@@ -2,6 +2,8 @@
 
 ERP platform built with ASP.NET Core, Entity Framework Core, PostgreSQL, and a React + Vite frontend.
 
+For the repo-specific SME ERP MVP roadmap and implementation breakdown, see `SME_ERP_MVP_IMPLEMENTATION_SPEC.md`.
+
 ## Solution layout
 
 - `VexorionERP` ASP.NET Core Web API
