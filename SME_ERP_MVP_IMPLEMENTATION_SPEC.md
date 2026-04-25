@@ -462,6 +462,106 @@ Add tests for:
 - over-allocation blocked
 - posted invoice cannot be edited
 
+### Phase 3 kickoff checklist (ready to execute)
+
+Use this as the implementation runbook for Phase 3. Execute top to bottom.
+
+#### A. Backend foundations
+
+- [ ] Define invoice status enums for sales and purchasing flows (draft, posted, partially paid, paid, cancelled or reversed according to existing style).
+- [ ] Create entities and line entities:
+	- `SalesInvoice`, `SalesInvoiceLine`
+	- `PurchaseInvoice`, `PurchaseInvoiceLine`
+- [ ] Add optional source links on headers:
+	- sales: source sales order id, source shipment id
+	- purchase: source purchase order id, source receipt id
+- [ ] Add monetary fields on headers:
+	- subtotal, tax total, grand total, paid total, balance due
+- [ ] Add due-date and reference fields required by current UI and document flow.
+- [ ] Add DbSets in `AppDbContext` and EF configurations for all headers/lines.
+- [ ] Add indexes:
+	- tenant + invoice number (unique per tenant)
+	- tenant + customer or supplier + invoice date
+	- header id + line number or product id
+- [ ] Generate and apply focused migration for invoice tables only.
+
+#### B. Contracts and API surface
+
+- [ ] Add sales invoice contracts under `VexorionERP.Contracts/Sales/Invoices`:
+	- create request, update request, list response, details response
+	- line create and line update contracts
+	- post request and reverse request placeholders if reverse is deferred
+- [ ] Add purchase invoice contracts under `VexorionERP.Contracts/Purchasing/Invoices` with equivalent structure.
+- [ ] Keep response DTO shape aligned with existing list/detail patterns used by orders and receipts.
+
+#### C. Domain/service implementation
+
+- [ ] Implement `ISalesInvoiceCommandService` and `ISalesInvoiceQueryService`.
+- [ ] Implement `IPurchaseInvoiceCommandService` and `IPurchaseInvoiceQueryService`.
+- [ ] Enforce invariant checks:
+	- at least one line on post
+	- no negative quantities or unit prices
+	- no edits to posted invoices
+- [ ] Implement totals calculation logic at service layer:
+	- line amount = quantity * unit price
+	- header subtotal = sum of line amounts
+	- grand total = subtotal + tax total
+	- balance due = grand total - paid total
+- [ ] Implement status transitions:
+	- draft -> posted
+	- posted -> partially paid -> paid (as paid total changes)
+- [ ] Add create-from-source workflows:
+	- create sales invoice from shipment or sales order
+	- create purchase invoice from receipt or purchase order
+
+#### D. Controllers and authorization
+
+- [ ] Add controllers:
+	- `SalesInvoicesController`
+	- `PurchaseInvoicesController`
+- [ ] Expose endpoints matching existing pattern:
+	- list, details, create, update, delete draft, post
+- [ ] Apply policy-based authorization consistent with `AppPermissions.Sales.*` and `AppPermissions.Purchasing.*` naming style.
+- [ ] Register services in DI extension setup.
+
+#### E. Frontend implementation
+
+- [ ] Add API request/response types for sales and purchase invoices.
+- [ ] Add API clients in `src/lib/api` for list/details/create/update/post/delete draft.
+- [ ] Add UI types in `src/types/ui` for grid rows and dialog/form values.
+- [ ] Add feature folders:
+	- `src/features/salesInvoices`
+	- `src/features/purchaseInvoices`
+- [ ] Implement pages with:
+	- data grid
+	- create/edit dialog
+	- post and draft-delete actions
+- [ ] Wire routes and navigation entries in app shell.
+- [ ] Add order/shipment and order/receipt action buttons to launch invoice creation with route state.
+
+#### F. Test checklist (must pass before merge)
+
+- [ ] Sales invoice totals computed correctly across multi-line documents.
+- [ ] Purchase invoice totals computed correctly across multi-line documents.
+- [ ] Due date defaults and payment-term-driven due dates are correct.
+- [ ] Posting locks further edits/deletes except allowed reversal path.
+- [ ] Source-document-based creation maps lines and references correctly.
+- [ ] Over-allocation protection tests prepared for payment phase integration.
+- [ ] Existing test suite remains green.
+
+#### G. Completion gates for Phase 3
+
+Phase 3 is complete only when all conditions are true:
+
+- [ ] Backend compile passes.
+- [ ] Frontend TypeScript compile passes.
+- [ ] Invoice service tests pass.
+- [ ] Manual smoke test passes for:
+	- create from source document
+	- post invoice
+	- visible balance due in list/details UI
+- [ ] Documentation updated with implemented endpoints and known deferred items.
+
 ## Phase 4: Finance core
 
 This phase makes the system a real ERP.
@@ -681,11 +781,15 @@ Do not combine all of these into one migration.
 
 ### Milestone C
 
+Status: Completed (26 Apr 2026)
+
 - sales invoices
 - purchase invoices
 - billing UI
 
 ### Milestone D
+
+Status: Completed (26 Apr 2026)
 
 - customer payments
 - vendor payments
@@ -698,6 +802,80 @@ Do not combine all of these into one migration.
 - journal entries
 - posting engine
 
+### Milestone E execution checklist (kickoff)
+
+Run this checklist in order for the first Milestone E implementation slice.
+
+#### 1) Entities
+
+- [ ] Add finance entities under `VexorionERP.Models/Finance`:
+	- `Account`
+	- `FiscalPeriod`
+	- `JournalEntry`
+	- `JournalEntryLine`
+- [ ] Add core fields and invariants:
+	- account code uniqueness per tenant
+	- journal total debit and credit tracking
+	- optional reversal linkage (`ReversedJournalEntryId`)
+- [ ] Add enums/value choices needed for:
+	- account type
+	- journal status
+	- normal balance
+
+#### 2) EF + migration
+
+- [ ] Add DbSets in `AppDbContext` for all finance entities.
+- [ ] Add per-entity EF configurations and tenant-aware indexes.
+- [ ] Add indexes:
+	- tenant + account code (unique)
+	- tenant + fiscal period range
+	- tenant + journal number (unique)
+- [ ] Create focused migration for finance core tables only.
+- [ ] Apply migration and verify schema on dev database.
+
+#### 3) Posting service
+
+- [ ] Create `IPostingService` and `PostingService` in `VexorionERP.Services/Finance`.
+- [ ] Implement posting guards:
+	- fiscal period must be open
+	- source document must be eligible for posting
+	- duplicate posting blocked for the same source reference
+- [ ] Implement balanced journal creation logic where $\sum debit = \sum credit$.
+- [ ] Implement reversal journal generation with inverse lines.
+- [ ] Add first document posting adapters for:
+	- sales invoices
+	- purchase invoices
+	- customer payments
+	- vendor payments
+
+#### 4) Controllers
+
+- [ ] Add controllers for:
+	- accounts
+	- fiscal periods
+	- journals
+	- posting operations
+- [ ] Keep endpoint pattern aligned with existing API style.
+- [ ] Apply policy-based authorization using existing permission conventions.
+- [ ] Register finance services and posting service in DI.
+
+#### 5) UI
+
+- [ ] Add feature modules/pages for:
+	- accounts
+	- fiscal periods
+	- journals
+- [ ] Add API contracts and client wrappers for finance endpoints.
+- [ ] Add routes and navigation entries for new finance pages.
+- [ ] Provide journal list/details view with source-document references.
+
+#### Done criteria for Milestone E first slice
+
+- [ ] Backend build and tests pass.
+- [ ] Frontend TypeScript compile passes.
+- [ ] Posting tests prove balanced journals, closed period blocking, and duplicate posting protection.
+- [ ] Manual smoke test passes for creating accounts/periods and posting at least one sales invoice.
+
 ### Milestone F
 
 - approvals
@@ -707,13 +885,12 @@ Do not combine all of these into one migration.
 
 ## Immediate next coding slice
 
-The next code implementation slice should be Phase 3 commercial documents:
+The next code implementation slice is Milestone E (finance core) in this order:
 
-1. `SalesInvoice` aggregate and API surface
-2. `PurchaseInvoice` aggregate and API surface
-3. invoice line calculations (subtotal, tax total, grand total, balance due)
-4. invoice creation actions from shipment and receipt contexts
-5. frontend invoice pages and source-document initiation paths
-6. focused service and web tests for totals, due dates, status transitions, and immutability after posting
+1. entities
+2. EF configuration + migration
+3. posting service
+4. controllers
+5. UI
 
-That slice completes the billing layer first, then enables Phase 4 posting and Phase 4/5 receivables-payables controls to build on stable invoice state.
+Start by implementing accounts, fiscal periods, and journal structures, then wire posting for sales and purchase invoices as the first end-to-end finance flow.
