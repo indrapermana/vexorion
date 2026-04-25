@@ -1,9 +1,10 @@
-import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
 import WarehouseRoundedIcon from '@mui/icons-material/WarehouseRounded'
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded'
 import { Alert, Box, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material'
+import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
 import { ApiError, deleteWarehouse, getWarehouses } from '../../../lib/api'
 import type { WarehouseDetailsResponse, WarehouseListItemResponse } from '../../../types/api'
@@ -26,6 +27,7 @@ function WarehouseSurfaceFallback() {
 
 export default function WarehousesPage() {
   const { isAuthenticated } = useAuth()
+  const [searchParams] = useSearchParams()
   const [warehouses, setWarehouses] = useState<WarehouseListItemResponse[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -35,6 +37,24 @@ export default function WarehousesPage() {
   const [selectedWarehouseId, setSelectedWarehouseId] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<WarehouseListItemResponse | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const highlightedWarehouseId = searchParams.get('warehouseId')
+  const visibleWarehouses = useMemo(() => {
+    if (!highlightedWarehouseId) {
+      return warehouses
+    }
+
+    return [...warehouses].sort((left, right) => {
+      if (left.id === highlightedWarehouseId) {
+        return -1
+      }
+
+      if (right.id === highlightedWarehouseId) {
+        return 1
+      }
+
+      return left.name.localeCompare(right.name)
+    })
+  }, [highlightedWarehouseId, warehouses])
 
   const loadWarehouses = useCallback(async () => {
     if (!isAuthenticated) {
@@ -134,11 +154,12 @@ export default function WarehousesPage() {
       </Paper>
 
       {error ? <Alert severity="error">{error}</Alert> : null}
+      {highlightedWarehouseId ? <Alert severity="info">Focused warehouse moved to the top of the list.</Alert> : null}
       {feedback ? <Alert severity="success">{feedback}</Alert> : null}
 
       <Paper elevation={0} className="panel-card products-grid-panel">
         <Suspense fallback={<WarehouseSurfaceFallback />}>
-          <WarehouseDataGrid rows={warehouses} isLoading={isLoading} onEdit={openEditDialog} onDelete={setDeleteTarget} />
+          <WarehouseDataGrid rows={visibleWarehouses} isLoading={isLoading} highlightedWarehouseId={highlightedWarehouseId} onEdit={openEditDialog} onDelete={setDeleteTarget} />
         </Suspense>
       </Paper>
 

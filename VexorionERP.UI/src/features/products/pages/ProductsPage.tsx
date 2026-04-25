@@ -2,20 +2,29 @@ import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded'
+import ReportRoundedIcon from '@mui/icons-material/ReportRounded'
 import SellRoundedIcon from '@mui/icons-material/SellRounded'
 import {
   Alert,
   Box,
   Button,
   CircularProgress,
+  FormControlLabel,
   Paper,
   Stack,
+  Switch,
   Typography,
 } from '@mui/material'
 import { useAuth } from '../../../app/AuthContext'
-import { ApiError, deleteProduct, getProducts } from '../../../lib/api'
-import type { ProductDetailsResponse, ProductListItemResponse } from '../../../types/api'
+import { ApiError, deleteProduct, getInventoryBalances, getProducts, getWarehouses } from '../../../lib/api'
+import type {
+  InventoryBalanceListItemResponse,
+  ProductDetailsResponse,
+  ProductListItemResponse,
+  WarehouseListItemResponse,
+} from '../../../types/api'
 import type { ProductDialogMode } from '../../../types/ui'
+import type { ProductGridRow } from '../../../types/ui'
 
 const ProductEditorDialog = lazy(() => import('../components/ProductEditorDialog'))
 const ProductDataGrid = lazy(() => import('../components/ProductDataGrid'))
@@ -32,17 +41,98 @@ function ProductSurfaceFallback() {
   )
 }
 
+function buildProductRows(
+  products: ProductListItemResponse[],
+  inventoryBalances: InventoryBalanceListItemResponse[],
+  warehouses: WarehouseListItemResponse[],
+): ProductGridRow[] {
+  const warehouseById = new Map(warehouses.map((warehouse) => [warehouse.id, warehouse]))
+  const balanceByProductId = new Map<string, ProductGridRow['warehouseStock']>()
+  const totalsByProductId = new Map<string, {
+    quantityOnHand: number
+    quantityReserved: number
+    quantityAvailable: number
+    activeQuantityOnHand: number
+    activeQuantityReserved: number
+    activeQuantityAvailable: number
+  }>()
+
+  for (const balance of inventoryBalances) {
+    const warehouse = warehouseById.get(balance.warehouseId)
+    const isWarehouseActive = warehouse?.isActive ?? false
+    const currentTotals = totalsByProductId.get(balance.productId) ?? {
+      quantityOnHand: 0,
+      quantityReserved: 0,
+      quantityAvailable: 0,
+      activeQuantityOnHand: 0,
+      activeQuantityReserved: 0,
+      activeQuantityAvailable: 0,
+    }
+
+    currentTotals.quantityOnHand += balance.quantityOnHand
+    currentTotals.quantityReserved += balance.quantityReserved
+    currentTotals.quantityAvailable += balance.quantityAvailable
+
+    if (balance.isActive && isWarehouseActive) {
+      currentTotals.activeQuantityOnHand += balance.quantityOnHand
+      currentTotals.activeQuantityReserved += balance.quantityReserved
+      currentTotals.activeQuantityAvailable += balance.quantityAvailable
+    }
+
+    totalsByProductId.set(balance.productId, currentTotals)
+
+    const warehouseRows = balanceByProductId.get(balance.productId) ?? []
+    warehouseRows.push({
+      warehouseId: balance.warehouseId,
+      warehouseCode: warehouse?.code ?? 'Unknown',
+      warehouseName: warehouse?.name ?? 'Unknown warehouse',
+      isWarehouseActive,
+      quantityOnHand: balance.quantityOnHand,
+      quantityReserved: balance.quantityReserved,
+      quantityAvailable: balance.quantityAvailable,
+    })
+
+    balanceByProductId.set(balance.productId, warehouseRows)
+  }
+
+  return products.map((product) => {
+    const totals = totalsByProductId.get(product.id)
+    const warehouseStock = (balanceByProductId.get(product.id) ?? []).sort((left, right) => {
+      if (left.isWarehouseActive !== right.isWarehouseActive) {
+        return left.isWarehouseActive ? -1 : 1
+      }
+
+      return left.warehouseName.localeCompare(right.warehouseName)
+    })
+    const activeQuantityAvailable = totals?.activeQuantityAvailable ?? 0
+
+    return {
+      ...product,
+      quantityOnHand: totals?.quantityOnHand ?? 0,
+      quantityReserved: totals?.quantityReserved ?? 0,
+      quantityAvailable: totals?.quantityAvailable ?? 0,
+      activeQuantityOnHand: totals?.activeQuantityOnHand ?? 0,
+      activeQuantityReserved: totals?.activeQuantityReserved ?? 0,
+      activeQuantityAvailable,
+      isLowStock: product.isActive && activeQuantityAvailable <= product.reorderLevel,
+      warehouseStock,
+    }
+  })
+}
+
 export default function ProductsPage() {
   const { isAuthenticated } = useAuth()
-  const [products, setProducts] = useState<ProductListItemResponse[]>([])
+  const [products, setProducts] = useState<ProductGridRow[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
   const [dialogMode, setDialogMode] = useState<ProductDialogMode>('create')
   const [isEditorOpen, setIsEditorOpen] = useState(false)
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<ProductListItemResponse | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<ProductGridRow | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [showOnlyLowStock, setShowOnlyLowStock] = useState(false)
+  const [expandedProductIds, setExpandedProductIds] = useState<string[]>([])
 
   const loadProducts = useCallback(async () => {
     if (!isAuthenticated) {
@@ -54,8 +144,13 @@ export default function ProductsPage() {
     setError(null)
 
     try {
-      const result = await getProducts()
-      setProducts(result)
+      const [productResult, inventoryBalanceResult, warehouseResult] = await Promise.all([
+        getProducts(),
+        getInventoryBalances(),
+        getWarehouses(),
+      ])
+
+      setProducts(buildProductRows(productResult, inventoryBalanceResult, warehouseResult))
     } catch (loadError) {
       if (loadError instanceof ApiError) {
         setError(loadError.message)
@@ -121,11 +216,25 @@ export default function ProductsPage() {
     }
   }
 
+  const toggleExpandedProduct = (productId: string) => {
+    setExpandedProductIds((current) => (
+      current.includes(productId)
+        ? current.filter((candidate) => candidate !== productId)
+        : [...current, productId]
+    ))
+  }
+
   if (!isAuthenticated) {
     return (
       <Alert severity="info">Sign in first. The products API requires an authenticated user with product view permissions.</Alert>
     )
   }
+
+  const activeProducts = products.filter((product) => product.isActive)
+  const lowStockProducts = activeProducts.filter((product) => product.isLowStock)
+  const activeWarehouseOnHand = activeProducts.reduce((sum, product) => sum + product.activeQuantityOnHand, 0)
+  const activeWarehouseAvailable = activeProducts.reduce((sum, product) => sum + product.activeQuantityAvailable, 0)
+  const visibleProducts = showOnlyLowStock ? products.filter((product) => product.isLowStock) : products
 
   return (
     <Stack spacing={3}>
@@ -141,6 +250,11 @@ export default function ProductsPage() {
             <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog}>
               New product
             </Button>
+            <FormControlLabel
+              control={<Switch checked={showOnlyLowStock} onChange={(_, checked) => setShowOnlyLowStock(checked)} color="warning" />}
+              label="Only low stock"
+              sx={{ mx: 0.5 }}
+            />
             <Paper elevation={0} className="products-metric-card">
               <Inventory2RoundedIcon fontSize="small" />
               <Box>
@@ -152,7 +266,7 @@ export default function ProductsPage() {
               <CheckCircleRoundedIcon fontSize="small" />
               <Box>
                 <Typography variant="body2" color="text.secondary">Active items</Typography>
-                <Typography variant="h6">{products.filter((product) => product.isActive).length}</Typography>
+                <Typography variant="h6">{activeProducts.length}</Typography>
               </Box>
             </Paper>
             <Paper elevation={0} className="products-metric-card">
@@ -162,6 +276,27 @@ export default function ProductsPage() {
                 <Typography variant="h6">
                   ${products.length ? (products.reduce((sum, product) => sum + product.salesPrice, 0) / products.length).toFixed(2) : '0.00'}
                 </Typography>
+              </Box>
+            </Paper>
+            <Paper elevation={0} className="products-metric-card">
+              <Inventory2RoundedIcon fontSize="small" />
+              <Box>
+                <Typography variant="body2" color="text.secondary">Active warehouse on hand</Typography>
+                <Typography variant="h6">{activeWarehouseOnHand.toFixed(2)}</Typography>
+              </Box>
+            </Paper>
+            <Paper elevation={0} className="products-metric-card">
+              <Inventory2RoundedIcon fontSize="small" />
+              <Box>
+                <Typography variant="body2" color="text.secondary">Active warehouse available</Typography>
+                <Typography variant="h6">{activeWarehouseAvailable.toFixed(2)}</Typography>
+              </Box>
+            </Paper>
+            <Paper elevation={0} className="products-metric-card">
+              <ReportRoundedIcon fontSize="small" />
+              <Box>
+                <Typography variant="body2" color="text.secondary" className="products-metric-label">Low stock active items</Typography>
+                <Typography variant="h6">{lowStockProducts.length}</Typography>
               </Box>
             </Paper>
           </Stack>
@@ -174,8 +309,10 @@ export default function ProductsPage() {
       <Paper elevation={0} className="panel-card products-grid-panel">
         <Suspense fallback={<ProductSurfaceFallback />}>
           <ProductDataGrid
-            rows={products}
+            rows={visibleProducts}
             isLoading={isLoading}
+            expandedProductIds={expandedProductIds}
+            onToggleExpanded={toggleExpandedProduct}
             onEdit={openEditDialog}
             onDelete={setDeleteTarget}
           />

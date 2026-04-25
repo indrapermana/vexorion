@@ -7,5 +7,6 @@ public class ProductListItemResponse
     public string Name { get; set; } = string.Empty;
     public string UnitOfMeasure { get; set; } = string.Empty;
     public decimal SalesPrice { get; set; }
+    public decimal ReorderLevel { get; set; }
     public bool IsActive { get; set; }
 }

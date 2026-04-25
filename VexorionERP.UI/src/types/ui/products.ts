@@ -2,7 +2,26 @@ import type { ProductDetailsResponse, ProductListItemResponse } from '../api'
 
 export type ProductDialogMode = 'create' | 'edit'
 
-export type ProductGridRow = ProductListItemResponse
+export type ProductWarehouseStockRow = {
+  warehouseId: string
+  warehouseCode: string
+  warehouseName: string
+  isWarehouseActive: boolean
+  quantityOnHand: number
+  quantityReserved: number
+  quantityAvailable: number
+}
+
+export type ProductGridRow = ProductListItemResponse & {
+  quantityOnHand: number
+  quantityReserved: number
+  quantityAvailable: number
+  activeQuantityOnHand: number
+  activeQuantityReserved: number
+  activeQuantityAvailable: number
+  isLowStock: boolean
+  warehouseStock: ProductWarehouseStockRow[]
+}
 
 export type ProductFormValues = {
   sku: string

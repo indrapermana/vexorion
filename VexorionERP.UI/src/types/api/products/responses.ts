@@ -4,6 +4,7 @@ export type ProductListItemResponse = {
   name: string
   unitOfMeasure: string
   salesPrice: number
+  reorderLevel: number
   isActive: boolean
 }
 
