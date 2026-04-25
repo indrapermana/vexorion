@@ -333,6 +333,38 @@ Add tests for:
 - final receipt/shipment completes the order only when remaining quantity reaches zero
 - reversal restores the right stock and execution totals
 
+### Phase 2 completion status (26 Apr 2026)
+
+Phase 2 is implemented and validated in the current codebase.
+
+Delivered backend scope:
+
+- extended order line execution fields for purchase and sales flows
+- new `PurchaseReceipt` and `SalesShipment` aggregates with line entities
+- EF Core mappings, DbSets, and migration for receipt/shipment persistence
+- inventory movement posting integration for receipts and shipments
+- command/query services and controllers for receipt/shipment workflows
+- DI registration and policy-based authorization alignment with existing patterns
+
+Delivered frontend scope:
+
+- API request/response types and clients for purchase receipts and sales shipments
+- UI types, data grids, create dialogs, and feature pages for both flows
+- app routing and navigation entries for receipt and shipment workspaces
+- action links from orders to execution pages:
+	- purchase order -> view receipts
+	- sales order -> view shipments
+
+Validation evidence:
+
+- all service tests passing, including partial and cumulative execution scenarios
+- TypeScript compile check passing for the UI workspace
+- no open implementation gaps for Milestone B receipt/shipment execution
+
+Notes:
+
+- reversal APIs for receipts/shipments remain listed in roadmap DTO guidance but were not part of this delivered slice; current implementation includes create/list/details/post and draft delete behavior.
+
 ## Phase 3: Commercial document layer
 
 This phase adds billing and payment obligations.
@@ -675,13 +707,13 @@ Do not combine all of these into one migration.
 
 ## Immediate next coding slice
 
-The next code implementation slice should be:
+The next code implementation slice should be Phase 3 commercial documents:
 
-1. `CustomerPayment` aggregate and API surface
-2. `VendorPayment` aggregate and API surface
-3. payment allocation flow that updates invoice `PaidTotal`, `Status`, and `BalanceDue`
-4. outstanding invoices views (sales and purchasing) filtered by remaining balance
-5. frontend payment pages and actions from invoice workspaces
-6. focused service and web tests for authorization, validation, and over-allocation protection
+1. `SalesInvoice` aggregate and API surface
+2. `PurchaseInvoice` aggregate and API surface
+3. invoice line calculations (subtotal, tax total, grand total, balance due)
+4. invoice creation actions from shipment and receipt contexts
+5. frontend invoice pages and source-document initiation paths
+6. focused service and web tests for totals, due dates, status transitions, and immutability after posting
 
-That slice completes Milestone D's operational cash application loop and prepares the posting layer in Milestone E with reliable, test-backed balance state.
+That slice completes the billing layer first, then enables Phase 4 posting and Phase 4/5 receivables-payables controls to build on stable invoice state.
