@@ -15,9 +15,9 @@ public class PurchaseInvoicesController(
 {
     [HttpGet]
     [Authorize(Policy = AppPermissions.Purchasing.View)]
-    public async Task<ActionResult<IReadOnlyCollection<PurchaseInvoiceListItemResponse>>> GetAll()
+    public async Task<ActionResult<IReadOnlyCollection<PurchaseInvoiceListItemResponse>>> GetAll([FromQuery] bool outstandingOnly = false)
     {
-        var result = await purchaseInvoiceQueryService.GetAllAsync(HttpContext.RequestAborted);
+        var result = await purchaseInvoiceQueryService.GetAllAsync(outstandingOnly, HttpContext.RequestAborted);
         return ToActionResult(result);
     }
 

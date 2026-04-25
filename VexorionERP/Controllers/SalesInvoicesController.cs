@@ -15,9 +15,9 @@ public class SalesInvoicesController(
 {
     [HttpGet]
     [Authorize(Policy = AppPermissions.Sales.View)]
-    public async Task<ActionResult<IReadOnlyCollection<SalesInvoiceListItemResponse>>> GetAll()
+    public async Task<ActionResult<IReadOnlyCollection<SalesInvoiceListItemResponse>>> GetAll([FromQuery] bool outstandingOnly = false)
     {
-        var result = await salesInvoiceQueryService.GetAllAsync(HttpContext.RequestAborted);
+        var result = await salesInvoiceQueryService.GetAllAsync(outstandingOnly, HttpContext.RequestAborted);
         return ToActionResult(result);
     }
 

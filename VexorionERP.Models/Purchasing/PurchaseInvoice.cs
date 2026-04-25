@@ -30,4 +30,5 @@ public class PurchaseInvoice : TenantEntityBase
     public PurchaseOrder? SourcePurchaseOrder { get; set; }
     public PaymentTerm? PaymentTerm { get; set; }
     public ICollection<PurchaseInvoiceLine> Lines { get; set; } = [];
+    public ICollection<VendorPayment> Payments { get; set; } = [];
 }

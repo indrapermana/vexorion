@@ -12,13 +12,20 @@ public class SalesInvoiceQueryService(
     AppDbContext dbContext,
     ICurrentTenantProvider currentTenantProvider) : ISalesInvoiceQueryService
 {
-    public async Task<ServiceResult<IReadOnlyCollection<SalesInvoiceListItemResponse>>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<ServiceResult<IReadOnlyCollection<SalesInvoiceListItemResponse>>> GetAllAsync(bool outstandingOnly = false, CancellationToken cancellationToken = default)
     {
         if (!currentTenantProvider.TenantId.HasValue)
             return ServiceResult<IReadOnlyCollection<SalesInvoiceListItemResponse>>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
 
-        var invoices = await dbContext.SalesInvoices.AsNoTracking()
-            .Where(x => x.TenantId == currentTenantProvider.TenantId.Value)
+        var query = dbContext.SalesInvoices.AsNoTracking()
+            .Where(x => x.TenantId == currentTenantProvider.TenantId.Value);
+
+        if (outstandingOnly)
+        {
+            query = query.Where(x => x.GrandTotal > x.PaidTotal);
+        }
+
+        var invoices = await query
             .OrderByDescending(x => x.InvoiceDate)
             .ToListAsync(cancellationToken);
 

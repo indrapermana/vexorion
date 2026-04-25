@@ -61,8 +61,10 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
     public DbSet<InvoiceLine> InvoiceLines => Set<InvoiceLine>();
     public DbSet<SalesInvoice> SalesInvoices => Set<SalesInvoice>();
     public DbSet<SalesInvoiceLine> SalesInvoiceLines => Set<SalesInvoiceLine>();
+    public DbSet<CustomerPayment> CustomerPayments => Set<CustomerPayment>();
     public DbSet<PurchaseInvoice> PurchaseInvoices => Set<PurchaseInvoice>();
     public DbSet<PurchaseInvoiceLine> PurchaseInvoiceLines => Set<PurchaseInvoiceLine>();
+    public DbSet<VendorPayment> VendorPayments => Set<VendorPayment>();
     public DbSet<PaymentTerm> PaymentTerms => Set<PaymentTerm>();
     public DbSet<TaxCode> TaxCodes => Set<TaxCode>();
 

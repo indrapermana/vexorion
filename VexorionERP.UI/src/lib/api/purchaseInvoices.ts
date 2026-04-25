@@ -1,17 +1,25 @@
 import type {
   CreatePurchaseInvoiceLineRequest,
   CreatePurchaseInvoiceRequest,
+  CreateVendorPaymentRequest,
   PurchaseInvoiceDetailsResponse,
   PurchaseInvoiceLineDetailsResponse,
   PurchaseInvoiceLineListItemResponse,
   PurchaseInvoiceListItemResponse,
   UpdatePurchaseInvoiceLineRequest,
   UpdatePurchaseInvoiceRequest,
+  VendorPaymentDetailsResponse,
+  VendorPaymentListItemResponse,
 } from '../../types/api'
 import { requestJson } from './core'
 
-export function getPurchaseInvoices() {
-  return requestJson<PurchaseInvoiceListItemResponse[]>('/purchase-invoices')
+export function getPurchaseInvoices(outstandingOnly = false) {
+  const searchParams = new URLSearchParams()
+  if (outstandingOnly) {
+    searchParams.set('outstandingOnly', 'true')
+  }
+
+  return requestJson<PurchaseInvoiceListItemResponse[]>(`/purchase-invoices${searchParams.size > 0 ? `?${searchParams.toString()}` : ''}`)
 }
 
 export function getPurchaseInvoice(purchaseInvoiceId: string) {
@@ -44,4 +52,16 @@ export function updatePurchaseInvoiceLine(purchaseInvoiceId: string, purchaseInv
 
 export function deletePurchaseInvoiceLine(purchaseInvoiceId: string, purchaseInvoiceLineId: string) {
   return requestJson<void>(`/purchase-invoices/${purchaseInvoiceId}/lines/${purchaseInvoiceLineId}`, 'DELETE')
+}
+
+export function getVendorPayments() {
+  return requestJson<VendorPaymentListItemResponse[]>('/vendor-payments')
+}
+
+export function getVendorPayment(vendorPaymentId: string) {
+  return requestJson<VendorPaymentDetailsResponse>(`/vendor-payments/${vendorPaymentId}`)
+}
+
+export function createVendorPayment(request: CreateVendorPaymentRequest) {
+  return requestJson<VendorPaymentDetailsResponse>('/vendor-payments', 'POST', request)
 }

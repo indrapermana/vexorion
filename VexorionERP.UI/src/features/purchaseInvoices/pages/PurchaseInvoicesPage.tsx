@@ -2,7 +2,7 @@ import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react
 import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded'
 import PaidRoundedIcon from '@mui/icons-material/PaidRounded'
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded'
-import { Box, CircularProgress, Stack, Typography } from '@mui/material'
+import { Box, CircularProgress, FormControlLabel, Stack, Switch, Typography } from '@mui/material'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
 import OrderWorkspace from '../../../components/OrderWorkspace'
@@ -39,6 +39,7 @@ export default function PurchaseInvoicesPage() {
   const [lines, setLines] = useState<PurchaseInvoiceLineListItemResponse[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [linesLoading, setLinesLoading] = useState(false)
+  const [outstandingOnly, setOutstandingOnly] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [linesError, setLinesError] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
@@ -59,7 +60,7 @@ export default function PurchaseInvoicesPage() {
     setIsLoading(true)
     setError(null)
     try {
-      setPurchaseInvoices(await getPurchaseInvoices())
+      setPurchaseInvoices(await getPurchaseInvoices(outstandingOnly))
       await reloadSuppliers()
     } catch (loadError) {
       if (loadError instanceof ApiError) setError(loadError.message)
@@ -67,7 +68,7 @@ export default function PurchaseInvoicesPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [isAuthenticated, reloadSuppliers])
+  }, [isAuthenticated, outstandingOnly, reloadSuppliers])
 
   useEffect(() => {
     void loadPurchaseInvoices()
@@ -156,6 +157,21 @@ export default function PurchaseInvoicesPage() {
     await loadLines(row.id)
   }
 
+  const handleRecordPayment = (row: PurchaseInvoiceGridRow) => {
+    navigate('/vendor-payments', {
+      state: {
+        supplierId: row.supplierId,
+        purchaseInvoiceId: row.id,
+        currencyCode: row.currencyCode,
+        amount: row.balanceDue,
+        paymentDate: new Date().toISOString().slice(0, 10),
+        referenceNumber: row.invoiceNumber,
+        paymentMethod: '',
+        notes: '',
+      },
+    })
+  }
+
   if (!isAuthenticated) {
     return <OrderWorkspace title="Purchase Invoices" description="Accounts payable invoice headers from `/api/purchase-invoices`, linked to supplier master data and invoice line detail." createLabel="New purchase invoice" onCreate={() => undefined} disableCreate metrics={[]} alerts={[{ severity: 'info', message: 'Sign in first. The purchase invoices API requires an authenticated user with purchasing view permissions.' }]} grid={null} linesPanel={null} />
   }
@@ -177,8 +193,9 @@ export default function PurchaseInvoicesPage() {
         ...(suppliersError ? [{ severity: 'warning' as const, message: suppliersError }] : []),
         ...(error ? [{ severity: 'error' as const, message: error }] : []),
         ...(feedback ? [{ severity: 'success' as const, message: feedback }] : []),
+        { severity: 'info' as const, message: outstandingOnly ? 'Showing outstanding invoices only.' : 'Showing all invoices.' },
       ]}
-      grid={<Suspense fallback={<PurchaseInvoiceSurfaceFallback />}><PurchaseInvoiceDataGrid rows={rows} isLoading={isLoading} onEdit={openEditDialog} onDelete={setDeleteTarget} onManageLines={(row) => void handleManageLines(row)} /></Suspense>}
+      grid={<Suspense fallback={<PurchaseInvoiceSurfaceFallback />}><Stack spacing={1.5}><FormControlLabel control={<Switch checked={outstandingOnly} onChange={(_, checked) => setOutstandingOnly(checked)} />} label="Outstanding only" /><PurchaseInvoiceDataGrid rows={rows} isLoading={isLoading} onEdit={openEditDialog} onDelete={setDeleteTarget} onManageLines={(row) => void handleManageLines(row)} onRecordPayment={handleRecordPayment} /></Stack></Suspense>}
       linesPanel={<Suspense fallback={<PurchaseInvoiceSurfaceFallback />}><PurchaseInvoiceLinesPanel invoice={activeLinesInvoice} lines={lines} isLoading={linesLoading} error={linesError} onRefresh={() => activeLinesInvoice ? loadLines(activeLinesInvoice.id) : Promise.resolve()} /></Suspense>}
       editor={isEditorOpen ? <Suspense fallback={<PurchaseInvoiceSurfaceFallback />}><PurchaseInvoiceEditorDialog key={`${dialogMode}:${selectedPurchaseInvoiceId ?? 'new'}:${editorDefaults?.sourcePurchaseOrderId ?? 'manual'}`} open={isEditorOpen} mode={dialogMode} purchaseInvoiceId={selectedPurchaseInvoiceId} suppliers={suppliers} initialValues={editorDefaults} onClose={handleEditorClose} onSaved={(purchaseInvoice, mode) => void handleSaved(purchaseInvoice, mode)} /></Suspense> : null}
       deleteDialog={deleteTarget ? <Suspense fallback={null}><PurchaseInvoiceDeleteDialog target={deleteTarget} isDeleting={isDeleting} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} /></Suspense> : null}

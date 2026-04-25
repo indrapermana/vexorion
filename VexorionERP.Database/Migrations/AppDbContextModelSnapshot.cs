@@ -1744,6 +1744,136 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("PurchaseOrderLine", (string)null);
                 });
 
+            modelBuilder.Entity("VexorionERP.Models.Purchasing.VendorPayment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CurrencyCode")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateOnly>("PaymentDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("PaymentMethod")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("PurchaseInvoiceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ReferenceNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PurchaseInvoiceId");
+
+                    b.HasIndex("SupplierId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "PurchaseInvoiceId", "PaymentDate");
+
+                    b.HasIndex("TenantId", "SupplierId", "PaymentDate");
+
+                    b.ToTable("VendorPayment", (string)null);
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.Sales.CustomerPayment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CurrencyCode")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateOnly>("PaymentDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("PaymentMethod")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("ReferenceNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("SalesInvoiceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("SalesInvoiceId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "CustomerId", "PaymentDate");
+
+                    b.HasIndex("TenantId", "SalesInvoiceId", "PaymentDate");
+
+                    b.ToTable("CustomerPayment", (string)null);
+                });
+
             modelBuilder.Entity("VexorionERP.Models.Sales.SalesInvoice", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2664,6 +2794,60 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("VexorionERP.Models.Purchasing.VendorPayment", b =>
+                {
+                    b.HasOne("VexorionERP.Models.Purchasing.PurchaseInvoice", "PurchaseInvoice")
+                        .WithMany("Payments")
+                        .HasForeignKey("PurchaseInvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("VexorionERP.Models.Partners.Supplier", "Supplier")
+                        .WithMany("VendorPayments")
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("PurchaseInvoice");
+
+                    b.Navigation("Supplier");
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.Sales.CustomerPayment", b =>
+                {
+                    b.HasOne("VexorionERP.Models.Partners.Customer", "Customer")
+                        .WithMany("CustomerPayments")
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("VexorionERP.Models.Sales.SalesInvoice", "SalesInvoice")
+                        .WithMany("Payments")
+                        .HasForeignKey("SalesInvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("SalesInvoice");
+
+                    b.Navigation("Tenant");
+                });
+
             modelBuilder.Entity("VexorionERP.Models.Sales.SalesInvoice", b =>
                 {
                     b.HasOne("VexorionERP.Models.Partners.Customer", "Customer")
@@ -2857,6 +3041,8 @@ namespace VexorionERP.Database.Migrations
 
             modelBuilder.Entity("VexorionERP.Models.Partners.Customer", b =>
                 {
+                    b.Navigation("CustomerPayments");
+
                     b.Navigation("Invoices");
 
                     b.Navigation("SalesInvoices");
@@ -2869,11 +3055,15 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("PurchaseInvoices");
 
                     b.Navigation("PurchaseOrders");
+
+                    b.Navigation("VendorPayments");
                 });
 
             modelBuilder.Entity("VexorionERP.Models.Purchasing.PurchaseInvoice", b =>
                 {
                     b.Navigation("Lines");
+
+                    b.Navigation("Payments");
                 });
 
             modelBuilder.Entity("VexorionERP.Models.Purchasing.PurchaseOrder", b =>
@@ -2884,6 +3074,8 @@ namespace VexorionERP.Database.Migrations
             modelBuilder.Entity("VexorionERP.Models.Sales.SalesInvoice", b =>
                 {
                     b.Navigation("Lines");
+
+                    b.Navigation("Payments");
                 });
 
             modelBuilder.Entity("VexorionERP.Models.Sales.SalesOrder", b =>

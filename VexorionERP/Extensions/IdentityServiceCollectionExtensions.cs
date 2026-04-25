@@ -62,6 +62,8 @@ public static class IdentityServiceCollectionExtensions
         services.AddScoped<IPurchaseInvoiceLineCommandService, PurchaseInvoiceLineCommandService>();
         services.AddScoped<IPurchaseInvoiceLineQueryService, PurchaseInvoiceLineQueryService>();
         services.AddScoped<IPurchaseInvoiceQueryService, PurchaseInvoiceQueryService>();
+        services.AddScoped<IVendorPaymentCommandService, VendorPaymentCommandService>();
+        services.AddScoped<IVendorPaymentQueryService, VendorPaymentQueryService>();
         services.AddScoped<IRoleManagementService, RoleManagementService>();
         services.AddScoped<ISalesOrderCommandService, SalesOrderCommandService>();
         services.AddScoped<ISalesOrderLineCommandService, SalesOrderLineCommandService>();
@@ -71,6 +73,8 @@ public static class IdentityServiceCollectionExtensions
         services.AddScoped<ISalesInvoiceLineCommandService, SalesInvoiceLineCommandService>();
         services.AddScoped<ISalesInvoiceLineQueryService, SalesInvoiceLineQueryService>();
         services.AddScoped<ISalesInvoiceQueryService, SalesInvoiceQueryService>();
+        services.AddScoped<ICustomerPaymentCommandService, CustomerPaymentCommandService>();
+        services.AddScoped<ICustomerPaymentQueryService, CustomerPaymentQueryService>();
         services.AddScoped<IStockTransferCommandService, StockTransferCommandService>();
         services.AddScoped<IStockTransferLineCommandService, StockTransferLineCommandService>();
         services.AddScoped<IStockTransferQueryService, StockTransferQueryService>();

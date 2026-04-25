@@ -1,6 +1,9 @@
 import type {
+  CreateCustomerPaymentRequest,
   CreateSalesInvoiceLineRequest,
   CreateSalesInvoiceRequest,
+  CustomerPaymentDetailsResponse,
+  CustomerPaymentListItemResponse,
   SalesInvoiceDetailsResponse,
   SalesInvoiceLineDetailsResponse,
   SalesInvoiceLineListItemResponse,
@@ -10,8 +13,13 @@ import type {
 } from '../../types/api'
 import { requestJson } from './core'
 
-export function getSalesInvoices() {
-  return requestJson<SalesInvoiceListItemResponse[]>('/sales-invoices')
+export function getSalesInvoices(outstandingOnly = false) {
+  const searchParams = new URLSearchParams()
+  if (outstandingOnly) {
+    searchParams.set('outstandingOnly', 'true')
+  }
+
+  return requestJson<SalesInvoiceListItemResponse[]>(`/sales-invoices${searchParams.size > 0 ? `?${searchParams.toString()}` : ''}`)
 }
 
 export function getSalesInvoice(salesInvoiceId: string) {
@@ -44,4 +52,16 @@ export function updateSalesInvoiceLine(salesInvoiceId: string, salesInvoiceLineI
 
 export function deleteSalesInvoiceLine(salesInvoiceId: string, salesInvoiceLineId: string) {
   return requestJson<void>(`/sales-invoices/${salesInvoiceId}/lines/${salesInvoiceLineId}`, 'DELETE')
+}
+
+export function getCustomerPayments() {
+  return requestJson<CustomerPaymentListItemResponse[]>('/customer-payments')
+}
+
+export function getCustomerPayment(customerPaymentId: string) {
+  return requestJson<CustomerPaymentDetailsResponse>(`/customer-payments/${customerPaymentId}`)
+}
+
+export function createCustomerPayment(request: CreateCustomerPaymentRequest) {
+  return requestJson<CustomerPaymentDetailsResponse>('/customer-payments', 'POST', request)
 }

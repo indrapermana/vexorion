@@ -29,4 +29,5 @@ public class SalesInvoice : TenantEntityBase
     public SalesOrder? SourceSalesOrder { get; set; }
     public PaymentTerm? PaymentTerm { get; set; }
     public ICollection<SalesInvoiceLine> Lines { get; set; } = [];
+    public ICollection<CustomerPayment> Payments { get; set; } = [];
 }

@@ -44,6 +44,7 @@ const navigationSections = [
       { to: '/customers', label: 'Customers', icon: <Groups2RoundedIcon /> },
       { to: '/sales-orders', label: 'Sales orders', icon: <ReceiptLongRoundedIcon /> },
       { to: '/sales-invoices', label: 'Sales invoices', icon: <ReceiptLongRoundedIcon /> },
+      { to: '/customer-payments', label: 'Customer payments', icon: <ReceiptLongRoundedIcon /> },
     ],
   },
   {
@@ -52,6 +53,7 @@ const navigationSections = [
       { to: '/suppliers', label: 'Suppliers', icon: <Groups2RoundedIcon /> },
       { to: '/purchase-orders', label: 'Purchase orders', icon: <ReceiptLongRoundedIcon /> },
       { to: '/purchase-invoices', label: 'Purchase invoices', icon: <ReceiptLongRoundedIcon /> },
+      { to: '/vendor-payments', label: 'Vendor payments', icon: <ReceiptLongRoundedIcon /> },
     ],
   },
   {
@@ -69,6 +71,7 @@ const navigationSections = [
 const routeTitles: Record<string, string> = {
   '/': 'Overview',
   '/customers': 'Customers',
+  '/customer-payments': 'Customer Payments',
   '/products': 'Products',
   '/inventory-adjustments': 'Inventory Adjustments',
   '/purchase-invoices': 'Purchase Invoices',
@@ -78,6 +81,7 @@ const routeTitles: Record<string, string> = {
   '/stock-counts': 'Stock Counts',
   '/stock-transfers': 'Stock Transfers',
   '/suppliers': 'Suppliers',
+  '/vendor-payments': 'Vendor Payments',
   '/warehouses': 'Warehouses',
 }
 

@@ -18,4 +18,5 @@ public class Customer : TenantEntityBase
     public ICollection<SalesOrder> SalesOrders { get; set; } = [];
     public ICollection<Invoice> Invoices { get; set; } = [];
     public ICollection<SalesInvoice> SalesInvoices { get; set; } = [];
+    public ICollection<CustomerPayment> CustomerPayments { get; set; } = [];
 }

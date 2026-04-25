@@ -677,11 +677,11 @@ Do not combine all of these into one migration.
 
 The next code implementation slice should be:
 
-1. `InventoryAdjustment` aggregate
-2. `StockTransfer` aggregate
-3. inventory movement posting support for adjustments and transfers
-4. API controllers and contracts for adjustments and transfers
-5. basic adjustment and transfer pages in the frontend
-6. focused service tests for posting and reversal
+1. `CustomerPayment` aggregate and API surface
+2. `VendorPayment` aggregate and API surface
+3. payment allocation flow that updates invoice `PaidTotal`, `Status`, and `BalanceDue`
+4. outstanding invoices views (sales and purchasing) filtered by remaining balance
+5. frontend payment pages and actions from invoice workspaces
+6. focused service and web tests for authorization, validation, and over-allocation protection
 
-That slice keeps the codebase moving along the current strongest axis and sets up the rest of the ERP MVP without wasting effort on premature finance work.
+That slice completes Milestone D's operational cash application loop and prepares the posting layer in Milestone E with reliable, test-backed balance state.
