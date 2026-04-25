@@ -13,6 +13,8 @@ public class PurchaseReceipt : TenantEntityBase
     public DocumentStatus Status { get; set; } = DocumentStatus.Draft;
     public string? Notes { get; set; }
 
+    public DateTimeOffset? PostedAtUtc { get; set; }
+
     public PurchaseOrder? PurchaseOrder { get; set; }
     public Warehouse? Warehouse { get; set; }
     public ICollection<PurchaseReceiptLine> Lines { get; set; } = [];

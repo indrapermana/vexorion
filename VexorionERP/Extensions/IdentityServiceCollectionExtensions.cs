@@ -58,6 +58,8 @@ public static class IdentityServiceCollectionExtensions
         services.AddScoped<IPurchaseOrderLineCommandService, PurchaseOrderLineCommandService>();
         services.AddScoped<IPurchaseOrderLineQueryService, PurchaseOrderLineQueryService>();
         services.AddScoped<IPurchaseOrderQueryService, PurchaseOrderQueryService>();
+        services.AddScoped<IPurchaseReceiptCommandService, PurchaseReceiptCommandService>();
+        services.AddScoped<IPurchaseReceiptQueryService, PurchaseReceiptQueryService>();
         services.AddScoped<IPurchaseInvoiceCommandService, PurchaseInvoiceCommandService>();
         services.AddScoped<IPurchaseInvoiceLineCommandService, PurchaseInvoiceLineCommandService>();
         services.AddScoped<IPurchaseInvoiceLineQueryService, PurchaseInvoiceLineQueryService>();
@@ -69,6 +71,8 @@ public static class IdentityServiceCollectionExtensions
         services.AddScoped<ISalesOrderLineCommandService, SalesOrderLineCommandService>();
         services.AddScoped<ISalesOrderLineQueryService, SalesOrderLineQueryService>();
         services.AddScoped<ISalesOrderQueryService, SalesOrderQueryService>();
+        services.AddScoped<ISalesShipmentCommandService, SalesShipmentCommandService>();
+        services.AddScoped<ISalesShipmentQueryService, SalesShipmentQueryService>();
         services.AddScoped<ISalesInvoiceCommandService, SalesInvoiceCommandService>();
         services.AddScoped<ISalesInvoiceLineCommandService, SalesInvoiceLineCommandService>();
         services.AddScoped<ISalesInvoiceLineQueryService, SalesInvoiceLineQueryService>();

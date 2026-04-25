@@ -20,4 +20,5 @@ public class SalesOrder : TenantEntityBase
     public Customer? Customer { get; set; }
     public Warehouse? Warehouse { get; set; }
     public ICollection<SalesOrderLine> Lines { get; set; } = [];
+    public ICollection<SalesShipment> Shipments { get; set; } = [];
 }

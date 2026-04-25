@@ -20,4 +20,5 @@ public class PurchaseOrder : TenantEntityBase
     public Supplier? Supplier { get; set; }
     public Warehouse? Warehouse { get; set; }
     public ICollection<PurchaseOrderLine> Lines { get; set; } = [];
+    public ICollection<PurchaseReceipt> Receipts { get; set; } = [];
 }

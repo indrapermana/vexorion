@@ -516,7 +516,11 @@ public class InventoryMovementPostingService(AppDbContext dbContext) : IInventor
         Guid? inventoryAdjustmentLineId,
         Guid? stockTransferId,
         Guid? stockTransferLineId,
-        CancellationToken cancellationToken)
+        Guid? purchaseReceiptId = null,
+        Guid? purchaseReceiptLineId = null,
+        Guid? salesShipmentId = null,
+        Guid? salesShipmentLineId = null,
+        CancellationToken cancellationToken = default)
     {
         var balance = await dbContext.InventoryBalances
             .FirstOrDefaultAsync(x => x.TenantId == tenantId && x.ProductId == productId && x.WarehouseId == warehouseId, cancellationToken);
@@ -574,6 +578,10 @@ public class InventoryMovementPostingService(AppDbContext dbContext) : IInventor
             InventoryAdjustmentLineId = inventoryAdjustmentLineId,
             StockTransferId = stockTransferId,
             StockTransferLineId = stockTransferLineId,
+            PurchaseReceiptId = purchaseReceiptId,
+            PurchaseReceiptLineId = purchaseReceiptLineId,
+            SalesShipmentId = salesShipmentId,
+            SalesShipmentLineId = salesShipmentLineId,
         });
 
         return ServiceResult<bool>.Success(true);
@@ -610,4 +618,80 @@ public class InventoryMovementPostingService(AppDbContext dbContext) : IInventor
 
     private static bool ShouldReverseStockCount(DocumentStatus previousStatus, DocumentStatus newStatus)
         => previousStatus == DocumentStatus.Completed && newStatus == DocumentStatus.Cancelled;
+
+    public async Task<ServiceResult<bool>> ApplyPurchaseReceiptAsync(PurchaseReceipt receipt, string purchaseOrderNumber, CancellationToken cancellationToken = default)
+    {
+        foreach (var line in receipt.Lines.Where(x => x.IsActive))
+        {
+            var result = await ApplyMovementAsync(
+                tenantId: receipt.TenantId,
+                productId: line.ProductId,
+                warehouseId: receipt.WarehouseId,
+                movementType: InventoryMovementType.PurchaseReceipt,
+                quantity: line.ReceivedQuantity,
+                quantityOnHandDelta: line.ReceivedQuantity,
+                quantityReservedDelta: 0m,
+                referenceNumber: receipt.ReceiptNumber,
+                purchaseOrderId: receipt.PurchaseOrderId,
+                purchaseOrderLineId: line.PurchaseOrderLineId,
+                salesOrderId: null,
+                salesOrderLineId: null,
+                inventoryAdjustmentId: null,
+                inventoryAdjustmentLineId: null,
+                stockTransferId: null,
+                stockTransferLineId: null,
+                purchaseReceiptId: receipt.Id,
+                purchaseReceiptLineId: line.Id,
+                cancellationToken: cancellationToken);
+
+            if (!result.Succeeded)
+            {
+                return result;
+            }
+        }
+
+        return ServiceResult<bool>.Success(true);
+    }
+
+    public async Task<ServiceResult<bool>> ApplySalesShipmentAsync(SalesShipment shipment, string salesOrderNumber, CancellationToken cancellationToken = default)
+    {
+        foreach (var line in shipment.Lines.Where(x => x.IsActive))
+        {
+            var stockValidation = await ValidateWarehouseOnHandStockAsync(
+                shipment.TenantId, shipment.WarehouseId, line.ProductId, line.ShippedQuantity, cancellationToken);
+
+            if (!stockValidation.Succeeded)
+            {
+                return stockValidation;
+            }
+
+            var result = await ApplyMovementAsync(
+                tenantId: shipment.TenantId,
+                productId: line.ProductId,
+                warehouseId: shipment.WarehouseId,
+                movementType: InventoryMovementType.SalesShipment,
+                quantity: line.ShippedQuantity,
+                quantityOnHandDelta: -line.ShippedQuantity,
+                quantityReservedDelta: 0m,
+                referenceNumber: shipment.ShipmentNumber,
+                purchaseOrderId: null,
+                purchaseOrderLineId: null,
+                salesOrderId: shipment.SalesOrderId,
+                salesOrderLineId: line.SalesOrderLineId,
+                inventoryAdjustmentId: null,
+                inventoryAdjustmentLineId: null,
+                stockTransferId: null,
+                stockTransferLineId: null,
+                salesShipmentId: shipment.Id,
+                salesShipmentLineId: line.Id,
+                cancellationToken: cancellationToken);
+
+            if (!result.Succeeded)
+            {
+                return result;
+            }
+        }
+
+        return ServiceResult<bool>.Success(true);
+    }
 }

@@ -10,6 +10,8 @@ public class PurchaseOrderLineConfiguration : TenantEntityConfiguration<Purchase
     {
         builder.Property(x => x.Quantity).HasPrecision(18, 2);
         builder.Property(x => x.UnitCost).HasPrecision(18, 2);
+        builder.Property(x => x.ReceivedQuantity).HasPrecision(18, 2);
+        builder.Ignore(x => x.RemainingQuantity);
         builder.Ignore(x => x.LineTotal);
 
         builder.HasOne(x => x.PurchaseOrder)

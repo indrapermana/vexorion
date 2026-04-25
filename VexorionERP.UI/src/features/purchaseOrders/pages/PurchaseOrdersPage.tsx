@@ -161,6 +161,15 @@ export default function PurchaseOrdersPage() {
     })
   }
 
+  const handleViewReceipts = (row: PurchaseOrderGridRow) => {
+    navigate('/purchase-receipts', {
+      state: {
+        sourcePurchaseOrderId: row.id,
+        purchaseOrderNumber: row.orderNumber,
+      },
+    })
+  }
+
   if (!isAuthenticated) {
     return <OrderWorkspace title="Purchase Orders" description="Transactional purchasing headers from `/api/purchase-orders`, linked to supplier master data for selection and display." createLabel="New purchase order" onCreate={() => undefined} disableCreate metrics={[]} alerts={[{ severity: 'info', message: 'Sign in first. The purchase orders API requires an authenticated user with purchasing view permissions.' }]} grid={null} linesPanel={null} />
   }
@@ -185,7 +194,7 @@ export default function PurchaseOrdersPage() {
         ...(error ? [{ severity: 'error' as const, message: error }] : []),
         ...(feedback ? [{ severity: 'success' as const, message: feedback }] : []),
       ]}
-      grid={<Suspense fallback={<PurchaseOrderSurfaceFallback />}><PurchaseOrderDataGrid rows={rows} isLoading={isLoading} onEdit={openEditDialog} onDelete={setDeleteTarget} onManageLines={(row) => void handleManageLines(row)} onCreateInvoice={handleCreateInvoice} /></Suspense>}
+      grid={<Suspense fallback={<PurchaseOrderSurfaceFallback />}><PurchaseOrderDataGrid rows={rows} isLoading={isLoading} onEdit={openEditDialog} onDelete={setDeleteTarget} onManageLines={(row) => void handleManageLines(row)} onCreateInvoice={handleCreateInvoice} onViewReceipts={handleViewReceipts} /></Suspense>}
       linesPanel={<Suspense fallback={<PurchaseOrderSurfaceFallback />}><PurchaseOrderLinesPanel order={activeLinesOrder} lines={lines} isLoading={linesLoading} error={linesError} onRefresh={() => activeLinesOrder ? loadLines(activeLinesOrder.id) : Promise.resolve()} /></Suspense>}
       editor={isEditorOpen ? <Suspense fallback={<PurchaseOrderSurfaceFallback />}><PurchaseOrderEditorDialog key={`${dialogMode}:${selectedPurchaseOrderId ?? 'new'}`} open={isEditorOpen} mode={dialogMode} purchaseOrderId={selectedPurchaseOrderId} suppliers={suppliers} warehouses={warehouses} onClose={handleEditorClose} onSaved={(purchaseOrder, mode) => void handleSaved(purchaseOrder, mode)} /></Suspense> : null}
       deleteDialog={deleteTarget ? <Suspense fallback={null}><PurchaseOrderDeleteDialog target={deleteTarget} isDeleting={isDeleting} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} /></Suspense> : null}

@@ -13,6 +13,8 @@ public class SalesShipment : TenantEntityBase
     public DocumentStatus Status { get; set; } = DocumentStatus.Draft;
     public string? Notes { get; set; }
 
+    public DateTimeOffset? PostedAtUtc { get; set; }
+
     public SalesOrder? SalesOrder { get; set; }
     public Warehouse? Warehouse { get; set; }
     public ICollection<SalesShipmentLine> Lines { get; set; } = [];

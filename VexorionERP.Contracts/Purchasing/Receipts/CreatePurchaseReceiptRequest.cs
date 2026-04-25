@@ -1,0 +1,11 @@
+namespace VexorionERP.Contracts.Purchasing.Receipts;
+
+public class CreatePurchaseReceiptRequest
+{
+    public string ReceiptNumber { get; set; } = string.Empty;
+    public Guid PurchaseOrderId { get; set; }
+    public Guid WarehouseId { get; set; }
+    public DateOnly ReceiptDate { get; set; }
+    public string? Notes { get; set; }
+    public List<CreatePurchaseReceiptLineRequest> Lines { get; set; } = [];
+}

@@ -3,6 +3,7 @@ import { DataGrid, GridActionsCellItem, type GridColDef } from '@mui/x-data-grid
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
 import EditRoundedIcon from '@mui/icons-material/EditRounded'
 import FormatListBulletedRoundedIcon from '@mui/icons-material/FormatListBulletedRounded'
+import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded'
 import PostAddRoundedIcon from '@mui/icons-material/PostAddRounded'
 import { getDocumentStatusLabel, type PurchaseOrderGridRow } from '../../../types/ui'
 
@@ -13,6 +14,7 @@ type PurchaseOrderDataGridProps = {
   onDelete: (row: PurchaseOrderGridRow) => void
   onManageLines: (row: PurchaseOrderGridRow) => void
   onCreateInvoice: (row: PurchaseOrderGridRow) => void
+  onViewReceipts: (row: PurchaseOrderGridRow) => void
 }
 
 function getStatusColor(status: number) {
@@ -22,7 +24,7 @@ function getStatusColor(status: number) {
   return 'default' as const
 }
 
-export default function PurchaseOrderDataGrid({ rows, isLoading, onEdit, onDelete, onManageLines, onCreateInvoice }: PurchaseOrderDataGridProps) {
+export default function PurchaseOrderDataGrid({ rows, isLoading, onEdit, onDelete, onManageLines, onCreateInvoice, onViewReceipts }: PurchaseOrderDataGridProps) {
   const columns: GridColDef<PurchaseOrderGridRow>[] = [
     {
       field: 'orderNumber',
@@ -59,6 +61,7 @@ export default function PurchaseOrderDataGrid({ rows, isLoading, onEdit, onDelet
       minWidth: 200,
       getActions: ({ row }) => [
         <GridActionsCellItem key={`lines-${row.id}`} icon={<FormatListBulletedRoundedIcon />} label="Lines" onClick={() => onManageLines(row)} showInMenu={false} />,
+        <GridActionsCellItem key={`receipts-${row.id}`} icon={<LocalShippingRoundedIcon />} label="View receipts" onClick={() => onViewReceipts(row)} showInMenu={false} />,
         <GridActionsCellItem key={`invoice-${row.id}`} icon={<PostAddRoundedIcon />} label="Create invoice" onClick={() => onCreateInvoice(row)} showInMenu={false} />,
         <GridActionsCellItem key={`edit-${row.id}`} icon={<EditRoundedIcon />} label="Edit" onClick={() => onEdit(row.id)} showInMenu={false} />,
         <GridActionsCellItem key={`delete-${row.id}`} icon={<DeleteOutlineRoundedIcon />} label="Delete" onClick={() => onDelete(row)} showInMenu={false} />,
