@@ -1,0 +1,11 @@
+/Users/indra/Documents/work/vexorion/workspace/VexorionERP/VexorionERP.Models/bin/Debug/net8.0/VexorionERP.Models.deps.json
+/Users/indra/Documents/work/vexorion/workspace/VexorionERP/VexorionERP.Models/bin/Debug/net8.0/VexorionERP.Models.dll
+/Users/indra/Documents/work/vexorion/workspace/VexorionERP/VexorionERP.Models/bin/Debug/net8.0/VexorionERP.Models.pdb
+/Users/indra/Documents/work/vexorion/workspace/VexorionERP/VexorionERP.Models/obj/Debug/net8.0/VexorionERP.Models.GeneratedMSBuildEditorConfig.editorconfig
+/Users/indra/Documents/work/vexorion/workspace/VexorionERP/VexorionERP.Models/obj/Debug/net8.0/VexorionERP.Models.AssemblyInfoInputs.cache
+/Users/indra/Documents/work/vexorion/workspace/VexorionERP/VexorionERP.Models/obj/Debug/net8.0/VexorionERP.Models.AssemblyInfo.cs
+/Users/indra/Documents/work/vexorion/workspace/VexorionERP/VexorionERP.Models/obj/Debug/net8.0/VexorionERP.Models.csproj.CoreCompileInputs.cache
+/Users/indra/Documents/work/vexorion/workspace/VexorionERP/VexorionERP.Models/obj/Debug/net8.0/VexorionERP.Models.dll
+/Users/indra/Documents/work/vexorion/workspace/VexorionERP/VexorionERP.Models/obj/Debug/net8.0/refint/VexorionERP.Models.dll
+/Users/indra/Documents/work/vexorion/workspace/VexorionERP/VexorionERP.Models/obj/Debug/net8.0/VexorionERP.Models.pdb
+/Users/indra/Documents/work/vexorion/workspace/VexorionERP/VexorionERP.Models/obj/Debug/net8.0/ref/VexorionERP.Models.dll

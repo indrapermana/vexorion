@@ -1,0 +1,97 @@
+{
+  "version": 3,
+  "targets": {
+    "net8.0": {
+      "VexorionERP.Models/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v8.0",
+        "compile": {
+          "bin/placeholder/VexorionERP.Models.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/VexorionERP.Models.dll": {}
+        },
+        "frameworkReferences": [
+          "Microsoft.AspNetCore.App"
+        ]
+      }
+    }
+  },
+  "libraries": {
+    "VexorionERP.Models/1.0.0": {
+      "type": "project",
+      "path": "../VexorionERP.Models/VexorionERP.Models.csproj",
+      "msbuildProject": "../VexorionERP.Models/VexorionERP.Models.csproj"
+    }
+  },
+  "projectFileDependencyGroups": {
+    "net8.0": [
+      "VexorionERP.Models >= 1.0.0"
+    ]
+  },
+  "packageFolders": {
+    "/Users/indra/.nuget/packages/": {}
+  },
+  "project": {
+    "version": "1.0.0",
+    "restore": {
+      "projectUniqueName": "/Users/indra/Documents/work/vexorion/workspace/VexorionERP/VexorionERP.Contracts/VexorionERP.Contracts.csproj",
+      "projectName": "VexorionERP.Contracts",
+      "projectPath": "/Users/indra/Documents/work/vexorion/workspace/VexorionERP/VexorionERP.Contracts/VexorionERP.Contracts.csproj",
+      "packagesPath": "/Users/indra/.nuget/packages/",
+      "outputPath": "/Users/indra/Documents/work/vexorion/workspace/VexorionERP/VexorionERP.Contracts/obj/",
+      "projectStyle": "PackageReference",
+      "configFilePaths": [
+        "/Users/indra/.nuget/NuGet/NuGet.Config"
+      ],
+      "originalTargetFrameworks": [
+        "net8.0"
+      ],
+      "sources": {
+        "https://api.nuget.org/v3/index.json": {}
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "projectReferences": {
+            "/Users/indra/Documents/work/vexorion/workspace/VexorionERP/VexorionERP.Models/VexorionERP.Models.csproj": {
+              "projectPath": "/Users/indra/Documents/work/vexorion/workspace/VexorionERP/VexorionERP.Models/VexorionERP.Models.csproj"
+            }
+          }
+        }
+      },
+      "warningProperties": {
+        "warnAsError": [
+          "NU1605"
+        ]
+      },
+      "restoreAuditProperties": {
+        "enableAudit": "true",
+        "auditLevel": "low",
+        "auditMode": "direct"
+      }
+    },
+    "frameworks": {
+      "net8.0": {
+        "targetAlias": "net8.0",
+        "imports": [
+          "net461",
+          "net462",
+          "net47",
+          "net471",
+          "net472",
+          "net48",
+          "net481"
+        ],
+        "assetTargetFallback": true,
+        "warn": true,
+        "frameworkReferences": {
+          "Microsoft.NETCore.App": {
+            "privateAssets": "all"
+          }
+        },
+        "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.303/PortableRuntimeIdentifierGraph.json"
+      }
+    }
+  }
+}

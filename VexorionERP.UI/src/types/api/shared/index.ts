@@ -1,0 +1,1 @@
+export type ValidationProblem = Record<string, string[]>

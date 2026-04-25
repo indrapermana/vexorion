@@ -1,0 +1,6 @@
+@VexorionERP_HostAddress = http://localhost:5125
+
+GET {{VexorionERP_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

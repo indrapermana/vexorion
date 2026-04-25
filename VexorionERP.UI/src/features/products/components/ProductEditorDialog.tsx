@@ -1,0 +1,319 @@
+import { useEffect, useMemo, useState } from 'react'
+import {
+	Alert,
+	Box,
+	Button,
+	CircularProgress,
+	Dialog,
+	DialogActions,
+	DialogContent,
+	DialogTitle,
+	FormControlLabel,
+	Stack,
+	Switch,
+	TextField,
+	Typography,
+} from '@mui/material'
+import { Controller, useForm } from 'react-hook-form'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
+import { ApiError, createProduct, getProduct, updateProduct } from '../../../lib/api'
+import type { ValidationProblem } from '../../../types/api'
+import type { ProductEditorDialogProps, ProductFormValues } from '../../../types/ui'
+
+const defaultValues: ProductFormValues = {
+	sku: '',
+	name: '',
+	description: '',
+	unitOfMeasure: 'EA',
+	standardCost: 0,
+	salesPrice: 0,
+	reorderLevel: 0,
+	isActive: true,
+}
+
+const validationSchema: yup.ObjectSchema<ProductFormValues> = yup.object({
+	sku: yup.string().trim().required('SKU is required.').max(50, 'SKU must be at most 50 characters.'),
+	name: yup.string().trim().required('Name is required.').min(2, 'Name must be at least 2 characters.').max(200, 'Name must be at most 200 characters.'),
+	description: yup.string().max(1000, 'Description must be at most 1000 characters.').defined(),
+	unitOfMeasure: yup.string().trim().required('Unit of measure is required.').max(20, 'Unit of measure must be at most 20 characters.'),
+	standardCost: yup.number().typeError('Standard cost must be a number.').min(0, 'Standard cost cannot be negative.').required('Standard cost is required.'),
+	salesPrice: yup.number().typeError('Sales price must be a number.').min(0, 'Sales price cannot be negative.').required('Sales price is required.'),
+	reorderLevel: yup.number().typeError('Reorder level must be a number.').min(0, 'Reorder level cannot be negative.').required('Reorder level is required.'),
+	isActive: yup.boolean().required(),
+})
+
+function normalizeServerFieldName(fieldName: string): keyof ProductFormValues | null {
+	const normalized = fieldName.charAt(0).toLowerCase() + fieldName.slice(1)
+	if (normalized in defaultValues) {
+		return normalized as keyof ProductFormValues
+	}
+
+	return null
+}
+
+export default function ProductEditorDialog({
+	open,
+	mode,
+	productId,
+	onClose,
+	onSaved,
+}: ProductEditorDialogProps) {
+	const [isLoadingProduct, setIsLoadingProduct] = useState(mode === 'edit' && Boolean(productId))
+	const [submitError, setSubmitError] = useState<string | null>(null)
+
+	const title = useMemo(() => (mode === 'create' ? 'Create product' : 'Edit product'), [mode])
+	const {
+		control,
+		handleSubmit,
+		reset,
+		setError,
+		formState: { errors, isSubmitting },
+	} = useForm<ProductFormValues>({
+		defaultValues,
+		resolver: yupResolver(validationSchema),
+	})
+
+	useEffect(() => {
+		if (mode === 'create') {
+			return
+		}
+
+		if (!productId) {
+			return
+		}
+
+		let isMounted = true
+
+		void getProduct(productId)
+			.then((product) => {
+				if (!isMounted) {
+					return
+				}
+
+				reset({
+					sku: product.sku,
+					name: product.name,
+					description: product.description ?? '',
+					unitOfMeasure: product.unitOfMeasure,
+					standardCost: product.standardCost,
+					salesPrice: product.salesPrice,
+					reorderLevel: product.reorderLevel,
+					isActive: product.isActive,
+				})
+			})
+			.catch((error: unknown) => {
+				if (!isMounted) {
+					return
+				}
+
+				if (error instanceof ApiError) {
+					setSubmitError(error.message)
+				} else {
+					setSubmitError('Unable to load product details.')
+				}
+			})
+			.finally(() => {
+				if (isMounted) {
+					setIsLoadingProduct(false)
+				}
+			})
+
+		return () => {
+			isMounted = false
+		}
+	}, [mode, productId, reset])
+
+	const applyServerValidation = (validation?: ValidationProblem) => {
+		if (!validation) {
+			return
+		}
+
+		Object.entries(validation).forEach(([fieldName, fieldErrors]) => {
+			const normalizedFieldName = normalizeServerFieldName(fieldName)
+			if (normalizedFieldName && fieldErrors.length > 0) {
+				setError(normalizedFieldName, { message: fieldErrors[0] })
+			}
+		})
+	}
+
+	const onSubmit = handleSubmit(async (values) => {
+		setSubmitError(null)
+
+		const payload = {
+			sku: values.sku.trim(),
+			name: values.name.trim(),
+			description: values.description.trim() ? values.description.trim() : null,
+			unitOfMeasure: values.unitOfMeasure.trim(),
+			standardCost: values.standardCost,
+			salesPrice: values.salesPrice,
+			reorderLevel: values.reorderLevel,
+		}
+
+		try {
+			const savedProduct =
+				mode === 'create'
+					? await createProduct(payload)
+					: await updateProduct(productId!, { ...payload, isActive: values.isActive })
+
+			onSaved(savedProduct, mode)
+			reset(defaultValues)
+		} catch (error) {
+			if (error instanceof ApiError) {
+				setSubmitError(error.message)
+				applyServerValidation(error.validation)
+			} else {
+				setSubmitError('Unable to save product right now.')
+			}
+		}
+	})
+
+	return (
+		<Dialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="md">
+			<DialogTitle>{title}</DialogTitle>
+			<DialogContent dividers>
+				{isLoadingProduct ? (
+					<Box sx={{ display: 'grid', placeItems: 'center', minHeight: 220 }}>
+						<Stack spacing={1.5} sx={{ alignItems: 'center' }}>
+							<CircularProgress size={28} />
+							<Typography color="text.secondary">Loading product details...</Typography>
+						</Stack>
+					</Box>
+				) : (
+					<Stack spacing={2.5} sx={{ pt: 1 }}>
+						{submitError ? <Alert severity="error">{submitError}</Alert> : null}
+
+						<Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+							<Controller
+								name="sku"
+								control={control}
+								render={({ field }) => (
+									<TextField
+										{...field}
+										fullWidth
+										label="SKU"
+										error={Boolean(errors.sku)}
+										helperText={errors.sku?.message}
+									/>
+								)}
+							/>
+							<Controller
+								name="unitOfMeasure"
+								control={control}
+								render={({ field }) => (
+									<TextField
+										{...field}
+										fullWidth
+										label="Unit of measure"
+										error={Boolean(errors.unitOfMeasure)}
+										helperText={errors.unitOfMeasure?.message}
+									/>
+								)}
+							/>
+						</Stack>
+
+						<Controller
+							name="name"
+							control={control}
+							render={({ field }) => (
+								<TextField
+									{...field}
+									fullWidth
+									label="Product name"
+									error={Boolean(errors.name)}
+									helperText={errors.name?.message}
+								/>
+							)}
+						/>
+
+						<Controller
+							name="description"
+							control={control}
+							render={({ field }) => (
+								<TextField
+									{...field}
+									fullWidth
+									multiline
+									minRows={3}
+									label="Description"
+									error={Boolean(errors.description)}
+									helperText={errors.description?.message ?? 'Optional'}
+								/>
+							)}
+						/>
+
+						<Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+							<Controller
+								name="standardCost"
+								control={control}
+								render={({ field }) => (
+									<TextField
+										{...field}
+										fullWidth
+										label="Standard cost"
+										type="number"
+										slotProps={{ htmlInput: { min: 0, step: '0.01' } }}
+										error={Boolean(errors.standardCost)}
+										helperText={errors.standardCost?.message}
+										onChange={(event) => field.onChange(Number(event.target.value))}
+									/>
+								)}
+							/>
+							<Controller
+								name="salesPrice"
+								control={control}
+								render={({ field }) => (
+									<TextField
+										{...field}
+										fullWidth
+										label="Sales price"
+										type="number"
+										slotProps={{ htmlInput: { min: 0, step: '0.01' } }}
+										error={Boolean(errors.salesPrice)}
+										helperText={errors.salesPrice?.message}
+										onChange={(event) => field.onChange(Number(event.target.value))}
+									/>
+								)}
+							/>
+							<Controller
+								name="reorderLevel"
+								control={control}
+								render={({ field }) => (
+									<TextField
+										{...field}
+										fullWidth
+										label="Reorder level"
+										type="number"
+										slotProps={{ htmlInput: { min: 0, step: '0.01' } }}
+										error={Boolean(errors.reorderLevel)}
+										helperText={errors.reorderLevel?.message}
+										onChange={(event) => field.onChange(Number(event.target.value))}
+									/>
+								)}
+							/>
+						</Stack>
+
+						{mode === 'edit' ? (
+							<Controller
+								name="isActive"
+								control={control}
+								render={({ field }) => (
+									<FormControlLabel
+										control={<Switch checked={field.value} onChange={(_, checked) => field.onChange(checked)} />}
+										label={field.value ? 'Product is active' : 'Product is inactive'}
+									/>
+								)}
+							/>
+						) : null}
+					</Stack>
+				)}
+			</DialogContent>
+			<DialogActions sx={{ px: 3, py: 2 }}>
+				<Button onClick={onClose} disabled={isSubmitting}>Cancel</Button>
+				<Button onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoadingProduct}>
+					{isSubmitting ? 'Saving...' : mode === 'create' ? 'Create product' : 'Save changes'}
+				</Button>
+			</DialogActions>
+		</Dialog>
+	)
+}

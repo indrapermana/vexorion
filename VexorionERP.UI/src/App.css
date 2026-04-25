@@ -1,0 +1,397 @@
+.app-shell,
+.dashboard-shell {
+  min-height: 100vh;
+}
+
+.dashboard-shell {
+  background: linear-gradient(180deg, rgba(246, 242, 255, 0.92), rgba(241, 237, 255, 0.98));
+}
+
+.dashboard-sidebar-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 100vh;
+  background: linear-gradient(180deg, rgba(247, 244, 255, 0.96), rgba(239, 234, 255, 0.98));
+  border-right: 1px solid rgba(108, 92, 231, 0.1);
+}
+
+.sidebar-caption {
+  margin: 0 0 0.75rem;
+  padding-inline: 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #8c87b8;
+}
+
+.dashboard-nav-item {
+  margin-bottom: 0.3rem;
+  border-radius: 14px;
+  color: #5d568b;
+}
+
+.dashboard-nav-item .MuiListItemIcon-root {
+  min-width: 40px;
+  color: inherit;
+}
+
+.dashboard-nav-item:hover {
+  background: rgba(108, 92, 231, 0.08);
+  color: #6c5ce7;
+}
+
+.dashboard-nav-item-active {
+  background: linear-gradient(135deg, rgba(108, 92, 231, 0.16), rgba(162, 155, 254, 0.18));
+  color: #4d3fd1;
+}
+
+.sidebar-footer-card {
+  padding: 1rem;
+  border: 1px solid rgba(108, 92, 231, 0.08);
+  background: rgba(251, 250, 255, 0.85);
+}
+
+.dashboard-main {
+  min-height: 100vh;
+}
+
+.dashboard-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding-inline: 1rem;
+  backdrop-filter: blur(14px);
+  background: rgba(245, 242, 255, 0.78);
+  border-bottom: 1px solid rgba(108, 92, 231, 0.08);
+}
+
+.dashboard-content {
+  padding: 1.25rem;
+}
+
+.public-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(320px, 1.05fr) minmax(420px, 0.95fr);
+  background: #f6f3ff;
+}
+
+.public-shell__panel {
+  min-height: 100vh;
+}
+
+.public-shell__panel--content {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top left, rgba(162, 155, 254, 0.22), transparent 34%),
+    radial-gradient(circle at bottom right, rgba(108, 92, 231, 0.22), transparent 32%),
+    linear-gradient(160deg, #24195e, #33247e 52%, #4d38ab);
+}
+
+.public-shell__panel--content::before {
+  content: '';
+  position: absolute;
+  inset: auto -12% -16% auto;
+  width: 340px;
+  height: 340px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  filter: blur(10px);
+}
+
+.public-shell__content {
+  position: relative;
+  z-index: 1;
+  max-width: 620px;
+  padding: clamp(2rem, 5vw, 4rem);
+}
+
+.public-shell__eyebrow {
+  margin-bottom: 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.public-shell__title {
+  color: #fff;
+  max-width: 10ch;
+  margin-bottom: 1rem;
+}
+
+.public-shell__description {
+  max-width: 56ch;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.7;
+}
+
+.public-shell__chip {
+  width: fit-content;
+  padding-inline: 0.35rem;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.public-shell__chip .MuiChip-icon,
+.public-shell__chip .MuiChip-label {
+  color: inherit;
+}
+
+.public-feature-row {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.public-feature-row__icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.public-feature-row__description {
+  color: rgba(255, 255, 255, 0.74);
+  line-height: 1.65;
+}
+
+.public-shell__panel--form {
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+  background:
+    linear-gradient(180deg, rgba(251, 249, 255, 0.98), rgba(244, 240, 255, 0.98)),
+    radial-gradient(circle at top right, rgba(162, 155, 254, 0.18), transparent 30%);
+}
+
+.public-shell__form-wrap {
+  width: 100%;
+  max-width: 720px;
+}
+
+.public-form-card {
+  padding: clamp(1.75rem, 3vw, 2.5rem);
+  border-radius: 28px;
+  border: 1px solid rgba(108, 92, 231, 0.1);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 24px 60px rgba(68, 52, 145, 0.12);
+}
+
+.public-form-card--login {
+  max-width: 520px;
+}
+
+.public-form-card--tenant {
+  max-width: 720px;
+}
+
+.public-not-found-card,
+.admin-not-found-card {
+  max-width: 560px;
+}
+
+.nav-panel {
+  border: 1px solid rgba(108, 92, 231, 0.12);
+  background: rgba(250, 248, 255, 0.78);
+}
+
+.nav-links {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.shell-link {
+  color: #68639a;
+  text-decoration: none;
+  padding: 0.55rem 0.9rem;
+  border-radius: 999px;
+  font-weight: 700;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.shell-link:hover {
+  background: rgba(108, 92, 231, 0.08);
+  color: #6C5CE7;
+}
+
+.shell-link-active {
+  background: #6C5CE7;
+  color: #f8f7ff;
+}
+
+.hero-panel {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(1.5rem, 2vw, 2rem);
+  border: 1px solid rgba(108, 92, 231, 0.1);
+  background:
+    linear-gradient(135deg, rgba(252, 250, 255, 0.86), rgba(245, 241, 255, 0.76)),
+    radial-gradient(circle at top right, rgba(108, 92, 231, 0.12), transparent 30%);
+}
+
+.dashboard-banner {
+  min-height: 100%;
+}
+
+.hero-panel::after {
+  content: '';
+  position: absolute;
+  inset: auto -80px -90px auto;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: rgba(162, 155, 254, 0.18);
+  filter: blur(6px);
+}
+
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
+  color: #f8f7ff;
+  background: linear-gradient(145deg, #6C5CE7, #5443cf);
+  box-shadow: 0 18px 40px rgba(108, 92, 231, 0.22);
+}
+
+.spotlight-card {
+  height: 100%;
+  border: 1px solid rgba(108, 92, 231, 0.08);
+  background: linear-gradient(180deg, rgba(250, 246, 255, 0.9), rgba(240, 236, 255, 0.74));
+}
+
+.stat-card,
+.pillar-card,
+.panel-card {
+  height: 100%;
+  border: 1px solid rgba(108, 92, 231, 0.08);
+}
+
+.stat-card {
+  padding: 1.25rem;
+  background: rgba(250, 248, 255, 0.84);
+}
+
+.pillar-card {
+  padding: 1.5rem;
+  background: rgba(250, 248, 255, 0.74);
+}
+
+.panel-card {
+  padding: 1.25rem;
+  background: rgba(251, 250, 255, 0.86);
+}
+
+.products-grid-panel {
+  padding: 0.75rem;
+}
+
+.products-metric-card {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  min-width: 150px;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(108, 92, 231, 0.08);
+  background: rgba(250, 248, 255, 0.86);
+}
+
+.products-metric-card svg {
+  color: #6c5ce7;
+}
+
+.products-grid-panel .MuiDataGrid-toolbarContainer {
+  padding: 0.5rem 0.5rem 0.75rem;
+}
+
+.form-panel {
+  padding: clamp(1.25rem, 2vw, 2rem);
+  border: 1px solid rgba(108, 92, 231, 0.08);
+  background: rgba(250, 248, 255, 0.84);
+}
+
+.dashboard-stat-card {
+  padding: 1.35rem;
+}
+
+.pillar-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 1rem;
+  border-radius: 18px;
+  color: #6C5CE7;
+  background: rgba(162, 155, 254, 0.2);
+}
+
+.metric-icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  color: #6c5ce7;
+  background: rgba(162, 155, 254, 0.22);
+}
+
+.mini-pillar-row {
+  display: flex;
+  gap: 0.9rem;
+  align-items: flex-start;
+}
+
+.mini-pillar-icon {
+  width: 44px;
+  height: 44px;
+  margin-bottom: 0;
+}
+
+@media (max-width: 900px) {
+  .nav-links {
+    width: 100%;
+  }
+}
+
+@media (max-width: 1199px) {
+  .dashboard-content {
+    padding: 1rem;
+  }
+
+  .public-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .public-shell__panel--content {
+    min-height: auto;
+  }
+
+  .public-shell__panel--form {
+    min-height: auto;
+    padding-top: 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .public-shell__content,
+  .public-shell__panel--form {
+    padding: 1.25rem;
+  }
+
+  .public-form-card {
+    border-radius: 22px;
+    padding: 1.25rem;
+  }
+}
