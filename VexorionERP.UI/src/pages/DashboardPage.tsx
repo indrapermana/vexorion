@@ -83,7 +83,7 @@ export default function DashboardPage() {
           <Paper elevation={0} className="panel-card">
             <Typography variant="h6" sx={{ mb: 2 }}>System focus</Typography>
             <Stack spacing={1.5}>
-              <Typography color="text.secondary">Use the sidebar to move between protected CRUD areas and public tenant setup.</Typography>
+              <Typography color="text.secondary">Use the sidebar to move between ERP modules grouped by sales, procurement, and inventory.</Typography>
               <Typography color="text.secondary">The current design direction now reads like an admin console instead of a landing page.</Typography>
             </Stack>
           </Paper>

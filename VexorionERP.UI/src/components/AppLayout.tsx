@@ -1,9 +1,7 @@
-import ApartmentRoundedIcon from '@mui/icons-material/ApartmentRounded'
 import AutoGraphRoundedIcon from '@mui/icons-material/AutoGraphRounded'
 import Groups2RoundedIcon from '@mui/icons-material/Groups2Rounded'
 import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded'
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded'
-import LoginRoundedIcon from '@mui/icons-material/LoginRounded'
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded'
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded'
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded'
@@ -30,17 +28,35 @@ import { useAuth } from '../app/AuthContext'
 
 const drawerWidth = 280
 
-const links = [
-  { to: '/', label: 'Dashboard', icon: <DashboardRoundedIcon /> },
-  { to: '/customers', label: 'Customers', icon: <Groups2RoundedIcon /> },
-  { to: '/products', label: 'Products', icon: <Inventory2RoundedIcon /> },
-  { to: '/purchase-orders', label: 'Purchase orders', icon: <ReceiptLongRoundedIcon /> },
-  { to: '/sales-orders', label: 'Sales orders', icon: <ReceiptLongRoundedIcon /> },
-  { to: '/suppliers', label: 'Suppliers', icon: <Groups2RoundedIcon /> },
-  { to: '/tenants', label: 'Tenants', icon: <ApartmentRoundedIcon /> },
-  { to: '/warehouses', label: 'Warehouses', icon: <WarehouseRoundedIcon /> },
-  { to: '/login', label: 'Auth', icon: <LoginRoundedIcon /> },
-]
+const navigationSections = [
+  {
+    title: 'Overview',
+    links: [
+      { to: '/', label: 'Dashboard', icon: <DashboardRoundedIcon /> },
+    ],
+  },
+  {
+    title: 'Sales',
+    links: [
+      { to: '/customers', label: 'Customers', icon: <Groups2RoundedIcon /> },
+      { to: '/sales-orders', label: 'Sales orders', icon: <ReceiptLongRoundedIcon /> },
+    ],
+  },
+  {
+    title: 'Procurement',
+    links: [
+      { to: '/suppliers', label: 'Suppliers', icon: <Groups2RoundedIcon /> },
+      { to: '/purchase-orders', label: 'Purchase orders', icon: <ReceiptLongRoundedIcon /> },
+    ],
+  },
+  {
+    title: 'Inventory',
+    links: [
+      { to: '/products', label: 'Products', icon: <Inventory2RoundedIcon /> },
+      { to: '/warehouses', label: 'Warehouses', icon: <WarehouseRoundedIcon /> },
+    ],
+  },
+] as const
 
 const routeTitles: Record<string, string> = {
   '/': 'Overview',
@@ -49,9 +65,7 @@ const routeTitles: Record<string, string> = {
   '/purchase-orders': 'Purchase Orders',
   '/sales-orders': 'Sales Orders',
   '/suppliers': 'Suppliers',
-  '/tenants': 'Tenant onboarding',
   '/warehouses': 'Warehouses',
-  '/login': 'Authentication',
 }
 
 export default function AppLayout() {
@@ -83,21 +97,37 @@ export default function AppLayout() {
 
       <Box sx={{ px: 1.5, py: 1.5 }}>
         <Typography className="sidebar-caption">Navigation</Typography>
-        <List disablePadding>
-          {links.map((link) => (
-            <ListItemButton
-              key={link.to}
-              component={NavLink}
-              to={link.to}
-              selected={location.pathname === link.to}
-              onClick={() => setMobileOpen(false)}
-              className={location.pathname === link.to ? 'dashboard-nav-item dashboard-nav-item-active' : 'dashboard-nav-item'}
-            >
-              <ListItemIcon>{link.icon}</ListItemIcon>
-              <ListItemText primary={link.label} />
-            </ListItemButton>
+        <Stack spacing={1.5}>
+          {navigationSections.map((section) => (
+            <Box key={section.title}>
+              <Typography
+                variant="overline"
+                sx={{
+                  px: 1.5,
+                  color: 'text.secondary',
+                  letterSpacing: '0.12em',
+                }}
+              >
+                {section.title}
+              </Typography>
+              <List disablePadding>
+                {section.links.map((link) => (
+                  <ListItemButton
+                    key={link.to}
+                    component={NavLink}
+                    to={link.to}
+                    selected={location.pathname === link.to}
+                    onClick={() => setMobileOpen(false)}
+                    className={location.pathname === link.to ? 'dashboard-nav-item dashboard-nav-item-active' : 'dashboard-nav-item'}
+                  >
+                    <ListItemIcon>{link.icon}</ListItemIcon>
+                    <ListItemText primary={link.label} />
+                  </ListItemButton>
+                ))}
+              </List>
+            </Box>
           ))}
-        </List>
+        </Stack>
       </Box>
 
       <Box sx={{ mt: 'auto', px: 2, pb: 2 }}>
