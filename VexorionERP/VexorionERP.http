@@ -1,3 +1,40 @@
-@VexorionERP_HostAddress = http://localhost:5125
+@VexorionERP_HostAddress = https://localhost:7171
+@TenantCode = demo
+@UserNameOrEmail = admin
+@Password = DemoAdmin123!
+@AccessToken = paste-access-token-here
 
-###
+### Login
+POST {{VexorionERP_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+	"tenantCode": "{{TenantCode}}",
+	"userNameOrEmail": "{{UserNameOrEmail}}",
+	"password": "{{Password}}"
+}
+
+### Current user
+GET {{VexorionERP_HostAddress}}/api/auth/me
+Authorization: Bearer {{AccessToken}}
+
+### Products
+GET {{VexorionERP_HostAddress}}/api/products
+Authorization: Bearer {{AccessToken}}
+
+### Create product
+POST {{VexorionERP_HostAddress}}/api/products
+Authorization: Bearer {{AccessToken}}
+Content-Type: application/json
+
+{
+	"name": "Demo Product",
+	"sku": "DEMO-001",
+	"description": "Sample product created from the HTTP file",
+	"unitPrice": 19.99,
+	"isActive": true
+}
+
+### Inventory balances
+GET {{VexorionERP_HostAddress}}/api/inventory-balances
+Authorization: Bearer {{AccessToken}}
