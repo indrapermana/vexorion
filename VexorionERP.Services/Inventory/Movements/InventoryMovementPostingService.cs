@@ -33,6 +33,10 @@ public class InventoryMovementPostingService(AppDbContext dbContext) : IInventor
                 purchaseOrderLineId: line.Id,
                 salesOrderId: null,
                 salesOrderLineId: null,
+                inventoryAdjustmentId: null,
+                inventoryAdjustmentLineId: null,
+                stockTransferId: null,
+                stockTransferLineId: null,
                 cancellationToken: cancellationToken);
 
             if (!applyResult.Succeeded)
@@ -69,6 +73,10 @@ public class InventoryMovementPostingService(AppDbContext dbContext) : IInventor
                     purchaseOrderLineId: null,
                     salesOrderId: order.Id,
                     salesOrderLineId: line.Id,
+                    inventoryAdjustmentId: null,
+                    inventoryAdjustmentLineId: null,
+                    stockTransferId: null,
+                    stockTransferLineId: null,
                     cancellationToken: cancellationToken);
 
                 if (!reserveResult.Succeeded)
@@ -95,6 +103,10 @@ public class InventoryMovementPostingService(AppDbContext dbContext) : IInventor
                     purchaseOrderLineId: null,
                     salesOrderId: order.Id,
                     salesOrderLineId: line.Id,
+                    inventoryAdjustmentId: null,
+                    inventoryAdjustmentLineId: null,
+                    stockTransferId: null,
+                    stockTransferLineId: null,
                     cancellationToken: cancellationToken);
 
                 if (!releaseResult.Succeeded)
@@ -127,11 +139,206 @@ public class InventoryMovementPostingService(AppDbContext dbContext) : IInventor
                     purchaseOrderLineId: null,
                     salesOrderId: order.Id,
                     salesOrderLineId: line.Id,
+                    inventoryAdjustmentId: null,
+                    inventoryAdjustmentLineId: null,
+                    stockTransferId: null,
+                    stockTransferLineId: null,
                     cancellationToken: cancellationToken);
 
                 if (!shipResult.Succeeded)
                 {
                     return shipResult;
+                }
+            }
+        }
+
+        return ServiceResult<bool>.Success(true);
+    }
+
+    public async Task<ServiceResult<bool>> ApplyInventoryAdjustmentStatusChangeAsync(InventoryAdjustment adjustment, DocumentStatus previousStatus, DocumentStatus newStatus, CancellationToken cancellationToken = default)
+    {
+        if (ShouldPostInventoryAdjustment(previousStatus, newStatus))
+        {
+            foreach (var line in adjustment.Lines.Where(x => x.IsActive))
+            {
+                var result = await ApplyMovementAsync(
+                    tenantId: adjustment.TenantId,
+                    productId: line.ProductId,
+                    warehouseId: adjustment.WarehouseId,
+                    movementType: line.QuantityDelta >= 0 ? InventoryMovementType.InventoryAdjustmentIncrease : InventoryMovementType.InventoryAdjustmentDecrease,
+                    quantity: Math.Abs(line.QuantityDelta),
+                    quantityOnHandDelta: line.QuantityDelta,
+                    quantityReservedDelta: 0m,
+                    referenceNumber: adjustment.AdjustmentNumber,
+                    purchaseOrderId: null,
+                    purchaseOrderLineId: null,
+                    salesOrderId: null,
+                    salesOrderLineId: null,
+                    inventoryAdjustmentId: adjustment.Id,
+                    inventoryAdjustmentLineId: line.Id,
+                    stockTransferId: null,
+                    stockTransferLineId: null,
+                    cancellationToken: cancellationToken);
+
+                if (!result.Succeeded)
+                {
+                    return result;
+                }
+            }
+        }
+
+        if (ShouldReverseInventoryAdjustment(previousStatus, newStatus))
+        {
+            foreach (var line in adjustment.Lines.Where(x => x.IsActive))
+            {
+                var reversedDelta = -line.QuantityDelta;
+                var result = await ApplyMovementAsync(
+                    tenantId: adjustment.TenantId,
+                    productId: line.ProductId,
+                    warehouseId: adjustment.WarehouseId,
+                    movementType: reversedDelta >= 0 ? InventoryMovementType.InventoryAdjustmentIncrease : InventoryMovementType.InventoryAdjustmentDecrease,
+                    quantity: Math.Abs(reversedDelta),
+                    quantityOnHandDelta: reversedDelta,
+                    quantityReservedDelta: 0m,
+                    referenceNumber: adjustment.AdjustmentNumber,
+                    purchaseOrderId: null,
+                    purchaseOrderLineId: null,
+                    salesOrderId: null,
+                    salesOrderLineId: null,
+                    inventoryAdjustmentId: adjustment.Id,
+                    inventoryAdjustmentLineId: line.Id,
+                    stockTransferId: null,
+                    stockTransferLineId: null,
+                    cancellationToken: cancellationToken);
+
+                if (!result.Succeeded)
+                {
+                    return result;
+                }
+            }
+        }
+
+        return ServiceResult<bool>.Success(true);
+    }
+
+    public async Task<ServiceResult<bool>> ApplyStockTransferStatusChangeAsync(StockTransfer transfer, DocumentStatus previousStatus, DocumentStatus newStatus, CancellationToken cancellationToken = default)
+    {
+        if (ShouldPostStockTransfer(previousStatus, newStatus))
+        {
+            foreach (var line in transfer.Lines.Where(x => x.IsActive))
+            {
+                var validation = await ValidateWarehouseOnHandStockAsync(transfer.TenantId, transfer.SourceWarehouseId, line.ProductId, line.Quantity, cancellationToken);
+                if (!validation.Succeeded)
+                {
+                    return validation;
+                }
+
+                var sourceResult = await ApplyMovementAsync(
+                    tenantId: transfer.TenantId,
+                    productId: line.ProductId,
+                    warehouseId: transfer.SourceWarehouseId,
+                    movementType: InventoryMovementType.StockTransferOut,
+                    quantity: line.Quantity,
+                    quantityOnHandDelta: -line.Quantity,
+                    quantityReservedDelta: 0m,
+                    referenceNumber: transfer.TransferNumber,
+                    purchaseOrderId: null,
+                    purchaseOrderLineId: null,
+                    salesOrderId: null,
+                    salesOrderLineId: null,
+                    inventoryAdjustmentId: null,
+                    inventoryAdjustmentLineId: null,
+                    stockTransferId: transfer.Id,
+                    stockTransferLineId: line.Id,
+                    cancellationToken: cancellationToken);
+
+                if (!sourceResult.Succeeded)
+                {
+                    return sourceResult;
+                }
+
+                var destinationResult = await ApplyMovementAsync(
+                    tenantId: transfer.TenantId,
+                    productId: line.ProductId,
+                    warehouseId: transfer.DestinationWarehouseId,
+                    movementType: InventoryMovementType.StockTransferIn,
+                    quantity: line.Quantity,
+                    quantityOnHandDelta: line.Quantity,
+                    quantityReservedDelta: 0m,
+                    referenceNumber: transfer.TransferNumber,
+                    purchaseOrderId: null,
+                    purchaseOrderLineId: null,
+                    salesOrderId: null,
+                    salesOrderLineId: null,
+                    inventoryAdjustmentId: null,
+                    inventoryAdjustmentLineId: null,
+                    stockTransferId: transfer.Id,
+                    stockTransferLineId: line.Id,
+                    cancellationToken: cancellationToken);
+
+                if (!destinationResult.Succeeded)
+                {
+                    return destinationResult;
+                }
+            }
+        }
+
+        if (ShouldReverseStockTransfer(previousStatus, newStatus))
+        {
+            foreach (var line in transfer.Lines.Where(x => x.IsActive))
+            {
+                var validation = await ValidateWarehouseOnHandStockAsync(transfer.TenantId, transfer.DestinationWarehouseId, line.ProductId, line.Quantity, cancellationToken);
+                if (!validation.Succeeded)
+                {
+                    return validation;
+                }
+
+                var destinationResult = await ApplyMovementAsync(
+                    tenantId: transfer.TenantId,
+                    productId: line.ProductId,
+                    warehouseId: transfer.DestinationWarehouseId,
+                    movementType: InventoryMovementType.StockTransferOut,
+                    quantity: line.Quantity,
+                    quantityOnHandDelta: -line.Quantity,
+                    quantityReservedDelta: 0m,
+                    referenceNumber: transfer.TransferNumber,
+                    purchaseOrderId: null,
+                    purchaseOrderLineId: null,
+                    salesOrderId: null,
+                    salesOrderLineId: null,
+                    inventoryAdjustmentId: null,
+                    inventoryAdjustmentLineId: null,
+                    stockTransferId: transfer.Id,
+                    stockTransferLineId: line.Id,
+                    cancellationToken: cancellationToken);
+
+                if (!destinationResult.Succeeded)
+                {
+                    return destinationResult;
+                }
+
+                var sourceResult = await ApplyMovementAsync(
+                    tenantId: transfer.TenantId,
+                    productId: line.ProductId,
+                    warehouseId: transfer.SourceWarehouseId,
+                    movementType: InventoryMovementType.StockTransferIn,
+                    quantity: line.Quantity,
+                    quantityOnHandDelta: line.Quantity,
+                    quantityReservedDelta: 0m,
+                    referenceNumber: transfer.TransferNumber,
+                    purchaseOrderId: null,
+                    purchaseOrderLineId: null,
+                    salesOrderId: null,
+                    salesOrderLineId: null,
+                    inventoryAdjustmentId: null,
+                    inventoryAdjustmentLineId: null,
+                    stockTransferId: transfer.Id,
+                    stockTransferLineId: line.Id,
+                    cancellationToken: cancellationToken);
+
+                if (!sourceResult.Succeeded)
+                {
+                    return sourceResult;
                 }
             }
         }
@@ -183,6 +390,20 @@ public class InventoryMovementPostingService(AppDbContext dbContext) : IInventor
         return ServiceResult<bool>.Success(true);
     }
 
+    private async Task<ServiceResult<bool>> ValidateWarehouseOnHandStockAsync(Guid tenantId, Guid warehouseId, Guid productId, decimal requiredQuantity, CancellationToken cancellationToken)
+    {
+        var balance = await dbContext.InventoryBalances
+            .FirstOrDefaultAsync(x => x.TenantId == tenantId && x.ProductId == productId && x.WarehouseId == warehouseId, cancellationToken);
+
+        var onHandQuantity = balance?.QuantityOnHand ?? 0m;
+        if (onHandQuantity < requiredQuantity)
+        {
+            return ServiceResult<bool>.Failure(StatusCodes.Status400BadRequest, "Insufficient on-hand stock to complete the stock transfer.");
+        }
+
+        return ServiceResult<bool>.Success(true);
+    }
+
     private async Task<ServiceResult<bool>> ApplyMovementAsync(
         Guid tenantId,
         Guid productId,
@@ -196,6 +417,10 @@ public class InventoryMovementPostingService(AppDbContext dbContext) : IInventor
         Guid? purchaseOrderLineId,
         Guid? salesOrderId,
         Guid? salesOrderLineId,
+        Guid? inventoryAdjustmentId,
+        Guid? inventoryAdjustmentLineId,
+        Guid? stockTransferId,
+        Guid? stockTransferLineId,
         CancellationToken cancellationToken)
     {
         var balance = await dbContext.InventoryBalances
@@ -250,6 +475,10 @@ public class InventoryMovementPostingService(AppDbContext dbContext) : IInventor
             PurchaseOrderLineId = purchaseOrderLineId,
             SalesOrderId = salesOrderId,
             SalesOrderLineId = salesOrderLineId,
+            InventoryAdjustmentId = inventoryAdjustmentId,
+            InventoryAdjustmentLineId = inventoryAdjustmentLineId,
+            StockTransferId = stockTransferId,
+            StockTransferLineId = stockTransferLineId,
         });
 
         return ServiceResult<bool>.Success(true);
@@ -268,4 +497,16 @@ public class InventoryMovementPostingService(AppDbContext dbContext) : IInventor
     private static bool ShouldShipSalesOrder(DocumentStatus previousStatus, DocumentStatus newStatus)
         => previousStatus is DocumentStatus.Draft or DocumentStatus.Confirmed
             && newStatus is DocumentStatus.PartiallyProcessed or DocumentStatus.Completed;
+
+    private static bool ShouldPostInventoryAdjustment(DocumentStatus previousStatus, DocumentStatus newStatus)
+        => previousStatus != DocumentStatus.Completed && newStatus == DocumentStatus.Completed;
+
+    private static bool ShouldReverseInventoryAdjustment(DocumentStatus previousStatus, DocumentStatus newStatus)
+        => previousStatus == DocumentStatus.Completed && newStatus == DocumentStatus.Cancelled;
+
+    private static bool ShouldPostStockTransfer(DocumentStatus previousStatus, DocumentStatus newStatus)
+        => previousStatus != DocumentStatus.Completed && newStatus == DocumentStatus.Completed;
+
+    private static bool ShouldReverseStockTransfer(DocumentStatus previousStatus, DocumentStatus newStatus)
+        => previousStatus == DocumentStatus.Completed && newStatus == DocumentStatus.Cancelled;
 }

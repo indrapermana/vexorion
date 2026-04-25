@@ -582,6 +582,110 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("User", (string)null);
                 });
 
+            modelBuilder.Entity("VexorionERP.Models.Inventory.InventoryAdjustment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("AdjustmentDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("AdjustmentNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("WarehouseId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("WarehouseId");
+
+                    b.HasIndex("TenantId", "AdjustmentNumber")
+                        .IsUnique();
+
+                    b.ToTable("InventoryAdjustment", (string)null);
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.Inventory.InventoryAdjustmentLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("InventoryAdjustmentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("QuantityDelta")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("UnitCost")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InventoryAdjustmentId");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("InventoryAdjustmentLine", (string)null);
+                });
+
             modelBuilder.Entity("VexorionERP.Models.Inventory.InventoryBalance", b =>
                 {
                     b.Property<Guid>("Id")
@@ -639,6 +743,12 @@ namespace VexorionERP.Database.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("InventoryAdjustmentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("InventoryAdjustmentLineId")
+                        .HasColumnType("uuid");
+
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -679,6 +789,12 @@ namespace VexorionERP.Database.Migrations
                     b.Property<Guid?>("SalesOrderLineId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("StockTransferId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("StockTransferLineId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
 
@@ -699,6 +815,106 @@ namespace VexorionERP.Database.Migrations
                     b.HasIndex("TenantId", "ProductId", "WarehouseId", "CreatedAtUtc");
 
                     b.ToTable("InventoryMovement", (string)null);
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.Inventory.StockTransfer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("DestinationWarehouseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<Guid>("SourceWarehouseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("TransferDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("TransferNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DestinationWarehouseId");
+
+                    b.HasIndex("SourceWarehouseId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "TransferNumber")
+                        .IsUnique();
+
+                    b.ToTable("StockTransfer", (string)null);
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.Inventory.StockTransferLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<Guid>("StockTransferId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("UnitCost")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("StockTransferId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("StockTransferLine", (string)null);
                 });
 
             modelBuilder.Entity("VexorionERP.Models.Inventory.Warehouse", b =>
@@ -1509,6 +1725,52 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("VexorionERP.Models.Inventory.InventoryAdjustment", b =>
+                {
+                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("VexorionERP.Models.Inventory.Warehouse", "Warehouse")
+                        .WithMany("InventoryAdjustments")
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
+
+                    b.Navigation("Warehouse");
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.Inventory.InventoryAdjustmentLine", b =>
+                {
+                    b.HasOne("VexorionERP.Models.Inventory.InventoryAdjustment", "InventoryAdjustment")
+                        .WithMany("Lines")
+                        .HasForeignKey("InventoryAdjustmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VexorionERP.Models.Catalog.Product", "Product")
+                        .WithMany("InventoryAdjustmentLines")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("InventoryAdjustment");
+
+                    b.Navigation("Product");
+
+                    b.Navigation("Tenant");
+                });
+
             modelBuilder.Entity("VexorionERP.Models.Inventory.InventoryBalance", b =>
                 {
                     b.HasOne("VexorionERP.Models.Catalog.Product", "Product")
@@ -1561,6 +1823,60 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Tenant");
 
                     b.Navigation("Warehouse");
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.Inventory.StockTransfer", b =>
+                {
+                    b.HasOne("VexorionERP.Models.Inventory.Warehouse", "DestinationWarehouse")
+                        .WithMany("DestinationStockTransfers")
+                        .HasForeignKey("DestinationWarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("VexorionERP.Models.Inventory.Warehouse", "SourceWarehouse")
+                        .WithMany("SourceStockTransfers")
+                        .HasForeignKey("SourceWarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("DestinationWarehouse");
+
+                    b.Navigation("SourceWarehouse");
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.Inventory.StockTransferLine", b =>
+                {
+                    b.HasOne("VexorionERP.Models.Catalog.Product", "Product")
+                        .WithMany("StockTransferLines")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("VexorionERP.Models.Inventory.StockTransfer", "StockTransfer")
+                        .WithMany("Lines")
+                        .HasForeignKey("StockTransferId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("StockTransfer");
+
+                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("VexorionERP.Models.Inventory.Warehouse", b =>
@@ -1774,15 +2090,33 @@ namespace VexorionERP.Database.Migrations
 
             modelBuilder.Entity("VexorionERP.Models.Catalog.Product", b =>
                 {
+                    b.Navigation("InventoryAdjustmentLines");
+
                     b.Navigation("InventoryBalances");
 
                     b.Navigation("PurchaseOrderLines");
 
                     b.Navigation("SalesOrderLines");
+
+                    b.Navigation("StockTransferLines");
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.Inventory.InventoryAdjustment", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.Inventory.StockTransfer", b =>
+                {
+                    b.Navigation("Lines");
                 });
 
             modelBuilder.Entity("VexorionERP.Models.Inventory.Warehouse", b =>
                 {
+                    b.Navigation("DestinationStockTransfers");
+
+                    b.Navigation("InventoryAdjustments");
+
                     b.Navigation("InventoryBalances");
 
                     b.Navigation("InventoryMovements");
@@ -1790,6 +2124,8 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("PurchaseOrders");
 
                     b.Navigation("SalesOrders");
+
+                    b.Navigation("SourceStockTransfers");
                 });
 
             modelBuilder.Entity("VexorionERP.Models.Organization.Company", b =>

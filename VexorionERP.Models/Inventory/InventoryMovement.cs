@@ -17,6 +17,10 @@ public class InventoryMovement : TenantEntityBase
     public Guid? PurchaseOrderLineId { get; set; }
     public Guid? SalesOrderId { get; set; }
     public Guid? SalesOrderLineId { get; set; }
+    public Guid? InventoryAdjustmentId { get; set; }
+    public Guid? InventoryAdjustmentLineId { get; set; }
+    public Guid? StockTransferId { get; set; }
+    public Guid? StockTransferLineId { get; set; }
 
     public Product? Product { get; set; }
     public Warehouse? Warehouse { get; set; }

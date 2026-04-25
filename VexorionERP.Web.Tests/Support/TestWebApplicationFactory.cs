@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +24,13 @@ public sealed class TestWebApplicationFactory : WebApplicationFactory<Program>
             {
                 options.UseInMemoryDatabase($"vexorion-web-tests-{Guid.NewGuid()}");
             });
+
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = TestAuthenticationHandler.SchemeName;
+                options.DefaultChallengeScheme = TestAuthenticationHandler.SchemeName;
+                options.DefaultScheme = TestAuthenticationHandler.SchemeName;
+            }).AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(TestAuthenticationHandler.SchemeName, _ => { });
         });
 
         builder.ConfigureAppConfiguration((_, configurationBuilder) =>

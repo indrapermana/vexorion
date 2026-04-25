@@ -42,6 +42,9 @@ public static class IdentityServiceCollectionExtensions
         services.AddScoped<IDepartmentQueryService, DepartmentQueryService>();
         services.AddScoped<IEmployeeCommandService, EmployeeCommandService>();
         services.AddScoped<IEmployeeQueryService, EmployeeQueryService>();
+        services.AddScoped<IInventoryAdjustmentCommandService, InventoryAdjustmentCommandService>();
+        services.AddScoped<IInventoryAdjustmentLineCommandService, InventoryAdjustmentLineCommandService>();
+        services.AddScoped<IInventoryAdjustmentQueryService, InventoryAdjustmentQueryService>();
         services.AddScoped<IInventoryBalanceCommandService, InventoryBalanceCommandService>();
         services.AddScoped<IInventoryBalanceQueryService, InventoryBalanceQueryService>();
         services.AddScoped<IInventoryMovementPostingService, InventoryMovementPostingService>();
@@ -60,6 +63,9 @@ public static class IdentityServiceCollectionExtensions
         services.AddScoped<ISalesOrderLineCommandService, SalesOrderLineCommandService>();
         services.AddScoped<ISalesOrderLineQueryService, SalesOrderLineQueryService>();
         services.AddScoped<ISalesOrderQueryService, SalesOrderQueryService>();
+        services.AddScoped<IStockTransferCommandService, StockTransferCommandService>();
+        services.AddScoped<IStockTransferLineCommandService, StockTransferLineCommandService>();
+        services.AddScoped<IStockTransferQueryService, StockTransferQueryService>();
         services.AddScoped<ISupplierCommandService, SupplierCommandService>();
         services.AddScoped<ISupplierQueryService, SupplierQueryService>();
         services.AddScoped<ITenantOnboardingService, TenantOnboardingService>();

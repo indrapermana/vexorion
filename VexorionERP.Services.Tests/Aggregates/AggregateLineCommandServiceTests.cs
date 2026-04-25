@@ -1,4 +1,6 @@
 using VexorionERP.Contracts.Billing.Lines;
+using VexorionERP.Contracts.Inventory.Adjustments;
+using VexorionERP.Contracts.Inventory.Transfers;
 using VexorionERP.Contracts.Purchasing.Orders;
 using VexorionERP.Contracts.Purchasing.Lines;
 using VexorionERP.Contracts.Sales.Orders;
@@ -575,5 +577,614 @@ public class AggregateLineCommandServiceTests
         Assert.Equal(0m, invoice.Subtotal);
         Assert.Equal(0m, invoice.TaxAmount);
         Assert.Equal(0m, invoice.TotalAmount);
+    }
+
+    [Fact]
+    public async Task InventoryAdjustmentComplete_PostsIncreaseMovement()
+    {
+        var tenantId = Guid.NewGuid();
+        var adjustmentId = Guid.NewGuid();
+        var productId = Guid.NewGuid();
+        var warehouseId = Guid.NewGuid();
+        var databaseName = Guid.NewGuid().ToString();
+
+        await using var dbContext = TestDbContextFactory.Create(tenantId, databaseName);
+        dbContext.Products.Add(new Product { Id = productId, TenantId = tenantId, Sku = "P-ADJ-1", Name = "Product", UnitOfMeasure = "EA" });
+        dbContext.Warehouses.Add(new Warehouse { Id = warehouseId, TenantId = tenantId, Code = "MAIN", Name = "Main Warehouse" });
+        dbContext.InventoryAdjustments.Add(new InventoryAdjustment
+        {
+            Id = adjustmentId,
+            TenantId = tenantId,
+            AdjustmentNumber = "ADJ-1",
+            WarehouseId = warehouseId,
+            AdjustmentDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Draft,
+            Reason = "Opening correction",
+            Lines =
+            [
+                new InventoryAdjustmentLine
+                {
+                    Id = Guid.NewGuid(),
+                    TenantId = tenantId,
+                    InventoryAdjustmentId = adjustmentId,
+                    ProductId = productId,
+                    QuantityDelta = 8m,
+                    UnitCost = 3m,
+                },
+            ],
+        });
+        await dbContext.SaveChangesAsync();
+
+        var service = new InventoryAdjustmentCommandService(dbContext, new FixedTenantProvider(tenantId), new InventoryMovementPostingService(dbContext));
+        var result = await service.UpdateAsync(adjustmentId, new UpdateInventoryAdjustmentRequest
+        {
+            AdjustmentNumber = "ADJ-1",
+            WarehouseId = warehouseId,
+            AdjustmentDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Completed,
+            Reason = "Opening correction",
+            Notes = null,
+        });
+
+        Assert.True(result.Succeeded);
+        var balance = dbContext.InventoryBalances.Single();
+        Assert.Equal(8m, balance.QuantityOnHand);
+        Assert.Equal(0m, balance.QuantityReserved);
+        var movement = dbContext.InventoryMovements.Single();
+        Assert.Equal(InventoryMovementType.InventoryAdjustmentIncrease, movement.MovementType);
+        Assert.Equal(8m, movement.QuantityOnHandDelta);
+    }
+
+    [Fact]
+    public async Task InventoryAdjustmentComplete_PostsDecreaseMovement()
+    {
+        var tenantId = Guid.NewGuid();
+        var adjustmentId = Guid.NewGuid();
+        var productId = Guid.NewGuid();
+        var warehouseId = Guid.NewGuid();
+        var databaseName = Guid.NewGuid().ToString();
+
+        await using var dbContext = TestDbContextFactory.Create(tenantId, databaseName);
+        dbContext.Products.Add(new Product { Id = productId, TenantId = tenantId, Sku = "P-ADJ-2", Name = "Product", UnitOfMeasure = "EA" });
+        dbContext.Warehouses.Add(new Warehouse { Id = warehouseId, TenantId = tenantId, Code = "MAIN", Name = "Main Warehouse" });
+        dbContext.InventoryBalances.Add(new InventoryBalance
+        {
+            TenantId = tenantId,
+            ProductId = productId,
+            WarehouseId = warehouseId,
+            QuantityOnHand = 10m,
+            QuantityReserved = 0m,
+        });
+        dbContext.InventoryAdjustments.Add(new InventoryAdjustment
+        {
+            Id = adjustmentId,
+            TenantId = tenantId,
+            AdjustmentNumber = "ADJ-2",
+            WarehouseId = warehouseId,
+            AdjustmentDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Draft,
+            Reason = "Damage write-off",
+            Lines =
+            [
+                new InventoryAdjustmentLine
+                {
+                    Id = Guid.NewGuid(),
+                    TenantId = tenantId,
+                    InventoryAdjustmentId = adjustmentId,
+                    ProductId = productId,
+                    QuantityDelta = -4m,
+                    UnitCost = 3m,
+                },
+            ],
+        });
+        await dbContext.SaveChangesAsync();
+
+        var service = new InventoryAdjustmentCommandService(dbContext, new FixedTenantProvider(tenantId), new InventoryMovementPostingService(dbContext));
+        var result = await service.UpdateAsync(adjustmentId, new UpdateInventoryAdjustmentRequest
+        {
+            AdjustmentNumber = "ADJ-2",
+            WarehouseId = warehouseId,
+            AdjustmentDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Completed,
+            Reason = "Damage write-off",
+            Notes = null,
+        });
+
+        Assert.True(result.Succeeded);
+        var balance = dbContext.InventoryBalances.Single();
+        Assert.Equal(6m, balance.QuantityOnHand);
+        var movement = dbContext.InventoryMovements.Single();
+        Assert.Equal(InventoryMovementType.InventoryAdjustmentDecrease, movement.MovementType);
+        Assert.Equal(-4m, movement.QuantityOnHandDelta);
+    }
+
+    [Fact]
+    public async Task StockTransferComplete_MovesStockAcrossWarehouses()
+    {
+        var tenantId = Guid.NewGuid();
+        var transferId = Guid.NewGuid();
+        var productId = Guid.NewGuid();
+        var sourceWarehouseId = Guid.NewGuid();
+        var destinationWarehouseId = Guid.NewGuid();
+        var databaseName = Guid.NewGuid().ToString();
+
+        await using var dbContext = TestDbContextFactory.Create(tenantId, databaseName);
+        dbContext.Products.Add(new Product { Id = productId, TenantId = tenantId, Sku = "P-TR-1", Name = "Product", UnitOfMeasure = "EA" });
+        dbContext.Warehouses.AddRange(
+            new Warehouse { Id = sourceWarehouseId, TenantId = tenantId, Code = "SRC", Name = "Source" },
+            new Warehouse { Id = destinationWarehouseId, TenantId = tenantId, Code = "DST", Name = "Destination" });
+        dbContext.InventoryBalances.Add(new InventoryBalance
+        {
+            TenantId = tenantId,
+            ProductId = productId,
+            WarehouseId = sourceWarehouseId,
+            QuantityOnHand = 12m,
+            QuantityReserved = 0m,
+        });
+        dbContext.StockTransfers.Add(new StockTransfer
+        {
+            Id = transferId,
+            TenantId = tenantId,
+            TransferNumber = "TR-1",
+            SourceWarehouseId = sourceWarehouseId,
+            DestinationWarehouseId = destinationWarehouseId,
+            TransferDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Draft,
+            Lines =
+            [
+                new StockTransferLine
+                {
+                    Id = Guid.NewGuid(),
+                    TenantId = tenantId,
+                    StockTransferId = transferId,
+                    ProductId = productId,
+                    Quantity = 5m,
+                    UnitCost = 2m,
+                },
+            ],
+        });
+        await dbContext.SaveChangesAsync();
+
+        var service = new StockTransferCommandService(dbContext, new FixedTenantProvider(tenantId), new InventoryMovementPostingService(dbContext));
+        var result = await service.UpdateAsync(transferId, new UpdateStockTransferRequest
+        {
+            TransferNumber = "TR-1",
+            SourceWarehouseId = sourceWarehouseId,
+            DestinationWarehouseId = destinationWarehouseId,
+            TransferDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Completed,
+            Notes = null,
+        });
+
+        Assert.True(result.Succeeded);
+        var balances = dbContext.InventoryBalances.OrderBy(x => x.WarehouseId).ToList();
+        Assert.Equal(2, balances.Count);
+        Assert.Equal(7m, balances.Single(x => x.WarehouseId == sourceWarehouseId).QuantityOnHand);
+        Assert.Equal(5m, balances.Single(x => x.WarehouseId == destinationWarehouseId).QuantityOnHand);
+        var movements = dbContext.InventoryMovements.OrderBy(x => x.MovementType).ToList();
+        Assert.Equal(2, movements.Count);
+        Assert.Contains(movements, x => x.MovementType == InventoryMovementType.StockTransferOut && x.QuantityOnHandDelta == -5m);
+        Assert.Contains(movements, x => x.MovementType == InventoryMovementType.StockTransferIn && x.QuantityOnHandDelta == 5m);
+    }
+
+    [Fact]
+    public async Task StockTransferComplete_FailsWhenSourceStockIsInsufficient()
+    {
+        var tenantId = Guid.NewGuid();
+        var transferId = Guid.NewGuid();
+        var productId = Guid.NewGuid();
+        var sourceWarehouseId = Guid.NewGuid();
+        var destinationWarehouseId = Guid.NewGuid();
+        var databaseName = Guid.NewGuid().ToString();
+
+        await using var dbContext = TestDbContextFactory.Create(tenantId, databaseName);
+        dbContext.Products.Add(new Product { Id = productId, TenantId = tenantId, Sku = "P-TR-2", Name = "Product", UnitOfMeasure = "EA" });
+        dbContext.Warehouses.AddRange(
+            new Warehouse { Id = sourceWarehouseId, TenantId = tenantId, Code = "SRC", Name = "Source" },
+            new Warehouse { Id = destinationWarehouseId, TenantId = tenantId, Code = "DST", Name = "Destination" });
+        dbContext.InventoryBalances.Add(new InventoryBalance
+        {
+            TenantId = tenantId,
+            ProductId = productId,
+            WarehouseId = sourceWarehouseId,
+            QuantityOnHand = 2m,
+            QuantityReserved = 0m,
+        });
+        dbContext.StockTransfers.Add(new StockTransfer
+        {
+            Id = transferId,
+            TenantId = tenantId,
+            TransferNumber = "TR-2",
+            SourceWarehouseId = sourceWarehouseId,
+            DestinationWarehouseId = destinationWarehouseId,
+            TransferDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Draft,
+            Lines =
+            [
+                new StockTransferLine
+                {
+                    Id = Guid.NewGuid(),
+                    TenantId = tenantId,
+                    StockTransferId = transferId,
+                    ProductId = productId,
+                    Quantity = 5m,
+                    UnitCost = 2m,
+                },
+            ],
+        });
+        await dbContext.SaveChangesAsync();
+
+        var service = new StockTransferCommandService(dbContext, new FixedTenantProvider(tenantId), new InventoryMovementPostingService(dbContext));
+        var result = await service.UpdateAsync(transferId, new UpdateStockTransferRequest
+        {
+            TransferNumber = "TR-2",
+            SourceWarehouseId = sourceWarehouseId,
+            DestinationWarehouseId = destinationWarehouseId,
+            TransferDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Completed,
+            Notes = null,
+        });
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(0, dbContext.InventoryMovements.Count());
+        Assert.Equal(2m, dbContext.InventoryBalances.Single().QuantityOnHand);
+    }
+
+    [Fact]
+    public async Task StockTransferCancel_ReversesPostedStockMovements()
+    {
+        var tenantId = Guid.NewGuid();
+        var transferId = Guid.NewGuid();
+        var productId = Guid.NewGuid();
+        var sourceWarehouseId = Guid.NewGuid();
+        var destinationWarehouseId = Guid.NewGuid();
+        var databaseName = Guid.NewGuid().ToString();
+
+        await using var dbContext = TestDbContextFactory.Create(tenantId, databaseName);
+        dbContext.Products.Add(new Product { Id = productId, TenantId = tenantId, Sku = "P-TR-3", Name = "Product", UnitOfMeasure = "EA" });
+        dbContext.Warehouses.AddRange(
+            new Warehouse { Id = sourceWarehouseId, TenantId = tenantId, Code = "SRC", Name = "Source" },
+            new Warehouse { Id = destinationWarehouseId, TenantId = tenantId, Code = "DST", Name = "Destination" });
+        dbContext.InventoryBalances.AddRange(
+            new InventoryBalance
+            {
+                TenantId = tenantId,
+                ProductId = productId,
+                WarehouseId = sourceWarehouseId,
+                QuantityOnHand = 12m,
+                QuantityReserved = 0m,
+            },
+            new InventoryBalance
+            {
+                TenantId = tenantId,
+                ProductId = productId,
+                WarehouseId = destinationWarehouseId,
+                QuantityOnHand = 0m,
+                QuantityReserved = 0m,
+            });
+        dbContext.StockTransfers.Add(new StockTransfer
+        {
+            Id = transferId,
+            TenantId = tenantId,
+            TransferNumber = "TR-3",
+            SourceWarehouseId = sourceWarehouseId,
+            DestinationWarehouseId = destinationWarehouseId,
+            TransferDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Draft,
+            Lines =
+            [
+                new StockTransferLine
+                {
+                    Id = Guid.NewGuid(),
+                    TenantId = tenantId,
+                    StockTransferId = transferId,
+                    ProductId = productId,
+                    Quantity = 4m,
+                    UnitCost = 2m,
+                },
+            ],
+        });
+        await dbContext.SaveChangesAsync();
+
+        var service = new StockTransferCommandService(dbContext, new FixedTenantProvider(tenantId), new InventoryMovementPostingService(dbContext));
+
+        var completeResult = await service.UpdateAsync(transferId, new UpdateStockTransferRequest
+        {
+            TransferNumber = "TR-3",
+            SourceWarehouseId = sourceWarehouseId,
+            DestinationWarehouseId = destinationWarehouseId,
+            TransferDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Completed,
+            Notes = null,
+        });
+
+        Assert.True(completeResult.Succeeded);
+
+        var cancelResult = await service.UpdateAsync(transferId, new UpdateStockTransferRequest
+        {
+            TransferNumber = "TR-3",
+            SourceWarehouseId = sourceWarehouseId,
+            DestinationWarehouseId = destinationWarehouseId,
+            TransferDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Cancelled,
+            Notes = null,
+        });
+
+        Assert.True(cancelResult.Succeeded);
+        var sourceBalance = dbContext.InventoryBalances.Single(x => x.WarehouseId == sourceWarehouseId);
+        var destinationBalance = dbContext.InventoryBalances.Single(x => x.WarehouseId == destinationWarehouseId);
+        Assert.Equal(12m, sourceBalance.QuantityOnHand);
+        Assert.Equal(0m, destinationBalance.QuantityOnHand);
+        Assert.Equal(4, dbContext.InventoryMovements.Count());
+    }
+
+    [Fact]
+    public async Task InventoryAdjustmentComplete_FailsWithoutActiveLines()
+    {
+        var tenantId = Guid.NewGuid();
+        var adjustmentId = Guid.NewGuid();
+        var warehouseId = Guid.NewGuid();
+        var databaseName = Guid.NewGuid().ToString();
+
+        await using var dbContext = TestDbContextFactory.Create(tenantId, databaseName);
+        dbContext.Warehouses.Add(new Warehouse { Id = warehouseId, TenantId = tenantId, Code = "MAIN", Name = "Main Warehouse" });
+        dbContext.InventoryAdjustments.Add(new InventoryAdjustment
+        {
+            Id = adjustmentId,
+            TenantId = tenantId,
+            AdjustmentNumber = "ADJ-NO-LINES",
+            WarehouseId = warehouseId,
+            AdjustmentDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Draft,
+            Reason = "Cycle count",
+        });
+        await dbContext.SaveChangesAsync();
+
+        var service = new InventoryAdjustmentCommandService(dbContext, new FixedTenantProvider(tenantId), new InventoryMovementPostingService(dbContext));
+        var result = await service.UpdateAsync(adjustmentId, new UpdateInventoryAdjustmentRequest
+        {
+            AdjustmentNumber = "ADJ-NO-LINES",
+            WarehouseId = warehouseId,
+            AdjustmentDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Completed,
+            Reason = "Cycle count",
+        });
+
+        Assert.False(result.Succeeded);
+        Assert.Empty(dbContext.InventoryMovements);
+    }
+
+    [Fact]
+    public async Task InventoryAdjustmentCancel_FailsWhenWarehouseChangesAfterPosting()
+    {
+        var tenantId = Guid.NewGuid();
+        var adjustmentId = Guid.NewGuid();
+        var productId = Guid.NewGuid();
+        var originalWarehouseId = Guid.NewGuid();
+        var alternateWarehouseId = Guid.NewGuid();
+        var databaseName = Guid.NewGuid().ToString();
+
+        await using var dbContext = TestDbContextFactory.Create(tenantId, databaseName);
+        dbContext.Products.Add(new Product { Id = productId, TenantId = tenantId, Sku = "P-ADJ-LOCK", Name = "Product", UnitOfMeasure = "EA" });
+        dbContext.Warehouses.AddRange(
+            new Warehouse { Id = originalWarehouseId, TenantId = tenantId, Code = "MAIN", Name = "Main Warehouse" },
+            new Warehouse { Id = alternateWarehouseId, TenantId = tenantId, Code = "ALT", Name = "Alternate Warehouse" });
+        dbContext.InventoryAdjustments.Add(new InventoryAdjustment
+        {
+            Id = adjustmentId,
+            TenantId = tenantId,
+            AdjustmentNumber = "ADJ-LOCK",
+            WarehouseId = originalWarehouseId,
+            AdjustmentDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Draft,
+            Reason = "Lock warehouse",
+            Lines =
+            [
+                new InventoryAdjustmentLine { Id = Guid.NewGuid(), TenantId = tenantId, InventoryAdjustmentId = adjustmentId, ProductId = productId, QuantityDelta = 2m, UnitCost = 1m },
+            ],
+        });
+        await dbContext.SaveChangesAsync();
+
+        var service = new InventoryAdjustmentCommandService(dbContext, new FixedTenantProvider(tenantId), new InventoryMovementPostingService(dbContext));
+        var completeResult = await service.UpdateAsync(adjustmentId, new UpdateInventoryAdjustmentRequest
+        {
+            AdjustmentNumber = "ADJ-LOCK",
+            WarehouseId = originalWarehouseId,
+            AdjustmentDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Completed,
+            Reason = "Lock warehouse",
+        });
+
+        Assert.True(completeResult.Succeeded);
+
+        var cancelResult = await service.UpdateAsync(adjustmentId, new UpdateInventoryAdjustmentRequest
+        {
+            AdjustmentNumber = "ADJ-LOCK",
+            WarehouseId = alternateWarehouseId,
+            AdjustmentDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Cancelled,
+            Reason = "Lock warehouse",
+        });
+
+        Assert.False(cancelResult.Succeeded);
+    }
+
+    [Fact]
+    public async Task StockTransferComplete_FailsWithoutActiveLines()
+    {
+        var tenantId = Guid.NewGuid();
+        var transferId = Guid.NewGuid();
+        var sourceWarehouseId = Guid.NewGuid();
+        var destinationWarehouseId = Guid.NewGuid();
+        var databaseName = Guid.NewGuid().ToString();
+
+        await using var dbContext = TestDbContextFactory.Create(tenantId, databaseName);
+        dbContext.Warehouses.AddRange(
+            new Warehouse { Id = sourceWarehouseId, TenantId = tenantId, Code = "SRC", Name = "Source" },
+            new Warehouse { Id = destinationWarehouseId, TenantId = tenantId, Code = "DST", Name = "Destination" });
+        dbContext.StockTransfers.Add(new StockTransfer
+        {
+            Id = transferId,
+            TenantId = tenantId,
+            TransferNumber = "TR-NO-LINES",
+            SourceWarehouseId = sourceWarehouseId,
+            DestinationWarehouseId = destinationWarehouseId,
+            TransferDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Draft,
+        });
+        await dbContext.SaveChangesAsync();
+
+        var service = new StockTransferCommandService(dbContext, new FixedTenantProvider(tenantId), new InventoryMovementPostingService(dbContext));
+        var result = await service.UpdateAsync(transferId, new UpdateStockTransferRequest
+        {
+            TransferNumber = "TR-NO-LINES",
+            SourceWarehouseId = sourceWarehouseId,
+            DestinationWarehouseId = destinationWarehouseId,
+            TransferDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Completed,
+        });
+
+        Assert.False(result.Succeeded);
+        Assert.Empty(dbContext.InventoryMovements);
+    }
+
+    [Fact]
+    public async Task StockTransferCancel_FailsWhenWarehousesChangeAfterPosting()
+    {
+        var tenantId = Guid.NewGuid();
+        var transferId = Guid.NewGuid();
+        var productId = Guid.NewGuid();
+        var sourceWarehouseId = Guid.NewGuid();
+        var destinationWarehouseId = Guid.NewGuid();
+        var alternateWarehouseId = Guid.NewGuid();
+        var databaseName = Guid.NewGuid().ToString();
+
+        await using var dbContext = TestDbContextFactory.Create(tenantId, databaseName);
+        dbContext.Products.Add(new Product { Id = productId, TenantId = tenantId, Sku = "P-TR-LOCK", Name = "Product", UnitOfMeasure = "EA" });
+        dbContext.Warehouses.AddRange(
+            new Warehouse { Id = sourceWarehouseId, TenantId = tenantId, Code = "SRC", Name = "Source" },
+            new Warehouse { Id = destinationWarehouseId, TenantId = tenantId, Code = "DST", Name = "Destination" },
+            new Warehouse { Id = alternateWarehouseId, TenantId = tenantId, Code = "ALT", Name = "Alternate" });
+        dbContext.InventoryBalances.Add(new InventoryBalance { TenantId = tenantId, ProductId = productId, WarehouseId = sourceWarehouseId, QuantityOnHand = 10m, QuantityReserved = 0m });
+        dbContext.StockTransfers.Add(new StockTransfer
+        {
+            Id = transferId,
+            TenantId = tenantId,
+            TransferNumber = "TR-LOCK",
+            SourceWarehouseId = sourceWarehouseId,
+            DestinationWarehouseId = destinationWarehouseId,
+            TransferDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Draft,
+            Lines =
+            [
+                new StockTransferLine { Id = Guid.NewGuid(), TenantId = tenantId, StockTransferId = transferId, ProductId = productId, Quantity = 3m, UnitCost = 1m },
+            ],
+        });
+        await dbContext.SaveChangesAsync();
+
+        var service = new StockTransferCommandService(dbContext, new FixedTenantProvider(tenantId), new InventoryMovementPostingService(dbContext));
+        var completeResult = await service.UpdateAsync(transferId, new UpdateStockTransferRequest
+        {
+            TransferNumber = "TR-LOCK",
+            SourceWarehouseId = sourceWarehouseId,
+            DestinationWarehouseId = destinationWarehouseId,
+            TransferDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Completed,
+        });
+
+        Assert.True(completeResult.Succeeded);
+
+        var cancelResult = await service.UpdateAsync(transferId, new UpdateStockTransferRequest
+        {
+            TransferNumber = "TR-LOCK",
+            SourceWarehouseId = alternateWarehouseId,
+            DestinationWarehouseId = destinationWarehouseId,
+            TransferDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Cancelled,
+        });
+
+        Assert.False(cancelResult.Succeeded);
+    }
+
+    [Fact]
+    public async Task InventoryAdjustmentLineCreate_FailsForDuplicateActiveProduct()
+    {
+        var tenantId = Guid.NewGuid();
+        var adjustmentId = Guid.NewGuid();
+        var productId = Guid.NewGuid();
+        var warehouseId = Guid.NewGuid();
+        var databaseName = Guid.NewGuid().ToString();
+
+        await using var dbContext = TestDbContextFactory.Create(tenantId, databaseName);
+        dbContext.Products.Add(new Product { Id = productId, TenantId = tenantId, Sku = "P-ADJ-DUP", Name = "Product", UnitOfMeasure = "EA" });
+        dbContext.Warehouses.Add(new Warehouse { Id = warehouseId, TenantId = tenantId, Code = "MAIN", Name = "Main Warehouse" });
+        dbContext.InventoryAdjustments.Add(new InventoryAdjustment
+        {
+            Id = adjustmentId,
+            TenantId = tenantId,
+            AdjustmentNumber = "ADJ-DUP-LINE",
+            WarehouseId = warehouseId,
+            AdjustmentDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Draft,
+            Lines =
+            [
+                new InventoryAdjustmentLine { Id = Guid.NewGuid(), TenantId = tenantId, InventoryAdjustmentId = adjustmentId, ProductId = productId, QuantityDelta = 2m, UnitCost = 1m },
+            ],
+        });
+        await dbContext.SaveChangesAsync();
+
+        var service = new InventoryAdjustmentLineCommandService(dbContext, new FixedTenantProvider(tenantId));
+        var result = await service.CreateAsync(adjustmentId, new CreateInventoryAdjustmentLineRequest
+        {
+            ProductId = productId,
+            QuantityDelta = 3m,
+            UnitCost = 1m,
+        });
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(1, dbContext.InventoryAdjustmentLines.Count());
+    }
+
+    [Fact]
+    public async Task StockTransferLineCreate_FailsForDuplicateActiveProduct()
+    {
+        var tenantId = Guid.NewGuid();
+        var transferId = Guid.NewGuid();
+        var productId = Guid.NewGuid();
+        var sourceWarehouseId = Guid.NewGuid();
+        var destinationWarehouseId = Guid.NewGuid();
+        var databaseName = Guid.NewGuid().ToString();
+
+        await using var dbContext = TestDbContextFactory.Create(tenantId, databaseName);
+        dbContext.Products.Add(new Product { Id = productId, TenantId = tenantId, Sku = "P-TR-DUP", Name = "Product", UnitOfMeasure = "EA" });
+        dbContext.Warehouses.AddRange(
+            new Warehouse { Id = sourceWarehouseId, TenantId = tenantId, Code = "SRC", Name = "Source" },
+            new Warehouse { Id = destinationWarehouseId, TenantId = tenantId, Code = "DST", Name = "Destination" });
+        dbContext.StockTransfers.Add(new StockTransfer
+        {
+            Id = transferId,
+            TenantId = tenantId,
+            TransferNumber = "TR-DUP-LINE",
+            SourceWarehouseId = sourceWarehouseId,
+            DestinationWarehouseId = destinationWarehouseId,
+            TransferDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Draft,
+            Lines =
+            [
+                new StockTransferLine { Id = Guid.NewGuid(), TenantId = tenantId, StockTransferId = transferId, ProductId = productId, Quantity = 2m, UnitCost = 1m },
+            ],
+        });
+        await dbContext.SaveChangesAsync();
+
+        var service = new StockTransferLineCommandService(dbContext, new FixedTenantProvider(tenantId));
+        var result = await service.CreateAsync(transferId, new CreateStockTransferLineRequest
+        {
+            ProductId = productId,
+            Quantity = 3m,
+            UnitCost = 1m,
+        });
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(1, dbContext.StockTransferLines.Count());
     }
 }
