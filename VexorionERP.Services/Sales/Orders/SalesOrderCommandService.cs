@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using VexorionERP.Contracts.Sales.Orders;
 using VexorionERP.Database;
 using VexorionERP.Database.Abstractions;
+using VexorionERP.Models.Enums;
 using VexorionERP.Models.Sales;
 using VexorionERP.Services.Results;
 
@@ -11,7 +12,8 @@ namespace VexorionERP.Services;
 
 public class SalesOrderCommandService(
     AppDbContext dbContext,
-    ICurrentTenantProvider currentTenantProvider) : ISalesOrderCommandService
+    ICurrentTenantProvider currentTenantProvider,
+    IInventoryMovementPostingService inventoryMovementPostingService) : ISalesOrderCommandService
 {
     public async Task<ServiceResult<SalesOrderDetailsResponse>> CreateAsync(CreateSalesOrderRequest request, CancellationToken cancellationToken = default)
     {
@@ -92,11 +94,23 @@ public class SalesOrderCommandService(
             return ServiceResult<SalesOrderDetailsResponse>.Failure(StatusCodes.Status409Conflict, "A sales order with the same number already exists.");
         }
 
+        if (!CanTransition(order.Status, request.Status))
+        {
+            return ServiceResult<SalesOrderDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "The requested sales order status transition is not allowed.");
+        }
+
+        var previousStatus = order.Status;
         request.Adapt(order);
         order.OrderNumber = request.OrderNumber.Trim().ToUpperInvariant();
         order.CurrencyCode = request.CurrencyCode.Trim().ToUpperInvariant();
         order.Notes = NormalizeOptional(request.Notes);
         order.TotalAmount = order.Lines.Where(x => x.IsActive).Sum(x => (x.Quantity * x.UnitPrice) - x.DiscountAmount);
+
+        var inventoryResult = await inventoryMovementPostingService.ApplySalesOrderStatusChangeAsync(order, previousStatus, request.Status, cancellationToken);
+        if (!inventoryResult.Succeeded)
+        {
+            return ServiceResult<SalesOrderDetailsResponse>.Failure(inventoryResult.StatusCode ?? StatusCodes.Status400BadRequest, inventoryResult.ErrorMessage ?? "Unable to post sales inventory movement.");
+        }
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return ServiceResult<SalesOrderDetailsResponse>.Success(order.Adapt<SalesOrderDetailsResponse>());
@@ -123,6 +137,21 @@ public class SalesOrderCommandService(
         if (warehouseId == Guid.Empty) errors[nameof(CreateSalesOrderRequest.WarehouseId)] = ["Warehouse is required."];
         if (string.IsNullOrWhiteSpace(currencyCode)) errors[nameof(CreateSalesOrderRequest.CurrencyCode)] = ["Currency code is required."];
         return errors;
+    }
+
+    private static bool CanTransition(DocumentStatus previousStatus, DocumentStatus newStatus)
+    {
+        if (previousStatus == newStatus)
+        {
+            return true;
+        }
+
+        if (previousStatus is DocumentStatus.Completed or DocumentStatus.Cancelled)
+        {
+            return false;
+        }
+
+        return true;
     }
 
     private static string? NormalizeOptional(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();

@@ -11,6 +11,7 @@ public class Warehouse : TenantEntityBase
     public string? LocationDescription { get; set; }
 
     public ICollection<InventoryBalance> InventoryBalances { get; set; } = [];
+    public ICollection<InventoryMovement> InventoryMovements { get; set; } = [];
     public ICollection<PurchaseOrder> PurchaseOrders { get; set; } = [];
     public ICollection<SalesOrder> SalesOrders { get; set; } = [];
 }

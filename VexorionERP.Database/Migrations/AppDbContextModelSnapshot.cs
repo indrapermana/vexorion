@@ -630,6 +630,77 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("InventoryBalance", (string)null);
                 });
 
+            modelBuilder.Entity("VexorionERP.Models.Inventory.InventoryMovement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<int>("MovementType")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("PurchaseOrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("PurchaseOrderLineId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("QuantityOnHandDelta")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("QuantityReservedDelta")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("ReferenceNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid?>("SalesOrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("SalesOrderLineId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("WarehouseId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("WarehouseId");
+
+                    b.HasIndex("TenantId", "ProductId", "WarehouseId", "CreatedAtUtc");
+
+                    b.ToTable("InventoryMovement", (string)null);
+                });
+
             modelBuilder.Entity("VexorionERP.Models.Inventory.Warehouse", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1465,6 +1536,33 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Warehouse");
                 });
 
+            modelBuilder.Entity("VexorionERP.Models.Inventory.InventoryMovement", b =>
+                {
+                    b.HasOne("VexorionERP.Models.Catalog.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("VexorionERP.Models.Inventory.Warehouse", "Warehouse")
+                        .WithMany("InventoryMovements")
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("Tenant");
+
+                    b.Navigation("Warehouse");
+                });
+
             modelBuilder.Entity("VexorionERP.Models.Inventory.Warehouse", b =>
                 {
                     b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
@@ -1686,6 +1784,8 @@ namespace VexorionERP.Database.Migrations
             modelBuilder.Entity("VexorionERP.Models.Inventory.Warehouse", b =>
                 {
                     b.Navigation("InventoryBalances");
+
+                    b.Navigation("InventoryMovements");
 
                     b.Navigation("PurchaseOrders");
 

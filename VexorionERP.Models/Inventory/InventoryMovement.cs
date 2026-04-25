@@ -1,0 +1,23 @@
+using VexorionERP.Models.Common;
+using VexorionERP.Models.Catalog;
+using VexorionERP.Models.Enums;
+
+namespace VexorionERP.Models.Inventory;
+
+public class InventoryMovement : TenantEntityBase
+{
+    public Guid ProductId { get; set; }
+    public Guid WarehouseId { get; set; }
+    public InventoryMovementType MovementType { get; set; }
+    public decimal Quantity { get; set; }
+    public decimal QuantityOnHandDelta { get; set; }
+    public decimal QuantityReservedDelta { get; set; }
+    public string ReferenceNumber { get; set; } = string.Empty;
+    public Guid? PurchaseOrderId { get; set; }
+    public Guid? PurchaseOrderLineId { get; set; }
+    public Guid? SalesOrderId { get; set; }
+    public Guid? SalesOrderLineId { get; set; }
+
+    public Product? Product { get; set; }
+    public Warehouse? Warehouse { get; set; }
+}

@@ -1,0 +1,271 @@
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using VexorionERP.Database;
+using VexorionERP.Models.Enums;
+using VexorionERP.Models.Inventory;
+using VexorionERP.Models.Purchasing;
+using VexorionERP.Models.Sales;
+using VexorionERP.Services.Results;
+
+namespace VexorionERP.Services;
+
+public class InventoryMovementPostingService(AppDbContext dbContext) : IInventoryMovementPostingService
+{
+    public async Task<ServiceResult<bool>> ApplyPurchaseOrderStatusChangeAsync(PurchaseOrder order, DocumentStatus previousStatus, DocumentStatus newStatus, CancellationToken cancellationToken = default)
+    {
+        if (!ShouldReceivePurchaseOrder(previousStatus, newStatus))
+        {
+            return ServiceResult<bool>.Success(true);
+        }
+
+        foreach (var line in order.Lines.Where(x => x.IsActive))
+        {
+            var applyResult = await ApplyMovementAsync(
+                tenantId: order.TenantId,
+                productId: line.ProductId,
+                warehouseId: order.WarehouseId,
+                movementType: InventoryMovementType.PurchaseReceipt,
+                quantity: line.Quantity,
+                quantityOnHandDelta: line.Quantity,
+                quantityReservedDelta: 0m,
+                referenceNumber: order.OrderNumber,
+                purchaseOrderId: order.Id,
+                purchaseOrderLineId: line.Id,
+                salesOrderId: null,
+                salesOrderLineId: null,
+                cancellationToken: cancellationToken);
+
+            if (!applyResult.Succeeded)
+            {
+                return applyResult;
+            }
+        }
+
+        return ServiceResult<bool>.Success(true);
+    }
+
+    public async Task<ServiceResult<bool>> ApplySalesOrderStatusChangeAsync(SalesOrder order, DocumentStatus previousStatus, DocumentStatus newStatus, CancellationToken cancellationToken = default)
+    {
+        if (ShouldReserveSalesOrder(previousStatus, newStatus))
+        {
+            var reservationValidation = await ValidateAvailableStockAsync(order, cancellationToken);
+            if (!reservationValidation.Succeeded)
+            {
+                return reservationValidation;
+            }
+
+            foreach (var line in order.Lines.Where(x => x.IsActive))
+            {
+                var reserveResult = await ApplyMovementAsync(
+                    tenantId: order.TenantId,
+                    productId: line.ProductId,
+                    warehouseId: order.WarehouseId,
+                    movementType: InventoryMovementType.SalesReservation,
+                    quantity: line.Quantity,
+                    quantityOnHandDelta: 0m,
+                    quantityReservedDelta: line.Quantity,
+                    referenceNumber: order.OrderNumber,
+                    purchaseOrderId: null,
+                    purchaseOrderLineId: null,
+                    salesOrderId: order.Id,
+                    salesOrderLineId: line.Id,
+                    cancellationToken: cancellationToken);
+
+                if (!reserveResult.Succeeded)
+                {
+                    return reserveResult;
+                }
+            }
+        }
+
+        if (ShouldReleaseSalesReservation(previousStatus, newStatus))
+        {
+            foreach (var line in order.Lines.Where(x => x.IsActive))
+            {
+                var releaseResult = await ApplyMovementAsync(
+                    tenantId: order.TenantId,
+                    productId: line.ProductId,
+                    warehouseId: order.WarehouseId,
+                    movementType: InventoryMovementType.SalesReservationRelease,
+                    quantity: line.Quantity,
+                    quantityOnHandDelta: 0m,
+                    quantityReservedDelta: -line.Quantity,
+                    referenceNumber: order.OrderNumber,
+                    purchaseOrderId: null,
+                    purchaseOrderLineId: null,
+                    salesOrderId: order.Id,
+                    salesOrderLineId: line.Id,
+                    cancellationToken: cancellationToken);
+
+                if (!releaseResult.Succeeded)
+                {
+                    return releaseResult;
+                }
+            }
+        }
+
+        if (ShouldShipSalesOrder(previousStatus, newStatus))
+        {
+            var shippingValidation = await ValidateOnHandStockAsync(order, cancellationToken);
+            if (!shippingValidation.Succeeded)
+            {
+                return shippingValidation;
+            }
+
+            foreach (var line in order.Lines.Where(x => x.IsActive))
+            {
+                var shipResult = await ApplyMovementAsync(
+                    tenantId: order.TenantId,
+                    productId: line.ProductId,
+                    warehouseId: order.WarehouseId,
+                    movementType: InventoryMovementType.SalesShipment,
+                    quantity: line.Quantity,
+                    quantityOnHandDelta: -line.Quantity,
+                    quantityReservedDelta: previousStatus == DocumentStatus.Confirmed ? -line.Quantity : 0m,
+                    referenceNumber: order.OrderNumber,
+                    purchaseOrderId: null,
+                    purchaseOrderLineId: null,
+                    salesOrderId: order.Id,
+                    salesOrderLineId: line.Id,
+                    cancellationToken: cancellationToken);
+
+                if (!shipResult.Succeeded)
+                {
+                    return shipResult;
+                }
+            }
+        }
+
+        return ServiceResult<bool>.Success(true);
+    }
+
+    private async Task<ServiceResult<bool>> ValidateAvailableStockAsync(SalesOrder order, CancellationToken cancellationToken)
+    {
+        var requiredByProduct = order.Lines
+            .Where(x => x.IsActive)
+            .GroupBy(x => x.ProductId)
+            .ToDictionary(group => group.Key, group => group.Sum(line => line.Quantity));
+
+        foreach (var (productId, requiredQuantity) in requiredByProduct)
+        {
+            var balance = await dbContext.InventoryBalances
+                .FirstOrDefaultAsync(x => x.TenantId == order.TenantId && x.ProductId == productId && x.WarehouseId == order.WarehouseId, cancellationToken);
+
+            var availableQuantity = balance?.QuantityAvailable ?? 0m;
+            if (availableQuantity < requiredQuantity)
+            {
+                return ServiceResult<bool>.Failure(StatusCodes.Status400BadRequest, "Insufficient available stock to reserve the sales order.");
+            }
+        }
+
+        return ServiceResult<bool>.Success(true);
+    }
+
+    private async Task<ServiceResult<bool>> ValidateOnHandStockAsync(SalesOrder order, CancellationToken cancellationToken)
+    {
+        var requiredByProduct = order.Lines
+            .Where(x => x.IsActive)
+            .GroupBy(x => x.ProductId)
+            .ToDictionary(group => group.Key, group => group.Sum(line => line.Quantity));
+
+        foreach (var (productId, requiredQuantity) in requiredByProduct)
+        {
+            var balance = await dbContext.InventoryBalances
+                .FirstOrDefaultAsync(x => x.TenantId == order.TenantId && x.ProductId == productId && x.WarehouseId == order.WarehouseId, cancellationToken);
+
+            var onHandQuantity = balance?.QuantityOnHand ?? 0m;
+            if (onHandQuantity < requiredQuantity)
+            {
+                return ServiceResult<bool>.Failure(StatusCodes.Status400BadRequest, "Insufficient on-hand stock to complete the sales order.");
+            }
+        }
+
+        return ServiceResult<bool>.Success(true);
+    }
+
+    private async Task<ServiceResult<bool>> ApplyMovementAsync(
+        Guid tenantId,
+        Guid productId,
+        Guid warehouseId,
+        InventoryMovementType movementType,
+        decimal quantity,
+        decimal quantityOnHandDelta,
+        decimal quantityReservedDelta,
+        string referenceNumber,
+        Guid? purchaseOrderId,
+        Guid? purchaseOrderLineId,
+        Guid? salesOrderId,
+        Guid? salesOrderLineId,
+        CancellationToken cancellationToken)
+    {
+        var balance = await dbContext.InventoryBalances
+            .FirstOrDefaultAsync(x => x.TenantId == tenantId && x.ProductId == productId && x.WarehouseId == warehouseId, cancellationToken);
+
+        if (balance is null)
+        {
+            balance = new InventoryBalance
+            {
+                TenantId = tenantId,
+                ProductId = productId,
+                WarehouseId = warehouseId,
+                QuantityOnHand = 0m,
+                QuantityReserved = 0m,
+            };
+
+            dbContext.InventoryBalances.Add(balance);
+        }
+
+        var nextOnHand = balance.QuantityOnHand + quantityOnHandDelta;
+        var nextReserved = balance.QuantityReserved + quantityReservedDelta;
+
+        if (nextOnHand < 0)
+        {
+            return ServiceResult<bool>.Failure(StatusCodes.Status400BadRequest, "Inventory on hand cannot become negative.");
+        }
+
+        if (nextReserved < 0)
+        {
+            return ServiceResult<bool>.Failure(StatusCodes.Status400BadRequest, "Inventory reserved quantity cannot become negative.");
+        }
+
+        if (nextReserved > nextOnHand)
+        {
+            return ServiceResult<bool>.Failure(StatusCodes.Status400BadRequest, "Reserved quantity cannot exceed quantity on hand.");
+        }
+
+        balance.QuantityOnHand = nextOnHand;
+        balance.QuantityReserved = nextReserved;
+
+        dbContext.InventoryMovements.Add(new InventoryMovement
+        {
+            TenantId = tenantId,
+            ProductId = productId,
+            WarehouseId = warehouseId,
+            MovementType = movementType,
+            Quantity = quantity,
+            QuantityOnHandDelta = quantityOnHandDelta,
+            QuantityReservedDelta = quantityReservedDelta,
+            ReferenceNumber = referenceNumber,
+            PurchaseOrderId = purchaseOrderId,
+            PurchaseOrderLineId = purchaseOrderLineId,
+            SalesOrderId = salesOrderId,
+            SalesOrderLineId = salesOrderLineId,
+        });
+
+        return ServiceResult<bool>.Success(true);
+    }
+
+    private static bool ShouldReceivePurchaseOrder(DocumentStatus previousStatus, DocumentStatus newStatus)
+        => previousStatus is not (DocumentStatus.PartiallyProcessed or DocumentStatus.Completed)
+            && newStatus is DocumentStatus.PartiallyProcessed or DocumentStatus.Completed;
+
+    private static bool ShouldReserveSalesOrder(DocumentStatus previousStatus, DocumentStatus newStatus)
+        => previousStatus == DocumentStatus.Draft && newStatus == DocumentStatus.Confirmed;
+
+    private static bool ShouldReleaseSalesReservation(DocumentStatus previousStatus, DocumentStatus newStatus)
+        => previousStatus == DocumentStatus.Confirmed && newStatus == DocumentStatus.Cancelled;
+
+    private static bool ShouldShipSalesOrder(DocumentStatus previousStatus, DocumentStatus newStatus)
+        => previousStatus is DocumentStatus.Draft or DocumentStatus.Confirmed
+            && newStatus is DocumentStatus.PartiallyProcessed or DocumentStatus.Completed;
+}

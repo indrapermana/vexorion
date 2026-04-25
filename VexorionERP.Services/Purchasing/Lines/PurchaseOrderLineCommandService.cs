@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using VexorionERP.Contracts.Purchasing.Lines;
 using VexorionERP.Database;
 using VexorionERP.Database.Abstractions;
+using VexorionERP.Models.Enums;
 using VexorionERP.Models.Purchasing;
 using VexorionERP.Services.Results;
 
@@ -25,6 +26,11 @@ public class PurchaseOrderLineCommandService(
         if (order is null)
         {
             return ServiceResult<PurchaseOrderLineDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Purchase order not found.");
+        }
+
+        if (order.Status != DocumentStatus.Draft)
+        {
+            return ServiceResult<PurchaseOrderLineDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Purchase order lines can only be modified while the order is in Draft status.");
         }
 
         if (!await dbContext.Products.AnyAsync(x => x.Id == request.ProductId, cancellationToken))
@@ -56,6 +62,11 @@ public class PurchaseOrderLineCommandService(
             return ServiceResult<PurchaseOrderLineDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Purchase order not found.");
         }
 
+        if (order.Status != DocumentStatus.Draft)
+        {
+            return ServiceResult<PurchaseOrderLineDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Purchase order lines can only be modified while the order is in Draft status.");
+        }
+
         var line = order.Lines.FirstOrDefault(x => x.Id == purchaseOrderLineId);
         if (line is null)
         {
@@ -79,6 +90,11 @@ public class PurchaseOrderLineCommandService(
         if (order is null)
         {
             return ServiceResult<bool>.Failure(StatusCodes.Status404NotFound, "Purchase order not found.");
+        }
+
+        if (order.Status != DocumentStatus.Draft)
+        {
+            return ServiceResult<bool>.Failure(StatusCodes.Status400BadRequest, "Purchase order lines can only be modified while the order is in Draft status.");
         }
 
         var line = order.Lines.FirstOrDefault(x => x.Id == purchaseOrderLineId);

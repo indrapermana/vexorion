@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using VexorionERP.Contracts.Purchasing.Orders;
 using VexorionERP.Database;
 using VexorionERP.Database.Abstractions;
+using VexorionERP.Models.Enums;
 using VexorionERP.Models.Purchasing;
 using VexorionERP.Services.Results;
 
@@ -11,7 +12,8 @@ namespace VexorionERP.Services;
 
 public class PurchaseOrderCommandService(
     AppDbContext dbContext,
-    ICurrentTenantProvider currentTenantProvider) : IPurchaseOrderCommandService
+    ICurrentTenantProvider currentTenantProvider,
+    IInventoryMovementPostingService inventoryMovementPostingService) : IPurchaseOrderCommandService
 {
     public async Task<ServiceResult<PurchaseOrderDetailsResponse>> CreateAsync(CreatePurchaseOrderRequest request, CancellationToken cancellationToken = default)
     {
@@ -91,11 +93,23 @@ public class PurchaseOrderCommandService(
             return ServiceResult<PurchaseOrderDetailsResponse>.Failure(StatusCodes.Status409Conflict, "A purchase order with the same number already exists.");
         }
 
+        if (!CanTransition(order.Status, request.Status))
+        {
+            return ServiceResult<PurchaseOrderDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "The requested purchase order status transition is not allowed.");
+        }
+
+        var previousStatus = order.Status;
         request.Adapt(order);
         order.OrderNumber = request.OrderNumber.Trim().ToUpperInvariant();
         order.CurrencyCode = request.CurrencyCode.Trim().ToUpperInvariant();
         order.Notes = NormalizeOptional(request.Notes);
         order.TotalAmount = order.Lines.Where(x => x.IsActive).Sum(x => x.Quantity * x.UnitCost);
+
+        var inventoryResult = await inventoryMovementPostingService.ApplyPurchaseOrderStatusChangeAsync(order, previousStatus, request.Status, cancellationToken);
+        if (!inventoryResult.Succeeded)
+        {
+            return ServiceResult<PurchaseOrderDetailsResponse>.Failure(inventoryResult.StatusCode ?? StatusCodes.Status400BadRequest, inventoryResult.ErrorMessage ?? "Unable to post purchase inventory movement.");
+        }
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return ServiceResult<PurchaseOrderDetailsResponse>.Success(order.Adapt<PurchaseOrderDetailsResponse>());
@@ -122,6 +136,21 @@ public class PurchaseOrderCommandService(
         if (warehouseId == Guid.Empty) errors[nameof(CreatePurchaseOrderRequest.WarehouseId)] = ["Warehouse is required."];
         if (string.IsNullOrWhiteSpace(currencyCode)) errors[nameof(CreatePurchaseOrderRequest.CurrencyCode)] = ["Currency code is required."];
         return errors;
+    }
+
+    private static bool CanTransition(DocumentStatus previousStatus, DocumentStatus newStatus)
+    {
+        if (previousStatus == newStatus)
+        {
+            return true;
+        }
+
+        if (previousStatus is DocumentStatus.Completed or DocumentStatus.Cancelled)
+        {
+            return false;
+        }
+
+        return true;
     }
 
     private static string? NormalizeOptional(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();

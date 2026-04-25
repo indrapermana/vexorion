@@ -45,6 +45,7 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Warehouse> Warehouses => Set<Warehouse>();
     public DbSet<InventoryBalance> InventoryBalances => Set<InventoryBalance>();
+    public DbSet<InventoryMovement> InventoryMovements => Set<InventoryMovement>();
     public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
     public DbSet<PurchaseOrderLine> PurchaseOrderLines => Set<PurchaseOrderLine>();
     public DbSet<SalesOrder> SalesOrders => Set<SalesOrder>();
