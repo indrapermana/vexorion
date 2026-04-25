@@ -15,6 +15,7 @@ const InventoryAdjustmentsPage = lazy(() => import('./pages/InventoryAdjustments
 const PurchaseOrdersPage = lazy(() => import('./pages/PurchaseOrdersPage'))
 const ProductsPage = lazy(() => import('./pages/ProductsPage'))
 const SalesOrdersPage = lazy(() => import('./pages/SalesOrdersPage'))
+const StockCountsPage = lazy(() => import('./pages/StockCountsPage'))
 const StockTransfersPage = lazy(() => import('./pages/StockTransfersPage'))
 const SuppliersPage = lazy(() => import('./pages/SuppliersPage'))
 const TenantsPage = lazy(() => import('./pages/TenantsPage'))
@@ -38,6 +39,7 @@ function App() {
                 <Route path="/inventory-adjustments" element={<InventoryAdjustmentsPage />} />
                 <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
                 <Route path="/sales-orders" element={<SalesOrdersPage />} />
+                <Route path="/stock-counts" element={<StockCountsPage />} />
                 <Route path="/stock-transfers" element={<StockTransfersPage />} />
                 <Route path="/suppliers" element={<SuppliersPage />} />
                 <Route path="/warehouses" element={<WarehousesPage />} />

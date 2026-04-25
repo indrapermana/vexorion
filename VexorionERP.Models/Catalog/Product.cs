@@ -18,6 +18,7 @@ public class Product : TenantEntityBase
     public ICollection<InventoryBalance> InventoryBalances { get; set; } = [];
     public ICollection<InventoryAdjustmentLine> InventoryAdjustmentLines { get; set; } = [];
     public ICollection<StockTransferLine> StockTransferLines { get; set; } = [];
+    public ICollection<StockCountLine> StockCountLines { get; set; } = [];
     public ICollection<PurchaseOrderLine> PurchaseOrderLines { get; set; } = [];
     public ICollection<SalesOrderLine> SalesOrderLines { get; set; } = [];
 }

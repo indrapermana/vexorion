@@ -817,6 +817,103 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("InventoryMovement", (string)null);
                 });
 
+            modelBuilder.Entity("VexorionERP.Models.Inventory.StockCount", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("CountDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("CountNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("WarehouseId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("WarehouseId");
+
+                    b.HasIndex("TenantId", "CountNumber")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "WarehouseId", "CountDate");
+
+                    b.ToTable("StockCount", (string)null);
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.Inventory.StockCountLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("CountedQuantity")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("StockCountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("SystemQuantity")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("StockCountId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("StockCountLine", (string)null);
+                });
+
             modelBuilder.Entity("VexorionERP.Models.Inventory.StockTransfer", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1825,6 +1922,52 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Warehouse");
                 });
 
+            modelBuilder.Entity("VexorionERP.Models.Inventory.StockCount", b =>
+                {
+                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("VexorionERP.Models.Inventory.Warehouse", "Warehouse")
+                        .WithMany("StockCounts")
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
+
+                    b.Navigation("Warehouse");
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.Inventory.StockCountLine", b =>
+                {
+                    b.HasOne("VexorionERP.Models.Catalog.Product", "Product")
+                        .WithMany("StockCountLines")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("VexorionERP.Models.Inventory.StockCount", "StockCount")
+                        .WithMany("Lines")
+                        .HasForeignKey("StockCountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("StockCount");
+
+                    b.Navigation("Tenant");
+                });
+
             modelBuilder.Entity("VexorionERP.Models.Inventory.StockTransfer", b =>
                 {
                     b.HasOne("VexorionERP.Models.Inventory.Warehouse", "DestinationWarehouse")
@@ -2098,10 +2241,17 @@ namespace VexorionERP.Database.Migrations
 
                     b.Navigation("SalesOrderLines");
 
+                    b.Navigation("StockCountLines");
+
                     b.Navigation("StockTransferLines");
                 });
 
             modelBuilder.Entity("VexorionERP.Models.Inventory.InventoryAdjustment", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.Inventory.StockCount", b =>
                 {
                     b.Navigation("Lines");
                 });
@@ -2126,6 +2276,8 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("SalesOrders");
 
                     b.Navigation("SourceStockTransfers");
+
+                    b.Navigation("StockCounts");
                 });
 
             modelBuilder.Entity("VexorionERP.Models.Organization.Company", b =>

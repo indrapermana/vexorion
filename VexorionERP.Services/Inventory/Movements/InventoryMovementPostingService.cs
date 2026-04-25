@@ -346,6 +346,101 @@ public class InventoryMovementPostingService(AppDbContext dbContext) : IInventor
         return ServiceResult<bool>.Success(true);
     }
 
+    public async Task<ServiceResult<bool>> ApplyStockCountStatusChangeAsync(StockCount stockCount, DocumentStatus previousStatus, DocumentStatus newStatus, CancellationToken cancellationToken = default)
+    {
+        if (ShouldPostStockCount(previousStatus, newStatus))
+        {
+            foreach (var line in stockCount.Lines.Where(x => x.IsActive))
+            {
+                var varianceQuantity = line.CountedQuantity - line.SystemQuantity;
+                if (varianceQuantity == 0)
+                {
+                    continue;
+                }
+
+                if (varianceQuantity < 0)
+                {
+                    var validation = await ValidateWarehouseOnHandStockAsync(stockCount.TenantId, stockCount.WarehouseId, line.ProductId, Math.Abs(varianceQuantity), cancellationToken);
+                    if (!validation.Succeeded)
+                    {
+                        return validation;
+                    }
+                }
+
+                var result = await ApplyMovementAsync(
+                    tenantId: stockCount.TenantId,
+                    productId: line.ProductId,
+                    warehouseId: stockCount.WarehouseId,
+                    movementType: varianceQuantity >= 0 ? InventoryMovementType.StockCountVarianceIncrease : InventoryMovementType.StockCountVarianceDecrease,
+                    quantity: Math.Abs(varianceQuantity),
+                    quantityOnHandDelta: varianceQuantity,
+                    quantityReservedDelta: 0m,
+                    referenceNumber: stockCount.CountNumber,
+                    purchaseOrderId: null,
+                    purchaseOrderLineId: null,
+                    salesOrderId: null,
+                    salesOrderLineId: null,
+                    inventoryAdjustmentId: null,
+                    inventoryAdjustmentLineId: null,
+                    stockTransferId: null,
+                    stockTransferLineId: null,
+                    cancellationToken: cancellationToken);
+
+                if (!result.Succeeded)
+                {
+                    return result;
+                }
+            }
+        }
+
+        if (ShouldReverseStockCount(previousStatus, newStatus))
+        {
+            foreach (var line in stockCount.Lines.Where(x => x.IsActive))
+            {
+                var reversedVariance = line.SystemQuantity - line.CountedQuantity;
+                if (reversedVariance == 0)
+                {
+                    continue;
+                }
+
+                if (reversedVariance < 0)
+                {
+                    var validation = await ValidateWarehouseOnHandStockAsync(stockCount.TenantId, stockCount.WarehouseId, line.ProductId, Math.Abs(reversedVariance), cancellationToken);
+                    if (!validation.Succeeded)
+                    {
+                        return validation;
+                    }
+                }
+
+                var result = await ApplyMovementAsync(
+                    tenantId: stockCount.TenantId,
+                    productId: line.ProductId,
+                    warehouseId: stockCount.WarehouseId,
+                    movementType: reversedVariance >= 0 ? InventoryMovementType.StockCountVarianceIncrease : InventoryMovementType.StockCountVarianceDecrease,
+                    quantity: Math.Abs(reversedVariance),
+                    quantityOnHandDelta: reversedVariance,
+                    quantityReservedDelta: 0m,
+                    referenceNumber: stockCount.CountNumber,
+                    purchaseOrderId: null,
+                    purchaseOrderLineId: null,
+                    salesOrderId: null,
+                    salesOrderLineId: null,
+                    inventoryAdjustmentId: null,
+                    inventoryAdjustmentLineId: null,
+                    stockTransferId: null,
+                    stockTransferLineId: null,
+                    cancellationToken: cancellationToken);
+
+                if (!result.Succeeded)
+                {
+                    return result;
+                }
+            }
+        }
+
+        return ServiceResult<bool>.Success(true);
+    }
+
     private async Task<ServiceResult<bool>> ValidateAvailableStockAsync(SalesOrder order, CancellationToken cancellationToken)
     {
         var requiredByProduct = order.Lines
@@ -508,5 +603,11 @@ public class InventoryMovementPostingService(AppDbContext dbContext) : IInventor
         => previousStatus != DocumentStatus.Completed && newStatus == DocumentStatus.Completed;
 
     private static bool ShouldReverseStockTransfer(DocumentStatus previousStatus, DocumentStatus newStatus)
+        => previousStatus == DocumentStatus.Completed && newStatus == DocumentStatus.Cancelled;
+
+    private static bool ShouldPostStockCount(DocumentStatus previousStatus, DocumentStatus newStatus)
+        => previousStatus != DocumentStatus.Completed && newStatus == DocumentStatus.Completed;
+
+    private static bool ShouldReverseStockCount(DocumentStatus previousStatus, DocumentStatus newStatus)
         => previousStatus == DocumentStatus.Completed && newStatus == DocumentStatus.Cancelled;
 }

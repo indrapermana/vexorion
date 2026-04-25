@@ -5,6 +5,7 @@ import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded'
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded'
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded'
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded'
+import RuleRoundedIcon from '@mui/icons-material/RuleRounded'
 import SwapHorizRoundedIcon from '@mui/icons-material/SwapHorizRounded'
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded'
 import WarehouseRoundedIcon from '@mui/icons-material/WarehouseRounded'
@@ -56,6 +57,7 @@ const navigationSections = [
     links: [
       { to: '/products', label: 'Products', icon: <Inventory2RoundedIcon /> },
       { to: '/inventory-adjustments', label: 'Inventory adjustments', icon: <TuneRoundedIcon /> },
+      { to: '/stock-counts', label: 'Stock counts', icon: <RuleRoundedIcon /> },
       { to: '/stock-transfers', label: 'Stock transfers', icon: <SwapHorizRoundedIcon /> },
       { to: '/warehouses', label: 'Warehouses', icon: <WarehouseRoundedIcon /> },
     ],
@@ -69,6 +71,7 @@ const routeTitles: Record<string, string> = {
   '/inventory-adjustments': 'Inventory Adjustments',
   '/purchase-orders': 'Purchase Orders',
   '/sales-orders': 'Sales Orders',
+  '/stock-counts': 'Stock Counts',
   '/stock-transfers': 'Stock Transfers',
   '/suppliers': 'Suppliers',
   '/warehouses': 'Warehouses',

@@ -15,6 +15,7 @@ public class Warehouse : TenantEntityBase
     public ICollection<InventoryAdjustment> InventoryAdjustments { get; set; } = [];
     public ICollection<StockTransfer> SourceStockTransfers { get; set; } = [];
     public ICollection<StockTransfer> DestinationStockTransfers { get; set; } = [];
+    public ICollection<StockCount> StockCounts { get; set; } = [];
     public ICollection<PurchaseOrder> PurchaseOrders { get; set; } = [];
     public ICollection<SalesOrder> SalesOrders { get; set; } = [];
 }

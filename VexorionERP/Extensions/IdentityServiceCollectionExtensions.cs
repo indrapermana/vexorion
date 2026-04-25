@@ -66,6 +66,9 @@ public static class IdentityServiceCollectionExtensions
         services.AddScoped<IStockTransferCommandService, StockTransferCommandService>();
         services.AddScoped<IStockTransferLineCommandService, StockTransferLineCommandService>();
         services.AddScoped<IStockTransferQueryService, StockTransferQueryService>();
+        services.AddScoped<IStockCountCommandService, StockCountCommandService>();
+        services.AddScoped<IStockCountLineCommandService, StockCountLineCommandService>();
+        services.AddScoped<IStockCountQueryService, StockCountQueryService>();
         services.AddScoped<ISupplierCommandService, SupplierCommandService>();
         services.AddScoped<ISupplierQueryService, SupplierQueryService>();
         services.AddScoped<ITenantOnboardingService, TenantOnboardingService>();
