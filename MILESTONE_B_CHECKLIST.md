@@ -6,7 +6,7 @@ This checklist breaks Milestone B (Phase 1B: Stock Counts completion) into concr
 
 - [x] Add `StockCount` model with Id, TenantId, CountNumber, WarehouseId, CountDateUtc, Status, Notes
 - [x] Add `StockCountLine` model with Id, StockCountId, ProductId, SystemQuantity, CountedQuantity, VarianceQuantity
-- [ ] Add `StockCountStatus` enum (Draft, InProgress, Completed, Cancelled)
+- [x] Use shared `DocumentStatus` for StockCount lifecycle (Draft, Completed, Cancelled); no dedicated `StockCountStatus` enum added
 - [x] Extend `InventoryMovementType` with StockCountVarianceIncrease and StockCountVarianceDecrease
 - [x] Add `DbSet` registrations for StockCount and StockCountLine in `AppDbContext`
 - [x] Add EF Core configurations for StockCount and StockCountLine
@@ -73,4 +73,4 @@ This checklist breaks Milestone B (Phase 1B: Stock Counts completion) into concr
 
 ## Milestone B Status
 
-- [x] COMPLETE — Core stock count backend/frontend/tests and EF migration completed
+- [x] COMPLETE — Core stock count backend/frontend/tests and EF migration completed; status model standardized on shared `DocumentStatus`

@@ -3,6 +3,7 @@ import PaidRoundedIcon from '@mui/icons-material/PaidRounded'
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded'
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded'
 import { Box, CircularProgress, Stack, Typography } from '@mui/material'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
 import OrderWorkspace from '../../../components/OrderWorkspace'
 import { ApiError, deleteSalesOrder, getSalesOrderLines, getSalesOrders } from '../../../lib/api'
@@ -28,6 +29,7 @@ function SalesOrderSurfaceFallback() {
 
 export default function SalesOrdersPage() {
   const { isAuthenticated } = useAuth()
+  const navigate = useNavigate()
   const { items: customers, error: customersError, reload: reloadCustomers } = useCustomersLookup(isAuthenticated)
   const { items: warehouses, error: warehousesError, reload: reloadWarehouses } = useWarehousesLookup(isAuthenticated)
   const [salesOrders, setSalesOrders] = useState<SalesOrderListItemResponse[]>([])
@@ -156,6 +158,22 @@ export default function SalesOrdersPage() {
     await loadLines(row.id)
   }
 
+  const handleCreateInvoice = (row: SalesOrderGridRow) => {
+    navigate('/sales-invoices', {
+      state: {
+        sourceSalesOrderId: row.id,
+        invoiceNumber: `${row.orderNumber}-INV`,
+        customerId: row.customerId,
+        currencyCode: row.currencyCode,
+        invoiceDate: new Date().toISOString().slice(0, 10),
+        dueDate: new Date().toISOString().slice(0, 10),
+        status: 1,
+        notes: '',
+        isActive: true,
+      },
+    })
+  }
+
   if (!isAuthenticated) {
     return <OrderWorkspace title="Sales Orders" description="Transactional sales headers from `/api/sales-orders`, linked to customer master data for selection and display." createLabel="New sales order" onCreate={() => undefined} disableCreate metrics={[]} alerts={[{ severity: 'info', message: 'Sign in first. The sales orders API requires an authenticated user with sales view permissions.' }]} grid={null} linesPanel={null} />
   }
@@ -180,7 +198,7 @@ export default function SalesOrdersPage() {
         ...(error ? [{ severity: 'error' as const, message: error }] : []),
         ...(feedback ? [{ severity: 'success' as const, message: feedback }] : []),
       ]}
-      grid={<Suspense fallback={<SalesOrderSurfaceFallback />}><SalesOrderDataGrid rows={rows} isLoading={isLoading} onEdit={openEditDialog} onDelete={setDeleteTarget} onManageLines={(row) => void handleManageLines(row)} /></Suspense>}
+      grid={<Suspense fallback={<SalesOrderSurfaceFallback />}><SalesOrderDataGrid rows={rows} isLoading={isLoading} onEdit={openEditDialog} onDelete={setDeleteTarget} onManageLines={(row) => void handleManageLines(row)} onCreateInvoice={handleCreateInvoice} /></Suspense>}
       linesPanel={<Suspense fallback={<SalesOrderSurfaceFallback />}><SalesOrderLinesPanel order={activeLinesOrder} lines={lines} isLoading={linesLoading} error={linesError} onRefresh={() => activeLinesOrder ? loadLines(activeLinesOrder.id) : Promise.resolve()} /></Suspense>}
       editor={isEditorOpen ? <Suspense fallback={<SalesOrderSurfaceFallback />}><SalesOrderEditorDialog key={`${dialogMode}:${selectedSalesOrderId ?? 'new'}`} open={isEditorOpen} mode={dialogMode} salesOrderId={selectedSalesOrderId} customers={customers} warehouses={warehouses} onClose={handleEditorClose} onSaved={(salesOrder, mode) => void handleSaved(salesOrder, mode)} /></Suspense> : null}
       deleteDialog={deleteTarget ? <Suspense fallback={null}><SalesOrderDeleteDialog target={deleteTarget} isDeleting={isDeleting} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} /></Suspense> : null}

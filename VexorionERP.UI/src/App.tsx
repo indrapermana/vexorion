@@ -12,8 +12,10 @@ const CustomersPage = lazy(() => import('./pages/CustomersPage'))
 const LoginPage = lazy(() => import('./pages/LoginPage'))
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'))
 const InventoryAdjustmentsPage = lazy(() => import('./pages/InventoryAdjustmentsPage'))
+const PurchaseInvoicesPage = lazy(() => import('./pages/PurchaseInvoicesPage'))
 const PurchaseOrdersPage = lazy(() => import('./pages/PurchaseOrdersPage'))
 const ProductsPage = lazy(() => import('./pages/ProductsPage'))
+const SalesInvoicesPage = lazy(() => import('./pages/SalesInvoicesPage'))
 const SalesOrdersPage = lazy(() => import('./pages/SalesOrdersPage'))
 const StockCountsPage = lazy(() => import('./pages/StockCountsPage'))
 const StockTransfersPage = lazy(() => import('./pages/StockTransfersPage'))
@@ -37,8 +39,10 @@ function App() {
                 <Route path="/customers" element={<CustomersPage />} />
                 <Route path="/products" element={<ProductsPage />} />
                 <Route path="/inventory-adjustments" element={<InventoryAdjustmentsPage />} />
+                <Route path="/purchase-invoices" element={<PurchaseInvoicesPage />} />
                 <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
                 <Route path="/sales-orders" element={<SalesOrdersPage />} />
+                <Route path="/sales-invoices" element={<SalesInvoicesPage />} />
                 <Route path="/stock-counts" element={<StockCountsPage />} />
                 <Route path="/stock-transfers" element={<StockTransfersPage />} />
                 <Route path="/suppliers" element={<SuppliersPage />} />

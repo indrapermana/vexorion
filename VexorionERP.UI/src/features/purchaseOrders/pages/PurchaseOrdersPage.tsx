@@ -3,6 +3,7 @@ import PaidRoundedIcon from '@mui/icons-material/PaidRounded'
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded'
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded'
 import { Box, CircularProgress, Stack, Typography } from '@mui/material'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
 import OrderWorkspace from '../../../components/OrderWorkspace'
 import { ApiError, deletePurchaseOrder, getPurchaseOrderLines, getPurchaseOrders } from '../../../lib/api'
@@ -28,6 +29,7 @@ function PurchaseOrderSurfaceFallback() {
 
 export default function PurchaseOrdersPage() {
   const { isAuthenticated } = useAuth()
+  const navigate = useNavigate()
   const { items: suppliers, error: suppliersError, reload: reloadSuppliers } = useSuppliersLookup(isAuthenticated)
   const { items: warehouses, error: warehousesError, reload: reloadWarehouses } = useWarehousesLookup(isAuthenticated)
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrderListItemResponse[]>([])
@@ -142,6 +144,23 @@ export default function PurchaseOrdersPage() {
     await loadLines(row.id)
   }
 
+  const handleCreateInvoice = (row: PurchaseOrderGridRow) => {
+    navigate('/purchase-invoices', {
+      state: {
+        sourcePurchaseOrderId: row.id,
+        invoiceNumber: `${row.orderNumber}-INV`,
+        supplierId: row.supplierId,
+        currencyCode: row.currencyCode,
+        vendorReferenceNumber: row.orderNumber,
+        invoiceDate: new Date().toISOString().slice(0, 10),
+        dueDate: new Date().toISOString().slice(0, 10),
+        status: 1,
+        notes: '',
+        isActive: true,
+      },
+    })
+  }
+
   if (!isAuthenticated) {
     return <OrderWorkspace title="Purchase Orders" description="Transactional purchasing headers from `/api/purchase-orders`, linked to supplier master data for selection and display." createLabel="New purchase order" onCreate={() => undefined} disableCreate metrics={[]} alerts={[{ severity: 'info', message: 'Sign in first. The purchase orders API requires an authenticated user with purchasing view permissions.' }]} grid={null} linesPanel={null} />
   }
@@ -166,7 +185,7 @@ export default function PurchaseOrdersPage() {
         ...(error ? [{ severity: 'error' as const, message: error }] : []),
         ...(feedback ? [{ severity: 'success' as const, message: feedback }] : []),
       ]}
-      grid={<Suspense fallback={<PurchaseOrderSurfaceFallback />}><PurchaseOrderDataGrid rows={rows} isLoading={isLoading} onEdit={openEditDialog} onDelete={setDeleteTarget} onManageLines={(row) => void handleManageLines(row)} /></Suspense>}
+      grid={<Suspense fallback={<PurchaseOrderSurfaceFallback />}><PurchaseOrderDataGrid rows={rows} isLoading={isLoading} onEdit={openEditDialog} onDelete={setDeleteTarget} onManageLines={(row) => void handleManageLines(row)} onCreateInvoice={handleCreateInvoice} /></Suspense>}
       linesPanel={<Suspense fallback={<PurchaseOrderSurfaceFallback />}><PurchaseOrderLinesPanel order={activeLinesOrder} lines={lines} isLoading={linesLoading} error={linesError} onRefresh={() => activeLinesOrder ? loadLines(activeLinesOrder.id) : Promise.resolve()} /></Suspense>}
       editor={isEditorOpen ? <Suspense fallback={<PurchaseOrderSurfaceFallback />}><PurchaseOrderEditorDialog key={`${dialogMode}:${selectedPurchaseOrderId ?? 'new'}`} open={isEditorOpen} mode={dialogMode} purchaseOrderId={selectedPurchaseOrderId} suppliers={suppliers} warehouses={warehouses} onClose={handleEditorClose} onSaved={(purchaseOrder, mode) => void handleSaved(purchaseOrder, mode)} /></Suspense> : null}
       deleteDialog={deleteTarget ? <Suspense fallback={null}><PurchaseOrderDeleteDialog target={deleteTarget} isDeleting={isDeleting} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} /></Suspense> : null}

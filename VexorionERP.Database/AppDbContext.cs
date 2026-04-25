@@ -7,6 +7,7 @@ using VexorionERP.Models.Auditing;
 using VexorionERP.Models.Billing;
 using VexorionERP.Models.Catalog;
 using VexorionERP.Models.Common;
+using VexorionERP.Models.Finance;
 using VexorionERP.Models.Identity;
 using VexorionERP.Models.Inventory;
 using VexorionERP.Models.Organization;
@@ -58,6 +59,12 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
     public DbSet<SalesOrderLine> SalesOrderLines => Set<SalesOrderLine>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
     public DbSet<InvoiceLine> InvoiceLines => Set<InvoiceLine>();
+    public DbSet<SalesInvoice> SalesInvoices => Set<SalesInvoice>();
+    public DbSet<SalesInvoiceLine> SalesInvoiceLines => Set<SalesInvoiceLine>();
+    public DbSet<PurchaseInvoice> PurchaseInvoices => Set<PurchaseInvoice>();
+    public DbSet<PurchaseInvoiceLine> PurchaseInvoiceLines => Set<PurchaseInvoiceLine>();
+    public DbSet<PaymentTerm> PaymentTerms => Set<PaymentTerm>();
+    public DbSet<TaxCode> TaxCodes => Set<TaxCode>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -20,5 +20,7 @@ public class Product : TenantEntityBase
     public ICollection<StockTransferLine> StockTransferLines { get; set; } = [];
     public ICollection<StockCountLine> StockCountLines { get; set; } = [];
     public ICollection<PurchaseOrderLine> PurchaseOrderLines { get; set; } = [];
+    public ICollection<PurchaseInvoiceLine> PurchaseInvoiceLines { get; set; } = [];
     public ICollection<SalesOrderLine> SalesOrderLines { get; set; } = [];
+    public ICollection<SalesInvoiceLine> SalesInvoiceLines { get; set; } = [];
 }

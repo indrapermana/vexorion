@@ -14,4 +14,5 @@ public class Supplier : TenantEntityBase
     public string? PaymentTerms { get; set; }
 
     public ICollection<PurchaseOrder> PurchaseOrders { get; set; } = [];
+    public ICollection<PurchaseInvoice> PurchaseInvoices { get; set; } = [];
 }

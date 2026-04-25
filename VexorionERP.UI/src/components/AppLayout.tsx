@@ -43,6 +43,7 @@ const navigationSections = [
     links: [
       { to: '/customers', label: 'Customers', icon: <Groups2RoundedIcon /> },
       { to: '/sales-orders', label: 'Sales orders', icon: <ReceiptLongRoundedIcon /> },
+      { to: '/sales-invoices', label: 'Sales invoices', icon: <ReceiptLongRoundedIcon /> },
     ],
   },
   {
@@ -50,6 +51,7 @@ const navigationSections = [
     links: [
       { to: '/suppliers', label: 'Suppliers', icon: <Groups2RoundedIcon /> },
       { to: '/purchase-orders', label: 'Purchase orders', icon: <ReceiptLongRoundedIcon /> },
+      { to: '/purchase-invoices', label: 'Purchase invoices', icon: <ReceiptLongRoundedIcon /> },
     ],
   },
   {
@@ -69,7 +71,9 @@ const routeTitles: Record<string, string> = {
   '/customers': 'Customers',
   '/products': 'Products',
   '/inventory-adjustments': 'Inventory Adjustments',
+  '/purchase-invoices': 'Purchase Invoices',
   '/purchase-orders': 'Purchase Orders',
+  '/sales-invoices': 'Sales Invoices',
   '/sales-orders': 'Sales Orders',
   '/stock-counts': 'Stock Counts',
   '/stock-transfers': 'Stock Transfers',
