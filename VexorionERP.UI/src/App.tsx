@@ -21,6 +21,7 @@ const PurchaseOrdersPage = lazy(() => import('./pages/PurchaseOrdersPage'))
 const PurchaseReceiptsPage = lazy(() => import('./pages/PurchaseReceiptsPage'))
 const SalesShipmentsPage = lazy(() => import('./pages/SalesShipmentsPage'))
 const ProductsPage = lazy(() => import('./pages/ProductsPage'))
+const ReportsPage = lazy(() => import('./pages/ReportsPage'))
 const SalesInvoicesPage = lazy(() => import('./pages/SalesInvoicesPage'))
 const SalesOrdersPage = lazy(() => import('./pages/SalesOrdersPage'))
 const StockCountsPage = lazy(() => import('./pages/StockCountsPage'))
@@ -48,6 +49,7 @@ function App() {
                 <Route path="/accounts" element={<AccountsPage />} />
                 <Route path="/fiscal-periods" element={<FiscalPeriodsPage />} />
                 <Route path="/journals" element={<JournalsPage />} />
+                <Route path="/reports" element={<ReportsPage />} />
                 <Route path="/products" element={<ProductsPage />} />
                 <Route path="/inventory-adjustments" element={<InventoryAdjustmentsPage />} />
                 <Route path="/purchase-invoices" element={<PurchaseInvoicesPage />} />

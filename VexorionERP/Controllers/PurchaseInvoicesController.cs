@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using VexorionERP.Contracts.Finance.Approvals;
 using VexorionERP.Contracts.Purchasing.Invoices;
 using VexorionERP.Models.Identity;
 using VexorionERP.Services;
@@ -11,7 +13,8 @@ namespace VexorionERP.Controllers;
 [Authorize]
 public class PurchaseInvoicesController(
     IPurchaseInvoiceCommandService purchaseInvoiceCommandService,
-    IPurchaseInvoiceQueryService purchaseInvoiceQueryService) : ServiceResultControllerBase
+    IPurchaseInvoiceQueryService purchaseInvoiceQueryService,
+    IInvoiceApprovalService invoiceApprovalService) : ServiceResultControllerBase
 {
     [HttpGet]
     [Authorize(Policy = AppPermissions.Purchasing.View)]
@@ -52,5 +55,47 @@ public class PurchaseInvoicesController(
     {
         var result = await purchaseInvoiceCommandService.DeleteAsync(purchaseInvoiceId, HttpContext.RequestAborted);
         return ToActionResult(result);
+    }
+
+    [HttpPost("{purchaseInvoiceId:guid}/approval/request")]
+    [Authorize(Policy = AppPermissions.Purchasing.Manage)]
+    public async Task<ActionResult<PurchaseInvoiceDetailsResponse>> RequestApproval(Guid purchaseInvoiceId, [FromBody] ApprovalActionRequest request)
+    {
+        var result = await invoiceApprovalService.RequestPurchaseInvoiceApprovalAsync(
+            purchaseInvoiceId,
+            TryGetActorUserId(),
+            request.Comment,
+            HttpContext.RequestAborted);
+        return ToActionResult(result);
+    }
+
+    [HttpPost("{purchaseInvoiceId:guid}/approval/approve")]
+    [Authorize(Policy = AppPermissions.Purchasing.Manage)]
+    public async Task<ActionResult<PurchaseInvoiceDetailsResponse>> Approve(Guid purchaseInvoiceId, [FromBody] ApprovalActionRequest request)
+    {
+        var result = await invoiceApprovalService.ApprovePurchaseInvoiceAsync(
+            purchaseInvoiceId,
+            TryGetActorUserId(),
+            request.Comment,
+            HttpContext.RequestAborted);
+        return ToActionResult(result);
+    }
+
+    [HttpPost("{purchaseInvoiceId:guid}/approval/reject")]
+    [Authorize(Policy = AppPermissions.Purchasing.Manage)]
+    public async Task<ActionResult<PurchaseInvoiceDetailsResponse>> Reject(Guid purchaseInvoiceId, [FromBody] ApprovalActionRequest request)
+    {
+        var result = await invoiceApprovalService.RejectPurchaseInvoiceAsync(
+            purchaseInvoiceId,
+            TryGetActorUserId(),
+            request.Comment,
+            HttpContext.RequestAborted);
+        return ToActionResult(result);
+    }
+
+    private Guid? TryGetActorUserId()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        return Guid.TryParse(userId, out var parsed) ? parsed : null;
     }
 }

@@ -74,6 +74,7 @@ const navigationSections = [
       { to: '/accounts', label: 'Accounts', icon: <AutoGraphRoundedIcon /> },
       { to: '/fiscal-periods', label: 'Fiscal periods', icon: <AutoGraphRoundedIcon /> },
       { to: '/journals', label: 'Journals', icon: <AutoGraphRoundedIcon /> },
+      { to: '/reports', label: 'Reports', icon: <AutoGraphRoundedIcon /> },
     ],
   },
 ] as const
@@ -85,6 +86,7 @@ const routeTitles: Record<string, string> = {
   '/accounts': 'Accounts',
   '/fiscal-periods': 'Fiscal Periods',
   '/journals': 'Journals',
+  '/reports': 'Reports',
   '/products': 'Products',
   '/inventory-adjustments': 'Inventory Adjustments',
   '/purchase-invoices': 'Purchase Invoices',

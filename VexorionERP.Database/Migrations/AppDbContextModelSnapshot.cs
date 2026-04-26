@@ -460,6 +460,64 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("Account", (string)null);
                 });
 
+            modelBuilder.Entity("VexorionERP.Models.Finance.DocumentApproval", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DecidedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("DecidedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DocumentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DocumentType")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<DateTime>("RequestedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("RequestedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "DocumentType", "DocumentId", "RequestedAtUtc");
+
+                    b.HasIndex("TenantId", "DocumentType", "DocumentId", "Status");
+
+                    b.ToTable("DocumentApproval", (string)null);
+                });
+
             modelBuilder.Entity("VexorionERP.Models.Finance.FiscalPeriod", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2860,6 +2918,17 @@ namespace VexorionERP.Database.Migrations
                 });
 
             modelBuilder.Entity("VexorionERP.Models.Finance.Account", b =>
+                {
+                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.Finance.DocumentApproval", b =>
                 {
                     b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
                         .WithMany()

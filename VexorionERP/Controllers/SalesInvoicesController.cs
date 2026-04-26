@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using VexorionERP.Contracts.Finance.Approvals;
 using VexorionERP.Contracts.Sales.Invoices;
 using VexorionERP.Models.Identity;
 using VexorionERP.Services;
@@ -11,7 +13,8 @@ namespace VexorionERP.Controllers;
 [Authorize]
 public class SalesInvoicesController(
     ISalesInvoiceCommandService salesInvoiceCommandService,
-    ISalesInvoiceQueryService salesInvoiceQueryService) : ServiceResultControllerBase
+    ISalesInvoiceQueryService salesInvoiceQueryService,
+    IInvoiceApprovalService invoiceApprovalService) : ServiceResultControllerBase
 {
     [HttpGet]
     [Authorize(Policy = AppPermissions.Sales.View)]
@@ -52,5 +55,47 @@ public class SalesInvoicesController(
     {
         var result = await salesInvoiceCommandService.DeleteAsync(salesInvoiceId, HttpContext.RequestAborted);
         return ToActionResult(result);
+    }
+
+    [HttpPost("{salesInvoiceId:guid}/approval/request")]
+    [Authorize(Policy = AppPermissions.Sales.Manage)]
+    public async Task<ActionResult<SalesInvoiceDetailsResponse>> RequestApproval(Guid salesInvoiceId, [FromBody] ApprovalActionRequest request)
+    {
+        var result = await invoiceApprovalService.RequestSalesInvoiceApprovalAsync(
+            salesInvoiceId,
+            TryGetActorUserId(),
+            request.Comment,
+            HttpContext.RequestAborted);
+        return ToActionResult(result);
+    }
+
+    [HttpPost("{salesInvoiceId:guid}/approval/approve")]
+    [Authorize(Policy = AppPermissions.Sales.Manage)]
+    public async Task<ActionResult<SalesInvoiceDetailsResponse>> Approve(Guid salesInvoiceId, [FromBody] ApprovalActionRequest request)
+    {
+        var result = await invoiceApprovalService.ApproveSalesInvoiceAsync(
+            salesInvoiceId,
+            TryGetActorUserId(),
+            request.Comment,
+            HttpContext.RequestAborted);
+        return ToActionResult(result);
+    }
+
+    [HttpPost("{salesInvoiceId:guid}/approval/reject")]
+    [Authorize(Policy = AppPermissions.Sales.Manage)]
+    public async Task<ActionResult<SalesInvoiceDetailsResponse>> Reject(Guid salesInvoiceId, [FromBody] ApprovalActionRequest request)
+    {
+        var result = await invoiceApprovalService.RejectSalesInvoiceAsync(
+            salesInvoiceId,
+            TryGetActorUserId(),
+            request.Comment,
+            HttpContext.RequestAborted);
+        return ToActionResult(result);
+    }
+
+    private Guid? TryGetActorUserId()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        return Guid.TryParse(userId, out var parsed) ? parsed : null;
     }
 }

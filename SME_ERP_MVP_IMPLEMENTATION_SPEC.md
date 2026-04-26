@@ -887,7 +887,9 @@ Manual smoke evidence (26 Apr 2026, local dev API):
 
 ### Milestone F
 
-Status: In Progress (26 Apr 2026)
+Status: Completed (26 Apr 2026)
+
+Progress note: F1 numbering, F2 approvals, F3 reporting, and F4 finance dashboards completed on 26 Apr 2026.
 
 - approvals
 - numbering
@@ -932,14 +934,129 @@ Run this checklist in order for the first Milestone F implementation slice.
 - [x] Numbering tests prove sequential generation and reset behavior.
 - [x] Invoice creation supports explicit number and `AUTO` generation.
 
+### Milestone F execution checklist (F2 approvals)
+
+Run this checklist for the second Milestone F implementation slice.
+
+#### 1) Approval domain + schema
+
+- [x] Add approval status enum for workflow state.
+- [x] Add tenant-scoped document approval entity for request/decision tracking.
+- [x] Add EF configuration and indexes for document lookup and pending checks.
+- [x] Add DB migration for approval storage.
+
+#### 2) Approval service
+
+- [x] Add `IInvoiceApprovalService` and `InvoiceApprovalService`.
+- [x] Implement request/approve/reject flows for sales invoices.
+- [x] Implement request/approve/reject flows for purchase invoices.
+- [x] Add guards for missing tenant context, missing invoices, and duplicate pending requests.
+
+#### 3) API integration
+
+- [x] Add sales invoice endpoints:
+	- `POST /api/sales-invoices/{id}/approval/request`
+	- `POST /api/sales-invoices/{id}/approval/approve`
+	- `POST /api/sales-invoices/{id}/approval/reject`
+- [x] Add purchase invoice endpoints:
+	- `POST /api/purchase-invoices/{id}/approval/request`
+	- `POST /api/purchase-invoices/{id}/approval/approve`
+	- `POST /api/purchase-invoices/{id}/approval/reject`
+- [x] Apply existing sales/purchasing manage policies.
+
+#### Done criteria for Milestone F2 (approvals)
+
+- [x] Backend build and tests pass with approval changes.
+- [x] Service tests prove request/approve/reject behavior and guards.
+- [x] Integration tests prove approval endpoints return expected responses for missing resources.
+
+### Milestone F execution checklist (F3 reporting)
+
+Run this checklist for the third Milestone F implementation slice.
+
+#### 1) Reporting contracts and service layer
+
+- [x] Add reporting contracts for AR aging, AP aging, and trial balance responses.
+- [x] Add `IReportingService` and `ReportingService` in finance services.
+- [x] Implement AR aging aggregation by customer and aging buckets.
+- [x] Implement AP aging aggregation by supplier and aging buckets.
+- [x] Implement trial balance aggregation from journal entry lines.
+
+#### 2) Reporting API and authorization
+
+- [x] Add reports controller endpoints:
+	- `GET /api/reports/ar-aging`
+	- `GET /api/reports/ap-aging`
+	- `GET /api/reports/trial-balance`
+- [x] Protect reporting endpoints with existing billing view permission policy.
+- [x] Register reporting service in DI.
+
+#### 3) Tests and validation
+
+- [x] Add reporting service tests for aging/trial-balance calculations.
+- [x] Add reporting controller integration tests for happy-path and no-data behavior.
+- [x] Add reporting controller authorization tests for 401/403 outcomes.
+- [x] Validate build and targeted finance test suites.
+
+#### 4) UI integration
+
+- [x] Add finance reporting API types and client wrappers.
+- [x] Add Reports page with as-of date selection and summary cards.
+- [x] Wire routes and navigation entry for Reports page.
+- [x] Pass frontend TypeScript compile after reporting integration.
+
+#### Done criteria for Milestone F3 (reporting)
+
+- [x] Backend build passes with reporting changes.
+- [x] Service and web reporting tests pass.
+- [x] Frontend TypeScript compile passes.
+- [x] Reports UI route is reachable and loads AR/AP aging plus trial-balance summaries.
+
+### Milestone F execution checklist (F4 finance dashboards)
+
+Run this checklist for the fourth Milestone F implementation slice.
+
+#### 1) KPI contracts and service layer
+
+- [x] Add dashboard KPI contract for receivables, payables, revenue, and cash snapshot.
+- [x] Extend reporting service with dashboard snapshot aggregation.
+- [x] Support tenant-scoped as-of date and period-days filtering.
+
+#### 2) API and authorization
+
+- [x] Add dashboard endpoint:
+	- `GET /api/reports/dashboard`
+- [x] Protect dashboard endpoint with existing billing view permission policy.
+
+#### 3) Tests and validation
+
+- [x] Add reporting service test covering dashboard KPI calculations.
+- [x] Add reporting controller integration test for dashboard empty-state envelope.
+- [x] Add reporting controller authorization test for dashboard endpoint access.
+- [x] Validate build and focused reporting test suites.
+
+#### 4) UI integration
+
+- [x] Add frontend API type and client wrapper for dashboard snapshot endpoint.
+- [x] Replace static dashboard summary cards with live KPI values.
+- [x] Add dashboard as-of date and analysis window controls.
+- [x] Pass frontend TypeScript compile after dashboard integration.
+
+#### Done criteria for Milestone F4 (finance dashboards)
+
+- [x] Backend build passes with dashboard changes.
+- [x] Reporting service and web tests pass for dashboard endpoint.
+- [x] Frontend dashboard route renders live KPI values from API.
+- [x] Frontend TypeScript compile passes.
+
 ## Immediate next coding slice
 
-The next code implementation slice is Milestone F1 (numbering) in this order:
+The next code implementation slice is Milestone G1 (financial statements) in this order:
 
-1. numbering domain + schema
-2. numbering service
-3. document flow integration
-4. admin API endpoints
-5. tests + validation
+1. P&L and balance sheet response contracts and account-group mapping rules
+2. reporting service endpoints for statement generation by period/as-of date
+3. reports controller integration and authorization coverage for new statements
+4. focused service + web tests for statement math and empty-state behavior
+5. UI statement views with section totals and export-ready table layouts
 
-Start with tenant-scoped sequence definitions and wire them into sales invoices, purchase invoices, and journals before moving on to approvals/reporting/dashboard slices.
+Start with backend statement endpoints and tests first, then add UI statement pages.

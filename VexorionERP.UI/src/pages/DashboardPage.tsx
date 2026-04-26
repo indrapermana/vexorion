@@ -4,11 +4,13 @@ import PaidRoundedIcon from '@mui/icons-material/PaidRounded'
 import SecurityRoundedIcon from '@mui/icons-material/SecurityRounded'
 import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded'
 import {
+  Alert,
   Box,
   Chip,
   Grid,
   Paper,
   Stack,
+  TextField,
   Table,
   TableBody,
   TableCell,
@@ -17,7 +19,10 @@ import {
   TableRow,
   Typography,
 } from '@mui/material'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../app/AuthContext'
+import { ApiError, getFinanceDashboardSnapshot } from '../lib/api'
+import type { FinanceDashboardSnapshotResponse } from '../types/api'
 
 const quickCards = [
   {
@@ -37,20 +42,71 @@ const quickCards = [
   },
 ]
 
-const summaryCards = [
-  { title: 'Active modules', value: '14', change: '+3 this sprint', icon: <InsightsRoundedIcon /> },
-  { title: 'Catalog items', value: '128', change: '12 pending review', icon: <Inventory2RoundedIcon /> },
-  { title: 'Collected revenue', value: '$84.2k', change: '+8.4% vs last month', icon: <PaidRoundedIcon /> },
-]
+const periodOptions = [7, 30, 90, 180]
 
-const recentRows = [
-  { id: 'SO-2041', owner: 'Operations', status: 'Ready', amount: '$12,480' },
-  { id: 'INV-1188', owner: 'Finance', status: 'Pending', amount: '$8,120' },
-  { id: 'PO-9902', owner: 'Procurement', status: 'Approved', amount: '$4,960' },
-]
+function formatCurrency(value: number) {
+  return value.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 2 })
+}
 
 export default function DashboardPage() {
   const { user, isAuthenticated } = useAuth()
+  const [asOfDate, setAsOfDate] = useState(new Date().toISOString().slice(0, 10))
+  const [periodDays, setPeriodDays] = useState(30)
+  const [snapshot, setSnapshot] = useState<FinanceDashboardSnapshotResponse | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const summaryCards = useMemo(
+    () => [
+      {
+        title: 'Open receivables',
+        value: formatCurrency(snapshot?.receivablesOpen ?? 0),
+        change: `Overdue ${formatCurrency(snapshot?.receivablesOverdue ?? 0)}`,
+        icon: <PaidRoundedIcon />,
+      },
+      {
+        title: 'Open payables',
+        value: formatCurrency(snapshot?.payablesOpen ?? 0),
+        change: `Overdue ${formatCurrency(snapshot?.payablesOverdue ?? 0)}`,
+        icon: <Inventory2RoundedIcon />,
+      },
+      {
+        title: `Revenue (${periodDays}d)`,
+        value: formatCurrency(snapshot?.revenueInPeriod ?? 0),
+        change: `Net cash ${formatCurrency(snapshot?.netCashInPeriod ?? 0)}`,
+        icon: <InsightsRoundedIcon />,
+      },
+    ],
+    [snapshot, periodDays],
+  )
+
+  const cashRows = useMemo(
+    () => [
+      { id: 'CASH-IN', owner: 'Customer receipts', status: 'Inflow', amount: formatCurrency(snapshot?.cashInInPeriod ?? 0) },
+      { id: 'CASH-OUT', owner: 'Vendor payouts', status: 'Outflow', amount: formatCurrency(snapshot?.cashOutInPeriod ?? 0) },
+      { id: 'NET', owner: `${periodDays}-day window`, status: (snapshot?.netCashInPeriod ?? 0) >= 0 ? 'Positive' : 'Negative', amount: formatCurrency(snapshot?.netCashInPeriod ?? 0) },
+    ],
+    [snapshot, periodDays],
+  )
+
+  const loadSnapshot = useCallback(async () => {
+    if (!isAuthenticated) {
+      setSnapshot(null)
+      return
+    }
+
+    setError(null)
+    try {
+      const data = await getFinanceDashboardSnapshot(asOfDate, periodDays)
+      setSnapshot(data)
+    } catch (loadError) {
+      if (loadError instanceof ApiError) setError(loadError.message)
+      else setError('Unable to load dashboard metrics.')
+    }
+  }, [asOfDate, isAuthenticated, periodDays])
+
+  useEffect(() => {
+    void loadSnapshot()
+  }, [loadSnapshot])
 
   return (
     <Stack spacing={3}>
@@ -60,8 +116,30 @@ export default function DashboardPage() {
             <Stack spacing={2.5}>
               <Typography variant="h2">Run Vexorion like an operations dashboard, not a placeholder homepage.</Typography>
               <Typography variant="body1" sx={{ maxWidth: 760 }}>
-                The shell is now laid out like a CRUD admin workspace with a dedicated sidebar, dense summary cards, and tabular activity zones.
+                Finance KPIs update by as-of date and analysis window so operations can see receivables, payables, revenue, and cash momentum in one screen.
               </Typography>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+                <TextField
+                  type="date"
+                  label="As-of date"
+                  value={asOfDate}
+                  onChange={(event) => setAsOfDate(event.target.value)}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  sx={{ maxWidth: 220 }}
+                />
+                <TextField
+                  select
+                  label="Window"
+                  value={periodDays}
+                  onChange={(event) => setPeriodDays(Number(event.target.value))}
+                  SelectProps={{ native: true }}
+                  sx={{ maxWidth: 220 }}
+                >
+                  {periodOptions.map((option) => (
+                    <option key={option} value={option}>{option} days</option>
+                  ))}
+                </TextField>
+              </Stack>
               {isAuthenticated && user ? (
                 <Stack spacing={1}>
                   <Typography variant="h6">Signed in as {user.firstName ?? user.userName}</Typography>
@@ -75,6 +153,7 @@ export default function DashboardPage() {
               ) : (
                 <Chip color="secondary" label="Sign in to unlock protected modules" sx={{ alignSelf: 'flex-start' }} />
               )}
+              {error ? <Alert severity="error">{error}</Alert> : null}
             </Stack>
           </Paper>
         </Grid>
@@ -83,8 +162,8 @@ export default function DashboardPage() {
           <Paper elevation={0} className="panel-card">
             <Typography variant="h6" sx={{ mb: 2 }}>System focus</Typography>
             <Stack spacing={1.5}>
-              <Typography color="text.secondary">Use the sidebar to move between ERP modules grouped by sales, procurement, and inventory.</Typography>
-              <Typography color="text.secondary">The current design direction now reads like an admin console instead of a landing page.</Typography>
+              <Typography color="text.secondary">Use the reporting and finance modules to drill into aging and trial balance details from these KPI cards.</Typography>
+              <Typography color="text.secondary">Dashboard values are tenant-scoped and filtered by the selected as-of date and window.</Typography>
             </Stack>
           </Paper>
         </Grid>
@@ -107,26 +186,26 @@ export default function DashboardPage() {
         <Grid size={{ xs: 12, xl: 8 }}>
           <Paper elevation={0} className="panel-card">
             <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">Recent records</Typography>
-              <Chip label="CRUD-ready table zone" size="small" />
+              <Typography variant="h6">Cash movement snapshot</Typography>
+              <Chip label={`${periodDays}-day window`} size="small" />
             </Stack>
             <TableContainer>
               <Table size="small">
                 <TableHead>
                   <TableRow>
                     <TableCell>Reference</TableCell>
-                    <TableCell>Owner</TableCell>
-                    <TableCell>Status</TableCell>
+                    <TableCell>Source</TableCell>
+                    <TableCell>Direction</TableCell>
                     <TableCell align="right">Amount</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {recentRows.map((row) => (
+                  {cashRows.map((row) => (
                     <TableRow key={row.id} hover>
                       <TableCell>{row.id}</TableCell>
                       <TableCell>{row.owner}</TableCell>
                       <TableCell>
-                        <Chip label={row.status} size="small" color={row.status === 'Ready' ? 'primary' : 'default'} />
+                        <Chip label={row.status} size="small" color={row.status === 'Positive' || row.status === 'Inflow' ? 'primary' : 'default'} />
                       </TableCell>
                       <TableCell align="right">{row.amount}</TableCell>
                     </TableRow>
@@ -140,12 +219,12 @@ export default function DashboardPage() {
         <Grid size={{ xs: 12, xl: 4 }}>
           <Stack spacing={3}>
             <Paper elevation={0} className="panel-card">
-              <Typography variant="h6" sx={{ mb: 2 }}>Access snapshot</Typography>
+              <Typography variant="h6" sx={{ mb: 2 }}>Finance snapshot</Typography>
               <Stack spacing={1.5}>
-                <Typography variant="body2" color="text.secondary">Primary role</Typography>
-                <Typography variant="h5">{isAuthenticated && user ? user.roles[0] ?? 'User' : 'Guest'}</Typography>
-                <Typography variant="body2" color="text.secondary">Available permission count</Typography>
-                <Typography variant="h5">{isAuthenticated && user ? user.permissions.length : 0}</Typography>
+                <Typography variant="body2" color="text.secondary">Receivables overdue</Typography>
+                <Typography variant="h5">{formatCurrency(snapshot?.receivablesOverdue ?? 0)}</Typography>
+                <Typography variant="body2" color="text.secondary">Payables overdue</Typography>
+                <Typography variant="h5">{formatCurrency(snapshot?.payablesOverdue ?? 0)}</Typography>
               </Stack>
             </Paper>
 
