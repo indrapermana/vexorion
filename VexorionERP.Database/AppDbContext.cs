@@ -71,6 +71,7 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
     public DbSet<VendorPayment> VendorPayments => Set<VendorPayment>();
     public DbSet<Account> Accounts => Set<Account>();
     public DbSet<FiscalPeriod> FiscalPeriods => Set<FiscalPeriod>();
+    public DbSet<NumberingSequence> NumberingSequences => Set<NumberingSequence>();
     public DbSet<JournalEntry> JournalEntries => Set<JournalEntry>();
     public DbSet<JournalEntryLine> JournalEntryLines => Set<JournalEntryLine>();
     public DbSet<PaymentTerm> PaymentTerms => Set<PaymentTerm>();

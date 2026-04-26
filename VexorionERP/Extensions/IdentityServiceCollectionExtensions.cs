@@ -49,6 +49,7 @@ public static class IdentityServiceCollectionExtensions
         services.AddScoped<IInventoryBalanceQueryService, InventoryBalanceQueryService>();
         services.AddScoped<IInventoryMovementPostingService, InventoryMovementPostingService>();
         services.AddScoped<IPostingService, PostingService>();
+        services.AddScoped<INumberingService, NumberingService>();
         services.AddScoped<IInvoiceCommandService, InvoiceCommandService>();
         services.AddScoped<IInvoiceLineCommandService, InvoiceLineCommandService>();
         services.AddScoped<IInvoiceLineQueryService, InvoiceLineQueryService>();

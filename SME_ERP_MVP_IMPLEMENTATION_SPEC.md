@@ -887,19 +887,59 @@ Manual smoke evidence (26 Apr 2026, local dev API):
 
 ### Milestone F
 
+Status: In Progress (26 Apr 2026)
+
 - approvals
 - numbering
 - reporting
 - finance dashboards
 
+### Milestone F execution checklist (F1 numbering)
+
+Run this checklist in order for the first Milestone F implementation slice.
+
+#### 1) Numbering domain + schema
+
+- [x] Add numbering sequence model for tenant-scoped document numbering.
+- [x] Add reset period enum (none/yearly/monthly/daily).
+- [x] Add EF configuration and tenant+document-type unique index.
+- [x] Add DB migration for numbering sequence storage.
+
+#### 2) Numbering service
+
+- [x] Add `INumberingService` and `NumberingService` in finance services.
+- [x] Add default sequence provisioning for:
+	- sales invoices
+	- purchase invoices
+	- journal entries
+- [x] Add date-aware token expansion in prefixes (`{yyyy}`, `{MM}`, `{dd}`, etc.).
+- [x] Add reset behavior per configured reset period.
+
+#### 3) Integration into document flows
+
+- [x] Wire sales invoice creation to support auto-number generation (`InvoiceNumber = AUTO`).
+- [x] Wire purchase invoice creation to support auto-number generation (`InvoiceNumber = AUTO`).
+- [x] Wire journal posting to use numbering service for journal numbers.
+
+#### 4) Admin API surface
+
+- [x] Add numbering sequence endpoints for list/upsert.
+- [x] Protect endpoints with billing view/manage permissions.
+
+#### Done criteria for Milestone F1 (numbering)
+
+- [x] Backend build and tests pass with numbering changes.
+- [x] Numbering tests prove sequential generation and reset behavior.
+- [x] Invoice creation supports explicit number and `AUTO` generation.
+
 ## Immediate next coding slice
 
-The next code implementation slice is Milestone E (finance core) in this order:
+The next code implementation slice is Milestone F1 (numbering) in this order:
 
-1. entities
-2. EF configuration + migration
-3. posting service
-4. controllers
-5. UI
+1. numbering domain + schema
+2. numbering service
+3. document flow integration
+4. admin API endpoints
+5. tests + validation
 
-Start by implementing accounts, fiscal periods, and journal structures, then wire posting for sales and purchase invoices as the first end-to-end finance flow.
+Start with tenant-scoped sequence definitions and wire them into sales invoices, purchase invoices, and journals before moving on to approvals/reporting/dashboard slices.

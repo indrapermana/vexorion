@@ -43,6 +43,31 @@ public class SalesInvoiceCommandServiceTests
     }
 
     [Fact]
+    public async Task Create_WithAutoInvoiceNumber_GeneratesNumberFromSequence()
+    {
+        var tenantId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var databaseName = Guid.NewGuid().ToString();
+
+        await using var dbContext = TestDbContextFactory.Create(tenantId, databaseName);
+        dbContext.Customers.Add(new Customer { Id = customerId, TenantId = tenantId, CustomerNumber = "CUST-AUTO", Name = "Customer" });
+        await dbContext.SaveChangesAsync();
+
+        var service = new SalesInvoiceCommandService(dbContext, new FixedTenantProvider(tenantId));
+        var result = await service.CreateAsync(new CreateSalesInvoiceRequest
+        {
+            InvoiceNumber = "AUTO",
+            CustomerId = customerId,
+            InvoiceDate = new DateOnly(2026, 4, 25),
+            DueDate = new DateOnly(2026, 5, 25),
+            CurrencyCode = "USD",
+        });
+
+        Assert.True(result.Succeeded);
+        Assert.StartsWith("SI-202604-", result.Value!.InvoiceNumber);
+    }
+
+    [Fact]
     public async Task Create_WithPaymentTerm_SetsDueDateFromTerm()
     {
         var tenantId = Guid.NewGuid();

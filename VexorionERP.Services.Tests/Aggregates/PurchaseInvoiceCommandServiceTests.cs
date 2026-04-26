@@ -43,6 +43,31 @@ public class PurchaseInvoiceCommandServiceTests
     }
 
     [Fact]
+    public async Task Create_WithAutoInvoiceNumber_GeneratesNumberFromSequence()
+    {
+        var tenantId = Guid.NewGuid();
+        var supplierId = Guid.NewGuid();
+        var databaseName = Guid.NewGuid().ToString();
+
+        await using var dbContext = TestDbContextFactory.Create(tenantId, databaseName);
+        dbContext.Suppliers.Add(new Supplier { Id = supplierId, TenantId = tenantId, SupplierNumber = "SUP-AUTO", Name = "Supplier" });
+        await dbContext.SaveChangesAsync();
+
+        var service = new PurchaseInvoiceCommandService(dbContext, new FixedTenantProvider(tenantId));
+        var result = await service.CreateAsync(new CreatePurchaseInvoiceRequest
+        {
+            InvoiceNumber = "AUTO",
+            SupplierId = supplierId,
+            InvoiceDate = new DateOnly(2026, 4, 25),
+            DueDate = new DateOnly(2026, 5, 25),
+            CurrencyCode = "USD",
+        });
+
+        Assert.True(result.Succeeded);
+        Assert.StartsWith("PI-202604-", result.Value!.InvoiceNumber);
+    }
+
+    [Fact]
     public async Task Create_WithPaymentTerm_SetsDueDateFromTerm()
     {
         var tenantId = Guid.NewGuid();

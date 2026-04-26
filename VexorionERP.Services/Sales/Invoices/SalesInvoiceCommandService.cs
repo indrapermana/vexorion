@@ -12,8 +12,11 @@ namespace VexorionERP.Services;
 
 public class SalesInvoiceCommandService(
     AppDbContext dbContext,
-    ICurrentTenantProvider currentTenantProvider) : ISalesInvoiceCommandService
+    ICurrentTenantProvider currentTenantProvider,
+    INumberingService? numberingService = null) : ISalesInvoiceCommandService
 {
+    private readonly INumberingService _numberingService = numberingService ?? new NumberingService(dbContext, currentTenantProvider);
+
     public async Task<ServiceResult<SalesInvoiceDetailsResponse>> CreateAsync(CreateSalesInvoiceRequest request, CancellationToken cancellationToken = default)
     {
         if (!currentTenantProvider.TenantId.HasValue)
@@ -35,7 +38,7 @@ public class SalesInvoiceCommandService(
         var effectiveCustomerId = sourceSalesOrder?.CustomerId ?? request.CustomerId;
         var effectiveCurrencyCode = sourceSalesOrder?.CurrencyCode ?? request.CurrencyCode;
 
-        var validation = Validate(request.InvoiceNumber, effectiveCustomerId, effectiveCurrencyCode);
+        var validation = Validate(request.InvoiceNumber, effectiveCustomerId, effectiveCurrencyCode, requireInvoiceNumber: false);
         if (validation.Count > 0)
             return ServiceResult<SalesInvoiceDetailsResponse>.ValidationFailure(validation);
 
@@ -51,7 +54,11 @@ public class SalesInvoiceCommandService(
             dueDate = request.InvoiceDate.AddDays(term.DaysDue);
         }
 
-        var normalized = request.InvoiceNumber.Trim().ToUpperInvariant();
+        var invoiceNumberResult = await ResolveInvoiceNumberAsync(request.InvoiceNumber, request.InvoiceDate, cancellationToken);
+        if (!invoiceNumberResult.Succeeded)
+            return ServiceResult<SalesInvoiceDetailsResponse>.Failure(invoiceNumberResult.StatusCode ?? StatusCodes.Status400BadRequest, invoiceNumberResult.ErrorMessage ?? "Failed to generate invoice number.");
+
+        var normalized = invoiceNumberResult.Value!;
         if (await dbContext.SalesInvoices.AnyAsync(x => x.TenantId == currentTenantProvider.TenantId.Value && x.InvoiceNumber.ToUpper() == normalized, cancellationToken))
             return ServiceResult<SalesInvoiceDetailsResponse>.Failure(StatusCodes.Status409Conflict, "A sales invoice with the same number already exists.");
 
@@ -97,7 +104,7 @@ public class SalesInvoiceCommandService(
         if (!currentTenantProvider.TenantId.HasValue)
             return ServiceResult<SalesInvoiceDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
 
-        var validation = Validate(request.InvoiceNumber, request.CustomerId, request.CurrencyCode);
+        var validation = Validate(request.InvoiceNumber, request.CustomerId, request.CurrencyCode, requireInvoiceNumber: true);
         if (validation.Count > 0)
             return ServiceResult<SalesInvoiceDetailsResponse>.ValidationFailure(validation);
 
@@ -190,10 +197,22 @@ public class SalesInvoiceCommandService(
         invoice.GrandTotal = invoice.Subtotal + invoice.TaxTotal;
     }
 
-    private static Dictionary<string, string[]> Validate(string invoiceNumber, Guid customerId, string currencyCode)
+    private async Task<ServiceResult<string>> ResolveInvoiceNumberAsync(string invoiceNumber, DateOnly invoiceDate, CancellationToken cancellationToken)
+    {
+        if (!string.IsNullOrWhiteSpace(invoiceNumber) && !string.Equals(invoiceNumber.Trim(), "AUTO", StringComparison.OrdinalIgnoreCase))
+            return ServiceResult<string>.Success(invoiceNumber.Trim().ToUpperInvariant());
+
+        var nextNumber = await _numberingService.GenerateNextAsync("SALES_INVOICE", invoiceDate, cancellationToken);
+        if (!nextNumber.Succeeded)
+            return ServiceResult<string>.Failure(nextNumber.StatusCode ?? StatusCodes.Status400BadRequest, nextNumber.ErrorMessage ?? "Failed to generate invoice number.");
+
+        return ServiceResult<string>.Success(nextNumber.Value!);
+    }
+
+    private static Dictionary<string, string[]> Validate(string invoiceNumber, Guid customerId, string currencyCode, bool requireInvoiceNumber)
     {
         var errors = new Dictionary<string, string[]>();
-        if (string.IsNullOrWhiteSpace(invoiceNumber)) errors[nameof(CreateSalesInvoiceRequest.InvoiceNumber)] = ["Invoice number is required."];
+        if (requireInvoiceNumber && string.IsNullOrWhiteSpace(invoiceNumber)) errors[nameof(CreateSalesInvoiceRequest.InvoiceNumber)] = ["Invoice number is required."];
         if (customerId == Guid.Empty) errors[nameof(CreateSalesInvoiceRequest.CustomerId)] = ["Customer is required."];
         if (string.IsNullOrWhiteSpace(currencyCode)) errors[nameof(CreateSalesInvoiceRequest.CurrencyCode)] = ["Currency code is required."];
         return errors;

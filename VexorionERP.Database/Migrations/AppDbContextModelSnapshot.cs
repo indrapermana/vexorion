@@ -643,6 +643,59 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("JournalEntryLine", (string)null);
                 });
 
+            modelBuilder.Entity("VexorionERP.Models.Finance.NumberingSequence", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CurrentPeriodKey")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("DocumentType")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<int>("NextNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("NumberPadding")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PrefixTemplate")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<int>("ResetPeriod")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "DocumentType")
+                        .IsUnique();
+
+                    b.ToTable("NumberingSequence", (string)null);
+                });
+
             modelBuilder.Entity("VexorionERP.Models.Finance.PaymentTerm", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2877,6 +2930,17 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Account");
 
                     b.Navigation("JournalEntry");
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.Finance.NumberingSequence", b =>
+                {
+                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Tenant");
                 });

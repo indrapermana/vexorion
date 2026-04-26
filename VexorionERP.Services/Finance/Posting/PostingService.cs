@@ -10,8 +10,11 @@ namespace VexorionERP.Services;
 
 public class PostingService(
     AppDbContext dbContext,
-    ICurrentTenantProvider currentTenantProvider) : IPostingService
+    ICurrentTenantProvider currentTenantProvider,
+    INumberingService? numberingService = null) : IPostingService
 {
+    private readonly INumberingService _numberingService = numberingService ?? new NumberingService(dbContext, currentTenantProvider);
+
     public async Task<ServiceResult<JournalEntry>> PostSalesInvoiceAsync(
         Guid salesInvoiceId,
         Guid receivableAccountId,
@@ -375,7 +378,7 @@ public class PostingService(
         var journal = new JournalEntry
         {
             TenantId = tenantId,
-            JournalNumber = await GenerateJournalNumberAsync(tenantId, postingDate, cancellationToken),
+            JournalNumber = string.Empty,
             SourceDocumentType = sourceDocumentType,
             SourceDocumentId = sourceDocumentId,
             PostingDate = postingDate,
@@ -387,6 +390,12 @@ public class PostingService(
             ReversedJournalEntryId = reversedJournalEntryId,
             Lines = lines.ToList(),
         };
+
+        var journalNumberResult = await _numberingService.GenerateNextAsync("JOURNAL_ENTRY", postingDate, cancellationToken);
+        if (!journalNumberResult.Succeeded)
+            return ServiceResult<JournalEntry>.Failure(journalNumberResult.StatusCode ?? StatusCodes.Status400BadRequest, journalNumberResult.ErrorMessage ?? "Failed to generate journal number.");
+
+        journal.JournalNumber = journalNumberResult.Value!;
 
         dbContext.JournalEntries.Add(journal);
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -413,14 +422,4 @@ public class PostingService(
         };
     }
 
-    private async Task<string> GenerateJournalNumberAsync(Guid tenantId, DateOnly postingDate, CancellationToken cancellationToken)
-    {
-        var prefix = $"JRN-{postingDate:yyyyMMdd}";
-
-        var sequence = await dbContext.JournalEntries
-            .Where(x => x.TenantId == tenantId && x.JournalNumber.StartsWith(prefix))
-            .CountAsync(cancellationToken) + 1;
-
-        return $"{prefix}-{sequence:0000}";
-    }
 }
