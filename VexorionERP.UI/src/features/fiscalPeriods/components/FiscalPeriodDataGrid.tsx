@@ -1,0 +1,58 @@
+import EditRoundedIcon from '@mui/icons-material/EditRounded'
+import LockOpenRoundedIcon from '@mui/icons-material/LockOpenRounded'
+import LockRoundedIcon from '@mui/icons-material/LockRounded'
+import { Chip } from '@mui/material'
+import { DataGrid, GridActionsCellItem, type GridColDef } from '@mui/x-data-grid'
+import type { FiscalPeriodGridRow } from '../../../types/ui'
+
+type FiscalPeriodDataGridProps = {
+  rows: FiscalPeriodGridRow[]
+  isLoading: boolean
+  onEdit: (fiscalPeriodId: string) => void
+  onClosePeriod: (row: FiscalPeriodGridRow) => void
+  onReopenPeriod: (row: FiscalPeriodGridRow) => void
+}
+
+export default function FiscalPeriodDataGrid({ rows, isLoading, onEdit, onClosePeriod, onReopenPeriod }: FiscalPeriodDataGridProps) {
+  const columns: GridColDef<FiscalPeriodGridRow>[] = [
+    { field: 'periodCode', headerName: 'Period', minWidth: 130, flex: 0.5 },
+    { field: 'startDate', headerName: 'Start date', minWidth: 130, flex: 0.5 },
+    { field: 'endDate', headerName: 'End date', minWidth: 130, flex: 0.5 },
+    {
+      field: 'isClosed',
+      headerName: 'Status',
+      minWidth: 120,
+      flex: 0.4,
+      renderCell: ({ row }) => (
+        <Chip size="small" color={row.isClosed ? 'default' : 'success'} label={row.isClosed ? 'Closed' : 'Open'} />
+      ),
+    },
+    {
+      field: 'actions',
+      type: 'actions',
+      headerName: 'Actions',
+      minWidth: 180,
+      getActions: ({ row }) => [
+        <GridActionsCellItem key={`edit-${row.id}`} icon={<EditRoundedIcon />} label="Edit" onClick={() => onEdit(row.id)} showInMenu={false} />,
+        row.isClosed
+          ? <GridActionsCellItem key={`reopen-${row.id}`} icon={<LockOpenRoundedIcon />} label="Reopen" onClick={() => onReopenPeriod(row)} showInMenu={false} />
+          : <GridActionsCellItem key={`close-${row.id}`} icon={<LockRoundedIcon />} label="Close" onClick={() => onClosePeriod(row)} showInMenu={false} />,
+      ],
+    },
+  ]
+
+  return (
+    <DataGrid
+      autoHeight
+      rows={rows}
+      columns={columns}
+      loading={isLoading}
+      disableRowSelectionOnClick
+      pageSizeOptions={[10, 25, 50]}
+      initialState={{ pagination: { paginationModel: { pageSize: 10, page: 0 } } }}
+      showToolbar
+      slotProps={{ toolbar: { showQuickFilter: true } }}
+      sx={{ border: 'none' }}
+    />
+  )
+}

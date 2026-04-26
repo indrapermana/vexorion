@@ -797,6 +797,8 @@ Status: Completed (26 Apr 2026)
 
 ### Milestone E
 
+Status: Completed (26 Apr 2026)
+
 - chart of accounts
 - fiscal periods
 - journal entries
@@ -808,41 +810,41 @@ Run this checklist in order for the first Milestone E implementation slice.
 
 #### 1) Entities
 
-- [ ] Add finance entities under `VexorionERP.Models/Finance`:
+- [x] Add finance entities under `VexorionERP.Models/Finance`:
 	- `Account`
 	- `FiscalPeriod`
 	- `JournalEntry`
 	- `JournalEntryLine`
-- [ ] Add core fields and invariants:
+- [x] Add core fields and invariants:
 	- account code uniqueness per tenant
 	- journal total debit and credit tracking
 	- optional reversal linkage (`ReversedJournalEntryId`)
-- [ ] Add enums/value choices needed for:
+- [x] Add enums/value choices needed for:
 	- account type
 	- journal status
 	- normal balance
 
 #### 2) EF + migration
 
-- [ ] Add DbSets in `AppDbContext` for all finance entities.
-- [ ] Add per-entity EF configurations and tenant-aware indexes.
-- [ ] Add indexes:
+- [x] Add DbSets in `AppDbContext` for all finance entities.
+- [x] Add per-entity EF configurations and tenant-aware indexes.
+- [x] Add indexes:
 	- tenant + account code (unique)
 	- tenant + fiscal period range
 	- tenant + journal number (unique)
-- [ ] Create focused migration for finance core tables only.
-- [ ] Apply migration and verify schema on dev database.
+- [x] Create focused migration for finance core tables only.
+- [x] Apply migration and verify schema on dev database.
 
 #### 3) Posting service
 
-- [ ] Create `IPostingService` and `PostingService` in `VexorionERP.Services/Finance`.
-- [ ] Implement posting guards:
+- [x] Create `IPostingService` and `PostingService` in `VexorionERP.Services/Finance`.
+- [x] Implement posting guards:
 	- fiscal period must be open
 	- source document must be eligible for posting
 	- duplicate posting blocked for the same source reference
-- [ ] Implement balanced journal creation logic where $\sum debit = \sum credit$.
-- [ ] Implement reversal journal generation with inverse lines.
-- [ ] Add first document posting adapters for:
+- [x] Implement balanced journal creation logic where $\sum debit = \sum credit$.
+- [x] Implement reversal journal generation with inverse lines.
+- [x] Add first document posting adapters for:
 	- sales invoices
 	- purchase invoices
 	- customer payments
@@ -850,31 +852,38 @@ Run this checklist in order for the first Milestone E implementation slice.
 
 #### 4) Controllers
 
-- [ ] Add controllers for:
+- [x] Add controllers for:
 	- accounts
 	- fiscal periods
 	- journals
 	- posting operations
-- [ ] Keep endpoint pattern aligned with existing API style.
-- [ ] Apply policy-based authorization using existing permission conventions.
-- [ ] Register finance services and posting service in DI.
+- [x] Keep endpoint pattern aligned with existing API style.
+- [x] Apply policy-based authorization using existing permission conventions.
+- [x] Register finance services and posting service in DI.
 
 #### 5) UI
 
-- [ ] Add feature modules/pages for:
+- [x] Add feature modules/pages for:
 	- accounts
 	- fiscal periods
 	- journals
-- [ ] Add API contracts and client wrappers for finance endpoints.
-- [ ] Add routes and navigation entries for new finance pages.
-- [ ] Provide journal list/details view with source-document references.
+- [x] Add API contracts and client wrappers for finance endpoints.
+- [x] Add routes and navigation entries for new finance pages.
+- [x] Provide journal list/details view with source-document references.
 
 #### Done criteria for Milestone E first slice
 
-- [ ] Backend build and tests pass.
-- [ ] Frontend TypeScript compile passes.
-- [ ] Posting tests prove balanced journals, closed period blocking, and duplicate posting protection.
-- [ ] Manual smoke test passes for creating accounts/periods and posting at least one sales invoice.
+- [x] Backend build and tests pass.
+- [x] Frontend TypeScript compile passes.
+- [x] Posting tests prove balanced journals, closed period blocking, and duplicate posting protection.
+- [x] Manual smoke test passes for creating accounts/periods and posting at least one sales invoice.
+
+Manual smoke evidence (26 Apr 2026, local dev API):
+- Fiscal period id: `ae950f08-6457-4fb3-9b74-f7b4b2dc8b81`
+- AR account id: `6024a290-47e3-45e8-b4f1-a544f9289a20`
+- Revenue account id: `318df217-9e03-4701-8254-5327b20dd21c`
+- Sales invoice id: `a9b0236c-caf5-45f4-b263-a62d300298b6`
+- Posted journal id: `16afa012-eae2-47f9-9491-34061f113c74` (`JRN-20990426-0001`)
 
 ### Milestone F
 

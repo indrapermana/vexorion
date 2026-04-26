@@ -6,10 +6,13 @@ import { AuthProvider } from './app/AuthContext'
 import { ProtectedRoute, PublicOnlyRoute } from './components/RouteGuards'
 
 const AppLayout = lazy(() => import('./components/AppLayout'))
+const AccountsPage = lazy(() => import('./pages/AccountsPage'))
 const PublicAuthLayout = lazy(() => import('./components/PublicAuthLayout'))
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
 const CustomersPage = lazy(() => import('./pages/CustomersPage'))
 const CustomerPaymentsPage = lazy(() => import('./pages/CustomerPaymentsPage'))
+const FiscalPeriodsPage = lazy(() => import('./pages/FiscalPeriodsPage'))
+const JournalsPage = lazy(() => import('./pages/JournalsPage'))
 const LoginPage = lazy(() => import('./pages/LoginPage'))
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'))
 const InventoryAdjustmentsPage = lazy(() => import('./pages/InventoryAdjustmentsPage'))
@@ -42,6 +45,9 @@ function App() {
                 <Route path="/" element={<DashboardPage />} />
                 <Route path="/customers" element={<CustomersPage />} />
                 <Route path="/customer-payments" element={<CustomerPaymentsPage />} />
+                <Route path="/accounts" element={<AccountsPage />} />
+                <Route path="/fiscal-periods" element={<FiscalPeriodsPage />} />
+                <Route path="/journals" element={<JournalsPage />} />
                 <Route path="/products" element={<ProductsPage />} />
                 <Route path="/inventory-adjustments" element={<InventoryAdjustmentsPage />} />
                 <Route path="/purchase-invoices" element={<PurchaseInvoicesPage />} />

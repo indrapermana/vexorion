@@ -1,6 +1,7 @@
 export * from './auth'
 export * from './core'
 export * from './customers'
+export * from './finance'
 export * from './inventoryBalances'
 export * from './inventoryAdjustments'
 export * from './orderLines'
