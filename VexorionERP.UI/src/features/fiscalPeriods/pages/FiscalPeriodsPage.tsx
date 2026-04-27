@@ -1,6 +1,7 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import { Alert, Box, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { ApiError, closeFiscalPeriod, getFiscalPeriods, reopenFiscalPeriod } from '../../../lib/api'
 import type { FiscalPeriodDetailsResponse, FiscalPeriodListItemResponse } from '../../../types/api'
@@ -17,6 +18,7 @@ function FiscalPeriodSurfaceFallback() {
 }
 
 export default function FiscalPeriodsPage() {
+  const { t } = useTranslation()
   const { isAuthenticated } = useAuth()
   const [rows, setRows] = useState<FiscalPeriodListItemResponse[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -96,7 +98,7 @@ export default function FiscalPeriodsPage() {
   }
 
   if (!isAuthenticated) {
-    return <Alert severity="info">Sign in first. Fiscal periods require billing permissions.</Alert>
+    return <Alert severity="info">{t('pages.fiscalPeriods.signInRequired')}</Alert>
   }
 
   return (
@@ -104,10 +106,10 @@ export default function FiscalPeriodsPage() {
       <Paper elevation={0} className="panel-card">
         <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2.5} sx={{ justifyContent: 'space-between' }}>
           <Box>
-            <Typography variant="h4" sx={{ mb: 1 }}>Fiscal Periods</Typography>
-            <Typography color="text.secondary">Accounting periods from /api/fiscal-periods.</Typography>
+            <Typography variant="h4" sx={{ mb: 1 }}>{t('nav.routeTitles.fiscalPeriods')}</Typography>
+            <Typography color="text.secondary">{t('pages.fiscalPeriods.description')}</Typography>
           </Box>
-          <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate}>New period</Button>
+          <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate}>{t('pages.fiscalPeriods.newButton')}</Button>
         </Stack>
       </Paper>
 

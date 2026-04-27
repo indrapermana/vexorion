@@ -4,6 +4,7 @@ import PaidRoundedIcon from '@mui/icons-material/PaidRounded'
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded'
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded'
 import { Alert, Box, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
 import { useSuppliersLookup } from '../../../hooks/useLookups'
@@ -15,11 +16,13 @@ const VendorPaymentDataGrid = lazy(() => import('../components/VendorPaymentData
 const VendorPaymentEditorDialog = lazy(() => import('../components/VendorPaymentEditorDialog'))
 
 function VendorPaymentSurfaceFallback() {
+  const { t } = useTranslation()
+
   return (
     <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
       <Stack spacing={1.5} sx={{ alignItems: 'center' }}>
         <CircularProgress size={28} />
-        <Typography color="text.secondary">Loading vendor payment tools...</Typography>
+        <Typography color="text.secondary">{t('pages.vendorPayments.loadingTools')}</Typography>
       </Stack>
     </Box>
   )
@@ -30,6 +33,7 @@ type SourceState = Partial<VendorPaymentFormValues> & {
 }
 
 export default function VendorPaymentsPage() {
+  const { t } = useTranslation()
   const { isAuthenticated } = useAuth()
   const { items: suppliers, error: suppliersError, reload: reloadSuppliers } = useSuppliersLookup(isAuthenticated)
   const location = useLocation()
@@ -120,7 +124,7 @@ export default function VendorPaymentsPage() {
   }
 
   if (!isAuthenticated) {
-    return <Alert severity="info">Sign in first. Vendor payments require an authenticated user with purchasing permissions.</Alert>
+    return <Alert severity="info">{t('pages.vendorPayments.signInRequired')}</Alert>
   }
 
   return (
@@ -128,31 +132,31 @@ export default function VendorPaymentsPage() {
       <Paper elevation={0} className="panel-card">
         <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2.5} sx={{ justifyContent: 'space-between' }}>
           <Box>
-            <Typography variant="h4" sx={{ mb: 1 }}>Vendor Payments</Typography>
-            <Typography color="text.secondary">Disbursement entries from `/api/vendor-payments`, linked to outstanding purchase invoices.</Typography>
+            <Typography variant="h4" sx={{ mb: 1 }}>{t('nav.routeTitles.vendorPayments')}</Typography>
+            <Typography color="text.secondary">{t('pages.vendorPayments.description')}</Typography>
           </Box>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
             <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog} disabled={!outstandingInvoices.length}>
-              Record payment
+              {t('pages.vendorPayments.recordPayment')}
             </Button>
             <Paper elevation={0} className="products-metric-card">
               <PaidRoundedIcon fontSize="small" />
               <Box>
-                <Typography variant="body2" color="text.secondary">Payments</Typography>
+                <Typography variant="body2" color="text.secondary">{t('pages.vendorPayments.metrics.payments')}</Typography>
                 <Typography variant="h6">{payments.length}</Typography>
               </Box>
             </Paper>
             <Paper elevation={0} className="products-metric-card">
               <ScheduleRoundedIcon fontSize="small" />
               <Box>
-                <Typography variant="body2" color="text.secondary">Outstanding invoices</Typography>
+                <Typography variant="body2" color="text.secondary">{t('pages.vendorPayments.metrics.outstandingInvoices')}</Typography>
                 <Typography variant="h6">{outstandingInvoices.length}</Typography>
               </Box>
             </Paper>
             <Paper elevation={0} className="products-metric-card">
               <ReceiptLongRoundedIcon fontSize="small" />
               <Box>
-                <Typography variant="body2" color="text.secondary">Open balance</Typography>
+                <Typography variant="body2" color="text.secondary">{t('pages.vendorPayments.metrics.openBalance')}</Typography>
                 <Typography variant="h6">${outstandingInvoices.reduce((sum, invoice) => sum + invoice.balanceDue, 0).toFixed(2)}</Typography>
               </Box>
             </Paper>
@@ -163,7 +167,7 @@ export default function VendorPaymentsPage() {
       {suppliersError ? <Alert severity="warning">{suppliersError}</Alert> : null}
       {error ? <Alert severity="error">{error}</Alert> : null}
       {feedback ? <Alert severity="success">{feedback}</Alert> : null}
-      {!outstandingInvoices.length ? <Alert severity="info">No outstanding purchase invoices are currently available for payment allocation.</Alert> : null}
+      {!outstandingInvoices.length ? <Alert severity="info">{t('pages.vendorPayments.noOutstandingInvoices')}</Alert> : null}
 
       <Paper elevation={0} className="panel-card products-grid-panel">
         <Suspense fallback={<VendorPaymentSurfaceFallback />}>

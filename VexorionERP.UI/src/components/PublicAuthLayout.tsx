@@ -4,45 +4,43 @@ import ShieldMoonRoundedIcon from '@mui/icons-material/ShieldMoonRounded'
 import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded'
 import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded'
 import { Box, Chip, Stack, Typography } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { Outlet, useLocation } from 'react-router-dom'
 
-const pageContent: Record<string, { eyebrow: string; title: string; description: string; cta: string }> = {
-  '/login': {
-    eyebrow: 'Access workspace',
-    title: 'Sign in to the ERP control plane.',
-    description:
-      'Authenticate against the ASP.NET Core API, restore your session automatically, and enter the protected CRUD workspace.',
-    cta: 'JWT login, refresh flow, and guarded routes are already wired.',
-  },
-  '/tenants': {
-    eyebrow: 'Launch new tenant',
-    title: 'Create a tenant and bootstrap the first admin account.',
-    description:
-      'Use the public onboarding flow to provision a fresh ERP workspace with tenant, company, and initial administrator details.',
-    cta: 'This stays outside the admin shell by design so first-run setup feels distinct.',
-  },
-}
-
-const featureRows = [
-  {
-    icon: <ShieldMoonRoundedIcon />,
-    title: 'Session resilience',
-    description: 'Access tokens are refreshed automatically and protected routes redirect cleanly when a session expires.',
-  },
-  {
-    icon: <StorefrontRoundedIcon />,
-    title: 'Operational modules',
-    description: 'Catalog, inventory, sales, purchasing, billing, and tenant provisioning are already aligned behind the same API boundary.',
-  },
-  {
-    icon: <TrendingUpRoundedIcon />,
-    title: 'Admin-first UI',
-    description: 'The main shell has moved to a left-nav CRUD dashboard, while public entry flows keep a dedicated conversion-oriented layout.',
-  },
-]
-
 export default function PublicAuthLayout() {
+  const { t } = useTranslation()
   const location = useLocation()
+  const pageContent: Record<string, { eyebrow: string; title: string; description: string; cta: string }> = {
+    '/login': {
+      eyebrow: t('publicAuth.login.eyebrow'),
+      title: t('publicAuth.login.title'),
+      description: t('publicAuth.login.description'),
+      cta: t('publicAuth.login.cta'),
+    },
+    '/tenants': {
+      eyebrow: t('publicAuth.tenants.eyebrow'),
+      title: t('publicAuth.tenants.title'),
+      description: t('publicAuth.tenants.description'),
+      cta: t('publicAuth.tenants.cta'),
+    },
+  }
+  const featureRows = [
+    {
+      icon: <ShieldMoonRoundedIcon />,
+      title: t('publicAuth.features.sessionResilience.title'),
+      description: t('publicAuth.features.sessionResilience.description'),
+    },
+    {
+      icon: <StorefrontRoundedIcon />,
+      title: t('publicAuth.features.operationalModules.title'),
+      description: t('publicAuth.features.operationalModules.description'),
+    },
+    {
+      icon: <TrendingUpRoundedIcon />,
+      title: t('publicAuth.features.adminFirstUi.title'),
+      description: t('publicAuth.features.adminFirstUi.description'),
+    },
+  ]
   const content = pageContent[location.pathname] ?? pageContent['/login']
 
   return (
@@ -55,9 +53,9 @@ export default function PublicAuthLayout() {
             </Box>
             <Box>
               <Typography variant="overline" sx={{ color: 'rgba(255,255,255,0.72)', letterSpacing: '0.18em' }}>
-                VEXORION ERP
+                {t('app.brand')}
               </Typography>
-              <Typography variant="h6" sx={{ color: '#fff' }}>Workspace access</Typography>
+              <Typography variant="h6" sx={{ color: '#fff' }}>{t('publicAuth.workspaceAccess')}</Typography>
             </Box>
           </Stack>
 

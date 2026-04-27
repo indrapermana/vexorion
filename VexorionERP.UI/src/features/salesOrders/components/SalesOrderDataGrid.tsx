@@ -6,6 +6,7 @@ import FormatListBulletedRoundedIcon from '@mui/icons-material/FormatListBullete
 import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded'
 import PostAddRoundedIcon from '@mui/icons-material/PostAddRounded'
 import { getDocumentStatusLabel, type SalesOrderGridRow } from '../../../types/ui'
+import { useTranslation } from 'react-i18next'
 
 type SalesOrderDataGridProps = {
   rows: SalesOrderGridRow[]
@@ -31,6 +32,7 @@ function getStatusColor(status: number) {
 }
 
 export default function SalesOrderDataGrid({ rows, isLoading, onEdit, onDelete, onManageLines, onCreateInvoice, onViewShipments }: SalesOrderDataGridProps) {
+  useTranslation()
   const columns: GridColDef<SalesOrderGridRow>[] = [
     {
       field: 'orderNumber',

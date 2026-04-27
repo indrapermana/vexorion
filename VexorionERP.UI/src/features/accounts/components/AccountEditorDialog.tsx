@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, MenuItem, Stack, Switch, TextField } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
@@ -32,6 +33,7 @@ const schema: yup.ObjectSchema<AccountFormValues> = yup.object({
 })
 
 export default function AccountEditorDialog({ open, mode, accountId, onClose, onSaved }: AccountEditorDialogProps) {
+  useTranslation()
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(mode === 'edit')
 

@@ -4,6 +4,7 @@ import FormatListBulletedRoundedIcon from '@mui/icons-material/FormatListBullete
 import PaidRoundedIcon from '@mui/icons-material/PaidRounded'
 import { Box, Chip, Typography } from '@mui/material'
 import { DataGrid, GridActionsCellItem, type GridColDef } from '@mui/x-data-grid'
+import { useTranslation } from 'react-i18next'
 import { getInvoiceStatusLabel, type PurchaseInvoiceGridRow } from '../../../types/ui'
 
 type PurchaseInvoiceDataGridProps = {
@@ -24,6 +25,7 @@ function getStatusColor(status: number) {
 }
 
 export default function PurchaseInvoiceDataGrid({ rows, isLoading, onEdit, onDelete, onManageLines, onRecordPayment }: PurchaseInvoiceDataGridProps) {
+  useTranslation()
   const columns: GridColDef<PurchaseInvoiceGridRow>[] = [
     {
       field: 'invoiceNumber',

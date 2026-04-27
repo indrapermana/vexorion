@@ -2,6 +2,7 @@ import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
 import PublishRoundedIcon from '@mui/icons-material/PublishRounded'
 import { Chip } from '@mui/material'
 import { DataGrid, GridActionsCellItem, type GridColDef } from '@mui/x-data-grid'
+import { useTranslation } from 'react-i18next'
 import type { SalesShipmentGridRow } from '../../../types/ui'
 
 function getStatusLabel(status: number) {
@@ -24,6 +25,7 @@ type SalesShipmentDataGridProps = {
 }
 
 export default function SalesShipmentDataGrid({ rows, isLoading, onPost, onDelete }: SalesShipmentDataGridProps) {
+  useTranslation()
   const columns: GridColDef<SalesShipmentGridRow>[] = [
     { field: 'shipmentNumber', headerName: 'Shipment #', minWidth: 160, flex: 1 },
     { field: 'shipmentDate', headerName: 'Date', minWidth: 130, flex: 0.7 },

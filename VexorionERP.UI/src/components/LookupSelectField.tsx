@@ -1,4 +1,5 @@
 import { MenuItem, TextField } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 
 type LookupOption = {
   value: string
@@ -26,6 +27,7 @@ export default function LookupSelectField({
   disabled,
   emptyText = 'No options available',
 }: LookupSelectFieldProps) {
+  useTranslation()
   return (
     <TextField
       fullWidth

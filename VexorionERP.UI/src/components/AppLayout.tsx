@@ -32,7 +32,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../app/AuthContext'
-import { countries } from '../i18n'
 import {
   type TranslationLanguage,
   LanguageOptions,
@@ -293,7 +292,22 @@ export default function AppLayout() {
       </Drawer>
 
       <Box className="dashboard-main" sx={{ ml: { lg: `${drawerWidth}px` } }}>
-        <Toolbar className="dashboard-topbar">
+        <Toolbar className="dashboard-topbar" sx={{ position: 'relative' }}>
+          <Box sx={{ position: 'absolute', top: 8, right: 16 }}>
+            <Select
+              size="small"
+              value={currentLanguage}
+              onChange={(event) => handleLanguageChange(event.target.value as TranslationLanguage)}
+              aria-label={t('app.languageSelectorAria')}
+              sx={{ minWidth: 132 }}
+            >
+              {LanguageOptions.map((option) => (
+                <MenuItem key={option.code} value={option.code}>
+                  {t(option.translationKey)}
+                </MenuItem>
+              ))}
+            </Select>
+          </Box>
           <Stack direction="row" spacing={2} sx={{ alignItems: 'center', width: '100%' }}>
             <IconButton sx={{ display: { lg: 'none' } }} onClick={() => setMobileOpen(true)}>
               <MenuRoundedIcon />
@@ -304,22 +318,6 @@ export default function AppLayout() {
               </Typography>
               <Typography variant="h5">{pageTitle}</Typography>
             </Box>
-            <Select
-              size="small"
-              value={currentLanguage}
-              onChange={(event) => handleLanguageChange(event.target.value as TranslationLanguage)}
-              aria-label={t('app.languageSelectorAria')}
-              sx={{ minWidth: 144 }}
-            >
-              {LanguageOptions.map((option) => {
-                const countryName = countries.getName(option.countryCode, option.i18nIsoCountryLocale) ?? option.countryCode
-                return (
-                  <MenuItem key={option.code} value={option.code}>
-                    {`${option.flag} ${countryName} - ${t(option.translationKey)}`}
-                  </MenuItem>
-                )
-              })}
-            </Select>
             {isAuthenticated ? (
               <Chip color="secondary" label={user ? `${user.firstName ?? user.userName} · ${user.roles[0] ?? 'User'}` : t('app.signedIn')} />
             ) : (

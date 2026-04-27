@@ -6,6 +6,7 @@ import FormatListBulletedRoundedIcon from '@mui/icons-material/FormatListBullete
 import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded'
 import PostAddRoundedIcon from '@mui/icons-material/PostAddRounded'
 import { getDocumentStatusLabel, type PurchaseOrderGridRow } from '../../../types/ui'
+import { useTranslation } from 'react-i18next'
 
 type PurchaseOrderDataGridProps = {
   rows: PurchaseOrderGridRow[]
@@ -25,6 +26,7 @@ function getStatusColor(status: number) {
 }
 
 export default function PurchaseOrderDataGrid({ rows, isLoading, onEdit, onDelete, onManageLines, onCreateInvoice, onViewReceipts }: PurchaseOrderDataGridProps) {
+  useTranslation()
   const columns: GridColDef<PurchaseOrderGridRow>[] = [
     {
       field: 'orderNumber',

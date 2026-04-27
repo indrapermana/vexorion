@@ -3,6 +3,7 @@ import LockOpenRoundedIcon from '@mui/icons-material/LockOpenRounded'
 import LockRoundedIcon from '@mui/icons-material/LockRounded'
 import { Chip } from '@mui/material'
 import { DataGrid, GridActionsCellItem, type GridColDef } from '@mui/x-data-grid'
+import { useTranslation } from 'react-i18next'
 import type { FiscalPeriodGridRow } from '../../../types/ui'
 
 type FiscalPeriodDataGridProps = {
@@ -14,6 +15,7 @@ type FiscalPeriodDataGridProps = {
 }
 
 export default function FiscalPeriodDataGrid({ rows, isLoading, onEdit, onClosePeriod, onReopenPeriod }: FiscalPeriodDataGridProps) {
+  useTranslation()
   const columns: GridColDef<FiscalPeriodGridRow>[] = [
     { field: 'periodCode', headerName: 'Period', minWidth: 130, flex: 0.5 },
     { field: 'startDate', headerName: 'Start date', minWidth: 130, flex: 0.5 },

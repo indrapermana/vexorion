@@ -18,6 +18,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { ApiError, createSalesShipment, getSalesOrderLines } from '../../../lib/api'
 import { useProductsLookup } from '../../../hooks/useLookups'
 import LookupSelectField from '../../../components/LookupSelectField'
@@ -34,6 +35,7 @@ type LineEntry = {
 }
 
 export default function CreateSalesShipmentDialog({ open, salesOrderId, warehouses, onClose, onSaved }: SalesShipmentEditorDialogProps) {
+  useTranslation()
   const { items: products } = useProductsLookup(open)
   const [orderLines, setOrderLines] = useState<LineEntry[]>([])
   const [isLoadingLines, setIsLoadingLines] = useState(false)

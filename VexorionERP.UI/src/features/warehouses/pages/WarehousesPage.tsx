@@ -4,6 +4,7 @@ import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
 import WarehouseRoundedIcon from '@mui/icons-material/WarehouseRounded'
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded'
 import { Alert, Box, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
 import { ApiError, deleteWarehouse, getWarehouses } from '../../../lib/api'
@@ -15,17 +16,20 @@ const WarehouseDataGrid = lazy(() => import('../components/WarehouseDataGrid'))
 const WarehouseDeleteDialog = lazy(() => import('../components/WarehouseDeleteDialog'))
 
 function WarehouseSurfaceFallback() {
+  const { t } = useTranslation()
+
   return (
     <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
       <Stack spacing={1.5} sx={{ alignItems: 'center' }}>
         <CircularProgress size={28} />
-        <Typography color="text.secondary">Loading warehouse tools...</Typography>
+        <Typography color="text.secondary">{t('pages.warehouses.loadingTools')}</Typography>
       </Stack>
     </Box>
   )
 }
 
 export default function WarehousesPage() {
+  const { t } = useTranslation()
   const { isAuthenticated } = useAuth()
   const [searchParams] = useSearchParams()
   const [warehouses, setWarehouses] = useState<WarehouseListItemResponse[]>([])
@@ -133,7 +137,7 @@ export default function WarehousesPage() {
   }
 
   if (!isAuthenticated) {
-    return <Alert severity="info">Sign in first. The warehouses API requires an authenticated user with inventory view permissions.</Alert>
+    return <Alert severity="info">{t('pages.warehouses.signInRequired')}</Alert>
   }
 
   return (
@@ -141,20 +145,20 @@ export default function WarehousesPage() {
       <Paper elevation={0} className="panel-card">
         <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2.5} sx={{ justifyContent: 'space-between' }}>
           <Box>
-            <Typography variant="h4" sx={{ mb: 1 }}>Warehouses</Typography>
-            <Typography color="text.secondary">Inventory locations from `/api/warehouses`, ready to support stock and fulfillment flows.</Typography>
+            <Typography variant="h4" sx={{ mb: 1 }}>{t('nav.routeTitles.warehouses')}</Typography>
+            <Typography color="text.secondary">{t('pages.warehouses.description')}</Typography>
           </Box>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
-            <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog}>New warehouse</Button>
-            <Paper elevation={0} className="products-metric-card"><WarehouseRoundedIcon fontSize="small" /><Box><Typography variant="body2" color="text.secondary">Warehouse rows</Typography><Typography variant="h6">{warehouses.length}</Typography></Box></Paper>
-            <Paper elevation={0} className="products-metric-card"><CheckCircleRoundedIcon fontSize="small" /><Box><Typography variant="body2" color="text.secondary">Active locations</Typography><Typography variant="h6">{warehouses.filter((warehouse) => warehouse.isActive).length}</Typography></Box></Paper>
-            <Paper elevation={0} className="products-metric-card"><PlaceRoundedIcon fontSize="small" /><Box><Typography variant="body2" color="text.secondary">Codes ready</Typography><Typography variant="h6">{warehouses.filter((warehouse) => warehouse.code.length > 0).length}</Typography></Box></Paper>
+            <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog}>{t('pages.warehouses.newButton')}</Button>
+            <Paper elevation={0} className="products-metric-card"><WarehouseRoundedIcon fontSize="small" /><Box><Typography variant="body2" color="text.secondary">{t('pages.warehouses.metrics.rows')}</Typography><Typography variant="h6">{warehouses.length}</Typography></Box></Paper>
+            <Paper elevation={0} className="products-metric-card"><CheckCircleRoundedIcon fontSize="small" /><Box><Typography variant="body2" color="text.secondary">{t('pages.warehouses.metrics.activeLocations')}</Typography><Typography variant="h6">{warehouses.filter((warehouse) => warehouse.isActive).length}</Typography></Box></Paper>
+            <Paper elevation={0} className="products-metric-card"><PlaceRoundedIcon fontSize="small" /><Box><Typography variant="body2" color="text.secondary">{t('pages.warehouses.metrics.codesReady')}</Typography><Typography variant="h6">{warehouses.filter((warehouse) => warehouse.code.length > 0).length}</Typography></Box></Paper>
           </Stack>
         </Stack>
       </Paper>
 
       {error ? <Alert severity="error">{error}</Alert> : null}
-      {highlightedWarehouseId ? <Alert severity="info">Focused warehouse moved to the top of the list.</Alert> : null}
+      {highlightedWarehouseId ? <Alert severity="info">{t('pages.warehouses.focusedMovedTop')}</Alert> : null}
       {feedback ? <Alert severity="success">{feedback}</Alert> : null}
 
       <Paper elevation={0} className="panel-card products-grid-panel">

@@ -4,6 +4,7 @@ import Groups2RoundedIcon from '@mui/icons-material/Groups2Rounded'
 import MailOutlineRoundedIcon from '@mui/icons-material/MailOutlineRounded'
 import LocalAtmRoundedIcon from '@mui/icons-material/LocalAtmRounded'
 import { Alert, Box, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { ApiError, deleteSupplier, getSuppliers } from '../../../lib/api'
 import type { SupplierDetailsResponse, SupplierListItemResponse } from '../../../types/api'
@@ -14,17 +15,20 @@ const SupplierDataGrid = lazy(() => import('../components/SupplierDataGrid'))
 const SupplierDeleteDialog = lazy(() => import('../components/SupplierDeleteDialog'))
 
 function SupplierSurfaceFallback() {
+  const { t } = useTranslation()
+
   return (
     <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
       <Stack spacing={1.5} sx={{ alignItems: 'center' }}>
         <CircularProgress size={28} />
-        <Typography color="text.secondary">Loading supplier tools...</Typography>
+        <Typography color="text.secondary">{t('pages.suppliers.loadingTools')}</Typography>
       </Stack>
     </Box>
   )
 }
 
 export default function SuppliersPage() {
+  const { t } = useTranslation()
   const { isAuthenticated } = useAuth()
   const [suppliers, setSuppliers] = useState<SupplierListItemResponse[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -113,7 +117,7 @@ export default function SuppliersPage() {
   }
 
   if (!isAuthenticated) {
-    return <Alert severity="info">Sign in first. The suppliers API requires an authenticated user with supplier view permissions.</Alert>
+    return <Alert severity="info">{t('pages.suppliers.signInRequired')}</Alert>
   }
 
   return (
@@ -121,14 +125,14 @@ export default function SuppliersPage() {
       <Paper elevation={0} className="panel-card">
         <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2.5} sx={{ justifyContent: 'space-between' }}>
           <Box>
-            <Typography variant="h4" sx={{ mb: 1 }}>Suppliers</Typography>
-            <Typography color="text.secondary">Supplier master data from `/api/suppliers`, ready for procurement workflows.</Typography>
+            <Typography variant="h4" sx={{ mb: 1 }}>{t('nav.routeTitles.suppliers')}</Typography>
+            <Typography color="text.secondary">{t('pages.suppliers.description')}</Typography>
           </Box>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
-            <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog}>New supplier</Button>
-            <Paper elevation={0} className="products-metric-card"><Groups2RoundedIcon fontSize="small" /><Box><Typography variant="body2" color="text.secondary">Supplier rows</Typography><Typography variant="h6">{suppliers.length}</Typography></Box></Paper>
-            <Paper elevation={0} className="products-metric-card"><MailOutlineRoundedIcon fontSize="small" /><Box><Typography variant="body2" color="text.secondary">With email</Typography><Typography variant="h6">{suppliers.filter((supplier) => Boolean(supplier.email)).length}</Typography></Box></Paper>
-            <Paper elevation={0} className="products-metric-card"><LocalAtmRoundedIcon fontSize="small" /><Box><Typography variant="body2" color="text.secondary">Active suppliers</Typography><Typography variant="h6">{suppliers.filter((supplier) => supplier.isActive).length}</Typography></Box></Paper>
+            <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog}>{t('pages.suppliers.newButton')}</Button>
+            <Paper elevation={0} className="products-metric-card"><Groups2RoundedIcon fontSize="small" /><Box><Typography variant="body2" color="text.secondary">{t('pages.suppliers.metrics.rows')}</Typography><Typography variant="h6">{suppliers.length}</Typography></Box></Paper>
+            <Paper elevation={0} className="products-metric-card"><MailOutlineRoundedIcon fontSize="small" /><Box><Typography variant="body2" color="text.secondary">{t('pages.common.withEmail')}</Typography><Typography variant="h6">{suppliers.filter((supplier) => Boolean(supplier.email)).length}</Typography></Box></Paper>
+            <Paper elevation={0} className="products-metric-card"><LocalAtmRoundedIcon fontSize="small" /><Box><Typography variant="body2" color="text.secondary">{t('pages.suppliers.metrics.active')}</Typography><Typography variant="h6">{suppliers.filter((supplier) => supplier.isActive).length}</Typography></Box></Paper>
           </Stack>
         </Stack>
       </Paper>

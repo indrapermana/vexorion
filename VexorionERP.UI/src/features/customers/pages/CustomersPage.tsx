@@ -12,6 +12,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { ApiError, deleteCustomer, getCustomers } from '../../../lib/api'
 import type { CustomerDetailsResponse, CustomerListItemResponse } from '../../../types/api'
@@ -22,17 +23,20 @@ const CustomerDataGrid = lazy(() => import('../components/CustomerDataGrid'))
 const CustomerDeleteDialog = lazy(() => import('../components/CustomerDeleteDialog'))
 
 function CustomerSurfaceFallback() {
+  const { t } = useTranslation()
+
   return (
     <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
       <Stack spacing={1.5} sx={{ alignItems: 'center' }}>
         <CircularProgress size={28} />
-        <Typography color="text.secondary">Loading customer tools...</Typography>
+        <Typography color="text.secondary">{t('pages.customers.loadingTools')}</Typography>
       </Stack>
     </Box>
   )
 }
 
 export default function CustomersPage() {
+  const { t } = useTranslation()
   const { isAuthenticated } = useAuth()
   const [customers, setCustomers] = useState<CustomerListItemResponse[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -123,7 +127,7 @@ export default function CustomersPage() {
 
   if (!isAuthenticated) {
     return (
-      <Alert severity="info">Sign in first. The customers API requires an authenticated user with customer view permissions.</Alert>
+      <Alert severity="info">{t('pages.customers.signInRequired')}</Alert>
     )
   }
 
@@ -132,33 +136,33 @@ export default function CustomersPage() {
       <Paper elevation={0} className="panel-card">
         <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2.5} sx={{ justifyContent: 'space-between' }}>
           <Box>
-            <Typography variant="h4" sx={{ mb: 1 }}>Customers</Typography>
+            <Typography variant="h4" sx={{ mb: 1 }}>{t('nav.routeTitles.customers')}</Typography>
             <Typography color="text.secondary">
-              Customer master data from `/api/customers`, using the same protected CRUD pattern as products.
+              {t('pages.customers.description')}
             </Typography>
           </Box>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
             <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog}>
-              New customer
+              {t('pages.customers.newButton')}
             </Button>
             <Paper elevation={0} className="products-metric-card">
               <Groups2RoundedIcon fontSize="small" />
               <Box>
-                <Typography variant="body2" color="text.secondary">Customer rows</Typography>
+                <Typography variant="body2" color="text.secondary">{t('pages.customers.metrics.rows')}</Typography>
                 <Typography variant="h6">{customers.length}</Typography>
               </Box>
             </Paper>
             <Paper elevation={0} className="products-metric-card">
               <MailOutlineRoundedIcon fontSize="small" />
               <Box>
-                <Typography variant="body2" color="text.secondary">With email</Typography>
+                <Typography variant="body2" color="text.secondary">{t('pages.common.withEmail')}</Typography>
                 <Typography variant="h6">{customers.filter((customer) => Boolean(customer.email)).length}</Typography>
               </Box>
             </Paper>
             <Paper elevation={0} className="products-metric-card">
               <MonetizationOnRoundedIcon fontSize="small" />
               <Box>
-                <Typography variant="body2" color="text.secondary">Active customers</Typography>
+                <Typography variant="body2" color="text.secondary">{t('pages.customers.metrics.active')}</Typography>
                 <Typography variant="h6">{customers.filter((customer) => customer.isActive).length}</Typography>
               </Box>
             </Paper>

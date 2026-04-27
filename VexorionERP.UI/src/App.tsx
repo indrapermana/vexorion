@@ -1,6 +1,7 @@
 import './App.css'
 import { Suspense, lazy } from 'react'
 import { Alert } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './app/AuthContext'
 import { ProtectedRoute, PublicOnlyRoute } from './components/RouteGuards'
@@ -43,6 +44,8 @@ function RouteFallback() {
 }
 
 function App() {
+  const { t } = useTranslation()
+
   return (
     <BrowserRouter>
       <AuthProvider>
@@ -85,8 +88,8 @@ function App() {
                 <Route path="/login" element={<LoginPage />} />
               </Route>
               <Route path="/tenants" element={<TenantsPage />} />
-              <Route path="/login/*" element={<NotFoundPage variant="public" backTo="/login" backLabel="Back to sign in" />} />
-              <Route path="/tenants/*" element={<NotFoundPage variant="public" backTo="/tenants" backLabel="Back to onboarding" />} />
+              <Route path="/login/*" element={<NotFoundPage variant="public" backTo="/login" backLabel={t('pages.notFound.backToSignIn')} />} />
+              <Route path="/tenants/*" element={<NotFoundPage variant="public" backTo="/tenants" backLabel={t('pages.notFound.backToOnboarding')} />} />
             </Route>
 
             <Route element={<AppLayout />}>

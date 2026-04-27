@@ -8,12 +8,14 @@ import {
   Stack,
   Typography,
 } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { ApiError, getTenantPreferences, updateMenuConfiguration } from '../../../lib/api'
 import { getHiddenMenuLinks, saveHiddenMenuLinks } from '../../../lib/menuConfig'
 import { configurableMenuItems } from '../menuItems'
 
 export default function ConfigMenuPage() {
+  const { t } = useTranslation()
   const { isAuthenticated } = useAuth()
   const [hiddenLinks, setHiddenLinks] = useState<string[]>(() => getHiddenMenuLinks())
   const [error, setError] = useState<string | null>(null)
@@ -35,10 +37,10 @@ export default function ConfigMenuPage() {
       if (loadError instanceof ApiError) {
         setError(loadError.message)
       } else {
-        setError('Unable to load menu configuration.')
+        setError(t('config.menu.errors.load'))
       }
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, t])
 
   useEffect(() => {
     void loadPreference()
@@ -78,12 +80,12 @@ export default function ConfigMenuPage() {
       const updated = await updateMenuConfiguration({ hiddenMenuLinks: hiddenLinks })
       setHiddenLinks(updated.hiddenMenuLinks)
       saveHiddenMenuLinks(updated.hiddenMenuLinks)
-      setFeedback('Menu visibility updated.')
+      setFeedback(t('config.menu.feedback.saved'))
     } catch (saveError) {
       if (saveError instanceof ApiError) {
         setError(saveError.message)
       } else {
-        setError('Unable to save menu configuration.')
+        setError(t('config.menu.errors.save'))
       }
     } finally {
       setIsSaving(false)
@@ -99,12 +101,12 @@ export default function ConfigMenuPage() {
       const updated = await updateMenuConfiguration({ hiddenMenuLinks: [] })
       setHiddenLinks(updated.hiddenMenuLinks)
       saveHiddenMenuLinks(updated.hiddenMenuLinks)
-      setFeedback('Menu visibility reset to default.')
+      setFeedback(t('config.menu.feedback.reset'))
     } catch (saveError) {
       if (saveError instanceof ApiError) {
         setError(saveError.message)
       } else {
-        setError('Unable to reset menu configuration.')
+        setError(t('config.menu.errors.reset'))
       }
     } finally {
       setIsSaving(false)
@@ -112,19 +114,19 @@ export default function ConfigMenuPage() {
   }
 
   if (!isAuthenticated) {
-    return <Alert severity="info">Sign in first. Menu configuration requires authentication.</Alert>
+    return <Alert severity="info">{t('config.menu.signInRequired')}</Alert>
   }
 
   return (
     <Stack spacing={3}>
       <Paper elevation={0} className="panel-card">
-        <Typography variant="h4" sx={{ mb: 1 }}>Menu Configuration</Typography>
+        <Typography variant="h4" sx={{ mb: 1 }}>{t('config.menu.title')}</Typography>
         <Typography color="text.secondary" sx={{ mb: 2 }}>
-          Control which navigation links are shown in the sidebar for this tenant.
+          {t('config.menu.description')}
         </Typography>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-          <Button variant="contained" onClick={() => void save()} disabled={isSaving}>Save changes</Button>
-          <Button variant="outlined" onClick={() => void reset()} disabled={isSaving}>Reset defaults</Button>
+          <Button variant="contained" onClick={() => void save()} disabled={isSaving}>{t('config.menu.saveChanges')}</Button>
+          <Button variant="outlined" onClick={() => void reset()} disabled={isSaving}>{t('config.menu.resetDefaults')}</Button>
         </Stack>
       </Paper>
 

@@ -15,6 +15,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
@@ -61,6 +62,7 @@ function optionalText(value: string) {
 }
 
 export default function PurchaseOrderEditorDialog({ open, mode, purchaseOrderId, suppliers, warehouses, onClose, onSaved }: PurchaseOrderEditorDialogProps) {
+  useTranslation()
   const [isLoadingPurchaseOrder, setIsLoadingPurchaseOrder] = useState(mode === 'edit' && Boolean(purchaseOrderId))
   const [submitError, setSubmitError] = useState<string | null>(null)
 

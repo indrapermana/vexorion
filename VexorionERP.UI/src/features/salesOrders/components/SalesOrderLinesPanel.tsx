@@ -4,6 +4,7 @@ import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
 import EditRoundedIcon from '@mui/icons-material/EditRounded'
 import WarehouseRoundedIcon from '@mui/icons-material/WarehouseRounded'
 import { Alert, Box, Button, Chip, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { ApiError, createSalesOrderLine, deleteSalesOrderLine, updateSalesOrderLine } from '../../../lib/api'
 import { useInventoryBalancesLookup, useProductsLookup, useWarehousesLookup } from '../../../hooks/useLookups'
 import type { SalesOrderLineListItemResponse } from '../../../types/api'
@@ -19,6 +20,7 @@ type SalesOrderLinesPanelProps = {
 }
 
 export default function SalesOrderLinesPanel({ order, lines, isLoading, error, onRefresh }: SalesOrderLinesPanelProps) {
+  useTranslation()
   const { items: products, error: productsError } = useProductsLookup(Boolean(order))
   const { items: warehouses, error: warehousesError } = useWarehousesLookup(Boolean(order))
   const { items: balances, error: balancesError } = useInventoryBalancesLookup(Boolean(order))

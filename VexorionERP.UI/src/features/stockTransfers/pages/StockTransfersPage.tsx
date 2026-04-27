@@ -28,6 +28,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import LookupSelectField from '../../../components/LookupSelectField'
 import OrderWorkspace from '../../../components/OrderWorkspace'
@@ -119,6 +120,7 @@ function buildLineForm(line: StockTransferLineDetailsResponse | null): TransferL
 }
 
 export default function StockTransfersPage() {
+  const { t } = useTranslation()
   const { isAuthenticated } = useAuth()
   const { items: warehouses, error: warehousesError, reload: reloadWarehouses } = useWarehousesLookup(isAuthenticated)
   const { items: products, error: productsError } = useProductsLookup(Boolean(isAuthenticated))
@@ -390,13 +392,13 @@ export default function StockTransfersPage() {
   if (!isAuthenticated) {
     return (
       <OrderWorkspace
-        title="Stock Transfers"
-        description="Warehouse-to-warehouse stock movements backed by `/api/stock-transfers`."
-        createLabel="New transfer"
+        title={t('nav.routeTitles.stockTransfers')}
+        description={t('pages.stockTransfers.descriptionShort')}
+        createLabel={t('pages.stockTransfers.newButton')}
         onCreate={() => undefined}
         disableCreate
         metrics={[]}
-        alerts={[{ severity: 'info', message: 'Sign in first. Stock transfers require inventory permissions.' }]}
+        alerts={[{ severity: 'info', message: t('pages.stockTransfers.signInRequired') }]}
         grid={null}
         linesPanel={null}
       />
@@ -405,18 +407,18 @@ export default function StockTransfersPage() {
 
   return (
     <OrderWorkspace
-      title="Stock Transfers"
-      description="Move stock between warehouses and complete the document to post outbound and inbound inventory movements together."
-      createLabel="New transfer"
+      title={t('nav.routeTitles.stockTransfers')}
+      description={t('pages.stockTransfers.description')}
+      createLabel={t('pages.stockTransfers.newButton')}
       onCreate={openCreateDialog}
       disableCreate={warehouses.length < 2}
       metrics={[
-        { icon: <WarehouseRoundedIcon fontSize="small" />, label: 'Headers', value: rows.length },
-        { icon: <CheckCircleRoundedIcon fontSize="small" />, label: 'Completed', value: rows.filter((row) => row.status === 4).length },
-        { icon: <AutoGraphRoundedIcon fontSize="small" />, label: 'Active', value: rows.filter((row) => row.isActive).length },
+        { icon: <WarehouseRoundedIcon fontSize="small" />, label: t('pages.stockTransfers.metrics.headers'), value: rows.length },
+        { icon: <CheckCircleRoundedIcon fontSize="small" />, label: t('pages.stockTransfers.metrics.completed'), value: rows.filter((row) => row.status === 4).length },
+        { icon: <AutoGraphRoundedIcon fontSize="small" />, label: t('pages.stockTransfers.metrics.active'), value: rows.filter((row) => row.isActive).length },
       ]}
       alerts={[
-        ...(warehouses.length < 2 ? [{ severity: 'warning' as const, message: 'Create at least two warehouses before creating stock transfers.' }] : []),
+        ...(warehouses.length < 2 ? [{ severity: 'warning' as const, message: t('pages.stockTransfers.createWarehousesFirst') }] : []),
         ...(warehousesError ? [{ severity: 'warning' as const, message: warehousesError }] : []),
         ...(productsError ? [{ severity: 'warning' as const, message: productsError }] : []),
         ...(balancesError ? [{ severity: 'warning' as const, message: balancesError }] : []),

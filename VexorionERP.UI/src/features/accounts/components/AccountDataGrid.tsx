@@ -2,6 +2,7 @@ import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
 import EditRoundedIcon from '@mui/icons-material/EditRounded'
 import { Box, Chip, Typography } from '@mui/material'
 import { DataGrid, GridActionsCellItem, type GridColDef } from '@mui/x-data-grid'
+import { useTranslation } from 'react-i18next'
 import { getAccountTypeLabel, getNormalBalanceLabel, type AccountGridRow } from '../../../types/ui'
 
 type AccountDataGridProps = {
@@ -12,6 +13,7 @@ type AccountDataGridProps = {
 }
 
 export default function AccountDataGrid({ rows, isLoading, onEdit, onDelete }: AccountDataGridProps) {
+  useTranslation()
   const columns: GridColDef<AccountGridRow>[] = [
     { field: 'code', headerName: 'Code', minWidth: 120, flex: 0.5 },
     {

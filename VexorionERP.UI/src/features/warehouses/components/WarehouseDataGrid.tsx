@@ -2,6 +2,7 @@ import { Box, Chip, Typography } from '@mui/material'
 import { DataGrid, GridActionsCellItem, type GridColDef } from '@mui/x-data-grid'
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
 import EditRoundedIcon from '@mui/icons-material/EditRounded'
+import { useTranslation } from 'react-i18next'
 import type { WarehouseGridRow } from '../../../types/ui'
 
 type WarehouseDataGridProps = {
@@ -13,35 +14,36 @@ type WarehouseDataGridProps = {
 }
 
 export default function WarehouseDataGrid({ rows, isLoading, highlightedWarehouseId, onEdit, onDelete }: WarehouseDataGridProps) {
+  const { t } = useTranslation()
   const columns: GridColDef<WarehouseGridRow>[] = [
     {
       field: 'name',
-      headerName: 'Warehouse',
+      headerName: t('components.warehouses.grid.columns.warehouse'),
       flex: 1.2,
       minWidth: 220,
       renderCell: ({ row }) => (
         <Box sx={{ py: 1 }}>
           <Typography sx={{ fontWeight: 700 }}>{row.name}</Typography>
-          <Typography variant="body2" color="text.secondary">Code {row.code}</Typography>
+          <Typography variant="body2" color="text.secondary">{t('components.warehouses.grid.codePrefix')} {row.code}</Typography>
         </Box>
       ),
     },
     {
       field: 'isActive',
-      headerName: 'Status',
+      headerName: t('components.warehouses.grid.columns.status'),
       minWidth: 140,
       flex: 0.7,
       sortable: false,
-      renderCell: ({ value }) => <Chip size="small" color={value ? 'primary' : 'default'} label={value ? 'Active' : 'Inactive'} variant={value ? 'filled' : 'outlined'} />,
+      renderCell: ({ value }) => <Chip size="small" color={value ? 'primary' : 'default'} label={value ? t('components.warehouses.grid.active') : t('components.warehouses.grid.inactive')} variant={value ? 'filled' : 'outlined'} />,
     },
     {
       field: 'actions',
       type: 'actions',
-      headerName: 'Actions',
+      headerName: t('components.warehouses.grid.columns.actions'),
       minWidth: 110,
       getActions: ({ row }) => [
-        <GridActionsCellItem key={`edit-${row.id}`} icon={<EditRoundedIcon />} label="Edit" onClick={() => onEdit(row.id)} showInMenu={false} />,
-        <GridActionsCellItem key={`delete-${row.id}`} icon={<DeleteOutlineRoundedIcon />} label="Delete" onClick={() => onDelete(row)} showInMenu={false} />,
+        <GridActionsCellItem key={`edit-${row.id}`} icon={<EditRoundedIcon />} label={t('common.edit')} onClick={() => onEdit(row.id)} showInMenu={false} />,
+        <GridActionsCellItem key={`delete-${row.id}`} icon={<DeleteOutlineRoundedIcon />} label={t('dialogs.delete')} onClick={() => onDelete(row)} showInMenu={false} />,
       ],
     },
   ]

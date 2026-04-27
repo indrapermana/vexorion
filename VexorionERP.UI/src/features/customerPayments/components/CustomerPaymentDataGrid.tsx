@@ -1,5 +1,6 @@
 import { Box, Typography } from '@mui/material'
 import { DataGrid, type GridColDef } from '@mui/x-data-grid'
+import { useTranslation } from 'react-i18next'
 import type { CustomerPaymentGridRow } from '../../../types/ui'
 
 type CustomerPaymentDataGridProps = {
@@ -8,16 +9,17 @@ type CustomerPaymentDataGridProps = {
 }
 
 export default function CustomerPaymentDataGrid({ rows, isLoading }: CustomerPaymentDataGridProps) {
+  const { t } = useTranslation()
   const columns: GridColDef<CustomerPaymentGridRow>[] = [
     {
       field: 'paymentDate',
-      headerName: 'Payment date',
+      headerName: t('components.customerPayments.grid.columns.paymentDate'),
       minWidth: 130,
       flex: 0.7,
     },
     {
       field: 'customerName',
-      headerName: 'Customer',
+      headerName: t('components.customerPayments.grid.columns.customer'),
       minWidth: 180,
       flex: 1,
       renderCell: ({ row }) => (
@@ -29,7 +31,7 @@ export default function CustomerPaymentDataGrid({ rows, isLoading }: CustomerPay
     },
     {
       field: 'amount',
-      headerName: 'Amount',
+      headerName: t('components.customerPayments.grid.columns.amount'),
       minWidth: 130,
       flex: 0.7,
       type: 'number',
@@ -37,17 +39,17 @@ export default function CustomerPaymentDataGrid({ rows, isLoading }: CustomerPay
     },
     {
       field: 'paymentMethod',
-      headerName: 'Method',
+      headerName: t('components.customerPayments.grid.columns.method'),
       minWidth: 140,
       flex: 0.7,
-      valueFormatter: (value) => (value ? String(value) : 'N/A'),
+      valueFormatter: (value) => (value ? String(value) : t('components.customerPayments.grid.na')),
     },
     {
       field: 'referenceNumber',
-      headerName: 'Reference',
+      headerName: t('components.customerPayments.grid.columns.reference'),
       minWidth: 160,
       flex: 0.8,
-      valueFormatter: (value) => (value ? String(value) : 'N/A'),
+      valueFormatter: (value) => (value ? String(value) : t('components.customerPayments.grid.na')),
     },
   ]
 

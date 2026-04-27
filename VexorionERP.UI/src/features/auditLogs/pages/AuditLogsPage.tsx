@@ -13,11 +13,13 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { ApiError, getAuditLogs } from '../../../lib/api'
 import type { AuditLogListItemResponse } from '../../../types/api'
 
 export default function AuditLogsPage() {
+  const { t } = useTranslation()
   const { isAuthenticated } = useAuth()
   const [eventType, setEventType] = useState('')
   const [entityName, setEntityName] = useState('')
@@ -49,22 +51,22 @@ export default function AuditLogsPage() {
   }, [loadLogs])
 
   if (!isAuthenticated) {
-    return <Alert severity="info">Sign in first. Audit logs require accounting permissions.</Alert>
+    return <Alert severity="info">{t('pages.auditLogs.signInRequired')}</Alert>
   }
 
   return (
     <Stack spacing={3}>
       <Paper elevation={0} className="panel-card">
-        <Typography variant="h4" sx={{ mb: 1 }}>Audit Logs</Typography>
+        <Typography variant="h4" sx={{ mb: 1 }}>{t('nav.routeTitles.auditLogs')}</Typography>
         <Typography color="text.secondary" sx={{ mb: 2 }}>
-          Browse system activity with basic filtering for control-layer verification.
+          {t('pages.auditLogs.description')}
         </Typography>
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={1}>
-          <TextField size="small" label="Event type" value={eventType} onChange={(event) => setEventType(event.target.value)} />
-          <TextField size="small" label="Entity" value={entityName} onChange={(event) => setEntityName(event.target.value)} />
+          <TextField size="small" label={t('pages.auditLogs.eventType')} value={eventType} onChange={(event) => setEventType(event.target.value)} />
+          <TextField size="small" label={t('pages.auditLogs.entity')} value={entityName} onChange={(event) => setEntityName(event.target.value)} />
           <TextField
             size="small"
-            label="Page size"
+            label={t('pages.auditLogs.pageSize')}
             select
             value={pageSize}
             onChange={(event) => setPageSize(Number(event.target.value))}
@@ -74,7 +76,7 @@ export default function AuditLogsPage() {
             <MenuItem value={50}>50</MenuItem>
             <MenuItem value={100}>100</MenuItem>
           </TextField>
-          <Button variant="outlined" onClick={() => void loadLogs()}>Refresh</Button>
+          <Button variant="outlined" onClick={() => void loadLogs()}>{t('pages.auditLogs.refresh')}</Button>
         </Stack>
       </Paper>
 
@@ -82,7 +84,7 @@ export default function AuditLogsPage() {
 
       <Paper elevation={0} className="panel-card">
         <Typography color="text.secondary" sx={{ mb: 1 }}>
-          Showing {items.length} of {totalCount} entries.
+          {t('pages.auditLogs.showingEntries', { shown: items.length, total: totalCount })}
         </Typography>
         <Table size="small">
           <TableHead>

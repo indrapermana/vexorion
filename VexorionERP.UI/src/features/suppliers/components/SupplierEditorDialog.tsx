@@ -17,6 +17,7 @@ import {
 import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
+import { useTranslation } from 'react-i18next'
 import { ApiError, createSupplier, getSupplier, updateSupplier } from '../../../lib/api'
 import type { ValidationProblem } from '../../../types/api'
 import type { SupplierEditorDialogProps, SupplierFormValues } from '../../../types/ui'
@@ -58,10 +59,14 @@ function optionalText(value: string) {
 }
 
 export default function SupplierEditorDialog({ open, mode, supplierId, onClose, onSaved }: SupplierEditorDialogProps) {
+  const { t } = useTranslation()
   const [isLoadingSupplier, setIsLoadingSupplier] = useState(mode === 'edit' && Boolean(supplierId))
   const [submitError, setSubmitError] = useState<string | null>(null)
 
-  const title = useMemo(() => (mode === 'create' ? 'Create supplier' : 'Edit supplier'), [mode])
+  const title = useMemo(
+    () => (mode === 'create' ? t('components.suppliers.editor.createTitle') : t('components.suppliers.editor.editTitle')),
+    [mode, t],
+  )
   const { control, handleSubmit, reset, setError, formState: { errors, isSubmitting } } = useForm<SupplierFormValues>({
     defaultValues,
     resolver: yupResolver(validationSchema),
@@ -102,7 +107,7 @@ export default function SupplierEditorDialog({ open, mode, supplierId, onClose, 
         if (error instanceof ApiError) {
           setSubmitError(error.message)
         } else {
-          setSubmitError('Unable to load supplier details.')
+          setSubmitError(t('components.suppliers.editor.errors.load'))
         }
       })
       .finally(() => {
@@ -114,7 +119,7 @@ export default function SupplierEditorDialog({ open, mode, supplierId, onClose, 
     return () => {
       isMounted = false
     }
-  }, [mode, reset, supplierId])
+  }, [mode, reset, supplierId, t])
 
   const applyServerValidation = (validation?: ValidationProblem) => {
     if (!validation) {
@@ -154,7 +159,7 @@ export default function SupplierEditorDialog({ open, mode, supplierId, onClose, 
         setSubmitError(error.message)
         applyServerValidation(error.validation)
       } else {
-        setSubmitError('Unable to save supplier right now.')
+        setSubmitError(t('components.suppliers.editor.errors.save'))
       }
     }
   })
@@ -167,7 +172,7 @@ export default function SupplierEditorDialog({ open, mode, supplierId, onClose, 
           <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 220 }}>
             <Stack spacing={1.5} sx={{ alignItems: 'center' }}>
               <CircularProgress size={28} />
-              <Typography color="text.secondary">Loading supplier details...</Typography>
+              <Typography color="text.secondary">{t('components.suppliers.editor.loading')}</Typography>
             </Stack>
           </Box>
         ) : (
@@ -175,18 +180,18 @@ export default function SupplierEditorDialog({ open, mode, supplierId, onClose, 
             {submitError ? <Alert severity="error">{submitError}</Alert> : null}
 
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-              <Controller name="supplierNumber" control={control} render={({ field }) => <TextField {...field} fullWidth label="Supplier number" error={Boolean(errors.supplierNumber)} helperText={errors.supplierNumber?.message} />} />
-              <Controller name="name" control={control} render={({ field }) => <TextField {...field} fullWidth label="Supplier name" error={Boolean(errors.name)} helperText={errors.name?.message} />} />
+              <Controller name="supplierNumber" control={control} render={({ field }) => <TextField {...field} fullWidth label={t('components.suppliers.editor.fields.supplierNumber')} error={Boolean(errors.supplierNumber)} helperText={errors.supplierNumber?.message} />} />
+              <Controller name="name" control={control} render={({ field }) => <TextField {...field} fullWidth label={t('components.suppliers.editor.fields.name')} error={Boolean(errors.name)} helperText={errors.name?.message} />} />
             </Stack>
 
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-              <Controller name="contactName" control={control} render={({ field }) => <TextField {...field} fullWidth label="Contact name" error={Boolean(errors.contactName)} helperText={errors.contactName?.message ?? 'Optional'} />} />
-              <Controller name="phoneNumber" control={control} render={({ field }) => <TextField {...field} fullWidth label="Phone number" error={Boolean(errors.phoneNumber)} helperText={errors.phoneNumber?.message ?? 'Optional'} />} />
+              <Controller name="contactName" control={control} render={({ field }) => <TextField {...field} fullWidth label={t('components.suppliers.editor.fields.contactName')} error={Boolean(errors.contactName)} helperText={errors.contactName?.message ?? t('components.suppliers.editor.optional')} />} />
+              <Controller name="phoneNumber" control={control} render={({ field }) => <TextField {...field} fullWidth label={t('components.suppliers.editor.fields.phoneNumber')} error={Boolean(errors.phoneNumber)} helperText={errors.phoneNumber?.message ?? t('components.suppliers.editor.optional')} />} />
             </Stack>
 
-            <Controller name="email" control={control} render={({ field }) => <TextField {...field} fullWidth label="Email" error={Boolean(errors.email)} helperText={errors.email?.message ?? 'Optional'} />} />
-            <Controller name="address" control={control} render={({ field }) => <TextField {...field} fullWidth multiline minRows={3} label="Address" error={Boolean(errors.address)} helperText={errors.address?.message ?? 'Optional'} />} />
-            <Controller name="paymentTerms" control={control} render={({ field }) => <TextField {...field} fullWidth label="Payment terms" error={Boolean(errors.paymentTerms)} helperText={errors.paymentTerms?.message ?? 'Optional'} />} />
+            <Controller name="email" control={control} render={({ field }) => <TextField {...field} fullWidth label={t('components.suppliers.editor.fields.email')} error={Boolean(errors.email)} helperText={errors.email?.message ?? t('components.suppliers.editor.optional')} />} />
+            <Controller name="address" control={control} render={({ field }) => <TextField {...field} fullWidth multiline minRows={3} label={t('components.suppliers.editor.fields.address')} error={Boolean(errors.address)} helperText={errors.address?.message ?? t('components.suppliers.editor.optional')} />} />
+            <Controller name="paymentTerms" control={control} render={({ field }) => <TextField {...field} fullWidth label={t('components.suppliers.editor.fields.paymentTerms')} error={Boolean(errors.paymentTerms)} helperText={errors.paymentTerms?.message ?? t('components.suppliers.editor.optional')} />} />
 
             {mode === 'edit' ? (
               <Controller
@@ -195,7 +200,7 @@ export default function SupplierEditorDialog({ open, mode, supplierId, onClose, 
                 render={({ field }) => (
                   <FormControlLabel
                     control={<Switch checked={field.value} onChange={(_, checked) => field.onChange(checked)} />}
-                    label={field.value ? 'Supplier is active' : 'Supplier is inactive'}
+                      label={field.value ? t('components.suppliers.editor.active') : t('components.suppliers.editor.inactive')}
                   />
                 )}
               />
@@ -204,9 +209,13 @@ export default function SupplierEditorDialog({ open, mode, supplierId, onClose, 
         )}
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose} disabled={isSubmitting}>Cancel</Button>
+        <Button onClick={onClose} disabled={isSubmitting}>{t('dialogs.cancel')}</Button>
         <Button onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoadingSupplier}>
-          {isSubmitting ? 'Saving...' : mode === 'create' ? 'Create supplier' : 'Save changes'}
+          {isSubmitting
+            ? t('components.suppliers.editor.saving')
+            : mode === 'create'
+              ? t('components.suppliers.editor.createAction')
+              : t('components.suppliers.editor.saveAction')}
         </Button>
       </DialogActions>
     </Dialog>

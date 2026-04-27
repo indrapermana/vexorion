@@ -15,6 +15,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
@@ -62,6 +63,7 @@ function optionalText(value: string) {
 }
 
 export default function SalesOrderEditorDialog({ open, mode, salesOrderId, customers, warehouses, onClose, onSaved }: SalesOrderEditorDialogProps) {
+  useTranslation()
   const [isLoadingSalesOrder, setIsLoadingSalesOrder] = useState(mode === 'edit' && Boolean(salesOrderId))
   const [submitError, setSubmitError] = useState<string | null>(null)
 

@@ -15,6 +15,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
@@ -64,6 +65,7 @@ function optionalText(value: string) {
 }
 
 export default function PurchaseInvoiceEditorDialog({ open, mode, purchaseInvoiceId, suppliers, initialValues, onClose, onSaved }: PurchaseInvoiceEditorDialogProps) {
+  useTranslation()
   const [isLoadingPurchaseInvoice, setIsLoadingPurchaseInvoice] = useState(mode === 'edit' && Boolean(purchaseInvoiceId))
   const [submitError, setSubmitError] = useState<string | null>(null)
 

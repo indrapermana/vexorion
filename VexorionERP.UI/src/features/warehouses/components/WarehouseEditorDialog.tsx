@@ -17,6 +17,7 @@ import {
 import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
+import { useTranslation } from 'react-i18next'
 import { ApiError, createWarehouse, getWarehouse, updateWarehouse } from '../../../lib/api'
 import type { ValidationProblem } from '../../../types/api'
 import type { WarehouseEditorDialogProps, WarehouseFormValues } from '../../../types/ui'
@@ -50,10 +51,14 @@ function optionalText(value: string) {
 }
 
 export default function WarehouseEditorDialog({ open, mode, warehouseId, onClose, onSaved }: WarehouseEditorDialogProps) {
+  const { t } = useTranslation()
   const [isLoadingWarehouse, setIsLoadingWarehouse] = useState(mode === 'edit' && Boolean(warehouseId))
   const [submitError, setSubmitError] = useState<string | null>(null)
 
-  const title = useMemo(() => (mode === 'create' ? 'Create warehouse' : 'Edit warehouse'), [mode])
+  const title = useMemo(
+    () => (mode === 'create' ? t('components.warehouses.editor.createTitle') : t('components.warehouses.editor.editTitle')),
+    [mode, t],
+  )
   const { control, handleSubmit, reset, setError, formState: { errors, isSubmitting } } = useForm<WarehouseFormValues>({
     defaultValues,
     resolver: yupResolver(validationSchema),
@@ -90,7 +95,7 @@ export default function WarehouseEditorDialog({ open, mode, warehouseId, onClose
         if (error instanceof ApiError) {
           setSubmitError(error.message)
         } else {
-          setSubmitError('Unable to load warehouse details.')
+          setSubmitError(t('components.warehouses.editor.errors.load'))
         }
       })
       .finally(() => {
@@ -102,7 +107,7 @@ export default function WarehouseEditorDialog({ open, mode, warehouseId, onClose
     return () => {
       isMounted = false
     }
-  }, [mode, reset, warehouseId])
+  }, [mode, reset, warehouseId, t])
 
   const applyServerValidation = (validation?: ValidationProblem) => {
     if (!validation) {
@@ -138,7 +143,7 @@ export default function WarehouseEditorDialog({ open, mode, warehouseId, onClose
         setSubmitError(error.message)
         applyServerValidation(error.validation)
       } else {
-        setSubmitError('Unable to save warehouse right now.')
+        setSubmitError(t('components.warehouses.editor.errors.save'))
       }
     }
   })
@@ -148,28 +153,28 @@ export default function WarehouseEditorDialog({ open, mode, warehouseId, onClose
       <DialogTitle>{title}</DialogTitle>
       <DialogContent dividers>
         {isLoadingWarehouse ? (
-          <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 220 }}><Stack spacing={1.5} sx={{ alignItems: 'center' }}><CircularProgress size={28} /><Typography color="text.secondary">Loading warehouse details...</Typography></Stack></Box>
+          <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 220 }}><Stack spacing={1.5} sx={{ alignItems: 'center' }}><CircularProgress size={28} /><Typography color="text.secondary">{t('components.warehouses.editor.loading')}</Typography></Stack></Box>
         ) : (
           <Stack spacing={2.5} sx={{ pt: 1 }}>
             {submitError ? <Alert severity="error">{submitError}</Alert> : null}
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-              <Controller name="code" control={control} render={({ field }) => <TextField {...field} fullWidth label="Code" error={Boolean(errors.code)} helperText={errors.code?.message} />} />
-              <Controller name="name" control={control} render={({ field }) => <TextField {...field} fullWidth label="Warehouse name" error={Boolean(errors.name)} helperText={errors.name?.message} />} />
+              <Controller name="code" control={control} render={({ field }) => <TextField {...field} fullWidth label={t('components.warehouses.editor.fields.code')} error={Boolean(errors.code)} helperText={errors.code?.message} />} />
+              <Controller name="name" control={control} render={({ field }) => <TextField {...field} fullWidth label={t('components.warehouses.editor.fields.name')} error={Boolean(errors.name)} helperText={errors.name?.message} />} />
             </Stack>
-            <Controller name="locationDescription" control={control} render={({ field }) => <TextField {...field} fullWidth multiline minRows={3} label="Location description" error={Boolean(errors.locationDescription)} helperText={errors.locationDescription?.message ?? 'Optional'} />} />
+            <Controller name="locationDescription" control={control} render={({ field }) => <TextField {...field} fullWidth multiline minRows={3} label={t('components.warehouses.editor.fields.locationDescription')} error={Boolean(errors.locationDescription)} helperText={errors.locationDescription?.message ?? t('components.warehouses.editor.optional')} />} />
             {mode === 'edit' ? (
               <Controller
                 name="isActive"
                 control={control}
-                render={({ field }) => <FormControlLabel control={<Switch checked={field.value} onChange={(_, checked) => field.onChange(checked)} />} label={field.value ? 'Warehouse is active' : 'Warehouse is inactive'} />}
+                render={({ field }) => <FormControlLabel control={<Switch checked={field.value} onChange={(_, checked) => field.onChange(checked)} />} label={field.value ? t('components.warehouses.editor.active') : t('components.warehouses.editor.inactive')} />}
               />
             ) : null}
           </Stack>
         )}
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose} disabled={isSubmitting}>Cancel</Button>
-        <Button onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoadingWarehouse}>{isSubmitting ? 'Saving...' : mode === 'create' ? 'Create warehouse' : 'Save changes'}</Button>
+        <Button onClick={onClose} disabled={isSubmitting}>{t('dialogs.cancel')}</Button>
+        <Button onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoadingWarehouse}>{isSubmitting ? t('components.warehouses.editor.saving') : mode === 'create' ? t('components.warehouses.editor.createAction') : t('components.warehouses.editor.saveAction')}</Button>
       </DialogActions>
     </Dialog>
   )

@@ -20,27 +20,10 @@ import {
   Typography,
 } from '@mui/material'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../app/AuthContext'
 import { ApiError, getFinanceDashboardSnapshot } from '../lib/api'
 import type { FinanceDashboardSnapshotResponse } from '../types/api'
-
-const quickCards = [
-  {
-    title: 'Identity and permissions',
-    description: 'JWT login, role claims, and permission policies are already exposed by the API.',
-    icon: <SecurityRoundedIcon fontSize="large" />,
-  },
-  {
-    title: 'Catalog and inventory',
-    description: 'Products, warehouses, and balances are ready to support operational flows.',
-    icon: <StorefrontRoundedIcon fontSize="large" />,
-  },
-  {
-    title: 'CQRS-backed modules',
-    description: 'The frontend can evolve page by page without collapsing service boundaries.',
-    icon: <InsightsRoundedIcon fontSize="large" />,
-  },
-]
 
 const periodOptions = [7, 30, 90, 180]
 
@@ -49,43 +32,61 @@ function formatCurrency(value: number) {
 }
 
 export default function DashboardPage() {
+  const { t } = useTranslation()
   const { user, isAuthenticated } = useAuth()
   const [asOfDate, setAsOfDate] = useState(new Date().toISOString().slice(0, 10))
   const [periodDays, setPeriodDays] = useState(30)
   const [snapshot, setSnapshot] = useState<FinanceDashboardSnapshotResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const quickCards = [
+    {
+      title: t('dashboard.quickCards.identityPermissions.title'),
+      description: t('dashboard.quickCards.identityPermissions.description'),
+      icon: <SecurityRoundedIcon fontSize="large" />,
+    },
+    {
+      title: t('dashboard.quickCards.catalogInventory.title'),
+      description: t('dashboard.quickCards.catalogInventory.description'),
+      icon: <StorefrontRoundedIcon fontSize="large" />,
+    },
+    {
+      title: t('dashboard.quickCards.cqrsModules.title'),
+      description: t('dashboard.quickCards.cqrsModules.description'),
+      icon: <InsightsRoundedIcon fontSize="large" />,
+    },
+  ]
 
   const summaryCards = useMemo(
     () => [
       {
-        title: 'Open receivables',
+        title: t('dashboard.summary.openReceivables'),
         value: formatCurrency(snapshot?.receivablesOpen ?? 0),
-        change: `Overdue ${formatCurrency(snapshot?.receivablesOverdue ?? 0)}`,
+        change: t('dashboard.summary.overdueAmount', { amount: formatCurrency(snapshot?.receivablesOverdue ?? 0) }),
         icon: <PaidRoundedIcon />,
       },
       {
-        title: 'Open payables',
+        title: t('dashboard.summary.openPayables'),
         value: formatCurrency(snapshot?.payablesOpen ?? 0),
-        change: `Overdue ${formatCurrency(snapshot?.payablesOverdue ?? 0)}`,
+        change: t('dashboard.summary.overdueAmount', { amount: formatCurrency(snapshot?.payablesOverdue ?? 0) }),
         icon: <Inventory2RoundedIcon />,
       },
       {
-        title: `Revenue (${periodDays}d)`,
+        title: t('dashboard.summary.revenuePeriod', { days: periodDays }),
         value: formatCurrency(snapshot?.revenueInPeriod ?? 0),
-        change: `Net cash ${formatCurrency(snapshot?.netCashInPeriod ?? 0)}`,
+        change: t('dashboard.summary.netCashAmount', { amount: formatCurrency(snapshot?.netCashInPeriod ?? 0) }),
         icon: <InsightsRoundedIcon />,
       },
     ],
-    [snapshot, periodDays],
+    [snapshot, periodDays, t],
   )
 
   const cashRows = useMemo(
     () => [
-      { id: 'CASH-IN', owner: 'Customer receipts', status: 'Inflow', amount: formatCurrency(snapshot?.cashInInPeriod ?? 0) },
-      { id: 'CASH-OUT', owner: 'Vendor payouts', status: 'Outflow', amount: formatCurrency(snapshot?.cashOutInPeriod ?? 0) },
-      { id: 'NET', owner: `${periodDays}-day window`, status: (snapshot?.netCashInPeriod ?? 0) >= 0 ? 'Positive' : 'Negative', amount: formatCurrency(snapshot?.netCashInPeriod ?? 0) },
+      { id: 'CASH-IN', owner: t('dashboard.cashRows.customerReceipts'), status: t('dashboard.cashRows.inflow'), amount: formatCurrency(snapshot?.cashInInPeriod ?? 0) },
+      { id: 'CASH-OUT', owner: t('dashboard.cashRows.vendorPayouts'), status: t('dashboard.cashRows.outflow'), amount: formatCurrency(snapshot?.cashOutInPeriod ?? 0) },
+      { id: 'NET', owner: t('dashboard.cashRows.windowDays', { days: periodDays }), status: (snapshot?.netCashInPeriod ?? 0) >= 0 ? t('dashboard.cashRows.positive') : t('dashboard.cashRows.negative'), amount: formatCurrency(snapshot?.netCashInPeriod ?? 0) },
     ],
-    [snapshot, periodDays],
+    [snapshot, periodDays, t],
   )
 
   const loadSnapshot = useCallback(async () => {
@@ -100,9 +101,9 @@ export default function DashboardPage() {
       setSnapshot(data)
     } catch (loadError) {
       if (loadError instanceof ApiError) setError(loadError.message)
-      else setError('Unable to load dashboard metrics.')
+      else setError(t('dashboard.errors.loadMetrics'))
     }
-  }, [asOfDate, isAuthenticated, periodDays])
+  }, [asOfDate, isAuthenticated, periodDays, t])
 
   useEffect(() => {
     void loadSnapshot()
@@ -114,14 +115,14 @@ export default function DashboardPage() {
         <Grid size={{ xs: 12, xl: 8 }}>
           <Paper elevation={0} className="hero-panel dashboard-banner">
             <Stack spacing={2.5}>
-              <Typography variant="h2">Run Vexorion like an operations dashboard, not a placeholder homepage.</Typography>
+              <Typography variant="h2">{t('dashboard.hero.title')}</Typography>
               <Typography variant="body1" sx={{ maxWidth: 760 }}>
-                Finance KPIs update by as-of date and analysis window so operations can see receivables, payables, revenue, and cash momentum in one screen.
+                {t('dashboard.hero.description')}
               </Typography>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
                 <TextField
                   type="date"
-                  label="As-of date"
+                  label={t('dashboard.filters.asOfDate')}
                   value={asOfDate}
                   onChange={(event) => setAsOfDate(event.target.value)}
                   slotProps={{ inputLabel: { shrink: true } }}
@@ -129,21 +130,21 @@ export default function DashboardPage() {
                 />
                 <TextField
                   select
-                  label="Window"
+                  label={t('dashboard.filters.window')}
                   value={periodDays}
                   onChange={(event) => setPeriodDays(Number(event.target.value))}
                   SelectProps={{ native: true }}
                   sx={{ maxWidth: 220 }}
                 >
                   {periodOptions.map((option) => (
-                    <option key={option} value={option}>{option} days</option>
+                    <option key={option} value={option}>{t('dashboard.filters.daysOption', { days: option })}</option>
                   ))}
                 </TextField>
               </Stack>
               {isAuthenticated && user ? (
                 <Stack spacing={1}>
-                  <Typography variant="h6">Signed in as {user.firstName ?? user.userName}</Typography>
-                  <Typography color="text.secondary">Tenant {user.tenantId} · {user.email}</Typography>
+                  <Typography variant="h6">{t('dashboard.user.signedInAs', { name: user.firstName ?? user.userName })}</Typography>
+                  <Typography color="text.secondary">{t('dashboard.user.tenantAndEmail', { tenantId: user.tenantId, email: user.email })}</Typography>
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                     {user.permissions.slice(0, 6).map((permission) => (
                       <Chip key={permission} label={permission} size="small" />
@@ -151,7 +152,7 @@ export default function DashboardPage() {
                   </Box>
                 </Stack>
               ) : (
-                <Chip color="secondary" label="Sign in to unlock protected modules" sx={{ alignSelf: 'flex-start' }} />
+                <Chip color="secondary" label={t('dashboard.user.signInHint')} sx={{ alignSelf: 'flex-start' }} />
               )}
               {error ? <Alert severity="error">{error}</Alert> : null}
             </Stack>
@@ -160,10 +161,10 @@ export default function DashboardPage() {
 
         <Grid size={{ xs: 12, xl: 4 }}>
           <Paper elevation={0} className="panel-card">
-            <Typography variant="h6" sx={{ mb: 2 }}>System focus</Typography>
+            <Typography variant="h6" sx={{ mb: 2 }}>{t('dashboard.systemFocus.title')}</Typography>
             <Stack spacing={1.5}>
-              <Typography color="text.secondary">Use the reporting and finance modules to drill into aging and trial balance details from these KPI cards.</Typography>
-              <Typography color="text.secondary">Dashboard values are tenant-scoped and filtered by the selected as-of date and window.</Typography>
+              <Typography color="text.secondary">{t('dashboard.systemFocus.line1')}</Typography>
+              <Typography color="text.secondary">{t('dashboard.systemFocus.line2')}</Typography>
             </Stack>
           </Paper>
         </Grid>
@@ -186,17 +187,17 @@ export default function DashboardPage() {
         <Grid size={{ xs: 12, xl: 8 }}>
           <Paper elevation={0} className="panel-card">
             <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">Cash movement snapshot</Typography>
-              <Chip label={`${periodDays}-day window`} size="small" />
+              <Typography variant="h6">{t('dashboard.cashSnapshot.title')}</Typography>
+              <Chip label={t('dashboard.cashSnapshot.window', { days: periodDays })} size="small" />
             </Stack>
             <TableContainer>
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Reference</TableCell>
-                    <TableCell>Source</TableCell>
-                    <TableCell>Direction</TableCell>
-                    <TableCell align="right">Amount</TableCell>
+                    <TableCell>{t('dashboard.table.reference')}</TableCell>
+                    <TableCell>{t('dashboard.table.source')}</TableCell>
+                    <TableCell>{t('dashboard.table.direction')}</TableCell>
+                    <TableCell align="right">{t('dashboard.table.amount')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -205,7 +206,7 @@ export default function DashboardPage() {
                       <TableCell>{row.id}</TableCell>
                       <TableCell>{row.owner}</TableCell>
                       <TableCell>
-                        <Chip label={row.status} size="small" color={row.status === 'Positive' || row.status === 'Inflow' ? 'primary' : 'default'} />
+                        <Chip label={row.status} size="small" color={row.status === t('dashboard.cashRows.positive') || row.status === t('dashboard.cashRows.inflow') ? 'primary' : 'default'} />
                       </TableCell>
                       <TableCell align="right">{row.amount}</TableCell>
                     </TableRow>
@@ -219,17 +220,17 @@ export default function DashboardPage() {
         <Grid size={{ xs: 12, xl: 4 }}>
           <Stack spacing={3}>
             <Paper elevation={0} className="panel-card">
-              <Typography variant="h6" sx={{ mb: 2 }}>Finance snapshot</Typography>
+              <Typography variant="h6" sx={{ mb: 2 }}>{t('dashboard.financeSnapshot.title')}</Typography>
               <Stack spacing={1.5}>
-                <Typography variant="body2" color="text.secondary">Receivables overdue</Typography>
+                <Typography variant="body2" color="text.secondary">{t('dashboard.financeSnapshot.receivablesOverdue')}</Typography>
                 <Typography variant="h5">{formatCurrency(snapshot?.receivablesOverdue ?? 0)}</Typography>
-                <Typography variant="body2" color="text.secondary">Payables overdue</Typography>
+                <Typography variant="body2" color="text.secondary">{t('dashboard.financeSnapshot.payablesOverdue')}</Typography>
                 <Typography variant="h5">{formatCurrency(snapshot?.payablesOverdue ?? 0)}</Typography>
               </Stack>
             </Paper>
 
             <Paper elevation={0} className="panel-card">
-              <Typography variant="h6" sx={{ mb: 2 }}>Workspace pillars</Typography>
+              <Typography variant="h6" sx={{ mb: 2 }}>{t('dashboard.pillars.title')}</Typography>
               <Stack spacing={2}>
                 {quickCards.map((card) => (
                   <Box key={card.title} className="mini-pillar-row">

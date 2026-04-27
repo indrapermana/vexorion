@@ -1,7 +1,9 @@
 import { useEffect, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore } from './authStore'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  useTranslation()
   const initialize = useAuthStore((state) => state.initialize)
 
   useEffect(() => {

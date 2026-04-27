@@ -1,5 +1,6 @@
 import { Box, Typography } from '@mui/material'
 import { DataGrid, type GridColDef } from '@mui/x-data-grid'
+import { useTranslation } from 'react-i18next'
 import type { VendorPaymentGridRow } from '../../../types/ui'
 
 type VendorPaymentDataGridProps = {
@@ -8,16 +9,17 @@ type VendorPaymentDataGridProps = {
 }
 
 export default function VendorPaymentDataGrid({ rows, isLoading }: VendorPaymentDataGridProps) {
+  const { t } = useTranslation()
   const columns: GridColDef<VendorPaymentGridRow>[] = [
     {
       field: 'paymentDate',
-      headerName: 'Payment date',
+      headerName: t('components.vendorPayments.grid.columns.paymentDate'),
       minWidth: 130,
       flex: 0.7,
     },
     {
       field: 'supplierName',
-      headerName: 'Supplier',
+      headerName: t('components.vendorPayments.grid.columns.supplier'),
       minWidth: 180,
       flex: 1,
       renderCell: ({ row }) => (
@@ -29,7 +31,7 @@ export default function VendorPaymentDataGrid({ rows, isLoading }: VendorPayment
     },
     {
       field: 'amount',
-      headerName: 'Amount',
+      headerName: t('components.vendorPayments.grid.columns.amount'),
       minWidth: 130,
       flex: 0.7,
       type: 'number',
@@ -37,17 +39,17 @@ export default function VendorPaymentDataGrid({ rows, isLoading }: VendorPayment
     },
     {
       field: 'paymentMethod',
-      headerName: 'Method',
+      headerName: t('components.vendorPayments.grid.columns.method'),
       minWidth: 140,
       flex: 0.7,
-      valueFormatter: (value) => (value ? String(value) : 'N/A'),
+      valueFormatter: (value) => (value ? String(value) : t('components.vendorPayments.grid.na')),
     },
     {
       field: 'referenceNumber',
-      headerName: 'Reference',
+      headerName: t('components.vendorPayments.grid.columns.reference'),
       minWidth: 160,
       flex: 0.8,
-      valueFormatter: (value) => (value ? String(value) : 'N/A'),
+      valueFormatter: (value) => (value ? String(value) : t('components.vendorPayments.grid.na')),
     },
   ]
 

@@ -10,6 +10,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { ApiError, getCompanies, getCompany, updateCompany } from '../../../lib/api'
 import type { CompanyDetailsResponse, CompanyListItemResponse, UpdateCompanyRequest } from '../../../types/api'
@@ -47,6 +48,7 @@ function toDraft(details: CompanyDetailsResponse): CompanyDraft {
 }
 
 export default function ConfigCompanyPage() {
+  const { t } = useTranslation()
   const { isAuthenticated } = useAuth()
   const [companies, setCompanies] = useState<CompanyListItemResponse[]>([])
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('')
@@ -84,10 +86,10 @@ export default function ConfigCompanyPage() {
       if (loadError instanceof ApiError) {
         setError(loadError.message)
       } else {
-        setError('Unable to load company settings.')
+        setError(t('config.company.errors.loadSettings'))
       }
     }
-  }, [isAuthenticated, selectedCompanyId])
+  }, [isAuthenticated, selectedCompanyId, t])
 
   useEffect(() => {
     void loadCompanies()
@@ -105,7 +107,7 @@ export default function ConfigCompanyPage() {
       if (loadError instanceof ApiError) {
         setError(loadError.message)
       } else {
-        setError('Unable to load selected company.')
+        setError(t('config.company.errors.loadSelected'))
       }
     }
   }
@@ -137,13 +139,13 @@ export default function ConfigCompanyPage() {
     try {
       const updated = await updateCompany(selectedCompanyId, payload)
       setDraft(toDraft(updated))
-      setFeedback('Company profile updated.')
+      setFeedback(t('config.company.feedback.updated'))
       await loadCompanies()
     } catch (saveError) {
       if (saveError instanceof ApiError) {
         setError(saveError.message)
       } else {
-        setError('Unable to save company profile.')
+        setError(t('config.company.errors.save'))
       }
     } finally {
       setIsSaving(false)
@@ -151,15 +153,15 @@ export default function ConfigCompanyPage() {
   }
 
   if (!isAuthenticated) {
-    return <Alert severity="info">Sign in first. Company configuration requires authentication.</Alert>
+    return <Alert severity="info">{t('config.company.signInRequired')}</Alert>
   }
 
   return (
     <Stack spacing={3}>
       <Paper elevation={0} className="panel-card">
-        <Typography variant="h4" sx={{ mb: 1 }}>Company Profile</Typography>
+        <Typography variant="h4" sx={{ mb: 1 }}>{t('config.company.title')}</Typography>
         <Typography color="text.secondary">
-          Maintain legal and contact data used across operational documents.
+          {t('config.company.description')}
         </Typography>
       </Paper>
 
@@ -170,7 +172,7 @@ export default function ConfigCompanyPage() {
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ alignItems: { md: 'center' } }}>
           <TextField
             size="small"
-            label="Company"
+            label={t('config.company.companyField')}
             value={selectedCompanyId}
             select
             onChange={(event) => void loadCompany(event.target.value)}
@@ -183,7 +185,7 @@ export default function ConfigCompanyPage() {
             ))}
           </TextField>
           <Button variant="contained" onClick={() => void save()} disabled={!draft || isSaving || !selectedCompanyId}>
-            Save company profile
+            {t('config.company.saveButton')}
           </Button>
         </Stack>
       </Paper>
@@ -192,36 +194,36 @@ export default function ConfigCompanyPage() {
         <Paper elevation={0} className="panel-card">
           <Stack spacing={1.5}>
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
-              <TextField size="small" label="Company name" value={draft.name} onChange={(event) => setDraft((prev) => prev ? { ...prev, name: event.target.value } : prev)} fullWidth />
-              <TextField size="small" label="Company code" value={draft.code} onChange={(event) => setDraft((prev) => prev ? { ...prev, code: event.target.value } : prev)} fullWidth />
-              <TextField size="small" label="Tax number" value={draft.taxNumber} onChange={(event) => setDraft((prev) => prev ? { ...prev, taxNumber: event.target.value } : prev)} fullWidth />
+              <TextField size="small" label={t('config.company.fields.name')} value={draft.name} onChange={(event) => setDraft((prev) => prev ? { ...prev, name: event.target.value } : prev)} fullWidth />
+              <TextField size="small" label={t('config.company.fields.code')} value={draft.code} onChange={(event) => setDraft((prev) => prev ? { ...prev, code: event.target.value } : prev)} fullWidth />
+              <TextField size="small" label={t('config.company.fields.taxNumber')} value={draft.taxNumber} onChange={(event) => setDraft((prev) => prev ? { ...prev, taxNumber: event.target.value } : prev)} fullWidth />
             </Stack>
 
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
-              <TextField size="small" label="Email" value={draft.email} onChange={(event) => setDraft((prev) => prev ? { ...prev, email: event.target.value } : prev)} fullWidth />
-              <TextField size="small" label="Phone" value={draft.phoneNumber} onChange={(event) => setDraft((prev) => prev ? { ...prev, phoneNumber: event.target.value } : prev)} fullWidth />
-              <TextField size="small" label="Country" value={draft.country} onChange={(event) => setDraft((prev) => prev ? { ...prev, country: event.target.value } : prev)} fullWidth />
+              <TextField size="small" label={t('config.company.fields.email')} value={draft.email} onChange={(event) => setDraft((prev) => prev ? { ...prev, email: event.target.value } : prev)} fullWidth />
+              <TextField size="small" label={t('config.company.fields.phone')} value={draft.phoneNumber} onChange={(event) => setDraft((prev) => prev ? { ...prev, phoneNumber: event.target.value } : prev)} fullWidth />
+              <TextField size="small" label={t('config.company.fields.country')} value={draft.country} onChange={(event) => setDraft((prev) => prev ? { ...prev, country: event.target.value } : prev)} fullWidth />
             </Stack>
 
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
-              <TextField size="small" label="Address line 1" value={draft.addressLine1} onChange={(event) => setDraft((prev) => prev ? { ...prev, addressLine1: event.target.value } : prev)} fullWidth />
-              <TextField size="small" label="Address line 2" value={draft.addressLine2} onChange={(event) => setDraft((prev) => prev ? { ...prev, addressLine2: event.target.value } : prev)} fullWidth />
+              <TextField size="small" label={t('config.company.fields.address1')} value={draft.addressLine1} onChange={(event) => setDraft((prev) => prev ? { ...prev, addressLine1: event.target.value } : prev)} fullWidth />
+              <TextField size="small" label={t('config.company.fields.address2')} value={draft.addressLine2} onChange={(event) => setDraft((prev) => prev ? { ...prev, addressLine2: event.target.value } : prev)} fullWidth />
             </Stack>
 
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
-              <TextField size="small" label="City" value={draft.city} onChange={(event) => setDraft((prev) => prev ? { ...prev, city: event.target.value } : prev)} fullWidth />
-              <TextField size="small" label="State" value={draft.state} onChange={(event) => setDraft((prev) => prev ? { ...prev, state: event.target.value } : prev)} fullWidth />
-              <TextField size="small" label="Postal code" value={draft.postalCode} onChange={(event) => setDraft((prev) => prev ? { ...prev, postalCode: event.target.value } : prev)} fullWidth />
+              <TextField size="small" label={t('config.company.fields.city')} value={draft.city} onChange={(event) => setDraft((prev) => prev ? { ...prev, city: event.target.value } : prev)} fullWidth />
+              <TextField size="small" label={t('config.company.fields.state')} value={draft.state} onChange={(event) => setDraft((prev) => prev ? { ...prev, state: event.target.value } : prev)} fullWidth />
+              <TextField size="small" label={t('config.company.fields.postalCode')} value={draft.postalCode} onChange={(event) => setDraft((prev) => prev ? { ...prev, postalCode: event.target.value } : prev)} fullWidth />
             </Stack>
 
             <FormControlLabel
               control={<Switch checked={draft.isActive} onChange={(event) => setDraft((prev) => prev ? { ...prev, isActive: event.target.checked } : prev)} />}
-              label="Company active"
+              label={t('config.company.fields.isActive')}
             />
           </Stack>
         </Paper>
       ) : (
-        <Alert severity="info">No company records found for this tenant yet.</Alert>
+        <Alert severity="info">{t('config.company.noRecords')}</Alert>
       )}
     </Stack>
   )

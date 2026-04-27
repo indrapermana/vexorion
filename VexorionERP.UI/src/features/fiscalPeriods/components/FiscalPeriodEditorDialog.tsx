@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, Stack, Switch, TextField } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
@@ -21,6 +22,7 @@ const schema: yup.ObjectSchema<FiscalPeriodFormValues> = yup.object({
 })
 
 export default function FiscalPeriodEditorDialog({ open, mode, fiscalPeriodId, onClose, onSaved }: FiscalPeriodEditorDialogProps) {
+  useTranslation()
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(mode === 'edit')
 

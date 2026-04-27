@@ -3,6 +3,7 @@ import PaidRoundedIcon from '@mui/icons-material/PaidRounded'
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded'
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded'
 import { Box, CircularProgress, Stack, Typography } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
 import OrderWorkspace from '../../../components/OrderWorkspace'
@@ -17,17 +18,20 @@ const SalesOrderDeleteDialog = lazy(() => import('../components/SalesOrderDelete
 const SalesOrderLinesPanel = lazy(() => import('../components/SalesOrderLinesPanel'))
 
 function SalesOrderSurfaceFallback() {
+  const { t } = useTranslation()
+
   return (
     <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
       <Stack spacing={1.5} sx={{ alignItems: 'center' }}>
         <CircularProgress size={28} />
-        <Typography color="text.secondary">Loading sales order tools...</Typography>
+        <Typography color="text.secondary">{t('pages.salesOrders.loadingTools')}</Typography>
       </Stack>
     </Box>
   )
 }
 
 export default function SalesOrdersPage() {
+  const { t } = useTranslation()
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const { items: customers, error: customersError, reload: reloadCustomers } = useCustomersLookup(isAuthenticated)
@@ -184,24 +188,24 @@ export default function SalesOrdersPage() {
   }
 
   if (!isAuthenticated) {
-    return <OrderWorkspace title="Sales Orders" description="Transactional sales headers from `/api/sales-orders`, linked to customer master data for selection and display." createLabel="New sales order" onCreate={() => undefined} disableCreate metrics={[]} alerts={[{ severity: 'info', message: 'Sign in first. The sales orders API requires an authenticated user with sales view permissions.' }]} grid={null} linesPanel={null} />
+    return <OrderWorkspace title={t('nav.routeTitles.salesOrders')} description={t('pages.salesOrders.description')} createLabel={t('pages.salesOrders.newButton')} onCreate={() => undefined} disableCreate metrics={[]} alerts={[{ severity: 'info', message: t('pages.salesOrders.signInRequired') }]} grid={null} linesPanel={null} />
   }
 
   return (
     <OrderWorkspace
-      title="Sales Orders"
-      description="Transactional sales headers from `/api/sales-orders`, linked to customer master data for selection and display."
-      createLabel="New sales order"
+      title={t('nav.routeTitles.salesOrders')}
+      description={t('pages.salesOrders.description')}
+      createLabel={t('pages.salesOrders.newButton')}
       onCreate={openCreateDialog}
       disableCreate={customers.length === 0 || warehouses.length === 0}
       metrics={[
-        { icon: <ReceiptLongRoundedIcon fontSize="small" />, label: 'Open headers', value: salesOrders.length },
-        { icon: <ScheduleRoundedIcon fontSize="small" />, label: 'Draft orders', value: salesOrders.filter((salesOrder) => salesOrder.status === 1).length },
-        { icon: <PaidRoundedIcon fontSize="small" />, label: 'Total value', value: `$${salesOrders.reduce((sum, salesOrder) => sum + salesOrder.totalAmount, 0).toFixed(2)}` },
+        { icon: <ReceiptLongRoundedIcon fontSize="small" />, label: t('pages.salesOrders.metrics.openHeaders'), value: salesOrders.length },
+        { icon: <ScheduleRoundedIcon fontSize="small" />, label: t('pages.salesOrders.metrics.draftOrders'), value: salesOrders.filter((salesOrder) => salesOrder.status === 1).length },
+        { icon: <PaidRoundedIcon fontSize="small" />, label: t('pages.salesOrders.metrics.totalValue'), value: `$${salesOrders.reduce((sum, salesOrder) => sum + salesOrder.totalAmount, 0).toFixed(2)}` },
       ]}
       alerts={[
-        ...(!customers.length ? [{ severity: 'warning' as const, message: 'Create at least one customer before creating sales orders.' }] : []),
-        ...(!warehouses.length ? [{ severity: 'warning' as const, message: 'Create at least one warehouse before creating sales orders.' }] : []),
+        ...(!customers.length ? [{ severity: 'warning' as const, message: t('pages.salesOrders.createCustomerFirst') }] : []),
+        ...(!warehouses.length ? [{ severity: 'warning' as const, message: t('pages.salesOrders.createWarehouseFirst') }] : []),
         ...(customersError ? [{ severity: 'warning' as const, message: customersError }] : []),
         ...(warehousesError ? [{ severity: 'warning' as const, message: warehousesError }] : []),
         ...(error ? [{ severity: 'error' as const, message: error }] : []),

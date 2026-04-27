@@ -16,6 +16,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import {
   ApiError,
@@ -48,6 +49,7 @@ function toPeriodStart(asOfDate: string) {
 }
 
 export default function ReportsPage() {
+  const { t } = useTranslation()
   const { isAuthenticated } = useAuth()
   const [asOfDate, setAsOfDate] = useState(new Date().toISOString().slice(0, 10))
   const [showComparative, setShowComparative] = useState(false)
@@ -119,17 +121,17 @@ export default function ReportsPage() {
   }, [loadReports])
 
   if (!isAuthenticated) {
-    return <Alert severity="info">Sign in first. Reports require billing permissions.</Alert>
+    return <Alert severity="info">{t('pages.reports.signInRequired')}</Alert>
   }
 
   return (
     <Stack spacing={3}>
       <Paper elevation={0} className="panel-card">
-        <Typography variant="h4" sx={{ mb: 1 }}>Finance Reports</Typography>
-        <Typography color="text.secondary" sx={{ mb: 2 }}>A/R aging, A/P aging, and trial balance.</Typography>
+        <Typography variant="h4" sx={{ mb: 1 }}>{t('nav.routeTitles.reports')}</Typography>
+        <Typography color="text.secondary" sx={{ mb: 2 }}>{t('pages.reports.description')}</Typography>
         <TextField
           type="date"
-          label="As-of date"
+          label={t('pages.reports.asOfDate')}
           value={asOfDate}
           onChange={(event) => setAsOfDate(event.target.value)}
           slotProps={{ inputLabel: { shrink: true } }}
@@ -137,7 +139,7 @@ export default function ReportsPage() {
         />
         <FormControlLabel
           control={<Switch checked={showComparative} onChange={(event) => setShowComparative(event.target.checked)} />}
-          label="Comparative prior period"
+          label={t('pages.reports.comparativePriorPeriod')}
         />
       </Paper>
 

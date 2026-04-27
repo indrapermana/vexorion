@@ -1,13 +1,15 @@
 import { Alert } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../app/AuthContext'
 
 export function ProtectedRoute() {
+  const { t } = useTranslation()
   const location = useLocation()
   const { isAuthenticated, isLoading } = useAuth()
 
   if (isLoading) {
-    return <Alert severity="info">Checking your session...</Alert>
+    return <Alert severity="info">{t('routeGuards.checkingSession')}</Alert>
   }
 
   if (!isAuthenticated) {
@@ -18,10 +20,11 @@ export function ProtectedRoute() {
 }
 
 export function PublicOnlyRoute() {
+  const { t } = useTranslation()
   const { isAuthenticated, isLoading } = useAuth()
 
   if (isLoading) {
-    return <Alert severity="info">Loading workspace...</Alert>
+    return <Alert severity="info">{t('routeGuards.loadingWorkspace')}</Alert>
   }
 
   if (isAuthenticated) {

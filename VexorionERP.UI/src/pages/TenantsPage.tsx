@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Alert, Box, Button, Divider, Grid, Link, Stack, TextField, Typography } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
 import { ApiError, onboardTenant } from '../lib/api'
 import type { OnboardTenantRequest, OnboardTenantResponse, ValidationProblem } from '../types/api'
@@ -18,6 +19,7 @@ const initialForm: OnboardTenantRequest = {
 }
 
 export default function TenantsPage() {
+  const { t } = useTranslation()
   const [form, setForm] = useState(initialForm)
   const [result, setResult] = useState<OnboardTenantResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -53,16 +55,16 @@ export default function TenantsPage() {
   return (
     <Stack component="form" spacing={2.5} onSubmit={onSubmit} className="public-form-card public-form-card--tenant">
       <Box>
-        <Typography variant="h4" sx={{ mb: 1 }}>Tenant onboarding</Typography>
+        <Typography variant="h4" sx={{ mb: 1 }}>{t('pages.auth.tenants.title')}</Typography>
         <Typography color="text.secondary">
-          Anonymous flow wired to `/api/tenants/onboard` so the UI can seed a brand-new tenant and admin account.
+          {t('pages.auth.tenants.description')}
         </Typography>
       </Box>
 
       {error ? <Alert severity="error">{error}</Alert> : null}
       {result ? (
         <Alert severity="success">
-          Tenant {result.tenantCode} created. Admin user: {result.adminUserName}.
+          {t('pages.auth.tenants.success', { tenantCode: result.tenantCode, adminUserName: result.adminUserName })}
         </Alert>
       ) : null}
 
@@ -100,15 +102,15 @@ export default function TenantsPage() {
       </Grid>
 
       <Button type="submit" variant="contained" size="large" disabled={isSubmitting}>
-        {isSubmitting ? 'Creating tenant...' : 'Create tenant'}
+        {isSubmitting ? t('pages.auth.tenants.creating') : t('pages.auth.tenants.createButton')}
       </Button>
 
       <Divider />
 
       <Typography variant="body2" color="text.secondary">
-        Already have a workspace?{' '}
+        {t('pages.auth.tenants.alreadyHaveWorkspace')}{' '}
         <Link component={RouterLink} to="/login" underline="hover">
-          Sign in instead
+          {t('pages.auth.tenants.signInInstead')}
         </Link>
       </Typography>
     </Stack>

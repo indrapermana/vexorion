@@ -11,11 +11,13 @@ import {
   TableRow,
   Typography,
 } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { ApiError, getRolePermissions } from '../../../lib/api'
 import type { RolePermissionsResponse } from '../../../types/api'
 
 export default function ConfigRolesPage() {
+  const { t } = useTranslation()
   const { isAuthenticated } = useAuth()
   const [items, setItems] = useState<RolePermissionsResponse[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -34,25 +36,25 @@ export default function ConfigRolesPage() {
       if (loadError instanceof ApiError) {
         setError(loadError.message)
       } else {
-        setError('Unable to load role permissions.')
+        setError(t('config.roles.errors.load'))
       }
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, t])
 
   useEffect(() => {
     void loadRoles()
   }, [loadRoles])
 
   if (!isAuthenticated) {
-    return <Alert severity="info">Sign in first. Role configuration requires authentication.</Alert>
+    return <Alert severity="info">{t('config.roles.signInRequired')}</Alert>
   }
 
   return (
     <Stack spacing={3}>
       <Paper elevation={0} className="panel-card">
-        <Typography variant="h4" sx={{ mb: 1 }}>Role Permissions</Typography>
+        <Typography variant="h4" sx={{ mb: 1 }}>{t('config.roles.title')}</Typography>
         <Typography color="text.secondary">
-          Reference view of role-to-permission mapping currently configured in the backend matrix.
+          {t('config.roles.description')}
         </Typography>
       </Paper>
 
@@ -62,8 +64,8 @@ export default function ConfigRolesPage() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell sx={{ width: 180 }}>Role</TableCell>
-              <TableCell>Permissions</TableCell>
+              <TableCell sx={{ width: 180 }}>{t('config.roles.columns.role')}</TableCell>
+              <TableCell>{t('config.roles.columns.permissions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

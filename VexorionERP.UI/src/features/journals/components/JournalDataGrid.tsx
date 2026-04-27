@@ -1,6 +1,7 @@
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded'
 import { Chip } from '@mui/material'
 import { DataGrid, GridActionsCellItem, type GridColDef } from '@mui/x-data-grid'
+import { useTranslation } from 'react-i18next'
 import type { JournalGridRow } from '../../../types/ui'
 
 function getJournalStatusLabel(status: number) {
@@ -17,6 +18,7 @@ type JournalDataGridProps = {
 }
 
 export default function JournalDataGrid({ rows, isLoading, onOpen }: JournalDataGridProps) {
+  useTranslation()
   const columns: GridColDef<JournalGridRow>[] = [
     { field: 'journalNumber', headerName: 'Journal', minWidth: 160, flex: 0.7 },
     { field: 'postingDate', headerName: 'Posting date', minWidth: 130, flex: 0.6 },

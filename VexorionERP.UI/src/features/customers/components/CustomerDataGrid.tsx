@@ -6,6 +6,7 @@ import {
 import { DataGrid, GridActionsCellItem, type GridColDef } from '@mui/x-data-grid'
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
 import EditRoundedIcon from '@mui/icons-material/EditRounded'
+import { useTranslation } from 'react-i18next'
 import type { CustomerGridRow } from '../../../types/ui'
 
 type CustomerDataGridProps = {
@@ -16,31 +17,32 @@ type CustomerDataGridProps = {
 }
 
 export default function CustomerDataGrid({ rows, isLoading, onEdit, onDelete }: CustomerDataGridProps) {
+  const { t } = useTranslation()
   const columns: GridColDef<CustomerGridRow>[] = [
     {
       field: 'name',
-      headerName: 'Customer',
+      headerName: t('components.customers.grid.columns.customer'),
       flex: 1.2,
       minWidth: 220,
       renderCell: ({ row }) => (
         <Box sx={{ py: 1 }}>
           <Typography sx={{ fontWeight: 700 }}>{row.name}</Typography>
-          <Typography variant="body2" color="text.secondary">No. {row.customerNumber}</Typography>
+          <Typography variant="body2" color="text.secondary">{t('components.customers.grid.numberPrefix')} {row.customerNumber}</Typography>
         </Box>
       ),
     },
     {
       field: 'email',
-      headerName: 'Email',
+      headerName: t('components.customers.grid.columns.email'),
       minWidth: 220,
       flex: 1,
       renderCell: ({ value }) => (
-        <Typography variant="body2" color="text.secondary">{value || 'No email'}</Typography>
+        <Typography variant="body2" color="text.secondary">{value || t('components.customers.grid.noEmail')}</Typography>
       ),
     },
     {
       field: 'isActive',
-      headerName: 'Status',
+      headerName: t('components.customers.grid.columns.status'),
       minWidth: 140,
       flex: 0.7,
       sortable: false,
@@ -48,7 +50,7 @@ export default function CustomerDataGrid({ rows, isLoading, onEdit, onDelete }: 
         <Chip
           size="small"
           color={value ? 'primary' : 'default'}
-          label={value ? 'Active' : 'Inactive'}
+          label={value ? t('components.customers.grid.active') : t('components.customers.grid.inactive')}
           variant={value ? 'filled' : 'outlined'}
         />
       ),
@@ -56,20 +58,20 @@ export default function CustomerDataGrid({ rows, isLoading, onEdit, onDelete }: 
     {
       field: 'actions',
       type: 'actions',
-      headerName: 'Actions',
+      headerName: t('components.customers.grid.columns.actions'),
       minWidth: 110,
       getActions: ({ row }) => [
         <GridActionsCellItem
           key={`edit-${row.id}`}
           icon={<EditRoundedIcon />}
-          label="Edit"
+          label={t('common.edit')}
           onClick={() => onEdit(row.id)}
           showInMenu={false}
         />,
         <GridActionsCellItem
           key={`delete-${row.id}`}
           icon={<DeleteOutlineRoundedIcon />}
-          label="Delete"
+          label={t('dialogs.delete')}
           onClick={() => onDelete(row)}
           showInMenu={false}
         />,

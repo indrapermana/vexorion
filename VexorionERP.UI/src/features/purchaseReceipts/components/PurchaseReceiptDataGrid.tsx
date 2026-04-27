@@ -3,6 +3,7 @@ import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
 import PublishRoundedIcon from '@mui/icons-material/PublishRounded'
 import { Chip } from '@mui/material'
 import { DataGrid, GridActionsCellItem, type GridColDef } from '@mui/x-data-grid'
+import { useTranslation } from 'react-i18next'
 import type { PurchaseReceiptGridRow } from '../../../types/ui'
 
 function getStatusLabel(status: number) {
@@ -25,6 +26,7 @@ type PurchaseReceiptDataGridProps = {
 }
 
 export default function PurchaseReceiptDataGrid({ rows, isLoading, onPost, onDelete }: PurchaseReceiptDataGridProps) {
+  useTranslation()
   const columns: GridColDef<PurchaseReceiptGridRow>[] = [
     { field: 'receiptNumber', headerName: 'Receipt #', minWidth: 160, flex: 1 },
     { field: 'receiptDate', headerName: 'Date', minWidth: 130, flex: 0.7 },

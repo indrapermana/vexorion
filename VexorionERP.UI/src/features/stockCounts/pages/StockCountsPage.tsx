@@ -27,6 +27,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import LookupSelectField from '../../../components/LookupSelectField'
 import OrderWorkspace from '../../../components/OrderWorkspace'
@@ -114,6 +115,7 @@ function buildLineForm(line: StockCountLineDetailsResponse | null): CountLineFor
 }
 
 export default function StockCountsPage() {
+  const { t } = useTranslation()
   const { isAuthenticated } = useAuth()
   const { items: warehouses, error: warehousesError, reload: reloadWarehouses } = useWarehousesLookup(isAuthenticated)
   const { items: products, error: productsError } = useProductsLookup(Boolean(isAuthenticated))
@@ -471,20 +473,20 @@ export default function StockCountsPage() {
     const active = rows.filter((row) => row.isActive).length
 
     return [
-      { icon: <FormatListBulletedRoundedIcon color="primary" />, label: 'Total counts', value: total },
-      { icon: <CheckCircleRoundedIcon color="success" />, label: 'Completed', value: completed },
-      { icon: <AutoGraphRoundedIcon color="info" />, label: 'Active', value: active },
+      { icon: <FormatListBulletedRoundedIcon color="primary" />, label: t('pages.stockCounts.metrics.totalCounts'), value: total },
+      { icon: <CheckCircleRoundedIcon color="success" />, label: t('pages.stockCounts.metrics.completed'), value: completed },
+      { icon: <AutoGraphRoundedIcon color="info" />, label: t('pages.stockCounts.metrics.active'), value: active },
     ]
-  }, [rows])
+  }, [rows, t])
 
   const canPost = Boolean(selectedCount && selectedCount.status === 1 && selectedCount.lines.length > 0)
   const canReverse = Boolean(selectedCount && selectedCount.status === 4)
 
   return (
     <OrderWorkspace
-      title="Stock counts"
-      description="Physical count reconciliation backed by /api/stock-counts."
-      createLabel="Create stock count"
+      title={t('nav.routeTitles.stockCounts')}
+      description={t('pages.stockCounts.description')}
+      createLabel={t('pages.stockCounts.newButton')}
       onCreate={openCreateDialog}
       metrics={metrics}
       alerts={alerts}

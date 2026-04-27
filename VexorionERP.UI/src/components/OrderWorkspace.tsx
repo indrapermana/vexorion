@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Alert, Box, Button, Paper, Stack, Typography } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 
 type MetricCard = {
   icon: ReactNode
@@ -34,6 +35,7 @@ export default function OrderWorkspace({
   editor,
   deleteDialog,
 }: OrderWorkspaceProps) {
+  useTranslation()
   return (
     <Stack spacing={3}>
       <Paper elevation={0} className="panel-card">

@@ -8,6 +8,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
 import { ApiError, deletePurchaseReceipt, getPurchaseReceiptsForOrder, postPurchaseReceipt } from '../../../lib/api'
@@ -19,9 +20,14 @@ const PurchaseReceiptDataGrid = lazy(() => import('../components/PurchaseReceipt
 const CreatePurchaseReceiptDialog = lazy(() => import('../components/CreatePurchaseReceiptDialog'))
 
 function LoadingFallback() {
+  const { t } = useTranslation()
+
   return (
     <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
-      <CircularProgress size={28} />
+      <Stack spacing={1.5} sx={{ alignItems: 'center' }}>
+        <CircularProgress size={28} />
+        <Typography color="text.secondary">{t('pages.purchaseReceipts.loadingTools')}</Typography>
+      </Stack>
     </Box>
   )
 }
@@ -29,6 +35,7 @@ function LoadingFallback() {
 type SourceState = { sourcePurchaseOrderId?: string | null; purchaseOrderNumber?: string | null }
 
 export default function PurchaseReceiptsPage() {
+  const { t } = useTranslation()
   const { isAuthenticated } = useAuth()
   const location = useLocation()
   const sourceState = (location.state as SourceState | null) ?? null
@@ -95,14 +102,14 @@ export default function PurchaseReceiptsPage() {
 
   if (!isAuthenticated) {
     return (
-      <Alert severity="info">Sign in to view purchase receipts.</Alert>
+      <Alert severity="info">{t('pages.purchaseReceipts.signInRequired')}</Alert>
     )
   }
 
   if (!purchaseOrderId) {
     return (
       <Alert severity="warning">
-        Navigate here from a purchase order to view its receipts.
+        {t('pages.purchaseReceipts.navigateFromOrder')}
       </Alert>
     )
   }
@@ -113,12 +120,12 @@ export default function PurchaseReceiptsPage() {
         <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
           <LocalShippingRoundedIcon color="primary" />
           <Typography variant="h6">
-            Purchase Receipts
+            {t('nav.routeTitles.purchaseReceipts')}
             {purchaseOrderNumber ? ` — ${purchaseOrderNumber}` : ''}
           </Typography>
         </Stack>
         <Button variant="contained" size="small" onClick={() => setIsCreateOpen(true)}>
-          New Receipt
+          {t('pages.purchaseReceipts.newButton')}
         </Button>
       </Stack>
 

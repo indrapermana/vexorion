@@ -15,6 +15,7 @@ import {
   Switch,
   Typography,
 } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { ApiError, deleteProduct, getInventoryBalances, getProducts, getWarehouses } from '../../../lib/api'
 import type {
@@ -31,11 +32,13 @@ const ProductDataGrid = lazy(() => import('../components/ProductDataGrid'))
 const ProductDeleteDialog = lazy(() => import('../components/ProductDeleteDialog'))
 
 function ProductSurfaceFallback() {
+  const { t } = useTranslation()
+
   return (
     <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
       <Stack spacing={1.5} sx={{ alignItems: 'center' }}>
         <CircularProgress size={28} />
-        <Typography color="text.secondary">Loading product tools...</Typography>
+        <Typography color="text.secondary">{t('pages.products.loadingTools')}</Typography>
       </Stack>
     </Box>
   )
@@ -121,6 +124,7 @@ function buildProductRows(
 }
 
 export default function ProductsPage() {
+  const { t } = useTranslation()
   const { isAuthenticated } = useAuth()
   const [products, setProducts] = useState<ProductGridRow[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -226,7 +230,7 @@ export default function ProductsPage() {
 
   if (!isAuthenticated) {
     return (
-      <Alert severity="info">Sign in first. The products API requires an authenticated user with product view permissions.</Alert>
+      <Alert severity="info">{t('pages.products.signInRequired')}</Alert>
     )
   }
 
@@ -241,38 +245,38 @@ export default function ProductsPage() {
       <Paper elevation={0} className="panel-card">
         <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2.5} sx={{ justifyContent: 'space-between' }}>
           <Box>
-            <Typography variant="h4" sx={{ mb: 1 }}>Products</Typography>
+            <Typography variant="h4" sx={{ mb: 1 }}>{t('nav.routeTitles.products')}</Typography>
             <Typography color="text.secondary">
-              Live list from `/api/products`, rendered as an admin-grade MUI data grid.
+              {t('pages.products.description')}
             </Typography>
           </Box>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
             <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog}>
-              New product
+              {t('pages.products.newButton')}
             </Button>
             <FormControlLabel
               control={<Switch checked={showOnlyLowStock} onChange={(_, checked) => setShowOnlyLowStock(checked)} color="warning" />}
-              label="Only low stock"
+              label={t('pages.products.onlyLowStock')}
               sx={{ mx: 0.5 }}
             />
             <Paper elevation={0} className="products-metric-card">
               <Inventory2RoundedIcon fontSize="small" />
               <Box>
-                <Typography variant="body2" color="text.secondary">Catalog rows</Typography>
+                <Typography variant="body2" color="text.secondary">{t('pages.products.metrics.catalogRows')}</Typography>
                 <Typography variant="h6">{products.length}</Typography>
               </Box>
             </Paper>
             <Paper elevation={0} className="products-metric-card">
               <CheckCircleRoundedIcon fontSize="small" />
               <Box>
-                <Typography variant="body2" color="text.secondary">Active items</Typography>
+                <Typography variant="body2" color="text.secondary">{t('pages.products.metrics.activeItems')}</Typography>
                 <Typography variant="h6">{activeProducts.length}</Typography>
               </Box>
             </Paper>
             <Paper elevation={0} className="products-metric-card">
               <SellRoundedIcon fontSize="small" />
               <Box>
-                <Typography variant="body2" color="text.secondary">Average price</Typography>
+                <Typography variant="body2" color="text.secondary">{t('pages.products.metrics.averagePrice')}</Typography>
                 <Typography variant="h6">
                   ${products.length ? (products.reduce((sum, product) => sum + product.salesPrice, 0) / products.length).toFixed(2) : '0.00'}
                 </Typography>
@@ -281,21 +285,21 @@ export default function ProductsPage() {
             <Paper elevation={0} className="products-metric-card">
               <Inventory2RoundedIcon fontSize="small" />
               <Box>
-                <Typography variant="body2" color="text.secondary">Active warehouse on hand</Typography>
+                <Typography variant="body2" color="text.secondary">{t('pages.products.metrics.activeWarehouseOnHand')}</Typography>
                 <Typography variant="h6">{activeWarehouseOnHand.toFixed(2)}</Typography>
               </Box>
             </Paper>
             <Paper elevation={0} className="products-metric-card">
               <Inventory2RoundedIcon fontSize="small" />
               <Box>
-                <Typography variant="body2" color="text.secondary">Active warehouse available</Typography>
+                <Typography variant="body2" color="text.secondary">{t('pages.products.metrics.activeWarehouseAvailable')}</Typography>
                 <Typography variant="h6">{activeWarehouseAvailable.toFixed(2)}</Typography>
               </Box>
             </Paper>
             <Paper elevation={0} className="products-metric-card">
               <ReportRoundedIcon fontSize="small" />
               <Box>
-                <Typography variant="body2" color="text.secondary" className="products-metric-label">Low stock active items</Typography>
+                <Typography variant="body2" color="text.secondary" className="products-metric-label">{t('pages.products.metrics.lowStockActiveItems')}</Typography>
                 <Typography variant="h6">{lowStockProducts.length}</Typography>
               </Box>
             </Paper>

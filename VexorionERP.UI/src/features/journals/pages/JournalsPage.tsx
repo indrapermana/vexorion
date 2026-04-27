@@ -1,5 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
 import { Alert, Box, Button, CircularProgress, Divider, MenuItem, Paper, Stack, TextField, Typography } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import {
   ApiError,
@@ -24,6 +25,7 @@ function JournalSurfaceFallback() {
 }
 
 export default function JournalsPage() {
+  const { t } = useTranslation()
   const { isAuthenticated } = useAuth()
 
   const [journals, setJournals] = useState<JournalEntryListItemResponse[]>([])
@@ -152,14 +154,14 @@ export default function JournalsPage() {
   }
 
   if (!isAuthenticated) {
-    return <Alert severity="info">Sign in first. Journals require billing permissions.</Alert>
+    return <Alert severity="info">{t('pages.journals.signInRequired')}</Alert>
   }
 
   return (
     <Stack spacing={3}>
       <Paper elevation={0} className="panel-card">
-        <Typography variant="h4" sx={{ mb: 1 }}>Journals & Posting</Typography>
-        <Typography color="text.secondary">Post invoices and manage journal reversals through /api/posting and /api/journals.</Typography>
+        <Typography variant="h4" sx={{ mb: 1 }}>{t('pages.journals.title')}</Typography>
+        <Typography color="text.secondary">{t('pages.journals.description')}</Typography>
       </Paper>
 
       {error ? <Alert severity="error">{error}</Alert> : null}

@@ -3,6 +3,7 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
 import EditRoundedIcon from '@mui/icons-material/EditRounded'
 import { Alert, Box, Button, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { ApiError, createPurchaseInvoiceLine, deletePurchaseInvoiceLine, updatePurchaseInvoiceLine } from '../../../lib/api'
 import { useProductsLookup } from '../../../hooks/useLookups'
 import type { PurchaseInvoiceLineListItemResponse } from '../../../types/api'
@@ -18,6 +19,7 @@ type PurchaseInvoiceLinesPanelProps = {
 }
 
 export default function PurchaseInvoiceLinesPanel({ invoice, lines, isLoading, error, onRefresh }: PurchaseInvoiceLinesPanelProps) {
+  useTranslation()
   const { items: products, error: productsError } = useProductsLookup(Boolean(invoice))
   const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create')
   const [selectedLine, setSelectedLine] = useState<PurchaseInvoiceLineListItemResponse | null>(null)

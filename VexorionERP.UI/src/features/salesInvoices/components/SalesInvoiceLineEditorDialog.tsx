@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField, Typography } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
@@ -26,6 +27,7 @@ const validationSchema: yup.ObjectSchema<SalesInvoiceLineFormValues> = yup.objec
 })
 
 export default function SalesInvoiceLineEditorDialog({ open, mode, line, products, onClose, onSaved }: SalesInvoiceLineEditorDialogProps) {
+  useTranslation()
   const { control, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<SalesInvoiceLineFormValues>({ defaultValues, resolver: yupResolver(validationSchema) })
   const [autofillHint, setAutofillHint] = useState<string | null>(null)
   const selectedProductId = watch('productId')

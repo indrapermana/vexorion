@@ -3,6 +3,7 @@ import PaidRoundedIcon from '@mui/icons-material/PaidRounded'
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded'
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded'
 import { Box, CircularProgress, Stack, Typography } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
 import OrderWorkspace from '../../../components/OrderWorkspace'
@@ -17,17 +18,20 @@ const PurchaseOrderDeleteDialog = lazy(() => import('../components/PurchaseOrder
 const PurchaseOrderLinesPanel = lazy(() => import('../components/PurchaseOrderLinesPanel'))
 
 function PurchaseOrderSurfaceFallback() {
+  const { t } = useTranslation()
+
   return (
     <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
       <Stack spacing={1.5} sx={{ alignItems: 'center' }}>
         <CircularProgress size={28} />
-        <Typography color="text.secondary">Loading purchase order tools...</Typography>
+        <Typography color="text.secondary">{t('pages.purchaseOrders.loadingTools')}</Typography>
       </Stack>
     </Box>
   )
 }
 
 export default function PurchaseOrdersPage() {
+  const { t } = useTranslation()
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const { items: suppliers, error: suppliersError, reload: reloadSuppliers } = useSuppliersLookup(isAuthenticated)
@@ -171,24 +175,24 @@ export default function PurchaseOrdersPage() {
   }
 
   if (!isAuthenticated) {
-    return <OrderWorkspace title="Purchase Orders" description="Transactional purchasing headers from `/api/purchase-orders`, linked to supplier master data for selection and display." createLabel="New purchase order" onCreate={() => undefined} disableCreate metrics={[]} alerts={[{ severity: 'info', message: 'Sign in first. The purchase orders API requires an authenticated user with purchasing view permissions.' }]} grid={null} linesPanel={null} />
+    return <OrderWorkspace title={t('nav.routeTitles.purchaseOrders')} description={t('pages.purchaseOrders.description')} createLabel={t('pages.purchaseOrders.newButton')} onCreate={() => undefined} disableCreate metrics={[]} alerts={[{ severity: 'info', message: t('pages.purchaseOrders.signInRequired') }]} grid={null} linesPanel={null} />
   }
 
   return (
     <OrderWorkspace
-      title="Purchase Orders"
-      description="Transactional purchasing headers from `/api/purchase-orders`, linked to supplier master data for selection and display."
-      createLabel="New purchase order"
+      title={t('nav.routeTitles.purchaseOrders')}
+      description={t('pages.purchaseOrders.description')}
+      createLabel={t('pages.purchaseOrders.newButton')}
       onCreate={openCreateDialog}
       disableCreate={suppliers.length === 0 || warehouses.length === 0}
       metrics={[
-        { icon: <ReceiptLongRoundedIcon fontSize="small" />, label: 'Open headers', value: purchaseOrders.length },
-        { icon: <ScheduleRoundedIcon fontSize="small" />, label: 'Draft orders', value: purchaseOrders.filter((purchaseOrder) => purchaseOrder.status === 1).length },
-        { icon: <PaidRoundedIcon fontSize="small" />, label: 'Total value', value: `$${purchaseOrders.reduce((sum, purchaseOrder) => sum + purchaseOrder.totalAmount, 0).toFixed(2)}` },
+        { icon: <ReceiptLongRoundedIcon fontSize="small" />, label: t('pages.purchaseOrders.metrics.openHeaders'), value: purchaseOrders.length },
+        { icon: <ScheduleRoundedIcon fontSize="small" />, label: t('pages.purchaseOrders.metrics.draftOrders'), value: purchaseOrders.filter((purchaseOrder) => purchaseOrder.status === 1).length },
+        { icon: <PaidRoundedIcon fontSize="small" />, label: t('pages.purchaseOrders.metrics.totalValue'), value: `$${purchaseOrders.reduce((sum, purchaseOrder) => sum + purchaseOrder.totalAmount, 0).toFixed(2)}` },
       ]}
       alerts={[
-        ...(!suppliers.length ? [{ severity: 'warning' as const, message: 'Create at least one supplier before creating purchase orders.' }] : []),
-        ...(!warehouses.length ? [{ severity: 'warning' as const, message: 'Create at least one warehouse before creating purchase orders.' }] : []),
+        ...(!suppliers.length ? [{ severity: 'warning' as const, message: t('pages.purchaseOrders.createSupplierFirst') }] : []),
+        ...(!warehouses.length ? [{ severity: 'warning' as const, message: t('pages.purchaseOrders.createWarehouseFirst') }] : []),
         ...(suppliersError ? [{ severity: 'warning' as const, message: suppliersError }] : []),
         ...(warehousesError ? [{ severity: 'warning' as const, message: warehousesError }] : []),
         ...(error ? [{ severity: 'error' as const, message: error }] : []),

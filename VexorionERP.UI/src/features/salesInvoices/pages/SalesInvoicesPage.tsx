@@ -3,6 +3,7 @@ import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded'
 import PaidRoundedIcon from '@mui/icons-material/PaidRounded'
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded'
 import { Box, CircularProgress, FormControlLabel, Stack, Switch, Typography } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
 import OrderWorkspace from '../../../components/OrderWorkspace'
@@ -17,11 +18,13 @@ const SalesInvoiceDeleteDialog = lazy(() => import('../components/SalesInvoiceDe
 const SalesInvoiceLinesPanel = lazy(() => import('../components/SalesInvoiceLinesPanel'))
 
 function SalesInvoiceSurfaceFallback() {
+  const { t } = useTranslation()
+
   return (
     <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
       <Stack spacing={1.5} sx={{ alignItems: 'center' }}>
         <CircularProgress size={28} />
-        <Typography color="text.secondary">Loading sales invoice tools...</Typography>
+        <Typography color="text.secondary">{t('pages.salesInvoices.loadingTools')}</Typography>
       </Stack>
     </Box>
   )
@@ -30,6 +33,7 @@ function SalesInvoiceSurfaceFallback() {
 type SourceState = Partial<SalesInvoiceFormValues> & { sourceSalesOrderId?: string | null }
 
 export default function SalesInvoicesPage() {
+  const { t } = useTranslation()
   const { isAuthenticated } = useAuth()
   const { items: customers, error: customersError, reload: reloadCustomers } = useCustomersLookup(isAuthenticated)
   const navigate = useNavigate()
@@ -173,29 +177,29 @@ export default function SalesInvoicesPage() {
   }
 
   if (!isAuthenticated) {
-    return <OrderWorkspace title="Sales Invoices" description="Accounts receivable invoice headers from `/api/sales-invoices`, linked to customer master data and invoice line detail." createLabel="New sales invoice" onCreate={() => undefined} disableCreate metrics={[]} alerts={[{ severity: 'info', message: 'Sign in first. The sales invoices API requires an authenticated user with sales view permissions.' }]} grid={null} linesPanel={null} />
+    return <OrderWorkspace title={t('nav.routeTitles.salesInvoices')} description={t('pages.salesInvoices.description')} createLabel={t('pages.salesInvoices.newButton')} onCreate={() => undefined} disableCreate metrics={[]} alerts={[{ severity: 'info', message: t('pages.salesInvoices.signInRequired') }]} grid={null} linesPanel={null} />
   }
 
   return (
     <OrderWorkspace
-      title="Sales Invoices"
-      description="Accounts receivable invoice headers from `/api/sales-invoices`, with balance visibility and line-level billing tools."
-      createLabel="New sales invoice"
+      title={t('nav.routeTitles.salesInvoices')}
+      description={t('pages.salesInvoices.description')}
+      createLabel={t('pages.salesInvoices.newButton')}
       onCreate={openCreateDialog}
       disableCreate={customers.length === 0}
       metrics={[
-        { icon: <DescriptionRoundedIcon fontSize="small" />, label: 'Invoices', value: salesInvoices.length },
-        { icon: <ScheduleRoundedIcon fontSize="small" />, label: 'Open balance', value: `$${salesInvoices.reduce((sum, salesInvoice) => sum + salesInvoice.balanceDue, 0).toFixed(2)}` },
-        { icon: <PaidRoundedIcon fontSize="small" />, label: 'Paid total', value: `$${salesInvoices.reduce((sum, salesInvoice) => sum + salesInvoice.paidTotal, 0).toFixed(2)}` },
+        { icon: <DescriptionRoundedIcon fontSize="small" />, label: t('pages.salesInvoices.metrics.invoices'), value: salesInvoices.length },
+        { icon: <ScheduleRoundedIcon fontSize="small" />, label: t('pages.salesInvoices.metrics.openBalance'), value: `$${salesInvoices.reduce((sum, salesInvoice) => sum + salesInvoice.balanceDue, 0).toFixed(2)}` },
+        { icon: <PaidRoundedIcon fontSize="small" />, label: t('pages.salesInvoices.metrics.paidTotal'), value: `$${salesInvoices.reduce((sum, salesInvoice) => sum + salesInvoice.paidTotal, 0).toFixed(2)}` },
       ]}
       alerts={[
-        ...(!customers.length ? [{ severity: 'warning' as const, message: 'Create at least one customer before creating sales invoices.' }] : []),
+        ...(!customers.length ? [{ severity: 'warning' as const, message: t('pages.salesInvoices.createCustomerFirst') }] : []),
         ...(customersError ? [{ severity: 'warning' as const, message: customersError }] : []),
         ...(error ? [{ severity: 'error' as const, message: error }] : []),
         ...(feedback ? [{ severity: 'success' as const, message: feedback }] : []),
-        { severity: 'info' as const, message: outstandingOnly ? 'Showing outstanding invoices only.' : 'Showing all invoices.' },
+        { severity: 'info' as const, message: outstandingOnly ? t('pages.salesInvoices.showingOutstandingOnly') : t('pages.salesInvoices.showingAll') },
       ]}
-      grid={<Suspense fallback={<SalesInvoiceSurfaceFallback />}><Stack spacing={1.5}><FormControlLabel control={<Switch checked={outstandingOnly} onChange={(_, checked) => setOutstandingOnly(checked)} />} label="Outstanding only" /><SalesInvoiceDataGrid rows={rows} isLoading={isLoading} onEdit={openEditDialog} onDelete={setDeleteTarget} onManageLines={(row) => void handleManageLines(row)} onRecordPayment={handleRecordPayment} /></Stack></Suspense>}
+      grid={<Suspense fallback={<SalesInvoiceSurfaceFallback />}><Stack spacing={1.5}><FormControlLabel control={<Switch checked={outstandingOnly} onChange={(_, checked) => setOutstandingOnly(checked)} />} label={t('pages.salesInvoices.outstandingOnly')} /><SalesInvoiceDataGrid rows={rows} isLoading={isLoading} onEdit={openEditDialog} onDelete={setDeleteTarget} onManageLines={(row) => void handleManageLines(row)} onRecordPayment={handleRecordPayment} /></Stack></Suspense>}
       linesPanel={<Suspense fallback={<SalesInvoiceSurfaceFallback />}><SalesInvoiceLinesPanel invoice={activeLinesInvoice} lines={lines} isLoading={linesLoading} error={linesError} onRefresh={() => activeLinesInvoice ? loadLines(activeLinesInvoice.id) : Promise.resolve()} /></Suspense>}
       editor={isEditorOpen ? <Suspense fallback={<SalesInvoiceSurfaceFallback />}><SalesInvoiceEditorDialog key={`${dialogMode}:${selectedSalesInvoiceId ?? 'new'}:${editorDefaults?.sourceSalesOrderId ?? 'manual'}`} open={isEditorOpen} mode={dialogMode} salesInvoiceId={selectedSalesInvoiceId} customers={customers} initialValues={editorDefaults} onClose={handleEditorClose} onSaved={(salesInvoice, mode) => void handleSaved(salesInvoice, mode)} /></Suspense> : null}
       deleteDialog={deleteTarget ? <Suspense fallback={null}><SalesInvoiceDeleteDialog target={deleteTarget} isDeleting={isDeleting} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} /></Suspense> : null}

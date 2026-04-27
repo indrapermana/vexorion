@@ -28,6 +28,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import LookupSelectField from '../../../components/LookupSelectField'
 import OrderWorkspace from '../../../components/OrderWorkspace'
@@ -121,6 +122,7 @@ function buildLineForm(line: InventoryAdjustmentLineDetailsResponse | null): Adj
 }
 
 export default function InventoryAdjustmentsPage() {
+  const { t } = useTranslation()
   const { isAuthenticated } = useAuth()
   const { items: warehouses, error: warehousesError, reload: reloadWarehouses } = useWarehousesLookup(isAuthenticated)
   const { items: products, error: productsError } = useProductsLookup(Boolean(isAuthenticated))
@@ -387,13 +389,13 @@ export default function InventoryAdjustmentsPage() {
   if (!isAuthenticated) {
     return (
       <OrderWorkspace
-        title="Inventory Adjustments"
-        description="Warehouse stock corrections backed by `/api/inventory-adjustments`."
-        createLabel="New adjustment"
+        title={t('nav.routeTitles.inventoryAdjustments')}
+        description={t('pages.inventoryAdjustments.descriptionShort')}
+        createLabel={t('pages.inventoryAdjustments.newButton')}
         onCreate={() => undefined}
         disableCreate
         metrics={[]}
-        alerts={[{ severity: 'info', message: 'Sign in first. Inventory adjustments require inventory permissions.' }]}
+        alerts={[{ severity: 'info', message: t('pages.inventoryAdjustments.signInRequired') }]}
         grid={null}
         linesPanel={null}
       />
@@ -402,18 +404,18 @@ export default function InventoryAdjustmentsPage() {
 
   return (
     <OrderWorkspace
-      title="Inventory Adjustments"
-      description="Record counted stock gains and losses, then complete the document to post movements into the inventory ledger."
-      createLabel="New adjustment"
+      title={t('nav.routeTitles.inventoryAdjustments')}
+      description={t('pages.inventoryAdjustments.description')}
+      createLabel={t('pages.inventoryAdjustments.newButton')}
       onCreate={openCreateDialog}
       disableCreate={warehouses.length === 0}
       metrics={[
-        { icon: <Inventory2RoundedIcon fontSize="small" />, label: 'Headers', value: rows.length },
-        { icon: <CheckCircleRoundedIcon fontSize="small" />, label: 'Completed', value: rows.filter((row) => row.status === 4).length },
-        { icon: <AutoGraphRoundedIcon fontSize="small" />, label: 'Active', value: rows.filter((row) => row.isActive).length },
+        { icon: <Inventory2RoundedIcon fontSize="small" />, label: t('pages.inventoryAdjustments.metrics.headers'), value: rows.length },
+        { icon: <CheckCircleRoundedIcon fontSize="small" />, label: t('pages.inventoryAdjustments.metrics.completed'), value: rows.filter((row) => row.status === 4).length },
+        { icon: <AutoGraphRoundedIcon fontSize="small" />, label: t('pages.inventoryAdjustments.metrics.active'), value: rows.filter((row) => row.isActive).length },
       ]}
       alerts={[
-        ...(!warehouses.length ? [{ severity: 'warning' as const, message: 'Create at least one warehouse before creating inventory adjustments.' }] : []),
+        ...(!warehouses.length ? [{ severity: 'warning' as const, message: t('pages.inventoryAdjustments.createWarehouseFirst') }] : []),
         ...(warehousesError ? [{ severity: 'warning' as const, message: warehousesError }] : []),
         ...(productsError ? [{ severity: 'warning' as const, message: productsError }] : []),
         ...(balancesError ? [{ severity: 'warning' as const, message: balancesError }] : []),

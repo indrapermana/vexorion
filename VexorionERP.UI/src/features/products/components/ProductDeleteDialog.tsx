@@ -6,6 +6,7 @@ import {
   DialogTitle,
   Typography,
 } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import type { ProductGridRow } from '../../../types/ui'
 
 type ProductDeleteDialogProps = {
@@ -16,6 +17,8 @@ type ProductDeleteDialogProps = {
 }
 
 export default function ProductDeleteDialog({ target, isDeleting, onClose, onConfirm }: ProductDeleteDialogProps) {
+  const { t } = useTranslation()
+
   return (
     <Dialog open={Boolean(target)} onClose={isDeleting ? undefined : onClose} fullWidth maxWidth="xs">
       <DialogTitle>Delete product</DialogTitle>
@@ -27,9 +30,9 @@ export default function ProductDeleteDialog({ target, isDeleting, onClose, onCon
         </Typography>
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose} disabled={isDeleting}>Cancel</Button>
+        <Button onClick={onClose} disabled={isDeleting}>{t('dialogs.cancel')}</Button>
         <Button color="error" variant="contained" onClick={onConfirm} disabled={isDeleting}>
-          {isDeleting ? 'Deleting...' : 'Delete'}
+          {isDeleting ? t('dialogs.deleting') : t('dialogs.delete')}
         </Button>
       </DialogActions>
     </Dialog>

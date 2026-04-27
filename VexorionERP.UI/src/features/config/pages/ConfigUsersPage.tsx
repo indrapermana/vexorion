@@ -15,6 +15,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import {
   ApiError,
@@ -49,6 +50,7 @@ const defaultDraft: CreateUserDraft = {
 }
 
 export default function ConfigUsersPage() {
+  const { t } = useTranslation()
   const { isAuthenticated } = useAuth()
   const [users, setUsers] = useState<UserListItemResponse[]>([])
   const [roles, setRoles] = useState<RolePermissionsResponse[]>([])
@@ -82,10 +84,10 @@ export default function ConfigUsersPage() {
       if (loadError instanceof ApiError) {
         setError(loadError.message)
       } else {
-        setError('Unable to load user management data.')
+        setError(t('config.users.errors.load'))
       }
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, t])
 
   useEffect(() => {
     void loadData()
@@ -108,13 +110,13 @@ export default function ConfigUsersPage() {
     setIsSaving(true)
     try {
       await assignUserRoles(userId, { roles: roleDraftByUserId[userId] ?? [] })
-      setFeedback('User roles updated.')
+      setFeedback(t('config.users.feedback.rolesUpdated'))
       await loadData()
     } catch (saveError) {
       if (saveError instanceof ApiError) {
         setError(saveError.message)
       } else {
-        setError('Unable to update user roles.')
+        setError(t('config.users.errors.updateRoles'))
       }
     } finally {
       setIsSaving(false)
@@ -127,13 +129,13 @@ export default function ConfigUsersPage() {
     setIsSaving(true)
     try {
       await setUserStatus(user.id, { isActive })
-      setFeedback(`User ${user.userName} ${isActive ? 'enabled' : 'disabled'}.`)
+      setFeedback(t('config.users.feedback.userStatus', { userName: user.userName, state: isActive ? t('config.users.states.enabled') : t('config.users.states.disabled') }))
       await loadData()
     } catch (saveError) {
       if (saveError instanceof ApiError) {
         setError(saveError.message)
       } else {
-        setError('Unable to update user status.')
+        setError(t('config.users.errors.updateStatus'))
       }
     } finally {
       setIsSaving(false)
@@ -157,14 +159,14 @@ export default function ConfigUsersPage() {
 
     try {
       await createUser(payload)
-      setFeedback(`User ${payload.userName} created.`)
+      setFeedback(t('config.users.feedback.userCreated', { userName: payload.userName }))
       setCreateDraft(defaultDraft)
       await loadData()
     } catch (saveError) {
       if (saveError instanceof ApiError) {
         setError(saveError.message)
       } else {
-        setError('Unable to create user.')
+        setError(t('config.users.errors.create'))
       }
     } finally {
       setIsSaving(false)
@@ -172,15 +174,15 @@ export default function ConfigUsersPage() {
   }
 
   if (!isAuthenticated) {
-    return <Alert severity="info">Sign in first. User configuration requires authentication.</Alert>
+    return <Alert severity="info">{t('config.users.signInRequired')}</Alert>
   }
 
   return (
     <Stack spacing={3}>
       <Paper elevation={0} className="panel-card">
-        <Typography variant="h4" sx={{ mb: 1 }}>User Management</Typography>
+        <Typography variant="h4" sx={{ mb: 1 }}>{t('config.users.title')}</Typography>
         <Typography color="text.secondary">
-          Add users, manage active status, and assign role bundles.
+          {t('config.users.description')}
         </Typography>
       </Paper>
 
@@ -188,41 +190,41 @@ export default function ConfigUsersPage() {
       {feedback ? <Alert severity="success">{feedback}</Alert> : null}
 
       <Paper elevation={0} className="panel-card">
-        <Typography variant="h6" sx={{ mb: 2 }}>Create User</Typography>
+        <Typography variant="h6" sx={{ mb: 2 }}>{t('config.users.createSection')}</Typography>
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ flexWrap: 'wrap' }}>
           <TextField
-            label="Username"
+            label={t('config.users.fields.userName')}
             size="small"
             value={createDraft.userName}
             onChange={(event) => setCreateDraft((prev) => ({ ...prev, userName: event.target.value }))}
           />
           <TextField
-            label="Email"
+            label={t('config.users.fields.email')}
             size="small"
             value={createDraft.email}
             onChange={(event) => setCreateDraft((prev) => ({ ...prev, email: event.target.value }))}
           />
           <TextField
-            label="Password"
+            label={t('config.users.fields.password')}
             size="small"
             type="password"
             value={createDraft.password}
             onChange={(event) => setCreateDraft((prev) => ({ ...prev, password: event.target.value }))}
           />
           <TextField
-            label="First name"
+            label={t('config.users.fields.firstName')}
             size="small"
             value={createDraft.firstName}
             onChange={(event) => setCreateDraft((prev) => ({ ...prev, firstName: event.target.value }))}
           />
           <TextField
-            label="Last name"
+            label={t('config.users.fields.lastName')}
             size="small"
             value={createDraft.lastName}
             onChange={(event) => setCreateDraft((prev) => ({ ...prev, lastName: event.target.value }))}
           />
           <TextField
-            label="Roles"
+            label={t('config.users.fields.roles')}
             size="small"
             select
             SelectProps={{ multiple: true }}
@@ -240,20 +242,20 @@ export default function ConfigUsersPage() {
               <MenuItem key={role} value={role}>{role}</MenuItem>
             ))}
           </TextField>
-          <Button variant="contained" disabled={isSaving} onClick={() => void submitCreate()}>Create user</Button>
+          <Button variant="contained" disabled={isSaving} onClick={() => void submitCreate()}>{t('config.users.createButton')}</Button>
         </Stack>
       </Paper>
 
       <Paper elevation={0} className="panel-card">
-        <Typography variant="h6" sx={{ mb: 1.5 }}>Users</Typography>
+        <Typography variant="h6" sx={{ mb: 1.5 }}>{t('config.users.listSection')}</Typography>
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>User</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell sx={{ minWidth: 220 }}>Roles</TableCell>
-              <TableCell>Active</TableCell>
-              <TableCell align="right">Actions</TableCell>
+              <TableCell>{t('config.users.columns.user')}</TableCell>
+              <TableCell>{t('config.users.columns.email')}</TableCell>
+              <TableCell sx={{ minWidth: 220 }}>{t('config.users.columns.roles')}</TableCell>
+              <TableCell>{t('config.users.columns.active')}</TableCell>
+              <TableCell align="right">{t('config.users.columns.actions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -293,7 +295,7 @@ export default function ConfigUsersPage() {
                 </TableCell>
                 <TableCell align="right">
                   <Button size="small" variant="outlined" disabled={isSaving} onClick={() => void saveUserRoles(user.id)}>
-                    Save roles
+                    {t('config.users.saveRolesButton')}
                   </Button>
                 </TableCell>
               </TableRow>

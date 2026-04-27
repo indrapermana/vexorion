@@ -14,6 +14,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import {
   ApiError,
@@ -41,6 +42,7 @@ const emptyTaxCodeDraft: TaxCodeDraft = {
 }
 
 export default function ConfigTaxDiscountPage() {
+  const { t } = useTranslation()
   const { isAuthenticated } = useAuth()
   const [taxCodes, setTaxCodes] = useState<TaxCodeListItemResponse[]>([])
   const [draft, setDraft] = useState<TaxCodeDraft>(emptyTaxCodeDraft)
@@ -73,10 +75,10 @@ export default function ConfigTaxDiscountPage() {
       if (loadError instanceof ApiError) {
         setError(loadError.message)
       } else {
-        setError('Unable to load tax and discount configuration.')
+        setError(t('config.taxDiscount.errors.load'))
       }
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, t])
 
   useEffect(() => {
     void loadData()
@@ -102,10 +104,10 @@ export default function ConfigTaxDiscountPage() {
     try {
       if (editTargetId) {
         await updateTaxCode(editTargetId, payload)
-        setFeedback('Tax code updated.')
+        setFeedback(t('config.taxDiscount.feedback.taxUpdated'))
       } else {
         await createTaxCode(payload)
-        setFeedback('Tax code created.')
+        setFeedback(t('config.taxDiscount.feedback.taxCreated'))
       }
 
       clearTaxDraft()
@@ -114,7 +116,7 @@ export default function ConfigTaxDiscountPage() {
       if (saveError instanceof ApiError) {
         setError(saveError.message)
       } else {
-        setError('Unable to save tax code.')
+        setError(t('config.taxDiscount.errors.saveTax'))
       }
     } finally {
       setIsSaving(false)
@@ -138,7 +140,7 @@ export default function ConfigTaxDiscountPage() {
 
     try {
       await deleteTaxCode(taxCodeId)
-      setFeedback('Tax code deleted.')
+      setFeedback(t('config.taxDiscount.feedback.taxDeleted'))
       if (editTargetId === taxCodeId) {
         clearTaxDraft()
       }
@@ -148,7 +150,7 @@ export default function ConfigTaxDiscountPage() {
       if (deleteError instanceof ApiError) {
         setError(deleteError.message)
       } else {
-        setError('Unable to delete tax code.')
+        setError(t('config.taxDiscount.errors.deleteTax'))
       }
     } finally {
       setIsSaving(false)
@@ -172,12 +174,12 @@ export default function ConfigTaxDiscountPage() {
         maxManualDiscountPercent: updated.maxManualDiscountPercent,
         allowNegativeDiscount: updated.allowNegativeDiscount,
       })
-      setFeedback('Discount configuration saved.')
+      setFeedback(t('config.taxDiscount.feedback.discountSaved'))
     } catch (saveError) {
       if (saveError instanceof ApiError) {
         setError(saveError.message)
       } else {
-        setError('Unable to save discount configuration.')
+        setError(t('config.taxDiscount.errors.saveDiscount'))
       }
     } finally {
       setIsSaving(false)
@@ -185,15 +187,15 @@ export default function ConfigTaxDiscountPage() {
   }
 
   if (!isAuthenticated) {
-    return <Alert severity="info">Sign in first. Tax and discount configuration requires authentication.</Alert>
+    return <Alert severity="info">{t('config.taxDiscount.signInRequired')}</Alert>
   }
 
   return (
     <Stack spacing={3}>
       <Paper elevation={0} className="panel-card">
-        <Typography variant="h4" sx={{ mb: 1 }}>Tax and Discount Configuration</Typography>
+        <Typography variant="h4" sx={{ mb: 1 }}>{t('config.taxDiscount.title')}</Typography>
         <Typography color="text.secondary">
-          Manage tax code definitions and baseline discount rules.
+          {t('config.taxDiscount.description')}
         </Typography>
       </Paper>
 
@@ -201,13 +203,13 @@ export default function ConfigTaxDiscountPage() {
       {feedback ? <Alert severity="success">{feedback}</Alert> : null}
 
       <Paper elevation={0} className="panel-card">
-        <Typography variant="h6" sx={{ mb: 2 }}>{editTargetId ? 'Edit tax code' : 'New tax code'}</Typography>
+        <Typography variant="h6" sx={{ mb: 2 }}>{editTargetId ? t('config.taxDiscount.editTaxCode') : t('config.taxDiscount.newTaxCode')}</Typography>
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ alignItems: { md: 'center' } }}>
-          <TextField size="small" label="Code" value={draft.code} onChange={(event) => setDraft((prev) => ({ ...prev, code: event.target.value }))} />
-          <TextField size="small" label="Name" value={draft.name} onChange={(event) => setDraft((prev) => ({ ...prev, name: event.target.value }))} />
+          <TextField size="small" label={t('config.taxDiscount.fields.code')} value={draft.code} onChange={(event) => setDraft((prev) => ({ ...prev, code: event.target.value }))} />
+          <TextField size="small" label={t('config.taxDiscount.fields.name')} value={draft.name} onChange={(event) => setDraft((prev) => ({ ...prev, name: event.target.value }))} />
           <TextField
             size="small"
-            label="Rate %"
+            label={t('config.taxDiscount.fields.ratePercent')}
             type="number"
             value={draft.ratePercent}
             onChange={(event) => setDraft((prev) => ({ ...prev, ratePercent: event.target.value }))}
@@ -215,23 +217,23 @@ export default function ConfigTaxDiscountPage() {
           />
           <FormControlLabel
             control={<Switch checked={draft.isInclusive} onChange={(event) => setDraft((prev) => ({ ...prev, isInclusive: event.target.checked }))} />}
-            label="Inclusive"
+            label={t('config.taxDiscount.fields.inclusive')}
           />
-          <Button variant="contained" onClick={() => void submitTaxCode()} disabled={isSaving}>Save</Button>
-          {editTargetId ? <Button variant="outlined" onClick={clearTaxDraft}>Cancel edit</Button> : null}
+          <Button variant="contained" onClick={() => void submitTaxCode()} disabled={isSaving}>{t('config.taxDiscount.saveTaxButton')}</Button>
+          {editTargetId ? <Button variant="outlined" onClick={clearTaxDraft}>{t('config.taxDiscount.cancelEdit')}</Button> : null}
         </Stack>
       </Paper>
 
       <Paper elevation={0} className="panel-card">
-        <Typography variant="h6" sx={{ mb: 1.5 }}>Tax codes</Typography>
+        <Typography variant="h6" sx={{ mb: 1.5 }}>{t('config.taxDiscount.taxCodesSection')}</Typography>
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Code</TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Rate %</TableCell>
-              <TableCell>Inclusive</TableCell>
-              <TableCell align="right">Actions</TableCell>
+              <TableCell>{t('config.taxDiscount.columns.code')}</TableCell>
+              <TableCell>{t('config.taxDiscount.columns.name')}</TableCell>
+              <TableCell>{t('config.taxDiscount.columns.ratePercent')}</TableCell>
+              <TableCell>{t('config.taxDiscount.columns.inclusive')}</TableCell>
+              <TableCell align="right">{t('config.taxDiscount.columns.actions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -240,12 +242,12 @@ export default function ConfigTaxDiscountPage() {
                 <TableCell>{item.code}</TableCell>
                 <TableCell>{item.name}</TableCell>
                 <TableCell>{item.ratePercent}</TableCell>
-                <TableCell>{item.isInclusive ? 'Yes' : 'No'}</TableCell>
+                <TableCell>{item.isInclusive ? t('common.yes') : t('common.no')}</TableCell>
                 <TableCell align="right">
                   <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
-                    <Button size="small" variant="outlined" onClick={() => startEdit(item)}>Edit</Button>
+                    <Button size="small" variant="outlined" onClick={() => startEdit(item)}>{t('common.edit')}</Button>
                     <Button size="small" color="error" variant="outlined" onClick={() => void removeTaxCode(item.id)}>
-                      Delete
+                      {t('dialogs.delete')}
                     </Button>
                   </Stack>
                 </TableCell>
@@ -256,12 +258,12 @@ export default function ConfigTaxDiscountPage() {
       </Paper>
 
       <Paper elevation={0} className="panel-card">
-        <Typography variant="h6" sx={{ mb: 2 }}>Discount policy defaults</Typography>
+        <Typography variant="h6" sx={{ mb: 2 }}>{t('config.taxDiscount.discountSection')}</Typography>
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ alignItems: { md: 'center' } }}>
           <TextField
             size="small"
             type="number"
-            label="Default discount %"
+            label={t('config.taxDiscount.fields.defaultDiscountPercent')}
             value={discountConfig.defaultDiscountPercent}
             onChange={(event) => setDiscountConfig((prev) => ({ ...prev, defaultDiscountPercent: Number(event.target.value) }))}
             sx={{ width: 200 }}
@@ -269,7 +271,7 @@ export default function ConfigTaxDiscountPage() {
           <TextField
             size="small"
             type="number"
-            label="Max manual discount %"
+            label={t('config.taxDiscount.fields.maxManualDiscountPercent')}
             value={discountConfig.maxManualDiscountPercent}
             onChange={(event) => setDiscountConfig((prev) => ({ ...prev, maxManualDiscountPercent: Number(event.target.value) }))}
             sx={{ width: 220 }}
@@ -281,9 +283,9 @@ export default function ConfigTaxDiscountPage() {
                 onChange={(event) => setDiscountConfig((prev) => ({ ...prev, allowNegativeDiscount: event.target.checked }))}
               />
             }
-            label="Allow negative discount"
+            label={t('config.taxDiscount.fields.allowNegativeDiscount')}
           />
-          <Button variant="contained" onClick={() => void saveDiscounts()} disabled={isSaving}>Save discount config</Button>
+          <Button variant="contained" onClick={() => void saveDiscounts()} disabled={isSaving}>{t('config.taxDiscount.saveDiscountButton')}</Button>
         </Stack>
       </Paper>
     </Stack>

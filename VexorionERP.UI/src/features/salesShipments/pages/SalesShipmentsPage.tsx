@@ -8,6 +8,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
 import { ApiError, deleteSalesShipment, getSalesShipmentsForOrder, postSalesShipment } from '../../../lib/api'
@@ -19,9 +20,14 @@ const SalesShipmentDataGrid = lazy(() => import('../components/SalesShipmentData
 const CreateSalesShipmentDialog = lazy(() => import('../components/CreateSalesShipmentDialog'))
 
 function LoadingFallback() {
+  const { t } = useTranslation()
+
   return (
     <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
-      <CircularProgress size={28} />
+      <Stack spacing={1.5} sx={{ alignItems: 'center' }}>
+        <CircularProgress size={28} />
+        <Typography color="text.secondary">{t('pages.salesShipments.loadingTools')}</Typography>
+      </Stack>
     </Box>
   )
 }
@@ -29,6 +35,7 @@ function LoadingFallback() {
 type SourceState = { sourceSalesOrderId?: string | null; salesOrderNumber?: string | null }
 
 export default function SalesShipmentsPage() {
+  const { t } = useTranslation()
   const { isAuthenticated } = useAuth()
   const location = useLocation()
   const sourceState = (location.state as SourceState | null) ?? null
@@ -94,13 +101,13 @@ export default function SalesShipmentsPage() {
   const rows: SalesShipmentGridRow[] = shipments
 
   if (!isAuthenticated) {
-    return <Alert severity="info">Sign in to view sales shipments.</Alert>
+    return <Alert severity="info">{t('pages.salesShipments.signInRequired')}</Alert>
   }
 
   if (!salesOrderId) {
     return (
       <Alert severity="warning">
-        Navigate here from a sales order to view its shipments.
+        {t('pages.salesShipments.navigateFromOrder')}
       </Alert>
     )
   }
@@ -111,12 +118,12 @@ export default function SalesShipmentsPage() {
         <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
           <LocalShippingRoundedIcon color="primary" />
           <Typography variant="h6">
-            Sales Shipments
+            {t('nav.routeTitles.salesShipments')}
             {salesOrderNumber ? ` — ${salesOrderNumber}` : ''}
           </Typography>
         </Stack>
         <Button variant="contained" size="small" onClick={() => setIsCreateOpen(true)}>
-          New Shipment
+          {t('pages.salesShipments.newButton')}
         </Button>
       </Stack>
 

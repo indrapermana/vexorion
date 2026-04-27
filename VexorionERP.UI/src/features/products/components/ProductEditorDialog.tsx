@@ -17,6 +17,7 @@ import {
 import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
+import { useTranslation } from 'react-i18next'
 import { ApiError, createProduct, getProduct, updateProduct } from '../../../lib/api'
 import type { ValidationProblem } from '../../../types/api'
 import type { ProductEditorDialogProps, ProductFormValues } from '../../../types/ui'
@@ -59,10 +60,14 @@ export default function ProductEditorDialog({
 	onClose,
 	onSaved,
 }: ProductEditorDialogProps) {
+	const { t } = useTranslation()
 	const [isLoadingProduct, setIsLoadingProduct] = useState(mode === 'edit' && Boolean(productId))
 	const [submitError, setSubmitError] = useState<string | null>(null)
 
-	const title = useMemo(() => (mode === 'create' ? 'Create product' : 'Edit product'), [mode])
+	const title = useMemo(
+		() => (mode === 'create' ? t('components.products.editor.createTitle') : t('components.products.editor.editTitle')),
+		[mode, t],
+	)
 	const {
 		control,
 		handleSubmit,
@@ -110,7 +115,7 @@ export default function ProductEditorDialog({
 				if (error instanceof ApiError) {
 					setSubmitError(error.message)
 				} else {
-					setSubmitError('Unable to load product details.')
+					setSubmitError(t('components.products.editor.errors.load'))
 				}
 			})
 			.finally(() => {
@@ -122,7 +127,7 @@ export default function ProductEditorDialog({
 		return () => {
 			isMounted = false
 		}
-	}, [mode, productId, reset])
+	}, [mode, productId, reset, t])
 
 	const applyServerValidation = (validation?: ValidationProblem) => {
 		if (!validation) {
@@ -163,7 +168,7 @@ export default function ProductEditorDialog({
 				setSubmitError(error.message)
 				applyServerValidation(error.validation)
 			} else {
-				setSubmitError('Unable to save product right now.')
+				setSubmitError(t('components.products.editor.errors.save'))
 			}
 		}
 	})
@@ -176,7 +181,7 @@ export default function ProductEditorDialog({
 					<Box sx={{ display: 'grid', placeItems: 'center', minHeight: 220 }}>
 						<Stack spacing={1.5} sx={{ alignItems: 'center' }}>
 							<CircularProgress size={28} />
-							<Typography color="text.secondary">Loading product details...</Typography>
+							<Typography color="text.secondary">{t('components.products.editor.loading')}</Typography>
 						</Stack>
 					</Box>
 				) : (
@@ -191,7 +196,7 @@ export default function ProductEditorDialog({
 									<TextField
 										{...field}
 										fullWidth
-										label="SKU"
+										label={t('components.products.editor.fields.sku')}
 										error={Boolean(errors.sku)}
 										helperText={errors.sku?.message}
 									/>
@@ -204,7 +209,7 @@ export default function ProductEditorDialog({
 									<TextField
 										{...field}
 										fullWidth
-										label="Unit of measure"
+										label={t('components.products.editor.fields.unitOfMeasure')}
 										error={Boolean(errors.unitOfMeasure)}
 										helperText={errors.unitOfMeasure?.message}
 									/>
@@ -219,7 +224,7 @@ export default function ProductEditorDialog({
 								<TextField
 									{...field}
 									fullWidth
-									label="Product name"
+									label={t('components.products.editor.fields.name')}
 									error={Boolean(errors.name)}
 									helperText={errors.name?.message}
 								/>
@@ -235,9 +240,9 @@ export default function ProductEditorDialog({
 									fullWidth
 									multiline
 									minRows={3}
-									label="Description"
+									label={t('components.products.editor.fields.description')}
 									error={Boolean(errors.description)}
-									helperText={errors.description?.message ?? 'Optional'}
+									helperText={errors.description?.message ?? t('components.products.editor.optional')}
 								/>
 							)}
 						/>
@@ -250,7 +255,7 @@ export default function ProductEditorDialog({
 									<TextField
 										{...field}
 										fullWidth
-										label="Standard cost"
+										label={t('components.products.editor.fields.standardCost')}
 										type="number"
 										slotProps={{ htmlInput: { min: 0, step: '0.01' } }}
 										error={Boolean(errors.standardCost)}
@@ -266,7 +271,7 @@ export default function ProductEditorDialog({
 									<TextField
 										{...field}
 										fullWidth
-										label="Sales price"
+										label={t('components.products.editor.fields.salesPrice')}
 										type="number"
 										slotProps={{ htmlInput: { min: 0, step: '0.01' } }}
 										error={Boolean(errors.salesPrice)}
@@ -282,7 +287,7 @@ export default function ProductEditorDialog({
 									<TextField
 										{...field}
 										fullWidth
-										label="Reorder level"
+										label={t('components.products.editor.fields.reorderLevel')}
 										type="number"
 										slotProps={{ htmlInput: { min: 0, step: '0.01' } }}
 										error={Boolean(errors.reorderLevel)}
@@ -300,7 +305,7 @@ export default function ProductEditorDialog({
 								render={({ field }) => (
 									<FormControlLabel
 										control={<Switch checked={field.value} onChange={(_, checked) => field.onChange(checked)} />}
-										label={field.value ? 'Product is active' : 'Product is inactive'}
+										label={field.value ? t('components.products.editor.active') : t('components.products.editor.inactive')}
 									/>
 								)}
 							/>
@@ -309,9 +314,13 @@ export default function ProductEditorDialog({
 				)}
 			</DialogContent>
 			<DialogActions sx={{ px: 3, py: 2 }}>
-				<Button onClick={onClose} disabled={isSubmitting}>Cancel</Button>
+				<Button onClick={onClose} disabled={isSubmitting}>{t('dialogs.cancel')}</Button>
 				<Button onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoadingProduct}>
-					{isSubmitting ? 'Saving...' : mode === 'create' ? 'Create product' : 'Save changes'}
+					{isSubmitting
+						? t('components.products.editor.saving')
+						: mode === 'create'
+							? t('components.products.editor.createAction')
+							: t('components.products.editor.saveAction')}
 				</Button>
 			</DialogActions>
 		</Dialog>

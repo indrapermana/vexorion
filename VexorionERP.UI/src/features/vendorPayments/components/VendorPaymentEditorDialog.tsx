@@ -3,6 +3,7 @@ import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextF
 import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
+import { useTranslation } from 'react-i18next'
 import LookupSelectField from '../../../components/LookupSelectField'
 import { ApiError, createVendorPayment } from '../../../lib/api'
 import type { VendorPaymentEditorDialogProps, VendorPaymentFormValues } from '../../../types/ui'
@@ -35,6 +36,7 @@ function optionalText(value: string) {
 }
 
 export default function VendorPaymentEditorDialog({ open, suppliers, outstandingInvoices, initialValues, onClose, onSaved }: VendorPaymentEditorDialogProps) {
+  const { t } = useTranslation()
   const {
     control,
     handleSubmit,
@@ -89,9 +91,9 @@ export default function VendorPaymentEditorDialog({ open, suppliers, outstanding
       .filter((invoice) => !selectedSupplierId || invoice.supplierId === selectedSupplierId)
       .map((invoice) => ({
         value: invoice.id,
-        label: `${invoice.invoiceNumber} - ${invoice.currencyCode} ${invoice.balanceDue.toFixed(2)} due`,
+        label: `${invoice.invoiceNumber} - ${invoice.currencyCode} ${invoice.balanceDue.toFixed(2)} ${t('components.vendorPayments.editor.due')}`,
       })),
-    [outstandingInvoices, selectedSupplierId],
+    [outstandingInvoices, selectedSupplierId, t],
   )
 
   const onSubmit = handleSubmit(async (values) => {
@@ -123,7 +125,7 @@ export default function VendorPaymentEditorDialog({ open, suppliers, outstanding
 
   return (
     <Dialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="md">
-      <DialogTitle>Record vendor payment</DialogTitle>
+      <DialogTitle>{t('components.vendorPayments.editor.title')}</DialogTitle>
       <DialogContent dividers>
         <Stack spacing={2.5} sx={{ pt: 1 }}>
           <Controller
@@ -131,14 +133,14 @@ export default function VendorPaymentEditorDialog({ open, suppliers, outstanding
             control={control}
             render={({ field }) => (
               <LookupSelectField
-                label="Supplier"
+                label={t('components.vendorPayments.editor.fields.supplier')}
                 value={field.value}
                 onChange={field.onChange}
                 options={supplierOptions}
                 error={Boolean(errors.supplierId)}
                 helperText={errors.supplierId?.message}
                 disabled={!suppliers.length}
-                emptyText="No suppliers available"
+                emptyText={t('components.vendorPayments.editor.empty.suppliers')}
               />
             )}
           />
@@ -148,14 +150,14 @@ export default function VendorPaymentEditorDialog({ open, suppliers, outstanding
             control={control}
             render={({ field }) => (
               <LookupSelectField
-                label="Outstanding invoice"
+                label={t('components.vendorPayments.editor.fields.outstandingInvoice')}
                 value={field.value}
                 onChange={field.onChange}
                 options={invoiceOptions}
                 error={Boolean(errors.purchaseInvoiceId)}
                 helperText={errors.purchaseInvoiceId?.message}
                 disabled={!invoiceOptions.length}
-                emptyText="No outstanding invoices available"
+                emptyText={t('components.vendorPayments.editor.empty.invoices')}
               />
             )}
           />
@@ -169,7 +171,7 @@ export default function VendorPaymentEditorDialog({ open, suppliers, outstanding
                   {...field}
                   fullWidth
                   type="date"
-                  label="Payment date"
+                  label={t('components.vendorPayments.editor.fields.paymentDate')}
                   slotProps={{ inputLabel: { shrink: true } }}
                   error={Boolean(errors.paymentDate)}
                   helperText={errors.paymentDate?.message}
@@ -183,7 +185,7 @@ export default function VendorPaymentEditorDialog({ open, suppliers, outstanding
                 <TextField
                   {...field}
                   fullWidth
-                  label="Amount"
+                  label={t('components.vendorPayments.editor.fields.amount')}
                   type="number"
                   slotProps={{ htmlInput: { min: 0.01, step: '0.01' } }}
                   error={Boolean(errors.amount)}
@@ -199,7 +201,7 @@ export default function VendorPaymentEditorDialog({ open, suppliers, outstanding
                 <TextField
                   {...field}
                   fullWidth
-                  label="Currency"
+                  label={t('components.vendorPayments.editor.fields.currency')}
                   error={Boolean(errors.currencyCode)}
                   helperText={errors.currencyCode?.message}
                 />
@@ -215,9 +217,9 @@ export default function VendorPaymentEditorDialog({ open, suppliers, outstanding
                 <TextField
                   {...field}
                   fullWidth
-                  label="Reference"
+                  label={t('components.vendorPayments.editor.fields.reference')}
                   error={Boolean(errors.referenceNumber)}
-                  helperText={errors.referenceNumber?.message ?? 'Optional'}
+                  helperText={errors.referenceNumber?.message ?? t('components.vendorPayments.editor.optional')}
                 />
               )}
             />
@@ -228,9 +230,9 @@ export default function VendorPaymentEditorDialog({ open, suppliers, outstanding
                 <TextField
                   {...field}
                   fullWidth
-                  label="Payment method"
+                  label={t('components.vendorPayments.editor.fields.paymentMethod')}
                   error={Boolean(errors.paymentMethod)}
-                  helperText={errors.paymentMethod?.message ?? 'Optional'}
+                  helperText={errors.paymentMethod?.message ?? t('components.vendorPayments.editor.optional')}
                 />
               )}
             />
@@ -245,22 +247,22 @@ export default function VendorPaymentEditorDialog({ open, suppliers, outstanding
                 fullWidth
                 multiline
                 minRows={3}
-                label="Notes"
+                label={t('components.vendorPayments.editor.fields.notes')}
                 error={Boolean(errors.notes)}
-                helperText={errors.notes?.message ?? 'Optional'}
+                helperText={errors.notes?.message ?? t('components.vendorPayments.editor.optional')}
               />
             )}
           />
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose} disabled={isSubmitting}>Cancel</Button>
+        <Button onClick={onClose} disabled={isSubmitting}>{t('dialogs.cancel')}</Button>
         <Button
           onClick={() => void onSubmit()}
           variant="contained"
           disabled={isSubmitting || !suppliers.length || !outstandingInvoices.length}
         >
-          {isSubmitting ? 'Saving...' : 'Record payment'}
+          {isSubmitting ? t('components.vendorPayments.editor.saving') : t('components.vendorPayments.editor.recordAction')}
         </Button>
       </DialogActions>
     </Dialog>

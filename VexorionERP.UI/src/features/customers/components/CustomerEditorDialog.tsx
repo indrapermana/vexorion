@@ -17,6 +17,7 @@ import {
 import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
+import { useTranslation } from 'react-i18next'
 import { ApiError, createCustomer, getCustomer, updateCustomer } from '../../../lib/api'
 import type { ValidationProblem } from '../../../types/api'
 import type { CustomerEditorDialogProps, CustomerFormValues } from '../../../types/ui'
@@ -66,10 +67,14 @@ export default function CustomerEditorDialog({
   onClose,
   onSaved,
 }: CustomerEditorDialogProps) {
+  const { t } = useTranslation()
   const [isLoadingCustomer, setIsLoadingCustomer] = useState(mode === 'edit' && Boolean(customerId))
   const [submitError, setSubmitError] = useState<string | null>(null)
 
-  const title = useMemo(() => (mode === 'create' ? 'Create customer' : 'Edit customer'), [mode])
+  const title = useMemo(
+    () => (mode === 'create' ? t('components.customers.editor.createTitle') : t('components.customers.editor.editTitle')),
+    [mode, t],
+  )
   const {
     control,
     handleSubmit,
@@ -119,7 +124,7 @@ export default function CustomerEditorDialog({
         if (error instanceof ApiError) {
           setSubmitError(error.message)
         } else {
-          setSubmitError('Unable to load customer details.')
+          setSubmitError(t('components.customers.editor.errors.load'))
         }
       })
       .finally(() => {
@@ -131,7 +136,7 @@ export default function CustomerEditorDialog({
     return () => {
       isMounted = false
     }
-  }, [customerId, mode, reset])
+  }, [customerId, mode, reset, t])
 
   const applyServerValidation = (validation?: ValidationProblem) => {
     if (!validation) {
@@ -173,7 +178,7 @@ export default function CustomerEditorDialog({
         setSubmitError(error.message)
         applyServerValidation(error.validation)
       } else {
-        setSubmitError('Unable to save customer right now.')
+        setSubmitError(t('components.customers.editor.errors.save'))
       }
     }
   })
@@ -186,7 +191,7 @@ export default function CustomerEditorDialog({
           <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 220 }}>
             <Stack spacing={1.5} sx={{ alignItems: 'center' }}>
               <CircularProgress size={28} />
-              <Typography color="text.secondary">Loading customer details...</Typography>
+              <Typography color="text.secondary">{t('components.customers.editor.loading')}</Typography>
             </Stack>
           </Box>
         ) : (
@@ -201,7 +206,7 @@ export default function CustomerEditorDialog({
                   <TextField
                     {...field}
                     fullWidth
-                    label="Customer number"
+                    label={t('components.customers.editor.fields.customerNumber')}
                     error={Boolean(errors.customerNumber)}
                     helperText={errors.customerNumber?.message}
                   />
@@ -214,7 +219,7 @@ export default function CustomerEditorDialog({
                   <TextField
                     {...field}
                     fullWidth
-                    label="Customer name"
+                    label={t('components.customers.editor.fields.name')}
                     error={Boolean(errors.name)}
                     helperText={errors.name?.message}
                   />
@@ -230,9 +235,9 @@ export default function CustomerEditorDialog({
                   <TextField
                     {...field}
                     fullWidth
-                    label="Contact name"
+                    label={t('components.customers.editor.fields.contactName')}
                     error={Boolean(errors.contactName)}
-                    helperText={errors.contactName?.message ?? 'Optional'}
+                    helperText={errors.contactName?.message ?? t('components.customers.editor.optional')}
                   />
                 )}
               />
@@ -243,9 +248,9 @@ export default function CustomerEditorDialog({
                   <TextField
                     {...field}
                     fullWidth
-                    label="Phone number"
+                    label={t('components.customers.editor.fields.phoneNumber')}
                     error={Boolean(errors.phoneNumber)}
-                    helperText={errors.phoneNumber?.message ?? 'Optional'}
+                    helperText={errors.phoneNumber?.message ?? t('components.customers.editor.optional')}
                   />
                 )}
               />
@@ -258,9 +263,9 @@ export default function CustomerEditorDialog({
                 <TextField
                   {...field}
                   fullWidth
-                  label="Email"
+                  label={t('components.customers.editor.fields.email')}
                   error={Boolean(errors.email)}
-                  helperText={errors.email?.message ?? 'Optional'}
+                  helperText={errors.email?.message ?? t('components.customers.editor.optional')}
                 />
               )}
             />
@@ -275,9 +280,9 @@ export default function CustomerEditorDialog({
                     fullWidth
                     multiline
                     minRows={3}
-                    label="Billing address"
+                    label={t('components.customers.editor.fields.billingAddress')}
                     error={Boolean(errors.billingAddress)}
-                    helperText={errors.billingAddress?.message ?? 'Optional'}
+                    helperText={errors.billingAddress?.message ?? t('components.customers.editor.optional')}
                   />
                 )}
               />
@@ -290,9 +295,9 @@ export default function CustomerEditorDialog({
                     fullWidth
                     multiline
                     minRows={3}
-                    label="Shipping address"
+                    label={t('components.customers.editor.fields.shippingAddress')}
                     error={Boolean(errors.shippingAddress)}
-                    helperText={errors.shippingAddress?.message ?? 'Optional'}
+                    helperText={errors.shippingAddress?.message ?? t('components.customers.editor.optional')}
                   />
                 )}
               />
@@ -306,7 +311,7 @@ export default function CustomerEditorDialog({
                   <TextField
                     {...field}
                     fullWidth
-                    label="Credit limit"
+                    label={t('components.customers.editor.fields.creditLimit')}
                     type="number"
                     slotProps={{ htmlInput: { min: 0, step: '0.01' } }}
                     error={Boolean(errors.creditLimit)}
@@ -323,7 +328,7 @@ export default function CustomerEditorDialog({
                   render={({ field }) => (
                     <FormControlLabel
                       control={<Switch checked={field.value} onChange={(_, checked) => field.onChange(checked)} />}
-                      label={field.value ? 'Customer is active' : 'Customer is inactive'}
+                      label={field.value ? t('components.customers.editor.active') : t('components.customers.editor.inactive')}
                     />
                   )}
                 />
@@ -333,9 +338,13 @@ export default function CustomerEditorDialog({
         )}
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose} disabled={isSubmitting}>Cancel</Button>
+        <Button onClick={onClose} disabled={isSubmitting}>{t('dialogs.cancel')}</Button>
         <Button onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoadingCustomer}>
-          {isSubmitting ? 'Saving...' : mode === 'create' ? 'Create customer' : 'Save changes'}
+          {isSubmitting
+            ? t('components.customers.editor.saving')
+            : mode === 'create'
+              ? t('components.customers.editor.createAction')
+              : t('components.customers.editor.saveAction')}
         </Button>
       </DialogActions>
     </Dialog>

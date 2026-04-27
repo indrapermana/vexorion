@@ -4,6 +4,7 @@ import PaidRoundedIcon from '@mui/icons-material/PaidRounded'
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded'
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded'
 import { Alert, Box, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
 import { useCustomersLookup } from '../../../hooks/useLookups'
@@ -15,11 +16,13 @@ const CustomerPaymentDataGrid = lazy(() => import('../components/CustomerPayment
 const CustomerPaymentEditorDialog = lazy(() => import('../components/CustomerPaymentEditorDialog'))
 
 function CustomerPaymentSurfaceFallback() {
+  const { t } = useTranslation()
+
   return (
     <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
       <Stack spacing={1.5} sx={{ alignItems: 'center' }}>
         <CircularProgress size={28} />
-        <Typography color="text.secondary">Loading customer payment tools...</Typography>
+        <Typography color="text.secondary">{t('pages.customerPayments.loadingTools')}</Typography>
       </Stack>
     </Box>
   )
@@ -30,6 +33,7 @@ type SourceState = Partial<CustomerPaymentFormValues> & {
 }
 
 export default function CustomerPaymentsPage() {
+  const { t } = useTranslation()
   const { isAuthenticated } = useAuth()
   const { items: customers, error: customersError, reload: reloadCustomers } = useCustomersLookup(isAuthenticated)
   const location = useLocation()
@@ -120,7 +124,7 @@ export default function CustomerPaymentsPage() {
   }
 
   if (!isAuthenticated) {
-    return <Alert severity="info">Sign in first. Customer payments require an authenticated user with sales permissions.</Alert>
+    return <Alert severity="info">{t('pages.customerPayments.signInRequired')}</Alert>
   }
 
   return (
@@ -128,31 +132,31 @@ export default function CustomerPaymentsPage() {
       <Paper elevation={0} className="panel-card">
         <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2.5} sx={{ justifyContent: 'space-between' }}>
           <Box>
-            <Typography variant="h4" sx={{ mb: 1 }}>Customer Payments</Typography>
-            <Typography color="text.secondary">Cash application entries from `/api/customer-payments`, linked to outstanding sales invoices.</Typography>
+            <Typography variant="h4" sx={{ mb: 1 }}>{t('nav.routeTitles.customerPayments')}</Typography>
+            <Typography color="text.secondary">{t('pages.customerPayments.description')}</Typography>
           </Box>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
             <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog} disabled={!outstandingInvoices.length}>
-              Record payment
+              {t('pages.customerPayments.recordPayment')}
             </Button>
             <Paper elevation={0} className="products-metric-card">
               <PaidRoundedIcon fontSize="small" />
               <Box>
-                <Typography variant="body2" color="text.secondary">Payments</Typography>
+                <Typography variant="body2" color="text.secondary">{t('pages.customerPayments.metrics.payments')}</Typography>
                 <Typography variant="h6">{payments.length}</Typography>
               </Box>
             </Paper>
             <Paper elevation={0} className="products-metric-card">
               <ScheduleRoundedIcon fontSize="small" />
               <Box>
-                <Typography variant="body2" color="text.secondary">Outstanding invoices</Typography>
+                <Typography variant="body2" color="text.secondary">{t('pages.customerPayments.metrics.outstandingInvoices')}</Typography>
                 <Typography variant="h6">{outstandingInvoices.length}</Typography>
               </Box>
             </Paper>
             <Paper elevation={0} className="products-metric-card">
               <ReceiptLongRoundedIcon fontSize="small" />
               <Box>
-                <Typography variant="body2" color="text.secondary">Open balance</Typography>
+                <Typography variant="body2" color="text.secondary">{t('pages.customerPayments.metrics.openBalance')}</Typography>
                 <Typography variant="h6">${outstandingInvoices.reduce((sum, invoice) => sum + invoice.balanceDue, 0).toFixed(2)}</Typography>
               </Box>
             </Paper>
@@ -163,7 +167,7 @@ export default function CustomerPaymentsPage() {
       {customersError ? <Alert severity="warning">{customersError}</Alert> : null}
       {error ? <Alert severity="error">{error}</Alert> : null}
       {feedback ? <Alert severity="success">{feedback}</Alert> : null}
-      {!outstandingInvoices.length ? <Alert severity="info">No outstanding sales invoices are currently available for payment allocation.</Alert> : null}
+      {!outstandingInvoices.length ? <Alert severity="info">{t('pages.customerPayments.noOutstandingInvoices')}</Alert> : null}
 
       <Paper elevation={0} className="panel-card products-grid-panel">
         <Suspense fallback={<CustomerPaymentSurfaceFallback />}>

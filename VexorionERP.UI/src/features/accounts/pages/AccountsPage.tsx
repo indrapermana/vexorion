@@ -1,6 +1,7 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import { Alert, Box, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { ApiError, deleteAccount, getAccounts } from '../../../lib/api'
 import type { AccountDetailsResponse, AccountListItemResponse } from '../../../types/api'
@@ -17,6 +18,7 @@ function AccountSurfaceFallback() {
 }
 
 export default function AccountsPage() {
+  const { t } = useTranslation()
   const { isAuthenticated } = useAuth()
   const [rows, setRows] = useState<AccountListItemResponse[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -87,7 +89,7 @@ export default function AccountsPage() {
   }
 
   if (!isAuthenticated) {
-    return <Alert severity="info">Sign in first. Accounts require billing permissions.</Alert>
+    return <Alert severity="info">{t('pages.accounts.signInRequired')}</Alert>
   }
 
   return (
@@ -95,10 +97,10 @@ export default function AccountsPage() {
       <Paper elevation={0} className="panel-card">
         <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2.5} sx={{ justifyContent: 'space-between' }}>
           <Box>
-            <Typography variant="h4" sx={{ mb: 1 }}>Accounts</Typography>
-            <Typography color="text.secondary">General ledger accounts from /api/accounts.</Typography>
+            <Typography variant="h4" sx={{ mb: 1 }}>{t('nav.routeTitles.accounts')}</Typography>
+            <Typography color="text.secondary">{t('pages.accounts.description')}</Typography>
           </Box>
-          <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate}>New account</Button>
+          <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate}>{t('pages.accounts.newButton')}</Button>
         </Stack>
       </Paper>
 
