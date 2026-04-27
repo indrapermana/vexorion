@@ -4,6 +4,7 @@ import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded'
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded'
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded'
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded'
+import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded'
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded'
 import RuleRoundedIcon from '@mui/icons-material/RuleRounded'
 import SwapHorizRoundedIcon from '@mui/icons-material/SwapHorizRounded'
@@ -20,100 +21,179 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  MenuItem,
   Paper,
+  Select,
   Stack,
   Toolbar,
   Typography,
 } from '@mui/material'
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../app/AuthContext'
+import { countries } from '../i18n'
+import {
+  type TranslationLanguage,
+  LanguageOptions,
+  normalizeTranslationLanguage,
+} from '../i18n/translationConstant'
+import { getTenantPreferences } from '../lib/api'
+import { getHiddenMenuLinks, saveHiddenMenuLinks, subscribeToMenuConfigChange } from '../lib/menuConfig'
 
 const drawerWidth = 280
 
 const navigationSections = [
   {
-    title: 'Overview',
+    titleKey: 'nav.sections.overview',
     links: [
-      { to: '/', label: 'Dashboard', icon: <DashboardRoundedIcon /> },
+      { to: '/', labelKey: 'nav.links.dashboard', icon: <DashboardRoundedIcon /> },
     ],
   },
   {
-    title: 'Sales',
+    titleKey: 'nav.sections.sales',
     links: [
-      { to: '/customers', label: 'Customers', icon: <Groups2RoundedIcon /> },
-      { to: '/sales-orders', label: 'Sales orders', icon: <ReceiptLongRoundedIcon /> },
-      { to: '/sales-shipments', label: 'Sales shipments', icon: <ReceiptLongRoundedIcon /> },
-      { to: '/sales-invoices', label: 'Sales invoices', icon: <ReceiptLongRoundedIcon /> },
-      { to: '/customer-payments', label: 'Customer payments', icon: <ReceiptLongRoundedIcon /> },
+      { to: '/customers', labelKey: 'nav.links.customers', icon: <Groups2RoundedIcon /> },
+      { to: '/sales-orders', labelKey: 'nav.links.salesOrders', icon: <ReceiptLongRoundedIcon /> },
+      { to: '/sales-shipments', labelKey: 'nav.links.salesShipments', icon: <ReceiptLongRoundedIcon /> },
+      { to: '/sales-invoices', labelKey: 'nav.links.salesInvoices', icon: <ReceiptLongRoundedIcon /> },
+      { to: '/customer-payments', labelKey: 'nav.links.customerPayments', icon: <ReceiptLongRoundedIcon /> },
     ],
   },
   {
-    title: 'Procurement',
+    titleKey: 'nav.sections.procurement',
     links: [
-      { to: '/suppliers', label: 'Suppliers', icon: <Groups2RoundedIcon /> },
-      { to: '/purchase-orders', label: 'Purchase orders', icon: <ReceiptLongRoundedIcon /> },
-      { to: '/purchase-receipts', label: 'Purchase receipts', icon: <ReceiptLongRoundedIcon /> },
-      { to: '/purchase-invoices', label: 'Purchase invoices', icon: <ReceiptLongRoundedIcon /> },
-      { to: '/vendor-payments', label: 'Vendor payments', icon: <ReceiptLongRoundedIcon /> },
+      { to: '/suppliers', labelKey: 'nav.links.suppliers', icon: <Groups2RoundedIcon /> },
+      { to: '/purchase-orders', labelKey: 'nav.links.purchaseOrders', icon: <ReceiptLongRoundedIcon /> },
+      { to: '/purchase-receipts', labelKey: 'nav.links.purchaseReceipts', icon: <ReceiptLongRoundedIcon /> },
+      { to: '/purchase-invoices', labelKey: 'nav.links.purchaseInvoices', icon: <ReceiptLongRoundedIcon /> },
+      { to: '/vendor-payments', labelKey: 'nav.links.vendorPayments', icon: <ReceiptLongRoundedIcon /> },
     ],
   },
   {
-    title: 'Inventory',
+    titleKey: 'nav.sections.inventory',
     links: [
-      { to: '/products', label: 'Products', icon: <Inventory2RoundedIcon /> },
-      { to: '/inventory-adjustments', label: 'Inventory adjustments', icon: <TuneRoundedIcon /> },
-      { to: '/stock-counts', label: 'Stock counts', icon: <RuleRoundedIcon /> },
-      { to: '/stock-transfers', label: 'Stock transfers', icon: <SwapHorizRoundedIcon /> },
-      { to: '/warehouses', label: 'Warehouses', icon: <WarehouseRoundedIcon /> },
+      { to: '/products', labelKey: 'nav.links.products', icon: <Inventory2RoundedIcon /> },
+      { to: '/inventory-adjustments', labelKey: 'nav.links.inventoryAdjustments', icon: <TuneRoundedIcon /> },
+      { to: '/stock-counts', labelKey: 'nav.links.stockCounts', icon: <RuleRoundedIcon /> },
+      { to: '/stock-transfers', labelKey: 'nav.links.stockTransfers', icon: <SwapHorizRoundedIcon /> },
+      { to: '/warehouses', labelKey: 'nav.links.warehouses', icon: <WarehouseRoundedIcon /> },
     ],
   },
   {
-    title: 'Finance',
+    titleKey: 'nav.sections.finance',
     links: [
-      { to: '/accounts', label: 'Accounts', icon: <AutoGraphRoundedIcon /> },
-      { to: '/audit-logs', label: 'Audit logs', icon: <AutoGraphRoundedIcon /> },
-      { to: '/fiscal-periods', label: 'Fiscal periods', icon: <AutoGraphRoundedIcon /> },
-      { to: '/journals', label: 'Journals', icon: <AutoGraphRoundedIcon /> },
-      { to: '/reports', label: 'Reports', icon: <AutoGraphRoundedIcon /> },
+      { to: '/accounts', labelKey: 'nav.links.accounts', icon: <AutoGraphRoundedIcon /> },
+      { to: '/audit-logs', labelKey: 'nav.links.auditLogs', icon: <AutoGraphRoundedIcon /> },
+      { to: '/fiscal-periods', labelKey: 'nav.links.fiscalPeriods', icon: <AutoGraphRoundedIcon /> },
+      { to: '/journals', labelKey: 'nav.links.journals', icon: <AutoGraphRoundedIcon /> },
+      { to: '/reports', labelKey: 'nav.links.reports', icon: <AutoGraphRoundedIcon /> },
+    ],
+  },
+  {
+    titleKey: 'nav.sections.configuration',
+    links: [
+      { to: '/config', labelKey: 'nav.links.configCenter', icon: <SettingsRoundedIcon /> },
     ],
   },
 ] as const
 
-const routeTitles: Record<string, string> = {
-  '/': 'Overview',
-  '/customers': 'Customers',
-  '/customer-payments': 'Customer Payments',
-  '/accounts': 'Accounts',
-  '/audit-logs': 'Audit Logs',
-  '/fiscal-periods': 'Fiscal Periods',
-  '/journals': 'Journals',
-  '/reports': 'Reports',
-  '/products': 'Products',
-  '/inventory-adjustments': 'Inventory Adjustments',
-  '/purchase-invoices': 'Purchase Invoices',
-  '/purchase-orders': 'Purchase Orders',
-  '/purchase-receipts': 'Purchase Receipts',
-  '/sales-invoices': 'Sales Invoices',
-  '/sales-orders': 'Sales Orders',
-  '/sales-shipments': 'Sales Shipments',
-  '/stock-counts': 'Stock Counts',
-  '/stock-transfers': 'Stock Transfers',
-  '/suppliers': 'Suppliers',
-  '/vendor-payments': 'Vendor Payments',
-  '/warehouses': 'Warehouses',
+const routeTitleKeys: Record<string, string> = {
+  '/': 'nav.routeTitles.overview',
+  '/customers': 'nav.routeTitles.customers',
+  '/customer-payments': 'nav.routeTitles.customerPayments',
+  '/accounts': 'nav.routeTitles.accounts',
+  '/audit-logs': 'nav.routeTitles.auditLogs',
+  '/config': 'nav.routeTitles.config',
+  '/config/company': 'nav.routeTitles.configCompany',
+  '/config/menu': 'nav.routeTitles.configMenu',
+  '/config/roles': 'nav.routeTitles.configRoles',
+  '/config/tax-discount': 'nav.routeTitles.configTaxDiscount',
+  '/config/users': 'nav.routeTitles.configUsers',
+  '/fiscal-periods': 'nav.routeTitles.fiscalPeriods',
+  '/journals': 'nav.routeTitles.journals',
+  '/reports': 'nav.routeTitles.reports',
+  '/products': 'nav.routeTitles.products',
+  '/inventory-adjustments': 'nav.routeTitles.inventoryAdjustments',
+  '/purchase-invoices': 'nav.routeTitles.purchaseInvoices',
+  '/purchase-orders': 'nav.routeTitles.purchaseOrders',
+  '/purchase-receipts': 'nav.routeTitles.purchaseReceipts',
+  '/sales-invoices': 'nav.routeTitles.salesInvoices',
+  '/sales-orders': 'nav.routeTitles.salesOrders',
+  '/sales-shipments': 'nav.routeTitles.salesShipments',
+  '/stock-counts': 'nav.routeTitles.stockCounts',
+  '/stock-transfers': 'nav.routeTitles.stockTransfers',
+  '/suppliers': 'nav.routeTitles.suppliers',
+  '/vendor-payments': 'nav.routeTitles.vendorPayments',
+  '/warehouses': 'nav.routeTitles.warehouses',
 }
 
 export default function AppLayout() {
+  const { t, i18n } = useTranslation()
   const { user, isAuthenticated, logout } = useAuth()
   const location = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [hiddenMenuLinks, setHiddenMenuLinks] = useState<string[]>(() => getHiddenMenuLinks())
+
+  const currentLanguage = normalizeTranslationLanguage(i18n.language)
+
+  const handleLanguageChange = (nextLanguage: TranslationLanguage) => {
+    void i18n.changeLanguage(nextLanguage)
+  }
+
+  useEffect(() => {
+    setHiddenMenuLinks(getHiddenMenuLinks())
+    return subscribeToMenuConfigChange(() => {
+      setHiddenMenuLinks(getHiddenMenuLinks())
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setHiddenMenuLinks([])
+      saveHiddenMenuLinks([])
+      return
+    }
+
+    let cancelled = false
+
+    const loadPreference = async () => {
+      try {
+        const preference = await getTenantPreferences()
+        if (!cancelled) {
+          setHiddenMenuLinks(preference.hiddenMenuLinks)
+          saveHiddenMenuLinks(preference.hiddenMenuLinks)
+        }
+      } catch {
+        if (!cancelled) {
+          setHiddenMenuLinks([])
+          saveHiddenMenuLinks([])
+        }
+      }
+    }
+
+    void loadPreference()
+
+    return () => {
+      cancelled = true
+    }
+  }, [isAuthenticated])
+
+  const visibleNavigationSections = useMemo(
+    () => navigationSections
+      .map((section) => ({
+        ...section,
+        links: section.links.filter((link) => !hiddenMenuLinks.includes(link.to)),
+      }))
+      .filter((section) => section.links.length > 0),
+    [hiddenMenuLinks],
+  )
 
   const handleLogout = async () => {
     await logout()
   }
 
-  const pageTitle = routeTitles[location.pathname] ?? 'Workspace'
+  const pageTitle = t(routeTitleKeys[location.pathname] ?? 'app.workspaceTitle')
 
   const sidebar = (
     <Box className="dashboard-sidebar-shell">
@@ -123,19 +203,19 @@ export default function AppLayout() {
         </Box>
         <Box>
           <Typography variant="overline" sx={{ color: 'text.secondary', letterSpacing: '0.18em' }}>
-            VEXORION ERP
+            {t('app.brand')}
           </Typography>
-          <Typography variant="h6">CRUD workspace</Typography>
+          <Typography variant="h6">{t('app.workspace')}</Typography>
         </Box>
       </Stack>
 
       <Divider />
 
       <Box sx={{ px: 1.5, py: 1.5 }}>
-        <Typography className="sidebar-caption">Navigation</Typography>
+        <Typography className="sidebar-caption">{t('app.navigation')}</Typography>
         <Stack spacing={1.5}>
-          {navigationSections.map((section) => (
-            <Box key={section.title}>
+          {visibleNavigationSections.map((section) => (
+            <Box key={section.titleKey}>
               <Typography
                 variant="overline"
                 sx={{
@@ -144,7 +224,7 @@ export default function AppLayout() {
                   letterSpacing: '0.12em',
                 }}
               >
-                {section.title}
+                {t(section.titleKey)}
               </Typography>
               <List disablePadding>
                 {section.links.map((link) => (
@@ -157,7 +237,7 @@ export default function AppLayout() {
                     className={location.pathname === link.to ? 'dashboard-nav-item dashboard-nav-item-active' : 'dashboard-nav-item'}
                   >
                     <ListItemIcon>{link.icon}</ListItemIcon>
-                    <ListItemText primary={link.label} />
+                    <ListItemText primary={t(link.labelKey)} />
                   </ListItemButton>
                 ))}
               </List>
@@ -169,17 +249,17 @@ export default function AppLayout() {
       <Box sx={{ mt: 'auto', px: 2, pb: 2 }}>
         <Paper elevation={0} className="sidebar-footer-card">
           <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5 }}>
-            {isAuthenticated && user ? user.firstName ?? user.userName : 'Anonymous mode'}
+            {isAuthenticated && user ? user.firstName ?? user.userName : t('app.anonymousMode')}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-            {isAuthenticated && user ? user.email : 'Sign in to unlock protected modules.'}
+            {isAuthenticated && user ? user.email : t('app.signInHint')}
           </Typography>
           {isAuthenticated ? (
             <Button fullWidth variant="contained" startIcon={<LogoutRoundedIcon />} onClick={() => void handleLogout()}>
-              Logout
+              {t('app.logout')}
             </Button>
           ) : (
-            <Chip label="Public access only" variant="outlined" />
+            <Chip label={t('app.publicAccessOnly')} variant="outlined" />
           )}
         </Paper>
       </Box>
@@ -220,14 +300,30 @@ export default function AppLayout() {
             </IconButton>
             <Box sx={{ mr: 'auto' }}>
               <Typography variant="overline" sx={{ color: 'text.secondary', letterSpacing: '0.18em' }}>
-                Admin console
+                {t('app.adminConsole')}
               </Typography>
               <Typography variant="h5">{pageTitle}</Typography>
             </Box>
+            <Select
+              size="small"
+              value={currentLanguage}
+              onChange={(event) => handleLanguageChange(event.target.value as TranslationLanguage)}
+              aria-label={t('app.languageSelectorAria')}
+              sx={{ minWidth: 144 }}
+            >
+              {LanguageOptions.map((option) => {
+                const countryName = countries.getName(option.countryCode, option.i18nIsoCountryLocale) ?? option.countryCode
+                return (
+                  <MenuItem key={option.code} value={option.code}>
+                    {`${option.flag} ${countryName} - ${t(option.translationKey)}`}
+                  </MenuItem>
+                )
+              })}
+            </Select>
             {isAuthenticated ? (
-              <Chip color="secondary" label={user ? `${user.firstName ?? user.userName} · ${user.roles[0] ?? 'User'}` : 'Signed in'} />
+              <Chip color="secondary" label={user ? `${user.firstName ?? user.userName} · ${user.roles[0] ?? 'User'}` : t('app.signedIn')} />
             ) : (
-              <Chip label="Public route" variant="outlined" />
+              <Chip label={t('app.publicRoute')} variant="outlined" />
             )}
           </Stack>
         </Toolbar>

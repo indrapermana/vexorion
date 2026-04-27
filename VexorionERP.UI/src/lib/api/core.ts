@@ -69,7 +69,7 @@ export class ApiError extends Error {
   }
 }
 
-export async function requestJson<T>(path: string, method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET', body?: unknown): Promise<T> {
+export async function requestJson<T>(path: string, method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' = 'GET', body?: unknown): Promise<T> {
   try {
     const response = await apiClient.request<T>({
       url: path,

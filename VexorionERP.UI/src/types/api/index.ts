@@ -1,5 +1,6 @@
 export * from './auth'
 export * from './auditLogs'
+export * from './configuration'
 export * from './customers'
 export * from './customerPayments'
 export * from './financeAccounts'

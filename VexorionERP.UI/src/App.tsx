@@ -8,6 +8,12 @@ import { ProtectedRoute, PublicOnlyRoute } from './components/RouteGuards'
 const AppLayout = lazy(() => import('./components/AppLayout'))
 const AccountsPage = lazy(() => import('./pages/AccountsPage'))
 const AuditLogsPage = lazy(() => import('./pages/AuditLogsPage'))
+const ConfigCompanyPage = lazy(() => import('./pages/ConfigCompanyPage'))
+const ConfigMenuPage = lazy(() => import('./pages/ConfigMenuPage'))
+const ConfigPage = lazy(() => import('./pages/ConfigPage'))
+const ConfigRolesPage = lazy(() => import('./pages/ConfigRolesPage'))
+const ConfigTaxDiscountPage = lazy(() => import('./pages/ConfigTaxDiscountPage'))
+const ConfigUsersPage = lazy(() => import('./pages/ConfigUsersPage'))
 const PublicAuthLayout = lazy(() => import('./components/PublicAuthLayout'))
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
 const CustomersPage = lazy(() => import('./pages/CustomersPage'))
@@ -49,6 +55,12 @@ function App() {
                 <Route path="/customer-payments" element={<CustomerPaymentsPage />} />
                 <Route path="/accounts" element={<AccountsPage />} />
                 <Route path="/audit-logs" element={<AuditLogsPage />} />
+                <Route path="/config" element={<ConfigPage />} />
+                <Route path="/config/users" element={<ConfigUsersPage />} />
+                <Route path="/config/roles" element={<ConfigRolesPage />} />
+                <Route path="/config/menu" element={<ConfigMenuPage />} />
+                <Route path="/config/tax-discount" element={<ConfigTaxDiscountPage />} />
+                <Route path="/config/company" element={<ConfigCompanyPage />} />
                 <Route path="/fiscal-periods" element={<FiscalPeriodsPage />} />
                 <Route path="/journals" element={<JournalsPage />} />
                 <Route path="/reports" element={<ReportsPage />} />

@@ -77,6 +77,7 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
     public DbSet<JournalEntryLine> JournalEntryLines => Set<JournalEntryLine>();
     public DbSet<PaymentTerm> PaymentTerms => Set<PaymentTerm>();
     public DbSet<TaxCode> TaxCodes => Set<TaxCode>();
+    public DbSet<TenantPreference> TenantPreferences => Set<TenantPreference>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
