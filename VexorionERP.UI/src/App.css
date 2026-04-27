@@ -14,6 +14,11 @@
   min-height: 100vh;
   background: linear-gradient(180deg, rgba(247, 244, 255, 0.96), rgba(239, 234, 255, 0.98));
   border-right: 1px solid rgba(108, 92, 231, 0.1);
+  transition: padding 180ms ease, background-color 180ms ease;
+}
+
+.dashboard-sidebar-shell-collapsed {
+  align-items: stretch;
 }
 
 .sidebar-caption {
@@ -30,11 +35,29 @@
   margin-bottom: 0.3rem;
   border-radius: 14px;
   color: #5d568b;
+  min-height: 48px;
 }
 
 .dashboard-nav-item .MuiListItemIcon-root {
   min-width: 40px;
   color: inherit;
+}
+
+.dashboard-nav-icon-slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dashboard-nav-icon-slot svg {
+  font-size: 1.35rem;
+}
+
+.dashboard-nav-icon-slot-collapsed {
+  min-width: 40px;
+  width: 40px;
+  height: 40px;
 }
 
 .dashboard-nav-item:hover {
@@ -51,6 +74,12 @@
   padding: 1rem;
   border: 1px solid rgba(108, 92, 231, 0.08);
   background: rgba(251, 250, 255, 0.85);
+}
+
+.dashboard-sidebar-shell-collapsed .sidebar-footer-card {
+  display: grid;
+  place-items: center;
+  padding: 0.65rem;
 }
 
 .dashboard-main {

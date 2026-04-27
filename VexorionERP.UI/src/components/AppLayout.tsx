@@ -1,4 +1,21 @@
-import AutoGraphRoundedIcon from '@mui/icons-material/AutoGraphRounded'
+import AccountBalanceRoundedIcon from '@mui/icons-material/AccountBalanceRounded'
+import AccountBalanceWalletRoundedIcon from '@mui/icons-material/AccountBalanceWalletRounded'
+import AdminPanelSettingsRoundedIcon from '@mui/icons-material/AdminPanelSettingsRounded'
+import BadgeRoundedIcon from '@mui/icons-material/BadgeRounded'
+import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded'
+import FactCheckRoundedIcon from '@mui/icons-material/FactCheckRounded'
+import RequestQuoteRoundedIcon from '@mui/icons-material/RequestQuoteRounded'
+import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded'
+import InventoryRoundedIcon from '@mui/icons-material/InventoryRounded'
+import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded'
+import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded'
+import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded'
+import PolicyRoundedIcon from '@mui/icons-material/PolicyRounded'
+import SellRoundedIcon from '@mui/icons-material/SellRounded'
+import ShoppingBagRoundedIcon from '@mui/icons-material/ShoppingBagRounded'
+import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded'
+import TuneRoundedIcon from '@mui/icons-material/TuneRounded'
+import WarehouseRoundedIcon from '@mui/icons-material/WarehouseRounded'
 import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded'
 import Groups2RoundedIcon from '@mui/icons-material/Groups2Rounded'
 import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded'
@@ -6,12 +23,9 @@ import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded'
 import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded'
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded'
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded'
-import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded'
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded'
 import RuleRoundedIcon from '@mui/icons-material/RuleRounded'
 import SwapHorizRoundedIcon from '@mui/icons-material/SwapHorizRounded'
-import TuneRoundedIcon from '@mui/icons-material/TuneRounded'
-import WarehouseRoundedIcon from '@mui/icons-material/WarehouseRounded'
 import {
   Box,
   Button,
@@ -28,6 +42,7 @@ import {
   Select,
   Stack,
   Toolbar,
+  Tooltip,
   Typography,
 } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
@@ -44,6 +59,8 @@ import { getTenantPreferences } from '../lib/api'
 import { getHiddenMenuLinks, saveHiddenMenuLinks, subscribeToMenuConfigChange } from '../lib/menuConfig'
 
 const drawerWidth = 280
+const collapsedDrawerWidth = 92
+const sidebarCollapsedStorageKey = 'vexorion.sidebarCollapsed'
 
 const navigationSections = [
   {
@@ -55,21 +72,21 @@ const navigationSections = [
   {
     titleKey: 'nav.sections.sales',
     links: [
-      { to: '/customers', labelKey: 'nav.links.customers', icon: <Groups2RoundedIcon /> },
-      { to: '/sales-orders', labelKey: 'nav.links.salesOrders', icon: <ReceiptLongRoundedIcon /> },
-      { to: '/sales-shipments', labelKey: 'nav.links.salesShipments', icon: <ReceiptLongRoundedIcon /> },
-      { to: '/sales-invoices', labelKey: 'nav.links.salesInvoices', icon: <ReceiptLongRoundedIcon /> },
-      { to: '/customer-payments', labelKey: 'nav.links.customerPayments', icon: <ReceiptLongRoundedIcon /> },
+      { to: '/customers', labelKey: 'nav.links.customers', icon: <BadgeRoundedIcon /> },
+      { to: '/sales-orders', labelKey: 'nav.links.salesOrders', icon: <SellRoundedIcon /> },
+      { to: '/sales-shipments', labelKey: 'nav.links.salesShipments', icon: <LocalShippingRoundedIcon /> },
+      { to: '/sales-invoices', labelKey: 'nav.links.salesInvoices', icon: <RequestQuoteRoundedIcon /> },
+      { to: '/customer-payments', labelKey: 'nav.links.customerPayments', icon: <PaymentsRoundedIcon /> },
     ],
   },
   {
     titleKey: 'nav.sections.procurement',
     links: [
-      { to: '/suppliers', labelKey: 'nav.links.suppliers', icon: <Groups2RoundedIcon /> },
-      { to: '/purchase-orders', labelKey: 'nav.links.purchaseOrders', icon: <ReceiptLongRoundedIcon /> },
-      { to: '/purchase-receipts', labelKey: 'nav.links.purchaseReceipts', icon: <ReceiptLongRoundedIcon /> },
+      { to: '/suppliers', labelKey: 'nav.links.suppliers', icon: <StorefrontRoundedIcon /> },
+      { to: '/purchase-orders', labelKey: 'nav.links.purchaseOrders', icon: <ShoppingBagRoundedIcon /> },
+      { to: '/purchase-receipts', labelKey: 'nav.links.purchaseReceipts', icon: <InventoryRoundedIcon /> },
       { to: '/purchase-invoices', labelKey: 'nav.links.purchaseInvoices', icon: <ReceiptLongRoundedIcon /> },
-      { to: '/vendor-payments', labelKey: 'nav.links.vendorPayments', icon: <ReceiptLongRoundedIcon /> },
+      { to: '/vendor-payments', labelKey: 'nav.links.vendorPayments', icon: <AccountBalanceWalletRoundedIcon /> },
     ],
   },
   {
@@ -85,17 +102,17 @@ const navigationSections = [
   {
     titleKey: 'nav.sections.finance',
     links: [
-      { to: '/accounts', labelKey: 'nav.links.accounts', icon: <AutoGraphRoundedIcon /> },
-      { to: '/audit-logs', labelKey: 'nav.links.auditLogs', icon: <AutoGraphRoundedIcon /> },
-      { to: '/fiscal-periods', labelKey: 'nav.links.fiscalPeriods', icon: <AutoGraphRoundedIcon /> },
-      { to: '/journals', labelKey: 'nav.links.journals', icon: <AutoGraphRoundedIcon /> },
-      { to: '/reports', labelKey: 'nav.links.reports', icon: <AutoGraphRoundedIcon /> },
+      { to: '/accounts', labelKey: 'nav.links.accounts', icon: <AccountBalanceRoundedIcon /> },
+      { to: '/audit-logs', labelKey: 'nav.links.auditLogs', icon: <PolicyRoundedIcon /> },
+      { to: '/fiscal-periods', labelKey: 'nav.links.fiscalPeriods', icon: <CalendarMonthRoundedIcon /> },
+      { to: '/journals', labelKey: 'nav.links.journals', icon: <MenuBookRoundedIcon /> },
+      { to: '/reports', labelKey: 'nav.links.reports', icon: <InsightsRoundedIcon /> },
     ],
   },
   {
     titleKey: 'nav.sections.configuration',
     links: [
-      { to: '/config', labelKey: 'nav.links.configCenter', icon: <SettingsRoundedIcon /> },
+      { to: '/config', labelKey: 'nav.links.configCenter', icon: <AdminPanelSettingsRoundedIcon /> },
     ],
   },
 ] as const
@@ -136,6 +153,7 @@ export default function AppLayout() {
   const { mode: themeMode, setMode: setThemeMode } = useThemeMode()
   const location = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => localStorage.getItem(sidebarCollapsedStorageKey) === 'true')
   const [hiddenMenuLinks, setHiddenMenuLinks] = useState<string[]>(() => getHiddenMenuLinks())
 
   const currentLanguage = normalizeTranslationLanguage(i18n.language)
@@ -152,8 +170,15 @@ export default function AppLayout() {
     setThemeMode(themeMode === 'light' ? 'dark' : 'light')
   }
 
+  const toggleSidebarCollapsed = () => {
+    setIsSidebarCollapsed((current) => {
+      const next = !current
+      localStorage.setItem(sidebarCollapsedStorageKey, String(next))
+      return next
+    })
+  }
+
   useEffect(() => {
-    setHiddenMenuLinks(getHiddenMenuLinks())
     return subscribeToMenuConfigChange(() => {
       setHiddenMenuLinks(getHiddenMenuLinks())
     })
@@ -161,7 +186,6 @@ export default function AppLayout() {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      setHiddenMenuLinks([])
       saveHiddenMenuLinks([])
       return
     }
@@ -206,71 +230,99 @@ export default function AppLayout() {
 
   const pageTitle = t(routeTitleKeys[location.pathname] ?? 'app.workspaceTitle')
 
-  const sidebar = (
-    <Box className="dashboard-sidebar-shell">
-      <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', px: 2.5, py: 2.5 }}>
+  const desktopDrawerWidth = isSidebarCollapsed ? collapsedDrawerWidth : drawerWidth
+
+  const sidebar = (collapsed: boolean) => (
+    <Box className={collapsed ? 'dashboard-sidebar-shell dashboard-sidebar-shell-collapsed' : 'dashboard-sidebar-shell'}>
+      <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', px: collapsed ? 1.25 : 2.5, py: 2.5 }}>
         <Box className="brand-mark">
-          <AutoGraphRoundedIcon />
+          <Box component="img" src="/favicon.svg" alt={t('app.brand')} sx={{ width: 28, height: 28 }} />
         </Box>
-        <Box>
-          <Typography variant="overline" sx={{ color: 'text.secondary', letterSpacing: '0.18em' }}>
-            {t('app.brand')}
-          </Typography>
-          <Typography variant="h6">{t('app.workspace')}</Typography>
-        </Box>
+        {!collapsed ? (
+          <Box sx={{ minWidth: 0, flex: 1 }}>
+            <Typography variant="overline" sx={{ color: 'text.secondary', letterSpacing: '0.18em' }}>
+              {t('app.brand')}
+            </Typography>
+          </Box>
+        ) : null}
       </Stack>
 
       <Divider />
 
-      <Box sx={{ px: 1.5, py: 1.5 }}>
-        <Typography className="sidebar-caption">{t('app.navigation')}</Typography>
+      <Box sx={{ px: collapsed ? 1 : 1.5, py: 1.5 }}>
+        {!collapsed ? <Typography className="sidebar-caption">{t('app.navigation')}</Typography> : null}
         <Stack spacing={1.5}>
           {visibleNavigationSections.map((section) => (
             <Box key={section.titleKey}>
-              <Typography
-                variant="overline"
-                sx={{
-                  px: 1.5,
-                  color: 'text.secondary',
-                  letterSpacing: '0.12em',
-                }}
-              >
-                {t(section.titleKey)}
-              </Typography>
+              {!collapsed ? (
+                <Typography
+                  variant="overline"
+                  sx={{
+                    px: 1.5,
+                    color: 'text.secondary',
+                    letterSpacing: '0.12em',
+                  }}
+                >
+                  {t(section.titleKey)}
+                </Typography>
+              ) : null}
               <List disablePadding>
-                {section.links.map((link) => (
-                  <ListItemButton
-                    key={link.to}
-                    component={NavLink}
-                    to={link.to}
-                    selected={location.pathname === link.to}
-                    onClick={() => setMobileOpen(false)}
-                    className={location.pathname === link.to ? 'dashboard-nav-item dashboard-nav-item-active' : 'dashboard-nav-item'}
-                  >
-                    <ListItemIcon>{link.icon}</ListItemIcon>
-                    <ListItemText primary={t(link.labelKey)} />
-                  </ListItemButton>
-                ))}
+                {section.links.map((link) => {
+                  const navItem = (
+                    <ListItemButton
+                      key={link.to}
+                      component={NavLink}
+                      to={link.to}
+                      selected={location.pathname === link.to}
+                      onClick={() => setMobileOpen(false)}
+                      className={location.pathname === link.to ? 'dashboard-nav-item dashboard-nav-item-active' : 'dashboard-nav-item'}
+                      sx={{ justifyContent: collapsed ? 'center' : 'flex-start', px: collapsed ? 1.25 : 2 }}
+                    >
+                        <ListItemIcon className={collapsed ? 'dashboard-nav-icon-slot dashboard-nav-icon-slot-collapsed' : 'dashboard-nav-icon-slot'} sx={{ justifyContent: 'center' }}>{link.icon}</ListItemIcon>
+                      {!collapsed ? <ListItemText primary={t(link.labelKey)} /> : null}
+                    </ListItemButton>
+                  )
+
+                  if (!collapsed) {
+                    return navItem
+                  }
+
+                  return (
+                    <Tooltip key={link.to} title={t(link.labelKey)} placement="right" arrow>
+                      {navItem}
+                    </Tooltip>
+                  )
+                })}
               </List>
             </Box>
           ))}
         </Stack>
       </Box>
 
-      <Box sx={{ mt: 'auto', px: 2, pb: 2 }}>
+      <Box sx={{ mt: 'auto', px: collapsed ? 1 : 2, pb: 2 }}>
         <Paper elevation={0} className="sidebar-footer-card">
-          <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5 }}>
-            {isAuthenticated && user ? user.firstName ?? user.userName : t('app.anonymousMode')}
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-            {isAuthenticated && user ? user.email : t('app.signInHint')}
-          </Typography>
+          {!collapsed ? (
+            <>
+              <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5 }}>
+                {isAuthenticated && user ? user.firstName ?? user.userName : t('app.anonymousMode')}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                {isAuthenticated && user ? user.email : t('app.signInHint')}
+              </Typography>
+            </>
+          ) : null}
           {isAuthenticated ? (
-            <Button fullWidth variant="contained" startIcon={<LogoutRoundedIcon />} onClick={() => void handleLogout()}>
-              {t('app.logout')}
-            </Button>
+            collapsed ? (
+              <IconButton color="primary" onClick={() => void handleLogout()} aria-label={t('app.logout')} sx={{ width: '100%' }}>
+                <LogoutRoundedIcon />
+              </IconButton>
+            ) : (
+              <Button fullWidth variant="contained" startIcon={<LogoutRoundedIcon />} onClick={() => void handleLogout()}>
+                {t('app.logout')}
+              </Button>
+            )
           ) : (
-            <Chip label={t('app.publicAccessOnly')} variant="outlined" />
+            collapsed ? <Chip size="small" label="P" variant="outlined" /> : <Chip label={t('app.publicAccessOnly')} variant="outlined" />
           )}
         </Paper>
       </Box>
@@ -289,7 +341,7 @@ export default function AppLayout() {
           '& .MuiDrawer-paper': { width: drawerWidth, boxSizing: 'border-box' },
         }}
       >
-        {sidebar}
+        {sidebar(false)}
       </Drawer>
 
       <Drawer
@@ -297,13 +349,13 @@ export default function AppLayout() {
         open
         sx={{
           display: { xs: 'none', lg: 'block' },
-          '& .MuiDrawer-paper': { width: drawerWidth, boxSizing: 'border-box', border: 'none' },
+          '& .MuiDrawer-paper': { width: desktopDrawerWidth, boxSizing: 'border-box', border: 'none', transition: 'width 180ms ease' },
         }}
       >
-        {sidebar}
+        {sidebar(isSidebarCollapsed)}
       </Drawer>
 
-      <Box className="dashboard-main" sx={{ ml: { lg: `${drawerWidth}px` } }}>
+      <Box className="dashboard-main" sx={{ ml: { lg: `${desktopDrawerWidth}px` }, transition: 'margin-left 180ms ease' }}>
         <Toolbar className="dashboard-topbar" sx={{ position: 'relative' }}>
           <Stack direction="row" spacing={1} sx={{ position: 'absolute', top: 8, right: 16 }}>
             <Select
@@ -347,22 +399,29 @@ export default function AppLayout() {
                 </MenuItem>
               ))}
             </Select>
-          </Stack>
-          <Stack direction="row" spacing={2} sx={{ alignItems: 'center', width: '100%' }}>
-            <IconButton sx={{ display: { lg: 'none' } }} onClick={() => setMobileOpen(true)}>
-              <MenuRoundedIcon />
-            </IconButton>
-            <Box sx={{ mr: 'auto' }}>
-              <Typography variant="overline" sx={{ color: 'text.secondary', letterSpacing: '0.18em' }}>
-                {t('app.adminConsole')}
-              </Typography>
-              <Typography variant="h5">{pageTitle}</Typography>
-            </Box>
             {isAuthenticated ? (
               <Chip color="secondary" label={user ? `${user.firstName ?? user.userName} · ${user.roles[0] ?? 'User'}` : t('app.signedIn')} />
             ) : (
               <Chip label={t('app.publicRoute')} variant="outlined" />
             )}
+          </Stack>
+          <Stack direction="row" spacing={2} sx={{ alignItems: 'center', width: '100%' }}>
+            <IconButton sx={{ display: { lg: 'none' } }} onClick={() => setMobileOpen(true)}>
+              <MenuRoundedIcon />
+            </IconButton>
+            <IconButton
+              sx={{ display: { xs: 'none', lg: 'inline-flex' } }}
+              onClick={toggleSidebarCollapsed}
+              aria-label={isSidebarCollapsed ? 'Expand navigation' : 'Collapse navigation'}
+            >
+              <MenuRoundedIcon />
+            </IconButton>
+            <Box sx={{ mr: 'auto', minWidth: 0 }}>
+              <Typography variant="overline" sx={{ color: 'text.secondary', letterSpacing: '0.18em' }}>
+                {t('app.adminConsole')}
+              </Typography>
+              <Typography variant="h5" noWrap>{pageTitle}</Typography>
+            </Box>
           </Stack>
         </Toolbar>
 
