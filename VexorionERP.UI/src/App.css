@@ -43,6 +43,30 @@
   color: inherit;
 }
 
+.dashboard-nav-item.nav-accent-overview .MuiListItemIcon-root {
+  color: #6c5ce7;
+}
+
+.dashboard-nav-item.nav-accent-sales .MuiListItemIcon-root {
+  color: #e86a52;
+}
+
+.dashboard-nav-item.nav-accent-procurement .MuiListItemIcon-root {
+  color: #2f80c9;
+}
+
+.dashboard-nav-item.nav-accent-inventory .MuiListItemIcon-root {
+  color: #2e9d73;
+}
+
+.dashboard-nav-item.nav-accent-finance .MuiListItemIcon-root {
+  color: #8c5ad6;
+}
+
+.dashboard-nav-item.nav-accent-configuration .MuiListItemIcon-root {
+  color: #6c758c;
+}
+
 .dashboard-nav-icon-slot {
   display: inline-flex;
   align-items: center;
@@ -68,6 +92,10 @@
 .dashboard-nav-item-active {
   background: linear-gradient(135deg, rgba(108, 92, 231, 0.16), rgba(162, 155, 254, 0.18));
   color: #4d3fd1;
+}
+
+.dashboard-nav-item-active .MuiListItemIcon-root {
+  color: currentColor;
 }
 
 .sidebar-footer-card {
@@ -362,6 +390,30 @@
 
 [data-theme-mode='dark'] .dashboard-nav-item {
   color: #c4bce9;
+}
+
+[data-theme-mode='dark'] .dashboard-nav-item.nav-accent-overview .MuiListItemIcon-root {
+  color: #b6a7ff;
+}
+
+[data-theme-mode='dark'] .dashboard-nav-item.nav-accent-sales .MuiListItemIcon-root {
+  color: #ff9a7d;
+}
+
+[data-theme-mode='dark'] .dashboard-nav-item.nav-accent-procurement .MuiListItemIcon-root {
+  color: #7fc8ff;
+}
+
+[data-theme-mode='dark'] .dashboard-nav-item.nav-accent-inventory .MuiListItemIcon-root {
+  color: #72d9ac;
+}
+
+[data-theme-mode='dark'] .dashboard-nav-item.nav-accent-finance .MuiListItemIcon-root {
+  color: #c8a4ff;
+}
+
+[data-theme-mode='dark'] .dashboard-nav-item.nav-accent-configuration .MuiListItemIcon-root {
+  color: #b4bed2;
 }
 
 [data-theme-mode='dark'] .dashboard-nav-item:hover {

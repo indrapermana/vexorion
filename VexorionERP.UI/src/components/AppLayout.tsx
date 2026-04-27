@@ -3,7 +3,6 @@ import AccountBalanceWalletRoundedIcon from '@mui/icons-material/AccountBalanceW
 import AdminPanelSettingsRoundedIcon from '@mui/icons-material/AdminPanelSettingsRounded'
 import BadgeRoundedIcon from '@mui/icons-material/BadgeRounded'
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded'
-import FactCheckRoundedIcon from '@mui/icons-material/FactCheckRounded'
 import RequestQuoteRoundedIcon from '@mui/icons-material/RequestQuoteRounded'
 import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded'
 import InventoryRoundedIcon from '@mui/icons-material/InventoryRounded'
@@ -17,7 +16,6 @@ import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded'
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded'
 import WarehouseRoundedIcon from '@mui/icons-material/WarehouseRounded'
 import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded'
-import Groups2RoundedIcon from '@mui/icons-material/Groups2Rounded'
 import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded'
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded'
 import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded'
@@ -61,6 +59,16 @@ import { getHiddenMenuLinks, saveHiddenMenuLinks, subscribeToMenuConfigChange } 
 const drawerWidth = 280
 const collapsedDrawerWidth = 92
 const sidebarCollapsedStorageKey = 'vexorion.sidebarCollapsed'
+
+function getSectionAccentClass(titleKey: string) {
+  if (titleKey === 'nav.sections.overview') return 'nav-accent-overview'
+  if (titleKey === 'nav.sections.sales') return 'nav-accent-sales'
+  if (titleKey === 'nav.sections.procurement') return 'nav-accent-procurement'
+  if (titleKey === 'nav.sections.inventory') return 'nav-accent-inventory'
+  if (titleKey === 'nav.sections.finance') return 'nav-accent-finance'
+  if (titleKey === 'nav.sections.configuration') return 'nav-accent-configuration'
+  return 'nav-accent-default'
+}
 
 const navigationSections = [
   {
@@ -268,6 +276,7 @@ export default function AppLayout() {
               ) : null}
               <List disablePadding>
                 {section.links.map((link) => {
+                  const sectionAccentClass = getSectionAccentClass(section.titleKey)
                   const navItem = (
                     <ListItemButton
                       key={link.to}
@@ -275,7 +284,7 @@ export default function AppLayout() {
                       to={link.to}
                       selected={location.pathname === link.to}
                       onClick={() => setMobileOpen(false)}
-                      className={location.pathname === link.to ? 'dashboard-nav-item dashboard-nav-item-active' : 'dashboard-nav-item'}
+                      className={location.pathname === link.to ? `dashboard-nav-item dashboard-nav-item-active ${sectionAccentClass}` : `dashboard-nav-item ${sectionAccentClass}`}
                       sx={{ justifyContent: collapsed ? 'center' : 'flex-start', px: collapsed ? 1.25 : 2 }}
                     >
                         <ListItemIcon className={collapsed ? 'dashboard-nav-icon-slot dashboard-nav-icon-slot-collapsed' : 'dashboard-nav-icon-slot'} sx={{ justifyContent: 'center' }}>{link.icon}</ListItemIcon>
