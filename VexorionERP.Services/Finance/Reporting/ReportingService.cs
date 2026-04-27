@@ -12,6 +12,134 @@ public class ReportingService(
     AppDbContext dbContext,
     ICurrentTenantProvider currentTenantProvider) : IReportingService
 {
+    public async Task<ServiceResult<ProfitAndLossReportResponse>> GetProfitAndLossAsync(DateOnly periodStartDate, DateOnly periodEndDate, CancellationToken cancellationToken = default)
+    {
+        if (!currentTenantProvider.TenantId.HasValue)
+            return ServiceResult<ProfitAndLossReportResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+
+        if (periodStartDate > periodEndDate)
+            return ServiceResult<ProfitAndLossReportResponse>.Failure(StatusCodes.Status400BadRequest, "Period start date cannot be after period end date.");
+
+        var tenantId = currentTenantProvider.TenantId.Value;
+
+        var rows = await QueryAccountActivityRowsAsync(tenantId, periodStartDate, periodEndDate, cancellationToken);
+
+        var revenueLines = rows
+            .Where(x => x.AccountType == AccountType.Revenue)
+            .Select(x => new FinancialStatementLineResponse
+            {
+                AccountId = x.AccountId,
+                AccountCode = x.AccountCode,
+                AccountName = x.AccountName,
+                Amount = x.CreditAmount - x.DebitAmount,
+            })
+            .Where(x => x.Amount != 0m)
+            .OrderBy(x => x.AccountCode)
+            .ToList();
+
+        var expenseLines = rows
+            .Where(x => x.AccountType == AccountType.Expense)
+            .Select(x => new FinancialStatementLineResponse
+            {
+                AccountId = x.AccountId,
+                AccountCode = x.AccountCode,
+                AccountName = x.AccountName,
+                Amount = x.DebitAmount - x.CreditAmount,
+            })
+            .Where(x => x.Amount != 0m)
+            .OrderBy(x => x.AccountCode)
+            .ToList();
+
+        var totalRevenue = revenueLines.Sum(x => x.Amount);
+        var totalExpenses = expenseLines.Sum(x => x.Amount);
+
+        return ServiceResult<ProfitAndLossReportResponse>.Success(new ProfitAndLossReportResponse
+        {
+            PeriodStartDate = periodStartDate,
+            PeriodEndDate = periodEndDate,
+            TotalRevenue = totalRevenue,
+            TotalExpenses = totalExpenses,
+            NetIncome = totalRevenue - totalExpenses,
+            RevenueLines = revenueLines,
+            ExpenseLines = expenseLines,
+        });
+    }
+
+    public async Task<ServiceResult<BalanceSheetReportResponse>> GetBalanceSheetAsync(DateOnly asOfDate, CancellationToken cancellationToken = default)
+    {
+        if (!currentTenantProvider.TenantId.HasValue)
+            return ServiceResult<BalanceSheetReportResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+
+        var tenantId = currentTenantProvider.TenantId.Value;
+        var rows = await QueryAccountActivityRowsAsync(tenantId, null, asOfDate, cancellationToken);
+
+        var assetLines = rows
+            .Where(x => x.AccountType == AccountType.Asset)
+            .Select(x => new FinancialStatementLineResponse
+            {
+                AccountId = x.AccountId,
+                AccountCode = x.AccountCode,
+                AccountName = x.AccountName,
+                Amount = x.DebitAmount - x.CreditAmount,
+            })
+            .Where(x => x.Amount != 0m)
+            .OrderBy(x => x.AccountCode)
+            .ToList();
+
+        var liabilityLines = rows
+            .Where(x => x.AccountType == AccountType.Liability)
+            .Select(x => new FinancialStatementLineResponse
+            {
+                AccountId = x.AccountId,
+                AccountCode = x.AccountCode,
+                AccountName = x.AccountName,
+                Amount = x.CreditAmount - x.DebitAmount,
+            })
+            .Where(x => x.Amount != 0m)
+            .OrderBy(x => x.AccountCode)
+            .ToList();
+
+        var equityLines = rows
+            .Where(x => x.AccountType == AccountType.Equity)
+            .Select(x => new FinancialStatementLineResponse
+            {
+                AccountId = x.AccountId,
+                AccountCode = x.AccountCode,
+                AccountName = x.AccountName,
+                Amount = x.CreditAmount - x.DebitAmount,
+            })
+            .Where(x => x.Amount != 0m)
+            .OrderBy(x => x.AccountCode)
+            .ToList();
+
+        var currentRevenue = rows
+            .Where(x => x.AccountType == AccountType.Revenue)
+            .Sum(x => x.CreditAmount - x.DebitAmount);
+
+        var currentExpenses = rows
+            .Where(x => x.AccountType == AccountType.Expense)
+            .Sum(x => x.DebitAmount - x.CreditAmount);
+
+        var currentEarnings = currentRevenue - currentExpenses;
+
+        var totalAssets = assetLines.Sum(x => x.Amount);
+        var totalLiabilities = liabilityLines.Sum(x => x.Amount);
+        var totalEquity = equityLines.Sum(x => x.Amount);
+
+        return ServiceResult<BalanceSheetReportResponse>.Success(new BalanceSheetReportResponse
+        {
+            AsOfDate = asOfDate,
+            TotalAssets = totalAssets,
+            TotalLiabilities = totalLiabilities,
+            TotalEquity = totalEquity,
+            CurrentEarnings = currentEarnings,
+            TotalLiabilitiesAndEquity = totalLiabilities + totalEquity + currentEarnings,
+            AssetLines = assetLines,
+            LiabilityLines = liabilityLines,
+            EquityLines = equityLines,
+        });
+    }
+
     public async Task<ServiceResult<FinanceDashboardSnapshotResponse>> GetFinanceDashboardSnapshotAsync(DateOnly asOfDate, int periodDays, CancellationToken cancellationToken = default)
     {
         if (!currentTenantProvider.TenantId.HasValue)
@@ -262,5 +390,98 @@ public class ReportingService(
             DueOver90 = buckets.Sum(x => x.DueOver90),
             Total = buckets.Sum(x => x.Total),
         };
+    }
+
+    private async Task<List<AccountActivityRow>> QueryAccountActivityRowsAsync(Guid tenantId, DateOnly? startDateInclusive, DateOnly endDateInclusive, CancellationToken cancellationToken)
+    {
+        var entries =
+            from line in dbContext.JournalEntryLines.AsNoTracking()
+            join journal in dbContext.JournalEntries.AsNoTracking() on line.JournalEntryId equals journal.Id
+            join account in dbContext.Accounts.AsNoTracking() on line.AccountId equals account.Id
+            where line.TenantId == tenantId
+                  && journal.TenantId == tenantId
+                  && account.TenantId == tenantId
+                  && journal.Status == JournalEntryStatus.Posted
+                  && journal.PostingDate <= endDateInclusive
+                  && (!startDateInclusive.HasValue || journal.PostingDate >= startDateInclusive.Value)
+            group new { line, account } by new
+            {
+                account.Id,
+                account.Code,
+                account.Name,
+                account.AccountType,
+            }
+            into grouped
+            select new AccountActivityRow
+            {
+                AccountId = grouped.Key.Id,
+                AccountCode = grouped.Key.Code,
+                AccountName = grouped.Key.Name,
+                AccountType = grouped.Key.AccountType,
+                DebitAmount = grouped.Sum(x => x.line.DebitAmount),
+                CreditAmount = grouped.Sum(x => x.line.CreditAmount),
+            };
+
+        return await entries.ToListAsync(cancellationToken);
+    }
+
+    private sealed class AccountActivityRow
+    {
+        public Guid AccountId { get; set; }
+        public string AccountCode { get; set; } = string.Empty;
+        public string AccountName { get; set; } = string.Empty;
+        public AccountType AccountType { get; set; }
+        public decimal DebitAmount { get; set; }
+        public decimal CreditAmount { get; set; }
+    }
+
+    public async Task<ServiceResult<AccountDrillDownResponse>> GetAccountDrillDownAsync(Guid accountId, DateOnly? periodStartDate, DateOnly periodEndDate, CancellationToken cancellationToken = default)
+    {
+        if (!currentTenantProvider.TenantId.HasValue)
+            return ServiceResult<AccountDrillDownResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+
+        var tenantId = currentTenantProvider.TenantId.Value;
+
+        var account = await dbContext.Accounts
+            .AsNoTracking()
+            .Where(a => a.TenantId == tenantId && a.Id == accountId)
+            .Select(a => new { a.Id, a.Code, a.Name })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (account is null)
+            return ServiceResult<AccountDrillDownResponse>.Failure(StatusCodes.Status404NotFound, "Account not found.");
+
+        var lines = await (
+            from line in dbContext.JournalEntryLines.AsNoTracking()
+            join journal in dbContext.JournalEntries.AsNoTracking() on line.JournalEntryId equals journal.Id
+            where line.TenantId == tenantId
+                  && journal.TenantId == tenantId
+                  && journal.Status == JournalEntryStatus.Posted
+                  && line.AccountId == accountId
+                  && journal.PostingDate <= periodEndDate
+                  && (!periodStartDate.HasValue || journal.PostingDate >= periodStartDate.Value)
+            orderby journal.PostingDate, journal.JournalNumber
+            select new JournalLineDetailResponse
+            {
+                JournalEntryId = journal.Id,
+                JournalNumber = journal.JournalNumber,
+                PostingDate = journal.PostingDate,
+                Description = journal.Description ?? journal.SourceDocumentType,
+                DebitAmount = line.DebitAmount,
+                CreditAmount = line.CreditAmount,
+            })
+            .ToListAsync(cancellationToken);
+
+        return ServiceResult<AccountDrillDownResponse>.Success(new AccountDrillDownResponse
+        {
+            AccountId = account.Id,
+            AccountCode = account.Code,
+            AccountName = account.Name,
+            PeriodStartDate = periodStartDate,
+            PeriodEndDate = periodEndDate,
+            TotalDebit = lines.Sum(x => x.DebitAmount),
+            TotalCredit = lines.Sum(x => x.CreditAmount),
+            Lines = lines,
+        });
     }
 }

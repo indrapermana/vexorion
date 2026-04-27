@@ -56,6 +56,53 @@ public static class AppPermissions
         public const string Manage = "inventory.manage";
     }
 
+    public static class InventoryAdjustments
+    {
+        public const string View = "inventory-adjustments.view";
+        public const string Manage = "inventory-adjustments.manage";
+    }
+
+    public static class StockTransfers
+    {
+        public const string View = "stock-transfers.view";
+        public const string Manage = "stock-transfers.manage";
+    }
+
+    public static class StockCounts
+    {
+        public const string View = "stock-counts.view";
+        public const string Manage = "stock-counts.manage";
+    }
+
+    public static class SalesInvoices
+    {
+        public const string View = "sales-invoices.view";
+        public const string Manage = "sales-invoices.manage";
+    }
+
+    public static class PurchaseInvoices
+    {
+        public const string View = "purchase-invoices.view";
+        public const string Manage = "purchase-invoices.manage";
+    }
+
+    public static class Payments
+    {
+        public const string View = "payments.view";
+        public const string Manage = "payments.manage";
+    }
+
+    public static class Accounting
+    {
+        public const string View = "accounting.view";
+        public const string Manage = "accounting.manage";
+    }
+
+    public static class Reports
+    {
+        public const string View = "reports.view";
+    }
+
     public static class Billing
     {
         public const string View = "billing.view";
@@ -82,6 +129,21 @@ public static class AppPermissions
         Purchasing.Manage,
         Inventory.View,
         Inventory.Manage,
+        InventoryAdjustments.View,
+        InventoryAdjustments.Manage,
+        StockTransfers.View,
+        StockTransfers.Manage,
+        StockCounts.View,
+        StockCounts.Manage,
+        SalesInvoices.View,
+        SalesInvoices.Manage,
+        PurchaseInvoices.View,
+        PurchaseInvoices.Manage,
+        Payments.View,
+        Payments.Manage,
+        Accounting.View,
+        Accounting.Manage,
+        Reports.View,
         Billing.View,
         Billing.Manage
     ];

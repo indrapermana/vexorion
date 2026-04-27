@@ -67,3 +67,71 @@ export type FinanceDashboardSnapshotResponse = {
   cashOutInPeriod: number
   netCashInPeriod: number
 }
+
+export type FinancialStatementLineResponse = {
+  accountId: string
+  accountCode: string
+  accountName: string
+  amount: number
+}
+
+export type ProfitAndLossReportResponse = {
+  periodStartDate: string
+  periodEndDate: string
+  totalRevenue: number
+  totalExpenses: number
+  netIncome: number
+  revenueLines: FinancialStatementLineResponse[]
+  expenseLines: FinancialStatementLineResponse[]
+  priorPeriod?: PriorPeriodSummaryResponse
+}
+
+export type PriorPeriodSummaryResponse = {
+  periodStartDate: string
+  periodEndDate: string
+  totalRevenue: number
+  totalExpenses: number
+  netIncome: number
+}
+
+export type BalanceSheetReportResponse = {
+  asOfDate: string
+  totalAssets: number
+  totalLiabilities: number
+  totalEquity: number
+  currentEarnings: number
+  totalLiabilitiesAndEquity: number
+  assetLines: FinancialStatementLineResponse[]
+  liabilityLines: FinancialStatementLineResponse[]
+  equityLines: FinancialStatementLineResponse[]
+  priorPeriod?: PriorBalanceSheetSummaryResponse
+}
+
+export type PriorBalanceSheetSummaryResponse = {
+  asOfDate: string
+  totalAssets: number
+  totalLiabilities: number
+  totalEquity: number
+  currentEarnings: number
+  totalLiabilitiesAndEquity: number
+}
+
+export type JournalLineDetailResponse = {
+  journalEntryId: string
+  journalNumber: string
+  postingDate: string
+  description: string
+  debitAmount: number
+  creditAmount: number
+}
+
+export type AccountDrillDownResponse = {
+  accountId: string
+  accountCode: string
+  accountName: string
+  periodStartDate?: string
+  periodEndDate: string
+  totalDebit: number
+  totalCredit: number
+  lines: JournalLineDetailResponse[]
+}

@@ -6,29 +6,7 @@ public static class RolePermissionMatrix
         new Dictionary<string, IReadOnlyCollection<string>>
         {
             [AppRoles.SystemAdmin] = AppPermissions.All,
-            [AppRoles.TenantAdmin] =
-            [
-                AppPermissions.Users.View,
-                AppPermissions.Users.Manage,
-                AppPermissions.Roles.View,
-                AppPermissions.Roles.Manage,
-                AppPermissions.Customers.View,
-                AppPermissions.Customers.Manage,
-                AppPermissions.Suppliers.View,
-                AppPermissions.Suppliers.Manage,
-                AppPermissions.Products.View,
-                AppPermissions.Products.Manage,
-                AppPermissions.Organization.View,
-                AppPermissions.Organization.Manage,
-                AppPermissions.Sales.View,
-                AppPermissions.Sales.Manage,
-                AppPermissions.Purchasing.View,
-                AppPermissions.Purchasing.Manage,
-                AppPermissions.Inventory.View,
-                AppPermissions.Inventory.Manage,
-                AppPermissions.Billing.View,
-                AppPermissions.Billing.Manage
-            ],
+            [AppRoles.TenantAdmin] = AppPermissions.All,
             [AppRoles.Manager] =
             [
                 AppPermissions.Users.View,
@@ -43,6 +21,20 @@ public static class RolePermissionMatrix
                 AppPermissions.Purchasing.View,
                 AppPermissions.Inventory.View,
                 AppPermissions.Inventory.Manage,
+                AppPermissions.InventoryAdjustments.View,
+                AppPermissions.InventoryAdjustments.Manage,
+                AppPermissions.StockTransfers.View,
+                AppPermissions.StockTransfers.Manage,
+                AppPermissions.StockCounts.View,
+                AppPermissions.StockCounts.Manage,
+                AppPermissions.SalesInvoices.View,
+                AppPermissions.SalesInvoices.Manage,
+                AppPermissions.PurchaseInvoices.View,
+                AppPermissions.PurchaseInvoices.Manage,
+                AppPermissions.Payments.View,
+                AppPermissions.Payments.Manage,
+                AppPermissions.Accounting.View,
+                AppPermissions.Reports.View,
                 AppPermissions.Billing.View,
                 AppPermissions.Billing.Manage
             ],
@@ -55,6 +47,14 @@ public static class RolePermissionMatrix
                 AppPermissions.Sales.View,
                 AppPermissions.Purchasing.View,
                 AppPermissions.Inventory.View,
+                AppPermissions.InventoryAdjustments.View,
+                AppPermissions.StockTransfers.View,
+                AppPermissions.StockCounts.View,
+                AppPermissions.SalesInvoices.View,
+                AppPermissions.PurchaseInvoices.View,
+                AppPermissions.Payments.View,
+                AppPermissions.Accounting.View,
+                AppPermissions.Reports.View,
                 AppPermissions.Billing.View
             ]
         };

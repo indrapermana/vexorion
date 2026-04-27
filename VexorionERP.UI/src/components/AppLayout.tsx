@@ -72,6 +72,7 @@ const navigationSections = [
     title: 'Finance',
     links: [
       { to: '/accounts', label: 'Accounts', icon: <AutoGraphRoundedIcon /> },
+      { to: '/audit-logs', label: 'Audit logs', icon: <AutoGraphRoundedIcon /> },
       { to: '/fiscal-periods', label: 'Fiscal periods', icon: <AutoGraphRoundedIcon /> },
       { to: '/journals', label: 'Journals', icon: <AutoGraphRoundedIcon /> },
       { to: '/reports', label: 'Reports', icon: <AutoGraphRoundedIcon /> },
@@ -84,6 +85,7 @@ const routeTitles: Record<string, string> = {
   '/customers': 'Customers',
   '/customer-payments': 'Customer Payments',
   '/accounts': 'Accounts',
+  '/audit-logs': 'Audit Logs',
   '/fiscal-periods': 'Fiscal Periods',
   '/journals': 'Journals',
   '/reports': 'Reports',

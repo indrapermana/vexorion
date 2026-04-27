@@ -7,6 +7,7 @@ import { ProtectedRoute, PublicOnlyRoute } from './components/RouteGuards'
 
 const AppLayout = lazy(() => import('./components/AppLayout'))
 const AccountsPage = lazy(() => import('./pages/AccountsPage'))
+const AuditLogsPage = lazy(() => import('./pages/AuditLogsPage'))
 const PublicAuthLayout = lazy(() => import('./components/PublicAuthLayout'))
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
 const CustomersPage = lazy(() => import('./pages/CustomersPage'))
@@ -47,6 +48,7 @@ function App() {
                 <Route path="/customers" element={<CustomersPage />} />
                 <Route path="/customer-payments" element={<CustomerPaymentsPage />} />
                 <Route path="/accounts" element={<AccountsPage />} />
+                <Route path="/audit-logs" element={<AuditLogsPage />} />
                 <Route path="/fiscal-periods" element={<FiscalPeriodsPage />} />
                 <Route path="/journals" element={<JournalsPage />} />
                 <Route path="/reports" element={<ReportsPage />} />

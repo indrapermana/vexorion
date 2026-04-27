@@ -1049,14 +1049,157 @@ Run this checklist for the fourth Milestone F implementation slice.
 - [x] Frontend dashboard route renders live KPI values from API.
 - [x] Frontend TypeScript compile passes.
 
-## Immediate next coding slice
+## Reporting completion status
 
-The next code implementation slice is Milestone G1 (financial statements) in this order:
+Milestones G1 through G5 are implemented in the current workspace. The reporting surface now covers:
 
-1. P&L and balance sheet response contracts and account-group mapping rules
-2. reporting service endpoints for statement generation by period/as-of date
-3. reports controller integration and authorization coverage for new statements
-4. focused service + web tests for statement math and empty-state behavior
-5. UI statement views with section totals and export-ready table layouts
+- AR aging
+- AP aging
+- trial balance
+- dashboard KPI snapshot
+- profit and loss
+- balance sheet
+- statement CSV export
+- comparative prior-period views
+- line-level statement detail grids
+- account drill-down journal provenance
+- drill-down CSV export
 
-Start with backend statement endpoints and tests first, then add UI statement pages.
+### Milestone G1 execution checklist (financial statements)
+
+Run this checklist for the first Milestone G implementation slice.
+
+#### 1) Statement contracts and service layer
+
+- [x] Add P&L and balance sheet response contracts with statement line details.
+- [x] Add account-type mapping rules for assets, liabilities, equity, revenue, and expenses.
+- [x] Extend reporting service with period-based P&L and as-of-date balance sheet methods.
+
+#### 2) API and authorization
+
+- [x] Add statement endpoints:
+	- `GET /api/reports/profit-and-loss`
+	- `GET /api/reports/balance-sheet`
+- [x] Protect new statement endpoints with existing billing view permission policy.
+
+#### 3) Tests and validation
+
+- [x] Add reporting service tests for statement totals and balancing behavior.
+- [x] Add reporting controller integration tests for statement empty-state envelopes.
+- [x] Add reporting controller authorization tests for statement endpoint access.
+- [x] Validate build and focused reporting test suites.
+
+#### 4) UI integration
+
+- [x] Add frontend statement response types and API client wrappers.
+- [x] Add statement summary cards to the reports page using selected as-of date.
+- [x] Keep statement rendering aligned with existing reporting page layout.
+- [x] Pass frontend TypeScript compile after statement integration.
+
+#### Done criteria for Milestone G1 (financial statements)
+
+- [x] Backend build passes with statement changes.
+- [x] Reporting service and web tests pass for statement endpoints.
+- [x] Reports UI shows P&L and balance sheet summaries from API.
+- [x] Frontend TypeScript compile passes.
+
+1. statement account drill-down endpoints for line-level journal provenance
+2. CSV export endpoints for P&L, balance sheet, and trial balance
+3. filter enhancements for comparative periods (current vs prior period)
+4. focused tests for export payload integrity and comparative math
+5. UI export actions and comparative view toggles in reports page
+
+Start with backend drill-down and export endpoints first, then wire UI export actions.
+
+### Milestone G2 execution checklist (statement detail and exports)
+
+- [x] Add account drill-down response contracts and service method.
+- [x] Add statement export endpoints for P&L, balance sheet, and trial balance in CSV format.
+- [x] Add comparative period support for P&L via prior-period query filters.
+- [x] Add focused service and controller tests for drill-down, comparative behavior, and CSV payload shape.
+- [x] Add UI report export actions and comparative-period toggle on reports page.
+
+#### Done criteria for Milestone G2 (statement detail and exports)
+
+- [x] Backend build passes with drill-down/export/comparative updates.
+- [x] Reporting service tests pass for drill-down and period-isolation math.
+- [x] Reporting controller tests pass for export endpoints and comparative query envelope.
+- [x] Reports UI supports CSV export actions and comparative prior-period view.
+
+### Milestone G3 execution checklist (comparative balance sheet)
+
+- [x] Extend balance sheet response contract with prior-period summary fields.
+- [x] Add prior-as-of-date support to `GET /api/reports/balance-sheet`.
+- [x] Add integration and authorization tests for prior-period balance-sheet queries.
+- [x] Wire frontend balance-sheet API client with optional prior-as-of-date filter.
+- [x] Add comparative balance-sheet variance display in reports UI.
+
+#### Done criteria for Milestone G3 (comparative balance sheet)
+
+- [x] Backend build passes with comparative balance-sheet changes.
+- [x] Reporting controller tests pass including prior-period balance-sheet coverage.
+- [x] Frontend TypeScript compile passes with updated response shape.
+- [x] Reports UI shows prior-period asset comparison and variance.
+
+### Milestone G4 execution checklist (statement detail grids)
+
+- [x] Render line-level statement tables for P&L revenue/expense accounts.
+- [x] Render line-level statement tables for balance-sheet asset/liability/equity accounts.
+- [x] Add comparative variance columns (current, prior, variance) for statement line grids.
+- [x] Render account drill-down grid with journal-level provenance (date, journal number, description, debit, credit).
+- [x] Add reporting integration test coverage for non-empty account drill-down payload.
+
+#### Done criteria for Milestone G4 (statement detail grids)
+
+- [x] Backend build passes with G4 updates.
+- [x] Reporting web tests pass including seeded account drill-down scenario.
+- [x] Frontend TypeScript compile passes with table/grid rendering changes.
+- [x] Reports UI shows detailed statement rows and drill-down journal provenance grid.
+
+### Milestone G5 execution checklist (grid controls and audit scaffold)
+
+- [x] Add filtering controls for statement detail grids.
+- [x] Add sorting controls for statement detail grids.
+- [x] Add drill-down filter and sort controls for journal provenance rows.
+- [x] Add drill-down CSV export endpoint and UI action.
+- [x] Add expanded control-layer permission groups in permission model and role matrix.
+- [x] Add audit-log query contracts, service, controller, tests, and UI scaffold.
+
+#### Done criteria for Milestone G5 (grid controls and audit scaffold)
+
+- [x] Backend build passes with G5 and control-layer scaffold changes.
+- [x] Focused reporting and audit web tests pass.
+- [x] Frontend TypeScript compile passes with report controls and audit UI.
+- [x] Reports UI supports grid filtering/sorting and drill-down CSV export.
+- [x] Audit log browsing route and API scaffold are reachable for accounting users.
+
+## Release-readiness reconciliation (27 Apr 2026)
+
+This section reconciles roadmap status against the actual workspace after Milestone G5.
+
+### Implemented and validated
+
+- [x] Phase 1 inventory control scope is present in backend and UI.
+- [x] Phase 2 partial receipt and shipment execution is implemented and previously validated.
+- [x] Phase 3 invoice and payment flows are implemented across sales and purchasing.
+- [x] Phase 4 finance core, chart of accounts, periods, journals, and posting engine are implemented.
+- [x] Phase 5 finance reporting slice is implemented through AR/AP aging, trial balance, P&L, balance sheet, exports, comparative views, and drill-downs.
+- [x] Numbering and invoice approval slices are implemented.
+- [x] Audit log query/browsing scaffold is implemented.
+- [x] Expanded permission vocabulary for control-layer domains is present in the permission model and role matrix.
+
+### Remaining before "done done"
+
+- [ ] Inventory valuation report endpoint and UI page.
+- [ ] Inventory movement audit report endpoint and UI page.
+- [ ] Low-stock / reorder recommendation report endpoint and UI page.
+- [ ] Approval rules by document type and amount beyond current invoice approval workflow.
+- [ ] Full immutable-posted / reversal-only consistency audit across every aggregate and controller surface.
+- [ ] Manual release smoke pass covering end-to-end ERP flows across inventory, billing, payments, posting, and reporting.
+- [ ] Documentation update summarizing implemented endpoints, permissions, and deferred items.
+
+### Current readiness summary
+
+- Core SME ERP workflow coverage: substantially complete.
+- Reporting and finance visibility: substantially complete for finance statements.
+- Remaining work is concentrated in final control-layer breadth, inventory management reporting breadth, and release hardening.

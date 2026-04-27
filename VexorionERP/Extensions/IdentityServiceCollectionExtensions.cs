@@ -33,6 +33,7 @@ public static class IdentityServiceCollectionExtensions
         services.AddScoped<IUserClaimsPrincipalFactory<User>, AppUserClaimsPrincipalFactory>();
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IAuditLogger, AuditLogger>();
+        services.AddScoped<IAuditLogQueryService, AuditLogQueryService>();
         services.AddScoped<IAuthApplicationService, AuthApplicationService>();
         services.AddScoped<ICompanyCommandService, CompanyCommandService>();
         services.AddScoped<ICompanyQueryService, CompanyQueryService>();
