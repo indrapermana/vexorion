@@ -1,86 +1,51 @@
-import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded'
-import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded'
-import PaidRoundedIcon from '@mui/icons-material/PaidRounded'
-import SecurityRoundedIcon from '@mui/icons-material/SecurityRounded'
-import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded'
-import {
-  Alert,
-  Box,
-  Chip,
-  Grid,
-  Paper,
-  Stack,
-  TextField,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-} from '@mui/material'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Stack } from '@mui/material'
+import { Suspense, lazy, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '../app/AuthContext'
-import { ApiError, getFinanceDashboardSnapshot } from '../lib/api'
-import type { FinanceDashboardSnapshotResponse } from '../types/api'
+import type { CustomerListItemResponse } from '../types/api'
+import { formatCurrency } from './dashboard/formatters'
+import { useApAgingQuery, useArAgingQuery, useCustomersQuery, useFinanceSnapshotQuery, useSalesOrdersQuery } from './dashboard/queries'
+import type { AgingPoint, BalancePoint, CashFlowPoint, CashRowView, QuickStat, RecentOrderView, TopCustomerView } from './dashboard/types'
+import DashboardSectionLoader from './dashboard/components/DashboardSectionLoader'
+
+const DashboardHeaderFilters = lazy(() => import('./dashboard/components/DashboardHeaderFilters'))
+const DashboardKpiCards = lazy(() => import('./dashboard/components/DashboardKpiCards'))
+const DashboardChartsSection = lazy(() => import('./dashboard/components/DashboardChartsSection'))
+const DashboardHealthSection = lazy(() => import('./dashboard/components/DashboardHealthSection'))
+const DashboardQuickStatsSection = lazy(() => import('./dashboard/components/DashboardQuickStatsSection'))
+const DashboardAgingSection = lazy(() => import('./dashboard/components/DashboardAgingSection'))
+const DashboardTopCustomersSection = lazy(() => import('./dashboard/components/DashboardTopCustomersSection'))
+const DashboardRecentOrdersSection = lazy(() => import('./dashboard/components/DashboardRecentOrdersSection'))
+const DashboardCashFlowTable = lazy(() => import('./dashboard/components/DashboardCashFlowTable'))
 
 const periodOptions = [7, 30, 90, 180]
 
-function formatCurrency(value: number) {
-  return value.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 2 })
-}
-
 export default function DashboardPage() {
   const { t } = useTranslation()
-  const { user, isAuthenticated } = useAuth()
   const [asOfDate, setAsOfDate] = useState(new Date().toISOString().slice(0, 10))
   const [periodDays, setPeriodDays] = useState(30)
-  const [snapshot, setSnapshot] = useState<FinanceDashboardSnapshotResponse | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const quickCards = [
-    {
-      title: t('dashboard.quickCards.identityPermissions.title'),
-      description: t('dashboard.quickCards.identityPermissions.description'),
-      icon: <SecurityRoundedIcon fontSize="large" />,
-    },
-    {
-      title: t('dashboard.quickCards.catalogInventory.title'),
-      description: t('dashboard.quickCards.catalogInventory.description'),
-      icon: <StorefrontRoundedIcon fontSize="large" />,
-    },
-    {
-      title: t('dashboard.quickCards.cqrsModules.title'),
-      description: t('dashboard.quickCards.cqrsModules.description'),
-      icon: <InsightsRoundedIcon fontSize="large" />,
-    },
-  ]
 
-  const summaryCards = useMemo(
-    () => [
-      {
-        title: t('dashboard.summary.openReceivables'),
-        value: formatCurrency(snapshot?.receivablesOpen ?? 0),
-        change: t('dashboard.summary.overdueAmount', { amount: formatCurrency(snapshot?.receivablesOverdue ?? 0) }),
-        icon: <PaidRoundedIcon />,
-      },
-      {
-        title: t('dashboard.summary.openPayables'),
-        value: formatCurrency(snapshot?.payablesOpen ?? 0),
-        change: t('dashboard.summary.overdueAmount', { amount: formatCurrency(snapshot?.payablesOverdue ?? 0) }),
-        icon: <Inventory2RoundedIcon />,
-      },
-      {
-        title: t('dashboard.summary.revenuePeriod', { days: periodDays }),
-        value: formatCurrency(snapshot?.revenueInPeriod ?? 0),
-        change: t('dashboard.summary.netCashAmount', { amount: formatCurrency(snapshot?.netCashInPeriod ?? 0) }),
-        icon: <InsightsRoundedIcon />,
-      },
-    ],
-    [snapshot, periodDays, t],
-  )
+  const financeQuery = useFinanceSnapshotQuery(asOfDate, periodDays)
+  const arAgingQuery = useArAgingQuery(asOfDate)
+  const apAgingQuery = useApAgingQuery(asOfDate)
+  const salesOrdersQuery = useSalesOrdersQuery()
+  const customersQuery = useCustomersQuery()
 
-  const cashRows = useMemo(
+  const snapshot = financeQuery.data ?? null
+  const arAging = arAgingQuery.data ?? null
+  const apAging = apAgingQuery.data ?? null
+  const salesOrders = useMemo(() => salesOrdersQuery.data ?? [], [salesOrdersQuery.data])
+  const customers = useMemo(() => customersQuery.data ?? [], [customersQuery.data])
+
+  const errorMessage = useMemo(() => {
+    if (financeQuery.error instanceof Error) return financeQuery.error.message
+    if (arAgingQuery.error instanceof Error) return arAgingQuery.error.message
+    if (apAgingQuery.error instanceof Error) return apAgingQuery.error.message
+    if (salesOrdersQuery.error instanceof Error) return salesOrdersQuery.error.message
+    if (customersQuery.error instanceof Error) return customersQuery.error.message
+    return null
+  }, [financeQuery.error, arAgingQuery.error, apAgingQuery.error, salesOrdersQuery.error, customersQuery.error])
+
+  const cashRows = useMemo<CashRowView[]>(
     () => [
       { id: 'CASH-IN', owner: t('dashboard.cashRows.customerReceipts'), status: t('dashboard.cashRows.inflow'), amount: formatCurrency(snapshot?.cashInInPeriod ?? 0) },
       { id: 'CASH-OUT', owner: t('dashboard.cashRows.vendorPayouts'), status: t('dashboard.cashRows.outflow'), amount: formatCurrency(snapshot?.cashOutInPeriod ?? 0) },
@@ -89,163 +54,241 @@ export default function DashboardPage() {
     [snapshot, periodDays, t],
   )
 
-  const loadSnapshot = useCallback(async () => {
-    if (!isAuthenticated) {
-      setSnapshot(null)
-      return
+  const customersById = useMemo(() => {
+    const map = new Map<string, CustomerListItemResponse>()
+    for (const customer of customers) {
+      map.set(customer.id, customer)
+    }
+    return map
+  }, [customers])
+
+  const getCustomerLabel = useCallback((customerId: string) => {
+    const customer = customersById.get(customerId)
+    if (!customer) return t('dashboard.common.unknownCustomer')
+    return customer.name || customer.customerNumber || t('dashboard.common.unknownCustomer')
+  }, [customersById, t])
+
+  const getSalesOrderStatusLabel = useCallback((status: number) => {
+    if (status === 1) return t('dashboard.recentOrders.status.draft')
+    if (status === 2) return t('dashboard.recentOrders.status.confirmed')
+    if (status === 3) return t('dashboard.recentOrders.status.partiallyProcessed')
+    if (status === 4) return t('dashboard.recentOrders.status.completed')
+    if (status === 5) return t('dashboard.recentOrders.status.cancelled')
+    return t('dashboard.recentOrders.status.unknown', { status })
+  }, [t])
+
+  // Generate mock trend data for charts
+  const cashFlowChartData = useMemo<CashFlowPoint[]>(() => {
+    const days = periodDays
+    const data: CashFlowPoint[] = []
+    const cashIn = snapshot?.cashInInPeriod ?? 0
+    const cashOut = snapshot?.cashOutInPeriod ?? 0
+    const dailyIn = cashIn / days
+    const dailyOut = cashOut / days
+    
+    for (let i = 0; i <= days; i += Math.max(1, Math.floor(days / 7))) {
+      const offsetIn = 0.7 + ((i * 13) % 25) / 100
+      const offsetOut = 0.7 + ((i * 17) % 25) / 100
+      data.push({
+        day: i,
+        inflow: Math.round(dailyIn * Math.max(i, 1) * offsetIn),
+        outflow: Math.round(dailyOut * Math.max(i, 1) * offsetOut),
+      })
+    }
+    return data
+  }, [snapshot, periodDays])
+
+  const receivablesVsPayablesData = useMemo<BalancePoint[]>(() => {
+    return [
+      {
+        name: t('dashboard.summary.receivables'),
+        open: snapshot?.receivablesOpen ?? 0,
+        overdue: snapshot?.receivablesOverdue ?? 0,
+      },
+      {
+        name: t('dashboard.summary.payables'),
+        open: snapshot?.payablesOpen ?? 0,
+        overdue: snapshot?.payablesOverdue ?? 0,
+      },
+    ]
+  }, [snapshot, t])
+
+  const totalReceivables = (snapshot?.receivablesOpen ?? 0) + (snapshot?.receivablesOverdue ?? 0)
+  const totalPayables = (snapshot?.payablesOpen ?? 0) + (snapshot?.payablesOverdue ?? 0)
+  const receivablesHealthPercent = totalReceivables > 0 ? Math.round(((snapshot?.receivablesOpen ?? 0) / totalReceivables) * 100) : 100
+  const payablesHealthPercent = totalPayables > 0 ? Math.round(((snapshot?.payablesOpen ?? 0) / totalPayables) * 100) : 100
+
+  // Aging breakdown data for AR
+  const arAgingData: AgingPoint[] = !arAging?.totals
+    ? []
+    : [
+      { name: 'Current', value: arAging.totals.current },
+      { name: '1-30 Days', value: arAging.totals.due1To30 },
+      { name: '31-60 Days', value: arAging.totals.due31To60 },
+      { name: '61-90 Days', value: arAging.totals.due61To90 },
+      { name: '90+ Days', value: arAging.totals.dueOver90 },
+    ].filter((item) => item.value > 0)
+
+  // Aging breakdown data for AP
+  const apAgingData: AgingPoint[] = !apAging?.totals
+    ? []
+    : [
+      { name: 'Current', value: apAging.totals.current },
+      { name: '1-30 Days', value: apAging.totals.due1To30 },
+      { name: '31-60 Days', value: apAging.totals.due31To60 },
+      { name: '61-90 Days', value: apAging.totals.due61To90 },
+      { name: '90+ Days', value: apAging.totals.dueOver90 },
+    ].filter((item) => item.value > 0)
+
+  // Top customers by sales amount
+  const topCustomers = useMemo<TopCustomerView[]>(() => {
+    const aggregated = new Map<string, { total: number; latestOrderNumber: string }>()
+    for (const order of salesOrders) {
+      const existing = aggregated.get(order.customerId)
+      aggregated.set(order.customerId, {
+        total: (existing?.total ?? 0) + order.totalAmount,
+        latestOrderNumber: order.orderNumber || existing?.latestOrderNumber || '-',
+      })
     }
 
-    setError(null)
-    try {
-      const data = await getFinanceDashboardSnapshot(asOfDate, periodDays)
-      setSnapshot(data)
-    } catch (loadError) {
-      if (loadError instanceof ApiError) setError(loadError.message)
-      else setError(t('dashboard.errors.loadMetrics'))
-    }
-  }, [asOfDate, isAuthenticated, periodDays, t])
+    return [...aggregated.entries()]
+      .map(([customerId, value]) => ({ customerId, ...value }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5)
+      .map((entry, idx) => ({
+        id: `${entry.customerId}-${idx}`,
+        rank: idx + 1,
+        customerLabel: getCustomerLabel(entry.customerId),
+        orderReference: entry.latestOrderNumber,
+        amount: entry.total,
+      }))
+  }, [getCustomerLabel, salesOrders])
 
-  useEffect(() => {
-    void loadSnapshot()
-  }, [loadSnapshot])
+  const recentOrders = useMemo<RecentOrderView[]>(() => {
+    return [...salesOrders]
+      .sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime())
+      .slice(0, 8)
+      .map((order) => ({
+        id: order.id,
+        orderReference: order.orderNumber,
+        customerLabel: getCustomerLabel(order.customerId),
+        orderDateLabel: new Date(order.orderDate).toLocaleDateString(),
+        status: order.status,
+          statusLabel: getSalesOrderStatusLabel(order.status),
+        amount: order.totalAmount,
+      }))
+        }, [getCustomerLabel, getSalesOrderStatusLabel, salesOrders])
+
+  // Quick stats calculations
+  const quickStats = useMemo<QuickStat[]>(() => {
+    const ar = snapshot?.receivablesOpen ?? 0
+    const ap = snapshot?.payablesOpen ?? 0
+    const arOverdue = snapshot?.receivablesOverdue ?? 0
+    const apOverdue = snapshot?.payablesOverdue ?? 0
+
+    // AR Collection Efficiency = Current AR / Total AR
+    const arCollectionRate = totalReceivables > 0 ? Math.round(((snapshot?.receivablesOpen ?? 0) / totalReceivables) * 100) : 0
+    
+    // AP Payment Rate = Current AP / Total AP
+    const apPaymentRate = totalPayables > 0 ? Math.round(((snapshot?.payablesOpen ?? 0) / totalPayables) * 100) : 0
+    
+    // Overdue ratio = Overdue amount / Total
+    const arOverdueRatio = totalReceivables > 0 ? ((arOverdue / totalReceivables) * 100).toFixed(1) : '0.0'
+    const apOverdueRatio = totalPayables > 0 ? ((apOverdue / totalPayables) * 100).toFixed(1) : '0.0'
+    
+    // Working Capital = AR + Inventory - AP (we're using receivables for now)
+    const workingCapital = ar - ap
+
+    return [
+      { label: t('dashboard.quickStats.arCollectionRate'), value: `${arCollectionRate}%`, trend: 'positive' as const },
+      { label: t('dashboard.quickStats.apPaymentRate'), value: `${apPaymentRate}%`, trend: 'positive' as const },
+      { label: t('dashboard.quickStats.arOverduePercent'), value: `${arOverdueRatio}%`, trend: arOverdueRatio === '0.0' ? 'positive' : 'negative' as const },
+      { label: t('dashboard.quickStats.apOverduePercent'), value: `${apOverdueRatio}%`, trend: apOverdueRatio === '0.0' ? 'positive' : 'negative' as const },
+      { label: t('dashboard.quickStats.workingCapital'), value: formatCurrency(workingCapital), trend: workingCapital >= 0 ? 'positive' : 'negative' as const },
+    ]
+  }, [snapshot, t, totalReceivables, totalPayables])
 
   return (
     <Stack spacing={3}>
-      <Grid container spacing={3}>
-        <Grid size={{ xs: 12, xl: 8 }}>
-          <Paper elevation={0} className="hero-panel dashboard-banner">
-            <Stack spacing={2.5}>
-              <Typography variant="h2">{t('dashboard.hero.title')}</Typography>
-              <Typography variant="body1" sx={{ maxWidth: 760 }}>
-                {t('dashboard.hero.description')}
-              </Typography>
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-                <TextField
-                  type="date"
-                  label={t('dashboard.filters.asOfDate')}
-                  value={asOfDate}
-                  onChange={(event) => setAsOfDate(event.target.value)}
-                  slotProps={{ inputLabel: { shrink: true } }}
-                  sx={{ maxWidth: 220 }}
-                />
-                <TextField
-                  select
-                  label={t('dashboard.filters.window')}
-                  value={periodDays}
-                  onChange={(event) => setPeriodDays(Number(event.target.value))}
-                  SelectProps={{ native: true }}
-                  sx={{ maxWidth: 220 }}
-                >
-                  {periodOptions.map((option) => (
-                    <option key={option} value={option}>{t('dashboard.filters.daysOption', { days: option })}</option>
-                  ))}
-                </TextField>
-              </Stack>
-              {isAuthenticated && user ? (
-                <Stack spacing={1}>
-                  <Typography variant="h6">{t('dashboard.user.signedInAs', { name: user.firstName ?? user.userName })}</Typography>
-                  <Typography color="text.secondary">{t('dashboard.user.tenantAndEmail', { tenantId: user.tenantId, email: user.email })}</Typography>
-                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                    {user.permissions.slice(0, 6).map((permission) => (
-                      <Chip key={permission} label={permission} size="small" />
-                    ))}
-                  </Box>
-                </Stack>
-              ) : (
-                <Chip color="secondary" label={t('dashboard.user.signInHint')} sx={{ alignSelf: 'flex-start' }} />
-              )}
-              {error ? <Alert severity="error">{error}</Alert> : null}
-            </Stack>
-          </Paper>
-        </Grid>
+      <Suspense fallback={<DashboardSectionLoader minHeight={180} />}>
+        <DashboardHeaderFilters
+          t={t}
+          asOfDate={asOfDate}
+          periodDays={periodDays}
+          periodOptions={periodOptions}
+          error={errorMessage ?? (financeQuery.isError ? t('dashboard.errors.loadMetrics') : null)}
+          onAsOfDateChange={setAsOfDate}
+          onPeriodChange={setPeriodDays}
+        />
+      </Suspense>
 
-        <Grid size={{ xs: 12, xl: 4 }}>
-          <Paper elevation={0} className="panel-card">
-            <Typography variant="h6" sx={{ mb: 2 }}>{t('dashboard.systemFocus.title')}</Typography>
-            <Stack spacing={1.5}>
-              <Typography color="text.secondary">{t('dashboard.systemFocus.line1')}</Typography>
-              <Typography color="text.secondary">{t('dashboard.systemFocus.line2')}</Typography>
-            </Stack>
-          </Paper>
-        </Grid>
+      <Suspense fallback={<DashboardSectionLoader minHeight={220} />}>
+        {financeQuery.isPending ? <DashboardSectionLoader minHeight={220} /> : <DashboardKpiCards t={t} snapshot={snapshot} periodDays={periodDays} />}
+      </Suspense>
 
-        {summaryCards.map((card) => (
-          <Grid key={card.title} size={{ xs: 12, md: 4 }}>
-            <Paper elevation={0} className="stat-card dashboard-stat-card">
-              <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography color="text.secondary" sx={{ mb: 0.5 }}>{card.title}</Typography>
-                  <Typography variant="h4" sx={{ mb: 0.5 }}>{card.value}</Typography>
-                  <Typography variant="body2" color="text.secondary">{card.change}</Typography>
-                </Box>
-                <Box className="metric-icon">{card.icon}</Box>
-              </Stack>
-            </Paper>
-          </Grid>
-        ))}
+      <Suspense fallback={<DashboardSectionLoader minHeight={320} />}>
+        {financeQuery.isPending ? (
+          <DashboardSectionLoader minHeight={320} />
+        ) : (
+          <DashboardChartsSection
+            t={t}
+            cashFlowChartData={cashFlowChartData}
+            receivablesVsPayablesData={receivablesVsPayablesData}
+          />
+        )}
+      </Suspense>
 
-        <Grid size={{ xs: 12, xl: 8 }}>
-          <Paper elevation={0} className="panel-card">
-            <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">{t('dashboard.cashSnapshot.title')}</Typography>
-              <Chip label={t('dashboard.cashSnapshot.window', { days: periodDays })} size="small" />
-            </Stack>
-            <TableContainer>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>{t('dashboard.table.reference')}</TableCell>
-                    <TableCell>{t('dashboard.table.source')}</TableCell>
-                    <TableCell>{t('dashboard.table.direction')}</TableCell>
-                    <TableCell align="right">{t('dashboard.table.amount')}</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {cashRows.map((row) => (
-                    <TableRow key={row.id} hover>
-                      <TableCell>{row.id}</TableCell>
-                      <TableCell>{row.owner}</TableCell>
-                      <TableCell>
-                        <Chip label={row.status} size="small" color={row.status === t('dashboard.cashRows.positive') || row.status === t('dashboard.cashRows.inflow') ? 'primary' : 'default'} />
-                      </TableCell>
-                      <TableCell align="right">{row.amount}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Paper>
-        </Grid>
+      <Suspense fallback={<DashboardSectionLoader minHeight={220} />}>
+        {financeQuery.isPending ? (
+          <DashboardSectionLoader minHeight={220} />
+        ) : (
+          <DashboardHealthSection
+            t={t}
+            receivablesHealthPercent={receivablesHealthPercent}
+            payablesHealthPercent={payablesHealthPercent}
+            totalReceivables={totalReceivables}
+            totalPayables={totalPayables}
+          />
+        )}
+      </Suspense>
 
-        <Grid size={{ xs: 12, xl: 4 }}>
-          <Stack spacing={3}>
-            <Paper elevation={0} className="panel-card">
-              <Typography variant="h6" sx={{ mb: 2 }}>{t('dashboard.financeSnapshot.title')}</Typography>
-              <Stack spacing={1.5}>
-                <Typography variant="body2" color="text.secondary">{t('dashboard.financeSnapshot.receivablesOverdue')}</Typography>
-                <Typography variant="h5">{formatCurrency(snapshot?.receivablesOverdue ?? 0)}</Typography>
-                <Typography variant="body2" color="text.secondary">{t('dashboard.financeSnapshot.payablesOverdue')}</Typography>
-                <Typography variant="h5">{formatCurrency(snapshot?.payablesOverdue ?? 0)}</Typography>
-              </Stack>
-            </Paper>
+      <Suspense fallback={<DashboardSectionLoader minHeight={140} />}>
+        {financeQuery.isPending ? <DashboardSectionLoader minHeight={140} /> : <DashboardQuickStatsSection t={t} quickStats={quickStats} />}
+      </Suspense>
 
-            <Paper elevation={0} className="panel-card">
-              <Typography variant="h6" sx={{ mb: 2 }}>{t('dashboard.pillars.title')}</Typography>
-              <Stack spacing={2}>
-                {quickCards.map((card) => (
-                  <Box key={card.title} className="mini-pillar-row">
-                    <Box className="pillar-icon mini-pillar-icon">{card.icon}</Box>
-                    <Box>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>{card.title}</Typography>
-                      <Typography variant="body2" color="text.secondary">{card.description}</Typography>
-                    </Box>
-                  </Box>
-                ))}
-              </Stack>
-            </Paper>
-          </Stack>
-        </Grid>
-      </Grid>
+      <Suspense fallback={<DashboardSectionLoader minHeight={340} />}>
+        {arAgingQuery.isPending || apAgingQuery.isPending ? (
+          <DashboardSectionLoader minHeight={340} />
+        ) : (
+          <DashboardAgingSection
+            t={t}
+            arAgingData={arAgingData}
+            apAgingData={apAgingData}
+            arTotals={arAging?.totals ?? null}
+            apTotals={apAging?.totals ?? null}
+          />
+        )}
+      </Suspense>
+
+      <Suspense fallback={<DashboardSectionLoader minHeight={260} />}>
+        {salesOrdersQuery.isPending || customersQuery.isPending ? (
+          <DashboardSectionLoader minHeight={260} />
+        ) : (
+          <DashboardTopCustomersSection t={t} topCustomers={topCustomers} />
+        )}
+      </Suspense>
+
+      <Suspense fallback={<DashboardSectionLoader minHeight={260} />}>
+        {salesOrdersQuery.isPending || customersQuery.isPending ? (
+          <DashboardSectionLoader minHeight={260} />
+        ) : (
+          <DashboardRecentOrdersSection t={t} recentOrders={recentOrders} />
+        )}
+      </Suspense>
+
+      <Suspense fallback={<DashboardSectionLoader minHeight={240} />}>
+        {financeQuery.isPending ? <DashboardSectionLoader minHeight={240} /> : <DashboardCashFlowTable t={t} periodDays={periodDays} cashRows={cashRows} />}
+      </Suspense>
     </Stack>
   )
 }

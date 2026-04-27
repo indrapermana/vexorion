@@ -1,6 +1,7 @@
 import { StrictMode, useEffect, useMemo, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { CssBaseline, ThemeProvider } from '@mui/material'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import './index.css'
 import './i18n'
@@ -9,6 +10,7 @@ import { ThemeModeProvider } from './app/ThemeModeContext'
 import { createAppTheme, type ThemeMode } from './theme.ts'
 
 const THEME_MODE_STORAGE_KEY = 'vexorion.themeMode'
+const queryClient = new QueryClient()
 
 function normalizeThemeMode(value: string | null): ThemeMode {
   return value === 'dark' ? 'dark' : 'light'
@@ -26,12 +28,14 @@ function Root() {
   }, [themeMode])
 
   return (
-    <ThemeModeProvider value={{ mode: themeMode, setMode: setThemeMode }}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <App />
-      </ThemeProvider>
-    </ThemeModeProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeModeProvider value={{ mode: themeMode, setMode: setThemeMode }}>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <App />
+        </ThemeProvider>
+      </ThemeModeProvider>
+    </QueryClientProvider>
   )
 }
 
