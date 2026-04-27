@@ -12,6 +12,9 @@ const enUS = {
     publicAccessOnly: 'Public access only',
     workspaceTitle: 'Workspace',
     languageSelectorAria: 'Language selector',
+    themeSelectorAria: 'Theme selector',
+    themeLight: 'Light',
+    themeDark: 'Dark',
     publicWorkspaceAccess: 'Workspace access',
   },
   common: {

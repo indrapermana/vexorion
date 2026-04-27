@@ -12,6 +12,9 @@ const idID = {
     publicAccessOnly: 'Akses publik saja',
     workspaceTitle: 'Ruang kerja',
     languageSelectorAria: 'Pemilih bahasa',
+    themeSelectorAria: 'Pemilih tema',
+    themeLight: 'Terang',
+    themeDark: 'Gelap',
     publicWorkspaceAccess: 'Akses workspace',
   },
   common: {

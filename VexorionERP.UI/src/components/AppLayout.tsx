@@ -1,7 +1,9 @@
 import AutoGraphRoundedIcon from '@mui/icons-material/AutoGraphRounded'
+import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded'
 import Groups2RoundedIcon from '@mui/icons-material/Groups2Rounded'
 import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded'
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded'
+import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded'
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded'
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded'
 import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded'
@@ -32,6 +34,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../app/AuthContext'
+import { useThemeMode } from '../app/ThemeModeContext'
 import {
   type TranslationLanguage,
   LanguageOptions,
@@ -130,6 +133,7 @@ const routeTitleKeys: Record<string, string> = {
 export default function AppLayout() {
   const { t, i18n } = useTranslation()
   const { user, isAuthenticated, logout } = useAuth()
+  const { mode: themeMode, setMode: setThemeMode } = useThemeMode()
   const location = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [hiddenMenuLinks, setHiddenMenuLinks] = useState<string[]>(() => getHiddenMenuLinks())
@@ -138,6 +142,14 @@ export default function AppLayout() {
 
   const handleLanguageChange = (nextLanguage: TranslationLanguage) => {
     void i18n.changeLanguage(nextLanguage)
+  }
+
+  const handleThemeModeChange = (nextMode: 'light' | 'dark') => {
+    setThemeMode(nextMode)
+  }
+
+  const toggleThemeMode = () => {
+    setThemeMode(themeMode === 'light' ? 'dark' : 'light')
   }
 
   useEffect(() => {
@@ -293,7 +305,35 @@ export default function AppLayout() {
 
       <Box className="dashboard-main" sx={{ ml: { lg: `${drawerWidth}px` } }}>
         <Toolbar className="dashboard-topbar" sx={{ position: 'relative' }}>
-          <Box sx={{ position: 'absolute', top: 8, right: 16 }}>
+          <Stack direction="row" spacing={1} sx={{ position: 'absolute', top: 8, right: 16 }}>
+            <Select
+              size="small"
+              value={themeMode}
+              onChange={(event) => handleThemeModeChange(event.target.value as 'light' | 'dark')}
+              aria-label={t('app.themeSelectorAria')}
+              sx={{ minWidth: 120, display: { xs: 'none', sm: 'inline-flex' } }}
+            >
+              <MenuItem value="light">
+                <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                  <LightModeRoundedIcon fontSize="small" />
+                  <span>{t('app.themeLight')}</span>
+                </Stack>
+              </MenuItem>
+              <MenuItem value="dark">
+                <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                  <DarkModeRoundedIcon fontSize="small" />
+                  <span>{t('app.themeDark')}</span>
+                </Stack>
+              </MenuItem>
+            </Select>
+            <IconButton
+              size="small"
+              onClick={toggleThemeMode}
+              aria-label={themeMode === 'light' ? `${t('app.themeSelectorAria')}: ${t('app.themeDark')}` : `${t('app.themeSelectorAria')}: ${t('app.themeLight')}`}
+              sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
+            >
+              {themeMode === 'light' ? <DarkModeRoundedIcon fontSize="small" /> : <LightModeRoundedIcon fontSize="small" />}
+            </IconButton>
             <Select
               size="small"
               value={currentLanguage}
@@ -307,7 +347,7 @@ export default function AppLayout() {
                 </MenuItem>
               ))}
             </Select>
-          </Box>
+          </Stack>
           <Stack direction="row" spacing={2} sx={{ alignItems: 'center', width: '100%' }}>
             <IconButton sx={{ display: { lg: 'none' } }} onClick={() => setMobileOpen(true)}>
               <MenuRoundedIcon />

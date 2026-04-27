@@ -12,6 +12,9 @@ const esES = {
     publicAccessOnly: 'Solo acceso público',
     workspaceTitle: 'Espacio de trabajo',
     languageSelectorAria: 'Selector de idioma',
+    themeSelectorAria: 'Selector de tema',
+    themeLight: 'Claro',
+    themeDark: 'Oscuro',
     publicWorkspaceAccess: 'Acceso al espacio de trabajo',
   },
   common: {
