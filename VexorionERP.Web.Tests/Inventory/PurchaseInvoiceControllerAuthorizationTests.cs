@@ -1,11 +1,11 @@
 using System.Net;
 using System.Net.Http.Json;
-using VexorionERP.Contracts.Purchasing.Invoices;
-using VexorionERP.Models.Identity;
-using VexorionERP.Web.Tests.Support;
+using VexorionERP.Contracts;
+using VexorionERP.Models;
+using VexorionERP.Web.Tests;
 using Xunit;
 
-namespace VexorionERP.Web.Tests.Inventory;
+namespace VexorionERP.Web.Tests;
 
 public class PurchaseInvoiceControllerAuthorizationTests : IClassFixture<TestWebApplicationFactory>
 {

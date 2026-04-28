@@ -1,7 +1,7 @@
-using VexorionERP.Models.Enums;
+using VexorionERP.Models;
 using System.ComponentModel.DataAnnotations;
 
-namespace VexorionERP.Contracts.Sales.Invoices;
+namespace VexorionERP.Contracts;
 
 public class CreateSalesInvoiceRequest
 {

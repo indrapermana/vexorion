@@ -1,11 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using VexorionERP.Contracts.Products;
-using VexorionERP.Models.Identity;
+using VexorionERP.Contracts;
+using VexorionERP.Models;
 using VexorionERP.Services;
-using VexorionERP.Services.Results;
 
-namespace VexorionERP.Controllers;
+namespace VexorionERP;
 
 [ApiController]
 [Route("api/products")]

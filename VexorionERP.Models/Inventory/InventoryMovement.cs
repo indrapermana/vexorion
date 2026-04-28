@@ -1,8 +1,6 @@
-using VexorionERP.Models.Common;
-using VexorionERP.Models.Catalog;
-using VexorionERP.Models.Enums;
+using VexorionERP.Models;
 
-namespace VexorionERP.Models.Inventory;
+namespace VexorionERP.Models;
 
 public class InventoryMovement : TenantEntityBase
 {

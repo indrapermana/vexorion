@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using VexorionERP.Models.Inventory;
+using VexorionERP.Models;
 
-namespace VexorionERP.Database.Configurations.Inventory;
+namespace VexorionERP.Database;
 
 public class InventoryMovementConfiguration : TenantEntityConfiguration<InventoryMovement>
 {

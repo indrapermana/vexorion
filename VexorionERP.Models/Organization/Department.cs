@@ -1,6 +1,6 @@
-using VexorionERP.Models.Common;
+using VexorionERP.Models;
 
-namespace VexorionERP.Models.Organization;
+namespace VexorionERP.Models;
 
 public class Department : TenantEntityBase
 {

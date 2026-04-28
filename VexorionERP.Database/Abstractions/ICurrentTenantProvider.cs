@@ -1,4 +1,4 @@
-namespace VexorionERP.Database.Abstractions;
+namespace VexorionERP.Database;
 
 public interface ICurrentTenantProvider
 {

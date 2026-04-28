@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace VexorionERP.Contracts.Tenancy;
+namespace VexorionERP.Contracts;
 
 public class OnboardTenantRequest
 {

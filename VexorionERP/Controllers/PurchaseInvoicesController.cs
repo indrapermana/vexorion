@@ -1,12 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using VexorionERP.Contracts.Finance.Approvals;
-using VexorionERP.Contracts.Purchasing.Invoices;
-using VexorionERP.Models.Identity;
+using VexorionERP.Contracts;
+using VexorionERP.Models;
 using VexorionERP.Services;
 
-namespace VexorionERP.Controllers;
+namespace VexorionERP;
 
 [ApiController]
 [Route("api/purchase-invoices")]

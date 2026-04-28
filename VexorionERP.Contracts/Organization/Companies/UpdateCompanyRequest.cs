@@ -1,4 +1,4 @@
-namespace VexorionERP.Contracts.Organization.Companies;
+namespace VexorionERP.Contracts;
 
 public class UpdateCompanyRequest : CreateCompanyRequest
 {

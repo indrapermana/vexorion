@@ -1,8 +1,5 @@
-using VexorionERP.Models.Enums;
-using VexorionERP.Models.Inventory;
-using VexorionERP.Models.Purchasing;
-using VexorionERP.Models.Sales;
-using VexorionERP.Services.Results;
+using VexorionERP.Models;
+using VexorionERP.Services;
 
 namespace VexorionERP.Services;
 

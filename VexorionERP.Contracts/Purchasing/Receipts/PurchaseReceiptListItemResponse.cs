@@ -1,6 +1,6 @@
-using VexorionERP.Models.Enums;
+using VexorionERP.Models;
 
-namespace VexorionERP.Contracts.Purchasing.Receipts;
+namespace VexorionERP.Contracts;
 
 public class PurchaseReceiptListItemResponse
 {

@@ -1,6 +1,6 @@
 using System.Security.Claims;
-using VexorionERP.Contracts.Auth;
-using VexorionERP.Services.Results;
+using VexorionERP.Contracts;
+using VexorionERP.Services;
 
 namespace VexorionERP.Services;
 

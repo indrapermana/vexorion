@@ -1,10 +1,8 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using VexorionERP.Database;
-using VexorionERP.Database.Abstractions;
-using VexorionERP.Models.Enums;
-using VexorionERP.Models.Finance;
-using VexorionERP.Services.Results;
+using VexorionERP.Models;
+using VexorionERP.Services;
 
 namespace VexorionERP.Services;
 
@@ -37,7 +35,7 @@ public class PostingService(
         if (invoice.Status is InvoiceStatus.Draft or InvoiceStatus.Cancelled || invoice.ReversedAtUtc.HasValue)
             return ServiceResult<JournalEntry>.Failure(StatusCodes.Status400BadRequest, "Sales invoice is not eligible for posting.");
 
-        if (await HasDuplicatePostingAsync(tenantId, nameof(Models.Sales.SalesInvoice), salesInvoiceId, cancellationToken))
+        if (await HasDuplicatePostingAsync(tenantId, nameof(SalesInvoice), salesInvoiceId, cancellationToken))
             return ServiceResult<JournalEntry>.Failure(StatusCodes.Status409Conflict, "Sales invoice has already been posted.");
 
         var fiscalPeriod = await GetOpenFiscalPeriodAsync(tenantId, postingDate, cancellationToken);
@@ -78,7 +76,7 @@ public class PostingService(
         return await CreateAndPersistJournalEntryAsync(
             tenantId,
             fiscalPeriod.Id,
-            nameof(Models.Sales.SalesInvoice),
+            nameof(SalesInvoice),
             invoice.Id,
             postingDate,
             $"Post sales invoice {invoice.InvoiceNumber}",
@@ -108,7 +106,7 @@ public class PostingService(
         if (invoice.Status is InvoiceStatus.Draft or InvoiceStatus.Cancelled || invoice.ReversedAtUtc.HasValue)
             return ServiceResult<JournalEntry>.Failure(StatusCodes.Status400BadRequest, "Purchase invoice is not eligible for posting.");
 
-        if (await HasDuplicatePostingAsync(tenantId, nameof(Models.Purchasing.PurchaseInvoice), purchaseInvoiceId, cancellationToken))
+        if (await HasDuplicatePostingAsync(tenantId, nameof(PurchaseInvoice), purchaseInvoiceId, cancellationToken))
             return ServiceResult<JournalEntry>.Failure(StatusCodes.Status409Conflict, "Purchase invoice has already been posted.");
 
         var fiscalPeriod = await GetOpenFiscalPeriodAsync(tenantId, postingDate, cancellationToken);
@@ -149,7 +147,7 @@ public class PostingService(
         return await CreateAndPersistJournalEntryAsync(
             tenantId,
             fiscalPeriod.Id,
-            nameof(Models.Purchasing.PurchaseInvoice),
+            nameof(PurchaseInvoice),
             invoice.Id,
             postingDate,
             $"Post purchase invoice {invoice.InvoiceNumber}",
@@ -178,7 +176,7 @@ public class PostingService(
         if (payment.Amount <= 0m)
             return ServiceResult<JournalEntry>.Failure(StatusCodes.Status400BadRequest, "Customer payment amount must be greater than zero.");
 
-        if (await HasDuplicatePostingAsync(tenantId, nameof(Models.Sales.CustomerPayment), customerPaymentId, cancellationToken))
+        if (await HasDuplicatePostingAsync(tenantId, nameof(CustomerPayment), customerPaymentId, cancellationToken))
             return ServiceResult<JournalEntry>.Failure(StatusCodes.Status409Conflict, "Customer payment has already been posted.");
 
         var fiscalPeriod = await GetOpenFiscalPeriodAsync(tenantId, postingDate, cancellationToken);
@@ -202,7 +200,7 @@ public class PostingService(
         return await CreateAndPersistJournalEntryAsync(
             tenantId,
             fiscalPeriod.Id,
-            nameof(Models.Sales.CustomerPayment),
+            nameof(CustomerPayment),
             payment.Id,
             postingDate,
             $"Post customer payment {payment.Id}",
@@ -231,7 +229,7 @@ public class PostingService(
         if (payment.Amount <= 0m)
             return ServiceResult<JournalEntry>.Failure(StatusCodes.Status400BadRequest, "Vendor payment amount must be greater than zero.");
 
-        if (await HasDuplicatePostingAsync(tenantId, nameof(Models.Purchasing.VendorPayment), vendorPaymentId, cancellationToken))
+        if (await HasDuplicatePostingAsync(tenantId, nameof(VendorPayment), vendorPaymentId, cancellationToken))
             return ServiceResult<JournalEntry>.Failure(StatusCodes.Status409Conflict, "Vendor payment has already been posted.");
 
         var fiscalPeriod = await GetOpenFiscalPeriodAsync(tenantId, postingDate, cancellationToken);
@@ -255,7 +253,7 @@ public class PostingService(
         return await CreateAndPersistJournalEntryAsync(
             tenantId,
             fiscalPeriod.Id,
-            nameof(Models.Purchasing.VendorPayment),
+            nameof(VendorPayment),
             payment.Id,
             postingDate,
             $"Post vendor payment {payment.Id}",

@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
-using VexorionERP.Models.Enums;
+using VexorionERP.Models;
 
-namespace VexorionERP.Contracts.Inventory.Adjustments;
+namespace VexorionERP.Contracts;
 
 public class UpdateInventoryAdjustmentRequest
 {

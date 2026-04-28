@@ -1,9 +1,6 @@
-using VexorionERP.Models.Common;
-using VexorionERP.Models.Enums;
-using VexorionERP.Models.Finance;
-using VexorionERP.Models.Partners;
+using VexorionERP.Models;
 
-namespace VexorionERP.Models.Purchasing;
+namespace VexorionERP.Models;
 
 public class PurchaseInvoice : TenantEntityBase
 {

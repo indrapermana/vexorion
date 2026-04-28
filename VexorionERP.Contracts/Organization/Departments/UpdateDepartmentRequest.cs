@@ -1,4 +1,4 @@
-namespace VexorionERP.Contracts.Organization.Departments;
+namespace VexorionERP.Contracts;
 
 public class UpdateDepartmentRequest : CreateDepartmentRequest
 {

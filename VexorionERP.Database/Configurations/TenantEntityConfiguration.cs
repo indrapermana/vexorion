@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using VexorionERP.Models.Common;
+using VexorionERP.Models;
 
-namespace VexorionERP.Database.Configurations;
+namespace VexorionERP.Database;
 
 public abstract class TenantEntityConfiguration<TEntity> : BaseConfiguration<TEntity>
     where TEntity : TenantEntityBase

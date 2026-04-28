@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
-using VexorionERP.Database.Abstractions;
-using VexorionERP.Models.Identity;
+using VexorionERP.Database;
+using VexorionERP.Models;
 
-namespace VexorionERP.Tenancy;
+namespace VexorionERP;
 
 public class HttpContextCurrentTenantProvider(IHttpContextAccessor httpContextAccessor) : ICurrentTenantProvider
 {

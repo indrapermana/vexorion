@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace VexorionERP.Contracts.Sales.Payments;
+namespace VexorionERP.Contracts;
 
 public class CreateCustomerPaymentRequest
 {

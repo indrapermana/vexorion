@@ -1,6 +1,6 @@
-using VexorionERP.Models.Identity;
+using VexorionERP.Models;
 
-namespace VexorionERP.Extensions;
+namespace VexorionERP;
 
 public static class AuthorizationServiceCollectionExtensions
 {

@@ -1,13 +1,9 @@
-using VexorionERP.Contracts.Billing.Lines;
-using VexorionERP.Models.Billing;
-using VexorionERP.Models.Catalog;
-using VexorionERP.Models.Enums;
-using VexorionERP.Models.Partners;
+using VexorionERP.Contracts;
+using VexorionERP.Models;
 using VexorionERP.Services;
-using VexorionERP.Services.Tests.Support;
 using Xunit;
 
-namespace VexorionERP.Services.Tests.Aggregates;
+namespace VexorionERP.Services;
 
 public class InvoiceLineCommandServiceTests
 {

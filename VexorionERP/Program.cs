@@ -1,4 +1,4 @@
-using VexorionERP.Extensions;
+using VexorionERP;
 
 var builder = WebApplication.CreateBuilder(args);
 

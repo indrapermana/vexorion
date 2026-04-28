@@ -2,14 +2,12 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using System.Security.Claims;
-using VexorionERP.Configuration;
+using VexorionERP;
 using VexorionERP.Database;
-using VexorionERP.Models.Identity;
-using VexorionERP.Models.Organization;
-using VexorionERP.Models.Tenancy;
+using VexorionERP.Models;
 using VexorionERP.Services;
 
-namespace VexorionERP.Extensions;
+namespace VexorionERP;
 
 public static class ApplicationInitializationExtensions
 {

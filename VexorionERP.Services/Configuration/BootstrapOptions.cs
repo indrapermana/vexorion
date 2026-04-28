@@ -1,4 +1,4 @@
-namespace VexorionERP.Configuration;
+namespace VexorionERP;
 
 public class BootstrapOptions
 {

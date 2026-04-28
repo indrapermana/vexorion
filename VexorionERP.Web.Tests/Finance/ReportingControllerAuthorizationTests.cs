@@ -1,9 +1,9 @@
 using System.Net;
-using VexorionERP.Models.Identity;
-using VexorionERP.Web.Tests.Support;
+using VexorionERP.Models;
+using VexorionERP.Web.Tests;
 using Xunit;
 
-namespace VexorionERP.Web.Tests.Finance;
+namespace VexorionERP.Web.Tests;
 
 public class ReportingControllerAuthorizationTests : IClassFixture<TestWebApplicationFactory>
 {

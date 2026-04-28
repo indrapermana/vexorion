@@ -1,9 +1,6 @@
-using VexorionERP.Models.Common;
-using VexorionERP.Models.Enums;
-using VexorionERP.Models.Inventory;
-using VexorionERP.Models.Partners;
+using VexorionERP.Models;
 
-namespace VexorionERP.Models.Sales;
+namespace VexorionERP.Models;
 
 public class SalesOrder : TenantEntityBase
 {

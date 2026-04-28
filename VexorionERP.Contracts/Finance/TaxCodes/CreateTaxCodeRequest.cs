@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace VexorionERP.Contracts.Finance.TaxCodes;
+namespace VexorionERP.Contracts;
 
 public class CreateTaxCodeRequest
 {

@@ -1,8 +1,6 @@
-using VexorionERP.Models.Common;
-using VexorionERP.Models.Purchasing;
-using VexorionERP.Models.Sales;
+using VexorionERP.Models;
 
-namespace VexorionERP.Models.Inventory;
+namespace VexorionERP.Models;
 
 public class Warehouse : TenantEntityBase
 {

@@ -6,10 +6,10 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using VexorionERP.Configuration;
-using VexorionERP.Contracts.Auth;
+using VexorionERP;
+using VexorionERP.Contracts;
 using VexorionERP.Database;
-using VexorionERP.Models.Identity;
+using VexorionERP.Models;
 
 namespace VexorionERP.Services;
 

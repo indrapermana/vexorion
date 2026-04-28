@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using VexorionERP.Database;
 
-namespace VexorionERP.Services.Tests.Support;
+namespace VexorionERP.Services;
 
 internal static class TestDbContextFactory
 {

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace VexorionERP.Contracts.Billing.Lines;
+namespace VexorionERP.Contracts;
 
 public class CreateInvoiceLineRequest
 {

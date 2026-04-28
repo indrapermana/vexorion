@@ -1,17 +1,14 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using VexorionERP.Configuration;
+using VexorionERP;
 using VexorionERP.Database;
-using VexorionERP.Database.Abstractions;
-using VexorionERP.Identity;
-using VexorionERP.Models.Identity;
+using VexorionERP.Models;
 using VexorionERP.Services;
-using VexorionERP.Tenancy;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
-namespace VexorionERP.Extensions;
+namespace VexorionERP;
 
 public static class IdentityServiceCollectionExtensions
 {

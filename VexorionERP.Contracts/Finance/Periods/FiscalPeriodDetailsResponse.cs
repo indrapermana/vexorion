@@ -1,4 +1,4 @@
-namespace VexorionERP.Contracts.Finance.Periods;
+namespace VexorionERP.Contracts;
 
 public class FiscalPeriodDetailsResponse
 {

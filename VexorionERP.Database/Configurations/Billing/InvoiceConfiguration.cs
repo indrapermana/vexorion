@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using VexorionERP.Models.Billing;
+using VexorionERP.Models;
 
-namespace VexorionERP.Database.Configurations.Billing;
+namespace VexorionERP.Database;
 
 public class InvoiceConfiguration : TenantEntityConfiguration<Invoice>
 {

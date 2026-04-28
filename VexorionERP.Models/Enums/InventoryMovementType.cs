@@ -1,4 +1,4 @@
-namespace VexorionERP.Models.Enums;
+namespace VexorionERP.Models;
 
 public enum InventoryMovementType
 {

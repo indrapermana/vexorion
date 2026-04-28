@@ -1,12 +1,12 @@
 using System.Net;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc;
-using VexorionERP.Contracts.Inventory.Transfers;
-using VexorionERP.Models.Identity;
-using VexorionERP.Web.Tests.Support;
+using VexorionERP.Contracts;
+using VexorionERP.Models;
+using VexorionERP.Web.Tests;
 using Xunit;
 
-namespace VexorionERP.Web.Tests.Inventory;
+namespace VexorionERP.Web.Tests;
 
 public class StockTransferControllerAuthorizationTests : IClassFixture<TestWebApplicationFactory>
 {

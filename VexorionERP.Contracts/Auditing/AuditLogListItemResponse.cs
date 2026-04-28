@@ -1,4 +1,4 @@
-namespace VexorionERP.Contracts.Auditing;
+namespace VexorionERP.Contracts;
 
 public class AuditLogListItemResponse
 {

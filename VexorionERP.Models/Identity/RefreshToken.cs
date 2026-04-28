@@ -1,6 +1,6 @@
-using VexorionERP.Models.Common;
+using VexorionERP.Models;
 
-namespace VexorionERP.Models.Identity;
+namespace VexorionERP.Models;
 
 public class RefreshToken : TenantEntityBase
 {

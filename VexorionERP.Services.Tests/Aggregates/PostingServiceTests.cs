@@ -1,14 +1,10 @@
 using Microsoft.EntityFrameworkCore;
-using VexorionERP.Models.Enums;
-using VexorionERP.Models.Finance;
-using VexorionERP.Models.Partners;
-using VexorionERP.Models.Purchasing;
-using VexorionERP.Models.Sales;
+using VexorionERP.Database;
+using VexorionERP.Models;
 using VexorionERP.Services;
-using VexorionERP.Services.Tests.Support;
 using Xunit;
 
-namespace VexorionERP.Services.Tests.Aggregates;
+namespace VexorionERP.Services;
 
 public class PostingServiceTests
 {
@@ -356,7 +352,7 @@ public class PostingServiceTests
     }
 
     private static void SeedFiscalPeriod(
-        VexorionERP.Database.AppDbContext dbContext,
+        AppDbContext dbContext,
         Guid periodId,
         Guid tenantId,
         DateOnly startDate,
@@ -375,7 +371,7 @@ public class PostingServiceTests
     }
 
     private static void SeedAccount(
-        VexorionERP.Database.AppDbContext dbContext,
+        AppDbContext dbContext,
         Guid accountId,
         Guid tenantId,
         string code,

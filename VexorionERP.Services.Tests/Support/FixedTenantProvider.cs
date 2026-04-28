@@ -1,6 +1,6 @@
-using VexorionERP.Database.Abstractions;
+using VexorionERP.Database;
 
-namespace VexorionERP.Services.Tests.Support;
+namespace VexorionERP.Services;
 
 internal sealed class FixedTenantProvider(Guid tenantId) : ICurrentTenantProvider
 {

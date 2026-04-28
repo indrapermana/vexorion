@@ -1,11 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using VexorionERP.Contracts.Finance.Posting;
-using VexorionERP.Contracts.Finance.Journals;
-using VexorionERP.Models.Identity;
+using VexorionERP.Contracts;
+using VexorionERP.Models;
 using VexorionERP.Services;
 
-namespace VexorionERP.Controllers;
+namespace VexorionERP;
 
 [ApiController]
 [Route("api/posting")]
@@ -94,7 +93,7 @@ public class PostingController(
         return Ok(ToResponse(result.Value!));
     }
 
-    private static JournalEntryDetailsResponse ToResponse(VexorionERP.Models.Finance.JournalEntry journalEntry) => new()
+    private static JournalEntryDetailsResponse ToResponse(JournalEntry journalEntry) => new()
     {
         Id = journalEntry.Id,
         JournalNumber = journalEntry.JournalNumber,
@@ -123,7 +122,7 @@ public class PostingController(
             .ToList(),
     };
 
-    private ActionResult<JournalEntryDetailsResponse> ToPostingActionResult(VexorionERP.Services.Results.ServiceResult<VexorionERP.Models.Finance.JournalEntry> result)
+    private ActionResult<JournalEntryDetailsResponse> ToPostingActionResult(ServiceResult<JournalEntry> result)
     {
         if (result.Validation is not null)
             return BadRequest(result.Validation);

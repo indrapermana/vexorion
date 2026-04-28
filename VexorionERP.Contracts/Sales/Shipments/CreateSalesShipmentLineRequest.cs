@@ -1,4 +1,4 @@
-namespace VexorionERP.Contracts.Sales.Shipments;
+namespace VexorionERP.Contracts;
 
 public class CreateSalesShipmentLineRequest
 {

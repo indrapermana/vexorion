@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using VexorionERP.Models.Purchasing;
+using VexorionERP.Models;
 
-namespace VexorionERP.Database.Configurations.Purchasing;
+namespace VexorionERP.Database;
 
 public class PurchaseReceiptConfiguration : TenantEntityConfiguration<PurchaseReceipt>
 {

@@ -1,15 +1,9 @@
-using VexorionERP.Contracts.Sales.Lines;
-using VexorionERP.Contracts.Sales.Orders;
-using VexorionERP.Models.Catalog;
-using VexorionERP.Models.Enums;
-using VexorionERP.Models.Inventory;
-using VexorionERP.Models.Partners;
-using VexorionERP.Models.Sales;
+using VexorionERP.Contracts;
+using VexorionERP.Models;
 using VexorionERP.Services;
-using VexorionERP.Services.Tests.Support;
 using Xunit;
 
-namespace VexorionERP.Services.Tests.Aggregates;
+namespace VexorionERP.Services;
 
 public class SalesOrderCommandServiceTests
 {

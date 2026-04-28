@@ -1,4 +1,4 @@
-namespace VexorionERP.Contracts.Partners.Suppliers;
+namespace VexorionERP.Contracts;
 
 public class SupplierDetailsResponse
 {

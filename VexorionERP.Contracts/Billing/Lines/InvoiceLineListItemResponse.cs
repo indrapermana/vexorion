@@ -1,4 +1,4 @@
-namespace VexorionERP.Contracts.Billing.Lines;
+namespace VexorionERP.Contracts;
 
 public class InvoiceLineListItemResponse
 {

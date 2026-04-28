@@ -1,6 +1,6 @@
-using VexorionERP.Models.Identity;
+using VexorionERP.Models;
 
-namespace VexorionERP.Web.Tests.Support;
+namespace VexorionERP.Web.Tests;
 
 internal static class TestJwtTokenFactory
 {

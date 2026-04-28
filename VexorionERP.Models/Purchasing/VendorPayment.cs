@@ -1,7 +1,6 @@
-using VexorionERP.Models.Common;
-using VexorionERP.Models.Partners;
+using VexorionERP.Models;
 
-namespace VexorionERP.Models.Purchasing;
+namespace VexorionERP.Models;
 
 public class VendorPayment : TenantEntityBase
 {

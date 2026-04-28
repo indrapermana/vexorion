@@ -1,11 +1,11 @@
 using System.Net;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc;
-using VexorionERP.Contracts.Auth;
-using VexorionERP.Web.Tests.Support;
+using VexorionERP.Contracts;
+using VexorionERP.Web.Tests;
 using Xunit;
 
-namespace VexorionERP.Web.Tests.Auth;
+namespace VexorionERP.Web.Tests;
 
 public class AuthValidationTests : IClassFixture<TestWebApplicationFactory>
 {

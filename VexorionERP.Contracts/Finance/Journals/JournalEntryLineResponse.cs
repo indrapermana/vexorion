@@ -1,4 +1,4 @@
-namespace VexorionERP.Contracts.Finance.Journals;
+namespace VexorionERP.Contracts;
 
 public class JournalEntryLineResponse
 {

@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using VexorionERP.Models.Identity;
+using VexorionERP.Models;
 
-namespace VexorionERP.Database.Configurations.Identity;
+namespace VexorionERP.Database;
 
 public class RefreshTokenConfiguration : TenantEntityConfiguration<RefreshToken>
 {

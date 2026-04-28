@@ -1,4 +1,4 @@
-namespace VexorionERP.Contracts.Sales.Invoices;
+namespace VexorionERP.Contracts;
 
 public class UpdateSalesInvoiceRequest : CreateSalesInvoiceRequest
 {

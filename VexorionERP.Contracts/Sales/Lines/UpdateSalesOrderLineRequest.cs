@@ -1,4 +1,4 @@
-namespace VexorionERP.Contracts.Sales.Lines;
+namespace VexorionERP.Contracts;
 
 public class UpdateSalesOrderLineRequest : CreateSalesOrderLineRequest
 {

@@ -1,4 +1,4 @@
-namespace VexorionERP.Contracts.Inventory.Transfers;
+namespace VexorionERP.Contracts;
 
 public class StockTransferLineDetailsResponse
 {

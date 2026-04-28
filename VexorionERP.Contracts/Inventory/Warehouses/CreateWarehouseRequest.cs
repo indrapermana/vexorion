@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace VexorionERP.Contracts.Inventory.Warehouses;
+namespace VexorionERP.Contracts;
 
 public class CreateWarehouseRequest
 {

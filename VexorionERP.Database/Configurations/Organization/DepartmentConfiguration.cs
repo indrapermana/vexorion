@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using VexorionERP.Models.Organization;
+using VexorionERP.Models;
 
-namespace VexorionERP.Database.Configurations.Organization;
+namespace VexorionERP.Database;
 
 public class DepartmentConfiguration : TenantEntityConfiguration<Department>
 {

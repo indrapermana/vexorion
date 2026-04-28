@@ -1,11 +1,9 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using VexorionERP.Contracts.Sales.Shipments;
+using VexorionERP.Contracts;
 using VexorionERP.Database;
-using VexorionERP.Database.Abstractions;
-using VexorionERP.Models.Enums;
-using VexorionERP.Models.Sales;
-using VexorionERP.Services.Results;
+using VexorionERP.Models;
+using VexorionERP.Services;
 
 namespace VexorionERP.Services;
 

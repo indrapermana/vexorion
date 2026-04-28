@@ -2,19 +2,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
-using VexorionERP.Database.Abstractions;
-using VexorionERP.Models.Auditing;
-using VexorionERP.Models.Billing;
-using VexorionERP.Models.Catalog;
-using VexorionERP.Models.Common;
-using VexorionERP.Models.Finance;
-using VexorionERP.Models.Identity;
-using VexorionERP.Models.Inventory;
-using VexorionERP.Models.Organization;
-using VexorionERP.Models.Partners;
-using VexorionERP.Models.Purchasing;
-using VexorionERP.Models.Sales;
-using VexorionERP.Models.Tenancy;
+using VexorionERP.Database;
+using VexorionERP.Models;
 
 namespace VexorionERP.Database;
 

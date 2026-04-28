@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace VexorionERP.Contracts.Inventory.Balances;
+namespace VexorionERP.Contracts;
 
 public class CreateInventoryBalanceRequest
 {

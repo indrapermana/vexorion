@@ -1,4 +1,4 @@
-namespace VexorionERP.Contracts.Purchasing.Receipts;
+namespace VexorionERP.Contracts;
 
 public class PurchaseReceiptLineResponse
 {

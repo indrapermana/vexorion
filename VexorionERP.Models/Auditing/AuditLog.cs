@@ -1,6 +1,6 @@
-using VexorionERP.Models.Common;
+using VexorionERP.Models;
 
-namespace VexorionERP.Models.Auditing;
+namespace VexorionERP.Models;
 
 public class AuditLog : TenantEntityBase
 {
@@ -14,6 +14,6 @@ public class AuditLog : TenantEntityBase
     public string? IpAddress { get; set; }
     public string? UserAgent { get; set; }
 
-    public Identity.User? ActorUser { get; set; }
-    public Identity.User? TargetUser { get; set; }
+    public User? ActorUser { get; set; }
+    public User? TargetUser { get; set; }
 }

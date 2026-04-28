@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using VexorionERP.Database;
 
-namespace VexorionERP.Web.Tests.Support;
+namespace VexorionERP.Web.Tests;
 
 public abstract class TestWebApplicationFactoryBase : WebApplicationFactory<Program>
 {

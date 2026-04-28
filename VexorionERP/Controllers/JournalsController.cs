@@ -1,12 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using VexorionERP.Contracts.Finance.Journals;
+using VexorionERP.Contracts;
 using VexorionERP.Database;
-using VexorionERP.Database.Abstractions;
-using VexorionERP.Models.Identity;
+using VexorionERP.Models;
 
-namespace VexorionERP.Controllers;
+namespace VexorionERP;
 
 [ApiController]
 [Route("api/journals")]

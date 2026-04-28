@@ -1,4 +1,4 @@
-namespace VexorionERP.Contracts.Users;
+namespace VexorionERP.Contracts;
 
 public class UserListItemResponse
 {

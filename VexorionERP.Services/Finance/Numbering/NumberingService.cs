@@ -1,11 +1,9 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using VexorionERP.Contracts.Finance.Numbering;
+using VexorionERP.Contracts;
 using VexorionERP.Database;
-using VexorionERP.Database.Abstractions;
-using VexorionERP.Models.Enums;
-using VexorionERP.Models.Finance;
-using VexorionERP.Services.Results;
+using VexorionERP.Models;
+using VexorionERP.Services;
 
 namespace VexorionERP.Services;
 

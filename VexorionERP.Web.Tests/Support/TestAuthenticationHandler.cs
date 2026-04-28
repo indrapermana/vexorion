@@ -3,9 +3,9 @@ using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using VexorionERP.Models.Identity;
+using VexorionERP.Models;
 
-namespace VexorionERP.Web.Tests.Support;
+namespace VexorionERP.Web.Tests;
 
 internal sealed class TestAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 {

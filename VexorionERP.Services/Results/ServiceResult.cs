@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace VexorionERP.Services.Results;
+namespace VexorionERP.Services;
 
 public class ServiceResult<T>
 {

@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using VexorionERP.Models.Tenancy;
+using VexorionERP.Models;
 
-namespace VexorionERP.Database.Configurations.Tenancy;
+namespace VexorionERP.Database;
 
 public class TenantConfiguration : BaseConfiguration<Tenant>
 {

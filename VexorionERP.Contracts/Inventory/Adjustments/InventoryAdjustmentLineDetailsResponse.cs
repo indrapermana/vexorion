@@ -1,4 +1,4 @@
-namespace VexorionERP.Contracts.Inventory.Adjustments;
+namespace VexorionERP.Contracts;
 
 public class InventoryAdjustmentLineDetailsResponse
 {

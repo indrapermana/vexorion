@@ -1,4 +1,4 @@
-namespace VexorionERP.Contracts.Finance.Reporting;
+namespace VexorionERP.Contracts;
 
 public class ArAgingItemResponse
 {

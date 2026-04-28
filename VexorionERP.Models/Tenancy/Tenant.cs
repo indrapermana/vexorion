@@ -1,8 +1,6 @@
-using VexorionERP.Models.Common;
-using VexorionERP.Models.Identity;
-using VexorionERP.Models.Organization;
+using VexorionERP.Models;
 
-namespace VexorionERP.Models.Tenancy;
+namespace VexorionERP.Models;
 
 public class Tenant : EntityBase
 {

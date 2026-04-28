@@ -4,7 +4,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace VexorionERP.Database.Migrations
+namespace VexorionERP.Database
 {
     /// <inheritdoc />
     public partial class InitialIdentityAndMultiTenantSchema : Migration

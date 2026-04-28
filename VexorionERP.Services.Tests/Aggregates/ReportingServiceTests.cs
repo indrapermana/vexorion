@@ -1,13 +1,8 @@
-using VexorionERP.Models.Enums;
-using VexorionERP.Models.Finance;
-using VexorionERP.Models.Partners;
-using VexorionERP.Models.Purchasing;
-using VexorionERP.Models.Sales;
+using VexorionERP.Models;
 using VexorionERP.Services;
-using VexorionERP.Services.Tests.Support;
 using Xunit;
 
-namespace VexorionERP.Services.Tests.Aggregates;
+namespace VexorionERP.Services;
 
 public class ReportingServiceTests
 {

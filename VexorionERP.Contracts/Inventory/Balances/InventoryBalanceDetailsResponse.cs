@@ -1,4 +1,4 @@
-namespace VexorionERP.Contracts.Inventory.Balances;
+namespace VexorionERP.Contracts;
 
 public class InventoryBalanceDetailsResponse
 {

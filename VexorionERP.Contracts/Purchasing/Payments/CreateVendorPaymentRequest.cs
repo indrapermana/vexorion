@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace VexorionERP.Contracts.Purchasing.Payments;
+namespace VexorionERP.Contracts;
 
 public class CreateVendorPaymentRequest
 {

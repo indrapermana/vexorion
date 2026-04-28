@@ -1,4 +1,4 @@
-namespace VexorionERP.Models.Common;
+namespace VexorionERP.Models;
 
 public abstract class EntityBase
 {

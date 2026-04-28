@@ -1,5 +1,5 @@
-using VexorionERP.Contracts.Sales.Payments;
-using VexorionERP.Services.Results;
+using VexorionERP.Contracts;
+using VexorionERP.Services;
 
 namespace VexorionERP.Services;
 

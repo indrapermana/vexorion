@@ -1,11 +1,10 @@
 using Mapster;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using VexorionERP.Contracts.Products;
+using VexorionERP.Contracts;
 using VexorionERP.Database;
-using VexorionERP.Database.Abstractions;
-using VexorionERP.Models.Catalog;
-using VexorionERP.Services.Results;
+using VexorionERP.Models;
+using VexorionERP.Services;
 
 namespace VexorionERP.Services;
 

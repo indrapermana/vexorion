@@ -9,7 +9,7 @@ using VexorionERP.Database;
 
 #nullable disable
 
-namespace VexorionERP.Database.Migrations
+namespace VexorionERP.Database
 {
     [DbContext(typeof(AppDbContext))]
     [Migration("20260425065623_AddStockCounts")]
@@ -155,7 +155,7 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Auditing.AuditLog", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -226,7 +226,7 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("AuditLog", (string)null);
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Billing.Invoice", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -296,7 +296,7 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("Invoice", (string)null);
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Billing.InvoiceLine", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -345,7 +345,7 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("InvoiceLine", (string)null);
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Catalog.Product", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -406,7 +406,7 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("Product", (string)null);
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Identity.RefreshToken", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -470,7 +470,7 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("RefreshToken", (string)null);
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Identity.User", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -585,7 +585,7 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("User", (string)null);
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Inventory.InventoryAdjustment", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -640,7 +640,7 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("InventoryAdjustment", (string)null);
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Inventory.InventoryAdjustmentLine", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -689,7 +689,7 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("InventoryAdjustmentLine", (string)null);
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Inventory.InventoryBalance", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -737,7 +737,7 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("InventoryBalance", (string)null);
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Inventory.InventoryMovement", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -820,7 +820,7 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("InventoryMovement", (string)null);
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Inventory.StockCount", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -872,7 +872,7 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("StockCount", (string)null);
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Inventory.StockCountLine", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -917,7 +917,7 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("StockCountLine", (string)null);
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Inventory.StockTransfer", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -972,7 +972,7 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("StockTransfer", (string)null);
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Inventory.StockTransferLine", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -1017,7 +1017,7 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("StockTransferLine", (string)null);
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Inventory.Warehouse", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -1061,7 +1061,7 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("Warehouse", (string)null);
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Organization.Company", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -1137,7 +1137,7 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("Company", (string)null);
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Organization.Department", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -1187,7 +1187,7 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("Department", (string)null);
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Organization.Employee", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -1261,7 +1261,7 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("Employee", (string)null);
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Partners.Customer", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -1325,7 +1325,7 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("Customer", (string)null);
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Partners.Supplier", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -1385,7 +1385,7 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("Supplier", (string)null);
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Purchasing.PurchaseOrder", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -1452,7 +1452,7 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("PurchaseOrder", (string)null);
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Purchasing.PurchaseOrderLine", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -1497,7 +1497,7 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("PurchaseOrderLine", (string)null);
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Sales.SalesOrder", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -1564,7 +1564,7 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("SalesOrder", (string)null);
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Sales.SalesOrderLine", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -1613,7 +1613,7 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("SalesOrderLine", (string)null);
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Tenancy.Tenant", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -1666,7 +1666,7 @@ namespace VexorionERP.Database.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
                 {
-                    b.HasOne("VexorionERP.Models.Identity.User", null)
+                    b.HasOne("VexorionERP.Models", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1675,7 +1675,7 @@ namespace VexorionERP.Database.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<System.Guid>", b =>
                 {
-                    b.HasOne("VexorionERP.Models.Identity.User", null)
+                    b.HasOne("VexorionERP.Models", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1690,7 +1690,7 @@ namespace VexorionERP.Database.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("VexorionERP.Models.Identity.User", null)
+                    b.HasOne("VexorionERP.Models", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1699,26 +1699,26 @@ namespace VexorionERP.Database.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
                 {
-                    b.HasOne("VexorionERP.Models.Identity.User", null)
+                    b.HasOne("VexorionERP.Models", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Auditing.AuditLog", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
-                    b.HasOne("VexorionERP.Models.Identity.User", "ActorUser")
+                    b.HasOne("VexorionERP.Models", "ActorUser")
                         .WithMany()
                         .HasForeignKey("ActorUserId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("VexorionERP.Models.Identity.User", "TargetUser")
+                    b.HasOne("VexorionERP.Models", "TargetUser")
                         .WithMany()
                         .HasForeignKey("TargetUserId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                    b.HasOne("VexorionERP.Models", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1731,15 +1731,15 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Tenant");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Billing.Invoice", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
-                    b.HasOne("VexorionERP.Models.Partners.Customer", "Customer")
+                    b.HasOne("VexorionERP.Models", "Customer")
                         .WithMany("Invoices")
                         .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                    b.HasOne("VexorionERP.Models", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1750,21 +1750,21 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Tenant");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Billing.InvoiceLine", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
-                    b.HasOne("VexorionERP.Models.Billing.Invoice", "Invoice")
+                    b.HasOne("VexorionERP.Models", "Invoice")
                         .WithMany("Lines")
                         .HasForeignKey("InvoiceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("VexorionERP.Models.Catalog.Product", "Product")
+                    b.HasOne("VexorionERP.Models", "Product")
                         .WithMany()
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                    b.HasOne("VexorionERP.Models", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1777,9 +1777,9 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Tenant");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Catalog.Product", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
-                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                    b.HasOne("VexorionERP.Models", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1788,15 +1788,15 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Tenant");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Identity.RefreshToken", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
-                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                    b.HasOne("VexorionERP.Models", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("VexorionERP.Models.Identity.User", "User")
+                    b.HasOne("VexorionERP.Models", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1807,14 +1807,14 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Identity.User", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
-                    b.HasOne("VexorionERP.Models.Organization.Employee", "Employee")
+                    b.HasOne("VexorionERP.Models", "Employee")
                         .WithOne()
-                        .HasForeignKey("VexorionERP.Models.Identity.User", "EmployeeId")
+                        .HasForeignKey("VexorionERP.Models", "EmployeeId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                    b.HasOne("VexorionERP.Models", "Tenant")
                         .WithMany("Users")
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1825,15 +1825,15 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Tenant");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Inventory.InventoryAdjustment", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
-                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                    b.HasOne("VexorionERP.Models", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("VexorionERP.Models.Inventory.Warehouse", "Warehouse")
+                    b.HasOne("VexorionERP.Models", "Warehouse")
                         .WithMany("InventoryAdjustments")
                         .HasForeignKey("WarehouseId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1844,21 +1844,21 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Warehouse");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Inventory.InventoryAdjustmentLine", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
-                    b.HasOne("VexorionERP.Models.Inventory.InventoryAdjustment", "InventoryAdjustment")
+                    b.HasOne("VexorionERP.Models", "InventoryAdjustment")
                         .WithMany("Lines")
                         .HasForeignKey("InventoryAdjustmentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("VexorionERP.Models.Catalog.Product", "Product")
+                    b.HasOne("VexorionERP.Models", "Product")
                         .WithMany("InventoryAdjustmentLines")
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                    b.HasOne("VexorionERP.Models", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1871,21 +1871,21 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Tenant");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Inventory.InventoryBalance", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
-                    b.HasOne("VexorionERP.Models.Catalog.Product", "Product")
+                    b.HasOne("VexorionERP.Models", "Product")
                         .WithMany("InventoryBalances")
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                    b.HasOne("VexorionERP.Models", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("VexorionERP.Models.Inventory.Warehouse", "Warehouse")
+                    b.HasOne("VexorionERP.Models", "Warehouse")
                         .WithMany("InventoryBalances")
                         .HasForeignKey("WarehouseId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1898,21 +1898,21 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Warehouse");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Inventory.InventoryMovement", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
-                    b.HasOne("VexorionERP.Models.Catalog.Product", "Product")
+                    b.HasOne("VexorionERP.Models", "Product")
                         .WithMany()
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                    b.HasOne("VexorionERP.Models", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("VexorionERP.Models.Inventory.Warehouse", "Warehouse")
+                    b.HasOne("VexorionERP.Models", "Warehouse")
                         .WithMany("InventoryMovements")
                         .HasForeignKey("WarehouseId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1925,15 +1925,15 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Warehouse");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Inventory.StockCount", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
-                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                    b.HasOne("VexorionERP.Models", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("VexorionERP.Models.Inventory.Warehouse", "Warehouse")
+                    b.HasOne("VexorionERP.Models", "Warehouse")
                         .WithMany("StockCounts")
                         .HasForeignKey("WarehouseId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1944,21 +1944,21 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Warehouse");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Inventory.StockCountLine", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
-                    b.HasOne("VexorionERP.Models.Catalog.Product", "Product")
+                    b.HasOne("VexorionERP.Models", "Product")
                         .WithMany("StockCountLines")
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("VexorionERP.Models.Inventory.StockCount", "StockCount")
+                    b.HasOne("VexorionERP.Models", "StockCount")
                         .WithMany("Lines")
                         .HasForeignKey("StockCountId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                    b.HasOne("VexorionERP.Models", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1971,21 +1971,21 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Tenant");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Inventory.StockTransfer", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
-                    b.HasOne("VexorionERP.Models.Inventory.Warehouse", "DestinationWarehouse")
+                    b.HasOne("VexorionERP.Models", "DestinationWarehouse")
                         .WithMany("DestinationStockTransfers")
                         .HasForeignKey("DestinationWarehouseId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("VexorionERP.Models.Inventory.Warehouse", "SourceWarehouse")
+                    b.HasOne("VexorionERP.Models", "SourceWarehouse")
                         .WithMany("SourceStockTransfers")
                         .HasForeignKey("SourceWarehouseId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                    b.HasOne("VexorionERP.Models", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1998,21 +1998,21 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Tenant");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Inventory.StockTransferLine", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
-                    b.HasOne("VexorionERP.Models.Catalog.Product", "Product")
+                    b.HasOne("VexorionERP.Models", "Product")
                         .WithMany("StockTransferLines")
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("VexorionERP.Models.Inventory.StockTransfer", "StockTransfer")
+                    b.HasOne("VexorionERP.Models", "StockTransfer")
                         .WithMany("Lines")
                         .HasForeignKey("StockTransferId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                    b.HasOne("VexorionERP.Models", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -2025,9 +2025,9 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Tenant");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Inventory.Warehouse", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
-                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                    b.HasOne("VexorionERP.Models", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -2036,9 +2036,9 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Tenant");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Organization.Company", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
-                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                    b.HasOne("VexorionERP.Models", "Tenant")
                         .WithMany("Companies")
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -2047,20 +2047,20 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Tenant");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Organization.Department", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
-                    b.HasOne("VexorionERP.Models.Organization.Company", "Company")
+                    b.HasOne("VexorionERP.Models", "Company")
                         .WithMany("Departments")
                         .HasForeignKey("CompanyId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("VexorionERP.Models.Organization.Employee", "Manager")
+                    b.HasOne("VexorionERP.Models", "Manager")
                         .WithMany()
                         .HasForeignKey("ManagerId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                    b.HasOne("VexorionERP.Models", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -2073,20 +2073,20 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Tenant");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Organization.Employee", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
-                    b.HasOne("VexorionERP.Models.Organization.Company", "Company")
+                    b.HasOne("VexorionERP.Models", "Company")
                         .WithMany("Employees")
                         .HasForeignKey("CompanyId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("VexorionERP.Models.Organization.Department", "Department")
+                    b.HasOne("VexorionERP.Models", "Department")
                         .WithMany("Employees")
                         .HasForeignKey("DepartmentId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                    b.HasOne("VexorionERP.Models", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -2099,9 +2099,9 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Tenant");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Partners.Customer", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
-                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                    b.HasOne("VexorionERP.Models", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -2110,9 +2110,9 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Tenant");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Partners.Supplier", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
-                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                    b.HasOne("VexorionERP.Models", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -2121,21 +2121,21 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Tenant");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Purchasing.PurchaseOrder", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
-                    b.HasOne("VexorionERP.Models.Partners.Supplier", "Supplier")
+                    b.HasOne("VexorionERP.Models", "Supplier")
                         .WithMany("PurchaseOrders")
                         .HasForeignKey("SupplierId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                    b.HasOne("VexorionERP.Models", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("VexorionERP.Models.Inventory.Warehouse", "Warehouse")
+                    b.HasOne("VexorionERP.Models", "Warehouse")
                         .WithMany("PurchaseOrders")
                         .HasForeignKey("WarehouseId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -2148,21 +2148,21 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Warehouse");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Purchasing.PurchaseOrderLine", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
-                    b.HasOne("VexorionERP.Models.Catalog.Product", "Product")
+                    b.HasOne("VexorionERP.Models", "Product")
                         .WithMany("PurchaseOrderLines")
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("VexorionERP.Models.Purchasing.PurchaseOrder", "PurchaseOrder")
+                    b.HasOne("VexorionERP.Models", "PurchaseOrder")
                         .WithMany("Lines")
                         .HasForeignKey("PurchaseOrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                    b.HasOne("VexorionERP.Models", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -2175,21 +2175,21 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Tenant");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Sales.SalesOrder", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
-                    b.HasOne("VexorionERP.Models.Partners.Customer", "Customer")
+                    b.HasOne("VexorionERP.Models", "Customer")
                         .WithMany("SalesOrders")
                         .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                    b.HasOne("VexorionERP.Models", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("VexorionERP.Models.Inventory.Warehouse", "Warehouse")
+                    b.HasOne("VexorionERP.Models", "Warehouse")
                         .WithMany("SalesOrders")
                         .HasForeignKey("WarehouseId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -2202,21 +2202,21 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Warehouse");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Sales.SalesOrderLine", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
-                    b.HasOne("VexorionERP.Models.Catalog.Product", "Product")
+                    b.HasOne("VexorionERP.Models", "Product")
                         .WithMany("SalesOrderLines")
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("VexorionERP.Models.Sales.SalesOrder", "SalesOrder")
+                    b.HasOne("VexorionERP.Models", "SalesOrder")
                         .WithMany("Lines")
                         .HasForeignKey("SalesOrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("VexorionERP.Models.Tenancy.Tenant", "Tenant")
+                    b.HasOne("VexorionERP.Models", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -2229,12 +2229,12 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Tenant");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Billing.Invoice", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Navigation("Lines");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Catalog.Product", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Navigation("InventoryAdjustmentLines");
 
@@ -2249,22 +2249,22 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("StockTransferLines");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Inventory.InventoryAdjustment", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Navigation("Lines");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Inventory.StockCount", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Navigation("Lines");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Inventory.StockTransfer", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Navigation("Lines");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Inventory.Warehouse", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Navigation("DestinationStockTransfers");
 
@@ -2283,41 +2283,41 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("StockCounts");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Organization.Company", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Navigation("Departments");
 
                     b.Navigation("Employees");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Organization.Department", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Navigation("Employees");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Partners.Customer", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Navigation("Invoices");
 
                     b.Navigation("SalesOrders");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Partners.Supplier", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Navigation("PurchaseOrders");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Purchasing.PurchaseOrder", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Navigation("Lines");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Sales.SalesOrder", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Navigation("Lines");
                 });
 
-            modelBuilder.Entity("VexorionERP.Models.Tenancy.Tenant", b =>
+            modelBuilder.Entity("VexorionERP.Models", b =>
                 {
                     b.Navigation("Companies");
 

@@ -1,4 +1,4 @@
-namespace VexorionERP.Contracts.Products;
+namespace VexorionERP.Contracts;
 
 public class ProductDetailsResponse
 {

@@ -1,10 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using VexorionERP.Contracts.Tenancy;
+using VexorionERP.Contracts;
 using VexorionERP.Services;
-using VexorionERP.Services.Results;
 
-namespace VexorionERP.Controllers;
+namespace VexorionERP;
 
 [ApiController]
 [Route("api/tenants")]

@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using VexorionERP.Models.Auditing;
+using VexorionERP.Models;
 
-namespace VexorionERP.Database.Configurations.Auditing;
+namespace VexorionERP.Database;
 
 public class AuditLogConfiguration : TenantEntityConfiguration<AuditLog>
 {

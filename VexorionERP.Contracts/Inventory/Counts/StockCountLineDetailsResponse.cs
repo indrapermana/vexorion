@@ -1,4 +1,4 @@
-namespace VexorionERP.Contracts.Inventory.Counts;
+namespace VexorionERP.Contracts;
 
 public class StockCountLineDetailsResponse
 {

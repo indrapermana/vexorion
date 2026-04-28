@@ -1,10 +1,9 @@
-using VexorionERP.Contracts.Finance.Numbering;
-using VexorionERP.Models.Enums;
+using VexorionERP.Contracts;
+using VexorionERP.Models;
 using VexorionERP.Services;
-using VexorionERP.Services.Tests.Support;
 using Xunit;
 
-namespace VexorionERP.Services.Tests.Aggregates;
+namespace VexorionERP.Services;
 
 public class NumberingServiceTests
 {

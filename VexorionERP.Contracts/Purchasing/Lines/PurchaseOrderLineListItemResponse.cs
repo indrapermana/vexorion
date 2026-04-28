@@ -1,4 +1,4 @@
-namespace VexorionERP.Contracts.Purchasing.Lines;
+namespace VexorionERP.Contracts;
 
 public class PurchaseOrderLineListItemResponse
 {

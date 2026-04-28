@@ -2,10 +2,10 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-using VexorionERP.Contracts.Users;
-using VexorionERP.Database.Abstractions;
-using VexorionERP.Models.Identity;
-using VexorionERP.Services.Results;
+using VexorionERP.Contracts;
+using VexorionERP.Database;
+using VexorionERP.Models;
+using VexorionERP.Services;
 
 namespace VexorionERP.Services;
 

@@ -1,6 +1,6 @@
-using VexorionERP.Models.Tenancy;
+using VexorionERP.Models;
 
-namespace VexorionERP.Models.Common;
+namespace VexorionERP.Models;
 
 public abstract class TenantEntityBase : EntityBase, ITenantEntity
 {

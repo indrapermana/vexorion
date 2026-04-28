@@ -2,13 +2,11 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using VexorionERP.Contracts.Configuration.TenantPreferences;
+using VexorionERP.Contracts;
 using VexorionERP.Database;
-using VexorionERP.Database.Abstractions;
-using VexorionERP.Models.Identity;
-using VexorionERP.Models.Tenancy;
+using VexorionERP.Models;
 
-namespace VexorionERP.Controllers;
+namespace VexorionERP;
 
 [ApiController]
 [Route("api/configuration/preferences")]

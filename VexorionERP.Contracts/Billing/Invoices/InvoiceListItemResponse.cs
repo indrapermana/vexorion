@@ -1,6 +1,6 @@
-using VexorionERP.Models.Enums;
+using VexorionERP.Models;
 
-namespace VexorionERP.Contracts.Billing.Invoices;
+namespace VexorionERP.Contracts;
 
 public class InvoiceListItemResponse
 {

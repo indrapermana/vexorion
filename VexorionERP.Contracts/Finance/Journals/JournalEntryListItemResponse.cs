@@ -1,6 +1,6 @@
-using VexorionERP.Models.Enums;
+using VexorionERP.Models;
 
-namespace VexorionERP.Contracts.Finance.Journals;
+namespace VexorionERP.Contracts;
 
 public class JournalEntryListItemResponse
 {

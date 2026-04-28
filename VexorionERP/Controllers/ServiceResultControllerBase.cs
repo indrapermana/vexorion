@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using VexorionERP.Services.Results;
+using VexorionERP.Services;
 
-namespace VexorionERP.Controllers;
+namespace VexorionERP;
 
 public abstract class ServiceResultControllerBase : ControllerBase
 {

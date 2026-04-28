@@ -1,8 +1,6 @@
-using VexorionERP.Models.Common;
-using VexorionERP.Models.Billing;
-using VexorionERP.Models.Sales;
+using VexorionERP.Models;
 
-namespace VexorionERP.Models.Partners;
+namespace VexorionERP.Models;
 
 public class Customer : TenantEntityBase
 {

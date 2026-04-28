@@ -1,7 +1,6 @@
-using VexorionERP.Models.Common;
-using VexorionERP.Models.Enums;
+using VexorionERP.Models;
 
-namespace VexorionERP.Models.Inventory;
+namespace VexorionERP.Models;
 
 public class StockCount : TenantEntityBase
 {

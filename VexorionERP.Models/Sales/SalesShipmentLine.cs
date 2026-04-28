@@ -1,7 +1,6 @@
-using VexorionERP.Models.Catalog;
-using VexorionERP.Models.Common;
+using VexorionERP.Models;
 
-namespace VexorionERP.Models.Sales;
+namespace VexorionERP.Models;
 
 public class SalesShipmentLine : TenantEntityBase
 {

@@ -1,4 +1,4 @@
-namespace VexorionERP.Contracts.Roles;
+namespace VexorionERP.Contracts;
 
 public class RolePermissionsResponse
 {

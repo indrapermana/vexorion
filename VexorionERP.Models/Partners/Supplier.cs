@@ -1,7 +1,6 @@
-using VexorionERP.Models.Common;
-using VexorionERP.Models.Purchasing;
+using VexorionERP.Models;
 
-namespace VexorionERP.Models.Partners;
+namespace VexorionERP.Models;
 
 public class Supplier : TenantEntityBase
 {

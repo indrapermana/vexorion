@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace VexorionERP.Contracts.Organization.Departments;
+namespace VexorionERP.Contracts;
 
 public class CreateDepartmentRequest
 {

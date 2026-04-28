@@ -1,7 +1,7 @@
-using VexorionERP.Models.Enums;
+using VexorionERP.Models;
 using System.ComponentModel.DataAnnotations;
 
-namespace VexorionERP.Contracts.Purchasing.Orders;
+namespace VexorionERP.Contracts;
 
 public class CreatePurchaseOrderRequest
 {

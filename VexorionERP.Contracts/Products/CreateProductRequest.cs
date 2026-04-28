@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace VexorionERP.Contracts.Products;
+namespace VexorionERP.Contracts;
 
 public class CreateProductRequest
 {

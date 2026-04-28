@@ -1,4 +1,4 @@
-namespace VexorionERP.Contracts.Inventory.Warehouses;
+namespace VexorionERP.Contracts;
 
 public class WarehouseListItemResponse
 {

@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using VexorionERP.Models.Sales;
+using VexorionERP.Models;
 
-namespace VexorionERP.Database.Configurations.Sales;
+namespace VexorionERP.Database;
 
 public class SalesShipmentLineConfiguration : TenantEntityConfiguration<SalesShipmentLine>
 {

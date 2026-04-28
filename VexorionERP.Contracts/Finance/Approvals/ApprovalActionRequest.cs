@@ -1,4 +1,4 @@
-namespace VexorionERP.Contracts.Finance.Approvals;
+namespace VexorionERP.Contracts;
 
 public class ApprovalActionRequest
 {

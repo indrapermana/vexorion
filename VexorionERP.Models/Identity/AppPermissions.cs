@@ -1,4 +1,4 @@
-namespace VexorionERP.Models.Identity;
+namespace VexorionERP.Models;
 
 public static class AppPermissions
 {

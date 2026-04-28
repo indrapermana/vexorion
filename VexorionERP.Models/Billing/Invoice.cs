@@ -1,8 +1,6 @@
-using VexorionERP.Models.Common;
-using VexorionERP.Models.Enums;
-using VexorionERP.Models.Partners;
+using VexorionERP.Models;
 
-namespace VexorionERP.Models.Billing;
+namespace VexorionERP.Models;
 
 public class Invoice : TenantEntityBase
 {

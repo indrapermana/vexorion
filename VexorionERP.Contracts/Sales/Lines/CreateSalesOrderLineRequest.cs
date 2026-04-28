@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace VexorionERP.Contracts.Sales.Lines;
+namespace VexorionERP.Contracts;
 
 public class CreateSalesOrderLineRequest
 {

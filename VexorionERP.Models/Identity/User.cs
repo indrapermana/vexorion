@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Identity;
-using VexorionERP.Models.Common;
-using VexorionERP.Models.Organization;
-using VexorionERP.Models.Tenancy;
+using VexorionERP.Models;
 
-namespace VexorionERP.Models.Identity;
+namespace VexorionERP.Models;
 
 public class User : IdentityUser<Guid>, ITenantEntity
 {

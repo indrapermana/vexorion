@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace VexorionERP.Contracts.Roles;
+namespace VexorionERP.Contracts;
 
 public class AssignUserRolesRequest
 {

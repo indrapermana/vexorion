@@ -1,13 +1,12 @@
 using System.Net;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc;
-using VexorionERP.Contracts.Purchasing.Payments;
-using VexorionERP.Contracts.Sales.Payments;
-using VexorionERP.Models.Identity;
-using VexorionERP.Web.Tests.Support;
+using VexorionERP.Contracts;
+using VexorionERP.Models;
+using VexorionERP.Web.Tests;
 using Xunit;
 
-namespace VexorionERP.Web.Tests.Payments;
+namespace VexorionERP.Web.Tests;
 
 public class PaymentControllerValidationTests : IClassFixture<TestWebApplicationFactory>
 {

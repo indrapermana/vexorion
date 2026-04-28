@@ -1,10 +1,9 @@
 using Mapster;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using VexorionERP.Contracts.Organization.Departments;
+using VexorionERP.Contracts;
 using VexorionERP.Database;
-using VexorionERP.Database.Abstractions;
-using VexorionERP.Services.Results;
+using VexorionERP.Services;
 
 namespace VexorionERP.Services;
 

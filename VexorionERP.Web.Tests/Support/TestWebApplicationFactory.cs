@@ -1,4 +1,4 @@
-namespace VexorionERP.Web.Tests.Support;
+namespace VexorionERP.Web.Tests;
 
 public sealed class TestWebApplicationFactory : TestWebApplicationFactoryBase
 {

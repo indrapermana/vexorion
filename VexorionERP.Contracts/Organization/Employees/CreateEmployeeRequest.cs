@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace VexorionERP.Contracts.Organization.Employees;
+namespace VexorionERP.Contracts;
 
 public class CreateEmployeeRequest
 {

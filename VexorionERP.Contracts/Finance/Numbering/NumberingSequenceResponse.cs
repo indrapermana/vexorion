@@ -1,6 +1,6 @@
-using VexorionERP.Models.Enums;
+using VexorionERP.Models;
 
-namespace VexorionERP.Contracts.Finance.Numbering;
+namespace VexorionERP.Contracts;
 
 public class NumberingSequenceResponse
 {

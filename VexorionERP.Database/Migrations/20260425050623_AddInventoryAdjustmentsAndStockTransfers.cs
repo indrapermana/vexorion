@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace VexorionERP.Database.Migrations
+namespace VexorionERP.Database
 {
     /// <inheritdoc />
     public partial class AddInventoryAdjustmentsAndStockTransfers : Migration

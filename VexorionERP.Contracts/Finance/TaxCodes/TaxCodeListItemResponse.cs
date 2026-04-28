@@ -1,4 +1,4 @@
-namespace VexorionERP.Contracts.Finance.TaxCodes;
+namespace VexorionERP.Contracts;
 
 public class TaxCodeListItemResponse
 {

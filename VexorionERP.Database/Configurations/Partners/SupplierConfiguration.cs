@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using VexorionERP.Models.Partners;
+using VexorionERP.Models;
 
-namespace VexorionERP.Database.Configurations.Partners;
+namespace VexorionERP.Database;
 
 public class SupplierConfiguration : TenantEntityConfiguration<Supplier>
 {

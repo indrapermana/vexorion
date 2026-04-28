@@ -1,10 +1,8 @@
-using VexorionERP.Models.Enums;
-using VexorionERP.Models.Partners;
-using VexorionERP.Models.Sales;
-using VexorionERP.Services.Tests.Support;
+using VexorionERP.Models;
+using VexorionERP.Services;
 using Xunit;
 
-namespace VexorionERP.Services.Tests.Aggregates;
+namespace VexorionERP.Services;
 
 public class SalesInvoiceQueryServiceTests
 {

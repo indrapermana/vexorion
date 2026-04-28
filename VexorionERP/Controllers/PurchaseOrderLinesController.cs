@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using VexorionERP.Contracts.Purchasing.Lines;
-using VexorionERP.Models.Identity;
+using VexorionERP.Contracts;
+using VexorionERP.Models;
 using VexorionERP.Services;
 
-namespace VexorionERP.Controllers;
+namespace VexorionERP;
 
 [ApiController]
 [Route("api/purchase-orders/{purchaseOrderId:guid}/lines")]

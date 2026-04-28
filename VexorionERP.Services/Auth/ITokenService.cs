@@ -1,5 +1,5 @@
-using VexorionERP.Contracts.Auth;
-using VexorionERP.Models.Identity;
+using VexorionERP.Contracts;
+using VexorionERP.Models;
 
 namespace VexorionERP.Services;
 

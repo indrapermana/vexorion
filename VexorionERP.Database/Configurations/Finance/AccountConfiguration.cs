@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using VexorionERP.Models.Finance;
+using VexorionERP.Models;
 
-namespace VexorionERP.Database.Configurations.Finance;
+namespace VexorionERP.Database;
 
 public class AccountConfiguration : TenantEntityConfiguration<Account>
 {

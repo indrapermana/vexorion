@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using System.Security.Claims;
-using VexorionERP.Models.Identity;
+using VexorionERP.Models;
 
-namespace VexorionERP.Identity;
+namespace VexorionERP;
 
 public class AppUserClaimsPrincipalFactory(
     UserManager<User> userManager,

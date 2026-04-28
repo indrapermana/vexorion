@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using VexorionERP.Models.Catalog;
+using VexorionERP.Models;
 
-namespace VexorionERP.Database.Configurations.Catalog;
+namespace VexorionERP.Database;
 
 public class ProductConfiguration : TenantEntityConfiguration<Product>
 {

@@ -1,4 +1,4 @@
-namespace VexorionERP.Contracts.Configuration.TenantPreferences;
+namespace VexorionERP.Contracts;
 
 public class TenantPreferencesResponse
 {

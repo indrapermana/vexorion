@@ -1,4 +1,4 @@
-namespace VexorionERP.Contracts.Finance.Posting;
+namespace VexorionERP.Contracts;
 
 public class PostCustomerPaymentRequest
 {

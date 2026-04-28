@@ -1,8 +1,6 @@
-using VexorionERP.Models.Common;
-using VexorionERP.Models.Enums;
-using VexorionERP.Models.Inventory;
+using VexorionERP.Models;
 
-namespace VexorionERP.Models.Sales;
+namespace VexorionERP.Models;
 
 public class SalesShipment : TenantEntityBase
 {
