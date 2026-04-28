@@ -1,8 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using VexorionERP.Models;
 
 namespace VexorionERP.Contracts;
 
-public class CreateStockTransferRequest
+public class CreateStockTransferRequest : ICreateInput<StockTransfer>
 {
     [Required]
     public string TransferNumber { get; set; } = string.Empty;

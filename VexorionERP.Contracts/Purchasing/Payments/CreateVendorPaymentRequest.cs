@@ -1,8 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using VexorionERP.Models;
 
 namespace VexorionERP.Contracts;
 
-public class CreateVendorPaymentRequest
+public class CreateVendorPaymentRequest : ICreateInput<VendorPayment>
 {
     public Guid SupplierId { get; set; }
     public Guid PurchaseInvoiceId { get; set; }

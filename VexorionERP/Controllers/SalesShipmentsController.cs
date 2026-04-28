@@ -1,6 +1,8 @@
+using Mapster;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VexorionERP.Contracts;
+using VexorionERP.Database;
 using VexorionERP.Models;
 using VexorionERP.Services;
 
@@ -10,8 +12,10 @@ namespace VexorionERP;
 [Route("api/sales-shipments")]
 [Authorize]
 public class SalesShipmentsController(
-    ISalesShipmentCommandService salesShipmentCommandService,
-    ISalesShipmentQueryService salesShipmentQueryService) : ServiceResultControllerBase
+    ICommandService<SalesShipment> salesShipmentCommandService,
+    ISalesShipmentPostingService salesShipmentPostingService,
+    ISalesShipmentQueryService salesShipmentQueryService,
+    AppDbContext dbContext) : ServiceResultControllerBase
 {
     [HttpGet("by-order/{salesOrderId:guid}")]
     [Authorize(Policy = AppPermissions.Sales.View)]
@@ -33,16 +37,21 @@ public class SalesShipmentsController(
     [Authorize(Policy = AppPermissions.Sales.Manage)]
     public async Task<ActionResult<SalesShipmentDetailsResponse>> Create([FromBody] CreateSalesShipmentRequest request)
     {
-        var result = await salesShipmentCommandService.CreateAsync(request, HttpContext.RequestAborted);
-        if (!result.Succeeded) return ToActionResult(result);
-        return CreatedAtAction(nameof(GetById), new { shipmentId = result.Value!.Id }, result.Value);
+        var result = await salesShipmentCommandService.CreateAsync(request, dbContext, HttpContext.RequestAborted);
+        if (!result.Succeeded)
+        {
+            return ToActionResult(MapResult(result));
+        }
+
+        var mapped = result.Value!.Adapt<SalesShipmentDetailsResponse>();
+        return CreatedAtAction(nameof(GetById), new { shipmentId = mapped.Id }, mapped);
     }
 
     [HttpPost("{shipmentId:guid}/post")]
     [Authorize(Policy = AppPermissions.Sales.Manage)]
     public async Task<ActionResult<SalesShipmentDetailsResponse>> Post(Guid shipmentId)
     {
-        var result = await salesShipmentCommandService.PostAsync(shipmentId, HttpContext.RequestAborted);
+        var result = await salesShipmentPostingService.PostAsync(shipmentId, HttpContext.RequestAborted);
         return ToActionResult(result);
     }
 
@@ -50,7 +59,25 @@ public class SalesShipmentsController(
     [Authorize(Policy = AppPermissions.Sales.Manage)]
     public async Task<IActionResult> Delete(Guid shipmentId)
     {
-        var result = await salesShipmentCommandService.DeleteAsync(shipmentId, HttpContext.RequestAborted);
+        var result = await salesShipmentCommandService.DeleteAsync(shipmentId, dbContext, HttpContext.RequestAborted);
         return ToActionResult(result);
+    }
+
+    private ServiceResult<SalesShipmentDetailsResponse> MapResult(ServiceResult<IEntityResponse<SalesShipment>> result)
+    {
+        if (result.Succeeded)
+        {
+            var mapped = result.Value!.Adapt<SalesShipmentDetailsResponse>();
+            return ServiceResult<SalesShipmentDetailsResponse>.Success(mapped);
+        }
+
+        if (result.Validation is not null)
+        {
+            return ServiceResult<SalesShipmentDetailsResponse>.ValidationFailure(result.Validation.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+        }
+
+        return ServiceResult<SalesShipmentDetailsResponse>.Failure(
+            result.StatusCode ?? StatusCodes.Status400BadRequest,
+            result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
     }
 }

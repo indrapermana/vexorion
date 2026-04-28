@@ -3,6 +3,7 @@ using VexorionERP.Models;
 namespace VexorionERP.Contracts;
 
 public class PurchaseInvoiceDetailsResponse
+    : IEntityResponse<PurchaseInvoice>
 {
     public Guid Id { get; set; }
     public Guid TenantId { get; set; }

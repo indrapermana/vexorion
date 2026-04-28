@@ -1,6 +1,8 @@
+using Mapster;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VexorionERP.Contracts;
+using VexorionERP.Database;
 using VexorionERP.Models;
 using VexorionERP.Services;
 
@@ -10,8 +12,9 @@ namespace VexorionERP;
 [Route("api/suppliers")]
 [Authorize]
 public class SuppliersController(
-    ISupplierCommandService supplierCommandService,
-    ISupplierQueryService supplierQueryService) : ServiceResultControllerBase
+    ICommandService<Supplier> supplierCommandService,
+    ISupplierQueryService supplierQueryService,
+    AppDbContext dbContext) : ServiceResultControllerBase
 {
     [HttpGet]
     [Authorize(Policy = AppPermissions.Suppliers.View)]
@@ -33,28 +36,47 @@ public class SuppliersController(
     [Authorize(Policy = AppPermissions.Suppliers.Manage)]
     public async Task<ActionResult<SupplierDetailsResponse>> Create([FromBody] CreateSupplierRequest request)
     {
-        var result = await supplierCommandService.CreateAsync(request, HttpContext.RequestAborted);
+        var result = await supplierCommandService.CreateAsync(request, dbContext, HttpContext.RequestAborted);
         if (!result.Succeeded)
         {
-            return ToActionResult(result);
+            return ToActionResult(MapResult(result));
         }
 
-        return CreatedAtAction(nameof(GetById), new { supplierId = result.Value!.Id }, result.Value);
+        var mapped = result.Value!.Adapt<SupplierDetailsResponse>();
+        return CreatedAtAction(nameof(GetById), new { supplierId = mapped.Id }, mapped);
     }
 
     [HttpPut("{supplierId:guid}")]
     [Authorize(Policy = AppPermissions.Suppliers.Manage)]
     public async Task<ActionResult<SupplierDetailsResponse>> Update(Guid supplierId, [FromBody] UpdateSupplierRequest request)
     {
-        var result = await supplierCommandService.UpdateAsync(supplierId, request, HttpContext.RequestAborted);
-        return ToActionResult(result);
+        var result = await supplierCommandService.UpdateAsync(supplierId, request, dbContext, HttpContext.RequestAborted);
+        return ToActionResult(MapResult(result));
     }
 
     [HttpDelete("{supplierId:guid}")]
     [Authorize(Policy = AppPermissions.Suppliers.Manage)]
     public async Task<ActionResult> Delete(Guid supplierId)
     {
-        var result = await supplierCommandService.DeleteAsync(supplierId, HttpContext.RequestAborted);
+        var result = await supplierCommandService.DeleteAsync(supplierId, dbContext, HttpContext.RequestAborted);
         return ToActionResult(result);
+    }
+
+    private ServiceResult<SupplierDetailsResponse> MapResult(ServiceResult<IEntityResponse<Supplier>> result)
+    {
+        if (result.Succeeded)
+        {
+            var mapped = result.Value!.Adapt<SupplierDetailsResponse>();
+            return ServiceResult<SupplierDetailsResponse>.Success(mapped);
+        }
+
+        if (result.Validation is not null)
+        {
+            return ServiceResult<SupplierDetailsResponse>.ValidationFailure(result.Validation.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+        }
+
+        return ServiceResult<SupplierDetailsResponse>.Failure(
+            result.StatusCode ?? StatusCodes.Status400BadRequest,
+            result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
     }
 }

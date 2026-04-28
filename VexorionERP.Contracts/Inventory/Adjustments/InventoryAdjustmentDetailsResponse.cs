@@ -2,7 +2,7 @@ using VexorionERP.Models;
 
 namespace VexorionERP.Contracts;
 
-public class InventoryAdjustmentDetailsResponse
+public class InventoryAdjustmentDetailsResponse : IEntityResponse<InventoryAdjustment>
 {
     public Guid Id { get; set; }
     public Guid TenantId { get; set; }

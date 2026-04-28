@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace VexorionERP.Contracts;
 
-public class CreateSalesOrderRequest
+public class CreateSalesOrderRequest : ICreateInput<SalesOrder>
 {
     [Required]
     [StringLength(50, MinimumLength = 1)]

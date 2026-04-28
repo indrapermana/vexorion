@@ -2,7 +2,7 @@ using VexorionERP.Models;
 
 namespace VexorionERP.Contracts;
 
-public class PurchaseReceiptDetailsResponse
+public class PurchaseReceiptDetailsResponse : IEntityResponse<PurchaseReceipt>
 {
     public Guid Id { get; set; }
     public string ReceiptNumber { get; set; } = string.Empty;

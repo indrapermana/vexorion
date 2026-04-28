@@ -8,65 +8,90 @@ using VexorionERP.Services;
 
 namespace VexorionERP.Services;
 
-public class SalesInvoiceCommandService(
-    AppDbContext dbContext,
-    ICurrentTenantProvider currentTenantProvider,
-    INumberingService? numberingService = null) : ISalesInvoiceCommandService
+public class SalesInvoiceCommandService : BaseCommandService<SalesInvoice>
 {
-    private readonly INumberingService _numberingService = numberingService ?? new NumberingService(dbContext, currentTenantProvider);
+    private readonly AppDbContext dbContext;
+    private readonly INumberingService _numberingService;
+
+    public SalesInvoiceCommandService(
+        AppDbContext dbContext,
+        ICurrentTenantProvider currentTenantProvider,
+        INumberingService? numberingService = null) : base(currentTenantProvider)
+    {
+        this.dbContext = dbContext;
+        _numberingService = numberingService ?? new NumberingService(dbContext, CurrentTenantProvider);
+    }
 
     public async Task<ServiceResult<SalesInvoiceDetailsResponse>> CreateAsync(CreateSalesInvoiceRequest request, CancellationToken cancellationToken = default)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
-            return ServiceResult<SalesInvoiceDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+        var result = await CreateAsync((ICreateInput<SalesInvoice>)request, dbContext, cancellationToken);
+        return MapResult(result);
+    }
+
+    public async Task<ServiceResult<SalesInvoiceDetailsResponse>> UpdateAsync(Guid salesInvoiceId, UpdateSalesInvoiceRequest request, CancellationToken cancellationToken = default)
+    {
+        var result = await UpdateAsync(salesInvoiceId, (IUpdateInput<SalesInvoice>)request, dbContext, cancellationToken);
+        return MapResult(result);
+    }
+
+    public Task<ServiceResult<bool>> DeleteAsync(Guid salesInvoiceId, CancellationToken cancellationToken = default)
+        => DeleteAsync(salesInvoiceId, dbContext, cancellationToken);
+
+    public override async Task<ServiceResult<IEntityResponse<SalesInvoice>>> CreateAsync(ICreateInput<SalesInvoice> request, AppDbContext context, CancellationToken cancellationToken = default)
+    {
+        var tenantId = TryGetTenantId();
+        if (!tenantId.HasValue)
+            return ServiceResult<IEntityResponse<SalesInvoice>>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+
+        var createRequest = (CreateSalesInvoiceRequest)request;
 
         SalesOrder? sourceSalesOrder = null;
-        if (request.SourceSalesOrderId.HasValue)
+        if (createRequest.SourceSalesOrderId.HasValue)
         {
-            sourceSalesOrder = await dbContext.SalesOrders
+            sourceSalesOrder = await context.SalesOrders.GetByTenant(tenantId.Value)
                 .Include(x => x.Lines)
-                .FirstOrDefaultAsync(
-                    x => x.Id == request.SourceSalesOrderId.Value && x.TenantId == currentTenantProvider.TenantId.Value,
-                    cancellationToken);
+                .FirstOrDefaultAsync(x => x.Id == createRequest.SourceSalesOrderId.Value, cancellationToken);
 
             if (sourceSalesOrder is null)
-                return ServiceResult<SalesInvoiceDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Source sales order not found.");
+                return ServiceResult<IEntityResponse<SalesInvoice>>.Failure(StatusCodes.Status400BadRequest, "Source sales order not found.");
         }
 
-        var effectiveCustomerId = sourceSalesOrder?.CustomerId ?? request.CustomerId;
-        var effectiveCurrencyCode = sourceSalesOrder?.CurrencyCode ?? request.CurrencyCode;
+        var effectiveCustomerId = sourceSalesOrder?.CustomerId ?? createRequest.CustomerId;
+        var effectiveCurrencyCode = sourceSalesOrder?.CurrencyCode ?? createRequest.CurrencyCode;
 
-        var validation = Validate(request.InvoiceNumber, effectiveCustomerId, effectiveCurrencyCode, requireInvoiceNumber: false);
+        var validation = Validate(createRequest.InvoiceNumber, effectiveCustomerId, effectiveCurrencyCode, requireInvoiceNumber: false);
         if (validation.Count > 0)
-            return ServiceResult<SalesInvoiceDetailsResponse>.ValidationFailure(validation);
+            return ServiceResult<IEntityResponse<SalesInvoice>>.ValidationFailure(validation);
 
-        if (!await dbContext.Customers.AnyAsync(x => x.Id == effectiveCustomerId, cancellationToken))
-            return ServiceResult<SalesInvoiceDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Customer not found.");
+        if (!await context.Customers.GetByTenant(tenantId.Value)
+                .AnyAsync(x => x.Id == effectiveCustomerId, cancellationToken))
+            return ServiceResult<IEntityResponse<SalesInvoice>>.Failure(StatusCodes.Status400BadRequest, "Customer not found.");
 
-        DateOnly dueDate = request.DueDate;
-        if (request.PaymentTermId.HasValue)
+        DateOnly dueDate = createRequest.DueDate;
+        if (createRequest.PaymentTermId.HasValue)
         {
-            var term = await dbContext.PaymentTerms.FindAsync([request.PaymentTermId.Value], cancellationToken);
+            var term = await context.PaymentTerms.FindAsync([createRequest.PaymentTermId.Value], cancellationToken);
             if (term is null)
-                return ServiceResult<SalesInvoiceDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Payment term not found.");
-            dueDate = request.InvoiceDate.AddDays(term.DaysDue);
+                return ServiceResult<IEntityResponse<SalesInvoice>>.Failure(StatusCodes.Status400BadRequest, "Payment term not found.");
+            dueDate = createRequest.InvoiceDate.AddDays(term.DaysDue);
         }
 
-        var invoiceNumberResult = await ResolveInvoiceNumberAsync(request.InvoiceNumber, request.InvoiceDate, cancellationToken);
+        var invoiceNumberResult = await ResolveInvoiceNumberAsync(createRequest.InvoiceNumber, createRequest.InvoiceDate, cancellationToken);
         if (!invoiceNumberResult.Succeeded)
-            return ServiceResult<SalesInvoiceDetailsResponse>.Failure(invoiceNumberResult.StatusCode ?? StatusCodes.Status400BadRequest, invoiceNumberResult.ErrorMessage ?? "Failed to generate invoice number.");
+            return ServiceResult<IEntityResponse<SalesInvoice>>.Failure(invoiceNumberResult.StatusCode ?? StatusCodes.Status400BadRequest, invoiceNumberResult.ErrorMessage ?? "Failed to generate invoice number.");
 
         var normalized = invoiceNumberResult.Value!;
-        if (await dbContext.SalesInvoices.AnyAsync(x => x.TenantId == currentTenantProvider.TenantId.Value && x.InvoiceNumber.ToUpper() == normalized, cancellationToken))
-            return ServiceResult<SalesInvoiceDetailsResponse>.Failure(StatusCodes.Status409Conflict, "A sales invoice with the same number already exists.");
+        if (await context.SalesInvoices.GetByTenant(tenantId.Value)
+                .AnyAsync(x => x.InvoiceNumber.ToUpper() == normalized, cancellationToken))
+            return ServiceResult<IEntityResponse<SalesInvoice>>.Failure(StatusCodes.Status409Conflict, "A sales invoice with the same number already exists.");
 
-        var invoice = request.Adapt<SalesInvoice>();
-        invoice.TenantId = currentTenantProvider.TenantId.Value;
+        var invoice = createRequest.Adapt<SalesInvoice>();
+        invoice.TenantId = tenantId.Value;
         invoice.InvoiceNumber = normalized;
         invoice.CustomerId = effectiveCustomerId;
         invoice.CurrencyCode = effectiveCurrencyCode.Trim().ToUpperInvariant();
         invoice.DueDate = dueDate;
-        invoice.Notes = NormalizeOptional(request.Notes);
+        invoice.Notes = NormalizeOptional(createRequest.Notes);
         invoice.Subtotal = 0m;
         invoice.TaxTotal = 0m;
         invoice.GrandTotal = 0m;
@@ -79,7 +104,7 @@ public class SalesInvoiceCommandService(
                 .Where(x => x.IsActive)
                 .Select(line => new SalesInvoiceLine
                 {
-                    TenantId = currentTenantProvider.TenantId.Value,
+                    TenantId = tenantId.Value,
                     SalesInvoiceId = invoice.Id,
                     ProductId = line.ProductId,
                     Quantity = line.Quantity,
@@ -92,74 +117,84 @@ public class SalesInvoiceCommandService(
             RecalcTotals(invoice);
         }
 
-        dbContext.SalesInvoices.Add(invoice);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return ServiceResult<SalesInvoiceDetailsResponse>.Success(invoice.Adapt<SalesInvoiceDetailsResponse>());
+        context.SalesInvoices.Add(invoice);
+        await context.SaveChangesAsync(cancellationToken);
+        return ServiceResult<IEntityResponse<SalesInvoice>>.Success(invoice.Adapt<SalesInvoiceDetailsResponse>());
     }
 
-    public async Task<ServiceResult<SalesInvoiceDetailsResponse>> UpdateAsync(Guid salesInvoiceId, UpdateSalesInvoiceRequest request, CancellationToken cancellationToken = default)
+    public override async Task<ServiceResult<IEntityResponse<SalesInvoice>>> UpdateAsync(Guid salesInvoiceId, IUpdateInput<SalesInvoice> request, AppDbContext context, CancellationToken cancellationToken = default)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
-            return ServiceResult<SalesInvoiceDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+        var tenantId = TryGetTenantId();
+        if (!tenantId.HasValue)
+            return ServiceResult<IEntityResponse<SalesInvoice>>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
 
-        var validation = Validate(request.InvoiceNumber, request.CustomerId, request.CurrencyCode, requireInvoiceNumber: true);
+        var updateRequest = (UpdateSalesInvoiceRequest)request;
+
+        var validation = Validate(updateRequest.InvoiceNumber, updateRequest.CustomerId, updateRequest.CurrencyCode, requireInvoiceNumber: true);
         if (validation.Count > 0)
-            return ServiceResult<SalesInvoiceDetailsResponse>.ValidationFailure(validation);
+            return ServiceResult<IEntityResponse<SalesInvoice>>.ValidationFailure(validation);
 
-        var invoice = await dbContext.SalesInvoices.Include(x => x.Lines).FirstOrDefaultAsync(x => x.Id == salesInvoiceId, cancellationToken);
+        var invoice = await context.SalesInvoices.GetByTenant(tenantId.Value)
+            .Include(x => x.Lines)
+            .FirstOrDefaultAsync(x => x.Id == salesInvoiceId, cancellationToken);
         if (invoice is null)
-            return ServiceResult<SalesInvoiceDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Sales invoice not found.");
+            return ServiceResult<IEntityResponse<SalesInvoice>>.Failure(StatusCodes.Status404NotFound, "Sales invoice not found.");
 
         if (invoice.PostedAtUtc.HasValue || invoice.ReversedAtUtc.HasValue)
-            return ServiceResult<SalesInvoiceDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "A posted or reversed invoice cannot be modified.");
+            return ServiceResult<IEntityResponse<SalesInvoice>>.Failure(StatusCodes.Status400BadRequest, "A posted or reversed invoice cannot be modified.");
 
-        if (!await dbContext.Customers.AnyAsync(x => x.Id == request.CustomerId, cancellationToken))
-            return ServiceResult<SalesInvoiceDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Customer not found.");
+        if (!await context.Customers.GetByTenant(tenantId.Value)
+                .AnyAsync(x => x.Id == updateRequest.CustomerId, cancellationToken))
+            return ServiceResult<IEntityResponse<SalesInvoice>>.Failure(StatusCodes.Status400BadRequest, "Customer not found.");
 
-        DateOnly dueDate = request.DueDate;
-        if (request.PaymentTermId.HasValue)
+        DateOnly dueDate = updateRequest.DueDate;
+        if (updateRequest.PaymentTermId.HasValue)
         {
-            var term = await dbContext.PaymentTerms.FindAsync([request.PaymentTermId.Value], cancellationToken);
+            var term = await context.PaymentTerms.FindAsync([updateRequest.PaymentTermId.Value], cancellationToken);
             if (term is null)
-                return ServiceResult<SalesInvoiceDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Payment term not found.");
-            dueDate = request.InvoiceDate.AddDays(term.DaysDue);
+                return ServiceResult<IEntityResponse<SalesInvoice>>.Failure(StatusCodes.Status400BadRequest, "Payment term not found.");
+            dueDate = updateRequest.InvoiceDate.AddDays(term.DaysDue);
         }
 
-        var normalized = request.InvoiceNumber.Trim().ToUpperInvariant();
-        if (await dbContext.SalesInvoices.AnyAsync(x => x.Id != salesInvoiceId && x.TenantId == currentTenantProvider.TenantId.Value && x.InvoiceNumber.ToUpper() == normalized, cancellationToken))
-            return ServiceResult<SalesInvoiceDetailsResponse>.Failure(StatusCodes.Status409Conflict, "A sales invoice with the same number already exists.");
+        var normalized = updateRequest.InvoiceNumber.Trim().ToUpperInvariant();
+        if (await context.SalesInvoices.GetByTenant(tenantId.Value)
+                .AnyAsync(x => x.Id != salesInvoiceId && x.InvoiceNumber.ToUpper() == normalized, cancellationToken))
+            return ServiceResult<IEntityResponse<SalesInvoice>>.Failure(StatusCodes.Status409Conflict, "A sales invoice with the same number already exists.");
 
-        request.Adapt(invoice);
+        updateRequest.Adapt(invoice);
         invoice.InvoiceNumber = normalized;
-        invoice.CurrencyCode = request.CurrencyCode.Trim().ToUpperInvariant();
+        invoice.CurrencyCode = updateRequest.CurrencyCode.Trim().ToUpperInvariant();
         invoice.DueDate = dueDate;
-        invoice.Notes = NormalizeOptional(request.Notes);
+        invoice.Notes = NormalizeOptional(updateRequest.Notes);
         RecalcTotals(invoice);
 
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return ServiceResult<SalesInvoiceDetailsResponse>.Success(invoice.Adapt<SalesInvoiceDetailsResponse>());
+        await context.SaveChangesAsync(cancellationToken);
+        return ServiceResult<IEntityResponse<SalesInvoice>>.Success(invoice.Adapt<SalesInvoiceDetailsResponse>());
     }
 
-    public async Task<ServiceResult<bool>> DeleteAsync(Guid salesInvoiceId, CancellationToken cancellationToken = default)
+    public override async Task<ServiceResult<bool>> DeleteAsync(Guid salesInvoiceId, AppDbContext context, CancellationToken cancellationToken = default)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
+        var tenantId = TryGetTenantId();
+        if (!tenantId.HasValue)
             return ServiceResult<bool>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
 
-        var invoice = await dbContext.SalesInvoices.FirstOrDefaultAsync(x => x.Id == salesInvoiceId, cancellationToken);
+        var invoice = await context.SalesInvoices.GetByTenant(tenantId.Value)
+            .FirstOrDefaultAsync(x => x.Id == salesInvoiceId, cancellationToken);
         if (invoice is null)
             return ServiceResult<bool>.Failure(StatusCodes.Status404NotFound, "Sales invoice not found.");
 
         if (invoice.Status == InvoiceStatus.Cancelled || invoice.PostedAtUtc.HasValue || invoice.ReversedAtUtc.HasValue)
             return ServiceResult<bool>.Failure(StatusCodes.Status400BadRequest, "Only draft or unposted invoices can be deleted.");
 
-        dbContext.SalesInvoices.Remove(invoice);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        context.SalesInvoices.Remove(invoice);
+        await context.SaveChangesAsync(cancellationToken);
         return ServiceResult<bool>.Success(true);
     }
 
     public async Task<ServiceResult<SalesInvoiceDetailsResponse>> ApplyPaymentAsync(Guid salesInvoiceId, decimal amount, CancellationToken cancellationToken = default)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
+        var tenantId = TryGetTenantId();
+        if (!tenantId.HasValue)
             return ServiceResult<SalesInvoiceDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
 
         if (amount <= 0m)
@@ -170,7 +205,8 @@ public class SalesInvoiceCommandService(
             });
         }
 
-        var invoice = await dbContext.SalesInvoices.FirstOrDefaultAsync(x => x.Id == salesInvoiceId, cancellationToken);
+        var invoice = await dbContext.SalesInvoices.GetByTenant(tenantId.Value)
+            .FirstOrDefaultAsync(x => x.Id == salesInvoiceId, cancellationToken);
         if (invoice is null)
             return ServiceResult<SalesInvoiceDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Sales invoice not found.");
 
@@ -186,6 +222,21 @@ public class SalesInvoiceCommandService(
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return ServiceResult<SalesInvoiceDetailsResponse>.Success(invoice.Adapt<SalesInvoiceDetailsResponse>());
+    }
+
+    protected override IEntityResponse<SalesInvoice> BuildEntityResponse(SalesInvoice entity)
+    {
+        return entity.Adapt<SalesInvoiceDetailsResponse>();
+    }
+
+    protected override Task<SalesInvoice> GetUpdatedDbObjectAsync(Guid id, IUpdateInput<SalesInvoice> input, AppDbContext context, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult<SalesInvoice>(null!);
+    }
+
+    protected override Task<SalesInvoice> GetDeleteObjectAsync(Guid id, AppDbContext context, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult<SalesInvoice>(null!);
     }
 
     internal static void RecalcTotals(SalesInvoice invoice)
@@ -217,4 +268,22 @@ public class SalesInvoiceCommandService(
     }
 
     private static string? NormalizeOptional(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static ServiceResult<SalesInvoiceDetailsResponse> MapResult(ServiceResult<IEntityResponse<SalesInvoice>> result)
+    {
+        if (result.Succeeded)
+        {
+            var mapped = result.Value!.Adapt<SalesInvoiceDetailsResponse>();
+            return ServiceResult<SalesInvoiceDetailsResponse>.Success(mapped);
+        }
+
+        if (result.Validation is not null)
+        {
+            return ServiceResult<SalesInvoiceDetailsResponse>.ValidationFailure(result.Validation.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+        }
+
+        return ServiceResult<SalesInvoiceDetailsResponse>.Failure(
+            result.StatusCode ?? StatusCodes.Status400BadRequest,
+            result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
+    }
 }

@@ -1,7 +1,9 @@
+using Mapster;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using VexorionERP.Contracts;
+using VexorionERP.Database;
 using VexorionERP.Models;
 using VexorionERP.Services;
 
@@ -11,8 +13,9 @@ namespace VexorionERP;
 [Route("api/sales-invoices")]
 [Authorize]
 public class SalesInvoicesController(
-    ISalesInvoiceCommandService salesInvoiceCommandService,
+    ICommandService<SalesInvoice> salesInvoiceCommandService,
     ISalesInvoiceQueryService salesInvoiceQueryService,
+    AppDbContext dbContext,
     IInvoiceApprovalService invoiceApprovalService) : ServiceResultControllerBase
 {
     [HttpGet]
@@ -35,25 +38,48 @@ public class SalesInvoicesController(
     [Authorize(Policy = AppPermissions.Sales.Manage)]
     public async Task<ActionResult<SalesInvoiceDetailsResponse>> Create([FromBody] CreateSalesInvoiceRequest request)
     {
-        var result = await salesInvoiceCommandService.CreateAsync(request, HttpContext.RequestAborted);
-        if (!result.Succeeded) return ToActionResult(result);
-        return CreatedAtAction(nameof(GetById), new { salesInvoiceId = result.Value!.Id }, result.Value);
+        var result = await salesInvoiceCommandService.CreateAsync(request, dbContext, HttpContext.RequestAborted);
+        if (!result.Succeeded)
+        {
+            return ToActionResult(MapResult(result));
+        }
+
+        var mapped = result.Value!.Adapt<SalesInvoiceDetailsResponse>();
+        return CreatedAtAction(nameof(GetById), new { salesInvoiceId = mapped.Id }, mapped);
     }
 
     [HttpPut("{salesInvoiceId:guid}")]
     [Authorize(Policy = AppPermissions.Sales.Manage)]
     public async Task<ActionResult<SalesInvoiceDetailsResponse>> Update(Guid salesInvoiceId, [FromBody] UpdateSalesInvoiceRequest request)
     {
-        var result = await salesInvoiceCommandService.UpdateAsync(salesInvoiceId, request, HttpContext.RequestAborted);
-        return ToActionResult(result);
+        var result = await salesInvoiceCommandService.UpdateAsync(salesInvoiceId, request, dbContext, HttpContext.RequestAborted);
+        return ToActionResult(MapResult(result));
     }
 
     [HttpDelete("{salesInvoiceId:guid}")]
     [Authorize(Policy = AppPermissions.Sales.Manage)]
     public async Task<ActionResult> Delete(Guid salesInvoiceId)
     {
-        var result = await salesInvoiceCommandService.DeleteAsync(salesInvoiceId, HttpContext.RequestAborted);
+        var result = await salesInvoiceCommandService.DeleteAsync(salesInvoiceId, dbContext, HttpContext.RequestAborted);
         return ToActionResult(result);
+    }
+
+    private ServiceResult<SalesInvoiceDetailsResponse> MapResult(ServiceResult<IEntityResponse<SalesInvoice>> result)
+    {
+        if (result.Succeeded)
+        {
+            var mapped = result.Value!.Adapt<SalesInvoiceDetailsResponse>();
+            return ServiceResult<SalesInvoiceDetailsResponse>.Success(mapped);
+        }
+
+        if (result.Validation is not null)
+        {
+            return ServiceResult<SalesInvoiceDetailsResponse>.ValidationFailure(result.Validation.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+        }
+
+        return ServiceResult<SalesInvoiceDetailsResponse>.Failure(
+            result.StatusCode ?? StatusCodes.Status400BadRequest,
+            result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
     }
 
     [HttpPost("{salesInvoiceId:guid}/approval/request")]

@@ -1,6 +1,8 @@
+using VexorionERP.Models;
+
 namespace VexorionERP.Contracts;
 
-public class CreateSalesShipmentRequest
+public class CreateSalesShipmentRequest : ICreateInput<SalesShipment>
 {
     public string ShipmentNumber { get; set; } = string.Empty;
     public Guid SalesOrderId { get; set; }

@@ -1,8 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using VexorionERP.Models;
 
 namespace VexorionERP.Contracts;
 
-public class CreateStockCountRequest
+public class CreateStockCountRequest : ICreateInput<StockCount>
 {
     [Required]
     public string CountNumber { get; set; } = string.Empty;

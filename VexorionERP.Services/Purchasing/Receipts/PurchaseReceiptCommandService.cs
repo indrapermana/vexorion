@@ -11,98 +11,108 @@ namespace VexorionERP.Services;
 public class PurchaseReceiptCommandService(
     AppDbContext dbContext,
     ICurrentTenantProvider currentTenantProvider,
-    IInventoryMovementPostingService inventoryMovementPostingService) : IPurchaseReceiptCommandService
+    IInventoryMovementPostingService inventoryMovementPostingService) : BaseCommandService<PurchaseReceipt>(currentTenantProvider), IPurchaseReceiptPostingService
 {
     public async Task<ServiceResult<PurchaseReceiptDetailsResponse>> CreateAsync(CreatePurchaseReceiptRequest request, CancellationToken cancellationToken = default)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
+        var result = await CreateAsync((ICreateInput<PurchaseReceipt>)request, dbContext, cancellationToken);
+        return MapResult(result);
+    }
+
+    public Task<ServiceResult<bool>> DeleteAsync(Guid receiptId, CancellationToken cancellationToken = default)
+        => DeleteAsync(receiptId, dbContext, cancellationToken);
+
+    public override async Task<ServiceResult<IEntityResponse<PurchaseReceipt>>> CreateAsync(ICreateInput<PurchaseReceipt> request, AppDbContext context, CancellationToken cancellationToken = default)
+    {
+        var tenantId = TryGetTenantId();
+        if (!tenantId.HasValue)
         {
-            return ServiceResult<PurchaseReceiptDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+            return ServiceResult<IEntityResponse<PurchaseReceipt>>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
         }
 
-        var tenantId = currentTenantProvider.TenantId.Value;
+        var createRequest = (CreatePurchaseReceiptRequest)request;
 
-        if (string.IsNullOrWhiteSpace(request.ReceiptNumber))
+        if (string.IsNullOrWhiteSpace(createRequest.ReceiptNumber))
         {
-            return ServiceResult<PurchaseReceiptDetailsResponse>.ValidationFailure(
-                new Dictionary<string, string[]> { { nameof(request.ReceiptNumber), ["Receipt number is required."] } });
+            return ServiceResult<IEntityResponse<PurchaseReceipt>>.ValidationFailure(
+                new Dictionary<string, string[]> { { nameof(createRequest.ReceiptNumber), ["Receipt number is required."] } });
         }
 
-        if (request.Lines is null || request.Lines.Count == 0)
+        if (createRequest.Lines is null || createRequest.Lines.Count == 0)
         {
-            return ServiceResult<PurchaseReceiptDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "At least one receipt line is required.");
+            return ServiceResult<IEntityResponse<PurchaseReceipt>>.Failure(StatusCodes.Status400BadRequest, "At least one receipt line is required.");
         }
 
-        var order = await dbContext.PurchaseOrders
+        var order = await context.PurchaseOrders.GetByTenant(tenantId.Value)
             .Include(x => x.Lines)
-            .FirstOrDefaultAsync(x => x.Id == request.PurchaseOrderId, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Id == createRequest.PurchaseOrderId, cancellationToken);
 
         if (order is null)
         {
-            return ServiceResult<PurchaseReceiptDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Purchase order not found.");
+            return ServiceResult<IEntityResponse<PurchaseReceipt>>.Failure(StatusCodes.Status400BadRequest, "Purchase order not found.");
         }
 
         if (order.Status == DocumentStatus.Cancelled)
         {
-            return ServiceResult<PurchaseReceiptDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Cannot create a receipt for a cancelled purchase order.");
+            return ServiceResult<IEntityResponse<PurchaseReceipt>>.Failure(StatusCodes.Status400BadRequest, "Cannot create a receipt for a cancelled purchase order.");
         }
 
         if (order.Status == DocumentStatus.Completed)
         {
-            return ServiceResult<PurchaseReceiptDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Purchase order is already fully received.");
+            return ServiceResult<IEntityResponse<PurchaseReceipt>>.Failure(StatusCodes.Status400BadRequest, "Purchase order is already fully received.");
         }
 
-        if (!await dbContext.Warehouses.AnyAsync(x => x.Id == request.WarehouseId, cancellationToken))
+        if (!await context.Warehouses.GetByTenant(tenantId.Value).AnyAsync(x => x.Id == createRequest.WarehouseId, cancellationToken))
         {
-            return ServiceResult<PurchaseReceiptDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Warehouse not found.");
+            return ServiceResult<IEntityResponse<PurchaseReceipt>>.Failure(StatusCodes.Status400BadRequest, "Warehouse not found.");
         }
 
-        var normalizedNumber = request.ReceiptNumber.Trim().ToUpperInvariant();
-        var exists = await dbContext.PurchaseReceipts.AnyAsync(
-            x => x.TenantId == tenantId && x.ReceiptNumber.ToUpper() == normalizedNumber, cancellationToken);
+        var normalizedNumber = createRequest.ReceiptNumber.Trim().ToUpperInvariant();
+        var exists = await context.PurchaseReceipts.GetByTenant(tenantId.Value)
+            .AnyAsync(x => x.ReceiptNumber.ToUpper() == normalizedNumber, cancellationToken);
         if (exists)
         {
-            return ServiceResult<PurchaseReceiptDetailsResponse>.Failure(StatusCodes.Status409Conflict, "A purchase receipt with the same number already exists.");
+            return ServiceResult<IEntityResponse<PurchaseReceipt>>.Failure(StatusCodes.Status409Conflict, "A purchase receipt with the same number already exists.");
         }
 
         // Validate over-receipt
         var orderLinesById = order.Lines.Where(x => x.IsActive).ToDictionary(x => x.Id);
-        foreach (var lineRequest in request.Lines)
+        foreach (var lineRequest in createRequest.Lines)
         {
             if (lineRequest.ReceivedQuantity <= 0)
             {
-                return ServiceResult<PurchaseReceiptDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Received quantity must be greater than zero.");
+                return ServiceResult<IEntityResponse<PurchaseReceipt>>.Failure(StatusCodes.Status400BadRequest, "Received quantity must be greater than zero.");
             }
 
             if (!orderLinesById.TryGetValue(lineRequest.PurchaseOrderLineId, out var orderLine))
             {
-                return ServiceResult<PurchaseReceiptDetailsResponse>.Failure(StatusCodes.Status400BadRequest, $"Purchase order line {lineRequest.PurchaseOrderLineId} not found.");
+                return ServiceResult<IEntityResponse<PurchaseReceipt>>.Failure(StatusCodes.Status400BadRequest, $"Purchase order line {lineRequest.PurchaseOrderLineId} not found.");
             }
 
             var newTotal = orderLine.ReceivedQuantity + lineRequest.ReceivedQuantity;
             if (newTotal > orderLine.Quantity)
             {
-                return ServiceResult<PurchaseReceiptDetailsResponse>.Failure(StatusCodes.Status400BadRequest,
+                return ServiceResult<IEntityResponse<PurchaseReceipt>>.Failure(StatusCodes.Status400BadRequest,
                     $"Over-receipt not allowed. Order line allows {orderLine.Quantity - orderLine.ReceivedQuantity} more units to be received.");
             }
         }
 
         var receipt = new PurchaseReceipt
         {
-            TenantId = tenantId,
+            TenantId = tenantId.Value,
             ReceiptNumber = normalizedNumber,
-            PurchaseOrderId = request.PurchaseOrderId,
-            WarehouseId = request.WarehouseId,
-            ReceiptDate = request.ReceiptDate,
+            PurchaseOrderId = createRequest.PurchaseOrderId,
+            WarehouseId = createRequest.WarehouseId,
+            ReceiptDate = createRequest.ReceiptDate,
             Status = DocumentStatus.Draft,
-            Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim(),
+            Notes = string.IsNullOrWhiteSpace(createRequest.Notes) ? null : createRequest.Notes.Trim(),
         };
 
-        foreach (var lineRequest in request.Lines)
+        foreach (var lineRequest in createRequest.Lines)
         {
             receipt.Lines.Add(new PurchaseReceiptLine
             {
-                TenantId = tenantId,
+                TenantId = tenantId.Value,
                 PurchaseOrderLineId = lineRequest.PurchaseOrderLineId,
                 ProductId = lineRequest.ProductId,
                 ReceivedQuantity = lineRequest.ReceivedQuantity,
@@ -110,16 +120,22 @@ public class PurchaseReceiptCommandService(
             });
         }
 
-        dbContext.PurchaseReceipts.Add(receipt);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        context.PurchaseReceipts.Add(receipt);
+        await context.SaveChangesAsync(cancellationToken);
 
         var response = await BuildDetailsResponseAsync(receipt.Id, cancellationToken);
-        return ServiceResult<PurchaseReceiptDetailsResponse>.Success(response!);
+        return ServiceResult<IEntityResponse<PurchaseReceipt>>.Success(response!);
     }
 
     public async Task<ServiceResult<PurchaseReceiptDetailsResponse>> PostAsync(Guid receiptId, CancellationToken cancellationToken = default)
     {
-        var receipt = await dbContext.PurchaseReceipts
+        var tenantId = TryGetTenantId();
+        if (!tenantId.HasValue)
+        {
+            return ServiceResult<PurchaseReceiptDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+        }
+
+        var receipt = await dbContext.PurchaseReceipts.GetByTenant(tenantId.Value)
             .Include(x => x.Lines)
             .FirstOrDefaultAsync(x => x.Id == receiptId, cancellationToken);
 
@@ -133,7 +149,7 @@ public class PurchaseReceiptCommandService(
             return ServiceResult<PurchaseReceiptDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Only draft receipts can be posted.");
         }
 
-        var order = await dbContext.PurchaseOrders
+        var order = await dbContext.PurchaseOrders.GetByTenant(tenantId.Value)
             .Include(x => x.Lines)
             .FirstOrDefaultAsync(x => x.Id == receipt.PurchaseOrderId, cancellationToken);
 
@@ -196,9 +212,15 @@ public class PurchaseReceiptCommandService(
         return ServiceResult<PurchaseReceiptDetailsResponse>.Success(response!);
     }
 
-    public async Task<ServiceResult<bool>> DeleteAsync(Guid receiptId, CancellationToken cancellationToken = default)
+    public override async Task<ServiceResult<bool>> DeleteAsync(Guid receiptId, AppDbContext context, CancellationToken cancellationToken = default)
     {
-        var receipt = await dbContext.PurchaseReceipts
+        var tenantId = TryGetTenantId();
+        if (!tenantId.HasValue)
+        {
+            return ServiceResult<bool>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+        }
+
+        var receipt = await context.PurchaseReceipts.GetByTenant(tenantId.Value)
             .FirstOrDefaultAsync(x => x.Id == receiptId, cancellationToken);
 
         if (receipt is null)
@@ -212,8 +234,23 @@ public class PurchaseReceiptCommandService(
         }
 
         receipt.IsActive = false;
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
         return ServiceResult<bool>.Success(true);
+    }
+
+    protected override Task<PurchaseReceipt> GetUpdatedDbObjectAsync(Guid id, IUpdateInput<PurchaseReceipt> input, AppDbContext context, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult<PurchaseReceipt>(null!);
+    }
+
+    protected override Task<PurchaseReceipt> GetDeleteObjectAsync(Guid id, AppDbContext context, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult<PurchaseReceipt>(null!);
+    }
+
+    protected override IEntityResponse<PurchaseReceipt> BuildEntityResponse(PurchaseReceipt entity)
+    {
+        return entity.Adapt<PurchaseReceiptDetailsResponse>();
     }
 
     private async Task<PurchaseReceiptDetailsResponse?> BuildDetailsResponseAsync(Guid receiptId, CancellationToken cancellationToken)
@@ -249,5 +286,23 @@ public class PurchaseReceiptCommandService(
                 LineTotal = l.ReceivedQuantity * l.UnitCost,
             }).ToList(),
         };
+    }
+
+    private static ServiceResult<PurchaseReceiptDetailsResponse> MapResult(ServiceResult<IEntityResponse<PurchaseReceipt>> result)
+    {
+        if (result.Succeeded)
+        {
+            var mapped = result.Value!.Adapt<PurchaseReceiptDetailsResponse>();
+            return ServiceResult<PurchaseReceiptDetailsResponse>.Success(mapped);
+        }
+
+        if (result.Validation is not null)
+        {
+            return ServiceResult<PurchaseReceiptDetailsResponse>.ValidationFailure(result.Validation.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+        }
+
+        return ServiceResult<PurchaseReceiptDetailsResponse>.Failure(
+            result.StatusCode ?? StatusCodes.Status400BadRequest,
+            result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
     }
 }

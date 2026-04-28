@@ -1,6 +1,8 @@
+using VexorionERP.Models;
+
 namespace VexorionERP.Contracts;
 
-public class CreatePurchaseReceiptRequest
+public class CreatePurchaseReceiptRequest : ICreateInput<PurchaseReceipt>
 {
     public string ReceiptNumber { get; set; } = string.Empty;
     public Guid PurchaseOrderId { get; set; }

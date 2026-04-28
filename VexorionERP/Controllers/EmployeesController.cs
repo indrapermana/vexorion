@@ -1,6 +1,8 @@
+using Mapster;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VexorionERP.Contracts;
+using VexorionERP.Database;
 using VexorionERP.Models;
 using VexorionERP.Services;
 
@@ -10,8 +12,9 @@ namespace VexorionERP;
 [Route("api/employees")]
 [Authorize]
 public class EmployeesController(
-    IEmployeeCommandService employeeCommandService,
-    IEmployeeQueryService employeeQueryService) : ServiceResultControllerBase
+    ICommandService<Employee> employeeCommandService,
+    IEmployeeQueryService employeeQueryService,
+    AppDbContext dbContext) : ServiceResultControllerBase
 {
     [HttpGet]
     [Authorize(Policy = AppPermissions.Organization.View)]
@@ -33,28 +36,47 @@ public class EmployeesController(
     [Authorize(Policy = AppPermissions.Organization.Manage)]
     public async Task<ActionResult<EmployeeDetailsResponse>> Create([FromBody] CreateEmployeeRequest request)
     {
-        var result = await employeeCommandService.CreateAsync(request, HttpContext.RequestAborted);
+        var result = await employeeCommandService.CreateAsync(request, dbContext, HttpContext.RequestAborted);
         if (!result.Succeeded)
         {
-            return ToActionResult(result);
+            return ToActionResult(MapResult(result));
         }
 
-        return CreatedAtAction(nameof(GetById), new { employeeId = result.Value!.Id }, result.Value);
+        var mapped = result.Value!.Adapt<EmployeeDetailsResponse>();
+        return CreatedAtAction(nameof(GetById), new { employeeId = mapped.Id }, mapped);
     }
 
     [HttpPut("{employeeId:guid}")]
     [Authorize(Policy = AppPermissions.Organization.Manage)]
     public async Task<ActionResult<EmployeeDetailsResponse>> Update(Guid employeeId, [FromBody] UpdateEmployeeRequest request)
     {
-        var result = await employeeCommandService.UpdateAsync(employeeId, request, HttpContext.RequestAborted);
-        return ToActionResult(result);
+        var result = await employeeCommandService.UpdateAsync(employeeId, request, dbContext, HttpContext.RequestAborted);
+        return ToActionResult(MapResult(result));
     }
 
     [HttpDelete("{employeeId:guid}")]
     [Authorize(Policy = AppPermissions.Organization.Manage)]
     public async Task<ActionResult> Delete(Guid employeeId)
     {
-        var result = await employeeCommandService.DeleteAsync(employeeId, HttpContext.RequestAborted);
+        var result = await employeeCommandService.DeleteAsync(employeeId, dbContext, HttpContext.RequestAborted);
         return ToActionResult(result);
+    }
+
+    private ServiceResult<EmployeeDetailsResponse> MapResult(ServiceResult<IEntityResponse<Employee>> result)
+    {
+        if (result.Succeeded)
+        {
+            var mapped = result.Value!.Adapt<EmployeeDetailsResponse>();
+            return ServiceResult<EmployeeDetailsResponse>.Success(mapped);
+        }
+
+        if (result.Validation is not null)
+        {
+            return ServiceResult<EmployeeDetailsResponse>.ValidationFailure(result.Validation.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+        }
+
+        return ServiceResult<EmployeeDetailsResponse>.Failure(
+            result.StatusCode ?? StatusCodes.Status400BadRequest,
+            result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
     }
 }

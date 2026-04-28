@@ -9,89 +9,139 @@ using VexorionERP.Services;
 namespace VexorionERP.Services;
 
 public class CompanyCommandService(
-    AppDbContext dbContext,
-    ICurrentTenantProvider currentTenantProvider) : ICompanyCommandService
+    ICurrentTenantProvider currentTenantProvider) : BaseCommandService<Company>(currentTenantProvider)
 {
-    public async Task<ServiceResult<CompanyDetailsResponse>> CreateAsync(CreateCompanyRequest request, CancellationToken cancellationToken = default)
+    protected override bool ValidateAddInput(ICreateInput<Company> input, out IDictionary<string, string[]>? errors, out string? errorMessage)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
-        {
-            return ServiceResult<CompanyDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
-        }
+        errors = null;
+        errorMessage = null;
 
+        CreateCompanyRequest request = (CreateCompanyRequest)input;
         var validation = Validate(request.Name, request.Code);
         if (validation.Count > 0)
         {
-            return ServiceResult<CompanyDetailsResponse>.ValidationFailure(validation);
+            errors = validation;
+            return false;
         }
 
-        var normalizedCode = request.Code.Trim().ToUpperInvariant();
-        var codeExists = await dbContext.Companies.AnyAsync(
-            x => x.TenantId == currentTenantProvider.TenantId.Value && x.Code.ToUpper() == normalizedCode,
-            cancellationToken);
-
-        if (codeExists)
-        {
-            return ServiceResult<CompanyDetailsResponse>.Failure(StatusCodes.Status409Conflict, "A company with the same code already exists.");
-        }
-
-        var company = request.Adapt<Company>();
-        company.TenantId = currentTenantProvider.TenantId.Value;
-        Normalize(company);
-
-        dbContext.Companies.Add(company);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return ServiceResult<CompanyDetailsResponse>.Success(company.Adapt<CompanyDetailsResponse>());
+        return base.ValidateAddInput(input, out errors, out errorMessage);
     }
 
-    public async Task<ServiceResult<CompanyDetailsResponse>> UpdateAsync(Guid companyId, UpdateCompanyRequest request, CancellationToken cancellationToken = default)
+    protected override Task<ServiceResult<IEntityResponse<Company>>?> ValidateCreateBusinessRulesAsync(
+        ICreateInput<Company> input,
+        AppDbContext context,
+        CancellationToken cancellationToken = default)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
-        {
-            return ServiceResult<CompanyDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
-        }
+        CreateCompanyRequest request = (CreateCompanyRequest)input;
+        var tenantId = TryGetTenantId();
 
-        var validation = Validate(request.Name, request.Code);
-        if (validation.Count > 0)
+        if (!tenantId.HasValue)
         {
-            return ServiceResult<CompanyDetailsResponse>.ValidationFailure(validation);
-        }
-
-        var company = await dbContext.Companies.FirstOrDefaultAsync(x => x.Id == companyId, cancellationToken);
-        if (company is null)
-        {
-            return ServiceResult<CompanyDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Company not found.");
+            return Task.FromResult<ServiceResult<IEntityResponse<Company>>?>(null);
         }
 
         var normalizedCode = request.Code.Trim().ToUpperInvariant();
-        var codeExists = await dbContext.Companies.AnyAsync(
-            x => x.Id != companyId && x.TenantId == currentTenantProvider.TenantId.Value && x.Code.ToUpper() == normalizedCode,
-            cancellationToken);
+        var exists = context.Companies.GetByTenant(tenantId.Value)
+            .Any(x => x.Code.ToUpper() == normalizedCode);
 
-        if (codeExists)
+        if (exists)
         {
-            return ServiceResult<CompanyDetailsResponse>.Failure(StatusCodes.Status409Conflict, "A company with the same code already exists.");
+            var conflict = ServiceResult<IEntityResponse<Company>>.Failure(StatusCodes.Status409Conflict, "A company with the same code already exists.");
+            return Task.FromResult<ServiceResult<IEntityResponse<Company>>?>(conflict);
+        }
+
+        return Task.FromResult<ServiceResult<IEntityResponse<Company>>?>(null);
+    }
+
+    protected override bool ValidateUpdateInput(IUpdateInput<Company> input, out IDictionary<string, string[]>? errors, out string? errorMessage)
+    {
+        errors = null;
+        errorMessage = null;
+
+        UpdateCompanyRequest request = (UpdateCompanyRequest)input;
+        var validation = Validate(request.Name, request.Code);
+        if (validation.Count > 0)
+        {
+            errors = validation;
+            return false;
+        }
+
+        return base.ValidateUpdateInput(input, out errors, out errorMessage);
+    }
+
+    protected override async Task<ServiceResult<IEntityResponse<Company>>?> ValidateUpdateBusinessRulesAsync(
+        Guid id,
+        IUpdateInput<Company> input,
+        AppDbContext context,
+        CancellationToken cancellationToken = default)
+    {
+        UpdateCompanyRequest request = (UpdateCompanyRequest)input;
+        var tenantId = TryGetTenantId();
+
+        if (!tenantId.HasValue)
+        {
+            return null;
+        }
+
+        var normalizedCode = request.Code.Trim().ToUpperInvariant();
+        var exists = await context.Companies.GetByTenant(tenantId.Value)
+            .AnyAsync(x => x.Id != id && x.Code.ToUpper() == normalizedCode, cancellationToken);
+
+        if (exists)
+        {
+            return ServiceResult<IEntityResponse<Company>>.Failure(StatusCodes.Status409Conflict, "A company with the same code already exists.");
+        }
+
+        return null;
+    }
+
+    public override async Task<Company> GetAddToDbObjectAsync(ICreateInput<Company> input, AppDbContext context, CancellationToken cancellationToken = default)
+    {
+        var created = await base.GetAddToDbObjectAsync(input, context, cancellationToken);
+        Normalize(created);
+        return created;
+    }
+
+    protected override async Task<Company> GetUpdatedDbObjectAsync(Guid id, IUpdateInput<Company> input, AppDbContext context, CancellationToken cancellationToken = default)
+    {
+        UpdateCompanyRequest request = (UpdateCompanyRequest)input;
+        var tenantId = TryGetTenantId();
+
+        if (!tenantId.HasValue)
+        {
+            return null!;
+        }
+
+        var company = await context.Companies.GetByTenant(tenantId.Value)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        if (company is null)
+        {
+            return null!;
         }
 
         request.Adapt(company);
         Normalize(company);
 
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return ServiceResult<CompanyDetailsResponse>.Success(company.Adapt<CompanyDetailsResponse>());
+        return company;
     }
 
-    public async Task<ServiceResult<bool>> DeleteAsync(Guid companyId, CancellationToken cancellationToken = default)
+    protected override async Task<Company> GetDeleteObjectAsync(Guid id, AppDbContext context, CancellationToken cancellationToken = default)
     {
-        var company = await dbContext.Companies.FirstOrDefaultAsync(x => x.Id == companyId, cancellationToken);
-        if (company is null)
+        var tenantId = TryGetTenantId();
+
+        if (!tenantId.HasValue)
         {
-            return ServiceResult<bool>.Failure(StatusCodes.Status404NotFound, "Company not found.");
+            return null!;
         }
 
-        dbContext.Companies.Remove(company);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return ServiceResult<bool>.Success(true);
+        var company = await context.Companies.GetByTenant(tenantId.Value)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        return company ?? null!;
     }
+
+    protected override string GetNotFoundMessage() => "Company not found.";
 
     private static Dictionary<string, string[]> Validate(string name, string code)
     {

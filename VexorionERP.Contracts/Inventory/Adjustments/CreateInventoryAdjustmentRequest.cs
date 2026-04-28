@@ -1,8 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using VexorionERP.Models;
 
 namespace VexorionERP.Contracts;
 
-public class CreateInventoryAdjustmentRequest
+public class CreateInventoryAdjustmentRequest : ICreateInput<InventoryAdjustment>
 {
     [Required]
     public string AdjustmentNumber { get; set; } = string.Empty;

@@ -9,89 +9,139 @@ using VexorionERP.Services;
 namespace VexorionERP.Services;
 
 public class SupplierCommandService(
-    AppDbContext dbContext,
-    ICurrentTenantProvider currentTenantProvider) : ISupplierCommandService
+    ICurrentTenantProvider currentTenantProvider) : BaseCommandService<Supplier>(currentTenantProvider)
 {
-    public async Task<ServiceResult<SupplierDetailsResponse>> CreateAsync(CreateSupplierRequest request, CancellationToken cancellationToken = default)
+    protected override bool ValidateAddInput(ICreateInput<Supplier> input, out IDictionary<string, string[]>? errors, out string? errorMessage)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
-        {
-            return ServiceResult<SupplierDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
-        }
+        errors = null;
+        errorMessage = null;
 
+        CreateSupplierRequest request = (CreateSupplierRequest)input;
         var validation = Validate(request.SupplierNumber, request.Name);
         if (validation.Count > 0)
         {
-            return ServiceResult<SupplierDetailsResponse>.ValidationFailure(validation);
+            errors = validation;
+            return false;
         }
 
-        var normalizedNumber = request.SupplierNumber.Trim().ToUpperInvariant();
-        var numberExists = await dbContext.Suppliers.AnyAsync(
-            x => x.TenantId == currentTenantProvider.TenantId.Value && x.SupplierNumber.ToUpper() == normalizedNumber,
-            cancellationToken);
-
-        if (numberExists)
-        {
-            return ServiceResult<SupplierDetailsResponse>.Failure(StatusCodes.Status409Conflict, "A supplier with the same number already exists.");
-        }
-
-        var supplier = request.Adapt<Supplier>();
-        supplier.TenantId = currentTenantProvider.TenantId.Value;
-        Normalize(supplier);
-
-        dbContext.Suppliers.Add(supplier);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return ServiceResult<SupplierDetailsResponse>.Success(supplier.Adapt<SupplierDetailsResponse>());
+        return base.ValidateAddInput(input, out errors, out errorMessage);
     }
 
-    public async Task<ServiceResult<SupplierDetailsResponse>> UpdateAsync(Guid supplierId, UpdateSupplierRequest request, CancellationToken cancellationToken = default)
+    protected override Task<ServiceResult<IEntityResponse<Supplier>>?> ValidateCreateBusinessRulesAsync(
+        ICreateInput<Supplier> input,
+        AppDbContext context,
+        CancellationToken cancellationToken = default)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
-        {
-            return ServiceResult<SupplierDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
-        }
+        CreateSupplierRequest request = (CreateSupplierRequest)input;
+        var tenantId = TryGetTenantId();
 
-        var validation = Validate(request.SupplierNumber, request.Name);
-        if (validation.Count > 0)
+        if (!tenantId.HasValue)
         {
-            return ServiceResult<SupplierDetailsResponse>.ValidationFailure(validation);
-        }
-
-        var supplier = await dbContext.Suppliers.FirstOrDefaultAsync(x => x.Id == supplierId, cancellationToken);
-        if (supplier is null)
-        {
-            return ServiceResult<SupplierDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Supplier not found.");
+            return Task.FromResult<ServiceResult<IEntityResponse<Supplier>>?>(null);
         }
 
         var normalizedNumber = request.SupplierNumber.Trim().ToUpperInvariant();
-        var numberExists = await dbContext.Suppliers.AnyAsync(
-            x => x.Id != supplierId && x.TenantId == currentTenantProvider.TenantId.Value && x.SupplierNumber.ToUpper() == normalizedNumber,
-            cancellationToken);
+        var exists = context.Suppliers.GetByTenant(tenantId.Value)
+            .Any(x => x.SupplierNumber.ToUpper() == normalizedNumber);
 
-        if (numberExists)
+        if (exists)
         {
-            return ServiceResult<SupplierDetailsResponse>.Failure(StatusCodes.Status409Conflict, "A supplier with the same number already exists.");
+            var conflict = ServiceResult<IEntityResponse<Supplier>>.Failure(StatusCodes.Status409Conflict, "A supplier with the same number already exists.");
+            return Task.FromResult<ServiceResult<IEntityResponse<Supplier>>?>(conflict);
+        }
+
+        return Task.FromResult<ServiceResult<IEntityResponse<Supplier>>?>(null);
+    }
+
+    protected override bool ValidateUpdateInput(IUpdateInput<Supplier> input, out IDictionary<string, string[]>? errors, out string? errorMessage)
+    {
+        errors = null;
+        errorMessage = null;
+
+        UpdateSupplierRequest request = (UpdateSupplierRequest)input;
+        var validation = Validate(request.SupplierNumber, request.Name);
+        if (validation.Count > 0)
+        {
+            errors = validation;
+            return false;
+        }
+
+        return base.ValidateUpdateInput(input, out errors, out errorMessage);
+    }
+
+    protected override async Task<ServiceResult<IEntityResponse<Supplier>>?> ValidateUpdateBusinessRulesAsync(
+        Guid id,
+        IUpdateInput<Supplier> input,
+        AppDbContext context,
+        CancellationToken cancellationToken = default)
+    {
+        UpdateSupplierRequest request = (UpdateSupplierRequest)input;
+        var tenantId = TryGetTenantId();
+
+        if (!tenantId.HasValue)
+        {
+            return null;
+        }
+
+        var normalizedNumber = request.SupplierNumber.Trim().ToUpperInvariant();
+        var exists = await context.Suppliers.GetByTenant(tenantId.Value)
+            .AnyAsync(x => x.Id != id && x.SupplierNumber.ToUpper() == normalizedNumber, cancellationToken);
+
+        if (exists)
+        {
+            return ServiceResult<IEntityResponse<Supplier>>.Failure(StatusCodes.Status409Conflict, "A supplier with the same number already exists.");
+        }
+
+        return null;
+    }
+
+    public override async Task<Supplier> GetAddToDbObjectAsync(ICreateInput<Supplier> input, AppDbContext context, CancellationToken cancellationToken = default)
+    {
+        var created = await base.GetAddToDbObjectAsync(input, context, cancellationToken);
+        Normalize(created);
+        return created;
+    }
+
+    protected override async Task<Supplier> GetUpdatedDbObjectAsync(Guid id, IUpdateInput<Supplier> input, AppDbContext context, CancellationToken cancellationToken = default)
+    {
+        UpdateSupplierRequest request = (UpdateSupplierRequest)input;
+        var tenantId = TryGetTenantId();
+
+        if (!tenantId.HasValue)
+        {
+            return null!;
+        }
+
+        var supplier = await context.Suppliers.GetByTenant(tenantId.Value)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        if (supplier is null)
+        {
+            return null!;
         }
 
         request.Adapt(supplier);
         Normalize(supplier);
 
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return ServiceResult<SupplierDetailsResponse>.Success(supplier.Adapt<SupplierDetailsResponse>());
+        return supplier;
     }
 
-    public async Task<ServiceResult<bool>> DeleteAsync(Guid supplierId, CancellationToken cancellationToken = default)
+    protected override async Task<Supplier> GetDeleteObjectAsync(Guid id, AppDbContext context, CancellationToken cancellationToken = default)
     {
-        var supplier = await dbContext.Suppliers.FirstOrDefaultAsync(x => x.Id == supplierId, cancellationToken);
-        if (supplier is null)
+        var tenantId = TryGetTenantId();
+
+        if (!tenantId.HasValue)
         {
-            return ServiceResult<bool>.Failure(StatusCodes.Status404NotFound, "Supplier not found.");
+            return null!;
         }
 
-        dbContext.Suppliers.Remove(supplier);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return ServiceResult<bool>.Success(true);
+        var supplier = await context.Suppliers.GetByTenant(tenantId.Value)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        return supplier ?? null!;
     }
+
+    protected override string GetNotFoundMessage() => "Supplier not found.";
 
     private static Dictionary<string, string[]> Validate(string supplierNumber, string name)
     {

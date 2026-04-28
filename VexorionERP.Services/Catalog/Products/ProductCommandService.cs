@@ -1,4 +1,5 @@
 using Mapster;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using VexorionERP.Contracts;
 using VexorionERP.Database;
@@ -9,34 +10,65 @@ namespace VexorionERP.Services;
 
 public class ProductCommandService : BaseCommandService<Product>
 {
-    private readonly AppDbContext dbContext;
-
-    public ProductCommandService(
-        AppDbContext dbContext,
-        ICurrentTenantProvider currentTenantProvider) : base(currentTenantProvider)
+    public ProductCommandService(ICurrentTenantProvider currentTenantProvider) : base(currentTenantProvider)
     {
-        this.dbContext = dbContext;
     }
 
     protected override bool ValidateAddInput(ICreateInput<Product> input, out IDictionary<string, string[]>? errors, out string? errorMessage)
     {
-        errors = null;
-        errorMessage = null;
+        return base.ValidateAddInput(input, out errors, out errorMessage);
+    }
 
+    protected override Task<ServiceResult<IEntityResponse<Product>>?> ValidateCreateBusinessRulesAsync(
+        ICreateInput<Product> input,
+        AppDbContext context,
+        CancellationToken cancellationToken = default)
+    {
         CreateProductRequest request = (CreateProductRequest)input;
         var tenantId = TryGetTenantId();
 
-        if (tenantId.HasValue)
+        if (!tenantId.HasValue)
         {
-            var normalizedSku = request.Sku.Trim().ToUpperInvariant();
-            if (dbContext.Products.GetByTenant(tenantId.Value).Any(x => x.Sku.ToUpper() == normalizedSku))
-            {
-                errorMessage = "A product with the same SKU already exists.";
-                return false;
-            }
+            return Task.FromResult<ServiceResult<IEntityResponse<Product>>?>(null);
         }
 
-        return base.ValidateAddInput(input, out errors, out errorMessage);
+        var normalizedSku = request.Sku.Trim().ToUpperInvariant();
+        var exists = context.Products.GetByTenant(tenantId.Value)
+            .Any(x => x.Sku.ToUpper() == normalizedSku);
+
+        if (exists)
+        {
+            var conflict = ServiceResult<IEntityResponse<Product>>.Failure(StatusCodes.Status409Conflict, "A product with the same SKU already exists.");
+            return Task.FromResult<ServiceResult<IEntityResponse<Product>>?>(conflict);
+        }
+
+        return Task.FromResult<ServiceResult<IEntityResponse<Product>>?>(null);
+    }
+
+    protected override async Task<ServiceResult<IEntityResponse<Product>>?> ValidateUpdateBusinessRulesAsync(
+        Guid id,
+        IUpdateInput<Product> input,
+        AppDbContext context,
+        CancellationToken cancellationToken = default)
+    {
+        UpdateProductRequest request = (UpdateProductRequest)input;
+        var tenantId = TryGetTenantId();
+
+        if (!tenantId.HasValue)
+        {
+            return null;
+        }
+
+        var normalizedSku = request.Sku.Trim().ToUpperInvariant();
+        var exists = await context.Products.GetByTenant(tenantId.Value)
+            .AnyAsync(x => x.Id != id && x.Sku.ToUpper() == normalizedSku, cancellationToken);
+
+        if (exists)
+        {
+            return ServiceResult<IEntityResponse<Product>>.Failure(StatusCodes.Status409Conflict, "A product with the same SKU already exists.");
+        }
+
+        return null;
     }
 
     public override async Task<Product> GetAddToDbObjectAsync(ICreateInput<Product> input, AppDbContext context, CancellationToken cancellationToken = default)
@@ -70,14 +102,6 @@ public class ProductCommandService : BaseCommandService<Product>
         }
 
         // Validate SKU uniqueness before applying changes
-        var normalizedSku = request.Sku.Trim().ToUpperInvariant();
-        var skuConflict = await context.Products.GetByTenant(tenantId.Value)
-            .AnyAsync(x => x.Id != id && x.Sku.ToUpper() == normalizedSku, cancellationToken);
-        if (skuConflict)
-        {
-            return null!;
-        }
-
         request.Adapt(product);
         product.Sku = request.Sku.Trim();
         product.Name = request.Name.Trim();

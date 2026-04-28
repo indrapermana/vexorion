@@ -1,8 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using VexorionERP.Models;
 
 namespace VexorionERP.Contracts;
 
-public class CreateDepartmentRequest
+public class CreateDepartmentRequest : ICreateInput<Department>
 {
     public Guid CompanyId { get; set; }
 

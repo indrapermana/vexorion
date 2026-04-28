@@ -9,89 +9,138 @@ using VexorionERP.Services;
 namespace VexorionERP.Services;
 
 public class WarehouseCommandService(
-    AppDbContext dbContext,
-    ICurrentTenantProvider currentTenantProvider) : IWarehouseCommandService
+    ICurrentTenantProvider currentTenantProvider) : BaseCommandService<Warehouse>(currentTenantProvider)
 {
-    public async Task<ServiceResult<WarehouseDetailsResponse>> CreateAsync(CreateWarehouseRequest request, CancellationToken cancellationToken = default)
+    protected override bool ValidateAddInput(ICreateInput<Warehouse> input, out IDictionary<string, string[]>? errors, out string? errorMessage)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
-        {
-            return ServiceResult<WarehouseDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
-        }
+        errors = null;
+        errorMessage = null;
 
+        CreateWarehouseRequest request = (CreateWarehouseRequest)input;
         var validation = Validate(request.Code, request.Name);
         if (validation.Count > 0)
         {
-            return ServiceResult<WarehouseDetailsResponse>.ValidationFailure(validation);
+            errors = validation;
+            return false;
         }
 
-        var normalizedCode = request.Code.Trim().ToUpperInvariant();
-        var codeExists = await dbContext.Warehouses.AnyAsync(
-            x => x.TenantId == currentTenantProvider.TenantId.Value && x.Code.ToUpper() == normalizedCode,
-            cancellationToken);
-
-        if (codeExists)
-        {
-            return ServiceResult<WarehouseDetailsResponse>.Failure(StatusCodes.Status409Conflict, "A warehouse with the same code already exists.");
-        }
-
-        var warehouse = request.Adapt<Warehouse>();
-        warehouse.TenantId = currentTenantProvider.TenantId.Value;
-        Normalize(warehouse);
-
-        dbContext.Warehouses.Add(warehouse);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return ServiceResult<WarehouseDetailsResponse>.Success(warehouse.Adapt<WarehouseDetailsResponse>());
+        return base.ValidateAddInput(input, out errors, out errorMessage);
     }
 
-    public async Task<ServiceResult<WarehouseDetailsResponse>> UpdateAsync(Guid warehouseId, UpdateWarehouseRequest request, CancellationToken cancellationToken = default)
+    protected override async Task<ServiceResult<IEntityResponse<Warehouse>>?> ValidateCreateBusinessRulesAsync(
+        ICreateInput<Warehouse> input,
+        AppDbContext context,
+        CancellationToken cancellationToken = default)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
-        {
-            return ServiceResult<WarehouseDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
-        }
+        CreateWarehouseRequest request = (CreateWarehouseRequest)input;
+        var tenantId = TryGetTenantId();
 
-        var validation = Validate(request.Code, request.Name);
-        if (validation.Count > 0)
+        if (!tenantId.HasValue)
         {
-            return ServiceResult<WarehouseDetailsResponse>.ValidationFailure(validation);
-        }
-
-        var warehouse = await dbContext.Warehouses.FirstOrDefaultAsync(x => x.Id == warehouseId, cancellationToken);
-        if (warehouse is null)
-        {
-            return ServiceResult<WarehouseDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Warehouse not found.");
+            return null;
         }
 
         var normalizedCode = request.Code.Trim().ToUpperInvariant();
-        var codeExists = await dbContext.Warehouses.AnyAsync(
-            x => x.Id != warehouseId && x.TenantId == currentTenantProvider.TenantId.Value && x.Code.ToUpper() == normalizedCode,
-            cancellationToken);
+        var codeExists = await context.Warehouses.GetByTenant(tenantId.Value)
+            .AnyAsync(x => x.Code.ToUpper() == normalizedCode, cancellationToken);
 
         if (codeExists)
         {
-            return ServiceResult<WarehouseDetailsResponse>.Failure(StatusCodes.Status409Conflict, "A warehouse with the same code already exists.");
+            return ServiceResult<IEntityResponse<Warehouse>>.Failure(StatusCodes.Status409Conflict, "A warehouse with the same code already exists.");
+        }
+
+        return null;
+    }
+
+    protected override bool ValidateUpdateInput(IUpdateInput<Warehouse> input, out IDictionary<string, string[]>? errors, out string? errorMessage)
+    {
+        errors = null;
+        errorMessage = null;
+
+        UpdateWarehouseRequest request = (UpdateWarehouseRequest)input;
+        var validation = Validate(request.Code, request.Name);
+        if (validation.Count > 0)
+        {
+            errors = validation;
+            return false;
+        }
+
+        return base.ValidateUpdateInput(input, out errors, out errorMessage);
+    }
+
+    protected override async Task<ServiceResult<IEntityResponse<Warehouse>>?> ValidateUpdateBusinessRulesAsync(
+        Guid id,
+        IUpdateInput<Warehouse> input,
+        AppDbContext context,
+        CancellationToken cancellationToken = default)
+    {
+        UpdateWarehouseRequest request = (UpdateWarehouseRequest)input;
+        var tenantId = TryGetTenantId();
+
+        if (!tenantId.HasValue)
+        {
+            return null;
+        }
+
+        var normalizedCode = request.Code.Trim().ToUpperInvariant();
+        var codeExists = await context.Warehouses.GetByTenant(tenantId.Value)
+            .AnyAsync(x => x.Id != id && x.Code.ToUpper() == normalizedCode, cancellationToken);
+
+        if (codeExists)
+        {
+            return ServiceResult<IEntityResponse<Warehouse>>.Failure(StatusCodes.Status409Conflict, "A warehouse with the same code already exists.");
+        }
+
+        return null;
+    }
+
+    public override async Task<Warehouse> GetAddToDbObjectAsync(ICreateInput<Warehouse> input, AppDbContext context, CancellationToken cancellationToken = default)
+    {
+        var created = await base.GetAddToDbObjectAsync(input, context, cancellationToken);
+        Normalize(created);
+        return created;
+    }
+
+    protected override async Task<Warehouse> GetUpdatedDbObjectAsync(Guid id, IUpdateInput<Warehouse> input, AppDbContext context, CancellationToken cancellationToken = default)
+    {
+        var tenantId = TryGetTenantId();
+
+        if (!tenantId.HasValue)
+        {
+            return null!;
+        }
+
+        UpdateWarehouseRequest request = (UpdateWarehouseRequest)input;
+        var warehouse = await context.Warehouses.GetByTenant(tenantId.Value)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        if (warehouse is null)
+        {
+            return null!;
         }
 
         request.Adapt(warehouse);
         Normalize(warehouse);
 
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return ServiceResult<WarehouseDetailsResponse>.Success(warehouse.Adapt<WarehouseDetailsResponse>());
+        return warehouse;
     }
 
-    public async Task<ServiceResult<bool>> DeleteAsync(Guid warehouseId, CancellationToken cancellationToken = default)
+    protected override async Task<Warehouse> GetDeleteObjectAsync(Guid id, AppDbContext context, CancellationToken cancellationToken = default)
     {
-        var warehouse = await dbContext.Warehouses.FirstOrDefaultAsync(x => x.Id == warehouseId, cancellationToken);
-        if (warehouse is null)
+        var tenantId = TryGetTenantId();
+
+        if (!tenantId.HasValue)
         {
-            return ServiceResult<bool>.Failure(StatusCodes.Status404NotFound, "Warehouse not found.");
+            return null!;
         }
 
-        dbContext.Warehouses.Remove(warehouse);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return ServiceResult<bool>.Success(true);
+        var warehouse = await context.Warehouses.GetByTenant(tenantId.Value)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        return warehouse ?? null!;
     }
+
+    protected override string GetNotFoundMessage() => "Warehouse not found.";
 
     private static Dictionary<string, string[]> Validate(string code, string name)
     {

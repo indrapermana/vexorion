@@ -2,7 +2,7 @@ using VexorionERP.Models;
 
 namespace VexorionERP.Contracts;
 
-public class StockCountDetailsResponse
+public class StockCountDetailsResponse : IEntityResponse<StockCount>
 {
     public Guid Id { get; set; }
     public Guid TenantId { get; set; }

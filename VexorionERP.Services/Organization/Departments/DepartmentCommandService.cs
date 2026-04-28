@@ -9,109 +9,162 @@ using VexorionERP.Services;
 namespace VexorionERP.Services;
 
 public class DepartmentCommandService(
-    AppDbContext dbContext,
-    ICurrentTenantProvider currentTenantProvider) : IDepartmentCommandService
+    ICurrentTenantProvider currentTenantProvider) : BaseCommandService<Department>(currentTenantProvider)
 {
-    public async Task<ServiceResult<DepartmentDetailsResponse>> CreateAsync(CreateDepartmentRequest request, CancellationToken cancellationToken = default)
+    protected override bool ValidateAddInput(ICreateInput<Department> input, out IDictionary<string, string[]>? errors, out string? errorMessage)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
-        {
-            return ServiceResult<DepartmentDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
-        }
+        errors = null;
+        errorMessage = null;
 
+        CreateDepartmentRequest request = (CreateDepartmentRequest)input;
         var validation = Validate(request.CompanyId, request.Name, request.Code);
         if (validation.Count > 0)
         {
-            return ServiceResult<DepartmentDetailsResponse>.ValidationFailure(validation);
+            errors = validation;
+            return false;
         }
 
-        if (!await dbContext.Companies.AnyAsync(x => x.Id == request.CompanyId, cancellationToken))
-        {
-            return ServiceResult<DepartmentDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Company not found.");
-        }
-
-        if (request.ManagerId.HasValue && !await dbContext.Employees.AnyAsync(x => x.Id == request.ManagerId.Value && x.CompanyId == request.CompanyId, cancellationToken))
-        {
-            return ServiceResult<DepartmentDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Manager not found in the selected company.");
-        }
-
-        var normalizedCode = request.Code.Trim().ToUpperInvariant();
-        var codeExists = await dbContext.Departments.AnyAsync(
-            x => x.TenantId == currentTenantProvider.TenantId.Value && x.CompanyId == request.CompanyId && x.Code.ToUpper() == normalizedCode,
-            cancellationToken);
-
-        if (codeExists)
-        {
-            return ServiceResult<DepartmentDetailsResponse>.Failure(StatusCodes.Status409Conflict, "A department with the same code already exists in the company.");
-        }
-
-        var department = request.Adapt<Department>();
-        department.TenantId = currentTenantProvider.TenantId.Value;
-        Normalize(department);
-
-        dbContext.Departments.Add(department);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return ServiceResult<DepartmentDetailsResponse>.Success(department.Adapt<DepartmentDetailsResponse>());
+        return base.ValidateAddInput(input, out errors, out errorMessage);
     }
 
-    public async Task<ServiceResult<DepartmentDetailsResponse>> UpdateAsync(Guid departmentId, UpdateDepartmentRequest request, CancellationToken cancellationToken = default)
+    protected override async Task<ServiceResult<IEntityResponse<Department>>?> ValidateCreateBusinessRulesAsync(
+        ICreateInput<Department> input,
+        AppDbContext context,
+        CancellationToken cancellationToken = default)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
+        CreateDepartmentRequest request = (CreateDepartmentRequest)input;
+        var tenantId = TryGetTenantId();
+
+        if (!tenantId.HasValue)
         {
-            return ServiceResult<DepartmentDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+            return null;
         }
 
-        var validation = Validate(request.CompanyId, request.Name, request.Code);
-        if (validation.Count > 0)
+        if (!await context.Companies.GetByTenant(tenantId.Value)
+                .AnyAsync(x => x.Id == request.CompanyId, cancellationToken))
         {
-            return ServiceResult<DepartmentDetailsResponse>.ValidationFailure(validation);
+            return ServiceResult<IEntityResponse<Department>>.Failure(StatusCodes.Status400BadRequest, "Company not found.");
         }
 
-        var department = await dbContext.Departments.FirstOrDefaultAsync(x => x.Id == departmentId, cancellationToken);
-        if (department is null)
+        if (request.ManagerId.HasValue && !await context.Employees.GetByTenant(tenantId.Value)
+                .AnyAsync(x => x.Id == request.ManagerId.Value && x.CompanyId == request.CompanyId, cancellationToken))
         {
-            return ServiceResult<DepartmentDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Department not found.");
-        }
-
-        if (!await dbContext.Companies.AnyAsync(x => x.Id == request.CompanyId, cancellationToken))
-        {
-            return ServiceResult<DepartmentDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Company not found.");
-        }
-
-        if (request.ManagerId.HasValue && !await dbContext.Employees.AnyAsync(x => x.Id == request.ManagerId.Value && x.CompanyId == request.CompanyId, cancellationToken))
-        {
-            return ServiceResult<DepartmentDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Manager not found in the selected company.");
+            return ServiceResult<IEntityResponse<Department>>.Failure(StatusCodes.Status400BadRequest, "Manager not found in the selected company.");
         }
 
         var normalizedCode = request.Code.Trim().ToUpperInvariant();
-        var codeExists = await dbContext.Departments.AnyAsync(
-            x => x.Id != departmentId && x.TenantId == currentTenantProvider.TenantId.Value && x.CompanyId == request.CompanyId && x.Code.ToUpper() == normalizedCode,
-            cancellationToken);
+        var codeExists = await context.Departments.GetByTenant(tenantId.Value)
+            .AnyAsync(x => x.CompanyId == request.CompanyId && x.Code.ToUpper() == normalizedCode, cancellationToken);
 
         if (codeExists)
         {
-            return ServiceResult<DepartmentDetailsResponse>.Failure(StatusCodes.Status409Conflict, "A department with the same code already exists in the company.");
+            return ServiceResult<IEntityResponse<Department>>.Failure(StatusCodes.Status409Conflict, "A department with the same code already exists in the company.");
+        }
+
+        return null;
+    }
+
+    protected override bool ValidateUpdateInput(IUpdateInput<Department> input, out IDictionary<string, string[]>? errors, out string? errorMessage)
+    {
+        errors = null;
+        errorMessage = null;
+
+        UpdateDepartmentRequest request = (UpdateDepartmentRequest)input;
+        var validation = Validate(request.CompanyId, request.Name, request.Code);
+        if (validation.Count > 0)
+        {
+            errors = validation;
+            return false;
+        }
+
+        return base.ValidateUpdateInput(input, out errors, out errorMessage);
+    }
+
+    protected override async Task<ServiceResult<IEntityResponse<Department>>?> ValidateUpdateBusinessRulesAsync(
+        Guid id,
+        IUpdateInput<Department> input,
+        AppDbContext context,
+        CancellationToken cancellationToken = default)
+    {
+        UpdateDepartmentRequest request = (UpdateDepartmentRequest)input;
+        var tenantId = TryGetTenantId();
+
+        if (!tenantId.HasValue)
+        {
+            return null;
+        }
+
+        if (!await context.Companies.GetByTenant(tenantId.Value)
+                .AnyAsync(x => x.Id == request.CompanyId, cancellationToken))
+        {
+            return ServiceResult<IEntityResponse<Department>>.Failure(StatusCodes.Status400BadRequest, "Company not found.");
+        }
+
+        if (request.ManagerId.HasValue && !await context.Employees.GetByTenant(tenantId.Value)
+                .AnyAsync(x => x.Id == request.ManagerId.Value && x.CompanyId == request.CompanyId, cancellationToken))
+        {
+            return ServiceResult<IEntityResponse<Department>>.Failure(StatusCodes.Status400BadRequest, "Manager not found in the selected company.");
+        }
+
+        var normalizedCode = request.Code.Trim().ToUpperInvariant();
+        var codeExists = await context.Departments.GetByTenant(tenantId.Value)
+            .AnyAsync(x => x.Id != id && x.CompanyId == request.CompanyId && x.Code.ToUpper() == normalizedCode, cancellationToken);
+
+        if (codeExists)
+        {
+            return ServiceResult<IEntityResponse<Department>>.Failure(StatusCodes.Status409Conflict, "A department with the same code already exists in the company.");
+        }
+
+        return null;
+    }
+
+    public override async Task<Department> GetAddToDbObjectAsync(ICreateInput<Department> input, AppDbContext context, CancellationToken cancellationToken = default)
+    {
+        var created = await base.GetAddToDbObjectAsync(input, context, cancellationToken);
+        Normalize(created);
+        return created;
+    }
+
+    protected override async Task<Department> GetUpdatedDbObjectAsync(Guid id, IUpdateInput<Department> input, AppDbContext context, CancellationToken cancellationToken = default)
+    {
+        UpdateDepartmentRequest request = (UpdateDepartmentRequest)input;
+        var tenantId = TryGetTenantId();
+
+        if (!tenantId.HasValue)
+        {
+            return null!;
+        }
+
+        var department = await context.Departments.GetByTenant(tenantId.Value)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        if (department is null)
+        {
+            return null!;
         }
 
         request.Adapt(department);
         Normalize(department);
 
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return ServiceResult<DepartmentDetailsResponse>.Success(department.Adapt<DepartmentDetailsResponse>());
+        return department;
     }
 
-    public async Task<ServiceResult<bool>> DeleteAsync(Guid departmentId, CancellationToken cancellationToken = default)
+    protected override async Task<Department> GetDeleteObjectAsync(Guid id, AppDbContext context, CancellationToken cancellationToken = default)
     {
-        var department = await dbContext.Departments.FirstOrDefaultAsync(x => x.Id == departmentId, cancellationToken);
-        if (department is null)
+        var tenantId = TryGetTenantId();
+
+        if (!tenantId.HasValue)
         {
-            return ServiceResult<bool>.Failure(StatusCodes.Status404NotFound, "Department not found.");
+            return null!;
         }
 
-        dbContext.Departments.Remove(department);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return ServiceResult<bool>.Success(true);
+        var department = await context.Departments.GetByTenant(tenantId.Value)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        return department ?? null!;
     }
+
+    protected override string GetNotFoundMessage() => "Department not found.";
 
     private static Dictionary<string, string[]> Validate(Guid companyId, string name, string code)
     {

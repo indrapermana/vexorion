@@ -1,6 +1,8 @@
+using VexorionERP.Models;
+
 namespace VexorionERP.Contracts;
 
-public class InventoryBalanceDetailsResponse
+public class InventoryBalanceDetailsResponse : IEntityResponse<InventoryBalance>
 {
     public Guid Id { get; set; }
     public Guid TenantId { get; set; }

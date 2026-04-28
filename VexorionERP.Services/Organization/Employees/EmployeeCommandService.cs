@@ -9,109 +9,162 @@ using VexorionERP.Services;
 namespace VexorionERP.Services;
 
 public class EmployeeCommandService(
-    AppDbContext dbContext,
-    ICurrentTenantProvider currentTenantProvider) : IEmployeeCommandService
+    ICurrentTenantProvider currentTenantProvider) : BaseCommandService<Employee>(currentTenantProvider)
 {
-    public async Task<ServiceResult<EmployeeDetailsResponse>> CreateAsync(CreateEmployeeRequest request, CancellationToken cancellationToken = default)
+    protected override bool ValidateAddInput(ICreateInput<Employee> input, out IDictionary<string, string[]>? errors, out string? errorMessage)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
-        {
-            return ServiceResult<EmployeeDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
-        }
+        errors = null;
+        errorMessage = null;
 
+        CreateEmployeeRequest request = (CreateEmployeeRequest)input;
         var validation = Validate(request.CompanyId, request.EmployeeNumber, request.FirstName, request.LastName, request.Email, request.JobTitle);
         if (validation.Count > 0)
         {
-            return ServiceResult<EmployeeDetailsResponse>.ValidationFailure(validation);
+            errors = validation;
+            return false;
         }
 
-        if (!await dbContext.Companies.AnyAsync(x => x.Id == request.CompanyId, cancellationToken))
-        {
-            return ServiceResult<EmployeeDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Company not found.");
-        }
-
-        if (request.DepartmentId.HasValue && !await dbContext.Departments.AnyAsync(x => x.Id == request.DepartmentId.Value && x.CompanyId == request.CompanyId, cancellationToken))
-        {
-            return ServiceResult<EmployeeDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Department not found in the selected company.");
-        }
-
-        var normalizedNumber = request.EmployeeNumber.Trim().ToUpperInvariant();
-        var numberExists = await dbContext.Employees.AnyAsync(
-            x => x.TenantId == currentTenantProvider.TenantId.Value && x.CompanyId == request.CompanyId && x.EmployeeNumber.ToUpper() == normalizedNumber,
-            cancellationToken);
-
-        if (numberExists)
-        {
-            return ServiceResult<EmployeeDetailsResponse>.Failure(StatusCodes.Status409Conflict, "An employee with the same number already exists in the company.");
-        }
-
-        var employee = request.Adapt<Employee>();
-        employee.TenantId = currentTenantProvider.TenantId.Value;
-        Normalize(employee);
-
-        dbContext.Employees.Add(employee);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return ServiceResult<EmployeeDetailsResponse>.Success(employee.Adapt<EmployeeDetailsResponse>());
+        return base.ValidateAddInput(input, out errors, out errorMessage);
     }
 
-    public async Task<ServiceResult<EmployeeDetailsResponse>> UpdateAsync(Guid employeeId, UpdateEmployeeRequest request, CancellationToken cancellationToken = default)
+    protected override async Task<ServiceResult<IEntityResponse<Employee>>?> ValidateCreateBusinessRulesAsync(
+        ICreateInput<Employee> input,
+        AppDbContext context,
+        CancellationToken cancellationToken = default)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
+        CreateEmployeeRequest request = (CreateEmployeeRequest)input;
+        var tenantId = TryGetTenantId();
+
+        if (!tenantId.HasValue)
         {
-            return ServiceResult<EmployeeDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+            return null;
         }
 
-        var validation = Validate(request.CompanyId, request.EmployeeNumber, request.FirstName, request.LastName, request.Email, request.JobTitle);
-        if (validation.Count > 0)
+        if (!await context.Companies.GetByTenant(tenantId.Value)
+                .AnyAsync(x => x.Id == request.CompanyId, cancellationToken))
         {
-            return ServiceResult<EmployeeDetailsResponse>.ValidationFailure(validation);
+            return ServiceResult<IEntityResponse<Employee>>.Failure(StatusCodes.Status400BadRequest, "Company not found.");
         }
 
-        var employee = await dbContext.Employees.FirstOrDefaultAsync(x => x.Id == employeeId, cancellationToken);
-        if (employee is null)
+        if (request.DepartmentId.HasValue && !await context.Departments.GetByTenant(tenantId.Value)
+                .AnyAsync(x => x.Id == request.DepartmentId.Value && x.CompanyId == request.CompanyId, cancellationToken))
         {
-            return ServiceResult<EmployeeDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Employee not found.");
-        }
-
-        if (!await dbContext.Companies.AnyAsync(x => x.Id == request.CompanyId, cancellationToken))
-        {
-            return ServiceResult<EmployeeDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Company not found.");
-        }
-
-        if (request.DepartmentId.HasValue && !await dbContext.Departments.AnyAsync(x => x.Id == request.DepartmentId.Value && x.CompanyId == request.CompanyId, cancellationToken))
-        {
-            return ServiceResult<EmployeeDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Department not found in the selected company.");
+            return ServiceResult<IEntityResponse<Employee>>.Failure(StatusCodes.Status400BadRequest, "Department not found in the selected company.");
         }
 
         var normalizedNumber = request.EmployeeNumber.Trim().ToUpperInvariant();
-        var numberExists = await dbContext.Employees.AnyAsync(
-            x => x.Id != employeeId && x.TenantId == currentTenantProvider.TenantId.Value && x.CompanyId == request.CompanyId && x.EmployeeNumber.ToUpper() == normalizedNumber,
-            cancellationToken);
+        var numberExists = await context.Employees.GetByTenant(tenantId.Value)
+            .AnyAsync(x => x.CompanyId == request.CompanyId && x.EmployeeNumber.ToUpper() == normalizedNumber, cancellationToken);
 
         if (numberExists)
         {
-            return ServiceResult<EmployeeDetailsResponse>.Failure(StatusCodes.Status409Conflict, "An employee with the same number already exists in the company.");
+            return ServiceResult<IEntityResponse<Employee>>.Failure(StatusCodes.Status409Conflict, "An employee with the same number already exists in the company.");
+        }
+
+        return null;
+    }
+
+    protected override bool ValidateUpdateInput(IUpdateInput<Employee> input, out IDictionary<string, string[]>? errors, out string? errorMessage)
+    {
+        errors = null;
+        errorMessage = null;
+
+        UpdateEmployeeRequest request = (UpdateEmployeeRequest)input;
+        var validation = Validate(request.CompanyId, request.EmployeeNumber, request.FirstName, request.LastName, request.Email, request.JobTitle);
+        if (validation.Count > 0)
+        {
+            errors = validation;
+            return false;
+        }
+
+        return base.ValidateUpdateInput(input, out errors, out errorMessage);
+    }
+
+    protected override async Task<ServiceResult<IEntityResponse<Employee>>?> ValidateUpdateBusinessRulesAsync(
+        Guid id,
+        IUpdateInput<Employee> input,
+        AppDbContext context,
+        CancellationToken cancellationToken = default)
+    {
+        UpdateEmployeeRequest request = (UpdateEmployeeRequest)input;
+        var tenantId = TryGetTenantId();
+
+        if (!tenantId.HasValue)
+        {
+            return null;
+        }
+
+        if (!await context.Companies.GetByTenant(tenantId.Value)
+                .AnyAsync(x => x.Id == request.CompanyId, cancellationToken))
+        {
+            return ServiceResult<IEntityResponse<Employee>>.Failure(StatusCodes.Status400BadRequest, "Company not found.");
+        }
+
+        if (request.DepartmentId.HasValue && !await context.Departments.GetByTenant(tenantId.Value)
+                .AnyAsync(x => x.Id == request.DepartmentId.Value && x.CompanyId == request.CompanyId, cancellationToken))
+        {
+            return ServiceResult<IEntityResponse<Employee>>.Failure(StatusCodes.Status400BadRequest, "Department not found in the selected company.");
+        }
+
+        var normalizedNumber = request.EmployeeNumber.Trim().ToUpperInvariant();
+        var numberExists = await context.Employees.GetByTenant(tenantId.Value)
+            .AnyAsync(x => x.Id != id && x.CompanyId == request.CompanyId && x.EmployeeNumber.ToUpper() == normalizedNumber, cancellationToken);
+
+        if (numberExists)
+        {
+            return ServiceResult<IEntityResponse<Employee>>.Failure(StatusCodes.Status409Conflict, "An employee with the same number already exists in the company.");
+        }
+
+        return null;
+    }
+
+    public override async Task<Employee> GetAddToDbObjectAsync(ICreateInput<Employee> input, AppDbContext context, CancellationToken cancellationToken = default)
+    {
+        var created = await base.GetAddToDbObjectAsync(input, context, cancellationToken);
+        Normalize(created);
+        return created;
+    }
+
+    protected override async Task<Employee> GetUpdatedDbObjectAsync(Guid id, IUpdateInput<Employee> input, AppDbContext context, CancellationToken cancellationToken = default)
+    {
+        var tenantId = TryGetTenantId();
+
+        if (!tenantId.HasValue)
+        {
+            return null!;
+        }
+
+        UpdateEmployeeRequest request = (UpdateEmployeeRequest)input;
+        var employee = await context.Employees.GetByTenant(tenantId.Value)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        if (employee is null)
+        {
+            return null!;
         }
 
         request.Adapt(employee);
         Normalize(employee);
 
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return ServiceResult<EmployeeDetailsResponse>.Success(employee.Adapt<EmployeeDetailsResponse>());
+        return employee;
     }
 
-    public async Task<ServiceResult<bool>> DeleteAsync(Guid employeeId, CancellationToken cancellationToken = default)
+    protected override async Task<Employee> GetDeleteObjectAsync(Guid id, AppDbContext context, CancellationToken cancellationToken = default)
     {
-        var employee = await dbContext.Employees.FirstOrDefaultAsync(x => x.Id == employeeId, cancellationToken);
-        if (employee is null)
+        var tenantId = TryGetTenantId();
+
+        if (!tenantId.HasValue)
         {
-            return ServiceResult<bool>.Failure(StatusCodes.Status404NotFound, "Employee not found.");
+            return null!;
         }
 
-        dbContext.Employees.Remove(employee);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return ServiceResult<bool>.Success(true);
+        var employee = await context.Employees.GetByTenant(tenantId.Value)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        return employee ?? null!;
     }
+
+    protected override string GetNotFoundMessage() => "Employee not found.";
 
     private static Dictionary<string, string[]> Validate(Guid companyId, string employeeNumber, string firstName, string lastName, string email, string jobTitle)
     {

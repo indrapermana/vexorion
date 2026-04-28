@@ -1,6 +1,8 @@
+using Mapster;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VexorionERP.Contracts;
+using VexorionERP.Database;
 using VexorionERP.Models;
 using VexorionERP.Services;
 
@@ -10,8 +12,9 @@ namespace VexorionERP;
 [Route("api/companies")]
 [Authorize]
 public class CompaniesController(
-    ICompanyCommandService companyCommandService,
-    ICompanyQueryService companyQueryService) : ServiceResultControllerBase
+    ICommandService<Company> companyCommandService,
+    ICompanyQueryService companyQueryService,
+    AppDbContext dbContext) : ServiceResultControllerBase
 {
     [HttpGet]
     [Authorize(Policy = AppPermissions.Organization.View)]
@@ -33,28 +36,47 @@ public class CompaniesController(
     [Authorize(Policy = AppPermissions.Organization.Manage)]
     public async Task<ActionResult<CompanyDetailsResponse>> Create([FromBody] CreateCompanyRequest request)
     {
-        var result = await companyCommandService.CreateAsync(request, HttpContext.RequestAborted);
+        var result = await companyCommandService.CreateAsync(request, dbContext, HttpContext.RequestAborted);
         if (!result.Succeeded)
         {
-            return ToActionResult(result);
+            return ToActionResult(MapResult(result));
         }
 
-        return CreatedAtAction(nameof(GetById), new { companyId = result.Value!.Id }, result.Value);
+        var mapped = result.Value!.Adapt<CompanyDetailsResponse>();
+        return CreatedAtAction(nameof(GetById), new { companyId = mapped.Id }, mapped);
     }
 
     [HttpPut("{companyId:guid}")]
     [Authorize(Policy = AppPermissions.Organization.Manage)]
     public async Task<ActionResult<CompanyDetailsResponse>> Update(Guid companyId, [FromBody] UpdateCompanyRequest request)
     {
-        var result = await companyCommandService.UpdateAsync(companyId, request, HttpContext.RequestAborted);
-        return ToActionResult(result);
+        var result = await companyCommandService.UpdateAsync(companyId, request, dbContext, HttpContext.RequestAborted);
+        return ToActionResult(MapResult(result));
     }
 
     [HttpDelete("{companyId:guid}")]
     [Authorize(Policy = AppPermissions.Organization.Manage)]
     public async Task<ActionResult> Delete(Guid companyId)
     {
-        var result = await companyCommandService.DeleteAsync(companyId, HttpContext.RequestAborted);
+        var result = await companyCommandService.DeleteAsync(companyId, dbContext, HttpContext.RequestAborted);
         return ToActionResult(result);
+    }
+
+    private ServiceResult<CompanyDetailsResponse> MapResult(ServiceResult<IEntityResponse<Company>> result)
+    {
+        if (result.Succeeded)
+        {
+            var mapped = result.Value!.Adapt<CompanyDetailsResponse>();
+            return ServiceResult<CompanyDetailsResponse>.Success(mapped);
+        }
+
+        if (result.Validation is not null)
+        {
+            return ServiceResult<CompanyDetailsResponse>.ValidationFailure(result.Validation.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+        }
+
+        return ServiceResult<CompanyDetailsResponse>.Failure(
+            result.StatusCode ?? StatusCodes.Status400BadRequest,
+            result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
     }
 }

@@ -1,6 +1,8 @@
+using Mapster;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VexorionERP.Contracts;
+using VexorionERP.Database;
 using VexorionERP.Models;
 using VexorionERP.Services;
 
@@ -10,8 +12,9 @@ namespace VexorionERP;
 [Route("api/sales-orders")]
 [Authorize]
 public class SalesOrdersController(
-    ISalesOrderCommandService salesOrderCommandService,
-    ISalesOrderQueryService salesOrderQueryService) : ServiceResultControllerBase
+    ICommandService<SalesOrder> salesOrderCommandService,
+    ISalesOrderQueryService salesOrderQueryService,
+    AppDbContext dbContext) : ServiceResultControllerBase
 {
     [HttpGet]
     [Authorize(Policy = AppPermissions.Sales.View)]
@@ -33,24 +36,47 @@ public class SalesOrdersController(
     [Authorize(Policy = AppPermissions.Sales.Manage)]
     public async Task<ActionResult<SalesOrderDetailsResponse>> Create([FromBody] CreateSalesOrderRequest request)
     {
-        var result = await salesOrderCommandService.CreateAsync(request, HttpContext.RequestAborted);
-        if (!result.Succeeded) return ToActionResult(result);
-        return CreatedAtAction(nameof(GetById), new { salesOrderId = result.Value!.Id }, result.Value);
+        var result = await salesOrderCommandService.CreateAsync(request, dbContext, HttpContext.RequestAborted);
+        if (!result.Succeeded)
+        {
+            return ToActionResult(MapResult(result));
+        }
+
+        var mapped = result.Value!.Adapt<SalesOrderDetailsResponse>();
+        return CreatedAtAction(nameof(GetById), new { salesOrderId = mapped.Id }, mapped);
     }
 
     [HttpPut("{salesOrderId:guid}")]
     [Authorize(Policy = AppPermissions.Sales.Manage)]
     public async Task<ActionResult<SalesOrderDetailsResponse>> Update(Guid salesOrderId, [FromBody] UpdateSalesOrderRequest request)
     {
-        var result = await salesOrderCommandService.UpdateAsync(salesOrderId, request, HttpContext.RequestAborted);
-        return ToActionResult(result);
+        var result = await salesOrderCommandService.UpdateAsync(salesOrderId, request, dbContext, HttpContext.RequestAborted);
+        return ToActionResult(MapResult(result));
     }
 
     [HttpDelete("{salesOrderId:guid}")]
     [Authorize(Policy = AppPermissions.Sales.Manage)]
     public async Task<ActionResult> Delete(Guid salesOrderId)
     {
-        var result = await salesOrderCommandService.DeleteAsync(salesOrderId, HttpContext.RequestAborted);
+        var result = await salesOrderCommandService.DeleteAsync(salesOrderId, dbContext, HttpContext.RequestAborted);
         return ToActionResult(result);
+    }
+
+    private ServiceResult<SalesOrderDetailsResponse> MapResult(ServiceResult<IEntityResponse<SalesOrder>> result)
+    {
+        if (result.Succeeded)
+        {
+            var mapped = result.Value!.Adapt<SalesOrderDetailsResponse>();
+            return ServiceResult<SalesOrderDetailsResponse>.Success(mapped);
+        }
+
+        if (result.Validation is not null)
+        {
+            return ServiceResult<SalesOrderDetailsResponse>.ValidationFailure(result.Validation.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+        }
+
+        return ServiceResult<SalesOrderDetailsResponse>.Failure(
+            result.StatusCode ?? StatusCodes.Status400BadRequest,
+            result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
     }
 }

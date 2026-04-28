@@ -10,62 +10,90 @@ namespace VexorionERP.Services;
 
 public class CustomerPaymentCommandService(
     AppDbContext dbContext,
-    ICurrentTenantProvider currentTenantProvider) : ICustomerPaymentCommandService
+    ICurrentTenantProvider currentTenantProvider) : BaseCommandService<CustomerPayment>(currentTenantProvider)
 {
+    // Compatibility wrapper used by tests and existing code
     public async Task<ServiceResult<CustomerPaymentDetailsResponse>> CreateAsync(CreateCustomerPaymentRequest request, CancellationToken cancellationToken = default)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
-            return ServiceResult<CustomerPaymentDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+        var result = await CreateAsync((ICreateInput<CustomerPayment>)request, dbContext, cancellationToken);
+        return MapResult(result);
+    }
 
-        var validation = Validate(request);
+    public override async Task<ServiceResult<IEntityResponse<CustomerPayment>>> CreateAsync(ICreateInput<CustomerPayment> request, AppDbContext context, CancellationToken cancellationToken = default)
+    {
+        var tenantId = TryGetTenantId();
+        if (!tenantId.HasValue)
+            return ServiceResult<IEntityResponse<CustomerPayment>>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+
+        var createRequest = (CreateCustomerPaymentRequest)request;
+
+        var validation = Validate(createRequest);
         if (validation.Count > 0)
-            return ServiceResult<CustomerPaymentDetailsResponse>.ValidationFailure(validation);
+            return ServiceResult<IEntityResponse<CustomerPayment>>.ValidationFailure(validation);
 
-        var customer = await dbContext.Customers
+        var customer = await context.Customers
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == request.CustomerId && x.TenantId == currentTenantProvider.TenantId.Value, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Id == createRequest.CustomerId && x.TenantId == tenantId.Value, cancellationToken);
         if (customer is null)
-            return ServiceResult<CustomerPaymentDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Customer not found.");
+            return ServiceResult<IEntityResponse<CustomerPayment>>.Failure(StatusCodes.Status400BadRequest, "Customer not found.");
 
-        var salesInvoice = await dbContext.SalesInvoices
-            .FirstOrDefaultAsync(x => x.Id == request.SalesInvoiceId && x.TenantId == currentTenantProvider.TenantId.Value, cancellationToken);
+        var salesInvoice = await context.SalesInvoices
+            .FirstOrDefaultAsync(x => x.Id == createRequest.SalesInvoiceId && x.TenantId == tenantId.Value, cancellationToken);
         if (salesInvoice is null)
-            return ServiceResult<CustomerPaymentDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Sales invoice not found.");
+            return ServiceResult<IEntityResponse<CustomerPayment>>.Failure(StatusCodes.Status400BadRequest, "Sales invoice not found.");
 
-        if (salesInvoice.CustomerId != request.CustomerId)
-            return ServiceResult<CustomerPaymentDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Sales invoice does not belong to the specified customer.");
+        if (salesInvoice.CustomerId != createRequest.CustomerId)
+            return ServiceResult<IEntityResponse<CustomerPayment>>.Failure(StatusCodes.Status400BadRequest, "Sales invoice does not belong to the specified customer.");
 
-        var currencyCode = request.CurrencyCode.Trim().ToUpperInvariant();
+        var currencyCode = createRequest.CurrencyCode.Trim().ToUpperInvariant();
         if (!string.Equals(salesInvoice.CurrencyCode, currencyCode, StringComparison.OrdinalIgnoreCase))
-            return ServiceResult<CustomerPaymentDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Payment currency must match invoice currency.");
+            return ServiceResult<IEntityResponse<CustomerPayment>>.Failure(StatusCodes.Status400BadRequest, "Payment currency must match invoice currency.");
 
         if (salesInvoice.Status is InvoiceStatus.Draft or InvoiceStatus.Cancelled || salesInvoice.ReversedAtUtc.HasValue)
-            return ServiceResult<CustomerPaymentDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Payments can only be allocated to active issued invoices.");
+            return ServiceResult<IEntityResponse<CustomerPayment>>.Failure(StatusCodes.Status400BadRequest, "Payments can only be allocated to active issued invoices.");
 
-        var nextPaidTotal = salesInvoice.PaidTotal + request.Amount;
+        var nextPaidTotal = salesInvoice.PaidTotal + createRequest.Amount;
         if (nextPaidTotal > salesInvoice.GrandTotal)
-            return ServiceResult<CustomerPaymentDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Payment allocation exceeds the remaining balance.");
+            return ServiceResult<IEntityResponse<CustomerPayment>>.Failure(StatusCodes.Status400BadRequest, "Payment allocation exceeds the remaining balance.");
 
         var payment = new CustomerPayment
         {
-            TenantId = currentTenantProvider.TenantId.Value,
-            CustomerId = request.CustomerId,
-            SalesInvoiceId = request.SalesInvoiceId,
-            PaymentDate = request.PaymentDate,
-            Amount = request.Amount,
+            TenantId = tenantId.Value,
+            CustomerId = createRequest.CustomerId,
+            SalesInvoiceId = createRequest.SalesInvoiceId,
+            PaymentDate = createRequest.PaymentDate,
+            Amount = createRequest.Amount,
             CurrencyCode = currencyCode,
-            ReferenceNumber = NormalizeOptional(request.ReferenceNumber),
-            PaymentMethod = NormalizeOptional(request.PaymentMethod),
-            Notes = NormalizeOptional(request.Notes),
+            ReferenceNumber = NormalizeOptional(createRequest.ReferenceNumber),
+            PaymentMethod = NormalizeOptional(createRequest.PaymentMethod),
+            Notes = NormalizeOptional(createRequest.Notes),
         };
 
         salesInvoice.PaidTotal = nextPaidTotal;
         salesInvoice.Status = nextPaidTotal == salesInvoice.GrandTotal ? InvoiceStatus.Paid : InvoiceStatus.PartiallyPaid;
 
-        dbContext.CustomerPayments.Add(payment);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        context.CustomerPayments.Add(payment);
+        await context.SaveChangesAsync(cancellationToken);
 
-        return ServiceResult<CustomerPaymentDetailsResponse>.Success(payment.Adapt<CustomerPaymentDetailsResponse>());
+        return ServiceResult<IEntityResponse<CustomerPayment>>.Success(payment.Adapt<CustomerPaymentDetailsResponse>());
+    }
+
+    protected override IEntityResponse<CustomerPayment> BuildEntityResponse(CustomerPayment entity)
+        => entity.Adapt<CustomerPaymentDetailsResponse>();
+
+    protected override Task<CustomerPayment> GetUpdatedDbObjectAsync(Guid id, IUpdateInput<CustomerPayment> input, AppDbContext context, CancellationToken cancellationToken = default)
+        => Task.FromResult<CustomerPayment>(null!);
+
+    protected override Task<CustomerPayment> GetDeleteObjectAsync(Guid id, AppDbContext context, CancellationToken cancellationToken = default)
+        => Task.FromResult<CustomerPayment>(null!);
+
+    private static ServiceResult<CustomerPaymentDetailsResponse> MapResult(ServiceResult<IEntityResponse<CustomerPayment>> result)
+    {
+        if (result.Succeeded)
+            return ServiceResult<CustomerPaymentDetailsResponse>.Success(result.Value!.Adapt<CustomerPaymentDetailsResponse>());
+        if (result.Validation is not null)
+            return ServiceResult<CustomerPaymentDetailsResponse>.ValidationFailure(result.Validation.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+        return ServiceResult<CustomerPaymentDetailsResponse>.Failure(result.StatusCode ?? StatusCodes.Status400BadRequest, result.ErrorMessage ?? "An error occurred.");
     }
 
     private static Dictionary<string, string[]> Validate(CreateCustomerPaymentRequest request)

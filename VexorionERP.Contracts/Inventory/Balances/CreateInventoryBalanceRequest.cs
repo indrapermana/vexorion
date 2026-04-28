@@ -1,8 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using VexorionERP.Models;
 
 namespace VexorionERP.Contracts;
 
-public class CreateInventoryBalanceRequest
+public class CreateInventoryBalanceRequest : ICreateInput<InventoryBalance>
 {
     public Guid ProductId { get; set; }
     public Guid WarehouseId { get; set; }

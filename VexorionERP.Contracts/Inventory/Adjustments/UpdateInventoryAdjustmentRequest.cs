@@ -3,7 +3,7 @@ using VexorionERP.Models;
 
 namespace VexorionERP.Contracts;
 
-public class UpdateInventoryAdjustmentRequest
+public class UpdateInventoryAdjustmentRequest : IUpdateInput<InventoryAdjustment>
 {
     [Required]
     public string AdjustmentNumber { get; set; } = string.Empty;

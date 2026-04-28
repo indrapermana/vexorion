@@ -2,7 +2,7 @@ using VexorionERP.Models;
 
 namespace VexorionERP.Contracts;
 
-public class UpdatePurchaseOrderRequest
+public class UpdatePurchaseOrderRequest : IUpdateInput<PurchaseOrder>
 {
     public string OrderNumber { get; set; } = string.Empty;
     public Guid SupplierId { get; set; }

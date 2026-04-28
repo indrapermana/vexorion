@@ -1,3 +1,4 @@
+using Mapster;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using VexorionERP.Contracts;
@@ -10,98 +11,108 @@ namespace VexorionERP.Services;
 public class SalesShipmentCommandService(
     AppDbContext dbContext,
     ICurrentTenantProvider currentTenantProvider,
-    IInventoryMovementPostingService inventoryMovementPostingService) : ISalesShipmentCommandService
+    IInventoryMovementPostingService inventoryMovementPostingService) : BaseCommandService<SalesShipment>(currentTenantProvider), ISalesShipmentPostingService
 {
     public async Task<ServiceResult<SalesShipmentDetailsResponse>> CreateAsync(CreateSalesShipmentRequest request, CancellationToken cancellationToken = default)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
+        var result = await CreateAsync((ICreateInput<SalesShipment>)request, dbContext, cancellationToken);
+        return MapResult(result);
+    }
+
+    public Task<ServiceResult<bool>> DeleteAsync(Guid shipmentId, CancellationToken cancellationToken = default)
+        => DeleteAsync(shipmentId, dbContext, cancellationToken);
+
+    public override async Task<ServiceResult<IEntityResponse<SalesShipment>>> CreateAsync(ICreateInput<SalesShipment> request, AppDbContext context, CancellationToken cancellationToken = default)
+    {
+        var tenantId = TryGetTenantId();
+        if (!tenantId.HasValue)
         {
-            return ServiceResult<SalesShipmentDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+            return ServiceResult<IEntityResponse<SalesShipment>>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
         }
 
-        var tenantId = currentTenantProvider.TenantId.Value;
+        var createRequest = (CreateSalesShipmentRequest)request;
 
-        if (string.IsNullOrWhiteSpace(request.ShipmentNumber))
+        if (string.IsNullOrWhiteSpace(createRequest.ShipmentNumber))
         {
-            return ServiceResult<SalesShipmentDetailsResponse>.ValidationFailure(
-                new Dictionary<string, string[]> { { nameof(request.ShipmentNumber), ["Shipment number is required."] } });
+            return ServiceResult<IEntityResponse<SalesShipment>>.ValidationFailure(
+                new Dictionary<string, string[]> { { nameof(createRequest.ShipmentNumber), ["Shipment number is required."] } });
         }
 
-        if (request.Lines is null || request.Lines.Count == 0)
+        if (createRequest.Lines is null || createRequest.Lines.Count == 0)
         {
-            return ServiceResult<SalesShipmentDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "At least one shipment line is required.");
+            return ServiceResult<IEntityResponse<SalesShipment>>.Failure(StatusCodes.Status400BadRequest, "At least one shipment line is required.");
         }
 
-        var order = await dbContext.SalesOrders
+        var order = await context.SalesOrders.GetByTenant(tenantId.Value)
             .Include(x => x.Lines)
-            .FirstOrDefaultAsync(x => x.Id == request.SalesOrderId, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Id == createRequest.SalesOrderId, cancellationToken);
 
         if (order is null)
         {
-            return ServiceResult<SalesShipmentDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Sales order not found.");
+            return ServiceResult<IEntityResponse<SalesShipment>>.Failure(StatusCodes.Status400BadRequest, "Sales order not found.");
         }
 
         if (order.Status == DocumentStatus.Cancelled)
         {
-            return ServiceResult<SalesShipmentDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Cannot create a shipment for a cancelled sales order.");
+            return ServiceResult<IEntityResponse<SalesShipment>>.Failure(StatusCodes.Status400BadRequest, "Cannot create a shipment for a cancelled sales order.");
         }
 
         if (order.Status == DocumentStatus.Completed)
         {
-            return ServiceResult<SalesShipmentDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Sales order is already fully shipped.");
+            return ServiceResult<IEntityResponse<SalesShipment>>.Failure(StatusCodes.Status400BadRequest, "Sales order is already fully shipped.");
         }
 
-        if (!await dbContext.Warehouses.AnyAsync(x => x.Id == request.WarehouseId, cancellationToken))
+        if (!await context.Warehouses.GetByTenant(tenantId.Value).AnyAsync(x => x.Id == createRequest.WarehouseId, cancellationToken))
         {
-            return ServiceResult<SalesShipmentDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Warehouse not found.");
+            return ServiceResult<IEntityResponse<SalesShipment>>.Failure(StatusCodes.Status400BadRequest, "Warehouse not found.");
         }
 
-        var normalizedNumber = request.ShipmentNumber.Trim().ToUpperInvariant();
-        var exists = await dbContext.SalesShipments.AnyAsync(
-            x => x.TenantId == tenantId && x.ShipmentNumber.ToUpper() == normalizedNumber, cancellationToken);
+        var normalizedNumber = createRequest.ShipmentNumber.Trim().ToUpperInvariant();
+        var exists = await context.SalesShipments.GetByTenant(tenantId.Value)
+            .AnyAsync(x => x.ShipmentNumber.ToUpper() == normalizedNumber, cancellationToken);
         if (exists)
         {
-            return ServiceResult<SalesShipmentDetailsResponse>.Failure(StatusCodes.Status409Conflict, "A sales shipment with the same number already exists.");
+            return ServiceResult<IEntityResponse<SalesShipment>>.Failure(StatusCodes.Status409Conflict, "A sales shipment with the same number already exists.");
         }
 
         // Validate over-shipment
         var orderLinesById = order.Lines.Where(x => x.IsActive).ToDictionary(x => x.Id);
-        foreach (var lineRequest in request.Lines)
+        foreach (var lineRequest in createRequest.Lines)
         {
             if (lineRequest.ShippedQuantity <= 0)
             {
-                return ServiceResult<SalesShipmentDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Shipped quantity must be greater than zero.");
+                return ServiceResult<IEntityResponse<SalesShipment>>.Failure(StatusCodes.Status400BadRequest, "Shipped quantity must be greater than zero.");
             }
 
             if (!orderLinesById.TryGetValue(lineRequest.SalesOrderLineId, out var orderLine))
             {
-                return ServiceResult<SalesShipmentDetailsResponse>.Failure(StatusCodes.Status400BadRequest, $"Sales order line {lineRequest.SalesOrderLineId} not found.");
+                return ServiceResult<IEntityResponse<SalesShipment>>.Failure(StatusCodes.Status400BadRequest, $"Sales order line {lineRequest.SalesOrderLineId} not found.");
             }
 
             var newTotal = orderLine.ShippedQuantity + lineRequest.ShippedQuantity;
             if (newTotal > orderLine.Quantity)
             {
-                return ServiceResult<SalesShipmentDetailsResponse>.Failure(StatusCodes.Status400BadRequest,
+                return ServiceResult<IEntityResponse<SalesShipment>>.Failure(StatusCodes.Status400BadRequest,
                     $"Over-shipment not allowed. Order line allows {orderLine.Quantity - orderLine.ShippedQuantity} more units to be shipped.");
             }
         }
 
         var shipment = new SalesShipment
         {
-            TenantId = tenantId,
+            TenantId = tenantId.Value,
             ShipmentNumber = normalizedNumber,
-            SalesOrderId = request.SalesOrderId,
-            WarehouseId = request.WarehouseId,
-            ShipmentDate = request.ShipmentDate,
+            SalesOrderId = createRequest.SalesOrderId,
+            WarehouseId = createRequest.WarehouseId,
+            ShipmentDate = createRequest.ShipmentDate,
             Status = DocumentStatus.Draft,
-            Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim(),
+            Notes = string.IsNullOrWhiteSpace(createRequest.Notes) ? null : createRequest.Notes.Trim(),
         };
 
-        foreach (var lineRequest in request.Lines)
+        foreach (var lineRequest in createRequest.Lines)
         {
             shipment.Lines.Add(new SalesShipmentLine
             {
-                TenantId = tenantId,
+                TenantId = tenantId.Value,
                 SalesOrderLineId = lineRequest.SalesOrderLineId,
                 ProductId = lineRequest.ProductId,
                 ShippedQuantity = lineRequest.ShippedQuantity,
@@ -109,16 +120,22 @@ public class SalesShipmentCommandService(
             });
         }
 
-        dbContext.SalesShipments.Add(shipment);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        context.SalesShipments.Add(shipment);
+        await context.SaveChangesAsync(cancellationToken);
 
         var response = await BuildDetailsResponseAsync(shipment.Id, cancellationToken);
-        return ServiceResult<SalesShipmentDetailsResponse>.Success(response!);
+        return ServiceResult<IEntityResponse<SalesShipment>>.Success(response!);
     }
 
     public async Task<ServiceResult<SalesShipmentDetailsResponse>> PostAsync(Guid shipmentId, CancellationToken cancellationToken = default)
     {
-        var shipment = await dbContext.SalesShipments
+        var tenantId = TryGetTenantId();
+        if (!tenantId.HasValue)
+        {
+            return ServiceResult<SalesShipmentDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+        }
+
+        var shipment = await dbContext.SalesShipments.GetByTenant(tenantId.Value)
             .Include(x => x.Lines)
             .FirstOrDefaultAsync(x => x.Id == shipmentId, cancellationToken);
 
@@ -132,7 +149,7 @@ public class SalesShipmentCommandService(
             return ServiceResult<SalesShipmentDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Only draft shipments can be posted.");
         }
 
-        var order = await dbContext.SalesOrders
+        var order = await dbContext.SalesOrders.GetByTenant(tenantId.Value)
             .Include(x => x.Lines)
             .FirstOrDefaultAsync(x => x.Id == shipment.SalesOrderId, cancellationToken);
 
@@ -195,9 +212,15 @@ public class SalesShipmentCommandService(
         return ServiceResult<SalesShipmentDetailsResponse>.Success(response!);
     }
 
-    public async Task<ServiceResult<bool>> DeleteAsync(Guid shipmentId, CancellationToken cancellationToken = default)
+    public override async Task<ServiceResult<bool>> DeleteAsync(Guid shipmentId, AppDbContext context, CancellationToken cancellationToken = default)
     {
-        var shipment = await dbContext.SalesShipments
+        var tenantId = TryGetTenantId();
+        if (!tenantId.HasValue)
+        {
+            return ServiceResult<bool>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+        }
+
+        var shipment = await context.SalesShipments.GetByTenant(tenantId.Value)
             .FirstOrDefaultAsync(x => x.Id == shipmentId, cancellationToken);
 
         if (shipment is null)
@@ -211,8 +234,23 @@ public class SalesShipmentCommandService(
         }
 
         shipment.IsActive = false;
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
         return ServiceResult<bool>.Success(true);
+    }
+
+    protected override Task<SalesShipment> GetUpdatedDbObjectAsync(Guid id, IUpdateInput<SalesShipment> input, AppDbContext context, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult<SalesShipment>(null!);
+    }
+
+    protected override Task<SalesShipment> GetDeleteObjectAsync(Guid id, AppDbContext context, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult<SalesShipment>(null!);
+    }
+
+    protected override IEntityResponse<SalesShipment> BuildEntityResponse(SalesShipment entity)
+    {
+        return entity.Adapt<SalesShipmentDetailsResponse>();
     }
 
     private async Task<SalesShipmentDetailsResponse?> BuildDetailsResponseAsync(Guid shipmentId, CancellationToken cancellationToken)
@@ -248,5 +286,23 @@ public class SalesShipmentCommandService(
                 LineTotal = l.ShippedQuantity * l.UnitPrice,
             }).ToList(),
         };
+    }
+
+    private static ServiceResult<SalesShipmentDetailsResponse> MapResult(ServiceResult<IEntityResponse<SalesShipment>> result)
+    {
+        if (result.Succeeded)
+        {
+            var mapped = result.Value!.Adapt<SalesShipmentDetailsResponse>();
+            return ServiceResult<SalesShipmentDetailsResponse>.Success(mapped);
+        }
+
+        if (result.Validation is not null)
+        {
+            return ServiceResult<SalesShipmentDetailsResponse>.ValidationFailure(result.Validation.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+        }
+
+        return ServiceResult<SalesShipmentDetailsResponse>.Failure(
+            result.StatusCode ?? StatusCodes.Status400BadRequest,
+            result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
     }
 }

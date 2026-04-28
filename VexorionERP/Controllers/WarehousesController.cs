@@ -1,6 +1,8 @@
+using Mapster;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VexorionERP.Contracts;
+using VexorionERP.Database;
 using VexorionERP.Models;
 using VexorionERP.Services;
 
@@ -10,8 +12,9 @@ namespace VexorionERP;
 [Route("api/warehouses")]
 [Authorize]
 public class WarehousesController(
-    IWarehouseCommandService warehouseCommandService,
-    IWarehouseQueryService warehouseQueryService) : ServiceResultControllerBase
+    ICommandService<Warehouse> warehouseCommandService,
+    IWarehouseQueryService warehouseQueryService,
+    AppDbContext dbContext) : ServiceResultControllerBase
 {
     [HttpGet]
     [Authorize(Policy = AppPermissions.Inventory.View)]
@@ -33,28 +36,47 @@ public class WarehousesController(
     [Authorize(Policy = AppPermissions.Inventory.Manage)]
     public async Task<ActionResult<WarehouseDetailsResponse>> Create([FromBody] CreateWarehouseRequest request)
     {
-        var result = await warehouseCommandService.CreateAsync(request, HttpContext.RequestAborted);
+        var result = await warehouseCommandService.CreateAsync(request, dbContext, HttpContext.RequestAborted);
         if (!result.Succeeded)
         {
-            return ToActionResult(result);
+            return ToActionResult(MapResult(result));
         }
 
-        return CreatedAtAction(nameof(GetById), new { warehouseId = result.Value!.Id }, result.Value);
+        var mapped = result.Value!.Adapt<WarehouseDetailsResponse>();
+        return CreatedAtAction(nameof(GetById), new { warehouseId = mapped.Id }, mapped);
     }
 
     [HttpPut("{warehouseId:guid}")]
     [Authorize(Policy = AppPermissions.Inventory.Manage)]
     public async Task<ActionResult<WarehouseDetailsResponse>> Update(Guid warehouseId, [FromBody] UpdateWarehouseRequest request)
     {
-        var result = await warehouseCommandService.UpdateAsync(warehouseId, request, HttpContext.RequestAborted);
-        return ToActionResult(result);
+        var result = await warehouseCommandService.UpdateAsync(warehouseId, request, dbContext, HttpContext.RequestAborted);
+        return ToActionResult(MapResult(result));
     }
 
     [HttpDelete("{warehouseId:guid}")]
     [Authorize(Policy = AppPermissions.Inventory.Manage)]
     public async Task<ActionResult> Delete(Guid warehouseId)
     {
-        var result = await warehouseCommandService.DeleteAsync(warehouseId, HttpContext.RequestAborted);
+        var result = await warehouseCommandService.DeleteAsync(warehouseId, dbContext, HttpContext.RequestAborted);
         return ToActionResult(result);
+    }
+
+    private ServiceResult<WarehouseDetailsResponse> MapResult(ServiceResult<IEntityResponse<Warehouse>> result)
+    {
+        if (result.Succeeded)
+        {
+            var mapped = result.Value!.Adapt<WarehouseDetailsResponse>();
+            return ServiceResult<WarehouseDetailsResponse>.Success(mapped);
+        }
+
+        if (result.Validation is not null)
+        {
+            return ServiceResult<WarehouseDetailsResponse>.ValidationFailure(result.Validation.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+        }
+
+        return ServiceResult<WarehouseDetailsResponse>.Failure(
+            result.StatusCode ?? StatusCodes.Status400BadRequest,
+            result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
     }
 }

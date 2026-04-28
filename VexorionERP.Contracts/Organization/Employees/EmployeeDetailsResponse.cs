@@ -1,6 +1,8 @@
+using VexorionERP.Models;
+
 namespace VexorionERP.Contracts;
 
-public class EmployeeDetailsResponse
+public class EmployeeDetailsResponse : IEntityResponse<Employee>
 {
     public Guid Id { get; set; }
     public Guid TenantId { get; set; }

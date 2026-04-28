@@ -8,66 +8,93 @@ using VexorionERP.Services;
 
 namespace VexorionERP.Services;
 
-public class PurchaseInvoiceCommandService(
-    AppDbContext dbContext,
-    ICurrentTenantProvider currentTenantProvider,
-    INumberingService? numberingService = null) : IPurchaseInvoiceCommandService
+public class PurchaseInvoiceCommandService : BaseCommandService<PurchaseInvoice>
 {
-    private readonly INumberingService _numberingService = numberingService ?? new NumberingService(dbContext, currentTenantProvider);
+    private readonly AppDbContext dbContext;
+    private readonly INumberingService _numberingService;
+
+    public PurchaseInvoiceCommandService(
+        AppDbContext dbContext,
+        ICurrentTenantProvider currentTenantProvider,
+        INumberingService? numberingService = null) : base(currentTenantProvider)
+    {
+        this.dbContext = dbContext;
+        _numberingService = numberingService ?? new NumberingService(dbContext, CurrentTenantProvider);
+    }
 
     public async Task<ServiceResult<PurchaseInvoiceDetailsResponse>> CreateAsync(CreatePurchaseInvoiceRequest request, CancellationToken cancellationToken = default)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
-            return ServiceResult<PurchaseInvoiceDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+        var result = await CreateAsync((ICreateInput<PurchaseInvoice>)request, dbContext, cancellationToken);
+        return MapResult(result);
+    }
+
+    public async Task<ServiceResult<PurchaseInvoiceDetailsResponse>> UpdateAsync(Guid purchaseInvoiceId, UpdatePurchaseInvoiceRequest request, CancellationToken cancellationToken = default)
+    {
+        var result = await UpdateAsync(purchaseInvoiceId, (IUpdateInput<PurchaseInvoice>)request, dbContext, cancellationToken);
+        return MapResult(result);
+    }
+
+    public Task<ServiceResult<bool>> DeleteAsync(Guid purchaseInvoiceId, CancellationToken cancellationToken = default)
+        => DeleteAsync(purchaseInvoiceId, dbContext, cancellationToken);
+
+    public override async Task<ServiceResult<IEntityResponse<PurchaseInvoice>>> CreateAsync(ICreateInput<PurchaseInvoice> request, AppDbContext context, CancellationToken cancellationToken = default)
+    {
+        var tenantId = TryGetTenantId();
+        if (!tenantId.HasValue)
+            return ServiceResult<IEntityResponse<PurchaseInvoice>>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+
+        var createRequest = (CreatePurchaseInvoiceRequest)request;
 
         PurchaseOrder? sourcePurchaseOrder = null;
-        if (request.SourcePurchaseOrderId.HasValue)
+        if (createRequest.SourcePurchaseOrderId.HasValue)
         {
-            sourcePurchaseOrder = await dbContext.PurchaseOrders
+            sourcePurchaseOrder = await context.PurchaseOrders.GetByTenant(tenantId.Value)
                 .Include(x => x.Lines)
                 .FirstOrDefaultAsync(
-                    x => x.Id == request.SourcePurchaseOrderId.Value && x.TenantId == currentTenantProvider.TenantId.Value,
+                    x => x.Id == createRequest.SourcePurchaseOrderId.Value,
                     cancellationToken);
 
             if (sourcePurchaseOrder is null)
-                return ServiceResult<PurchaseInvoiceDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Source purchase order not found.");
+                return ServiceResult<IEntityResponse<PurchaseInvoice>>.Failure(StatusCodes.Status400BadRequest, "Source purchase order not found.");
         }
 
-        var effectiveSupplierId = sourcePurchaseOrder?.SupplierId ?? request.SupplierId;
-        var effectiveCurrencyCode = sourcePurchaseOrder?.CurrencyCode ?? request.CurrencyCode;
+        var effectiveSupplierId = sourcePurchaseOrder?.SupplierId ?? createRequest.SupplierId;
+        var effectiveCurrencyCode = sourcePurchaseOrder?.CurrencyCode ?? createRequest.CurrencyCode;
 
-        var validation = Validate(request.InvoiceNumber, effectiveSupplierId, effectiveCurrencyCode, requireInvoiceNumber: false);
+        var validation = Validate(createRequest.InvoiceNumber, effectiveSupplierId, effectiveCurrencyCode, requireInvoiceNumber: false);
         if (validation.Count > 0)
-            return ServiceResult<PurchaseInvoiceDetailsResponse>.ValidationFailure(validation);
+            return ServiceResult<IEntityResponse<PurchaseInvoice>>.ValidationFailure(validation);
 
-        if (!await dbContext.Suppliers.AnyAsync(x => x.Id == effectiveSupplierId, cancellationToken))
-            return ServiceResult<PurchaseInvoiceDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Supplier not found.");
+        if (!await context.Suppliers.GetByTenant(tenantId.Value)
+                .AnyAsync(x => x.Id == effectiveSupplierId, cancellationToken))
+            return ServiceResult<IEntityResponse<PurchaseInvoice>>.Failure(StatusCodes.Status400BadRequest, "Supplier not found.");
 
-        DateOnly dueDate = request.DueDate;
-        if (request.PaymentTermId.HasValue)
+        DateOnly dueDate = createRequest.DueDate;
+        if (createRequest.PaymentTermId.HasValue)
         {
-            var term = await dbContext.PaymentTerms.FindAsync([request.PaymentTermId.Value], cancellationToken);
+            var term = await context.PaymentTerms.FindAsync([createRequest.PaymentTermId.Value], cancellationToken);
             if (term is null)
-                return ServiceResult<PurchaseInvoiceDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Payment term not found.");
-            dueDate = request.InvoiceDate.AddDays(term.DaysDue);
+                return ServiceResult<IEntityResponse<PurchaseInvoice>>.Failure(StatusCodes.Status400BadRequest, "Payment term not found.");
+            dueDate = createRequest.InvoiceDate.AddDays(term.DaysDue);
         }
 
-        var invoiceNumberResult = await ResolveInvoiceNumberAsync(request.InvoiceNumber, request.InvoiceDate, cancellationToken);
+        var invoiceNumberResult = await ResolveInvoiceNumberAsync(createRequest.InvoiceNumber, createRequest.InvoiceDate, cancellationToken);
         if (!invoiceNumberResult.Succeeded)
-            return ServiceResult<PurchaseInvoiceDetailsResponse>.Failure(invoiceNumberResult.StatusCode ?? StatusCodes.Status400BadRequest, invoiceNumberResult.ErrorMessage ?? "Failed to generate invoice number.");
+            return ServiceResult<IEntityResponse<PurchaseInvoice>>.Failure(invoiceNumberResult.StatusCode ?? StatusCodes.Status400BadRequest, invoiceNumberResult.ErrorMessage ?? "Failed to generate invoice number.");
 
         var normalized = invoiceNumberResult.Value!;
-        if (await dbContext.PurchaseInvoices.AnyAsync(x => x.TenantId == currentTenantProvider.TenantId.Value && x.InvoiceNumber.ToUpper() == normalized, cancellationToken))
-            return ServiceResult<PurchaseInvoiceDetailsResponse>.Failure(StatusCodes.Status409Conflict, "A purchase invoice with the same number already exists.");
+        if (await context.PurchaseInvoices.GetByTenant(tenantId.Value)
+                .AnyAsync(x => x.InvoiceNumber.ToUpper() == normalized, cancellationToken))
+            return ServiceResult<IEntityResponse<PurchaseInvoice>>.Failure(StatusCodes.Status409Conflict, "A purchase invoice with the same number already exists.");
 
-        var invoice = request.Adapt<PurchaseInvoice>();
-        invoice.TenantId = currentTenantProvider.TenantId.Value;
+        var invoice = createRequest.Adapt<PurchaseInvoice>();
+        invoice.TenantId = tenantId.Value;
         invoice.InvoiceNumber = normalized;
         invoice.SupplierId = effectiveSupplierId;
         invoice.CurrencyCode = effectiveCurrencyCode.Trim().ToUpperInvariant();
         invoice.DueDate = dueDate;
-        invoice.Notes = NormalizeOptional(request.Notes);
-        invoice.VendorReferenceNumber = NormalizeOptional(request.VendorReferenceNumber);
+        invoice.Notes = NormalizeOptional(createRequest.Notes);
+        invoice.VendorReferenceNumber = NormalizeOptional(createRequest.VendorReferenceNumber);
         invoice.Subtotal = 0m;
         invoice.TaxTotal = 0m;
         invoice.GrandTotal = 0m;
@@ -80,7 +107,7 @@ public class PurchaseInvoiceCommandService(
                 .Where(x => x.IsActive)
                 .Select(line => new PurchaseInvoiceLine
                 {
-                    TenantId = currentTenantProvider.TenantId.Value,
+                    TenantId = tenantId.Value,
                     PurchaseInvoiceId = invoice.Id,
                     ProductId = line.ProductId,
                     Quantity = line.Quantity,
@@ -93,75 +120,85 @@ public class PurchaseInvoiceCommandService(
             RecalcTotals(invoice);
         }
 
-        dbContext.PurchaseInvoices.Add(invoice);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return ServiceResult<PurchaseInvoiceDetailsResponse>.Success(invoice.Adapt<PurchaseInvoiceDetailsResponse>());
+        context.PurchaseInvoices.Add(invoice);
+        await context.SaveChangesAsync(cancellationToken);
+        return ServiceResult<IEntityResponse<PurchaseInvoice>>.Success(invoice.Adapt<PurchaseInvoiceDetailsResponse>());
     }
 
-    public async Task<ServiceResult<PurchaseInvoiceDetailsResponse>> UpdateAsync(Guid purchaseInvoiceId, UpdatePurchaseInvoiceRequest request, CancellationToken cancellationToken = default)
+    public override async Task<ServiceResult<IEntityResponse<PurchaseInvoice>>> UpdateAsync(Guid purchaseInvoiceId, IUpdateInput<PurchaseInvoice> request, AppDbContext context, CancellationToken cancellationToken = default)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
-            return ServiceResult<PurchaseInvoiceDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+        var tenantId = TryGetTenantId();
+        if (!tenantId.HasValue)
+            return ServiceResult<IEntityResponse<PurchaseInvoice>>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
 
-        var validation = Validate(request.InvoiceNumber, request.SupplierId, request.CurrencyCode, requireInvoiceNumber: true);
+        var updateRequest = (UpdatePurchaseInvoiceRequest)request;
+
+        var validation = Validate(updateRequest.InvoiceNumber, updateRequest.SupplierId, updateRequest.CurrencyCode, requireInvoiceNumber: true);
         if (validation.Count > 0)
-            return ServiceResult<PurchaseInvoiceDetailsResponse>.ValidationFailure(validation);
+            return ServiceResult<IEntityResponse<PurchaseInvoice>>.ValidationFailure(validation);
 
-        var invoice = await dbContext.PurchaseInvoices.Include(x => x.Lines).FirstOrDefaultAsync(x => x.Id == purchaseInvoiceId, cancellationToken);
+        var invoice = await context.PurchaseInvoices.GetByTenant(tenantId.Value)
+            .Include(x => x.Lines)
+            .FirstOrDefaultAsync(x => x.Id == purchaseInvoiceId, cancellationToken);
         if (invoice is null)
-            return ServiceResult<PurchaseInvoiceDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Purchase invoice not found.");
+            return ServiceResult<IEntityResponse<PurchaseInvoice>>.Failure(StatusCodes.Status404NotFound, "Purchase invoice not found.");
 
         if (invoice.PostedAtUtc.HasValue || invoice.ReversedAtUtc.HasValue)
-            return ServiceResult<PurchaseInvoiceDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "A posted or reversed invoice cannot be modified.");
+            return ServiceResult<IEntityResponse<PurchaseInvoice>>.Failure(StatusCodes.Status400BadRequest, "A posted or reversed invoice cannot be modified.");
 
-        if (!await dbContext.Suppliers.AnyAsync(x => x.Id == request.SupplierId, cancellationToken))
-            return ServiceResult<PurchaseInvoiceDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Supplier not found.");
+        if (!await context.Suppliers.GetByTenant(tenantId.Value)
+                .AnyAsync(x => x.Id == updateRequest.SupplierId, cancellationToken))
+            return ServiceResult<IEntityResponse<PurchaseInvoice>>.Failure(StatusCodes.Status400BadRequest, "Supplier not found.");
 
-        DateOnly dueDate = request.DueDate;
-        if (request.PaymentTermId.HasValue)
+        DateOnly dueDate = updateRequest.DueDate;
+        if (updateRequest.PaymentTermId.HasValue)
         {
-            var term = await dbContext.PaymentTerms.FindAsync([request.PaymentTermId.Value], cancellationToken);
+            var term = await context.PaymentTerms.FindAsync([updateRequest.PaymentTermId.Value], cancellationToken);
             if (term is null)
-                return ServiceResult<PurchaseInvoiceDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Payment term not found.");
-            dueDate = request.InvoiceDate.AddDays(term.DaysDue);
+                return ServiceResult<IEntityResponse<PurchaseInvoice>>.Failure(StatusCodes.Status400BadRequest, "Payment term not found.");
+            dueDate = updateRequest.InvoiceDate.AddDays(term.DaysDue);
         }
 
-        var normalized = request.InvoiceNumber.Trim().ToUpperInvariant();
-        if (await dbContext.PurchaseInvoices.AnyAsync(x => x.Id != purchaseInvoiceId && x.TenantId == currentTenantProvider.TenantId.Value && x.InvoiceNumber.ToUpper() == normalized, cancellationToken))
-            return ServiceResult<PurchaseInvoiceDetailsResponse>.Failure(StatusCodes.Status409Conflict, "A purchase invoice with the same number already exists.");
+        var normalized = updateRequest.InvoiceNumber.Trim().ToUpperInvariant();
+        if (await context.PurchaseInvoices.GetByTenant(tenantId.Value)
+                .AnyAsync(x => x.Id != purchaseInvoiceId && x.InvoiceNumber.ToUpper() == normalized, cancellationToken))
+            return ServiceResult<IEntityResponse<PurchaseInvoice>>.Failure(StatusCodes.Status409Conflict, "A purchase invoice with the same number already exists.");
 
-        request.Adapt(invoice);
+        updateRequest.Adapt(invoice);
         invoice.InvoiceNumber = normalized;
-        invoice.CurrencyCode = request.CurrencyCode.Trim().ToUpperInvariant();
+        invoice.CurrencyCode = updateRequest.CurrencyCode.Trim().ToUpperInvariant();
         invoice.DueDate = dueDate;
-        invoice.Notes = NormalizeOptional(request.Notes);
-        invoice.VendorReferenceNumber = NormalizeOptional(request.VendorReferenceNumber);
+        invoice.Notes = NormalizeOptional(updateRequest.Notes);
+        invoice.VendorReferenceNumber = NormalizeOptional(updateRequest.VendorReferenceNumber);
         RecalcTotals(invoice);
 
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return ServiceResult<PurchaseInvoiceDetailsResponse>.Success(invoice.Adapt<PurchaseInvoiceDetailsResponse>());
+        await context.SaveChangesAsync(cancellationToken);
+        return ServiceResult<IEntityResponse<PurchaseInvoice>>.Success(invoice.Adapt<PurchaseInvoiceDetailsResponse>());
     }
 
-    public async Task<ServiceResult<bool>> DeleteAsync(Guid purchaseInvoiceId, CancellationToken cancellationToken = default)
+    public override async Task<ServiceResult<bool>> DeleteAsync(Guid purchaseInvoiceId, AppDbContext context, CancellationToken cancellationToken = default)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
+        var tenantId = TryGetTenantId();
+        if (!tenantId.HasValue)
             return ServiceResult<bool>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
 
-        var invoice = await dbContext.PurchaseInvoices.FirstOrDefaultAsync(x => x.Id == purchaseInvoiceId, cancellationToken);
+        var invoice = await context.PurchaseInvoices.GetByTenant(tenantId.Value)
+            .FirstOrDefaultAsync(x => x.Id == purchaseInvoiceId, cancellationToken);
         if (invoice is null)
             return ServiceResult<bool>.Failure(StatusCodes.Status404NotFound, "Purchase invoice not found.");
 
         if (invoice.Status == InvoiceStatus.Cancelled || invoice.PostedAtUtc.HasValue || invoice.ReversedAtUtc.HasValue)
             return ServiceResult<bool>.Failure(StatusCodes.Status400BadRequest, "Only draft or unposted invoices can be deleted.");
 
-        dbContext.PurchaseInvoices.Remove(invoice);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        context.PurchaseInvoices.Remove(invoice);
+        await context.SaveChangesAsync(cancellationToken);
         return ServiceResult<bool>.Success(true);
     }
 
     public async Task<ServiceResult<PurchaseInvoiceDetailsResponse>> ApplyPaymentAsync(Guid purchaseInvoiceId, decimal amount, CancellationToken cancellationToken = default)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
+        var tenantId = TryGetTenantId();
+        if (!tenantId.HasValue)
             return ServiceResult<PurchaseInvoiceDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
 
         if (amount <= 0m)
@@ -172,7 +209,8 @@ public class PurchaseInvoiceCommandService(
             });
         }
 
-        var invoice = await dbContext.PurchaseInvoices.FirstOrDefaultAsync(x => x.Id == purchaseInvoiceId, cancellationToken);
+        var invoice = await dbContext.PurchaseInvoices.GetByTenant(tenantId.Value)
+            .FirstOrDefaultAsync(x => x.Id == purchaseInvoiceId, cancellationToken);
         if (invoice is null)
             return ServiceResult<PurchaseInvoiceDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Purchase invoice not found.");
 
@@ -188,6 +226,21 @@ public class PurchaseInvoiceCommandService(
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return ServiceResult<PurchaseInvoiceDetailsResponse>.Success(invoice.Adapt<PurchaseInvoiceDetailsResponse>());
+    }
+
+    protected override IEntityResponse<PurchaseInvoice> BuildEntityResponse(PurchaseInvoice entity)
+    {
+        return entity.Adapt<PurchaseInvoiceDetailsResponse>();
+    }
+
+    protected override Task<PurchaseInvoice> GetUpdatedDbObjectAsync(Guid id, IUpdateInput<PurchaseInvoice> input, AppDbContext context, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult<PurchaseInvoice>(null!);
+    }
+
+    protected override Task<PurchaseInvoice> GetDeleteObjectAsync(Guid id, AppDbContext context, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult<PurchaseInvoice>(null!);
     }
 
     internal static void RecalcTotals(PurchaseInvoice invoice)
@@ -219,4 +272,22 @@ public class PurchaseInvoiceCommandService(
     }
 
     private static string? NormalizeOptional(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static ServiceResult<PurchaseInvoiceDetailsResponse> MapResult(ServiceResult<IEntityResponse<PurchaseInvoice>> result)
+    {
+        if (result.Succeeded)
+        {
+            var mapped = result.Value!.Adapt<PurchaseInvoiceDetailsResponse>();
+            return ServiceResult<PurchaseInvoiceDetailsResponse>.Success(mapped);
+        }
+
+        if (result.Validation is not null)
+        {
+            return ServiceResult<PurchaseInvoiceDetailsResponse>.ValidationFailure(result.Validation.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+        }
+
+        return ServiceResult<PurchaseInvoiceDetailsResponse>.Failure(
+            result.StatusCode ?? StatusCodes.Status400BadRequest,
+            result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
+    }
 }

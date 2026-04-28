@@ -33,6 +33,12 @@ public abstract class BaseCommandService<T> : BaseService, ICommandService<T>
             return ServiceResult<IEntityResponse<T>>.Failure(StatusCodes.Status400BadRequest, errorMessage ?? Errors.ERR_UNKNOWN_ERROR);
         }
 
+        var createBusinessRule = await ValidateCreateBusinessRulesAsync(request, dbContext, cancellationToken);
+        if (createBusinessRule is not null)
+        {
+            return createBusinessRule;
+        }
+
         T created = await AddProcessAsync(request, dbContext, cancellationToken);
 
         if (created is null)
@@ -42,7 +48,7 @@ public abstract class BaseCommandService<T> : BaseService, ICommandService<T>
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return ServiceResult<IEntityResponse<T>>.Success(created.Adapt<IEntityResponse<T>>());
+        return ServiceResult<IEntityResponse<T>>.Success(BuildEntityResponse(created));
     }
 
     protected virtual async Task<T> AddProcessAsync(ICreateInput<T> input, AppDbContext context, CancellationToken cancellationToken = default)
@@ -83,6 +89,14 @@ public abstract class BaseCommandService<T> : BaseService, ICommandService<T>
         return isValid;
     }
 
+    protected virtual Task<ServiceResult<IEntityResponse<T>>?> ValidateCreateBusinessRulesAsync(
+        ICreateInput<T> input,
+        AppDbContext context,
+        CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult<ServiceResult<IEntityResponse<T>>?>(null);
+    }
+
     public virtual Task<T> GetAddToDbObjectAsync(ICreateInput<T> input, AppDbContext context, CancellationToken cancellationToken = default)
     {
         return Task.FromResult(input.Adapt<T>());
@@ -108,6 +122,12 @@ public abstract class BaseCommandService<T> : BaseService, ICommandService<T>
             return ServiceResult<IEntityResponse<T>>.Failure(StatusCodes.Status400BadRequest, errorMessage ?? Errors.ERR_UNKNOWN_ERROR);
         }
 
+        var updateBusinessRule = await ValidateUpdateBusinessRulesAsync(id, request, dbContext, cancellationToken);
+        if (updateBusinessRule is not null)
+        {
+            return updateBusinessRule;
+        }
+
         T updated = await UpdateProcessAsync(id, request, dbContext, cancellationToken);
 
         if (updated is null)
@@ -115,9 +135,15 @@ public abstract class BaseCommandService<T> : BaseService, ICommandService<T>
             return ServiceResult<IEntityResponse<T>>.Failure(StatusCodes.Status404NotFound, GetNotFoundMessage());
         }
 
+        var updateSideEffects = await ProcessUpdateSideEffectsAsync(id, request, updated, dbContext, cancellationToken);
+        if (updateSideEffects is not null)
+        {
+            return updateSideEffects;
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return ServiceResult<IEntityResponse<T>>.Success(updated.Adapt<IEntityResponse<T>>());
+        return ServiceResult<IEntityResponse<T>>.Success(BuildEntityResponse(updated));
     }
 
     protected virtual bool ValidateUpdateInput(IUpdateInput<T> input, out IDictionary<string, string[]>? errors, out string? errorMessage)
@@ -126,6 +152,15 @@ public abstract class BaseCommandService<T> : BaseService, ICommandService<T>
         errors = validationErrors.Count > 0 ? validationErrors : null;
         errorMessage = null;
         return isValid;
+    }
+
+    protected virtual Task<ServiceResult<IEntityResponse<T>>?> ValidateUpdateBusinessRulesAsync(
+        Guid id,
+        IUpdateInput<T> input,
+        AppDbContext context,
+        CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult<ServiceResult<IEntityResponse<T>>?>(null);
     }
 
     protected virtual async Task<T> UpdateProcessAsync(Guid id, IUpdateInput<T> input, AppDbContext context, CancellationToken cancellationToken = default)
@@ -145,6 +180,21 @@ public abstract class BaseCommandService<T> : BaseService, ICommandService<T>
         return updated;
     }
 
+    protected virtual Task<ServiceResult<IEntityResponse<T>>?> ProcessUpdateSideEffectsAsync(
+        Guid id,
+        IUpdateInput<T> input,
+        T updated,
+        AppDbContext context,
+        CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult<ServiceResult<IEntityResponse<T>>?>(null);
+    }
+
+    protected virtual IEntityResponse<T> BuildEntityResponse(T entity)
+    {
+        return entity.Adapt<IEntityResponse<T>>();
+    }
+
     protected abstract Task<T> GetUpdatedDbObjectAsync(Guid id, IUpdateInput<T> input, AppDbContext context,
         CancellationToken cancellationToken = default);
 
@@ -155,6 +205,12 @@ public abstract class BaseCommandService<T> : BaseService, ICommandService<T>
         if (RequiresTenantContext() && !HasTenantContext)
         {
             return ServiceResult<bool>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+        }
+
+        var deleteBusinessRule = await ValidateDeleteBusinessRulesAsync(id, dbContext, cancellationToken);
+        if (deleteBusinessRule is not null)
+        {
+            return deleteBusinessRule;
         }
 
         T deleted = await DeleteProcessAsync(id, dbContext, cancellationToken);
@@ -185,6 +241,14 @@ public abstract class BaseCommandService<T> : BaseService, ICommandService<T>
 
     protected abstract Task<T> GetDeleteObjectAsync(Guid id, AppDbContext context,
         CancellationToken cancellationToken = default);
+
+    protected virtual Task<ServiceResult<bool>?> ValidateDeleteBusinessRulesAsync(
+        Guid id,
+        AppDbContext context,
+        CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult<ServiceResult<bool>?>(null);
+    }
 
     protected virtual bool RequiresTenantContext() => typeof(ITenantEntity).IsAssignableFrom(typeof(T));
 

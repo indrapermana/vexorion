@@ -1,8 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using VexorionERP.Models;
 
 namespace VexorionERP.Contracts;
 
-public class CreateSupplierRequest
+public class CreateSupplierRequest : ICreateInput<Supplier>
 {
     [Required]
     [StringLength(50, MinimumLength = 1)]

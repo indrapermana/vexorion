@@ -1,6 +1,9 @@
+using Mapster;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using VexorionERP.Contracts;
+using VexorionERP.Database;
 using VexorionERP.Models;
 using VexorionERP.Services;
 
@@ -10,8 +13,9 @@ namespace VexorionERP;
 [Route("api/customer-payments")]
 [Authorize]
 public class CustomerPaymentsController(
-    ICustomerPaymentCommandService customerPaymentCommandService,
-    ICustomerPaymentQueryService customerPaymentQueryService) : ServiceResultControllerBase
+    ICommandService<CustomerPayment> customerPaymentCommandService,
+    ICustomerPaymentQueryService customerPaymentQueryService,
+    AppDbContext dbContext) : ServiceResultControllerBase
 {
     [HttpGet]
     [Authorize(Policy = AppPermissions.Sales.View)]
@@ -33,8 +37,20 @@ public class CustomerPaymentsController(
     [Authorize(Policy = AppPermissions.Sales.Manage)]
     public async Task<ActionResult<CustomerPaymentDetailsResponse>> Create([FromBody] CreateCustomerPaymentRequest request)
     {
-        var result = await customerPaymentCommandService.CreateAsync(request, HttpContext.RequestAborted);
-        if (!result.Succeeded) return ToActionResult(result);
-        return CreatedAtAction(nameof(GetById), new { customerPaymentId = result.Value!.Id }, result.Value);
+        var result = await customerPaymentCommandService.CreateAsync(request, dbContext, HttpContext.RequestAborted);
+        if (!result.Succeeded) return ToActionResult(MapResult(result));
+        var mapped = result.Value!.Adapt<CustomerPaymentDetailsResponse>();
+        return CreatedAtAction(nameof(GetById), new { customerPaymentId = mapped.Id }, mapped);
+    }
+
+    private ServiceResult<CustomerPaymentDetailsResponse> MapResult(ServiceResult<IEntityResponse<CustomerPayment>> result)
+    {
+        if (result.Succeeded)
+            return ServiceResult<CustomerPaymentDetailsResponse>.Success(result.Value!.Adapt<CustomerPaymentDetailsResponse>());
+        if (result.Validation is not null)
+            return ServiceResult<CustomerPaymentDetailsResponse>.ValidationFailure(result.Validation.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+        return ServiceResult<CustomerPaymentDetailsResponse>.Failure(
+            result.StatusCode ?? StatusCodes.Status400BadRequest,
+            result.ErrorMessage ?? "An error occurred.");
     }
 }

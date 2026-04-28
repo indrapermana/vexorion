@@ -3,7 +3,7 @@ using VexorionERP.Models;
 
 namespace VexorionERP.Contracts;
 
-public class UpdateStockCountRequest
+public class UpdateStockCountRequest : IUpdateInput<StockCount>
 {
     [Required]
     public string CountNumber { get; set; } = string.Empty;

@@ -3,7 +3,7 @@ using VexorionERP.Models;
 
 namespace VexorionERP.Contracts;
 
-public class UpdateStockTransferRequest
+public class UpdateStockTransferRequest : IUpdateInput<StockTransfer>
 {
     [Required]
     public string TransferNumber { get; set; } = string.Empty;

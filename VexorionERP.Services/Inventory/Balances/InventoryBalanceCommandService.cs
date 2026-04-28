@@ -9,104 +9,151 @@ using VexorionERP.Services;
 namespace VexorionERP.Services;
 
 public class InventoryBalanceCommandService(
-    AppDbContext dbContext,
-    ICurrentTenantProvider currentTenantProvider) : IInventoryBalanceCommandService
+    ICurrentTenantProvider currentTenantProvider) : BaseCommandService<InventoryBalance>(currentTenantProvider)
 {
-    public async Task<ServiceResult<InventoryBalanceDetailsResponse>> CreateAsync(CreateInventoryBalanceRequest request, CancellationToken cancellationToken = default)
+    protected override bool ValidateAddInput(ICreateInput<InventoryBalance> input, out IDictionary<string, string[]>? errors, out string? errorMessage)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
-        {
-            return ServiceResult<InventoryBalanceDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
-        }
+        errors = null;
+        errorMessage = null;
 
+        CreateInventoryBalanceRequest request = (CreateInventoryBalanceRequest)input;
         var validation = Validate(request.ProductId, request.WarehouseId, request.QuantityOnHand, request.QuantityReserved);
         if (validation.Count > 0)
         {
-            return ServiceResult<InventoryBalanceDetailsResponse>.ValidationFailure(validation);
+            errors = validation;
+            return false;
         }
 
-        if (!await dbContext.Products.AnyAsync(x => x.Id == request.ProductId, cancellationToken))
-        {
-            return ServiceResult<InventoryBalanceDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Product not found.");
-        }
-
-        if (!await dbContext.Warehouses.AnyAsync(x => x.Id == request.WarehouseId, cancellationToken))
-        {
-            return ServiceResult<InventoryBalanceDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Warehouse not found.");
-        }
-
-        var exists = await dbContext.InventoryBalances.AnyAsync(
-            x => x.TenantId == currentTenantProvider.TenantId.Value && x.ProductId == request.ProductId && x.WarehouseId == request.WarehouseId,
-            cancellationToken);
-
-        if (exists)
-        {
-            return ServiceResult<InventoryBalanceDetailsResponse>.Failure(StatusCodes.Status409Conflict, "An inventory balance already exists for this product and warehouse.");
-        }
-
-        var balance = request.Adapt<InventoryBalance>();
-        balance.TenantId = currentTenantProvider.TenantId.Value;
-
-        dbContext.InventoryBalances.Add(balance);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return ServiceResult<InventoryBalanceDetailsResponse>.Success(balance.Adapt<InventoryBalanceDetailsResponse>());
+        return base.ValidateAddInput(input, out errors, out errorMessage);
     }
 
-    public async Task<ServiceResult<InventoryBalanceDetailsResponse>> UpdateAsync(Guid inventoryBalanceId, UpdateInventoryBalanceRequest request, CancellationToken cancellationToken = default)
+    protected override async Task<ServiceResult<IEntityResponse<InventoryBalance>>?> ValidateCreateBusinessRulesAsync(
+        ICreateInput<InventoryBalance> input,
+        AppDbContext context,
+        CancellationToken cancellationToken = default)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
+        CreateInventoryBalanceRequest request = (CreateInventoryBalanceRequest)input;
+        var tenantId = TryGetTenantId();
+
+        if (!tenantId.HasValue)
         {
-            return ServiceResult<InventoryBalanceDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+            return null;
         }
 
-        var validation = Validate(request.ProductId, request.WarehouseId, request.QuantityOnHand, request.QuantityReserved);
-        if (validation.Count > 0)
+        if (!await context.Products.GetByTenant(tenantId.Value)
+                .AnyAsync(x => x.Id == request.ProductId, cancellationToken))
         {
-            return ServiceResult<InventoryBalanceDetailsResponse>.ValidationFailure(validation);
+            return ServiceResult<IEntityResponse<InventoryBalance>>.Failure(StatusCodes.Status400BadRequest, "Product not found.");
         }
 
-        var balance = await dbContext.InventoryBalances.FirstOrDefaultAsync(x => x.Id == inventoryBalanceId, cancellationToken);
-        if (balance is null)
+        if (!await context.Warehouses.GetByTenant(tenantId.Value)
+                .AnyAsync(x => x.Id == request.WarehouseId, cancellationToken))
         {
-            return ServiceResult<InventoryBalanceDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Inventory balance not found.");
+            return ServiceResult<IEntityResponse<InventoryBalance>>.Failure(StatusCodes.Status400BadRequest, "Warehouse not found.");
         }
 
-        if (!await dbContext.Products.AnyAsync(x => x.Id == request.ProductId, cancellationToken))
-        {
-            return ServiceResult<InventoryBalanceDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Product not found.");
-        }
-
-        if (!await dbContext.Warehouses.AnyAsync(x => x.Id == request.WarehouseId, cancellationToken))
-        {
-            return ServiceResult<InventoryBalanceDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Warehouse not found.");
-        }
-
-        var exists = await dbContext.InventoryBalances.AnyAsync(
-            x => x.Id != inventoryBalanceId && x.TenantId == currentTenantProvider.TenantId.Value && x.ProductId == request.ProductId && x.WarehouseId == request.WarehouseId,
-            cancellationToken);
+        var exists = await context.InventoryBalances.GetByTenant(tenantId.Value)
+            .AnyAsync(x => x.ProductId == request.ProductId && x.WarehouseId == request.WarehouseId, cancellationToken);
 
         if (exists)
         {
-            return ServiceResult<InventoryBalanceDetailsResponse>.Failure(StatusCodes.Status409Conflict, "An inventory balance already exists for this product and warehouse.");
+            return ServiceResult<IEntityResponse<InventoryBalance>>.Failure(StatusCodes.Status409Conflict, "An inventory balance already exists for this product and warehouse.");
+        }
+
+        return null;
+    }
+
+    protected override bool ValidateUpdateInput(IUpdateInput<InventoryBalance> input, out IDictionary<string, string[]>? errors, out string? errorMessage)
+    {
+        errors = null;
+        errorMessage = null;
+
+        UpdateInventoryBalanceRequest request = (UpdateInventoryBalanceRequest)input;
+        var validation = Validate(request.ProductId, request.WarehouseId, request.QuantityOnHand, request.QuantityReserved);
+        if (validation.Count > 0)
+        {
+            errors = validation;
+            return false;
+        }
+
+        return base.ValidateUpdateInput(input, out errors, out errorMessage);
+    }
+
+    protected override async Task<ServiceResult<IEntityResponse<InventoryBalance>>?> ValidateUpdateBusinessRulesAsync(
+        Guid id,
+        IUpdateInput<InventoryBalance> input,
+        AppDbContext context,
+        CancellationToken cancellationToken = default)
+    {
+        UpdateInventoryBalanceRequest request = (UpdateInventoryBalanceRequest)input;
+        var tenantId = TryGetTenantId();
+
+        if (!tenantId.HasValue)
+        {
+            return null;
+        }
+
+        if (!await context.Products.GetByTenant(tenantId.Value)
+                .AnyAsync(x => x.Id == request.ProductId, cancellationToken))
+        {
+            return ServiceResult<IEntityResponse<InventoryBalance>>.Failure(StatusCodes.Status400BadRequest, "Product not found.");
+        }
+
+        if (!await context.Warehouses.GetByTenant(tenantId.Value)
+                .AnyAsync(x => x.Id == request.WarehouseId, cancellationToken))
+        {
+            return ServiceResult<IEntityResponse<InventoryBalance>>.Failure(StatusCodes.Status400BadRequest, "Warehouse not found.");
+        }
+
+        var exists = await context.InventoryBalances.GetByTenant(tenantId.Value)
+            .AnyAsync(x => x.Id != id && x.ProductId == request.ProductId && x.WarehouseId == request.WarehouseId, cancellationToken);
+
+        if (exists)
+        {
+            return ServiceResult<IEntityResponse<InventoryBalance>>.Failure(StatusCodes.Status409Conflict, "An inventory balance already exists for this product and warehouse.");
+        }
+
+        return null;
+    }
+
+    protected override async Task<InventoryBalance> GetUpdatedDbObjectAsync(Guid id, IUpdateInput<InventoryBalance> input, AppDbContext context, CancellationToken cancellationToken = default)
+    {
+        var tenantId = TryGetTenantId();
+
+        if (!tenantId.HasValue)
+        {
+            return null!;
+        }
+
+        UpdateInventoryBalanceRequest request = (UpdateInventoryBalanceRequest)input;
+        var balance = await context.InventoryBalances.GetByTenant(tenantId.Value)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        if (balance is null)
+        {
+            return null!;
         }
 
         request.Adapt(balance);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return ServiceResult<InventoryBalanceDetailsResponse>.Success(balance.Adapt<InventoryBalanceDetailsResponse>());
+        return balance;
     }
 
-    public async Task<ServiceResult<bool>> DeleteAsync(Guid inventoryBalanceId, CancellationToken cancellationToken = default)
+    protected override async Task<InventoryBalance> GetDeleteObjectAsync(Guid id, AppDbContext context, CancellationToken cancellationToken = default)
     {
-        var balance = await dbContext.InventoryBalances.FirstOrDefaultAsync(x => x.Id == inventoryBalanceId, cancellationToken);
-        if (balance is null)
+        var tenantId = TryGetTenantId();
+
+        if (!tenantId.HasValue)
         {
-            return ServiceResult<bool>.Failure(StatusCodes.Status404NotFound, "Inventory balance not found.");
+            return null!;
         }
 
-        dbContext.InventoryBalances.Remove(balance);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return ServiceResult<bool>.Success(true);
+        var balance = await context.InventoryBalances.GetByTenant(tenantId.Value)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        return balance ?? null!;
     }
+
+    protected override string GetNotFoundMessage() => "Inventory balance not found.";
 
     private static Dictionary<string, string[]> Validate(Guid productId, Guid warehouseId, decimal quantityOnHand, decimal quantityReserved)
     {

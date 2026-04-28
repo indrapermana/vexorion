@@ -1,8 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using VexorionERP.Models;
 
 namespace VexorionERP.Contracts;
 
-public class CreateCompanyRequest
+public class CreateCompanyRequest : ICreateInput<Company>
 {
     [Required]
     [StringLength(200, MinimumLength = 2)]

@@ -10,62 +10,90 @@ namespace VexorionERP.Services;
 
 public class VendorPaymentCommandService(
     AppDbContext dbContext,
-    ICurrentTenantProvider currentTenantProvider) : IVendorPaymentCommandService
+    ICurrentTenantProvider currentTenantProvider) : BaseCommandService<VendorPayment>(currentTenantProvider)
 {
+    // Compatibility wrapper used by tests and existing code
     public async Task<ServiceResult<VendorPaymentDetailsResponse>> CreateAsync(CreateVendorPaymentRequest request, CancellationToken cancellationToken = default)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
-            return ServiceResult<VendorPaymentDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+        var result = await CreateAsync((ICreateInput<VendorPayment>)request, dbContext, cancellationToken);
+        return MapResult(result);
+    }
 
-        var validation = Validate(request);
+    public override async Task<ServiceResult<IEntityResponse<VendorPayment>>> CreateAsync(ICreateInput<VendorPayment> request, AppDbContext context, CancellationToken cancellationToken = default)
+    {
+        var tenantId = TryGetTenantId();
+        if (!tenantId.HasValue)
+            return ServiceResult<IEntityResponse<VendorPayment>>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+
+        var createRequest = (CreateVendorPaymentRequest)request;
+
+        var validation = Validate(createRequest);
         if (validation.Count > 0)
-            return ServiceResult<VendorPaymentDetailsResponse>.ValidationFailure(validation);
+            return ServiceResult<IEntityResponse<VendorPayment>>.ValidationFailure(validation);
 
-        var supplier = await dbContext.Suppliers
+        var supplier = await context.Suppliers
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == request.SupplierId && x.TenantId == currentTenantProvider.TenantId.Value, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Id == createRequest.SupplierId && x.TenantId == tenantId.Value, cancellationToken);
         if (supplier is null)
-            return ServiceResult<VendorPaymentDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Supplier not found.");
+            return ServiceResult<IEntityResponse<VendorPayment>>.Failure(StatusCodes.Status400BadRequest, "Supplier not found.");
 
-        var purchaseInvoice = await dbContext.PurchaseInvoices
-            .FirstOrDefaultAsync(x => x.Id == request.PurchaseInvoiceId && x.TenantId == currentTenantProvider.TenantId.Value, cancellationToken);
+        var purchaseInvoice = await context.PurchaseInvoices
+            .FirstOrDefaultAsync(x => x.Id == createRequest.PurchaseInvoiceId && x.TenantId == tenantId.Value, cancellationToken);
         if (purchaseInvoice is null)
-            return ServiceResult<VendorPaymentDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Purchase invoice not found.");
+            return ServiceResult<IEntityResponse<VendorPayment>>.Failure(StatusCodes.Status400BadRequest, "Purchase invoice not found.");
 
-        if (purchaseInvoice.SupplierId != request.SupplierId)
-            return ServiceResult<VendorPaymentDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Purchase invoice does not belong to the specified supplier.");
+        if (purchaseInvoice.SupplierId != createRequest.SupplierId)
+            return ServiceResult<IEntityResponse<VendorPayment>>.Failure(StatusCodes.Status400BadRequest, "Purchase invoice does not belong to the specified supplier.");
 
-        var currencyCode = request.CurrencyCode.Trim().ToUpperInvariant();
+        var currencyCode = createRequest.CurrencyCode.Trim().ToUpperInvariant();
         if (!string.Equals(purchaseInvoice.CurrencyCode, currencyCode, StringComparison.OrdinalIgnoreCase))
-            return ServiceResult<VendorPaymentDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Payment currency must match invoice currency.");
+            return ServiceResult<IEntityResponse<VendorPayment>>.Failure(StatusCodes.Status400BadRequest, "Payment currency must match invoice currency.");
 
         if (purchaseInvoice.Status is InvoiceStatus.Draft or InvoiceStatus.Cancelled || purchaseInvoice.ReversedAtUtc.HasValue)
-            return ServiceResult<VendorPaymentDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Payments can only be allocated to active issued invoices.");
+            return ServiceResult<IEntityResponse<VendorPayment>>.Failure(StatusCodes.Status400BadRequest, "Payments can only be allocated to active issued invoices.");
 
-        var nextPaidTotal = purchaseInvoice.PaidTotal + request.Amount;
+        var nextPaidTotal = purchaseInvoice.PaidTotal + createRequest.Amount;
         if (nextPaidTotal > purchaseInvoice.GrandTotal)
-            return ServiceResult<VendorPaymentDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Payment allocation exceeds the remaining balance.");
+            return ServiceResult<IEntityResponse<VendorPayment>>.Failure(StatusCodes.Status400BadRequest, "Payment allocation exceeds the remaining balance.");
 
         var payment = new VendorPayment
         {
-            TenantId = currentTenantProvider.TenantId.Value,
-            SupplierId = request.SupplierId,
-            PurchaseInvoiceId = request.PurchaseInvoiceId,
-            PaymentDate = request.PaymentDate,
-            Amount = request.Amount,
+            TenantId = tenantId.Value,
+            SupplierId = createRequest.SupplierId,
+            PurchaseInvoiceId = createRequest.PurchaseInvoiceId,
+            PaymentDate = createRequest.PaymentDate,
+            Amount = createRequest.Amount,
             CurrencyCode = currencyCode,
-            ReferenceNumber = NormalizeOptional(request.ReferenceNumber),
-            PaymentMethod = NormalizeOptional(request.PaymentMethod),
-            Notes = NormalizeOptional(request.Notes),
+            ReferenceNumber = NormalizeOptional(createRequest.ReferenceNumber),
+            PaymentMethod = NormalizeOptional(createRequest.PaymentMethod),
+            Notes = NormalizeOptional(createRequest.Notes),
         };
 
         purchaseInvoice.PaidTotal = nextPaidTotal;
         purchaseInvoice.Status = nextPaidTotal == purchaseInvoice.GrandTotal ? InvoiceStatus.Paid : InvoiceStatus.PartiallyPaid;
 
-        dbContext.VendorPayments.Add(payment);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        context.VendorPayments.Add(payment);
+        await context.SaveChangesAsync(cancellationToken);
 
-        return ServiceResult<VendorPaymentDetailsResponse>.Success(payment.Adapt<VendorPaymentDetailsResponse>());
+        return ServiceResult<IEntityResponse<VendorPayment>>.Success(payment.Adapt<VendorPaymentDetailsResponse>());
+    }
+
+    protected override IEntityResponse<VendorPayment> BuildEntityResponse(VendorPayment entity)
+        => entity.Adapt<VendorPaymentDetailsResponse>();
+
+    protected override Task<VendorPayment> GetUpdatedDbObjectAsync(Guid id, IUpdateInput<VendorPayment> input, AppDbContext context, CancellationToken cancellationToken = default)
+        => Task.FromResult<VendorPayment>(null!);
+
+    protected override Task<VendorPayment> GetDeleteObjectAsync(Guid id, AppDbContext context, CancellationToken cancellationToken = default)
+        => Task.FromResult<VendorPayment>(null!);
+
+    private static ServiceResult<VendorPaymentDetailsResponse> MapResult(ServiceResult<IEntityResponse<VendorPayment>> result)
+    {
+        if (result.Succeeded)
+            return ServiceResult<VendorPaymentDetailsResponse>.Success(result.Value!.Adapt<VendorPaymentDetailsResponse>());
+        if (result.Validation is not null)
+            return ServiceResult<VendorPaymentDetailsResponse>.ValidationFailure(result.Validation.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+        return ServiceResult<VendorPaymentDetailsResponse>.Failure(result.StatusCode ?? StatusCodes.Status400BadRequest, result.ErrorMessage ?? "An error occurred.");
     }
 
     private static Dictionary<string, string[]> Validate(CreateVendorPaymentRequest request)
