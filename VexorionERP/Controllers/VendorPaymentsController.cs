@@ -14,23 +14,23 @@ namespace VexorionERP;
 [Authorize]
 public class VendorPaymentsController(
     ICommandService<VendorPayment> vendorPaymentCommandService,
-    IVendorPaymentQueryService vendorPaymentQueryService,
+    IQueryService<VendorPayment> vendorPaymentQueryService,
     AppDbContext dbContext) : ServiceResultControllerBase
 {
     [HttpGet]
     [Authorize(Policy = AppPermissions.Purchasing.View)]
     public async Task<ActionResult<IReadOnlyCollection<VendorPaymentListItemResponse>>> GetAll()
     {
-        var result = await vendorPaymentQueryService.GetAllAsync(HttpContext.RequestAborted);
-        return ToActionResult(result);
+        var result = await vendorPaymentQueryService.GetAllAsync(dbContext, HttpContext.RequestAborted);
+        return ToActionResult(MapResult(result));
     }
 
     [HttpGet("{vendorPaymentId:guid}")]
     [Authorize(Policy = AppPermissions.Purchasing.View)]
     public async Task<ActionResult<VendorPaymentDetailsResponse>> GetById(Guid vendorPaymentId)
     {
-        var result = await vendorPaymentQueryService.GetByIdAsync(vendorPaymentId, HttpContext.RequestAborted);
-        return ToActionResult(result);
+        var result = await vendorPaymentQueryService.GetByIdAsync(vendorPaymentId, dbContext, HttpContext.RequestAborted);
+        return ToActionResult(MapResult(result));
     }
 
     [HttpPost]
@@ -50,6 +50,17 @@ public class VendorPaymentsController(
         if (result.Validation is not null)
             return ServiceResult<VendorPaymentDetailsResponse>.ValidationFailure(result.Validation.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
         return ServiceResult<VendorPaymentDetailsResponse>.Failure(
+            result.StatusCode ?? StatusCodes.Status400BadRequest,
+            result.ErrorMessage ?? "An error occurred.");
+    }
+
+    private ServiceResult<IReadOnlyCollection<VendorPaymentListItemResponse>> MapResult(ServiceResult<IReadOnlyCollection<IEntityListResponse<VendorPayment>>> result)
+    {
+        if (result.Succeeded)
+            return ServiceResult<IReadOnlyCollection<VendorPaymentListItemResponse>>.Success(result.Value!.Adapt<IReadOnlyCollection<VendorPaymentListItemResponse>>());
+        if (result.Validation is not null)
+            return ServiceResult<IReadOnlyCollection<VendorPaymentListItemResponse>>.ValidationFailure(result.Validation.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+        return ServiceResult<IReadOnlyCollection<VendorPaymentListItemResponse>>.Failure(
             result.StatusCode ?? StatusCodes.Status400BadRequest,
             result.ErrorMessage ?? "An error occurred.");
     }

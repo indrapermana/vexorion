@@ -32,18 +32,26 @@ public static class IdentityServiceCollectionExtensions
 
         foreach (Type type in types)
         {
-            Type? serviceInterface = type.GetInterfaces()
-                .FirstOrDefault(interfaceType =>
+            Type[] serviceInterfaces = type.GetInterfaces()
+                .Where(interfaceType =>
                     interfaceType.IsGenericType &&
                     (interfaceType.GetGenericTypeDefinition() == typeof(ICommandService<>)
-                    ));
+                    || interfaceType.GetGenericTypeDefinition() == typeof(ILineCommandService<,>)
+                    || interfaceType.GetGenericTypeDefinition() == typeof(IQueryService<>)
+                    || interfaceType.GetGenericTypeDefinition() == typeof(IFilteredQueryService<,>)
+                    || interfaceType.GetGenericTypeDefinition() == typeof(IChildQueryService<,>)
+                    || interfaceType.GetGenericTypeDefinition() == typeof(ILineQueryService<,>)))
+                .ToArray();
 
-            if (serviceInterface is null)
+            if (serviceInterfaces.Length == 0)
             {
                 continue;
             }
 
-            services.AddScoped(serviceInterface, type);
+            foreach (Type serviceInterface in serviceInterfaces)
+            {
+                services.AddScoped(serviceInterface, type);
+            }
         }
 
         services.AddScoped<ICurrentTenantProvider, HttpContextCurrentTenantProvider>();
@@ -52,50 +60,17 @@ public static class IdentityServiceCollectionExtensions
         services.AddScoped<IAuditLogger, AuditLogger>();
         services.AddScoped<IAuditLogQueryService, AuditLogQueryService>();
         services.AddScoped<IAuthApplicationService, AuthApplicationService>();
-        services.AddScoped<ICompanyQueryService, CompanyQueryService>();
-        services.AddScoped<ICustomerQueryService, CustomerQueryService>();
-        services.AddScoped<IDepartmentQueryService, DepartmentQueryService>();
-        services.AddScoped<IEmployeeQueryService, EmployeeQueryService>();
-        services.AddScoped<IInventoryAdjustmentLineCommandService, InventoryAdjustmentLineCommandService>();
-        services.AddScoped<IInventoryAdjustmentQueryService, InventoryAdjustmentQueryService>();
-        services.AddScoped<IInventoryBalanceQueryService, InventoryBalanceQueryService>();
         services.AddScoped<IInventoryMovementPostingService, InventoryMovementPostingService>();
         services.AddScoped<IPostingService, PostingService>();
         services.AddScoped<INumberingService, NumberingService>();
         services.AddScoped<IInvoiceApprovalService, InvoiceApprovalService>();
         services.AddScoped<IReportingService, ReportingService>();
         services.AddScoped<IInvoiceCommandService, InvoiceCommandService>();
-        services.AddScoped<IInvoiceLineCommandService, InvoiceLineCommandService>();
-        services.AddScoped<IInvoiceLineQueryService, InvoiceLineQueryService>();
-        services.AddScoped<IInvoiceQueryService, InvoiceQueryService>();
-        services.AddScoped<IProductQueryService, ProductQueryService>();
-        services.AddScoped<IPurchaseOrderLineCommandService, PurchaseOrderLineCommandService>();
-        services.AddScoped<IPurchaseOrderLineQueryService, PurchaseOrderLineQueryService>();
-        services.AddScoped<IPurchaseOrderQueryService, PurchaseOrderQueryService>();
         services.AddScoped<IPurchaseReceiptPostingService, PurchaseReceiptCommandService>();
-        services.AddScoped<IPurchaseReceiptQueryService, PurchaseReceiptQueryService>();
-        services.AddScoped<IPurchaseInvoiceLineCommandService, PurchaseInvoiceLineCommandService>();
-        services.AddScoped<IPurchaseInvoiceLineQueryService, PurchaseInvoiceLineQueryService>();
-        services.AddScoped<IPurchaseInvoiceQueryService, PurchaseInvoiceQueryService>();
-        services.AddScoped<IVendorPaymentQueryService, VendorPaymentQueryService>();
         services.AddScoped<IRoleManagementService, RoleManagementService>();
-        services.AddScoped<ISalesOrderLineCommandService, SalesOrderLineCommandService>();
-        services.AddScoped<ISalesOrderLineQueryService, SalesOrderLineQueryService>();
-        services.AddScoped<ISalesOrderQueryService, SalesOrderQueryService>();
         services.AddScoped<ISalesShipmentPostingService, SalesShipmentCommandService>();
-        services.AddScoped<ISalesShipmentQueryService, SalesShipmentQueryService>();
-        services.AddScoped<ISalesInvoiceLineCommandService, SalesInvoiceLineCommandService>();
-        services.AddScoped<ISalesInvoiceLineQueryService, SalesInvoiceLineQueryService>();
-        services.AddScoped<ISalesInvoiceQueryService, SalesInvoiceQueryService>();
-        services.AddScoped<ICustomerPaymentQueryService, CustomerPaymentQueryService>();
-        services.AddScoped<IStockTransferLineCommandService, StockTransferLineCommandService>();
-        services.AddScoped<IStockTransferQueryService, StockTransferQueryService>();
-        services.AddScoped<IStockCountLineCommandService, StockCountLineCommandService>();
-        services.AddScoped<IStockCountQueryService, StockCountQueryService>();
-        services.AddScoped<ISupplierQueryService, SupplierQueryService>();
         services.AddScoped<ITenantOnboardingService, TenantOnboardingService>();
         services.AddScoped<IUserManagementService, UserManagementService>();
-        services.AddScoped<IWarehouseQueryService, WarehouseQueryService>();
 
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
         {

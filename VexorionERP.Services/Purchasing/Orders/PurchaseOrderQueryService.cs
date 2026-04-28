@@ -3,35 +3,41 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using VexorionERP.Contracts;
 using VexorionERP.Database;
+using VexorionERP.Models;
 using VexorionERP.Services;
 
 namespace VexorionERP.Services;
 
 public class PurchaseOrderQueryService(
-    AppDbContext dbContext,
-    ICurrentTenantProvider currentTenantProvider) : IPurchaseOrderQueryService
+    ICurrentTenantProvider currentTenantProvider) : BaseService(currentTenantProvider), IQueryService<PurchaseOrder>
 {
-    public async Task<ServiceResult<IReadOnlyCollection<PurchaseOrderListItemResponse>>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<ServiceResult<IReadOnlyCollection<IEntityListResponse<PurchaseOrder>>>> GetAllAsync(AppDbContext context, CancellationToken cancellationToken = default)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
+        ArgumentNullException.ThrowIfNull(context);
+
+        var tenantId = TryGetTenantId();
+        if (!tenantId.HasValue)
         {
-            return ServiceResult<IReadOnlyCollection<PurchaseOrderListItemResponse>>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+            return ServiceResult<IReadOnlyCollection<IEntityListResponse<PurchaseOrder>>>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
         }
 
-        var orders = await dbContext.PurchaseOrders.AsNoTracking().OrderByDescending(x => x.OrderDate).ToListAsync(cancellationToken);
-        return ServiceResult<IReadOnlyCollection<PurchaseOrderListItemResponse>>.Success(orders.Adapt<IReadOnlyCollection<PurchaseOrderListItemResponse>>());
+        var orders = await context.PurchaseOrders.GetByTenant(tenantId.Value).AsNoTracking().OrderByDescending(x => x.OrderDate).ToListAsync(cancellationToken);
+        return ServiceResult<IReadOnlyCollection<IEntityListResponse<PurchaseOrder>>>.Success(orders.Adapt<IReadOnlyCollection<IEntityListResponse<PurchaseOrder>>>());
     }
 
-    public async Task<ServiceResult<PurchaseOrderDetailsResponse>> GetByIdAsync(Guid purchaseOrderId, CancellationToken cancellationToken = default)
+    public async Task<ServiceResult<IEntityResponse<PurchaseOrder>>> GetByIdAsync(Guid purchaseOrderId, AppDbContext context, CancellationToken cancellationToken = default)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
+        ArgumentNullException.ThrowIfNull(context);
+
+        var tenantId = TryGetTenantId();
+        if (!tenantId.HasValue)
         {
-            return ServiceResult<PurchaseOrderDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+            return ServiceResult<IEntityResponse<PurchaseOrder>>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
         }
 
-        var order = await dbContext.PurchaseOrders.AsNoTracking().FirstOrDefaultAsync(x => x.Id == purchaseOrderId, cancellationToken);
+        var order = await context.PurchaseOrders.GetByTenant(tenantId.Value).AsNoTracking().FirstOrDefaultAsync(x => x.Id == purchaseOrderId, cancellationToken);
         return order is null
-            ? ServiceResult<PurchaseOrderDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Purchase order not found.")
-            : ServiceResult<PurchaseOrderDetailsResponse>.Success(order.Adapt<PurchaseOrderDetailsResponse>());
+            ? ServiceResult<IEntityResponse<PurchaseOrder>>.Failure(StatusCodes.Status404NotFound, "Purchase order not found.")
+            : ServiceResult<IEntityResponse<PurchaseOrder>>.Success(order.Adapt<PurchaseOrderDetailsResponse>());
     }
 }

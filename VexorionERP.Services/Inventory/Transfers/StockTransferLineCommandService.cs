@@ -10,35 +10,35 @@ namespace VexorionERP.Services;
 
 public class StockTransferLineCommandService(
     AppDbContext dbContext,
-    ICurrentTenantProvider currentTenantProvider) : IStockTransferLineCommandService
+    ICurrentTenantProvider currentTenantProvider) : BaseLineCommandService<StockTransfer, StockTransferLine, CreateStockTransferLineRequest, UpdateStockTransferLineRequest>
 {
-    public async Task<ServiceResult<StockTransferLineDetailsResponse>> CreateAsync(Guid stockTransferId, CreateStockTransferLineRequest request, CancellationToken cancellationToken = default)
+    protected override async Task<ServiceResult<ILineResponse<StockTransferLine>>> CreateAsync(Guid stockTransferId, CreateStockTransferLineRequest request, CancellationToken cancellationToken = default)
     {
         var validation = Validate(stockTransferId, request.ProductId, request.Quantity, request.UnitCost);
         if (validation.Count > 0)
         {
-            return ServiceResult<StockTransferLineDetailsResponse>.ValidationFailure(validation);
+            return ServiceResult<ILineResponse<StockTransferLine>>.ValidationFailure(validation);
         }
 
         var transfer = await dbContext.StockTransfers.Include(x => x.Lines).FirstOrDefaultAsync(x => x.Id == stockTransferId, cancellationToken);
         if (transfer is null)
         {
-            return ServiceResult<StockTransferLineDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Stock transfer not found.");
+            return ServiceResult<ILineResponse<StockTransferLine>>.Failure(StatusCodes.Status404NotFound, "Stock transfer not found.");
         }
 
         if (transfer.Status != DocumentStatus.Draft)
         {
-            return ServiceResult<StockTransferLineDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Stock transfer lines can only be modified while the transfer is in Draft status.");
+            return ServiceResult<ILineResponse<StockTransferLine>>.Failure(StatusCodes.Status400BadRequest, "Stock transfer lines can only be modified while the transfer is in Draft status.");
         }
 
         if (!await dbContext.Products.AnyAsync(x => x.Id == request.ProductId, cancellationToken))
         {
-            return ServiceResult<StockTransferLineDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Product not found.");
+            return ServiceResult<ILineResponse<StockTransferLine>>.Failure(StatusCodes.Status400BadRequest, "Product not found.");
         }
 
         if (HasDuplicateProductLine(transfer, request.ProductId))
         {
-            return ServiceResult<StockTransferLineDetailsResponse>.Failure(StatusCodes.Status409Conflict, "An active transfer line already exists for this product.");
+            return ServiceResult<ILineResponse<StockTransferLine>>.Failure(StatusCodes.Status409Conflict, "An active transfer line already exists for this product.");
         }
 
         var line = request.Adapt<StockTransferLine>();
@@ -47,50 +47,50 @@ public class StockTransferLineCommandService(
 
         dbContext.StockTransferLines.Add(line);
         await dbContext.SaveChangesAsync(cancellationToken);
-        return ServiceResult<StockTransferLineDetailsResponse>.Success(line.Adapt<StockTransferLineDetailsResponse>());
+        return ServiceResult<ILineResponse<StockTransferLine>>.Success(line.Adapt<StockTransferLineDetailsResponse>());
     }
 
-    public async Task<ServiceResult<StockTransferLineDetailsResponse>> UpdateAsync(Guid stockTransferId, Guid stockTransferLineId, UpdateStockTransferLineRequest request, CancellationToken cancellationToken = default)
+    protected override async Task<ServiceResult<ILineResponse<StockTransferLine>>> UpdateAsync(Guid stockTransferId, Guid stockTransferLineId, UpdateStockTransferLineRequest request, CancellationToken cancellationToken = default)
     {
         var validation = Validate(stockTransferId, request.ProductId, request.Quantity, request.UnitCost);
         if (validation.Count > 0)
         {
-            return ServiceResult<StockTransferLineDetailsResponse>.ValidationFailure(validation);
+            return ServiceResult<ILineResponse<StockTransferLine>>.ValidationFailure(validation);
         }
 
         var transfer = await dbContext.StockTransfers.Include(x => x.Lines).FirstOrDefaultAsync(x => x.Id == stockTransferId, cancellationToken);
         if (transfer is null)
         {
-            return ServiceResult<StockTransferLineDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Stock transfer not found.");
+            return ServiceResult<ILineResponse<StockTransferLine>>.Failure(StatusCodes.Status404NotFound, "Stock transfer not found.");
         }
 
         if (transfer.Status != DocumentStatus.Draft)
         {
-            return ServiceResult<StockTransferLineDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Stock transfer lines can only be modified while the transfer is in Draft status.");
+            return ServiceResult<ILineResponse<StockTransferLine>>.Failure(StatusCodes.Status400BadRequest, "Stock transfer lines can only be modified while the transfer is in Draft status.");
         }
 
         var line = transfer.Lines.FirstOrDefault(x => x.Id == stockTransferLineId);
         if (line is null)
         {
-            return ServiceResult<StockTransferLineDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Stock transfer line not found.");
+            return ServiceResult<ILineResponse<StockTransferLine>>.Failure(StatusCodes.Status404NotFound, "Stock transfer line not found.");
         }
 
         if (!await dbContext.Products.AnyAsync(x => x.Id == request.ProductId, cancellationToken))
         {
-            return ServiceResult<StockTransferLineDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Product not found.");
+            return ServiceResult<ILineResponse<StockTransferLine>>.Failure(StatusCodes.Status400BadRequest, "Product not found.");
         }
 
         if (HasDuplicateProductLine(transfer, request.ProductId, stockTransferLineId))
         {
-            return ServiceResult<StockTransferLineDetailsResponse>.Failure(StatusCodes.Status409Conflict, "An active transfer line already exists for this product.");
+            return ServiceResult<ILineResponse<StockTransferLine>>.Failure(StatusCodes.Status409Conflict, "An active transfer line already exists for this product.");
         }
 
         request.Adapt(line);
         await dbContext.SaveChangesAsync(cancellationToken);
-        return ServiceResult<StockTransferLineDetailsResponse>.Success(line.Adapt<StockTransferLineDetailsResponse>());
+        return ServiceResult<ILineResponse<StockTransferLine>>.Success(line.Adapt<StockTransferLineDetailsResponse>());
     }
 
-    public async Task<ServiceResult<bool>> DeleteAsync(Guid stockTransferId, Guid stockTransferLineId, CancellationToken cancellationToken = default)
+    public override async Task<ServiceResult<bool>> DeleteAsync(Guid stockTransferId, Guid stockTransferLineId, CancellationToken cancellationToken = default)
     {
         var transfer = await dbContext.StockTransfers.Include(x => x.Lines).FirstOrDefaultAsync(x => x.Id == stockTransferId, cancellationToken);
         if (transfer is null)

@@ -1,6 +1,8 @@
+using VexorionERP.Models;
+
 namespace VexorionERP.Contracts;
 
-public class CompanyListItemResponse
+public class CompanyListItemResponse : IEntityListResponse<Company>
 {
     public Guid Id { get; set; }
     public string Code { get; set; } = string.Empty;

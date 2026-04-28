@@ -1,6 +1,8 @@
+using VexorionERP.Models;
+
 namespace VexorionERP.Contracts;
 
-public class PurchaseOrderLineDetailsResponse
+public class PurchaseOrderLineDetailsResponse : ILineResponse<PurchaseOrderLine>
 {
     public Guid Id { get; set; }
     public Guid TenantId { get; set; }

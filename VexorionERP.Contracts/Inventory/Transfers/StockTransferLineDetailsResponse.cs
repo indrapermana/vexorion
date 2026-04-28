@@ -1,6 +1,8 @@
+using VexorionERP.Models;
+
 namespace VexorionERP.Contracts;
 
-public class StockTransferLineDetailsResponse
+public class StockTransferLineDetailsResponse : ILineResponse<StockTransferLine>
 {
     public Guid Id { get; set; }
     public Guid StockTransferId { get; set; }

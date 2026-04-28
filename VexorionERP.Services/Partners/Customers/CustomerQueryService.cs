@@ -3,35 +3,41 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using VexorionERP.Contracts;
 using VexorionERP.Database;
+using VexorionERP.Models;
 using VexorionERP.Services;
 
 namespace VexorionERP.Services;
 
 public class CustomerQueryService(
-    AppDbContext dbContext,
-    ICurrentTenantProvider currentTenantProvider) : ICustomerQueryService
+    ICurrentTenantProvider currentTenantProvider) : BaseService(currentTenantProvider), IQueryService<Customer>
 {
-    public async Task<ServiceResult<IReadOnlyCollection<CustomerListItemResponse>>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<ServiceResult<IReadOnlyCollection<IEntityListResponse<Customer>>>> GetAllAsync(AppDbContext context, CancellationToken cancellationToken = default)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
+        ArgumentNullException.ThrowIfNull(context);
+
+        var tenantId = TryGetTenantId();
+        if (!tenantId.HasValue)
         {
-            return ServiceResult<IReadOnlyCollection<CustomerListItemResponse>>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+            return ServiceResult<IReadOnlyCollection<IEntityListResponse<Customer>>>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
         }
 
-        var customers = await dbContext.Customers.AsNoTracking().OrderBy(x => x.Name).ToListAsync(cancellationToken);
-        return ServiceResult<IReadOnlyCollection<CustomerListItemResponse>>.Success(customers.Adapt<IReadOnlyCollection<CustomerListItemResponse>>());
+        var customers = await context.Customers.GetByTenant(tenantId.Value).AsNoTracking().OrderBy(x => x.Name).ToListAsync(cancellationToken);
+        return ServiceResult<IReadOnlyCollection<IEntityListResponse<Customer>>>.Success(customers.Adapt<IReadOnlyCollection<IEntityListResponse<Customer>>>());
     }
 
-    public async Task<ServiceResult<CustomerDetailsResponse>> GetByIdAsync(Guid customerId, CancellationToken cancellationToken = default)
+    public async Task<ServiceResult<IEntityResponse<Customer>>> GetByIdAsync(Guid customerId, AppDbContext context, CancellationToken cancellationToken = default)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
+        ArgumentNullException.ThrowIfNull(context);
+
+        var tenantId = TryGetTenantId();
+        if (!tenantId.HasValue)
         {
-            return ServiceResult<CustomerDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+            return ServiceResult<IEntityResponse<Customer>>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
         }
 
-        var customer = await dbContext.Customers.AsNoTracking().FirstOrDefaultAsync(x => x.Id == customerId, cancellationToken);
+        var customer = await context.Customers.GetByTenant(tenantId.Value).AsNoTracking().FirstOrDefaultAsync(x => x.Id == customerId, cancellationToken);
         return customer is null
-            ? ServiceResult<CustomerDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Customer not found.")
-            : ServiceResult<CustomerDetailsResponse>.Success(customer.Adapt<CustomerDetailsResponse>());
+            ? ServiceResult<IEntityResponse<Customer>>.Failure(StatusCodes.Status404NotFound, "Customer not found.")
+            : ServiceResult<IEntityResponse<Customer>>.Success(customer.Adapt<CustomerDetailsResponse>());
     }
 }

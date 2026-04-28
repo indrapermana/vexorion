@@ -2,7 +2,7 @@ using VexorionERP.Models;
 
 namespace VexorionERP.Contracts;
 
-public class InvoiceListItemResponse
+public class InvoiceListItemResponse : IEntityListResponse<Invoice>
 {
     public Guid Id { get; set; }
     public string InvoiceNumber { get; set; } = string.Empty;

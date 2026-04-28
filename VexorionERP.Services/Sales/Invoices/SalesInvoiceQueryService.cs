@@ -3,44 +3,59 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using VexorionERP.Contracts;
 using VexorionERP.Database;
+using VexorionERP.Models;
 using VexorionERP.Services;
 
 namespace VexorionERP.Services;
 
 public class SalesInvoiceQueryService(
     AppDbContext dbContext,
-    ICurrentTenantProvider currentTenantProvider) : ISalesInvoiceQueryService
+    ICurrentTenantProvider currentTenantProvider) : BaseFilteredQueryService<SalesInvoice, bool>(currentTenantProvider)
 {
-    public async Task<ServiceResult<IReadOnlyCollection<SalesInvoiceListItemResponse>>> GetAllAsync(bool outstandingOnly = false, CancellationToken cancellationToken = default)
+    protected override bool DefaultFilter => false;
+
+    protected override IQueryable<SalesInvoice> ApplyFilter(IQueryable<SalesInvoice> query, bool outstandingOnly)
+        => outstandingOnly ? query.Where(x => x.GrandTotal > x.PaidTotal) : query;
+
+    protected override IQueryable<SalesInvoice> ApplyOrdering(IQueryable<SalesInvoice> query)
+        => query.OrderByDescending(x => x.InvoiceDate);
+
+    public new async Task<ServiceResult<IReadOnlyCollection<IEntityListResponse<SalesInvoice>>>> GetAllAsync(bool outstandingOnly, AppDbContext context, CancellationToken cancellationToken = default)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
-            return ServiceResult<IReadOnlyCollection<SalesInvoiceListItemResponse>>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+        ArgumentNullException.ThrowIfNull(context);
 
-        var query = dbContext.SalesInvoices.AsNoTracking()
-            .Where(x => x.TenantId == currentTenantProvider.TenantId.Value);
-
-        if (outstandingOnly)
+        if (!HasTenantContext)
         {
-            query = query.Where(x => x.GrandTotal > x.PaidTotal);
+            return ServiceResult<IReadOnlyCollection<IEntityListResponse<SalesInvoice>>>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
         }
 
-        var invoices = await query
-            .OrderByDescending(x => x.InvoiceDate)
+        var invoices = await ApplyOrdering(ApplyFilter(context.GetByTenant<SalesInvoice>(TenantId).AsNoTracking(), outstandingOnly))
             .ToListAsync(cancellationToken);
 
-        return ServiceResult<IReadOnlyCollection<SalesInvoiceListItemResponse>>.Success(invoices.Adapt<IReadOnlyCollection<SalesInvoiceListItemResponse>>());
+        var mapped = invoices.Adapt<IReadOnlyCollection<SalesInvoiceListItemResponse>>()
+            .Cast<IEntityListResponse<SalesInvoice>>()
+            .ToArray();
+
+        return ServiceResult<IReadOnlyCollection<IEntityListResponse<SalesInvoice>>>.Success(mapped);
+    }
+
+    public async Task<ServiceResult<IReadOnlyCollection<SalesInvoiceListItemResponse>>> GetAllAsync(bool outstandingOnly = false, CancellationToken cancellationToken = default)
+    {
+        var result = await GetAllAsync(outstandingOnly, dbContext, cancellationToken);
+        return result.Succeeded
+            ? ServiceResult<IReadOnlyCollection<SalesInvoiceListItemResponse>>.Success(result.Value!.Cast<SalesInvoiceListItemResponse>().ToArray())
+            : result.Validation is not null
+                ? ServiceResult<IReadOnlyCollection<SalesInvoiceListItemResponse>>.ValidationFailure(result.Validation.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value))
+                : ServiceResult<IReadOnlyCollection<SalesInvoiceListItemResponse>>.Failure(result.StatusCode ?? StatusCodes.Status400BadRequest, result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
     }
 
     public async Task<ServiceResult<SalesInvoiceDetailsResponse>> GetByIdAsync(Guid salesInvoiceId, CancellationToken cancellationToken = default)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
-            return ServiceResult<SalesInvoiceDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
-
-        var invoice = await dbContext.SalesInvoices.AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == salesInvoiceId && x.TenantId == currentTenantProvider.TenantId.Value, cancellationToken);
-
-        return invoice is null
-            ? ServiceResult<SalesInvoiceDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Sales invoice not found.")
-            : ServiceResult<SalesInvoiceDetailsResponse>.Success(invoice.Adapt<SalesInvoiceDetailsResponse>());
+        var result = await GetByIdAsync(salesInvoiceId, dbContext, cancellationToken);
+        return result.Succeeded
+            ? ServiceResult<SalesInvoiceDetailsResponse>.Success(result.Value!.Adapt<SalesInvoiceDetailsResponse>())
+            : result.Validation is not null
+                ? ServiceResult<SalesInvoiceDetailsResponse>.ValidationFailure(result.Validation.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value))
+                : ServiceResult<SalesInvoiceDetailsResponse>.Failure(result.StatusCode ?? StatusCodes.Status400BadRequest, result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
     }
 }

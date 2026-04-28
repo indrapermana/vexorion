@@ -13,23 +13,23 @@ namespace VexorionERP;
 [Authorize]
 public class SalesOrdersController(
     ICommandService<SalesOrder> salesOrderCommandService,
-    ISalesOrderQueryService salesOrderQueryService,
+    IQueryService<SalesOrder> salesOrderQueryService,
     AppDbContext dbContext) : ServiceResultControllerBase
 {
     [HttpGet]
     [Authorize(Policy = AppPermissions.Sales.View)]
     public async Task<ActionResult<IReadOnlyCollection<SalesOrderListItemResponse>>> GetAll()
     {
-        var result = await salesOrderQueryService.GetAllAsync(HttpContext.RequestAborted);
-        return ToActionResult(result);
+        var result = await salesOrderQueryService.GetAllAsync(dbContext, HttpContext.RequestAborted);
+        return ToActionResult(MapResult(result));
     }
 
     [HttpGet("{salesOrderId:guid}")]
     [Authorize(Policy = AppPermissions.Sales.View)]
     public async Task<ActionResult<SalesOrderDetailsResponse>> GetById(Guid salesOrderId)
     {
-        var result = await salesOrderQueryService.GetByIdAsync(salesOrderId, HttpContext.RequestAborted);
-        return ToActionResult(result);
+        var result = await salesOrderQueryService.GetByIdAsync(salesOrderId, dbContext, HttpContext.RequestAborted);
+        return ToActionResult(MapResult(result));
     }
 
     [HttpPost]
@@ -76,6 +76,24 @@ public class SalesOrdersController(
         }
 
         return ServiceResult<SalesOrderDetailsResponse>.Failure(
+            result.StatusCode ?? StatusCodes.Status400BadRequest,
+            result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
+    }
+
+    private ServiceResult<IReadOnlyCollection<SalesOrderListItemResponse>> MapResult(ServiceResult<IReadOnlyCollection<IEntityListResponse<SalesOrder>>> result)
+    {
+        if (result.Succeeded)
+        {
+            var mapped = result.Value!.Adapt<IReadOnlyCollection<SalesOrderListItemResponse>>();
+            return ServiceResult<IReadOnlyCollection<SalesOrderListItemResponse>>.Success(mapped);
+        }
+
+        if (result.Validation is not null)
+        {
+            return ServiceResult<IReadOnlyCollection<SalesOrderListItemResponse>>.ValidationFailure(result.Validation.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+        }
+
+        return ServiceResult<IReadOnlyCollection<SalesOrderListItemResponse>>.Failure(
             result.StatusCode ?? StatusCodes.Status400BadRequest,
             result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
     }

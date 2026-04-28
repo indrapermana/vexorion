@@ -1,8 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using VexorionERP.Models;
 
 namespace VexorionERP.Contracts;
 
-public class CreateSalesInvoiceLineRequest
+public class CreateSalesInvoiceLineRequest : ICreateLineRequest<SalesInvoiceLine>
 {
     public Guid ProductId { get; set; }
     public Guid? TaxCodeId { get; set; }

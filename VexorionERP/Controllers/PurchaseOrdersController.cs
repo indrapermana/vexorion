@@ -13,23 +13,23 @@ namespace VexorionERP;
 [Authorize]
 public class PurchaseOrdersController(
     ICommandService<PurchaseOrder> purchaseOrderCommandService,
-    IPurchaseOrderQueryService purchaseOrderQueryService,
+    IQueryService<PurchaseOrder> purchaseOrderQueryService,
     AppDbContext dbContext) : ServiceResultControllerBase
 {
     [HttpGet]
     [Authorize(Policy = AppPermissions.Purchasing.View)]
     public async Task<ActionResult<IReadOnlyCollection<PurchaseOrderListItemResponse>>> GetAll()
     {
-        var result = await purchaseOrderQueryService.GetAllAsync(HttpContext.RequestAborted);
-        return ToActionResult(result);
+        var result = await purchaseOrderQueryService.GetAllAsync(dbContext, HttpContext.RequestAborted);
+        return ToActionResult(MapResult(result));
     }
 
     [HttpGet("{purchaseOrderId:guid}")]
     [Authorize(Policy = AppPermissions.Purchasing.View)]
     public async Task<ActionResult<PurchaseOrderDetailsResponse>> GetById(Guid purchaseOrderId)
     {
-        var result = await purchaseOrderQueryService.GetByIdAsync(purchaseOrderId, HttpContext.RequestAborted);
-        return ToActionResult(result);
+        var result = await purchaseOrderQueryService.GetByIdAsync(purchaseOrderId, dbContext, HttpContext.RequestAborted);
+        return ToActionResult(MapResult(result));
     }
 
     [HttpPost]
@@ -76,6 +76,24 @@ public class PurchaseOrdersController(
         }
 
         return ServiceResult<PurchaseOrderDetailsResponse>.Failure(
+            result.StatusCode ?? StatusCodes.Status400BadRequest,
+            result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
+    }
+
+    private ServiceResult<IReadOnlyCollection<PurchaseOrderListItemResponse>> MapResult(ServiceResult<IReadOnlyCollection<IEntityListResponse<PurchaseOrder>>> result)
+    {
+        if (result.Succeeded)
+        {
+            var mapped = result.Value!.Adapt<IReadOnlyCollection<PurchaseOrderListItemResponse>>();
+            return ServiceResult<IReadOnlyCollection<PurchaseOrderListItemResponse>>.Success(mapped);
+        }
+
+        if (result.Validation is not null)
+        {
+            return ServiceResult<IReadOnlyCollection<PurchaseOrderListItemResponse>>.ValidationFailure(result.Validation.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+        }
+
+        return ServiceResult<IReadOnlyCollection<PurchaseOrderListItemResponse>>.Failure(
             result.StatusCode ?? StatusCodes.Status400BadRequest,
             result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
     }

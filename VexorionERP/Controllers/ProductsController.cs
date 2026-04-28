@@ -13,23 +13,23 @@ namespace VexorionERP;
 [Authorize]
 public class ProductsController(
     ICommandService<Product> productCommandService,
-    IProductQueryService productQueryService,
+    IQueryService<Product> productQueryService,
     AppDbContext dbContext) : ServiceResultControllerBase
 {
     [HttpGet]
     [Authorize(Policy = AppPermissions.Products.View)]
     public async Task<ActionResult<IReadOnlyCollection<ProductListItemResponse>>> GetAll()
     {
-        var result = await productQueryService.GetAllAsync(HttpContext.RequestAborted);
-        return ToActionResult(result);
+        var result = await productQueryService.GetAllAsync(dbContext, HttpContext.RequestAborted);
+        return ToActionResult(MapResult(result));
     }
 
     [HttpGet("{productId:guid}")]
     [Authorize(Policy = AppPermissions.Products.View)]
     public async Task<ActionResult<ProductDetailsResponse>> GetById(Guid productId)
     {
-        var result = await productQueryService.GetByIdAsync(productId, HttpContext.RequestAborted);
-        return ToActionResult(result);
+        var result = await productQueryService.GetByIdAsync(productId, dbContext, HttpContext.RequestAborted);
+        return ToActionResult(MapResult(result));
     }
 
     [HttpPost]
@@ -76,6 +76,24 @@ public class ProductsController(
         }
 
         return ServiceResult<ProductDetailsResponse>.Failure(
+            result.StatusCode ?? StatusCodes.Status400BadRequest,
+            result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
+    }
+
+    private ServiceResult<IReadOnlyCollection<ProductListItemResponse>> MapResult(ServiceResult<IReadOnlyCollection<IEntityListResponse<Product>>> result)
+    {
+        if (result.Succeeded)
+        {
+            var mapped = result.Value!.Adapt<IReadOnlyCollection<ProductListItemResponse>>();
+            return ServiceResult<IReadOnlyCollection<ProductListItemResponse>>.Success(mapped);
+        }
+
+        if (result.Validation is not null)
+        {
+            return ServiceResult<IReadOnlyCollection<ProductListItemResponse>>.ValidationFailure(result.Validation.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+        }
+
+        return ServiceResult<IReadOnlyCollection<ProductListItemResponse>>.Failure(
             result.StatusCode ?? StatusCodes.Status400BadRequest,
             result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
     }

@@ -1,8 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using VexorionERP.Models;
 
 namespace VexorionERP.Contracts;
 
-public class CreateStockCountLineRequest
+public class CreateStockCountLineRequest : ICreateLineRequest<StockCountLine>
 {
     [Required]
     public Guid ProductId { get; set; }

@@ -1,37 +1,35 @@
 using Mapster;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using VexorionERP.Contracts;
 using VexorionERP.Database;
+using VexorionERP.Models;
 using VexorionERP.Services;
 
 namespace VexorionERP.Services;
 
 public class InvoiceLineQueryService(
-    AppDbContext dbContext,
-    ICurrentTenantProvider currentTenantProvider) : IInvoiceLineQueryService
+    ICurrentTenantProvider currentTenantProvider) : BaseLineQueryService<Invoice, InvoiceLine>(currentTenantProvider)
 {
-    public async Task<ServiceResult<IReadOnlyCollection<InvoiceLineListItemResponse>>> GetAllAsync(Guid invoiceId, CancellationToken cancellationToken = default)
-    {
-        if (!currentTenantProvider.TenantId.HasValue)
-        {
-            return ServiceResult<IReadOnlyCollection<InvoiceLineListItemResponse>>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
-        }
+    protected override string LineNotFoundMessage => "Invoice line not found.";
 
-        var lines = await dbContext.InvoiceLines.AsNoTracking().Where(x => x.InvoiceId == invoiceId).ToListAsync(cancellationToken);
-        return ServiceResult<IReadOnlyCollection<InvoiceLineListItemResponse>>.Success(lines.Adapt<IReadOnlyCollection<InvoiceLineListItemResponse>>());
+    protected override async Task<IReadOnlyCollection<IEntityListResponse<InvoiceLine>>> GetAllForParentCoreAsync(Guid parentId, AppDbContext context, CancellationToken cancellationToken)
+    {
+        var lines = await context.GetByTenant<InvoiceLine>(TenantId)
+            .AsNoTracking()
+            .Where(x => x.InvoiceId == parentId)
+            .ToListAsync(cancellationToken);
+
+        return lines.Adapt<IReadOnlyCollection<InvoiceLineListItemResponse>>()
+            .Cast<IEntityListResponse<InvoiceLine>>()
+            .ToArray();
     }
 
-    public async Task<ServiceResult<InvoiceLineDetailsResponse>> GetByIdAsync(Guid invoiceId, Guid invoiceLineId, CancellationToken cancellationToken = default)
+    protected override async Task<IEntityResponse<InvoiceLine>?> GetByIdCoreAsync(Guid parentId, Guid lineId, AppDbContext context, CancellationToken cancellationToken)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
-        {
-            return ServiceResult<InvoiceLineDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
-        }
+        var line = await context.GetByTenant<InvoiceLine>(TenantId)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.InvoiceId == parentId && x.Id == lineId, cancellationToken);
 
-        var line = await dbContext.InvoiceLines.AsNoTracking().FirstOrDefaultAsync(x => x.InvoiceId == invoiceId && x.Id == invoiceLineId, cancellationToken);
-        return line is null
-            ? ServiceResult<InvoiceLineDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Invoice line not found.")
-            : ServiceResult<InvoiceLineDetailsResponse>.Success(line.Adapt<InvoiceLineDetailsResponse>());
+        return line?.Adapt<InvoiceLineDetailsResponse>();
     }
 }

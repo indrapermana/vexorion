@@ -2,15 +2,18 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using VexorionERP.Contracts;
 using VexorionERP.Database;
+using VexorionERP.Models;
 using VexorionERP.Services;
 
 namespace VexorionERP.Services;
 
-public class PurchaseReceiptQueryService(AppDbContext dbContext) : IPurchaseReceiptQueryService
+public class PurchaseReceiptQueryService(ICurrentTenantProvider currentTenantProvider)
+    : BaseChildQueryService<PurchaseOrder, PurchaseReceipt>(currentTenantProvider)
 {
-    public async Task<ServiceResult<List<PurchaseReceiptListItemResponse>>> GetAllForOrderAsync(Guid purchaseOrderId, CancellationToken cancellationToken = default)
+    protected override async Task<IReadOnlyCollection<IEntityListResponse<PurchaseReceipt>>> GetAllForParentCoreAsync(Guid purchaseOrderId, AppDbContext context, CancellationToken cancellationToken)
     {
-        var receipts = await dbContext.PurchaseReceipts
+        var receipts = await context.PurchaseReceipts
+            .GetByTenant(TenantId)
             .Include(x => x.Warehouse)
             .Where(x => x.PurchaseOrderId == purchaseOrderId)
             .OrderByDescending(x => x.ReceiptDate)
@@ -28,12 +31,13 @@ public class PurchaseReceiptQueryService(AppDbContext dbContext) : IPurchaseRece
             })
             .ToListAsync(cancellationToken);
 
-        return ServiceResult<List<PurchaseReceiptListItemResponse>>.Success(receipts);
+        return receipts;
     }
 
-    public async Task<ServiceResult<PurchaseReceiptDetailsResponse>> GetByIdAsync(Guid receiptId, CancellationToken cancellationToken = default)
+    protected override async Task<IEntityResponse<PurchaseReceipt>?> GetByIdCoreAsync(Guid receiptId, AppDbContext context, CancellationToken cancellationToken)
     {
-        var receipt = await dbContext.PurchaseReceipts
+        var receipt = await context.PurchaseReceipts
+            .GetByTenant(TenantId)
             .Include(x => x.Lines).ThenInclude(x => x.Product)
             .Include(x => x.PurchaseOrder)
             .Include(x => x.Warehouse)
@@ -41,10 +45,10 @@ public class PurchaseReceiptQueryService(AppDbContext dbContext) : IPurchaseRece
 
         if (receipt is null)
         {
-            return ServiceResult<PurchaseReceiptDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Purchase receipt not found.");
+            return null;
         }
 
-        return ServiceResult<PurchaseReceiptDetailsResponse>.Success(new PurchaseReceiptDetailsResponse
+        return new PurchaseReceiptDetailsResponse
         {
             Id = receipt.Id,
             ReceiptNumber = receipt.ReceiptNumber,
@@ -66,6 +70,6 @@ public class PurchaseReceiptQueryService(AppDbContext dbContext) : IPurchaseRece
                 UnitCost = l.UnitCost,
                 LineTotal = l.ReceivedQuantity * l.UnitCost,
             }).ToList(),
-        });
+        };
     }
 }

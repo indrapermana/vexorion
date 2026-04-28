@@ -10,25 +10,25 @@ namespace VexorionERP.Services;
 
 public class InvoiceLineCommandService(
     AppDbContext dbContext,
-    ICurrentTenantProvider currentTenantProvider) : IInvoiceLineCommandService
+    ICurrentTenantProvider currentTenantProvider) : BaseLineCommandService<Invoice, InvoiceLine, CreateInvoiceLineRequest, UpdateInvoiceLineRequest>
 {
-    public async Task<ServiceResult<InvoiceLineDetailsResponse>> CreateAsync(Guid invoiceId, CreateInvoiceLineRequest request, CancellationToken cancellationToken = default)
+    protected override async Task<ServiceResult<ILineResponse<InvoiceLine>>> CreateAsync(Guid invoiceId, CreateInvoiceLineRequest request, CancellationToken cancellationToken = default)
     {
         var validation = Validate(invoiceId, request.ProductId, request.Quantity, request.UnitPrice, request.TaxAmount);
         if (validation.Count > 0)
         {
-            return ServiceResult<InvoiceLineDetailsResponse>.ValidationFailure(validation);
+            return ServiceResult<ILineResponse<InvoiceLine>>.ValidationFailure(validation);
         }
 
         var invoice = await dbContext.Invoices.Include(x => x.Lines).FirstOrDefaultAsync(x => x.Id == invoiceId, cancellationToken);
         if (invoice is null)
         {
-            return ServiceResult<InvoiceLineDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Invoice not found.");
+            return ServiceResult<ILineResponse<InvoiceLine>>.Failure(StatusCodes.Status404NotFound, "Invoice not found.");
         }
 
         if (!await dbContext.Products.AnyAsync(x => x.Id == request.ProductId, cancellationToken))
         {
-            return ServiceResult<InvoiceLineDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Product not found.");
+            return ServiceResult<ILineResponse<InvoiceLine>>.Failure(StatusCodes.Status400BadRequest, "Product not found.");
         }
 
         var line = request.Adapt<InvoiceLine>();
@@ -40,41 +40,41 @@ public class InvoiceLineCommandService(
         invoice.TaxAmount = invoice.Lines.Where(x => x.IsActive).Sum(x => x.TaxAmount);
         invoice.TotalAmount = invoice.Subtotal + invoice.TaxAmount;
         await dbContext.SaveChangesAsync(cancellationToken);
-        return ServiceResult<InvoiceLineDetailsResponse>.Success(line.Adapt<InvoiceLineDetailsResponse>());
+        return ServiceResult<ILineResponse<InvoiceLine>>.Success(line.Adapt<InvoiceLineDetailsResponse>());
     }
 
-    public async Task<ServiceResult<InvoiceLineDetailsResponse>> UpdateAsync(Guid invoiceId, Guid invoiceLineId, UpdateInvoiceLineRequest request, CancellationToken cancellationToken = default)
+    protected override async Task<ServiceResult<ILineResponse<InvoiceLine>>> UpdateAsync(Guid invoiceId, Guid invoiceLineId, UpdateInvoiceLineRequest request, CancellationToken cancellationToken = default)
     {
         var validation = Validate(invoiceId, request.ProductId, request.Quantity, request.UnitPrice, request.TaxAmount);
         if (validation.Count > 0)
         {
-            return ServiceResult<InvoiceLineDetailsResponse>.ValidationFailure(validation);
+            return ServiceResult<ILineResponse<InvoiceLine>>.ValidationFailure(validation);
         }
 
         var invoice = await dbContext.Invoices.Include(x => x.Lines).FirstOrDefaultAsync(x => x.Id == invoiceId, cancellationToken);
         if (invoice is null)
         {
-            return ServiceResult<InvoiceLineDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Invoice not found.");
+            return ServiceResult<ILineResponse<InvoiceLine>>.Failure(StatusCodes.Status404NotFound, "Invoice not found.");
         }
 
         var line = invoice.Lines.FirstOrDefault(x => x.Id == invoiceLineId);
         if (line is null)
         {
-            return ServiceResult<InvoiceLineDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Invoice line not found.");
+            return ServiceResult<ILineResponse<InvoiceLine>>.Failure(StatusCodes.Status404NotFound, "Invoice line not found.");
         }
 
         if (!await dbContext.Products.AnyAsync(x => x.Id == request.ProductId, cancellationToken))
         {
-            return ServiceResult<InvoiceLineDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Product not found.");
+            return ServiceResult<ILineResponse<InvoiceLine>>.Failure(StatusCodes.Status400BadRequest, "Product not found.");
         }
 
         request.Adapt(line);
         InvoiceCommandService.Recalculate(invoice);
         await dbContext.SaveChangesAsync(cancellationToken);
-        return ServiceResult<InvoiceLineDetailsResponse>.Success(line.Adapt<InvoiceLineDetailsResponse>());
+        return ServiceResult<ILineResponse<InvoiceLine>>.Success(line.Adapt<InvoiceLineDetailsResponse>());
     }
 
-    public async Task<ServiceResult<bool>> DeleteAsync(Guid invoiceId, Guid invoiceLineId, CancellationToken cancellationToken = default)
+    public override async Task<ServiceResult<bool>> DeleteAsync(Guid invoiceId, Guid invoiceLineId, CancellationToken cancellationToken = default)
     {
         var invoice = await dbContext.Invoices.Include(x => x.Lines).FirstOrDefaultAsync(x => x.Id == invoiceId, cancellationToken);
         if (invoice is null)

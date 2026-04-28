@@ -13,23 +13,23 @@ namespace VexorionERP;
 [Authorize]
 public class InventoryBalancesController(
     ICommandService<InventoryBalance> inventoryBalanceCommandService,
-    IInventoryBalanceQueryService inventoryBalanceQueryService,
+    IQueryService<InventoryBalance> inventoryBalanceQueryService,
     AppDbContext dbContext) : ServiceResultControllerBase
 {
     [HttpGet]
     [Authorize(Policy = AppPermissions.Inventory.View)]
     public async Task<ActionResult<IReadOnlyCollection<InventoryBalanceListItemResponse>>> GetAll()
     {
-        var result = await inventoryBalanceQueryService.GetAllAsync(HttpContext.RequestAborted);
-        return ToActionResult(result);
+        var result = await inventoryBalanceQueryService.GetAllAsync(dbContext, HttpContext.RequestAborted);
+        return ToActionResult(MapResult(result));
     }
 
     [HttpGet("{inventoryBalanceId:guid}")]
     [Authorize(Policy = AppPermissions.Inventory.View)]
     public async Task<ActionResult<InventoryBalanceDetailsResponse>> GetById(Guid inventoryBalanceId)
     {
-        var result = await inventoryBalanceQueryService.GetByIdAsync(inventoryBalanceId, HttpContext.RequestAborted);
-        return ToActionResult(result);
+        var result = await inventoryBalanceQueryService.GetByIdAsync(inventoryBalanceId, dbContext, HttpContext.RequestAborted);
+        return ToActionResult(MapResult(result));
     }
 
     [HttpPost]
@@ -76,6 +76,24 @@ public class InventoryBalancesController(
         }
 
         return ServiceResult<InventoryBalanceDetailsResponse>.Failure(
+            result.StatusCode ?? StatusCodes.Status400BadRequest,
+            result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
+    }
+
+    private ServiceResult<IReadOnlyCollection<InventoryBalanceListItemResponse>> MapResult(ServiceResult<IReadOnlyCollection<IEntityListResponse<InventoryBalance>>> result)
+    {
+        if (result.Succeeded)
+        {
+            var mapped = result.Value!.Adapt<IReadOnlyCollection<InventoryBalanceListItemResponse>>();
+            return ServiceResult<IReadOnlyCollection<InventoryBalanceListItemResponse>>.Success(mapped);
+        }
+
+        if (result.Validation is not null)
+        {
+            return ServiceResult<IReadOnlyCollection<InventoryBalanceListItemResponse>>.ValidationFailure(result.Validation.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+        }
+
+        return ServiceResult<IReadOnlyCollection<InventoryBalanceListItemResponse>>.Failure(
             result.StatusCode ?? StatusCodes.Status400BadRequest,
             result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
     }

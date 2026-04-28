@@ -14,23 +14,23 @@ namespace VexorionERP;
 [Authorize]
 public class StockCountsController(
     ICommandService<StockCount> stockCountCommandService,
-    IStockCountQueryService stockCountQueryService,
+    IQueryService<StockCount> stockCountQueryService,
     AppDbContext dbContext) : ServiceResultControllerBase
 {
     [HttpGet]
     [Authorize(Policy = AppPermissions.Inventory.View)]
     public async Task<ActionResult<IReadOnlyCollection<StockCountListItemResponse>>> GetAll()
     {
-        var result = await stockCountQueryService.GetAllAsync(HttpContext.RequestAborted);
-        return ToActionResult(result);
+        var result = await stockCountQueryService.GetAllAsync(dbContext, HttpContext.RequestAborted);
+        return ToActionResult(MapResult(result));
     }
 
     [HttpGet("{stockCountId:guid}")]
     [Authorize(Policy = AppPermissions.Inventory.View)]
     public async Task<ActionResult<StockCountDetailsResponse>> GetById(Guid stockCountId)
     {
-        var result = await stockCountQueryService.GetByIdAsync(stockCountId, HttpContext.RequestAborted);
-        return ToActionResult(result);
+        var result = await stockCountQueryService.GetByIdAsync(stockCountId, dbContext, HttpContext.RequestAborted);
+        return ToActionResult(MapResult(result));
     }
 
     [HttpPost]
@@ -66,6 +66,17 @@ public class StockCountsController(
         if (result.Validation is not null)
             return ServiceResult<StockCountDetailsResponse>.ValidationFailure(result.Validation.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
         return ServiceResult<StockCountDetailsResponse>.Failure(
+            result.StatusCode ?? StatusCodes.Status400BadRequest,
+            result.ErrorMessage ?? "An error occurred.");
+    }
+
+    private ServiceResult<IReadOnlyCollection<StockCountListItemResponse>> MapResult(ServiceResult<IReadOnlyCollection<IEntityListResponse<StockCount>>> result)
+    {
+        if (result.Succeeded)
+            return ServiceResult<IReadOnlyCollection<StockCountListItemResponse>>.Success(result.Value!.Adapt<IReadOnlyCollection<StockCountListItemResponse>>());
+        if (result.Validation is not null)
+            return ServiceResult<IReadOnlyCollection<StockCountListItemResponse>>.ValidationFailure(result.Validation.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+        return ServiceResult<IReadOnlyCollection<StockCountListItemResponse>>.Failure(
             result.StatusCode ?? StatusCodes.Status400BadRequest,
             result.ErrorMessage ?? "An error occurred.");
     }

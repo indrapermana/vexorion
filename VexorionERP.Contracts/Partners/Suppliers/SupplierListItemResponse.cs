@@ -1,6 +1,8 @@
+using VexorionERP.Models;
+
 namespace VexorionERP.Contracts;
 
-public class SupplierListItemResponse
+public class SupplierListItemResponse : IEntityListResponse<Supplier>
 {
     public Guid Id { get; set; }
     public string SupplierNumber { get; set; } = string.Empty;

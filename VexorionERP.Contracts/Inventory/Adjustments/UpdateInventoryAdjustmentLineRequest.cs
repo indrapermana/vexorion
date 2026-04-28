@@ -1,8 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using VexorionERP.Models;
 
 namespace VexorionERP.Contracts;
 
-public class UpdateInventoryAdjustmentLineRequest
+public class UpdateInventoryAdjustmentLineRequest : IUpdateLineRequest<InventoryAdjustmentLine>
 {
     public Guid ProductId { get; set; }
     [Range(typeof(decimal), "-79228162514264337593543950335", "79228162514264337593543950335")]

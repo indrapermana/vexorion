@@ -1,6 +1,8 @@
+using VexorionERP.Models;
+
 namespace VexorionERP.Contracts;
 
-public class CustomerPaymentListItemResponse
+public class CustomerPaymentListItemResponse : IEntityListResponse<CustomerPayment>
 {
     public Guid Id { get; set; }
     public Guid TenantId { get; set; }

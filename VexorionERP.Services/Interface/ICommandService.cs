@@ -3,7 +3,7 @@ using VexorionERP.Database;
 
 namespace VexorionERP.Services;
 
-public interface ICommandService<T> : IBaseCommandService<T>
+public interface ICommandService<T> : ICQRSService<T>
     where T : class
 {
     Task<ServiceResult<IEntityResponse<T>>> CreateAsync(ICreateInput<T> request, AppDbContext dbContext, CancellationToken cancellationToken = default);

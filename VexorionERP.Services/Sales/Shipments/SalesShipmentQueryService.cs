@@ -2,15 +2,18 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using VexorionERP.Contracts;
 using VexorionERP.Database;
+using VexorionERP.Models;
 using VexorionERP.Services;
 
 namespace VexorionERP.Services;
 
-public class SalesShipmentQueryService(AppDbContext dbContext) : ISalesShipmentQueryService
+public class SalesShipmentQueryService(ICurrentTenantProvider currentTenantProvider)
+    : BaseChildQueryService<SalesOrder, SalesShipment>(currentTenantProvider)
 {
-    public async Task<ServiceResult<List<SalesShipmentListItemResponse>>> GetAllForOrderAsync(Guid salesOrderId, CancellationToken cancellationToken = default)
+    protected override async Task<IReadOnlyCollection<IEntityListResponse<SalesShipment>>> GetAllForParentCoreAsync(Guid salesOrderId, AppDbContext context, CancellationToken cancellationToken)
     {
-        var shipments = await dbContext.SalesShipments
+        var shipments = await context.SalesShipments
+            .GetByTenant(TenantId)
             .Include(x => x.Warehouse)
             .Where(x => x.SalesOrderId == salesOrderId)
             .OrderByDescending(x => x.ShipmentDate)
@@ -28,12 +31,13 @@ public class SalesShipmentQueryService(AppDbContext dbContext) : ISalesShipmentQ
             })
             .ToListAsync(cancellationToken);
 
-        return ServiceResult<List<SalesShipmentListItemResponse>>.Success(shipments);
+        return shipments;
     }
 
-    public async Task<ServiceResult<SalesShipmentDetailsResponse>> GetByIdAsync(Guid shipmentId, CancellationToken cancellationToken = default)
+    protected override async Task<IEntityResponse<SalesShipment>?> GetByIdCoreAsync(Guid shipmentId, AppDbContext context, CancellationToken cancellationToken)
     {
-        var shipment = await dbContext.SalesShipments
+        var shipment = await context.SalesShipments
+            .GetByTenant(TenantId)
             .Include(x => x.Lines).ThenInclude(x => x.Product)
             .Include(x => x.SalesOrder)
             .Include(x => x.Warehouse)
@@ -41,10 +45,10 @@ public class SalesShipmentQueryService(AppDbContext dbContext) : ISalesShipmentQ
 
         if (shipment is null)
         {
-            return ServiceResult<SalesShipmentDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Sales shipment not found.");
+            return null;
         }
 
-        return ServiceResult<SalesShipmentDetailsResponse>.Success(new SalesShipmentDetailsResponse
+        return new SalesShipmentDetailsResponse
         {
             Id = shipment.Id,
             ShipmentNumber = shipment.ShipmentNumber,
@@ -66,6 +70,6 @@ public class SalesShipmentQueryService(AppDbContext dbContext) : ISalesShipmentQ
                 UnitPrice = l.UnitPrice,
                 LineTotal = l.ShippedQuantity * l.UnitPrice,
             }).ToList(),
-        });
+        };
     }
 }

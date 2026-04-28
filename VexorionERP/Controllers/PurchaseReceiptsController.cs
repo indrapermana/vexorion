@@ -14,23 +14,23 @@ namespace VexorionERP;
 public class PurchaseReceiptsController(
     ICommandService<PurchaseReceipt> purchaseReceiptCommandService,
     IPurchaseReceiptPostingService purchaseReceiptPostingService,
-    IPurchaseReceiptQueryService purchaseReceiptQueryService,
+    IChildQueryService<PurchaseOrder, PurchaseReceipt> purchaseReceiptQueryService,
     AppDbContext dbContext) : ServiceResultControllerBase
 {
     [HttpGet("by-order/{purchaseOrderId:guid}")]
     [Authorize(Policy = AppPermissions.Purchasing.View)]
-    public async Task<ActionResult<List<PurchaseReceiptListItemResponse>>> GetAllForOrder(Guid purchaseOrderId)
+    public async Task<ActionResult<IReadOnlyCollection<PurchaseReceiptListItemResponse>>> GetAllForOrder(Guid purchaseOrderId)
     {
-        var result = await purchaseReceiptQueryService.GetAllForOrderAsync(purchaseOrderId, HttpContext.RequestAborted);
-        return ToActionResult(result);
+        var result = await purchaseReceiptQueryService.GetAllForParentAsync(purchaseOrderId, dbContext, HttpContext.RequestAborted);
+        return ToActionResult(MapResult(result));
     }
 
     [HttpGet("{receiptId:guid}")]
     [Authorize(Policy = AppPermissions.Purchasing.View)]
     public async Task<ActionResult<PurchaseReceiptDetailsResponse>> GetById(Guid receiptId)
     {
-        var result = await purchaseReceiptQueryService.GetByIdAsync(receiptId, HttpContext.RequestAborted);
-        return ToActionResult(result);
+        var result = await purchaseReceiptQueryService.GetByIdAsync(receiptId, dbContext, HttpContext.RequestAborted);
+        return ToActionResult(MapResult(result));
     }
 
     [HttpPost]
@@ -80,4 +80,23 @@ public class PurchaseReceiptsController(
             result.StatusCode ?? StatusCodes.Status400BadRequest,
             result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
     }
+
+    private ServiceResult<IReadOnlyCollection<PurchaseReceiptListItemResponse>> MapResult(ServiceResult<IReadOnlyCollection<IEntityListResponse<PurchaseReceipt>>> result)
+    {
+        if (result.Succeeded)
+        {
+            var mapped = result.Value!.Adapt<IReadOnlyCollection<PurchaseReceiptListItemResponse>>();
+            return ServiceResult<IReadOnlyCollection<PurchaseReceiptListItemResponse>>.Success(mapped);
+        }
+
+        if (result.Validation is not null)
+        {
+            return ServiceResult<IReadOnlyCollection<PurchaseReceiptListItemResponse>>.ValidationFailure(result.Validation.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+        }
+
+        return ServiceResult<IReadOnlyCollection<PurchaseReceiptListItemResponse>>.Failure(
+            result.StatusCode ?? StatusCodes.Status400BadRequest,
+            result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
+    }
+
 }

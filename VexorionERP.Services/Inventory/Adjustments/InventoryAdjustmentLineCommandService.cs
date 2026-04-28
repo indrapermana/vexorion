@@ -10,35 +10,35 @@ namespace VexorionERP.Services;
 
 public class InventoryAdjustmentLineCommandService(
     AppDbContext dbContext,
-    ICurrentTenantProvider currentTenantProvider) : IInventoryAdjustmentLineCommandService
+    ICurrentTenantProvider currentTenantProvider) : BaseLineCommandService<InventoryAdjustment, InventoryAdjustmentLine, CreateInventoryAdjustmentLineRequest, UpdateInventoryAdjustmentLineRequest>
 {
-    public async Task<ServiceResult<InventoryAdjustmentLineDetailsResponse>> CreateAsync(Guid inventoryAdjustmentId, CreateInventoryAdjustmentLineRequest request, CancellationToken cancellationToken = default)
+    protected override async Task<ServiceResult<ILineResponse<InventoryAdjustmentLine>>> CreateAsync(Guid inventoryAdjustmentId, CreateInventoryAdjustmentLineRequest request, CancellationToken cancellationToken = default)
     {
         var validation = Validate(inventoryAdjustmentId, request.ProductId, request.QuantityDelta, request.UnitCost);
         if (validation.Count > 0)
         {
-            return ServiceResult<InventoryAdjustmentLineDetailsResponse>.ValidationFailure(validation);
+            return ServiceResult<ILineResponse<InventoryAdjustmentLine>>.ValidationFailure(validation);
         }
 
         var adjustment = await dbContext.InventoryAdjustments.Include(x => x.Lines).FirstOrDefaultAsync(x => x.Id == inventoryAdjustmentId, cancellationToken);
         if (adjustment is null)
         {
-            return ServiceResult<InventoryAdjustmentLineDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Inventory adjustment not found.");
+            return ServiceResult<ILineResponse<InventoryAdjustmentLine>>.Failure(StatusCodes.Status404NotFound, "Inventory adjustment not found.");
         }
 
         if (adjustment.Status != DocumentStatus.Draft)
         {
-            return ServiceResult<InventoryAdjustmentLineDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Inventory adjustment lines can only be modified while the document is in Draft status.");
+            return ServiceResult<ILineResponse<InventoryAdjustmentLine>>.Failure(StatusCodes.Status400BadRequest, "Inventory adjustment lines can only be modified while the document is in Draft status.");
         }
 
         if (!await dbContext.Products.AnyAsync(x => x.Id == request.ProductId, cancellationToken))
         {
-            return ServiceResult<InventoryAdjustmentLineDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Product not found.");
+            return ServiceResult<ILineResponse<InventoryAdjustmentLine>>.Failure(StatusCodes.Status400BadRequest, "Product not found.");
         }
 
         if (HasDuplicateProductLine(adjustment, request.ProductId))
         {
-            return ServiceResult<InventoryAdjustmentLineDetailsResponse>.Failure(StatusCodes.Status409Conflict, "An active adjustment line already exists for this product.");
+            return ServiceResult<ILineResponse<InventoryAdjustmentLine>>.Failure(StatusCodes.Status409Conflict, "An active adjustment line already exists for this product.");
         }
 
         var line = request.Adapt<InventoryAdjustmentLine>();
@@ -48,51 +48,51 @@ public class InventoryAdjustmentLineCommandService(
 
         dbContext.InventoryAdjustmentLines.Add(line);
         await dbContext.SaveChangesAsync(cancellationToken);
-        return ServiceResult<InventoryAdjustmentLineDetailsResponse>.Success(line.Adapt<InventoryAdjustmentLineDetailsResponse>());
+        return ServiceResult<ILineResponse<InventoryAdjustmentLine>>.Success(line.Adapt<InventoryAdjustmentLineDetailsResponse>());
     }
 
-    public async Task<ServiceResult<InventoryAdjustmentLineDetailsResponse>> UpdateAsync(Guid inventoryAdjustmentId, Guid inventoryAdjustmentLineId, UpdateInventoryAdjustmentLineRequest request, CancellationToken cancellationToken = default)
+    protected override async Task<ServiceResult<ILineResponse<InventoryAdjustmentLine>>> UpdateAsync(Guid inventoryAdjustmentId, Guid inventoryAdjustmentLineId, UpdateInventoryAdjustmentLineRequest request, CancellationToken cancellationToken = default)
     {
         var validation = Validate(inventoryAdjustmentId, request.ProductId, request.QuantityDelta, request.UnitCost);
         if (validation.Count > 0)
         {
-            return ServiceResult<InventoryAdjustmentLineDetailsResponse>.ValidationFailure(validation);
+            return ServiceResult<ILineResponse<InventoryAdjustmentLine>>.ValidationFailure(validation);
         }
 
         var adjustment = await dbContext.InventoryAdjustments.Include(x => x.Lines).FirstOrDefaultAsync(x => x.Id == inventoryAdjustmentId, cancellationToken);
         if (adjustment is null)
         {
-            return ServiceResult<InventoryAdjustmentLineDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Inventory adjustment not found.");
+            return ServiceResult<ILineResponse<InventoryAdjustmentLine>>.Failure(StatusCodes.Status404NotFound, "Inventory adjustment not found.");
         }
 
         if (adjustment.Status != DocumentStatus.Draft)
         {
-            return ServiceResult<InventoryAdjustmentLineDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Inventory adjustment lines can only be modified while the document is in Draft status.");
+            return ServiceResult<ILineResponse<InventoryAdjustmentLine>>.Failure(StatusCodes.Status400BadRequest, "Inventory adjustment lines can only be modified while the document is in Draft status.");
         }
 
         var line = adjustment.Lines.FirstOrDefault(x => x.Id == inventoryAdjustmentLineId);
         if (line is null)
         {
-            return ServiceResult<InventoryAdjustmentLineDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Inventory adjustment line not found.");
+            return ServiceResult<ILineResponse<InventoryAdjustmentLine>>.Failure(StatusCodes.Status404NotFound, "Inventory adjustment line not found.");
         }
 
         if (!await dbContext.Products.AnyAsync(x => x.Id == request.ProductId, cancellationToken))
         {
-            return ServiceResult<InventoryAdjustmentLineDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Product not found.");
+            return ServiceResult<ILineResponse<InventoryAdjustmentLine>>.Failure(StatusCodes.Status400BadRequest, "Product not found.");
         }
 
         if (HasDuplicateProductLine(adjustment, request.ProductId, inventoryAdjustmentLineId))
         {
-            return ServiceResult<InventoryAdjustmentLineDetailsResponse>.Failure(StatusCodes.Status409Conflict, "An active adjustment line already exists for this product.");
+            return ServiceResult<ILineResponse<InventoryAdjustmentLine>>.Failure(StatusCodes.Status409Conflict, "An active adjustment line already exists for this product.");
         }
 
         request.Adapt(line);
         line.Reason = NormalizeOptional(request.Reason);
         await dbContext.SaveChangesAsync(cancellationToken);
-        return ServiceResult<InventoryAdjustmentLineDetailsResponse>.Success(line.Adapt<InventoryAdjustmentLineDetailsResponse>());
+        return ServiceResult<ILineResponse<InventoryAdjustmentLine>>.Success(line.Adapt<InventoryAdjustmentLineDetailsResponse>());
     }
 
-    public async Task<ServiceResult<bool>> DeleteAsync(Guid inventoryAdjustmentId, Guid inventoryAdjustmentLineId, CancellationToken cancellationToken = default)
+    public override async Task<ServiceResult<bool>> DeleteAsync(Guid inventoryAdjustmentId, Guid inventoryAdjustmentLineId, CancellationToken cancellationToken = default)
     {
         var adjustment = await dbContext.InventoryAdjustments.Include(x => x.Lines).FirstOrDefaultAsync(x => x.Id == inventoryAdjustmentId, cancellationToken);
         if (adjustment is null)

@@ -13,23 +13,23 @@ namespace VexorionERP;
 [Authorize]
 public class SuppliersController(
     ICommandService<Supplier> supplierCommandService,
-    ISupplierQueryService supplierQueryService,
+    IQueryService<Supplier> supplierQueryService,
     AppDbContext dbContext) : ServiceResultControllerBase
 {
     [HttpGet]
     [Authorize(Policy = AppPermissions.Suppliers.View)]
     public async Task<ActionResult<IReadOnlyCollection<SupplierListItemResponse>>> GetAll()
     {
-        var result = await supplierQueryService.GetAllAsync(HttpContext.RequestAborted);
-        return ToActionResult(result);
+        var result = await supplierQueryService.GetAllAsync(dbContext, HttpContext.RequestAborted);
+        return ToActionResult(MapResult(result));
     }
 
     [HttpGet("{supplierId:guid}")]
     [Authorize(Policy = AppPermissions.Suppliers.View)]
     public async Task<ActionResult<SupplierDetailsResponse>> GetById(Guid supplierId)
     {
-        var result = await supplierQueryService.GetByIdAsync(supplierId, HttpContext.RequestAborted);
-        return ToActionResult(result);
+        var result = await supplierQueryService.GetByIdAsync(supplierId, dbContext, HttpContext.RequestAborted);
+        return ToActionResult(MapResult(result));
     }
 
     [HttpPost]
@@ -76,6 +76,24 @@ public class SuppliersController(
         }
 
         return ServiceResult<SupplierDetailsResponse>.Failure(
+            result.StatusCode ?? StatusCodes.Status400BadRequest,
+            result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
+    }
+
+    private ServiceResult<IReadOnlyCollection<SupplierListItemResponse>> MapResult(ServiceResult<IReadOnlyCollection<IEntityListResponse<Supplier>>> result)
+    {
+        if (result.Succeeded)
+        {
+            var mapped = result.Value!.Adapt<IReadOnlyCollection<SupplierListItemResponse>>();
+            return ServiceResult<IReadOnlyCollection<SupplierListItemResponse>>.Success(mapped);
+        }
+
+        if (result.Validation is not null)
+        {
+            return ServiceResult<IReadOnlyCollection<SupplierListItemResponse>>.ValidationFailure(result.Validation.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+        }
+
+        return ServiceResult<IReadOnlyCollection<SupplierListItemResponse>>.Failure(
             result.StatusCode ?? StatusCodes.Status400BadRequest,
             result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
     }

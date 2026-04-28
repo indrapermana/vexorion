@@ -10,35 +10,35 @@ namespace VexorionERP.Services;
 
 public class StockCountLineCommandService(
     AppDbContext dbContext,
-    ICurrentTenantProvider currentTenantProvider) : IStockCountLineCommandService
+    ICurrentTenantProvider currentTenantProvider) : BaseLineCommandService<StockCount, StockCountLine, CreateStockCountLineRequest, UpdateStockCountLineRequest>
 {
-    public async Task<ServiceResult<StockCountLineDetailsResponse>> CreateAsync(Guid stockCountId, CreateStockCountLineRequest request, CancellationToken cancellationToken = default)
+    protected override async Task<ServiceResult<ILineResponse<StockCountLine>>> CreateAsync(Guid stockCountId, CreateStockCountLineRequest request, CancellationToken cancellationToken = default)
     {
         var validation = Validate(stockCountId, request.ProductId, request.SystemQuantity, request.CountedQuantity);
         if (validation.Count > 0)
         {
-            return ServiceResult<StockCountLineDetailsResponse>.ValidationFailure(validation);
+            return ServiceResult<ILineResponse<StockCountLine>>.ValidationFailure(validation);
         }
 
         var stockCount = await dbContext.StockCounts.Include(x => x.Lines).FirstOrDefaultAsync(x => x.Id == stockCountId, cancellationToken);
         if (stockCount is null)
         {
-            return ServiceResult<StockCountLineDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Stock count not found.");
+            return ServiceResult<ILineResponse<StockCountLine>>.Failure(StatusCodes.Status404NotFound, "Stock count not found.");
         }
 
         if (stockCount.Status != DocumentStatus.Draft)
         {
-            return ServiceResult<StockCountLineDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Stock count lines can only be modified while the stock count is in Draft status.");
+            return ServiceResult<ILineResponse<StockCountLine>>.Failure(StatusCodes.Status400BadRequest, "Stock count lines can only be modified while the stock count is in Draft status.");
         }
 
         if (!await dbContext.Products.AnyAsync(x => x.Id == request.ProductId, cancellationToken))
         {
-            return ServiceResult<StockCountLineDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Product not found.");
+            return ServiceResult<ILineResponse<StockCountLine>>.Failure(StatusCodes.Status400BadRequest, "Product not found.");
         }
 
         if (HasDuplicateProductLine(stockCount, request.ProductId))
         {
-            return ServiceResult<StockCountLineDetailsResponse>.Failure(StatusCodes.Status409Conflict, "An active stock count line already exists for this product.");
+            return ServiceResult<ILineResponse<StockCountLine>>.Failure(StatusCodes.Status409Conflict, "An active stock count line already exists for this product.");
         }
 
         var line = request.Adapt<StockCountLine>();
@@ -47,50 +47,50 @@ public class StockCountLineCommandService(
 
         dbContext.StockCountLines.Add(line);
         await dbContext.SaveChangesAsync(cancellationToken);
-        return ServiceResult<StockCountLineDetailsResponse>.Success(line.Adapt<StockCountLineDetailsResponse>());
+        return ServiceResult<ILineResponse<StockCountLine>>.Success(line.Adapt<StockCountLineDetailsResponse>());
     }
 
-    public async Task<ServiceResult<StockCountLineDetailsResponse>> UpdateAsync(Guid stockCountId, Guid stockCountLineId, UpdateStockCountLineRequest request, CancellationToken cancellationToken = default)
+    protected override async Task<ServiceResult<ILineResponse<StockCountLine>>> UpdateAsync(Guid stockCountId, Guid stockCountLineId, UpdateStockCountLineRequest request, CancellationToken cancellationToken = default)
     {
         var validation = Validate(stockCountId, request.ProductId, request.SystemQuantity, request.CountedQuantity);
         if (validation.Count > 0)
         {
-            return ServiceResult<StockCountLineDetailsResponse>.ValidationFailure(validation);
+            return ServiceResult<ILineResponse<StockCountLine>>.ValidationFailure(validation);
         }
 
         var stockCount = await dbContext.StockCounts.Include(x => x.Lines).FirstOrDefaultAsync(x => x.Id == stockCountId, cancellationToken);
         if (stockCount is null)
         {
-            return ServiceResult<StockCountLineDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Stock count not found.");
+            return ServiceResult<ILineResponse<StockCountLine>>.Failure(StatusCodes.Status404NotFound, "Stock count not found.");
         }
 
         if (stockCount.Status != DocumentStatus.Draft)
         {
-            return ServiceResult<StockCountLineDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Stock count lines can only be modified while the stock count is in Draft status.");
+            return ServiceResult<ILineResponse<StockCountLine>>.Failure(StatusCodes.Status400BadRequest, "Stock count lines can only be modified while the stock count is in Draft status.");
         }
 
         var line = stockCount.Lines.FirstOrDefault(x => x.Id == stockCountLineId);
         if (line is null)
         {
-            return ServiceResult<StockCountLineDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Stock count line not found.");
+            return ServiceResult<ILineResponse<StockCountLine>>.Failure(StatusCodes.Status404NotFound, "Stock count line not found.");
         }
 
         if (!await dbContext.Products.AnyAsync(x => x.Id == request.ProductId, cancellationToken))
         {
-            return ServiceResult<StockCountLineDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Product not found.");
+            return ServiceResult<ILineResponse<StockCountLine>>.Failure(StatusCodes.Status400BadRequest, "Product not found.");
         }
 
         if (HasDuplicateProductLine(stockCount, request.ProductId, stockCountLineId))
         {
-            return ServiceResult<StockCountLineDetailsResponse>.Failure(StatusCodes.Status409Conflict, "An active stock count line already exists for this product.");
+            return ServiceResult<ILineResponse<StockCountLine>>.Failure(StatusCodes.Status409Conflict, "An active stock count line already exists for this product.");
         }
 
         request.Adapt(line);
         await dbContext.SaveChangesAsync(cancellationToken);
-        return ServiceResult<StockCountLineDetailsResponse>.Success(line.Adapt<StockCountLineDetailsResponse>());
+        return ServiceResult<ILineResponse<StockCountLine>>.Success(line.Adapt<StockCountLineDetailsResponse>());
     }
 
-    public async Task<ServiceResult<bool>> DeleteAsync(Guid stockCountId, Guid stockCountLineId, CancellationToken cancellationToken = default)
+    public override async Task<ServiceResult<bool>> DeleteAsync(Guid stockCountId, Guid stockCountLineId, CancellationToken cancellationToken = default)
     {
         var stockCount = await dbContext.StockCounts.Include(x => x.Lines).FirstOrDefaultAsync(x => x.Id == stockCountId, cancellationToken);
         if (stockCount is null)

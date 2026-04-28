@@ -14,7 +14,7 @@ namespace VexorionERP;
 [Authorize]
 public class SalesInvoicesController(
     ICommandService<SalesInvoice> salesInvoiceCommandService,
-    ISalesInvoiceQueryService salesInvoiceQueryService,
+    IFilteredQueryService<SalesInvoice, bool> salesInvoiceQueryService,
     AppDbContext dbContext,
     IInvoiceApprovalService invoiceApprovalService) : ServiceResultControllerBase
 {
@@ -22,16 +22,16 @@ public class SalesInvoicesController(
     [Authorize(Policy = AppPermissions.Sales.View)]
     public async Task<ActionResult<IReadOnlyCollection<SalesInvoiceListItemResponse>>> GetAll([FromQuery] bool outstandingOnly = false)
     {
-        var result = await salesInvoiceQueryService.GetAllAsync(outstandingOnly, HttpContext.RequestAborted);
-        return ToActionResult(result);
+        var result = await salesInvoiceQueryService.GetAllAsync(outstandingOnly, dbContext, HttpContext.RequestAborted);
+        return ToActionResult(MapResult(result));
     }
 
     [HttpGet("{salesInvoiceId:guid}")]
     [Authorize(Policy = AppPermissions.Sales.View)]
     public async Task<ActionResult<SalesInvoiceDetailsResponse>> GetById(Guid salesInvoiceId)
     {
-        var result = await salesInvoiceQueryService.GetByIdAsync(salesInvoiceId, HttpContext.RequestAborted);
-        return ToActionResult(result);
+        var result = await salesInvoiceQueryService.GetByIdAsync(salesInvoiceId, dbContext, HttpContext.RequestAborted);
+        return ToActionResult(MapResult(result));
     }
 
     [HttpPost]
@@ -78,6 +78,24 @@ public class SalesInvoicesController(
         }
 
         return ServiceResult<SalesInvoiceDetailsResponse>.Failure(
+            result.StatusCode ?? StatusCodes.Status400BadRequest,
+            result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
+    }
+
+    private ServiceResult<IReadOnlyCollection<SalesInvoiceListItemResponse>> MapResult(ServiceResult<IReadOnlyCollection<IEntityListResponse<SalesInvoice>>> result)
+    {
+        if (result.Succeeded)
+        {
+            var mapped = result.Value!.Adapt<IReadOnlyCollection<SalesInvoiceListItemResponse>>();
+            return ServiceResult<IReadOnlyCollection<SalesInvoiceListItemResponse>>.Success(mapped);
+        }
+
+        if (result.Validation is not null)
+        {
+            return ServiceResult<IReadOnlyCollection<SalesInvoiceListItemResponse>>.ValidationFailure(result.Validation.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+        }
+
+        return ServiceResult<IReadOnlyCollection<SalesInvoiceListItemResponse>>.Failure(
             result.StatusCode ?? StatusCodes.Status400BadRequest,
             result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
     }

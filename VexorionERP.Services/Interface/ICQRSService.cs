@@ -1,5 +1,5 @@
 namespace VexorionERP.Services;
 
-public interface IBaseCommandService<T>
+public interface ICQRSService<T>
     where T : class
 { }

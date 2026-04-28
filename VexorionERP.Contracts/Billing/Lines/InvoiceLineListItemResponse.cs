@@ -1,6 +1,8 @@
+using VexorionERP.Models;
+
 namespace VexorionERP.Contracts;
 
-public class InvoiceLineListItemResponse
+public class InvoiceLineListItemResponse : IEntityListResponse<InvoiceLine>
 {
     public Guid Id { get; set; }
     public Guid InvoiceId { get; set; }

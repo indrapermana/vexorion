@@ -3,38 +3,43 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using VexorionERP.Contracts;
 using VexorionERP.Database;
+using VexorionERP.Models;
 using VexorionERP.Services;
 
 namespace VexorionERP.Services;
 
 public class VendorPaymentQueryService(
-    AppDbContext dbContext,
-    ICurrentTenantProvider currentTenantProvider) : IVendorPaymentQueryService
+    ICurrentTenantProvider currentTenantProvider) : BaseService(currentTenantProvider), IQueryService<VendorPayment>
 {
-    public async Task<ServiceResult<IReadOnlyCollection<VendorPaymentListItemResponse>>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<ServiceResult<IReadOnlyCollection<IEntityListResponse<VendorPayment>>>> GetAllAsync(AppDbContext context, CancellationToken cancellationToken = default)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
-            return ServiceResult<IReadOnlyCollection<VendorPaymentListItemResponse>>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+        ArgumentNullException.ThrowIfNull(context);
 
-        var payments = await dbContext.VendorPayments.AsNoTracking()
-            .Where(x => x.TenantId == currentTenantProvider.TenantId.Value)
+        var tenantId = TryGetTenantId();
+        if (!tenantId.HasValue)
+            return ServiceResult<IReadOnlyCollection<IEntityListResponse<VendorPayment>>>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+
+        var payments = await context.VendorPayments.GetByTenant(tenantId.Value).AsNoTracking()
             .OrderByDescending(x => x.PaymentDate)
             .ThenByDescending(x => x.CreatedAtUtc)
             .ToListAsync(cancellationToken);
 
-        return ServiceResult<IReadOnlyCollection<VendorPaymentListItemResponse>>.Success(payments.Adapt<IReadOnlyCollection<VendorPaymentListItemResponse>>());
+        return ServiceResult<IReadOnlyCollection<IEntityListResponse<VendorPayment>>>.Success(payments.Adapt<IReadOnlyCollection<IEntityListResponse<VendorPayment>>>());
     }
 
-    public async Task<ServiceResult<VendorPaymentDetailsResponse>> GetByIdAsync(Guid vendorPaymentId, CancellationToken cancellationToken = default)
+    public async Task<ServiceResult<IEntityResponse<VendorPayment>>> GetByIdAsync(Guid vendorPaymentId, AppDbContext context, CancellationToken cancellationToken = default)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
-            return ServiceResult<VendorPaymentDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+        ArgumentNullException.ThrowIfNull(context);
 
-        var payment = await dbContext.VendorPayments.AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == vendorPaymentId && x.TenantId == currentTenantProvider.TenantId.Value, cancellationToken);
+        var tenantId = TryGetTenantId();
+        if (!tenantId.HasValue)
+            return ServiceResult<IEntityResponse<VendorPayment>>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+
+        var payment = await context.VendorPayments.GetByTenant(tenantId.Value).AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == vendorPaymentId, cancellationToken);
 
         return payment is null
-            ? ServiceResult<VendorPaymentDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Vendor payment not found.")
-            : ServiceResult<VendorPaymentDetailsResponse>.Success(payment.Adapt<VendorPaymentDetailsResponse>());
+            ? ServiceResult<IEntityResponse<VendorPayment>>.Failure(StatusCodes.Status404NotFound, "Vendor payment not found.")
+            : ServiceResult<IEntityResponse<VendorPayment>>.Success(payment.Adapt<VendorPaymentDetailsResponse>());
     }
 }

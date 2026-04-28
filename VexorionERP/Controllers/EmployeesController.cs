@@ -13,23 +13,23 @@ namespace VexorionERP;
 [Authorize]
 public class EmployeesController(
     ICommandService<Employee> employeeCommandService,
-    IEmployeeQueryService employeeQueryService,
+    IQueryService<Employee> employeeQueryService,
     AppDbContext dbContext) : ServiceResultControllerBase
 {
     [HttpGet]
     [Authorize(Policy = AppPermissions.Organization.View)]
     public async Task<ActionResult<IReadOnlyCollection<EmployeeListItemResponse>>> GetAll()
     {
-        var result = await employeeQueryService.GetAllAsync(HttpContext.RequestAborted);
-        return ToActionResult(result);
+        var result = await employeeQueryService.GetAllAsync(dbContext, HttpContext.RequestAborted);
+        return ToActionResult(MapResult(result));
     }
 
     [HttpGet("{employeeId:guid}")]
     [Authorize(Policy = AppPermissions.Organization.View)]
     public async Task<ActionResult<EmployeeDetailsResponse>> GetById(Guid employeeId)
     {
-        var result = await employeeQueryService.GetByIdAsync(employeeId, HttpContext.RequestAborted);
-        return ToActionResult(result);
+        var result = await employeeQueryService.GetByIdAsync(employeeId, dbContext, HttpContext.RequestAborted);
+        return ToActionResult(MapResult(result));
     }
 
     [HttpPost]
@@ -76,6 +76,24 @@ public class EmployeesController(
         }
 
         return ServiceResult<EmployeeDetailsResponse>.Failure(
+            result.StatusCode ?? StatusCodes.Status400BadRequest,
+            result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
+    }
+
+    private ServiceResult<IReadOnlyCollection<EmployeeListItemResponse>> MapResult(ServiceResult<IReadOnlyCollection<IEntityListResponse<Employee>>> result)
+    {
+        if (result.Succeeded)
+        {
+            var mapped = result.Value!.Adapt<IReadOnlyCollection<EmployeeListItemResponse>>();
+            return ServiceResult<IReadOnlyCollection<EmployeeListItemResponse>>.Success(mapped);
+        }
+
+        if (result.Validation is not null)
+        {
+            return ServiceResult<IReadOnlyCollection<EmployeeListItemResponse>>.ValidationFailure(result.Validation.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+        }
+
+        return ServiceResult<IReadOnlyCollection<EmployeeListItemResponse>>.Failure(
             result.StatusCode ?? StatusCodes.Status400BadRequest,
             result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
     }

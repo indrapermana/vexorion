@@ -13,23 +13,23 @@ namespace VexorionERP;
 [Authorize]
 public class DepartmentsController(
     ICommandService<Department> departmentCommandService,
-    IDepartmentQueryService departmentQueryService,
+    IQueryService<Department> departmentQueryService,
     AppDbContext dbContext) : ServiceResultControllerBase
 {
     [HttpGet]
     [Authorize(Policy = AppPermissions.Organization.View)]
     public async Task<ActionResult<IReadOnlyCollection<DepartmentListItemResponse>>> GetAll()
     {
-        var result = await departmentQueryService.GetAllAsync(HttpContext.RequestAborted);
-        return ToActionResult(result);
+        var result = await departmentQueryService.GetAllAsync(dbContext, HttpContext.RequestAborted);
+        return ToActionResult(MapResult(result));
     }
 
     [HttpGet("{departmentId:guid}")]
     [Authorize(Policy = AppPermissions.Organization.View)]
     public async Task<ActionResult<DepartmentDetailsResponse>> GetById(Guid departmentId)
     {
-        var result = await departmentQueryService.GetByIdAsync(departmentId, HttpContext.RequestAborted);
-        return ToActionResult(result);
+        var result = await departmentQueryService.GetByIdAsync(departmentId, dbContext, HttpContext.RequestAborted);
+        return ToActionResult(MapResult(result));
     }
 
     [HttpPost]
@@ -76,6 +76,24 @@ public class DepartmentsController(
         }
 
         return ServiceResult<DepartmentDetailsResponse>.Failure(
+            result.StatusCode ?? StatusCodes.Status400BadRequest,
+            result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
+    }
+
+    private ServiceResult<IReadOnlyCollection<DepartmentListItemResponse>> MapResult(ServiceResult<IReadOnlyCollection<IEntityListResponse<Department>>> result)
+    {
+        if (result.Succeeded)
+        {
+            var mapped = result.Value!.Adapt<IReadOnlyCollection<DepartmentListItemResponse>>();
+            return ServiceResult<IReadOnlyCollection<DepartmentListItemResponse>>.Success(mapped);
+        }
+
+        if (result.Validation is not null)
+        {
+            return ServiceResult<IReadOnlyCollection<DepartmentListItemResponse>>.ValidationFailure(result.Validation.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+        }
+
+        return ServiceResult<IReadOnlyCollection<DepartmentListItemResponse>>.Failure(
             result.StatusCode ?? StatusCodes.Status400BadRequest,
             result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
     }

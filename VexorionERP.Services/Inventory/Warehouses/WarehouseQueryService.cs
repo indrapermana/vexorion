@@ -3,35 +3,41 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using VexorionERP.Contracts;
 using VexorionERP.Database;
+using VexorionERP.Models;
 using VexorionERP.Services;
 
 namespace VexorionERP.Services;
 
 public class WarehouseQueryService(
-    AppDbContext dbContext,
-    ICurrentTenantProvider currentTenantProvider) : IWarehouseQueryService
+    ICurrentTenantProvider currentTenantProvider) : BaseService(currentTenantProvider), IQueryService<Warehouse>
 {
-    public async Task<ServiceResult<IReadOnlyCollection<WarehouseListItemResponse>>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<ServiceResult<IReadOnlyCollection<IEntityListResponse<Warehouse>>>> GetAllAsync(AppDbContext context, CancellationToken cancellationToken = default)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
+        ArgumentNullException.ThrowIfNull(context);
+
+        var tenantId = TryGetTenantId();
+        if (!tenantId.HasValue)
         {
-            return ServiceResult<IReadOnlyCollection<WarehouseListItemResponse>>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+            return ServiceResult<IReadOnlyCollection<IEntityListResponse<Warehouse>>>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
         }
 
-        var warehouses = await dbContext.Warehouses.AsNoTracking().OrderBy(x => x.Name).ToListAsync(cancellationToken);
-        return ServiceResult<IReadOnlyCollection<WarehouseListItemResponse>>.Success(warehouses.Adapt<IReadOnlyCollection<WarehouseListItemResponse>>());
+        var warehouses = await context.Warehouses.GetByTenant(tenantId.Value).AsNoTracking().OrderBy(x => x.Name).ToListAsync(cancellationToken);
+        return ServiceResult<IReadOnlyCollection<IEntityListResponse<Warehouse>>>.Success(warehouses.Adapt<IReadOnlyCollection<IEntityListResponse<Warehouse>>>());
     }
 
-    public async Task<ServiceResult<WarehouseDetailsResponse>> GetByIdAsync(Guid warehouseId, CancellationToken cancellationToken = default)
+    public async Task<ServiceResult<IEntityResponse<Warehouse>>> GetByIdAsync(Guid warehouseId, AppDbContext context, CancellationToken cancellationToken = default)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
+        ArgumentNullException.ThrowIfNull(context);
+
+        var tenantId = TryGetTenantId();
+        if (!tenantId.HasValue)
         {
-            return ServiceResult<WarehouseDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+            return ServiceResult<IEntityResponse<Warehouse>>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
         }
 
-        var warehouse = await dbContext.Warehouses.AsNoTracking().FirstOrDefaultAsync(x => x.Id == warehouseId, cancellationToken);
+        var warehouse = await context.Warehouses.GetByTenant(tenantId.Value).AsNoTracking().FirstOrDefaultAsync(x => x.Id == warehouseId, cancellationToken);
         return warehouse is null
-            ? ServiceResult<WarehouseDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Warehouse not found.")
-            : ServiceResult<WarehouseDetailsResponse>.Success(warehouse.Adapt<WarehouseDetailsResponse>());
+            ? ServiceResult<IEntityResponse<Warehouse>>.Failure(StatusCodes.Status404NotFound, "Warehouse not found.")
+            : ServiceResult<IEntityResponse<Warehouse>>.Success(warehouse.Adapt<WarehouseDetailsResponse>());
     }
 }

@@ -13,23 +13,23 @@ namespace VexorionERP;
 [Authorize]
 public class InventoryAdjustmentsController(
     ICommandService<InventoryAdjustment> inventoryAdjustmentCommandService,
-    IInventoryAdjustmentQueryService inventoryAdjustmentQueryService,
+    IQueryService<InventoryAdjustment> inventoryAdjustmentQueryService,
     AppDbContext dbContext) : ServiceResultControllerBase
 {
     [HttpGet]
     [Authorize(Policy = AppPermissions.Inventory.View)]
     public async Task<ActionResult<IReadOnlyCollection<InventoryAdjustmentListItemResponse>>> GetAll()
     {
-        var result = await inventoryAdjustmentQueryService.GetAllAsync(HttpContext.RequestAborted);
-        return ToActionResult(result);
+        var result = await inventoryAdjustmentQueryService.GetAllAsync(dbContext, HttpContext.RequestAborted);
+        return ToActionResult(MapResult(result));
     }
 
     [HttpGet("{inventoryAdjustmentId:guid}")]
     [Authorize(Policy = AppPermissions.Inventory.View)]
     public async Task<ActionResult<InventoryAdjustmentDetailsResponse>> GetById(Guid inventoryAdjustmentId)
     {
-        var result = await inventoryAdjustmentQueryService.GetByIdAsync(inventoryAdjustmentId, HttpContext.RequestAborted);
-        return ToActionResult(result);
+        var result = await inventoryAdjustmentQueryService.GetByIdAsync(inventoryAdjustmentId, dbContext, HttpContext.RequestAborted);
+        return ToActionResult(MapResult(result));
     }
 
     [HttpPost]
@@ -76,6 +76,24 @@ public class InventoryAdjustmentsController(
         }
 
         return ServiceResult<InventoryAdjustmentDetailsResponse>.Failure(
+            result.StatusCode ?? StatusCodes.Status400BadRequest,
+            result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
+    }
+
+    private ServiceResult<IReadOnlyCollection<InventoryAdjustmentListItemResponse>> MapResult(ServiceResult<IReadOnlyCollection<IEntityListResponse<InventoryAdjustment>>> result)
+    {
+        if (result.Succeeded)
+        {
+            var mapped = result.Value!.Adapt<IReadOnlyCollection<InventoryAdjustmentListItemResponse>>();
+            return ServiceResult<IReadOnlyCollection<InventoryAdjustmentListItemResponse>>.Success(mapped);
+        }
+
+        if (result.Validation is not null)
+        {
+            return ServiceResult<IReadOnlyCollection<InventoryAdjustmentListItemResponse>>.ValidationFailure(result.Validation.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+        }
+
+        return ServiceResult<IReadOnlyCollection<InventoryAdjustmentListItemResponse>>.Failure(
             result.StatusCode ?? StatusCodes.Status400BadRequest,
             result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
     }

@@ -1,46 +1,43 @@
 using Mapster;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using VexorionERP.Contracts;
 using VexorionERP.Database;
+using VexorionERP.Models;
 using VexorionERP.Services;
 
 namespace VexorionERP.Services;
 
 public class PurchaseInvoiceLineQueryService(
-    AppDbContext dbContext,
-    ICurrentTenantProvider currentTenantProvider) : IPurchaseInvoiceLineQueryService
+    ICurrentTenantProvider currentTenantProvider) : BaseLineQueryService<PurchaseInvoice, PurchaseInvoiceLine>(currentTenantProvider)
 {
-    public async Task<ServiceResult<IReadOnlyCollection<PurchaseInvoiceLineListItemResponse>>> GetAllAsync(Guid purchaseInvoiceId, CancellationToken cancellationToken = default)
+    protected override string ParentNotFoundMessage => "Purchase invoice not found.";
+
+    protected override string LineNotFoundMessage => "Purchase invoice line not found.";
+
+    protected override async Task<bool> ParentExistsAsync(Guid parentId, AppDbContext context, CancellationToken cancellationToken)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
-            return ServiceResult<IReadOnlyCollection<PurchaseInvoiceLineListItemResponse>>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
-
-        var invoiceExists = await dbContext.PurchaseInvoices.AnyAsync(x => x.Id == purchaseInvoiceId && x.TenantId == currentTenantProvider.TenantId.Value, cancellationToken);
-        if (!invoiceExists)
-            return ServiceResult<IReadOnlyCollection<PurchaseInvoiceLineListItemResponse>>.Failure(StatusCodes.Status404NotFound, "Purchase invoice not found.");
-
-        var lines = await dbContext.PurchaseInvoiceLines.AsNoTracking()
-            .Where(x => x.PurchaseInvoiceId == purchaseInvoiceId)
-            .ToListAsync(cancellationToken);
-
-        return ServiceResult<IReadOnlyCollection<PurchaseInvoiceLineListItemResponse>>.Success(lines.Adapt<IReadOnlyCollection<PurchaseInvoiceLineListItemResponse>>());
+        return await context.GetByTenant<PurchaseInvoice>(TenantId)
+            .AnyAsync(x => x.Id == parentId, cancellationToken);
     }
 
-    public async Task<ServiceResult<PurchaseInvoiceLineDetailsResponse>> GetByIdAsync(Guid purchaseInvoiceId, Guid purchaseInvoiceLineId, CancellationToken cancellationToken = default)
+    protected override async Task<IReadOnlyCollection<IEntityListResponse<PurchaseInvoiceLine>>> GetAllForParentCoreAsync(Guid parentId, AppDbContext context, CancellationToken cancellationToken)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
-            return ServiceResult<PurchaseInvoiceLineDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+        var lines = await context.GetByTenant<PurchaseInvoiceLine>(TenantId)
+            .AsNoTracking()
+            .Where(x => x.PurchaseInvoiceId == parentId)
+            .ToListAsync(cancellationToken);
 
-        var invoiceExists = await dbContext.PurchaseInvoices.AnyAsync(x => x.Id == purchaseInvoiceId && x.TenantId == currentTenantProvider.TenantId.Value, cancellationToken);
-        if (!invoiceExists)
-            return ServiceResult<PurchaseInvoiceLineDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Purchase invoice not found.");
+        return lines.Adapt<IReadOnlyCollection<PurchaseInvoiceLineListItemResponse>>()
+            .Cast<IEntityListResponse<PurchaseInvoiceLine>>()
+            .ToArray();
+    }
 
-        var line = await dbContext.PurchaseInvoiceLines.AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == purchaseInvoiceLineId && x.PurchaseInvoiceId == purchaseInvoiceId, cancellationToken);
+    protected override async Task<IEntityResponse<PurchaseInvoiceLine>?> GetByIdCoreAsync(Guid parentId, Guid lineId, AppDbContext context, CancellationToken cancellationToken)
+    {
+        var line = await context.GetByTenant<PurchaseInvoiceLine>(TenantId)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == lineId && x.PurchaseInvoiceId == parentId, cancellationToken);
 
-        return line is null
-            ? ServiceResult<PurchaseInvoiceLineDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Purchase invoice line not found.")
-            : ServiceResult<PurchaseInvoiceLineDetailsResponse>.Success(line.Adapt<PurchaseInvoiceLineDetailsResponse>());
+        return line?.Adapt<PurchaseInvoiceLineDetailsResponse>();
     }
 }

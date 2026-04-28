@@ -1,6 +1,8 @@
+using VexorionERP.Models;
+
 namespace VexorionERP.Contracts;
 
-public class InventoryAdjustmentLineDetailsResponse
+public class InventoryAdjustmentLineDetailsResponse : ILineResponse<InventoryAdjustmentLine>
 {
     public Guid Id { get; set; }
     public Guid InventoryAdjustmentId { get; set; }

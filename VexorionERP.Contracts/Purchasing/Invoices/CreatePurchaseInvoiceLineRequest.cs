@@ -1,8 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using VexorionERP.Models;
 
 namespace VexorionERP.Contracts;
 
-public class CreatePurchaseInvoiceLineRequest
+public class CreatePurchaseInvoiceLineRequest : ICreateLineRequest<PurchaseInvoiceLine>
 {
     public Guid ProductId { get; set; }
     public Guid? TaxCodeId { get; set; }

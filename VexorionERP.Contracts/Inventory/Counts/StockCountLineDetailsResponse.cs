@@ -1,6 +1,8 @@
+using VexorionERP.Models;
+
 namespace VexorionERP.Contracts;
 
-public class StockCountLineDetailsResponse
+public class StockCountLineDetailsResponse : ILineResponse<StockCountLine>
 {
     public Guid Id { get; set; }
     public Guid StockCountId { get; set; }

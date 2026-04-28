@@ -1,46 +1,43 @@
 using Mapster;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using VexorionERP.Contracts;
 using VexorionERP.Database;
+using VexorionERP.Models;
 using VexorionERP.Services;
 
 namespace VexorionERP.Services;
 
 public class SalesInvoiceLineQueryService(
-    AppDbContext dbContext,
-    ICurrentTenantProvider currentTenantProvider) : ISalesInvoiceLineQueryService
+    ICurrentTenantProvider currentTenantProvider) : BaseLineQueryService<SalesInvoice, SalesInvoiceLine>(currentTenantProvider)
 {
-    public async Task<ServiceResult<IReadOnlyCollection<SalesInvoiceLineListItemResponse>>> GetAllAsync(Guid salesInvoiceId, CancellationToken cancellationToken = default)
+    protected override string ParentNotFoundMessage => "Sales invoice not found.";
+
+    protected override string LineNotFoundMessage => "Sales invoice line not found.";
+
+    protected override async Task<bool> ParentExistsAsync(Guid parentId, AppDbContext context, CancellationToken cancellationToken)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
-            return ServiceResult<IReadOnlyCollection<SalesInvoiceLineListItemResponse>>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
-
-        var invoiceExists = await dbContext.SalesInvoices.AnyAsync(x => x.Id == salesInvoiceId && x.TenantId == currentTenantProvider.TenantId.Value, cancellationToken);
-        if (!invoiceExists)
-            return ServiceResult<IReadOnlyCollection<SalesInvoiceLineListItemResponse>>.Failure(StatusCodes.Status404NotFound, "Sales invoice not found.");
-
-        var lines = await dbContext.SalesInvoiceLines.AsNoTracking()
-            .Where(x => x.SalesInvoiceId == salesInvoiceId)
-            .ToListAsync(cancellationToken);
-
-        return ServiceResult<IReadOnlyCollection<SalesInvoiceLineListItemResponse>>.Success(lines.Adapt<IReadOnlyCollection<SalesInvoiceLineListItemResponse>>());
+        return await context.GetByTenant<SalesInvoice>(TenantId)
+            .AnyAsync(x => x.Id == parentId, cancellationToken);
     }
 
-    public async Task<ServiceResult<SalesInvoiceLineDetailsResponse>> GetByIdAsync(Guid salesInvoiceId, Guid salesInvoiceLineId, CancellationToken cancellationToken = default)
+    protected override async Task<IReadOnlyCollection<IEntityListResponse<SalesInvoiceLine>>> GetAllForParentCoreAsync(Guid parentId, AppDbContext context, CancellationToken cancellationToken)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
-            return ServiceResult<SalesInvoiceLineDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+        var lines = await context.GetByTenant<SalesInvoiceLine>(TenantId)
+            .AsNoTracking()
+            .Where(x => x.SalesInvoiceId == parentId)
+            .ToListAsync(cancellationToken);
 
-        var invoiceExists = await dbContext.SalesInvoices.AnyAsync(x => x.Id == salesInvoiceId && x.TenantId == currentTenantProvider.TenantId.Value, cancellationToken);
-        if (!invoiceExists)
-            return ServiceResult<SalesInvoiceLineDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Sales invoice not found.");
+        return lines.Adapt<IReadOnlyCollection<SalesInvoiceLineListItemResponse>>()
+            .Cast<IEntityListResponse<SalesInvoiceLine>>()
+            .ToArray();
+    }
 
-        var line = await dbContext.SalesInvoiceLines.AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == salesInvoiceLineId && x.SalesInvoiceId == salesInvoiceId, cancellationToken);
+    protected override async Task<IEntityResponse<SalesInvoiceLine>?> GetByIdCoreAsync(Guid parentId, Guid lineId, AppDbContext context, CancellationToken cancellationToken)
+    {
+        var line = await context.GetByTenant<SalesInvoiceLine>(TenantId)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == lineId && x.SalesInvoiceId == parentId, cancellationToken);
 
-        return line is null
-            ? ServiceResult<SalesInvoiceLineDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Sales invoice line not found.")
-            : ServiceResult<SalesInvoiceLineDetailsResponse>.Success(line.Adapt<SalesInvoiceLineDetailsResponse>());
+        return line?.Adapt<SalesInvoiceLineDetailsResponse>();
     }
 }

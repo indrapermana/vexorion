@@ -2,7 +2,7 @@ using VexorionERP.Models;
 
 namespace VexorionERP.Contracts;
 
-public class StockTransferListItemResponse
+public class StockTransferListItemResponse : IEntityListResponse<StockTransfer>
 {
     public Guid Id { get; set; }
     public string TransferNumber { get; set; } = string.Empty;
