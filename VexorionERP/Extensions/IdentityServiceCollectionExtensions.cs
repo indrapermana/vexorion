@@ -26,6 +26,26 @@ public static class IdentityServiceCollectionExtensions
         services.Configure<BootstrapOptions>(configuration.GetSection(BootstrapOptions.SectionName));
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.AddHttpContextAccessor();
+
+        List<Type> types = typeof(ProductCommandService).Assembly.GetTypes().AsParallel()
+                .Where(type => !type.IsAbstract && !type.IsInterface).ToList();
+
+        foreach (Type type in types)
+        {
+            Type? serviceInterface = type.GetInterfaces()
+                .FirstOrDefault(interfaceType =>
+                    interfaceType.IsGenericType &&
+                    (interfaceType.GetGenericTypeDefinition() == typeof(ICommandService<>)
+                    ));
+
+            if (serviceInterface is null)
+            {
+                continue;
+            }
+
+            services.AddScoped(serviceInterface, type);
+        }
+
         services.AddScoped<ICurrentTenantProvider, HttpContextCurrentTenantProvider>();
         services.AddScoped<IUserClaimsPrincipalFactory<User>, AppUserClaimsPrincipalFactory>();
         services.AddScoped<ITokenService, JwtTokenService>();
@@ -54,7 +74,6 @@ public static class IdentityServiceCollectionExtensions
         services.AddScoped<IInvoiceLineCommandService, InvoiceLineCommandService>();
         services.AddScoped<IInvoiceLineQueryService, InvoiceLineQueryService>();
         services.AddScoped<IInvoiceQueryService, InvoiceQueryService>();
-        services.AddScoped<IProductCommandService, ProductCommandService>();
         services.AddScoped<IProductQueryService, ProductQueryService>();
         services.AddScoped<IPurchaseOrderCommandService, PurchaseOrderCommandService>();
         services.AddScoped<IPurchaseOrderLineCommandService, PurchaseOrderLineCommandService>();

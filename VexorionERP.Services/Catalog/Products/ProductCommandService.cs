@@ -1,5 +1,4 @@
 using Mapster;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using VexorionERP.Contracts;
 using VexorionERP.Database;
@@ -8,73 +7,75 @@ using VexorionERP.Services;
 
 namespace VexorionERP.Services;
 
-public class ProductCommandService(
-    AppDbContext dbContext,
-    ICurrentTenantProvider currentTenantProvider) : IProductCommandService
+public class ProductCommandService : BaseCommandService<Product>
 {
-    public async Task<ServiceResult<ProductDetailsResponse>> CreateAsync(CreateProductRequest request, CancellationToken cancellationToken = default)
+    private readonly AppDbContext dbContext;
+
+    public ProductCommandService(
+        AppDbContext dbContext,
+        ICurrentTenantProvider currentTenantProvider) : base(currentTenantProvider)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
-        {
-            return ServiceResult<ProductDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
-        }
-
-        var validation = Validate(request.Sku, request.Name, request.UnitOfMeasure);
-        if (validation.Count > 0)
-        {
-            return ServiceResult<ProductDetailsResponse>.ValidationFailure(validation);
-        }
-
-        var normalizedSku = request.Sku.Trim().ToUpperInvariant();
-        var skuExists = await dbContext.Products.AnyAsync(
-            x => x.TenantId == currentTenantProvider.TenantId.Value && x.Sku.ToUpper() == normalizedSku,
-            cancellationToken);
-
-        if (skuExists)
-        {
-            return ServiceResult<ProductDetailsResponse>.Failure(StatusCodes.Status409Conflict, "A product with the same SKU already exists.");
-        }
-
-        var product = request.Adapt<Product>();
-        product.TenantId = currentTenantProvider.TenantId.Value;
-        product.Sku = request.Sku.Trim();
-        product.Name = request.Name.Trim();
-        product.Description = NormalizeOptional(request.Description);
-        product.UnitOfMeasure = request.UnitOfMeasure.Trim().ToUpperInvariant();
-
-        dbContext.Products.Add(product);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return ServiceResult<ProductDetailsResponse>.Success(product.Adapt<ProductDetailsResponse>());
+        this.dbContext = dbContext;
     }
 
-    public async Task<ServiceResult<ProductDetailsResponse>> UpdateAsync(Guid productId, UpdateProductRequest request, CancellationToken cancellationToken = default)
+    protected override bool ValidateAddInput(ICreateInput<Product> input, out IDictionary<string, string[]>? errors, out string? errorMessage)
     {
-        if (!currentTenantProvider.TenantId.HasValue)
+        errors = null;
+        errorMessage = null;
+
+        CreateProductRequest request = (CreateProductRequest)input;
+        var tenantId = TryGetTenantId();
+
+        if (tenantId.HasValue)
         {
-            return ServiceResult<ProductDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+            var normalizedSku = request.Sku.Trim().ToUpperInvariant();
+            if (dbContext.Products.GetByTenant(tenantId.Value).Any(x => x.Sku.ToUpper() == normalizedSku))
+            {
+                errorMessage = "A product with the same SKU already exists.";
+                return false;
+            }
         }
 
-        var validation = Validate(request.Sku, request.Name, request.UnitOfMeasure);
-        if (validation.Count > 0)
+        return base.ValidateAddInput(input, out errors, out errorMessage);
+    }
+
+    public override async Task<Product> GetAddToDbObjectAsync(ICreateInput<Product> input, AppDbContext context, CancellationToken cancellationToken = default)
+    {
+        CreateProductRequest request = (CreateProductRequest)input;
+        var created = await base.GetAddToDbObjectAsync(input, context, cancellationToken);
+        created.Sku = request.Sku.Trim();
+        created.Name = request.Name.Trim();
+        created.Description = NormalizeOptional(request.Description);
+        created.UnitOfMeasure = request.UnitOfMeasure.Trim().ToUpperInvariant();
+
+        return created;
+    }
+
+    protected override async Task<Product> GetUpdatedDbObjectAsync(Guid id, IUpdateInput<Product> input, AppDbContext context, CancellationToken cancellationToken = default)
+    {
+        UpdateProductRequest request = (UpdateProductRequest)input;
+        var tenantId = TryGetTenantId();
+
+        if (!tenantId.HasValue)
         {
-            return ServiceResult<ProductDetailsResponse>.ValidationFailure(validation);
+            return null!;
         }
 
-        var product = await dbContext.Products.FirstOrDefaultAsync(x => x.Id == productId, cancellationToken);
+        var product = await context.Products.GetByTenant(tenantId.Value)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
         if (product is null)
         {
-            return ServiceResult<ProductDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Product not found.");
+            return null!;
         }
 
+        // Validate SKU uniqueness before applying changes
         var normalizedSku = request.Sku.Trim().ToUpperInvariant();
-        var skuExists = await dbContext.Products.AnyAsync(
-            x => x.Id != productId && x.TenantId == currentTenantProvider.TenantId.Value && x.Sku.ToUpper() == normalizedSku,
-            cancellationToken);
-
-        if (skuExists)
+        var skuConflict = await context.Products.GetByTenant(tenantId.Value)
+            .AnyAsync(x => x.Id != id && x.Sku.ToUpper() == normalizedSku, cancellationToken);
+        if (skuConflict)
         {
-            return ServiceResult<ProductDetailsResponse>.Failure(StatusCodes.Status409Conflict, "A product with the same SKU already exists.");
+            return null!;
         }
 
         request.Adapt(product);
@@ -83,50 +84,24 @@ public class ProductCommandService(
         product.Description = NormalizeOptional(request.Description);
         product.UnitOfMeasure = request.UnitOfMeasure.Trim().ToUpperInvariant();
 
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return ServiceResult<ProductDetailsResponse>.Success(product.Adapt<ProductDetailsResponse>());
-    }
-
-    public async Task<ServiceResult<bool>> DeleteAsync(Guid productId, CancellationToken cancellationToken = default)
-    {
-        if (!currentTenantProvider.TenantId.HasValue)
-        {
-            return ServiceResult<bool>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
-        }
-
-        var product = await dbContext.Products.FirstOrDefaultAsync(x => x.Id == productId, cancellationToken);
-        if (product is null)
-        {
-            return ServiceResult<bool>.Failure(StatusCodes.Status404NotFound, "Product not found.");
-        }
-
-        dbContext.Products.Remove(product);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return ServiceResult<bool>.Success(true);
-    }
-
-    private static Dictionary<string, string[]> Validate(string sku, string name, string unitOfMeasure)
-    {
-        var errors = new Dictionary<string, string[]>();
-
-        if (string.IsNullOrWhiteSpace(sku))
-        {
-            errors[nameof(CreateProductRequest.Sku)] = ["SKU is required."];
-        }
-
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            errors[nameof(CreateProductRequest.Name)] = ["Name is required."];
-        }
-
-        if (string.IsNullOrWhiteSpace(unitOfMeasure))
-        {
-            errors[nameof(CreateProductRequest.UnitOfMeasure)] = ["Unit of measure is required."];
-        }
-
-        return errors;
+        return product;
     }
 
     private static string? NormalizeOptional(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    protected override async Task<Product> GetDeleteObjectAsync(Guid id, AppDbContext context, CancellationToken cancellationToken = default)
+    {
+        var tenantId = TryGetTenantId();
+        
+        if (!tenantId.HasValue)
+        {
+            return default!;
+        }
+
+        var product = await context.Products.GetByTenant(tenantId.Value)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        return product ?? default!;
+    }
+
+    protected override string GetNotFoundMessage() => "Product not found.";
 }

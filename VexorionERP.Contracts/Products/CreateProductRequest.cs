@@ -1,8 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using VexorionERP.Models;
 
 namespace VexorionERP.Contracts;
 
-public class CreateProductRequest
+public class CreateProductRequest : ICreateInput<Product>
 {
     [Required]
     [StringLength(50, MinimumLength = 1)]

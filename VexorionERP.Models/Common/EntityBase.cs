@@ -1,6 +1,6 @@
 namespace VexorionERP.Models;
 
-public abstract class EntityBase
+public abstract class EntityBase : IEntityTraceability
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
