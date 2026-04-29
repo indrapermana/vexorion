@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Mediator.Abstractions" Version="3.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\VexorionERP.Contracts\VexorionERP.Contracts.csproj" />
+    <ProjectReference Include="..\VexorionERP.Database\VexorionERP.Database.csproj" />
+    <ProjectReference Include="..\VexorionERP.Models\VexorionERP.Models.csproj" />
+    <ProjectReference Include="..\VexorionERP.Services\VexorionERP.Services.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -17,6 +17,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VexorionERP.Services.Tests"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VexorionERP.Web.Tests", "VexorionERP.Web.Tests\VexorionERP.Web.Tests.csproj", "{B47CA841-96FC-41D7-97CA-396EE1551B34}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VexorionERP.Handler", "VexorionERP.Handler\VexorionERP.Handler.csproj", "{7C58B239-27EE-4004-9207-89A0EB0434F0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VexorionERP.Handler.Tests", "VexorionERP.Handler.Tests\VexorionERP.Handler.Tests.csproj", "{725CA27D-3BBD-4929-95D9-7484B4CCD417}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -54,5 +58,13 @@ Global
 		{B47CA841-96FC-41D7-97CA-396EE1551B34}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B47CA841-96FC-41D7-97CA-396EE1551B34}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B47CA841-96FC-41D7-97CA-396EE1551B34}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C58B239-27EE-4004-9207-89A0EB0434F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C58B239-27EE-4004-9207-89A0EB0434F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C58B239-27EE-4004-9207-89A0EB0434F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C58B239-27EE-4004-9207-89A0EB0434F0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{725CA27D-3BBD-4929-95D9-7484B4CCD417}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{725CA27D-3BBD-4929-95D9-7484B4CCD417}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{725CA27D-3BBD-4929-95D9-7484B4CCD417}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{725CA27D-3BBD-4929-95D9-7484B4CCD417}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

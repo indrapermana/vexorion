@@ -4,6 +4,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddApplicationIdentity(builder.Configuration);
 builder.Services.AddApplicationAuthorization();
+builder.Services.AddMediator();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
