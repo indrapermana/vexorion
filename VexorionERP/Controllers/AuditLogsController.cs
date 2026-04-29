@@ -1,8 +1,9 @@
+using Mediator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VexorionERP.Contracts;
+using VexorionERP.Handler;
 using VexorionERP.Models;
-using VexorionERP.Services;
 
 namespace VexorionERP;
 
@@ -10,7 +11,7 @@ namespace VexorionERP;
 [Route("api/audit-logs")]
 [Authorize]
 public class AuditLogsController(
-    IAuditLogQueryService auditLogQueryService) : ServiceResultControllerBase
+    IMediator mediator) : ServiceResultControllerBase
 {
     [HttpGet]
     [Authorize(Policy = AppPermissions.Accounting.View)]
@@ -22,7 +23,7 @@ public class AuditLogsController(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50)
     {
-        var result = await auditLogQueryService.GetAsync(eventType, entityName, fromUtc, toUtc, page, pageSize, HttpContext.RequestAborted);
+        var result = await mediator.Send(new GetAuditLogsQuery(eventType, entityName, fromUtc, toUtc, page, pageSize), HttpContext.RequestAborted);
         return ToActionResult(result);
     }
 }

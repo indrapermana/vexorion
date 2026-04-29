@@ -2,7 +2,7 @@ using VexorionERP.Models;
 
 namespace VexorionERP.Contracts;
 
-public class CreateAccountRequest
+public class CreateAccountRequest : ICreateInput<Account>
 {
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;

@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace VexorionERP.Contracts;
 
-public class CreateInvoiceRequest
+public class CreateInvoiceRequest : ICreateInput<Invoice>
 {
     [Required]
     [StringLength(50, MinimumLength = 1)]

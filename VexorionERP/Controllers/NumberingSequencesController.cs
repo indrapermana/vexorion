@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Mediator;
 using VexorionERP.Contracts;
+using VexorionERP.Handler;
 using VexorionERP.Models;
-using VexorionERP.Services;
 
 namespace VexorionERP;
 
@@ -10,13 +11,13 @@ namespace VexorionERP;
 [Route("api/numbering-sequences")]
 [Authorize]
 public class NumberingSequencesController(
-    INumberingService numberingService) : ServiceResultControllerBase
+    IMediator mediator) : ServiceResultControllerBase
 {
     [HttpGet]
     [Authorize(Policy = AppPermissions.Billing.View)]
     public async Task<ActionResult<IReadOnlyCollection<NumberingSequenceResponse>>> GetAll()
     {
-        var result = await numberingService.GetAllAsync(HttpContext.RequestAborted);
+        var result = await mediator.Send(new GetNumberingSequencesQuery(), HttpContext.RequestAborted);
         return ToActionResult(result);
     }
 
@@ -24,7 +25,7 @@ public class NumberingSequencesController(
     [Authorize(Policy = AppPermissions.Billing.Manage)]
     public async Task<ActionResult<NumberingSequenceResponse>> Upsert([FromBody] UpsertNumberingSequenceRequest request)
     {
-        var result = await numberingService.UpsertAsync(request, HttpContext.RequestAborted);
+        var result = await mediator.Send(new UpsertNumberingSequenceCommand(request), HttpContext.RequestAborted);
         return ToActionResult(result);
     }
 }

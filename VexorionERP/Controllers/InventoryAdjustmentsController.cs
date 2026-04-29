@@ -1,100 +1,57 @@
-using Mapster;
+using Mediator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VexorionERP.Contracts;
-using VexorionERP.Database;
+using VexorionERP.Handler;
 using VexorionERP.Models;
-using VexorionERP.Services;
 
 namespace VexorionERP;
 
 [ApiController]
 [Route("api/inventory-adjustments")]
 [Authorize]
-public class InventoryAdjustmentsController(
-    ICommandService<InventoryAdjustment> inventoryAdjustmentCommandService,
-    IQueryService<InventoryAdjustment> inventoryAdjustmentQueryService,
-    AppDbContext dbContext) : ServiceResultControllerBase
+public class InventoryAdjustmentsController(IMediator mediator) : ServiceResultControllerBase
 {
     [HttpGet]
     [Authorize(Policy = AppPermissions.Inventory.View)]
     public async Task<ActionResult<IReadOnlyCollection<InventoryAdjustmentListItemResponse>>> GetAll()
     {
-        var result = await inventoryAdjustmentQueryService.GetAllAsync(dbContext, HttpContext.RequestAborted);
-        return ToActionResult(MapResult(result));
+        var result = await mediator.Send(new GetInventoryAdjustmentsQuery(), HttpContext.RequestAborted);
+        return ToActionResult(result);
     }
 
     [HttpGet("{inventoryAdjustmentId:guid}")]
     [Authorize(Policy = AppPermissions.Inventory.View)]
     public async Task<ActionResult<InventoryAdjustmentDetailsResponse>> GetById(Guid inventoryAdjustmentId)
     {
-        var result = await inventoryAdjustmentQueryService.GetByIdAsync(inventoryAdjustmentId, dbContext, HttpContext.RequestAborted);
-        return ToActionResult(MapResult(result));
+        var result = await mediator.Send(new GetInventoryAdjustmentByIdQuery(inventoryAdjustmentId), HttpContext.RequestAborted);
+        return ToActionResult(result);
     }
 
     [HttpPost]
     [Authorize(Policy = AppPermissions.Inventory.Manage)]
     public async Task<ActionResult<InventoryAdjustmentDetailsResponse>> Create([FromBody] CreateInventoryAdjustmentRequest request)
     {
-        var result = await inventoryAdjustmentCommandService.CreateAsync(request, dbContext, HttpContext.RequestAborted);
+        var result = await mediator.Send(new CreateInventoryAdjustmentCommand(request), HttpContext.RequestAborted);
         if (!result.Succeeded)
-        {
-            return ToActionResult(MapResult(result));
-        }
+            return ToActionResult(result);
 
-        var mapped = result.Value!.Adapt<InventoryAdjustmentDetailsResponse>();
-        return CreatedAtAction(nameof(GetById), new { inventoryAdjustmentId = mapped.Id }, mapped);
+        return CreatedAtAction(nameof(GetById), new { inventoryAdjustmentId = result.Value!.Id }, result.Value);
     }
 
     [HttpPut("{inventoryAdjustmentId:guid}")]
     [Authorize(Policy = AppPermissions.Inventory.Manage)]
     public async Task<ActionResult<InventoryAdjustmentDetailsResponse>> Update(Guid inventoryAdjustmentId, [FromBody] UpdateInventoryAdjustmentRequest request)
     {
-        var result = await inventoryAdjustmentCommandService.UpdateAsync(inventoryAdjustmentId, request, dbContext, HttpContext.RequestAborted);
-        return ToActionResult(MapResult(result));
+        var result = await mediator.Send(new UpdateInventoryAdjustmentCommand(inventoryAdjustmentId, request), HttpContext.RequestAborted);
+        return ToActionResult(result);
     }
 
     [HttpDelete("{inventoryAdjustmentId:guid}")]
     [Authorize(Policy = AppPermissions.Inventory.Manage)]
     public async Task<ActionResult> Delete(Guid inventoryAdjustmentId)
     {
-        var result = await inventoryAdjustmentCommandService.DeleteAsync(inventoryAdjustmentId, dbContext, HttpContext.RequestAborted);
+        var result = await mediator.Send(new DeleteInventoryAdjustmentCommand(inventoryAdjustmentId), HttpContext.RequestAborted);
         return ToActionResult(result);
-    }
-
-    private ServiceResult<InventoryAdjustmentDetailsResponse> MapResult(ServiceResult<IEntityResponse<InventoryAdjustment>> result)
-    {
-        if (result.Succeeded)
-        {
-            var mapped = result.Value!.Adapt<InventoryAdjustmentDetailsResponse>();
-            return ServiceResult<InventoryAdjustmentDetailsResponse>.Success(mapped);
-        }
-
-        if (result.Validation is not null)
-        {
-            return ServiceResult<InventoryAdjustmentDetailsResponse>.ValidationFailure(result.Validation.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
-        }
-
-        return ServiceResult<InventoryAdjustmentDetailsResponse>.Failure(
-            result.StatusCode ?? StatusCodes.Status400BadRequest,
-            result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
-    }
-
-    private ServiceResult<IReadOnlyCollection<InventoryAdjustmentListItemResponse>> MapResult(ServiceResult<IReadOnlyCollection<IEntityListResponse<InventoryAdjustment>>> result)
-    {
-        if (result.Succeeded)
-        {
-            var mapped = result.Value!.Adapt<IReadOnlyCollection<InventoryAdjustmentListItemResponse>>();
-            return ServiceResult<IReadOnlyCollection<InventoryAdjustmentListItemResponse>>.Success(mapped);
-        }
-
-        if (result.Validation is not null)
-        {
-            return ServiceResult<IReadOnlyCollection<InventoryAdjustmentListItemResponse>>.ValidationFailure(result.Validation.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
-        }
-
-        return ServiceResult<IReadOnlyCollection<InventoryAdjustmentListItemResponse>>.Failure(
-            result.StatusCode ?? StatusCodes.Status400BadRequest,
-            result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
     }
 }

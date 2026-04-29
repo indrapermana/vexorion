@@ -2,7 +2,7 @@ using VexorionERP.Models;
 
 namespace VexorionERP.Contracts;
 
-public class UpdateInvoiceRequest
+public class UpdateInvoiceRequest : CreateInvoiceRequest, IUpdateInput<Invoice>
 {
     public string InvoiceNumber { get; set; } = string.Empty;
     public Guid CustomerId { get; set; }
