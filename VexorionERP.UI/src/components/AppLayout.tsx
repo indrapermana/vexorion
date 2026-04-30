@@ -223,12 +223,13 @@ export default function AppLayout() {
   }, [isAuthenticated])
 
   const visibleNavigationSections = useMemo(
-    () => navigationSections
-      .map((section) => ({
-        ...section,
-        links: section.links.filter((link) => !hiddenMenuLinks.includes(link.to)),
-      }))
-      .filter((section) => section.links.length > 0),
+    () =>
+      navigationSections
+        .map((section) => ({
+          ...section,
+          links: section.links.filter((link) => !hiddenMenuLinks.includes(link.to)),
+        }))
+        .filter((section) => section.links.length > 0),
     [hiddenMenuLinks],
   )
 

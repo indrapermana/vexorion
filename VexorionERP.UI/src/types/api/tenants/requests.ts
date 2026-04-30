@@ -10,3 +10,4 @@ export type OnboardTenantRequest = {
   firstName: string
   lastName: string
 }
+

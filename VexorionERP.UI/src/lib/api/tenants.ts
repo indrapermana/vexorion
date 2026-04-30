@@ -1,4 +1,7 @@
-import type { OnboardTenantRequest, OnboardTenantResponse } from '../../types/api'
+import type {
+  OnboardTenantRequest,
+  OnboardTenantResponse,
+} from '../../types/api'
 import { requestJson } from './core'
 
 export function onboardTenant(request: OnboardTenantRequest) {

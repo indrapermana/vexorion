@@ -109,6 +109,12 @@ public static class AppPermissions
         public const string Manage = "billing.manage";
     }
 
+    public static class Tenants
+    {
+        public const string View = "tenants.view";
+        public const string Manage = "tenants.manage";
+    }
+
     public static IReadOnlyCollection<string> All { get; } =
     [
         Users.View,
@@ -145,6 +151,8 @@ public static class AppPermissions
         Accounting.Manage,
         Reports.View,
         Billing.View,
-        Billing.Manage
+        Billing.Manage,
+        Tenants.View,
+        Tenants.Manage
     ];
 }
