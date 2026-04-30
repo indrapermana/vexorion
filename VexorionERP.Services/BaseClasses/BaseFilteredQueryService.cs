@@ -31,7 +31,7 @@ public abstract class BaseFilteredQueryService<TEntity, TFilter> : BaseQueryServ
         var entities = await ApplyOrdering(ApplyFilter(context.GetByTenant<TEntity>(TenantId).AsNoTracking(), filter))
             .ToListAsync(cancellationToken);
 
-        return ServiceResult<IReadOnlyCollection<IEntityListResponse<TEntity>>>.Success(entities.Adapt<IReadOnlyCollection<IEntityListResponse<TEntity>>>());
+        return ServiceResult<IReadOnlyCollection<IEntityListResponse<TEntity>>>.Success(AdaptEntityListResponses(entities));
     }
 
     protected virtual IQueryable<TEntity> ApplyFilter(IQueryable<TEntity> query, TFilter filter) => query;

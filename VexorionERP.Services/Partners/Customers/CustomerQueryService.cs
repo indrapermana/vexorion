@@ -22,7 +22,7 @@ public class CustomerQueryService(
         }
 
         var customers = await context.Customers.GetByTenant(tenantId.Value).AsNoTracking().OrderBy(x => x.Name).ToListAsync(cancellationToken);
-        return ServiceResult<IReadOnlyCollection<IEntityListResponse<Customer>>>.Success(customers.Adapt<IReadOnlyCollection<IEntityListResponse<Customer>>>());
+        return ServiceResult<IReadOnlyCollection<IEntityListResponse<Customer>>>.Success(AdaptEntityListResponses(customers));
     }
 
     public async Task<ServiceResult<IEntityResponse<Customer>>> GetByIdAsync(Guid customerId, AppDbContext context, CancellationToken cancellationToken = default)

@@ -265,12 +265,18 @@ const esES = {
           product: 'Producto',
           uom: 'UM',
           salesPrice: 'Precio de venta',
+          purchasePrice: 'Precio de compra',
           onHand: 'En stock',
           reserved: 'Reservado',
           available: 'Disponible',
           stockHealth: 'Salud del stock',
           status: 'Estado',
           actions: 'Acciones',
+        },
+        purchasePriceTooltip: {
+          loading: 'Cargando precios...',
+          noHistory: 'Sin historial de compras',
+          lastOn: 'Última el {{date}}',
         },
         stockPanel: {
           warehouseStock: 'Stock por almacén',

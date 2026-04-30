@@ -2,7 +2,7 @@ using VexorionERP.Models;
 
 namespace VexorionERP.Contracts;
 
-public class JournalEntryDetailsResponse
+public class JournalEntryDetailsResponse : IEntityResponse<JournalEntry>
 {
     public Guid Id { get; set; }
     public string JournalNumber { get; set; } = string.Empty;

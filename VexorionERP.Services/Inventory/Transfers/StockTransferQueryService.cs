@@ -27,7 +27,7 @@ public class StockTransferQueryService(
             .ThenBy(x => x.TransferNumber)
             .ToListAsync(cancellationToken);
 
-        return ServiceResult<IReadOnlyCollection<IEntityListResponse<StockTransfer>>>.Success(transfers.Adapt<IReadOnlyCollection<IEntityListResponse<StockTransfer>>>());
+        return ServiceResult<IReadOnlyCollection<IEntityListResponse<StockTransfer>>>.Success(AdaptEntityListResponses(transfers));
     }
 
     public async Task<ServiceResult<IEntityResponse<StockTransfer>>> GetByIdAsync(Guid stockTransferId, AppDbContext context, CancellationToken cancellationToken = default)

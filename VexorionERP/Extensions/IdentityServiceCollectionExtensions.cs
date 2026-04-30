@@ -61,6 +61,7 @@ public static class IdentityServiceCollectionExtensions
         services.AddScoped<IAuditLogQueryService, AuditLogQueryService>();
         services.AddScoped<IAuthApplicationService, AuthApplicationService>();
         services.AddScoped<IInventoryMovementPostingService, InventoryMovementPostingService>();
+        services.AddScoped<IProductPurchasePriceHistoryQueryService, ProductPurchasePriceHistoryQueryService>();
         services.AddScoped<IPostingService, PostingService>();
         services.AddScoped<INumberingService, NumberingService>();
         services.AddScoped<IInvoiceApprovalService, InvoiceApprovalService>();

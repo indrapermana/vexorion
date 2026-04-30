@@ -1,7 +1,6 @@
 import { Fragment, useMemo, useState } from 'react'
 import {
   Box,
-  Button,
   Chip,
   CircularProgress,
   Collapse,
@@ -21,10 +20,11 @@ import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownR
 import KeyboardArrowUpRoundedIcon from '@mui/icons-material/KeyboardArrowUpRounded'
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
 import EditRoundedIcon from '@mui/icons-material/EditRounded'
-import LaunchRoundedIcon from '@mui/icons-material/LaunchRounded'
-import { Link as RouterLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { ProductGridRow } from '../../../types/ui'
+import { formatQuantity } from '../../../common/utils'
+import ProductStockPanel from './ProductStockPanel'
+import ProductPurchasePriceCell from './ProductPurchasePriceCell'
 
 type ProductDataGridProps = {
   rows: ProductGridRow[]
@@ -37,83 +37,6 @@ type ProductDataGridProps = {
 
 type ProductSortField = 'name' | 'quantityAvailable' | 'stockHealth'
 type SortDirection = 'asc' | 'desc'
-
-function formatQuantity(value: number) {
-  return value.toFixed(2)
-}
-
-function ProductStockPanel({ row, t }: { row: ProductGridRow; t: (key: string, options?: Record<string, unknown>) => string }) {
-  return (
-    <Box sx={{ px: { xs: 2, md: 3 }, py: 2, backgroundColor: 'rgba(15, 23, 42, 0.02)' }}>
-      <Stack spacing={1.5}>
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ justifyContent: 'space-between', alignItems: { md: 'center' } }}>
-          <Box>
-            <Typography sx={{ fontWeight: 700 }}>{t('components.products.grid.stockPanel.warehouseStock')}</Typography>
-            <Typography variant="body2" color="text.secondary">
-              {t('components.products.grid.stockPanel.activeReorder', {
-                activeQuantity: formatQuantity(row.activeQuantityAvailable),
-                reorderLevel: formatQuantity(row.reorderLevel),
-              })}
-            </Typography>
-          </Box>
-          <Chip
-            size="small"
-            color={row.isLowStock ? 'warning' : 'success'}
-            variant={row.isLowStock ? 'filled' : 'outlined'}
-            label={row.isLowStock ? t('components.products.grid.lowStock') : t('components.products.grid.healthy')}
-          />
-        </Stack>
-
-        {row.warehouseStock.length ? (
-          <Stack spacing={1}>
-            {row.warehouseStock.map((warehouse) => (
-              <Box
-                key={warehouse.warehouseId}
-                sx={{
-                  border: '1px solid rgba(15, 23, 42, 0.08)',
-                  borderRadius: 3,
-                  px: 2,
-                  py: 1.5,
-                  backgroundColor: warehouse.isWarehouseActive ? 'rgba(15, 23, 42, 0.02)' : 'rgba(120, 113, 108, 0.08)',
-                }}
-              >
-                <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1.5} sx={{ justifyContent: 'space-between', alignItems: { lg: 'center' } }}>
-                  <Box>
-                    <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
-                      <Typography sx={{ fontWeight: 700 }}>{warehouse.warehouseName}</Typography>
-                      <Chip
-                        size="small"
-                        label={warehouse.isWarehouseActive ? t('components.products.grid.stockPanel.activeWarehouse') : t('components.products.grid.stockPanel.inactiveWarehouse')}
-                        color={warehouse.isWarehouseActive ? 'primary' : 'default'}
-                        variant={warehouse.isWarehouseActive ? 'filled' : 'outlined'}
-                      />
-                    </Stack>
-                    <Button
-                      component={RouterLink}
-                      to={`/warehouses?warehouseId=${warehouse.warehouseId}`}
-                      size="small"
-                      endIcon={<LaunchRoundedIcon />}
-                      sx={{ px: 0, mt: 0.5 }}
-                    >
-                      {warehouse.warehouseCode}
-                    </Button>
-                  </Box>
-                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-                    <Chip size="small" label={t('components.products.grid.stockPanel.onHand', { quantity: formatQuantity(warehouse.quantityOnHand) })} variant="outlined" />
-                    <Chip size="small" label={t('components.products.grid.stockPanel.reserved', { quantity: formatQuantity(warehouse.quantityReserved) })} variant="outlined" />
-                    <Chip size="small" label={t('components.products.grid.stockPanel.available', { quantity: formatQuantity(warehouse.quantityAvailable) })} variant="outlined" />
-                  </Stack>
-                </Stack>
-              </Box>
-            ))}
-          </Stack>
-        ) : (
-          <Typography color="text.secondary">{t('components.products.grid.stockPanel.noWarehouseBalances')}</Typography>
-        )}
-      </Stack>
-    </Box>
-  )
-}
 
 function compareRows(left: ProductGridRow, right: ProductGridRow, sortField: ProductSortField) {
   if (sortField === 'quantityAvailable') {
@@ -194,6 +117,7 @@ export default function ProductDataGrid({ rows, isLoading, expandedProductIds, o
             </TableCell>
             <TableCell>{t('components.products.grid.columns.uom')}</TableCell>
             <TableCell align="right">{t('components.products.grid.columns.salesPrice')}</TableCell>
+            <TableCell align="right">{t('components.products.grid.columns.purchasePrice')}</TableCell>
             <TableCell align="right">{t('components.products.grid.columns.onHand')}</TableCell>
             <TableCell align="right">{t('components.products.grid.columns.reserved')}</TableCell>
             <TableCell align="right" sortDirection={sortField === 'quantityAvailable' ? sortDirection : false}>
@@ -244,6 +168,9 @@ export default function ProductDataGrid({ rows, isLoading, expandedProductIds, o
                   </TableCell>
                   <TableCell>{row.unitOfMeasure}</TableCell>
                   <TableCell align="right">${row.salesPrice.toFixed(2)}</TableCell>
+                  <TableCell align="right">
+                    <ProductPurchasePriceCell productId={row.id} standardCost={row.standardCost} />
+                  </TableCell>
                   <TableCell align="right">{formatQuantity(row.quantityOnHand)}</TableCell>
                   <TableCell align="right">{formatQuantity(row.quantityReserved)}</TableCell>
                   <TableCell align="right">{formatQuantity(row.quantityAvailable)}</TableCell>
@@ -287,9 +214,9 @@ export default function ProductDataGrid({ rows, isLoading, expandedProductIds, o
                   </TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell colSpan={10} sx={{ py: 0, borderBottom: '1px solid rgba(108, 92, 231, 0.06)' }}>
+                  <TableCell colSpan={11} sx={{ py: 0, borderBottom: '1px solid rgba(108, 92, 231, 0.06)' }}>
                     <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-                      <ProductStockPanel row={row} t={t} />
+                      <ProductStockPanel row={row} />
                     </Collapse>
                   </TableCell>
                 </TableRow>

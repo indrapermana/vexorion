@@ -22,7 +22,7 @@ public class InvoiceQueryService(
         }
 
         var invoices = await context.Invoices.GetByTenant(tenantId.Value).AsNoTracking().OrderByDescending(x => x.InvoiceDate).ToListAsync(cancellationToken);
-        return ServiceResult<IReadOnlyCollection<IEntityListResponse<Invoice>>>.Success(invoices.Adapt<IReadOnlyCollection<IEntityListResponse<Invoice>>>());
+        return ServiceResult<IReadOnlyCollection<IEntityListResponse<Invoice>>>.Success(AdaptEntityListResponses(invoices));
     }
 
     public async Task<ServiceResult<IEntityResponse<Invoice>>> GetByIdAsync(Guid invoiceId, AppDbContext context, CancellationToken cancellationToken = default)

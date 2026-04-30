@@ -192,7 +192,7 @@ public abstract class BaseCommandService<T> : BaseService, ICommandService<T>
 
     protected virtual IEntityResponse<T> BuildEntityResponse(T entity)
     {
-        return entity.Adapt<IEntityResponse<T>>();
+        return AdaptEntityResponse(entity);
     }
 
     protected abstract Task<T> GetUpdatedDbObjectAsync(Guid id, IUpdateInput<T> input, AppDbContext context,

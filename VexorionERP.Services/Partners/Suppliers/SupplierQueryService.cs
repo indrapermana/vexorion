@@ -22,7 +22,7 @@ public class SupplierQueryService(
         }
 
         var suppliers = await context.Suppliers.GetByTenant(tenantId.Value).AsNoTracking().OrderBy(x => x.Name).ToListAsync(cancellationToken);
-        return ServiceResult<IReadOnlyCollection<IEntityListResponse<Supplier>>>.Success(suppliers.Adapt<IReadOnlyCollection<IEntityListResponse<Supplier>>>());
+        return ServiceResult<IReadOnlyCollection<IEntityListResponse<Supplier>>>.Success(AdaptEntityListResponses(suppliers));
     }
 
     public async Task<ServiceResult<IEntityResponse<Supplier>>> GetByIdAsync(Guid supplierId, AppDbContext context, CancellationToken cancellationToken = default)

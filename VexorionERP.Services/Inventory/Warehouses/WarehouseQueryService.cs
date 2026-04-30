@@ -22,7 +22,7 @@ public class WarehouseQueryService(
         }
 
         var warehouses = await context.Warehouses.GetByTenant(tenantId.Value).AsNoTracking().OrderBy(x => x.Name).ToListAsync(cancellationToken);
-        return ServiceResult<IReadOnlyCollection<IEntityListResponse<Warehouse>>>.Success(warehouses.Adapt<IReadOnlyCollection<IEntityListResponse<Warehouse>>>());
+        return ServiceResult<IReadOnlyCollection<IEntityListResponse<Warehouse>>>.Success(AdaptEntityListResponses(warehouses));
     }
 
     public async Task<ServiceResult<IEntityResponse<Warehouse>>> GetByIdAsync(Guid warehouseId, AppDbContext context, CancellationToken cancellationToken = default)

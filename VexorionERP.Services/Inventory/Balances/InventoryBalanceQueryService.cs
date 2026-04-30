@@ -22,7 +22,7 @@ public class InventoryBalanceQueryService(
         }
 
         var balances = await context.InventoryBalances.GetByTenant(tenantId.Value).AsNoTracking().OrderBy(x => x.ProductId).ThenBy(x => x.WarehouseId).ToListAsync(cancellationToken);
-        return ServiceResult<IReadOnlyCollection<IEntityListResponse<InventoryBalance>>>.Success(balances.Adapt<IReadOnlyCollection<IEntityListResponse<InventoryBalance>>>());
+        return ServiceResult<IReadOnlyCollection<IEntityListResponse<InventoryBalance>>>.Success(AdaptEntityListResponses(balances));
     }
 
     public async Task<ServiceResult<IEntityResponse<InventoryBalance>>> GetByIdAsync(Guid inventoryBalanceId, AppDbContext context, CancellationToken cancellationToken = default)

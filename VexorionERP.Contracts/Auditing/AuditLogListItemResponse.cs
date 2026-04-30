@@ -1,6 +1,8 @@
+using VexorionERP.Models;
+
 namespace VexorionERP.Contracts;
 
-public class AuditLogListItemResponse
+public class AuditLogListItemResponse : IEntityListResponse<AuditLog>
 {
     public Guid Id { get; set; }
     public DateTime CreatedAtUtc { get; set; }

@@ -27,7 +27,7 @@ public class InventoryAdjustmentQueryService(
             .ThenBy(x => x.AdjustmentNumber)
             .ToListAsync(cancellationToken);
 
-        return ServiceResult<IReadOnlyCollection<IEntityListResponse<InventoryAdjustment>>>.Success(adjustments.Adapt<IReadOnlyCollection<IEntityListResponse<InventoryAdjustment>>>());
+        return ServiceResult<IReadOnlyCollection<IEntityListResponse<InventoryAdjustment>>>.Success(AdaptEntityListResponses(adjustments));
     }
 
     public async Task<ServiceResult<IEntityResponse<InventoryAdjustment>>> GetByIdAsync(Guid inventoryAdjustmentId, AppDbContext context, CancellationToken cancellationToken = default)

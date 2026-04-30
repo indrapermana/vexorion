@@ -11,6 +11,7 @@ public class ProductDetailsResponse : IEntityResponse<Product>
     public string? Description { get; set; }
     public string UnitOfMeasure { get; set; } = string.Empty;
     public decimal StandardCost { get; set; }
+    public decimal PurchasePrice => StandardCost;
     public decimal SalesPrice { get; set; }
     public decimal ReorderLevel { get; set; }
     public bool IsActive { get; set; }

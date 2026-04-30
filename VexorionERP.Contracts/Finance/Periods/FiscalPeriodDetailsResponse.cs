@@ -1,6 +1,8 @@
+using VexorionERP.Models;
+
 namespace VexorionERP.Contracts;
 
-public class FiscalPeriodDetailsResponse
+public class FiscalPeriodDetailsResponse : IEntityResponse<FiscalPeriod>
 {
     public Guid Id { get; set; }
     public string PeriodCode { get; set; } = string.Empty;

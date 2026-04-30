@@ -442,12 +442,18 @@ const enUS = {
           product: 'Product',
           uom: 'UOM',
           salesPrice: 'Sales price',
+          purchasePrice: 'Purchase price',
           onHand: 'On hand',
           reserved: 'Reserved',
           available: 'Available',
           stockHealth: 'Stock health',
           status: 'Status',
           actions: 'Actions',
+        },
+        purchasePriceTooltip: {
+          loading: 'Loading prices...',
+          noHistory: 'No purchase history',
+          lastOn: 'Last on {{date}}',
         },
         stockPanel: {
           warehouseStock: 'Warehouse stock',

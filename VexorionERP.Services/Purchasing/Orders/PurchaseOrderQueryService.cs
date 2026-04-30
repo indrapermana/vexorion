@@ -22,7 +22,7 @@ public class PurchaseOrderQueryService(
         }
 
         var orders = await context.PurchaseOrders.GetByTenant(tenantId.Value).AsNoTracking().OrderByDescending(x => x.OrderDate).ToListAsync(cancellationToken);
-        return ServiceResult<IReadOnlyCollection<IEntityListResponse<PurchaseOrder>>>.Success(orders.Adapt<IReadOnlyCollection<IEntityListResponse<PurchaseOrder>>>());
+        return ServiceResult<IReadOnlyCollection<IEntityListResponse<PurchaseOrder>>>.Success(AdaptEntityListResponses(orders));
     }
 
     public async Task<ServiceResult<IEntityResponse<PurchaseOrder>>> GetByIdAsync(Guid purchaseOrderId, AppDbContext context, CancellationToken cancellationToken = default)

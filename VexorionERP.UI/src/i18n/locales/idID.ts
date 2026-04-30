@@ -296,12 +296,18 @@ const idID = {
           product: 'Produk',
           uom: 'Satuan',
           salesPrice: 'Harga jual',
+          purchasePrice: 'Harga beli',
           onHand: 'Stok',
           reserved: 'Dipesan',
           available: 'Tersedia',
           stockHealth: 'Kesehatan stok',
           status: 'Status',
           actions: 'Aksi',
+        },
+        purchasePriceTooltip: {
+          loading: 'Memuat harga...',
+          noHistory: 'Belum ada riwayat pembelian',
+          lastOn: 'Terakhir {{date}}',
         },
         stockPanel: {
           warehouseStock: 'Stok gudang',

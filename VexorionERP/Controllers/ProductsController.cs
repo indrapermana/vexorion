@@ -28,6 +28,41 @@ public class ProductsController(IMediator mediator) : ServiceResultControllerBas
         return ToActionResult(result);
     }
 
+    [HttpGet("{productId:guid}/purchase-price-history")]
+    [Authorize(Policy = AppPermissions.Products.View)]
+    public async Task<ActionResult<IReadOnlyCollection<ProductSupplierLatestPurchasePriceResponse>>> GetPurchasePriceHistory(Guid productId)
+    {
+        var result = await mediator.Send(new GetProductPurchasePriceHistoryQuery(productId), HttpContext.RequestAborted);
+        return ToActionResult(result);
+    }
+
+    [HttpGet("{productId:guid}/purchase-price-history/entries")]
+    [Authorize(Policy = AppPermissions.Products.View)]
+    public async Task<ActionResult<IReadOnlyCollection<ProductPurchasePriceHistoryEntryResponse>>> GetPurchasePriceHistoryEntries(
+        Guid productId,
+        [FromQuery] Guid? supplierId = null,
+        [FromQuery] DateOnly? fromDate = null,
+        [FromQuery] DateOnly? toDate = null)
+    {
+        var result = await mediator.Send(
+            new GetProductPurchasePriceHistoryEntriesQuery(productId, supplierId, fromDate, toDate),
+            HttpContext.RequestAborted);
+        return ToActionResult(result);
+    }
+
+    [HttpGet("{productId:guid}/purchase-price-history/summary")]
+    [Authorize(Policy = AppPermissions.Products.View)]
+    public async Task<ActionResult<IReadOnlyCollection<ProductSupplierPurchasePriceSummaryResponse>>> GetPurchasePriceSummary(
+        Guid productId,
+        [FromQuery] DateOnly? fromDate = null,
+        [FromQuery] DateOnly? toDate = null)
+    {
+        var result = await mediator.Send(
+            new GetProductPurchasePriceSummaryQuery(productId, fromDate, toDate),
+            HttpContext.RequestAborted);
+        return ToActionResult(result);
+    }
+
     [HttpPost]
     [Authorize(Policy = AppPermissions.Products.Manage)]
     public async Task<ActionResult<ProductDetailsResponse>> Create([FromBody] CreateProductRequest request)

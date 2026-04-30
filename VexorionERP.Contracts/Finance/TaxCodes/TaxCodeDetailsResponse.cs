@@ -1,6 +1,8 @@
+using VexorionERP.Models;
+
 namespace VexorionERP.Contracts;
 
-public class TaxCodeDetailsResponse
+public class TaxCodeDetailsResponse : IEntityResponse<TaxCode>
 {
     public Guid Id { get; set; }
     public Guid TenantId { get; set; }

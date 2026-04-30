@@ -25,7 +25,7 @@ public abstract class BaseQueryService<T> : BaseService, IQueryService<T>
 
         var entities = await context.GetByTenant<T>(TenantId).AsNoTracking().ToListAsync(cancellationToken);
 
-        return ServiceResult<IReadOnlyCollection<IEntityListResponse<T>>>.Success(entities.Adapt<IReadOnlyCollection<IEntityListResponse<T>>>());
+        return ServiceResult<IReadOnlyCollection<IEntityListResponse<T>>>.Success(AdaptEntityListResponses(entities));
     }
 
     public virtual async Task<ServiceResult<IEntityResponse<T>>> GetByIdAsync(Guid id, AppDbContext context, CancellationToken cancellationToken = default)
@@ -44,6 +44,6 @@ public abstract class BaseQueryService<T> : BaseService, IQueryService<T>
             return ServiceResult<IEntityResponse<T>>.Failure(StatusCodes.Status404NotFound, "Entity not found.");
         }
 
-        return ServiceResult<IEntityResponse<T>>.Success(entity.Adapt<IEntityResponse<T>>());
+        return ServiceResult<IEntityResponse<T>>.Success(AdaptEntityResponse(entity));
     }
 }

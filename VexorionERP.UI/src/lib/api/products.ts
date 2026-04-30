@@ -2,6 +2,7 @@ import type {
   CreateProductRequest,
   ProductDetailsResponse,
   ProductListItemResponse,
+  ProductSupplierLatestPurchasePriceResponse,
   UpdateProductRequest,
 } from '../../types/api'
 import { requestJson } from './core'
@@ -24,4 +25,8 @@ export function updateProduct(productId: string, request: UpdateProductRequest) 
 
 export function deleteProduct(productId: string) {
   return requestJson<void>(`/products/${productId}`, 'DELETE')
+}
+
+export function getProductPurchasePriceHistory(productId: string) {
+  return requestJson<ProductSupplierLatestPurchasePriceResponse[]>(`/products/${productId}/purchase-price-history`)
 }

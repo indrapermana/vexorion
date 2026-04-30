@@ -24,7 +24,7 @@ public class VendorPaymentQueryService(
             .ThenByDescending(x => x.CreatedAtUtc)
             .ToListAsync(cancellationToken);
 
-        return ServiceResult<IReadOnlyCollection<IEntityListResponse<VendorPayment>>>.Success(payments.Adapt<IReadOnlyCollection<IEntityListResponse<VendorPayment>>>());
+        return ServiceResult<IReadOnlyCollection<IEntityListResponse<VendorPayment>>>.Success(AdaptEntityListResponses(payments));
     }
 
     public async Task<ServiceResult<IEntityResponse<VendorPayment>>> GetByIdAsync(Guid vendorPaymentId, AppDbContext context, CancellationToken cancellationToken = default)

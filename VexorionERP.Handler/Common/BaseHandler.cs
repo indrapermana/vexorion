@@ -19,7 +19,14 @@ public abstract class BaseHandler<TEntity>(IServiceProvider serviceProvider)
     protected static ServiceResult<TDetails> MapDetails<TDetails>(ServiceResult<IEntityResponse<TEntity>> result)
     {
         if (result.Succeeded)
+        {
+            if (result.Value is TDetails details)
+            {
+                return ServiceResult<TDetails>.Success(details);
+            }
+
             return ServiceResult<TDetails>.Success(result.Value!.Adapt<TDetails>());
+        }
 
         if (result.Validation is not null)
             return ServiceResult<TDetails>.ValidationFailure(
@@ -34,8 +41,20 @@ public abstract class BaseHandler<TEntity>(IServiceProvider serviceProvider)
         ServiceResult<IReadOnlyCollection<IEntityListResponse<TEntity>>> result)
     {
         if (result.Succeeded)
+        {
+            var source = result.Value!;
+
+            // Query services already return concrete list-item DTOs behind the interface.
+            // Preserve those instances to avoid losing values when remapping from the interface shape.
+            var casted = source.OfType<TListItem>().ToList();
+            if (casted.Count == source.Count)
+            {
+                return ServiceResult<IReadOnlyCollection<TListItem>>.Success(casted);
+            }
+
             return ServiceResult<IReadOnlyCollection<TListItem>>.Success(
-                result.Value!.Adapt<IReadOnlyCollection<TListItem>>());
+                source.Select(item => item.Adapt<TListItem>()).ToList());
+        }
 
         if (result.Validation is not null)
             return ServiceResult<IReadOnlyCollection<TListItem>>.ValidationFailure(

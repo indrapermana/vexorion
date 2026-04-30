@@ -27,7 +27,7 @@ public class StockCountQueryService(
             .ThenBy(x => x.CountNumber)
             .ToListAsync(cancellationToken);
 
-        return ServiceResult<IReadOnlyCollection<IEntityListResponse<StockCount>>>.Success(counts.Adapt<IReadOnlyCollection<IEntityListResponse<StockCount>>>());
+        return ServiceResult<IReadOnlyCollection<IEntityListResponse<StockCount>>>.Success(AdaptEntityListResponses(counts));
     }
 
     public async Task<ServiceResult<IEntityResponse<StockCount>>> GetByIdAsync(Guid stockCountId, AppDbContext context, CancellationToken cancellationToken = default)

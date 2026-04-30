@@ -19,7 +19,16 @@ public class CreateProductRequest : ICreateInput<Product>
     [Required]
     [StringLength(20, MinimumLength = 1)]
     public string UnitOfMeasure { get; set; } = "EA";
+
     public decimal StandardCost { get; set; }
+
+    // Backward-compatible alias for clients that use purchase terminology.
+    public decimal PurchasePrice
+    {
+        get => StandardCost;
+        set => StandardCost = value;
+    }
+
     public decimal SalesPrice { get; set; }
     public decimal ReorderLevel { get; set; }
 }
