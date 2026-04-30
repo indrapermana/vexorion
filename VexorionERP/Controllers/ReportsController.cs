@@ -1,17 +1,17 @@
 using System.Text;
+using Mediator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VexorionERP.Contracts;
+using VexorionERP.Handler;
 using VexorionERP.Models;
-using VexorionERP.Services;
 
 namespace VexorionERP;
 
 [ApiController]
 [Route("api/reports")]
 [Authorize]
-public class ReportsController(
-    IReportingService reportingService) : ServiceResultControllerBase
+public class ReportsController(IMediator mediator) : ServiceResultControllerBase
 {
     [HttpGet("profit-and-loss")]
     [Authorize(Policy = AppPermissions.Reports.View)]
@@ -23,33 +23,8 @@ public class ReportsController(
     {
         var effectiveEndDate = endDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
         var effectiveStartDate = startDate ?? new DateOnly(effectiveEndDate.Year, effectiveEndDate.Month, 1);
-        var result = await reportingService.GetProfitAndLossAsync(effectiveStartDate, effectiveEndDate, HttpContext.RequestAborted);
-
-        if (!result.Succeeded)
-        {
-            var errorResult = ToActionResult(result);
-            return errorResult.Result ?? BadRequest();
-        }
-
-        var response = result.Value!;
-
-        if (priorStartDate.HasValue && priorEndDate.HasValue)
-        {
-            var priorResult = await reportingService.GetProfitAndLossAsync(priorStartDate.Value, priorEndDate.Value, HttpContext.RequestAborted);
-            if (priorResult.Succeeded)
-            {
-                response.PriorPeriod = new PriorPeriodSummaryResponse
-                {
-                    PeriodStartDate = priorResult.Value!.PeriodStartDate,
-                    PeriodEndDate = priorResult.Value.PeriodEndDate,
-                    TotalRevenue = priorResult.Value.TotalRevenue,
-                    TotalExpenses = priorResult.Value.TotalExpenses,
-                    NetIncome = priorResult.Value.NetIncome,
-                };
-            }
-        }
-
-        return Ok(response);
+        var result = await mediator.Send(new GetProfitAndLossQuery(effectiveStartDate, effectiveEndDate, priorStartDate, priorEndDate));
+        return ToActionResult(result);
     }
 
     [HttpGet("profit-and-loss/export")]
@@ -58,7 +33,7 @@ public class ReportsController(
     {
         var effectiveEndDate = endDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
         var effectiveStartDate = startDate ?? new DateOnly(effectiveEndDate.Year, effectiveEndDate.Month, 1);
-        var result = await reportingService.GetProfitAndLossAsync(effectiveStartDate, effectiveEndDate, HttpContext.RequestAborted);
+        var result = await mediator.Send(new GetProfitAndLossQuery(effectiveStartDate, effectiveEndDate));
 
         if (!result.Succeeded)
         {
@@ -86,29 +61,8 @@ public class ReportsController(
     public async Task<ActionResult<BalanceSheetReportResponse>> GetBalanceSheet([FromQuery] DateOnly? asOfDate, [FromQuery] DateOnly? priorAsOfDate)
     {
         var effectiveDate = asOfDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
-        var result = await reportingService.GetBalanceSheetAsync(effectiveDate, HttpContext.RequestAborted);
-        if (!result.Succeeded)
-            return ToActionResult(result);
-
-        var response = result.Value!;
-        if (priorAsOfDate.HasValue)
-        {
-            var priorResult = await reportingService.GetBalanceSheetAsync(priorAsOfDate.Value, HttpContext.RequestAborted);
-            if (priorResult.Succeeded)
-            {
-                response.PriorPeriod = new PriorBalanceSheetSummaryResponse
-                {
-                    AsOfDate = priorResult.Value!.AsOfDate,
-                    TotalAssets = priorResult.Value.TotalAssets,
-                    TotalLiabilities = priorResult.Value.TotalLiabilities,
-                    TotalEquity = priorResult.Value.TotalEquity,
-                    CurrentEarnings = priorResult.Value.CurrentEarnings,
-                    TotalLiabilitiesAndEquity = priorResult.Value.TotalLiabilitiesAndEquity,
-                };
-            }
-        }
-
-        return Ok(response);
+        var result = await mediator.Send(new GetBalanceSheetQuery(effectiveDate, priorAsOfDate));
+        return ToActionResult(result);
     }
 
     [HttpGet("balance-sheet/export")]
@@ -116,7 +70,7 @@ public class ReportsController(
     public async Task<IActionResult> ExportBalanceSheet([FromQuery] DateOnly? asOfDate)
     {
         var effectiveDate = asOfDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
-        var result = await reportingService.GetBalanceSheetAsync(effectiveDate, HttpContext.RequestAborted);
+        var result = await mediator.Send(new GetBalanceSheetQuery(effectiveDate));
 
         if (!result.Succeeded)
         {
@@ -147,7 +101,7 @@ public class ReportsController(
     public async Task<ActionResult<FinanceDashboardSnapshotResponse>> GetDashboardSnapshot([FromQuery] DateOnly? asOfDate, [FromQuery] int periodDays = 30)
     {
         var effectiveDate = asOfDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
-        var result = await reportingService.GetFinanceDashboardSnapshotAsync(effectiveDate, periodDays, HttpContext.RequestAborted);
+        var result = await mediator.Send(new GetDashboardSnapshotQuery(effectiveDate, periodDays));
         return ToActionResult(result);
     }
 
@@ -156,7 +110,7 @@ public class ReportsController(
     public async Task<ActionResult<ArAgingReportResponse>> GetArAging([FromQuery] DateOnly? asOfDate)
     {
         var effectiveDate = asOfDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
-        var result = await reportingService.GetArAgingAsync(effectiveDate, HttpContext.RequestAborted);
+        var result = await mediator.Send(new GetArAgingQuery(effectiveDate));
         return ToActionResult(result);
     }
 
@@ -165,7 +119,7 @@ public class ReportsController(
     public async Task<ActionResult<ApAgingReportResponse>> GetApAging([FromQuery] DateOnly? asOfDate)
     {
         var effectiveDate = asOfDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
-        var result = await reportingService.GetApAgingAsync(effectiveDate, HttpContext.RequestAborted);
+        var result = await mediator.Send(new GetApAgingQuery(effectiveDate));
         return ToActionResult(result);
     }
 
@@ -174,7 +128,7 @@ public class ReportsController(
     public async Task<ActionResult<TrialBalanceReportResponse>> GetTrialBalance([FromQuery] DateOnly? asOfDate)
     {
         var effectiveDate = asOfDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
-        var result = await reportingService.GetTrialBalanceAsync(effectiveDate, HttpContext.RequestAborted);
+        var result = await mediator.Send(new GetTrialBalanceQuery(effectiveDate));
         return ToActionResult(result);
     }
 
@@ -183,7 +137,7 @@ public class ReportsController(
     public async Task<IActionResult> ExportTrialBalance([FromQuery] DateOnly? asOfDate)
     {
         var effectiveDate = asOfDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
-        var result = await reportingService.GetTrialBalanceAsync(effectiveDate, HttpContext.RequestAborted);
+        var result = await mediator.Send(new GetTrialBalanceQuery(effectiveDate));
 
         if (!result.Succeeded)
         {
@@ -210,7 +164,7 @@ public class ReportsController(
         [FromQuery] DateOnly? endDate)
     {
         var effectiveEndDate = endDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
-        var result = await reportingService.GetAccountDrillDownAsync(accountId, startDate, effectiveEndDate, HttpContext.RequestAborted);
+        var result = await mediator.Send(new GetAccountDrillDownQuery(accountId, startDate, effectiveEndDate));
         return ToActionResult(result);
     }
 
@@ -222,7 +176,7 @@ public class ReportsController(
         [FromQuery] DateOnly? endDate)
     {
         var effectiveEndDate = endDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
-        var result = await reportingService.GetAccountDrillDownAsync(accountId, startDate, effectiveEndDate, HttpContext.RequestAborted);
+        var result = await mediator.Send(new GetAccountDrillDownQuery(accountId, startDate, effectiveEndDate));
 
         if (!result.Succeeded)
         {
@@ -248,4 +202,3 @@ public class ReportsController(
         return value;
     }
 }
-

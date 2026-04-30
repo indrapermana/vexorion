@@ -1,22 +1,22 @@
+using Mediator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VexorionERP.Contracts;
+using VexorionERP.Handler;
 using VexorionERP.Models;
-using VexorionERP.Services;
 
 namespace VexorionERP;
 
 [ApiController]
 [Route("api/users")]
 [Authorize]
-public class UsersController(
-    IUserManagementService userManagementService) : ControllerBase
+public class UsersController(IMediator mediator) : ServiceResultControllerBase
 {
     [HttpGet]
     [Authorize(Policy = AppPermissions.Users.View)]
     public async Task<ActionResult<IReadOnlyCollection<UserListItemResponse>>> GetAll()
     {
-        var result = await userManagementService.GetAllAsync(HttpContext.RequestAborted);
+        var result = await mediator.Send(new GetUsersQuery());
         return ToActionResult(result);
     }
 
@@ -24,7 +24,7 @@ public class UsersController(
     [Authorize(Policy = AppPermissions.Users.Manage)]
     public async Task<ActionResult<UserListItemResponse>> Create([FromBody] CreateUserRequest request)
     {
-        var result = await userManagementService.CreateAsync(request, User, HttpContext.RequestAborted);
+        var result = await mediator.Send(new CreateUserCommand(request));
         return ToActionResult(result);
     }
 
@@ -32,7 +32,7 @@ public class UsersController(
     [Authorize(Policy = AppPermissions.Users.Manage)]
     public async Task<ActionResult> SetStatus(Guid userId, [FromBody] DisableUserRequest request)
     {
-        var result = await userManagementService.SetStatusAsync(userId, request, User, HttpContext.RequestAborted);
+        var result = await mediator.Send(new SetUserStatusCommand(userId, request));
         return ToActionResult(result);
     }
 
@@ -40,7 +40,7 @@ public class UsersController(
     [Authorize(Policy = AppPermissions.Users.Manage)]
     public async Task<ActionResult> ResetPassword(Guid userId, [FromBody] ResetPasswordRequest request)
     {
-        var result = await userManagementService.ResetPasswordAsync(userId, request, User, HttpContext.RequestAborted);
+        var result = await mediator.Send(new ResetUserPasswordCommand(userId, request));
         return ToActionResult(result);
     }
 
@@ -48,47 +48,7 @@ public class UsersController(
     [Authorize(Policy = AppPermissions.Users.Manage)]
     public async Task<ActionResult> Unlock(Guid userId)
     {
-        var result = await userManagementService.UnlockAsync(userId, User, HttpContext.RequestAborted);
+        var result = await mediator.Send(new UnlockUserCommand(userId));
         return ToActionResult(result);
-    }
-
-    private ActionResult ToActionResult(ServiceResult<bool> result)
-    {
-        if (result.Succeeded)
-        {
-            return NoContent();
-        }
-
-        if (result.Validation is not null)
-        {
-            return BadRequest(result.Validation);
-        }
-
-        return result.StatusCode switch
-        {
-            400 => BadRequest(new { message = result.ErrorMessage }),
-            404 => NotFound(),
-            _ => BadRequest(new { message = result.ErrorMessage })
-        };
-    }
-
-    private ActionResult<T> ToActionResult<T>(ServiceResult<T> result)
-    {
-        if (result.Succeeded)
-        {
-            return Ok(result.Value);
-        }
-
-        if (result.Validation is not null)
-        {
-            return BadRequest(result.Validation);
-        }
-
-        return result.StatusCode switch
-        {
-            400 => BadRequest(new { message = result.ErrorMessage }),
-            404 => NotFound(),
-            _ => BadRequest(new { message = result.ErrorMessage })
-        };
     }
 }

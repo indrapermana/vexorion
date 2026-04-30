@@ -1,20 +1,20 @@
+using Mediator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VexorionERP.Contracts;
-using VexorionERP.Services;
+using VexorionERP.Handler;
 
 namespace VexorionERP;
 
 [ApiController]
 [Route("api/auth")]
-public class AuthController(
-    IAuthApplicationService authApplicationService) : ControllerBase
+public class AuthController(IMediator mediator) : ServiceResultControllerBase
 {
     [AllowAnonymous]
     [HttpPost("login")]
     public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request)
     {
-        var result = await authApplicationService.LoginAsync(request, HttpContext.RequestAborted);
+        var result = await mediator.Send(new LoginCommand(request));
         return ToActionResult(result);
     }
 
@@ -22,7 +22,7 @@ public class AuthController(
     [HttpPost("refresh")]
     public async Task<ActionResult<LoginResponse>> Refresh([FromBody] RefreshTokenRequest request)
     {
-        var result = await authApplicationService.RefreshAsync(request, HttpContext.RequestAborted);
+        var result = await mediator.Send(new RefreshTokenCommand(request));
         return ToActionResult(result);
     }
 
@@ -30,15 +30,16 @@ public class AuthController(
     [HttpGet("me")]
     public async Task<ActionResult<CurrentUserResponse>> Me()
     {
-        var result = await authApplicationService.GetCurrentUserAsync(User, HttpContext.RequestAborted);
+        var result = await mediator.Send(new GetCurrentUserQuery());
         return ToActionResult(result);
     }
 
     [Authorize]
     [HttpGet("permissions")]
-    public ActionResult<PermissionListResponse> Permissions()
+    public async Task<ActionResult<PermissionListResponse>> Permissions()
     {
-        return ToActionResult(authApplicationService.GetPermissions(User));
+        var result = await mediator.Send(new GetPermissionsQuery());
+        return ToActionResult(result);
     }
 
     [Authorize]
@@ -52,7 +53,7 @@ public class AuthController(
     [HttpPost("logout-refresh")]
     public async Task<ActionResult> LogoutRefresh([FromBody] RefreshTokenRequest request)
     {
-        var result = await authApplicationService.LogoutRefreshAsync(User, request, HttpContext.RequestAborted);
+        var result = await mediator.Send(new LogoutRefreshCommand(request));
         return ToActionResult(result);
     }
 
@@ -60,51 +61,7 @@ public class AuthController(
     [HttpPost("revoke-sessions")]
     public async Task<ActionResult> RevokeSessions()
     {
-        var result = await authApplicationService.RevokeSessionsAsync(User, HttpContext.RequestAborted);
+        var result = await mediator.Send(new RevokeSessionsCommand());
         return ToActionResult(result);
-    }
-
-    private ActionResult ToActionResult(ServiceResult<bool> result)
-    {
-        if (result.Succeeded)
-        {
-            return NoContent();
-        }
-
-        if (result.Validation is not null)
-        {
-            return BadRequest(result.Validation);
-        }
-
-        return result.StatusCode switch
-        {
-            401 => Unauthorized(),
-            403 => Forbid(),
-            404 => NotFound(),
-            409 => Conflict(new { message = result.ErrorMessage }),
-            _ => BadRequest(new { message = result.ErrorMessage })
-        };
-    }
-
-    private ActionResult<T> ToActionResult<T>(ServiceResult<T> result)
-    {
-        if (result.Succeeded)
-        {
-            return Ok(result.Value);
-        }
-
-        if (result.Validation is not null)
-        {
-            return BadRequest(result.Validation);
-        }
-
-        return result.StatusCode switch
-        {
-            401 => Unauthorized(),
-            403 => Forbid(),
-            404 => NotFound(),
-            409 => Conflict(new { message = result.ErrorMessage }),
-            _ => BadRequest(new { message = result.ErrorMessage })
-        };
     }
 }
