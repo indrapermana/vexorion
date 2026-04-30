@@ -17,6 +17,7 @@ import {
 } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
+import { useCurrency } from '../../../app/CurrencyContext'
 import { ApiError, deleteProduct, getInventoryBalances, getProducts, getWarehouses } from '../../../lib/api'
 import type {
   InventoryBalanceListItemResponse,
@@ -125,6 +126,7 @@ function buildProductRows(
 
 export default function ProductsPage() {
   const { t } = useTranslation()
+  const { formatMoney } = useCurrency()
   const { isAuthenticated } = useAuth()
   const [products, setProducts] = useState<ProductGridRow[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -278,7 +280,7 @@ export default function ProductsPage() {
               <Box>
                 <Typography variant="body2" color="text.secondary">{t('pages.products.metrics.averagePrice')}</Typography>
                 <Typography variant="h6">
-                  ${products.length ? (products.reduce((sum, product) => sum + product.salesPrice, 0) / products.length).toFixed(2) : '0.00'}
+                  {products.length ? formatMoney(products.reduce((sum, product) => sum + product.salesPrice, 0) / products.length) : formatMoney(0)}
                 </Typography>
               </Box>
             </Paper>

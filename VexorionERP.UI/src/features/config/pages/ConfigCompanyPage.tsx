@@ -12,6 +12,7 @@ import {
 } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
+import { useCurrency } from '../../../app/CurrencyContext'
 import { ApiError, getCompanies, getCompany, updateCompany } from '../../../lib/api'
 import type { CompanyDetailsResponse, CompanyListItemResponse, UpdateCompanyRequest } from '../../../types/api'
 
@@ -52,6 +53,7 @@ function toDraft(details: CompanyDetailsResponse): CompanyDraft {
 export default function ConfigCompanyPage() {
   const { t } = useTranslation()
   const { isAuthenticated } = useAuth()
+  const { setCurrencyCode } = useCurrency()
   const [companies, setCompanies] = useState<CompanyListItemResponse[]>([])
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('')
   const [draft, setDraft] = useState<CompanyDraft | null>(null)
@@ -142,6 +144,9 @@ export default function ConfigCompanyPage() {
     try {
       const updated = await updateCompany(selectedCompanyId, payload)
       setDraft(toDraft(updated))
+      if (updated.currencyCode) {
+        setCurrencyCode(updated.currencyCode)
+      }
       setFeedback(t('config.company.feedback.updated'))
       await loadCompanies()
     } catch (saveError) {

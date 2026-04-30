@@ -29,7 +29,9 @@ public sealed class GetPurchaseOrderLinesQueryHandler(IServiceProvider servicePr
                 result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
         }
 
-        var mapped = result.Value!.Adapt<IReadOnlyCollection<PurchaseOrderLineListItemResponse>>();
+        var mapped = result.Value!
+            .Select(item => item as PurchaseOrderLineListItemResponse ?? item.Adapt<PurchaseOrderLineListItemResponse>())
+            .ToArray();
         return ServiceResult<IReadOnlyCollection<PurchaseOrderLineListItemResponse>>.Success(mapped);
     }
 }

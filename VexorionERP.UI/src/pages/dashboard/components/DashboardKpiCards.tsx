@@ -5,8 +5,8 @@ import TrendingDownRoundedIcon from '@mui/icons-material/TrendingDownRounded'
 import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded'
 import { Box, Grid, Paper, Stack, Typography } from '@mui/material'
 import type { TFunction } from 'i18next'
+import { useCurrency } from '../../../app/CurrencyContext'
 import type { FinanceDashboardSnapshotResponse } from '../../../types/api'
-import { formatCurrency } from '../formatters'
 
 type DashboardKpiCardsProps = {
   t: TFunction
@@ -15,6 +15,7 @@ type DashboardKpiCardsProps = {
 }
 
 export default function DashboardKpiCards({ t, snapshot, periodDays }: DashboardKpiCardsProps) {
+  const { formatMoney } = useCurrency()
   return (
     <Grid container spacing={2}>
       <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -26,7 +27,7 @@ export default function DashboardKpiCards({ t, snapshot, periodDays }: Dashboard
                   {t('dashboard.summary.openReceivables')}
                 </Typography>
                 <Typography variant="h5" sx={{ mt: 0.5 }}>
-                  {formatCurrency(snapshot?.receivablesOpen ?? 0)}
+                  {formatMoney(snapshot?.receivablesOpen ?? 0)}
                 </Typography>
               </Box>
               <PaidRoundedIcon sx={{ color: 'primary.main', fontSize: 28, opacity: 0.7 }} />
@@ -35,7 +36,7 @@ export default function DashboardKpiCards({ t, snapshot, periodDays }: Dashboard
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <TrendingDownRoundedIcon sx={{ fontSize: 18, color: 'warning.main' }} />
                 <Typography variant="caption" color="warning.main">
-                  {t('dashboard.summary.overdueAmount', { amount: formatCurrency(snapshot?.receivablesOverdue ?? 0) })}
+                  {t('dashboard.summary.overdueAmount', { amount: formatMoney(snapshot?.receivablesOverdue ?? 0) })}
                 </Typography>
               </Box>
             )}
@@ -52,7 +53,7 @@ export default function DashboardKpiCards({ t, snapshot, periodDays }: Dashboard
                   {t('dashboard.summary.openPayables')}
                 </Typography>
                 <Typography variant="h5" sx={{ mt: 0.5 }}>
-                  {formatCurrency(snapshot?.payablesOpen ?? 0)}
+                  {formatMoney(snapshot?.payablesOpen ?? 0)}
                 </Typography>
               </Box>
               <Inventory2RoundedIcon sx={{ color: 'secondary.main', fontSize: 28, opacity: 0.7 }} />
@@ -61,7 +62,7 @@ export default function DashboardKpiCards({ t, snapshot, periodDays }: Dashboard
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <TrendingDownRoundedIcon sx={{ fontSize: 18, color: 'warning.main' }} />
                 <Typography variant="caption" color="warning.main">
-                  {t('dashboard.summary.overdueAmount', { amount: formatCurrency(snapshot?.payablesOverdue ?? 0) })}
+                  {t('dashboard.summary.overdueAmount', { amount: formatMoney(snapshot?.payablesOverdue ?? 0) })}
                 </Typography>
               </Box>
             )}
@@ -78,7 +79,7 @@ export default function DashboardKpiCards({ t, snapshot, periodDays }: Dashboard
                   {t('dashboard.summary.revenuePeriod', { days: periodDays })}
                 </Typography>
                 <Typography variant="h5" sx={{ mt: 0.5 }}>
-                  {formatCurrency(snapshot?.revenueInPeriod ?? 0)}
+                  {formatMoney(snapshot?.revenueInPeriod ?? 0)}
                 </Typography>
               </Box>
               <InsightsRoundedIcon sx={{ color: 'success.main', fontSize: 28, opacity: 0.7 }} />
@@ -87,7 +88,7 @@ export default function DashboardKpiCards({ t, snapshot, periodDays }: Dashboard
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <TrendingUpRoundedIcon sx={{ fontSize: 18, color: 'success.main' }} />
                 <Typography variant="caption" color="success.main">
-                  {t('dashboard.summary.netCashAmount', { amount: formatCurrency(snapshot?.netCashInPeriod ?? 0) })}
+                  {t('dashboard.summary.netCashAmount', { amount: formatMoney(snapshot?.netCashInPeriod ?? 0) })}
                 </Typography>
               </Box>
             )}
@@ -104,7 +105,7 @@ export default function DashboardKpiCards({ t, snapshot, periodDays }: Dashboard
                   {t('dashboard.summary.netCashFlow')}
                 </Typography>
                 <Typography variant="h5" sx={{ mt: 0.5 }}>
-                  {formatCurrency(snapshot?.netCashInPeriod ?? 0)}
+                  {formatMoney(snapshot?.netCashInPeriod ?? 0)}
                 </Typography>
               </Box>
               <PaidRoundedIcon sx={{ color: 'warning.main', fontSize: 28, opacity: 0.7 }} />

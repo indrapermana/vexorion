@@ -6,6 +6,7 @@ import { Box, Chip, Typography } from '@mui/material'
 import { DataGrid, GridActionsCellItem, type GridColDef } from '@mui/x-data-grid'
 import { useTranslation } from 'react-i18next'
 import { getInvoiceStatusLabel, type PurchaseInvoiceGridRow } from '../../../types/ui'
+import { useCurrency } from '../../../app/CurrencyContext'
 
 type PurchaseInvoiceDataGridProps = {
   rows: PurchaseInvoiceGridRow[]
@@ -26,6 +27,7 @@ function getStatusColor(status: number) {
 
 export default function PurchaseInvoiceDataGrid({ rows, isLoading, onEdit, onDelete, onManageLines, onRecordPayment }: PurchaseInvoiceDataGridProps) {
   useTranslation()
+  const { formatMoney } = useCurrency()
   const columns: GridColDef<PurchaseInvoiceGridRow>[] = [
     {
       field: 'invoiceNumber',
@@ -54,7 +56,7 @@ export default function PurchaseInvoiceDataGrid({ rows, isLoading, onEdit, onDel
       minWidth: 130,
       flex: 0.7,
       type: 'number',
-      valueFormatter: (value) => `$${Number(value).toFixed(2)}`,
+      valueFormatter: (value) => formatMoney(Number(value)),
     },
     {
       field: 'balanceDue',
@@ -62,7 +64,7 @@ export default function PurchaseInvoiceDataGrid({ rows, isLoading, onEdit, onDel
       minWidth: 130,
       flex: 0.7,
       type: 'number',
-      valueFormatter: (value) => `$${Number(value).toFixed(2)}`,
+      valueFormatter: (value) => formatMoney(Number(value)),
     },
     {
       field: 'actions',

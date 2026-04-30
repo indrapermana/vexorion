@@ -4,6 +4,7 @@ import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
 import EditRoundedIcon from '@mui/icons-material/EditRounded'
 import { Alert, Box, Button, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
+import { useCurrency } from '../../../app/CurrencyContext'
 import { ApiError, createSalesInvoiceLine, deleteSalesInvoiceLine, updateSalesInvoiceLine } from '../../../lib/api'
 import { useProductsLookup } from '../../../hooks/useLookups'
 import type { SalesInvoiceLineListItemResponse } from '../../../types/api'
@@ -20,6 +21,7 @@ type SalesInvoiceLinesPanelProps = {
 
 export default function SalesInvoiceLinesPanel({ invoice, lines, isLoading, error, onRefresh }: SalesInvoiceLinesPanelProps) {
   useTranslation()
+  const { formatMoney } = useCurrency()
   const { items: products, error: productsError } = useProductsLookup(Boolean(invoice))
   const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create')
   const [selectedLine, setSelectedLine] = useState<SalesInvoiceLineListItemResponse | null>(null)
@@ -123,10 +125,10 @@ export default function SalesInvoiceLinesPanel({ invoice, lines, isLoading, erro
                 <TableRow key={line.id} hover>
                   <TableCell>{product ? `${product.name} (${product.sku})` : line.productId}</TableCell>
                   <TableCell align="right">{line.quantity}</TableCell>
-                  <TableCell align="right">${line.unitPrice.toFixed(2)}</TableCell>
-                  <TableCell align="right">${line.discountAmount.toFixed(2)}</TableCell>
-                  <TableCell align="right">${line.taxAmount.toFixed(2)}</TableCell>
-                  <TableCell align="right">${line.lineTotal.toFixed(2)}</TableCell>
+                  <TableCell align="right">{formatMoney(line.unitPrice)}</TableCell>
+                  <TableCell align="right">{formatMoney(line.discountAmount)}</TableCell>
+                  <TableCell align="right">{formatMoney(line.taxAmount)}</TableCell>
+                  <TableCell align="right">{formatMoney(line.lineTotal)}</TableCell>
                   <TableCell align="right">
                     <Button size="small" startIcon={<EditRoundedIcon />} onClick={() => openEdit(line)}>Edit</Button>
                     <Button size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => void handleDelete(line.id)}>Delete</Button>

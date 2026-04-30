@@ -7,6 +7,7 @@ import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded'
 import PostAddRoundedIcon from '@mui/icons-material/PostAddRounded'
 import { getDocumentStatusLabel, type PurchaseOrderGridRow } from '../../../types/ui'
 import { useTranslation } from 'react-i18next'
+import { useCurrency } from '../../../app/CurrencyContext'
 
 type PurchaseOrderDataGridProps = {
   rows: PurchaseOrderGridRow[]
@@ -27,6 +28,7 @@ function getStatusColor(status: number) {
 
 export default function PurchaseOrderDataGrid({ rows, isLoading, onEdit, onDelete, onManageLines, onCreateInvoice, onViewReceipts }: PurchaseOrderDataGridProps) {
   useTranslation()
+  const { formatMoney } = useCurrency()
   const columns: GridColDef<PurchaseOrderGridRow>[] = [
     {
       field: 'orderNumber',
@@ -54,7 +56,7 @@ export default function PurchaseOrderDataGrid({ rows, isLoading, onEdit, onDelet
       minWidth: 130,
       flex: 0.7,
       type: 'number',
-      valueFormatter: (value) => `$${Number(value).toFixed(2)}`,
+      valueFormatter: (value) => formatMoney(Number(value)),
     },
     {
       field: 'actions',

@@ -1,6 +1,6 @@
 import { Box, Grid, LinearProgress, Paper, Stack, Typography } from '@mui/material'
 import type { TFunction } from 'i18next'
-import { formatCurrency } from '../formatters'
+import { useCurrency } from '../../../app/CurrencyContext'
 
 type DashboardHealthSectionProps = {
   t: TFunction
@@ -17,6 +17,7 @@ export default function DashboardHealthSection({
   totalReceivables,
   totalPayables,
 }: DashboardHealthSectionProps) {
+  const { formatMoney } = useCurrency()
   return (
     <Grid container spacing={2}>
       <Grid size={{ xs: 12, md: 6 }}>
@@ -32,7 +33,7 @@ export default function DashboardHealthSection({
             </Box>
             <Box sx={{ pt: 1 }}>
               <Typography variant="caption" color="text.secondary">{t('dashboard.health.totalReceivables')}</Typography>
-              <Typography variant="h6">{formatCurrency(totalReceivables)}</Typography>
+              <Typography variant="h6">{formatMoney(totalReceivables)}</Typography>
             </Box>
           </Stack>
         </Paper>
@@ -51,7 +52,7 @@ export default function DashboardHealthSection({
             </Box>
             <Box sx={{ pt: 1 }}>
               <Typography variant="caption" color="text.secondary">{t('dashboard.health.totalPayables')}</Typography>
-              <Typography variant="h6">{formatCurrency(totalPayables)}</Typography>
+              <Typography variant="h6">{formatMoney(totalPayables)}</Typography>
             </Box>
           </Stack>
         </Paper>

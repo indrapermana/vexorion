@@ -1,8 +1,8 @@
 import { Stack } from '@mui/material'
 import { Suspense, lazy, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useCurrency } from '../app/CurrencyContext'
 import type { CustomerListItemResponse } from '../types/api'
-import { formatCurrency } from './dashboard/formatters'
 import { useApAgingQuery, useArAgingQuery, useCustomersQuery, useFinanceSnapshotQuery, useSalesOrdersQuery } from './dashboard/queries'
 import type { AgingPoint, BalancePoint, CashFlowPoint, CashRowView, QuickStat, RecentOrderView, TopCustomerView } from './dashboard/types'
 import DashboardSectionLoader from './dashboard/components/DashboardSectionLoader'
@@ -21,6 +21,7 @@ const periodOptions = [7, 30, 90, 180]
 
 export default function DashboardPage() {
   const { t } = useTranslation()
+  const { formatMoney } = useCurrency()
   const [asOfDate, setAsOfDate] = useState(new Date().toISOString().slice(0, 10))
   const [periodDays, setPeriodDays] = useState(30)
 
@@ -47,9 +48,9 @@ export default function DashboardPage() {
 
   const cashRows = useMemo<CashRowView[]>(
     () => [
-      { id: 'CASH-IN', owner: t('dashboard.cashRows.customerReceipts'), status: t('dashboard.cashRows.inflow'), amount: formatCurrency(snapshot?.cashInInPeriod ?? 0) },
-      { id: 'CASH-OUT', owner: t('dashboard.cashRows.vendorPayouts'), status: t('dashboard.cashRows.outflow'), amount: formatCurrency(snapshot?.cashOutInPeriod ?? 0) },
-      { id: 'NET', owner: t('dashboard.cashRows.windowDays', { days: periodDays }), status: (snapshot?.netCashInPeriod ?? 0) >= 0 ? t('dashboard.cashRows.positive') : t('dashboard.cashRows.negative'), amount: formatCurrency(snapshot?.netCashInPeriod ?? 0) },
+      { id: 'CASH-IN', owner: t('dashboard.cashRows.customerReceipts'), status: t('dashboard.cashRows.inflow'), amount: formatMoney(snapshot?.cashInInPeriod ?? 0) },
+      { id: 'CASH-OUT', owner: t('dashboard.cashRows.vendorPayouts'), status: t('dashboard.cashRows.outflow'), amount: formatMoney(snapshot?.cashOutInPeriod ?? 0) },
+      { id: 'NET', owner: t('dashboard.cashRows.windowDays', { days: periodDays }), status: (snapshot?.netCashInPeriod ?? 0) >= 0 ? t('dashboard.cashRows.positive') : t('dashboard.cashRows.negative'), amount: formatMoney(snapshot?.netCashInPeriod ?? 0) },
     ],
     [snapshot, periodDays, t],
   )
@@ -204,7 +205,7 @@ export default function DashboardPage() {
       { label: t('dashboard.quickStats.apPaymentRate'), value: `${apPaymentRate}%`, trend: 'positive' as const },
       { label: t('dashboard.quickStats.arOverduePercent'), value: `${arOverdueRatio}%`, trend: arOverdueRatio === '0.0' ? 'positive' : 'negative' as const },
       { label: t('dashboard.quickStats.apOverduePercent'), value: `${apOverdueRatio}%`, trend: apOverdueRatio === '0.0' ? 'positive' : 'negative' as const },
-      { label: t('dashboard.quickStats.workingCapital'), value: formatCurrency(workingCapital), trend: workingCapital >= 0 ? 'positive' : 'negative' as const },
+      { label: t('dashboard.quickStats.workingCapital'), value: formatMoney(workingCapital), trend: workingCapital >= 0 ? 'positive' : 'negative' as const },
     ]
   }, [snapshot, t, totalReceivables, totalPayables])
 

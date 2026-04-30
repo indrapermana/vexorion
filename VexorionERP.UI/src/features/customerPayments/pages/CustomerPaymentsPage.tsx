@@ -7,6 +7,7 @@ import { Alert, Box, Button, CircularProgress, Paper, Stack, Typography } from '
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
+import { useCurrency } from '../../../app/CurrencyContext'
 import { useCustomersLookup } from '../../../hooks/useLookups'
 import { ApiError, getCustomerPayments, getSalesInvoices } from '../../../lib/api'
 import type { CustomerPaymentDetailsResponse, CustomerPaymentListItemResponse, SalesInvoiceListItemResponse } from '../../../types/api'
@@ -34,6 +35,7 @@ type SourceState = Partial<CustomerPaymentFormValues> & {
 
 export default function CustomerPaymentsPage() {
   const { t } = useTranslation()
+  const { formatMoney } = useCurrency()
   const { isAuthenticated } = useAuth()
   const { items: customers, error: customersError, reload: reloadCustomers } = useCustomersLookup(isAuthenticated)
   const location = useLocation()
@@ -157,7 +159,7 @@ export default function CustomerPaymentsPage() {
               <ReceiptLongRoundedIcon fontSize="small" />
               <Box>
                 <Typography variant="body2" color="text.secondary">{t('pages.customerPayments.metrics.openBalance')}</Typography>
-                <Typography variant="h6">${outstandingInvoices.reduce((sum, invoice) => sum + invoice.balanceDue, 0).toFixed(2)}</Typography>
+                <Typography variant="h6">{formatMoney(outstandingInvoices.reduce((sum, invoice) => sum + invoice.balanceDue, 0))}</Typography>
               </Box>
             </Paper>
           </Stack>

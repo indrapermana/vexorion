@@ -29,7 +29,9 @@ public sealed class GetSalesShipmentsForOrderQueryHandler(IServiceProvider servi
                 result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
         }
 
-        var mapped = result.Value!.Adapt<IReadOnlyCollection<SalesShipmentListItemResponse>>();
+        var mapped = result.Value!
+            .Select(item => item as SalesShipmentListItemResponse ?? item.Adapt<SalesShipmentListItemResponse>())
+            .ToArray();
         return ServiceResult<IReadOnlyCollection<SalesShipmentListItemResponse>>.Success(mapped);
     }
 }

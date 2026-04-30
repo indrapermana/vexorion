@@ -21,6 +21,7 @@ import KeyboardArrowUpRoundedIcon from '@mui/icons-material/KeyboardArrowUpRound
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
 import EditRoundedIcon from '@mui/icons-material/EditRounded'
 import { useTranslation } from 'react-i18next'
+import { useCurrency } from '../../../app/CurrencyContext'
 import type { ProductGridRow } from '../../../types/ui'
 import { formatQuantity } from '../../../common/utils'
 import ProductExpandedPanel from './ProductExpandedPanel'
@@ -62,6 +63,7 @@ function compareRows(left: ProductGridRow, right: ProductGridRow, sortField: Pro
 
 export default function ProductDataGrid({ rows, isLoading, expandedProductIds, onToggleExpanded, onEdit, onDelete }: ProductDataGridProps) {
   const { t } = useTranslation()
+  const { formatMoney } = useCurrency()
   const [sortField, setSortField] = useState<ProductSortField>('name')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
 
@@ -167,7 +169,7 @@ export default function ProductDataGrid({ rows, isLoading, expandedProductIds, o
                     </Box>
                   </TableCell>
                   <TableCell>{row.unitOfMeasure}</TableCell>
-                  <TableCell align="right">${row.salesPrice.toFixed(2)}</TableCell>
+                  <TableCell align="right">{formatMoney(row.salesPrice)}</TableCell>
                   <TableCell align="right">
                     <ProductPurchasePriceCell productId={row.id} standardCost={row.standardCost} />
                   </TableCell>

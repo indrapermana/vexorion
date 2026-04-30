@@ -6,6 +6,7 @@ import { Box, CircularProgress, FormControlLabel, Stack, Switch, Typography } fr
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
+import { useCurrency } from '../../../app/CurrencyContext'
 import OrderWorkspace from '../../../components/OrderWorkspace'
 import { ApiError, deleteSalesInvoice, getSalesInvoiceLines, getSalesInvoices } from '../../../lib/api'
 import { useCustomersLookup } from '../../../hooks/useLookups'
@@ -34,6 +35,7 @@ type SourceState = Partial<SalesInvoiceFormValues> & { sourceSalesOrderId?: stri
 
 export default function SalesInvoicesPage() {
   const { t } = useTranslation()
+  const { formatMoney } = useCurrency()
   const { isAuthenticated } = useAuth()
   const { items: customers, error: customersError, reload: reloadCustomers } = useCustomersLookup(isAuthenticated)
   const navigate = useNavigate()
@@ -189,8 +191,8 @@ export default function SalesInvoicesPage() {
       disableCreate={customers.length === 0}
       metrics={[
         { icon: <DescriptionRoundedIcon fontSize="small" />, label: t('pages.salesInvoices.metrics.invoices'), value: salesInvoices.length },
-        { icon: <ScheduleRoundedIcon fontSize="small" />, label: t('pages.salesInvoices.metrics.openBalance'), value: `$${salesInvoices.reduce((sum, salesInvoice) => sum + salesInvoice.balanceDue, 0).toFixed(2)}` },
-        { icon: <PaidRoundedIcon fontSize="small" />, label: t('pages.salesInvoices.metrics.paidTotal'), value: `$${salesInvoices.reduce((sum, salesInvoice) => sum + salesInvoice.paidTotal, 0).toFixed(2)}` },
+        { icon: <ScheduleRoundedIcon fontSize="small" />, label: t('pages.salesInvoices.metrics.openBalance'), value: formatMoney(salesInvoices.reduce((sum, salesInvoice) => sum + salesInvoice.balanceDue, 0)) },
+        { icon: <PaidRoundedIcon fontSize="small" />, label: t('pages.salesInvoices.metrics.paidTotal'), value: formatMoney(salesInvoices.reduce((sum, salesInvoice) => sum + salesInvoice.paidTotal, 0)) },
       ]}
       alerts={[
         ...(!customers.length ? [{ severity: 'warning' as const, message: t('pages.salesInvoices.createCustomerFirst') }] : []),

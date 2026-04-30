@@ -6,6 +6,7 @@ import PaidRoundedIcon from '@mui/icons-material/PaidRounded'
 import { Box, Chip, Typography } from '@mui/material'
 import { DataGrid, GridActionsCellItem, type GridColDef } from '@mui/x-data-grid'
 import { useTranslation } from 'react-i18next'
+import { useCurrency } from '../../../app/CurrencyContext'
 import { getInvoiceStatusLabel, type SalesInvoiceGridRow } from '../../../types/ui'
 
 type SalesInvoiceDataGridProps = {
@@ -27,6 +28,7 @@ function getStatusColor(status: number) {
 
 export default function SalesInvoiceDataGrid({ rows, isLoading, onEdit, onDelete, onManageLines, onRecordPayment }: SalesInvoiceDataGridProps) {
   useTranslation()
+  const { formatMoney } = useCurrency()
   const columns: GridColDef<SalesInvoiceGridRow>[] = [
     {
       field: 'invoiceNumber',
@@ -55,7 +57,7 @@ export default function SalesInvoiceDataGrid({ rows, isLoading, onEdit, onDelete
       minWidth: 130,
       flex: 0.7,
       type: 'number',
-      valueFormatter: (value) => `$${Number(value).toFixed(2)}`,
+      valueFormatter: (value) => formatMoney(Number(value)),
     },
     {
       field: 'balanceDue',
@@ -63,7 +65,7 @@ export default function SalesInvoiceDataGrid({ rows, isLoading, onEdit, onDelete
       minWidth: 130,
       flex: 0.7,
       type: 'number',
-      valueFormatter: (value) => `$${Number(value).toFixed(2)}`,
+      valueFormatter: (value) => formatMoney(Number(value)),
     },
     {
       field: 'actions',

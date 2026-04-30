@@ -19,6 +19,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useTranslation } from 'react-i18next'
+import { useCurrency } from '../../../app/CurrencyContext'
 import { ApiError, createSalesShipment, getSalesOrderLines } from '../../../lib/api'
 import { useProductsLookup } from '../../../hooks/useLookups'
 import LookupSelectField from '../../../components/LookupSelectField'
@@ -36,6 +37,7 @@ type LineEntry = {
 
 export default function CreateSalesShipmentDialog({ open, salesOrderId, warehouses, onClose, onSaved }: SalesShipmentEditorDialogProps) {
   useTranslation()
+  const { formatMoney } = useCurrency()
   const { items: products } = useProductsLookup(open)
   const [orderLines, setOrderLines] = useState<LineEntry[]>([])
   const [isLoadingLines, setIsLoadingLines] = useState(false)
@@ -196,7 +198,7 @@ export default function CreateSalesShipmentDialog({ open, salesOrderId, warehous
                   <TableRow key={line.salesOrderLineId}>
                     <TableCell>{line.productName || line.productId}</TableCell>
                     <TableCell align="right">{line.orderedQty}</TableCell>
-                    <TableCell align="right">${line.unitPrice.toFixed(2)}</TableCell>
+                    <TableCell align="right">{formatMoney(line.unitPrice)}</TableCell>
                     <TableCell align="right">
                       <TextField
                         size="small"

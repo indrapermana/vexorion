@@ -6,6 +6,7 @@ import { Box, CircularProgress, Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
+import { useCurrency } from '../../../app/CurrencyContext'
 import OrderWorkspace from '../../../components/OrderWorkspace'
 import { ApiError, deleteSalesOrder, getSalesOrderLines, getSalesOrders } from '../../../lib/api'
 import { useCustomersLookup, useWarehousesLookup } from '../../../hooks/useLookups'
@@ -32,6 +33,7 @@ function SalesOrderSurfaceFallback() {
 
 export default function SalesOrdersPage() {
   const { t } = useTranslation()
+  const { formatMoney } = useCurrency()
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const { items: customers, error: customersError, reload: reloadCustomers } = useCustomersLookup(isAuthenticated)
@@ -201,7 +203,7 @@ export default function SalesOrdersPage() {
       metrics={[
         { icon: <ReceiptLongRoundedIcon fontSize="small" />, label: t('pages.salesOrders.metrics.openHeaders'), value: salesOrders.length },
         { icon: <ScheduleRoundedIcon fontSize="small" />, label: t('pages.salesOrders.metrics.draftOrders'), value: salesOrders.filter((salesOrder) => salesOrder.status === 1).length },
-        { icon: <PaidRoundedIcon fontSize="small" />, label: t('pages.salesOrders.metrics.totalValue'), value: `$${salesOrders.reduce((sum, salesOrder) => sum + salesOrder.totalAmount, 0).toFixed(2)}` },
+        { icon: <PaidRoundedIcon fontSize="small" />, label: t('pages.salesOrders.metrics.totalValue'), value: formatMoney(salesOrders.reduce((sum, salesOrder) => sum + salesOrder.totalAmount, 0)) },
       ]}
       alerts={[
         ...(!customers.length ? [{ severity: 'warning' as const, message: t('pages.salesOrders.createCustomerFirst') }] : []),

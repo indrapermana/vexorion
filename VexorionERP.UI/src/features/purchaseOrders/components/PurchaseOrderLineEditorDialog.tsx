@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
+import { useCurrency } from '../../../app/CurrencyContext'
 import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
@@ -24,6 +25,7 @@ const validationSchema: yup.ObjectSchema<PurchaseOrderLineFormValues> = yup.obje
 
 export default function PurchaseOrderLineEditorDialog({ open, mode, line, products, onClose, onSaved }: PurchaseOrderLineEditorDialogProps) {
   useTranslation()
+  const { formatMoney } = useCurrency()
   const { control, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<PurchaseOrderLineFormValues>({ defaultValues, resolver: yupResolver(validationSchema) })
   const [autofillHint, setAutofillHint] = useState<string | null>(null)
   const selectedProductId = watch('productId')
@@ -51,7 +53,7 @@ export default function PurchaseOrderLineEditorDialog({ open, mode, line, produc
         }
 
         setValue('unitCost', product.standardCost)
-        setAutofillHint(`Unit cost auto-filled from product standard cost: $${product.standardCost.toFixed(2)}`)
+        setAutofillHint(`Unit cost auto-filled from product standard cost: ${formatMoney(product.standardCost)}`)
       })
       .catch((error) => {
         if (!isMounted) {

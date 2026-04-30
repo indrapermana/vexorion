@@ -29,7 +29,9 @@ public sealed class GetPurchaseReceiptsForOrderQueryHandler(IServiceProvider ser
                 result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
         }
 
-        var mapped = result.Value!.Adapt<IReadOnlyCollection<PurchaseReceiptListItemResponse>>();
+        var mapped = result.Value!
+            .Select(item => item as PurchaseReceiptListItemResponse ?? item.Adapt<PurchaseReceiptListItemResponse>())
+            .ToArray();
         return ServiceResult<IReadOnlyCollection<PurchaseReceiptListItemResponse>>.Success(mapped);
     }
 }

@@ -1,7 +1,7 @@
-export function formatCurrency(value: number) {
+export function formatCurrency(value: number, currencyCode = 'USD') {
   return value.toLocaleString(undefined, {
     style: 'currency',
-    currency: 'USD',
+    currency: currencyCode,
     maximumFractionDigits: 2,
   })
 }

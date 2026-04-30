@@ -1,8 +1,8 @@
 import { Box, Grid, Paper, Stack, Typography } from '@mui/material'
 import { BarChart } from '@mui/x-charts'
 import type { TFunction } from 'i18next'
+import { useCurrency } from '../../../app/CurrencyContext'
 import type { AgingBucketTotalsResponse } from '../../../types/api'
-import { formatCurrency } from '../formatters'
 import type { AgingPoint } from '../types'
 
 type AgingCardProps = {
@@ -14,6 +14,7 @@ type AgingCardProps = {
 }
 
 function AgingCard({ t, title, data, totals, emptyText }: AgingCardProps) {
+  const { formatMoney } = useCurrency()
   return (
     <Paper elevation={0} sx={{ p: 3, borderRadius: 2 }}>
       <Typography variant="h6" sx={{ mb: 2 }}>{title}</Typography>
@@ -33,11 +34,11 @@ function AgingCard({ t, title, data, totals, emptyText }: AgingCardProps) {
         <Stack spacing={1} sx={{ mt: 2 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
             <Typography variant="body2">{t('dashboard.aging.total')}</Typography>
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>{formatCurrency(totals.total)}</Typography>
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>{formatMoney(totals.total)}</Typography>
           </Box>
           <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
             <Typography variant="body2">{t('dashboard.aging.overdue90')}</Typography>
-            <Typography variant="body2" sx={{ fontWeight: 600, color: 'error.main' }}>{formatCurrency(totals.dueOver90)}</Typography>
+            <Typography variant="body2" sx={{ fontWeight: 600, color: 'error.main' }}>{formatMoney(totals.dueOver90)}</Typography>
           </Box>
         </Stack>
       )}

@@ -12,7 +12,7 @@ import {
   Typography,
 } from '@mui/material'
 import type { TFunction } from 'i18next'
-import { formatCurrency } from '../formatters'
+import { useCurrency } from '../../../app/CurrencyContext'
 import type { RecentOrderView } from '../types'
 
 type DashboardRecentOrdersSectionProps = {
@@ -29,6 +29,7 @@ function getStatusColor(status: number): 'default' | 'primary' | 'success' | 'wa
 }
 
 export default function DashboardRecentOrdersSection({ t, recentOrders }: DashboardRecentOrdersSectionProps) {
+  const { formatMoney } = useCurrency()
   return (
     <Grid container spacing={2}>
       <Grid size={{ xs: 12 }}>
@@ -63,7 +64,7 @@ export default function DashboardRecentOrdersSection({ t, recentOrders }: Dashbo
                           variant="outlined"
                         />
                       </TableCell>
-                      <TableCell align="right">{formatCurrency(order.amount)}</TableCell>
+                      <TableCell align="right">{formatMoney(order.amount)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

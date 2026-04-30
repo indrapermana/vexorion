@@ -6,6 +6,7 @@ import { Box, CircularProgress, Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
+import { useCurrency } from '../../../app/CurrencyContext'
 import OrderWorkspace from '../../../components/OrderWorkspace'
 import { ApiError, deletePurchaseOrder, getPurchaseOrderLines, getPurchaseOrders } from '../../../lib/api'
 import { useSuppliersLookup, useWarehousesLookup } from '../../../hooks/useLookups'
@@ -32,6 +33,7 @@ function PurchaseOrderSurfaceFallback() {
 
 export default function PurchaseOrdersPage() {
   const { t } = useTranslation()
+  const { formatMoney } = useCurrency()
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const { items: suppliers, error: suppliersError, reload: reloadSuppliers } = useSuppliersLookup(isAuthenticated)
@@ -188,7 +190,7 @@ export default function PurchaseOrdersPage() {
       metrics={[
         { icon: <ReceiptLongRoundedIcon fontSize="small" />, label: t('pages.purchaseOrders.metrics.openHeaders'), value: purchaseOrders.length },
         { icon: <ScheduleRoundedIcon fontSize="small" />, label: t('pages.purchaseOrders.metrics.draftOrders'), value: purchaseOrders.filter((purchaseOrder) => purchaseOrder.status === 1).length },
-        { icon: <PaidRoundedIcon fontSize="small" />, label: t('pages.purchaseOrders.metrics.totalValue'), value: `$${purchaseOrders.reduce((sum, purchaseOrder) => sum + purchaseOrder.totalAmount, 0).toFixed(2)}` },
+        { icon: <PaidRoundedIcon fontSize="small" />, label: t('pages.purchaseOrders.metrics.totalValue'), value: formatMoney(purchaseOrders.reduce((sum, purchaseOrder) => sum + purchaseOrder.totalAmount, 0)) },
       ]}
       alerts={[
         ...(!suppliers.length ? [{ severity: 'warning' as const, message: t('pages.purchaseOrders.createSupplierFirst') }] : []),

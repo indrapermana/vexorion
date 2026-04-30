@@ -29,7 +29,9 @@ public sealed class GetInvoiceLinesQueryHandler(IServiceProvider serviceProvider
                 result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
         }
 
-        var mapped = result.Value!.Adapt<IReadOnlyCollection<InvoiceLineListItemResponse>>();
+        var mapped = result.Value!
+            .Select(item => item as InvoiceLineListItemResponse ?? item.Adapt<InvoiceLineListItemResponse>())
+            .ToArray();
         return ServiceResult<IReadOnlyCollection<InvoiceLineListItemResponse>>.Success(mapped);
     }
 }

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Box, CircularProgress, Stack, Tooltip, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
+import { useCurrency } from '../../../app/CurrencyContext'
 import type { ProductSupplierLatestPurchasePriceResponse } from '../../../types/api'
 import { getProductPurchasePriceHistory } from '../../../lib/api'
 
@@ -58,6 +59,7 @@ type ProductPurchasePriceCellProps = {
 }
 
 export default function ProductPurchasePriceCell({ productId, standardCost }: ProductPurchasePriceCellProps) {
+  const { formatMoney } = useCurrency()
   const [open, setOpen] = useState(false)
   const [state, setState] = useState<PurchasePriceState>({ status: 'idle' })
   const fetchedRef = useRef(false)
@@ -90,7 +92,7 @@ export default function ProductPurchasePriceCell({ productId, standardCost }: Pr
         component="span"
         sx={{ cursor: 'default', borderBottom: '1px dashed currentColor' }}
       >
-        ${standardCost.toFixed(2)}
+        ${formatMoney(standardCost)}
       </Typography>
     </Tooltip>
   )

@@ -13,7 +13,7 @@ import {
   Typography,
 } from '@mui/material'
 import type { TFunction } from 'i18next'
-import { formatCurrency } from '../formatters'
+import { useCurrency } from '../../../app/CurrencyContext'
 import type { TopCustomerView } from '../types'
 
 type DashboardTopCustomersSectionProps = {
@@ -22,6 +22,7 @@ type DashboardTopCustomersSectionProps = {
 }
 
 export default function DashboardTopCustomersSection({ t, topCustomers }: DashboardTopCustomersSectionProps) {
+  const { formatMoney } = useCurrency()
   return (
     <Grid container spacing={2}>
       <Grid size={{ xs: 12 }}>
@@ -57,7 +58,7 @@ export default function DashboardTopCustomersSection({ t, topCustomers }: Dashbo
                       </TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>{customer.customerLabel}</TableCell>
                       <TableCell>{customer.orderReference}</TableCell>
-                      <TableCell align="right">{formatCurrency(customer.amount)}</TableCell>
+                      <TableCell align="right">{formatMoney(customer.amount)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

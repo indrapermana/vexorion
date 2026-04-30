@@ -25,6 +25,10 @@ public sealed class GetSalesInvoiceLinesQueryHandler(IServiceProvider servicePro
             return ServiceResult<IReadOnlyCollection<SalesInvoiceLineListItemResponse>>.Failure(result.StatusCode ?? StatusCodes.Status400BadRequest, result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
         }
 
-        return ServiceResult<IReadOnlyCollection<SalesInvoiceLineListItemResponse>>.Success(result.Value!.Adapt<IReadOnlyCollection<SalesInvoiceLineListItemResponse>>());
+        var mapped = result.Value!
+            .Select(item => item as SalesInvoiceLineListItemResponse ?? item.Adapt<SalesInvoiceLineListItemResponse>())
+            .ToArray();
+
+        return ServiceResult<IReadOnlyCollection<SalesInvoiceLineListItemResponse>>.Success(mapped);
     }
 }

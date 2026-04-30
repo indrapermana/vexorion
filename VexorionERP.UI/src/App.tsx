@@ -4,6 +4,7 @@ import { Alert } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './app/AuthContext'
+import { CurrencyProvider } from './app/CurrencyContext'
 import { ProtectedRoute, PublicOnlyRoute } from './components/RouteGuards'
 
 const AppLayout = lazy(() => import('./components/AppLayout'))
@@ -50,6 +51,7 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <CurrencyProvider>
         <Suspense fallback={<RouteFallback />}>
           <Routes>
             <Route element={<AppLayout />}>
@@ -99,6 +101,7 @@ function App() {
             </Route>
           </Routes>
         </Suspense>
+        </CurrencyProvider>
       </AuthProvider>
     </BrowserRouter>
   )

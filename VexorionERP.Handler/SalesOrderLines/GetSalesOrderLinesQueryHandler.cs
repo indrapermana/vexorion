@@ -29,7 +29,9 @@ public sealed class GetSalesOrderLinesQueryHandler(IServiceProvider serviceProvi
                 result.ErrorMessage ?? Errors.ERR_UNKNOWN_ERROR);
         }
 
-        var mapped = result.Value!.Adapt<IReadOnlyCollection<SalesOrderLineListItemResponse>>();
+        var mapped = result.Value!
+            .Select(item => item as SalesOrderLineListItemResponse ?? item.Adapt<SalesOrderLineListItemResponse>())
+            .ToArray();
         return ServiceResult<IReadOnlyCollection<SalesOrderLineListItemResponse>>.Success(mapped);
     }
 }

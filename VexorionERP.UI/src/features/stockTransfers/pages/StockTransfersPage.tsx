@@ -30,6 +30,7 @@ import {
 } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
+import { useCurrency } from '../../../app/CurrencyContext'
 import LookupSelectField from '../../../components/LookupSelectField'
 import OrderWorkspace from '../../../components/OrderWorkspace'
 import { useInventoryBalancesLookup, useProductsLookup, useWarehousesLookup } from '../../../hooks/useLookups'
@@ -121,6 +122,7 @@ function buildLineForm(line: StockTransferLineDetailsResponse | null): TransferL
 
 export default function StockTransfersPage() {
   const { t } = useTranslation()
+  const { formatMoney } = useCurrency()
   const { isAuthenticated } = useAuth()
   const { items: warehouses, error: warehousesError, reload: reloadWarehouses } = useWarehousesLookup(isAuthenticated)
   const { items: products, error: productsError } = useProductsLookup(Boolean(isAuthenticated))
@@ -324,7 +326,7 @@ export default function StockTransfersPage() {
     try {
       const product = await getProduct(productId)
       setLineForm((current) => ({ ...current, unitCost: product.standardCost.toString() }))
-      setLineAutofillHint(`Unit cost auto-filled from product standard cost: $${product.standardCost.toFixed(2)}`)
+      setLineAutofillHint(`Unit cost auto-filled from product standard cost: ${formatMoney(product.standardCost)}`)
     } catch (loadError) {
       setLineAutofillHint(loadError instanceof ApiError ? loadError.message : 'Unable to auto-fill product costing.')
     }

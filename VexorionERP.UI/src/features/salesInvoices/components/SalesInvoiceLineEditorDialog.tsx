@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
+import { useCurrency } from '../../../app/CurrencyContext'
 import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
@@ -28,6 +29,7 @@ const validationSchema: yup.ObjectSchema<SalesInvoiceLineFormValues> = yup.objec
 
 export default function SalesInvoiceLineEditorDialog({ open, mode, line, products, onClose, onSaved }: SalesInvoiceLineEditorDialogProps) {
   useTranslation()
+  const { formatMoney } = useCurrency()
   const { control, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<SalesInvoiceLineFormValues>({ defaultValues, resolver: yupResolver(validationSchema) })
   const [autofillHint, setAutofillHint] = useState<string | null>(null)
   const selectedProductId = watch('productId')
@@ -51,7 +53,7 @@ export default function SalesInvoiceLineEditorDialog({ open, mode, line, product
         }
 
         setValue('unitPrice', product.salesPrice)
-        setAutofillHint(`Unit price auto-filled from product sales price: $${product.salesPrice.toFixed(2)}`)
+        setAutofillHint(`Unit price auto-filled from product sales price: ${formatMoney(product.salesPrice)}`)
       })
       .catch((error) => {
         if (!isMounted) {
