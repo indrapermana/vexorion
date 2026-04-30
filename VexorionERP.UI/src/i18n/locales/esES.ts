@@ -540,6 +540,8 @@ const esES = {
       signInRequired: 'Inicia sesión para ver despachos de venta.',
       navigateFromOrder: 'Navega aquí desde un pedido de venta para ver sus despachos.',
       newButton: 'Nuevo despacho',
+      filterByOrder: 'Pedido de venta',
+      selectOrderPrompt: 'Selecciona un pedido de venta para ver sus despachos.',
     },
     purchaseOrders: {
       loadingTools: 'Cargando herramientas de órdenes de compra...',
@@ -566,6 +568,8 @@ const esES = {
       signInRequired: 'Inicia sesión para ver recepciones de compra.',
       navigateFromOrder: 'Navega aquí desde una orden de compra para ver sus recepciones.',
       newButton: 'Nueva recepción',
+      filterByOrder: 'Orden de compra',
+      selectOrderPrompt: 'Selecciona una orden de compra para ver sus recepciones.',
     },
     inventoryAdjustments: {
       signInRequired: 'Inicia sesión primero. Los ajustes de inventario requieren permisos de inventario.',

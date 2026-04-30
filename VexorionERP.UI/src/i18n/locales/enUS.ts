@@ -778,6 +778,8 @@ const enUS = {
       signInRequired: 'Sign in to view sales shipments.',
       navigateFromOrder: 'Navigate here from a sales order to view its shipments.',
       newButton: 'New shipment',
+      filterByOrder: 'Sales order',
+      selectOrderPrompt: 'Select a sales order above to view its shipments.',
     },
     purchaseOrders: {
       loadingTools: 'Loading purchase order tools...',
@@ -812,6 +814,8 @@ const enUS = {
       signInRequired: 'Sign in to view purchase receipts.',
       navigateFromOrder: 'Navigate here from a purchase order to view its receipts.',
       newButton: 'New receipt',
+      filterByOrder: 'Purchase order',
+      selectOrderPrompt: 'Select a purchase order above to view its receipts.',
     },
     inventoryAdjustments: {
       signInRequired: 'Sign in first. Inventory adjustments require inventory permissions.',

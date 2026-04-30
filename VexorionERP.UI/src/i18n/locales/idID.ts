@@ -571,6 +571,8 @@ const idID = {
       signInRequired: 'Masuk untuk melihat pengiriman penjualan.',
       navigateFromOrder: 'Masuk ke halaman ini dari pesanan penjualan untuk melihat pengirimannya.',
       newButton: 'Pengiriman baru',
+      filterByOrder: 'Pesanan penjualan',
+      selectOrderPrompt: 'Pilih pesanan penjualan untuk melihat pengirimannya.',
     },
     purchaseOrders: {
       loadingTools: 'Memuat alat pesanan pembelian...',
@@ -597,6 +599,8 @@ const idID = {
       signInRequired: 'Masuk untuk melihat penerimaan pembelian.',
       navigateFromOrder: 'Masuk ke halaman ini dari pesanan pembelian untuk melihat penerimaannya.',
       newButton: 'Penerimaan baru',
+      filterByOrder: 'Pesanan pembelian',
+      selectOrderPrompt: 'Pilih pesanan pembelian untuk melihat penerimaannya.',
     },
     inventoryAdjustments: {
       signInRequired: 'Masuk terlebih dahulu. Penyesuaian persediaan memerlukan izin persediaan.',
