@@ -255,4 +255,120 @@ public class InventoryAdjustmentCommandServiceTests
         Assert.False(result.Succeeded);
         Assert.Equal(1, dbContext.InventoryAdjustmentLines.Count());
     }
+
+    [Fact]
+    public async Task Update_WithInvalidStatusTransition_Returns400()
+    {
+        var tenantId = Guid.NewGuid();
+        var adjustmentId = Guid.NewGuid();
+        var warehouseId = Guid.NewGuid();
+        var databaseName = Guid.NewGuid().ToString();
+
+        await using var dbContext = TestDbContextFactory.Create(tenantId, databaseName);
+        dbContext.Warehouses.Add(new Warehouse { Id = warehouseId, TenantId = tenantId, Code = "MAIN", Name = "Main Warehouse" });
+        dbContext.InventoryAdjustments.Add(new InventoryAdjustment
+        {
+            Id = adjustmentId,
+            TenantId = tenantId,
+            AdjustmentNumber = "ADJ-INVALID-STATE",
+            WarehouseId = warehouseId,
+            AdjustmentDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Cancelled,
+            Reason = "Cancelled",
+        });
+        await dbContext.SaveChangesAsync();
+
+        var service = new InventoryAdjustmentCommandService(dbContext, new FixedTenantProvider(tenantId), new InventoryMovementPostingService(dbContext));
+        var result = await service.UpdateAsync(adjustmentId, new UpdateInventoryAdjustmentRequest
+        {
+            AdjustmentNumber = "ADJ-INVALID-STATE",
+            WarehouseId = warehouseId,
+            AdjustmentDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Completed,
+            Reason = "Cancelled",
+        });
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(400, result.StatusCode);
+    }
+
+    [Fact]
+    public async Task Delete_WhenNonDraft_Returns400()
+    {
+        var tenantId = Guid.NewGuid();
+        var adjustmentId = Guid.NewGuid();
+        var warehouseId = Guid.NewGuid();
+        var databaseName = Guid.NewGuid().ToString();
+
+        await using var dbContext = TestDbContextFactory.Create(tenantId, databaseName);
+        dbContext.Warehouses.Add(new Warehouse { Id = warehouseId, TenantId = tenantId, Code = "MAIN", Name = "Main Warehouse" });
+        dbContext.InventoryAdjustments.Add(new InventoryAdjustment
+        {
+            Id = adjustmentId,
+            TenantId = tenantId,
+            AdjustmentNumber = "ADJ-NON-DRAFT",
+            WarehouseId = warehouseId,
+            AdjustmentDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Completed,
+            Reason = "Completed",
+        });
+        await dbContext.SaveChangesAsync();
+
+        var service = new InventoryAdjustmentCommandService(dbContext, new FixedTenantProvider(tenantId), new InventoryMovementPostingService(dbContext));
+        var result = await service.DeleteAsync(adjustmentId);
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(400, result.StatusCode);
+    }
+
+    [Fact]
+    public async Task Update_WhenMovementPostingFails_ReturnsFailure()
+    {
+        var tenantId = Guid.NewGuid();
+        var adjustmentId = Guid.NewGuid();
+        var warehouseId = Guid.NewGuid();
+        var productId = Guid.NewGuid();
+        var databaseName = Guid.NewGuid().ToString();
+
+        await using var dbContext = TestDbContextFactory.Create(tenantId, databaseName);
+        dbContext.Products.Add(new Product { Id = productId, TenantId = tenantId, Sku = "P-ADJ-FAIL", Name = "Product", UnitOfMeasure = "EA" });
+        dbContext.Warehouses.Add(new Warehouse { Id = warehouseId, TenantId = tenantId, Code = "MAIN", Name = "Main Warehouse" });
+        dbContext.InventoryAdjustments.Add(new InventoryAdjustment
+        {
+            Id = adjustmentId,
+            TenantId = tenantId,
+            AdjustmentNumber = "ADJ-FAIL",
+            WarehouseId = warehouseId,
+            AdjustmentDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Draft,
+            Reason = "Should fail posting",
+            Lines = [new InventoryAdjustmentLine { Id = Guid.NewGuid(), TenantId = tenantId, ProductId = productId, QuantityDelta = 2m, UnitCost = 1m, IsActive = true }],
+        });
+        await dbContext.SaveChangesAsync();
+
+        var service = new InventoryAdjustmentCommandService(dbContext, new FixedTenantProvider(tenantId), new FailingInventoryMovementPostingService());
+        var result = await service.UpdateAsync(adjustmentId, new UpdateInventoryAdjustmentRequest
+        {
+            AdjustmentNumber = "ADJ-FAIL",
+            WarehouseId = warehouseId,
+            AdjustmentDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Completed,
+            Reason = "Should fail posting",
+        });
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(409, result.StatusCode);
+        Assert.Equal("posting-failed", result.ErrorMessage);
+    }
+
+    private sealed class FailingInventoryMovementPostingService : IInventoryMovementPostingService
+    {
+        public Task<ServiceResult<bool>> ApplyPurchaseOrderStatusChangeAsync(PurchaseOrder order, DocumentStatus previousStatus, DocumentStatus newStatus, CancellationToken cancellationToken = default) => Task.FromResult(ServiceResult<bool>.Success(true));
+        public Task<ServiceResult<bool>> ApplySalesOrderStatusChangeAsync(SalesOrder order, DocumentStatus previousStatus, DocumentStatus newStatus, CancellationToken cancellationToken = default) => Task.FromResult(ServiceResult<bool>.Success(true));
+        public Task<ServiceResult<bool>> ApplyInventoryAdjustmentStatusChangeAsync(InventoryAdjustment adjustment, DocumentStatus previousStatus, DocumentStatus newStatus, CancellationToken cancellationToken = default) => Task.FromResult(ServiceResult<bool>.Failure(409, "posting-failed"));
+        public Task<ServiceResult<bool>> ApplyStockTransferStatusChangeAsync(StockTransfer transfer, DocumentStatus previousStatus, DocumentStatus newStatus, CancellationToken cancellationToken = default) => Task.FromResult(ServiceResult<bool>.Success(true));
+        public Task<ServiceResult<bool>> ApplyStockCountStatusChangeAsync(StockCount stockCount, DocumentStatus previousStatus, DocumentStatus newStatus, CancellationToken cancellationToken = default) => Task.FromResult(ServiceResult<bool>.Success(true));
+        public Task<ServiceResult<bool>> ApplyPurchaseReceiptAsync(PurchaseReceipt receipt, string purchaseOrderNumber, CancellationToken cancellationToken = default) => Task.FromResult(ServiceResult<bool>.Success(true));
+        public Task<ServiceResult<bool>> ApplySalesShipmentAsync(SalesShipment shipment, string salesOrderNumber, CancellationToken cancellationToken = default) => Task.FromResult(ServiceResult<bool>.Success(true));
+    }
 }

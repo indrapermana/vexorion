@@ -366,4 +366,127 @@ public class StockTransferCommandServiceTests
         Assert.False(result.Succeeded);
         Assert.Equal(1, dbContext.StockTransferLines.Count());
     }
+
+    [Fact]
+    public async Task Update_WithInvalidStatusTransition_Returns400()
+    {
+        var tenantId = Guid.NewGuid();
+        var transferId = Guid.NewGuid();
+        var sourceWarehouseId = Guid.NewGuid();
+        var destinationWarehouseId = Guid.NewGuid();
+        var databaseName = Guid.NewGuid().ToString();
+
+        await using var dbContext = TestDbContextFactory.Create(tenantId, databaseName);
+        dbContext.Warehouses.AddRange(
+            new Warehouse { Id = sourceWarehouseId, TenantId = tenantId, Code = "SRC", Name = "Source" },
+            new Warehouse { Id = destinationWarehouseId, TenantId = tenantId, Code = "DST", Name = "Destination" });
+        dbContext.StockTransfers.Add(new StockTransfer
+        {
+            Id = transferId,
+            TenantId = tenantId,
+            TransferNumber = "TR-INVALID-STATE",
+            SourceWarehouseId = sourceWarehouseId,
+            DestinationWarehouseId = destinationWarehouseId,
+            TransferDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Cancelled,
+        });
+        await dbContext.SaveChangesAsync();
+
+        var service = new StockTransferCommandService(dbContext, new FixedTenantProvider(tenantId), new InventoryMovementPostingService(dbContext));
+        var result = await service.UpdateAsync(transferId, new UpdateStockTransferRequest
+        {
+            TransferNumber = "TR-INVALID-STATE",
+            SourceWarehouseId = sourceWarehouseId,
+            DestinationWarehouseId = destinationWarehouseId,
+            TransferDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Completed,
+        });
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(400, result.StatusCode);
+    }
+
+    [Fact]
+    public async Task Delete_WhenNonDraft_Returns400()
+    {
+        var tenantId = Guid.NewGuid();
+        var transferId = Guid.NewGuid();
+        var sourceWarehouseId = Guid.NewGuid();
+        var destinationWarehouseId = Guid.NewGuid();
+        var databaseName = Guid.NewGuid().ToString();
+
+        await using var dbContext = TestDbContextFactory.Create(tenantId, databaseName);
+        dbContext.Warehouses.AddRange(
+            new Warehouse { Id = sourceWarehouseId, TenantId = tenantId, Code = "SRC", Name = "Source" },
+            new Warehouse { Id = destinationWarehouseId, TenantId = tenantId, Code = "DST", Name = "Destination" });
+        dbContext.StockTransfers.Add(new StockTransfer
+        {
+            Id = transferId,
+            TenantId = tenantId,
+            TransferNumber = "TR-NON-DRAFT",
+            SourceWarehouseId = sourceWarehouseId,
+            DestinationWarehouseId = destinationWarehouseId,
+            TransferDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Completed,
+        });
+        await dbContext.SaveChangesAsync();
+
+        var service = new StockTransferCommandService(dbContext, new FixedTenantProvider(tenantId), new InventoryMovementPostingService(dbContext));
+        var result = await service.DeleteAsync(transferId);
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(400, result.StatusCode);
+    }
+
+    [Fact]
+    public async Task Update_WhenMovementPostingFails_ReturnsFailure()
+    {
+        var tenantId = Guid.NewGuid();
+        var transferId = Guid.NewGuid();
+        var sourceWarehouseId = Guid.NewGuid();
+        var destinationWarehouseId = Guid.NewGuid();
+        var databaseName = Guid.NewGuid().ToString();
+
+        await using var dbContext = TestDbContextFactory.Create(tenantId, databaseName);
+        dbContext.Warehouses.AddRange(
+            new Warehouse { Id = sourceWarehouseId, TenantId = tenantId, Code = "SRC", Name = "Source" },
+            new Warehouse { Id = destinationWarehouseId, TenantId = tenantId, Code = "DST", Name = "Destination" });
+        dbContext.StockTransfers.Add(new StockTransfer
+        {
+            Id = transferId,
+            TenantId = tenantId,
+            TransferNumber = "TR-FAIL-MOV",
+            SourceWarehouseId = sourceWarehouseId,
+            DestinationWarehouseId = destinationWarehouseId,
+            TransferDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Draft,
+            Lines = [new StockTransferLine { Id = Guid.NewGuid(), TenantId = tenantId, ProductId = Guid.NewGuid(), Quantity = 1m, UnitCost = 1m, IsActive = true }]
+        });
+        await dbContext.SaveChangesAsync();
+
+        var service = new StockTransferCommandService(dbContext, new FixedTenantProvider(tenantId), new FailingInventoryMovementPostingService());
+        var result = await service.UpdateAsync(transferId, new UpdateStockTransferRequest
+        {
+            TransferNumber = "TR-FAIL-MOV",
+            SourceWarehouseId = sourceWarehouseId,
+            DestinationWarehouseId = destinationWarehouseId,
+            TransferDate = new DateOnly(2026, 4, 25),
+            Status = DocumentStatus.Completed,
+        });
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(409, result.StatusCode);
+        Assert.Equal("posting-failed", result.ErrorMessage);
+    }
+
+    private sealed class FailingInventoryMovementPostingService : IInventoryMovementPostingService
+    {
+        public Task<ServiceResult<bool>> ApplyPurchaseOrderStatusChangeAsync(PurchaseOrder order, DocumentStatus previousStatus, DocumentStatus newStatus, CancellationToken cancellationToken = default) => Task.FromResult(ServiceResult<bool>.Success(true));
+        public Task<ServiceResult<bool>> ApplySalesOrderStatusChangeAsync(SalesOrder order, DocumentStatus previousStatus, DocumentStatus newStatus, CancellationToken cancellationToken = default) => Task.FromResult(ServiceResult<bool>.Success(true));
+        public Task<ServiceResult<bool>> ApplyInventoryAdjustmentStatusChangeAsync(InventoryAdjustment adjustment, DocumentStatus previousStatus, DocumentStatus newStatus, CancellationToken cancellationToken = default) => Task.FromResult(ServiceResult<bool>.Success(true));
+        public Task<ServiceResult<bool>> ApplyStockTransferStatusChangeAsync(StockTransfer transfer, DocumentStatus previousStatus, DocumentStatus newStatus, CancellationToken cancellationToken = default) => Task.FromResult(ServiceResult<bool>.Failure(409, "posting-failed"));
+        public Task<ServiceResult<bool>> ApplyStockCountStatusChangeAsync(StockCount stockCount, DocumentStatus previousStatus, DocumentStatus newStatus, CancellationToken cancellationToken = default) => Task.FromResult(ServiceResult<bool>.Success(true));
+        public Task<ServiceResult<bool>> ApplyPurchaseReceiptAsync(PurchaseReceipt receipt, string purchaseOrderNumber, CancellationToken cancellationToken = default) => Task.FromResult(ServiceResult<bool>.Success(true));
+        public Task<ServiceResult<bool>> ApplySalesShipmentAsync(SalesShipment shipment, string salesOrderNumber, CancellationToken cancellationToken = default) => Task.FromResult(ServiceResult<bool>.Success(true));
+    }
 }

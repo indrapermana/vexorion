@@ -39,5 +39,7 @@ VexorionERP.UI/.env.*.local
 
 # Local tooling caches
 coverage/
+CoverageReport/
+**/CoverageReport/
 **/.vite/
 **/.cache/
