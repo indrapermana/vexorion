@@ -21,6 +21,11 @@ const idID = {
     yes: 'Ya',
     no: 'Tidak',
     edit: 'Ubah',
+    delete: 'Hapus',
+    cancel: 'Batal',
+    create: 'Buat',
+    save: 'Simpan',
+    actions: 'Aksi',
   },
   routeGuards: {
     checkingSession: 'Memeriksa sesi Anda...',
@@ -171,7 +176,17 @@ const idID = {
       title: 'Profil Perusahaan', description: 'Kelola data legal dan kontak yang digunakan di dokumen operasional.', signInRequired: 'Masuk terlebih dahulu. Konfigurasi perusahaan memerlukan autentikasi.', companyField: 'Perusahaan', saveButton: 'Simpan profil perusahaan', noRecords: 'Belum ada data perusahaan untuk tenant ini.',
       feedback: { updated: 'Profil perusahaan diperbarui.' },
       errors: { loadSettings: 'Tidak dapat memuat pengaturan perusahaan.', loadSelected: 'Tidak dapat memuat perusahaan terpilih.', save: 'Tidak dapat menyimpan profil perusahaan.' },
-      fields: { name: 'Nama perusahaan', code: 'Kode perusahaan', taxNumber: 'Nomor pajak', email: 'Email', phone: 'Telepon', country: 'Negara', address1: 'Alamat baris 1', address2: 'Alamat baris 2', city: 'Kota', state: 'Provinsi', postalCode: 'Kode pos', isActive: 'Perusahaan aktif' },
+      fields: { name: 'Nama perusahaan', code: 'Kode perusahaan', taxNumber: 'Nomor pajak', email: 'Email', phone: 'Telepon', country: 'Negara', address1: 'Alamat baris 1', address2: 'Alamat baris 2', city: 'Kota', state: 'Provinsi', postalCode: 'Kode pos', isActive: 'Perusahaan aktif', currencyCode: 'Mata uang' },
+    },
+    productCategories: {
+      title: 'Kategori Produk', description: 'Kelola taksonomi kategori produk untuk klasifikasi katalog.', signInRequired: 'Masuk terlebih dahulu. Konfigurasi kategori produk memerlukan autentikasi.', addButton: 'Tambah kategori', noRecords: 'Tidak ada kategori produk.',
+      feedback: { created: 'Kategori dibuat.', updated: 'Kategori diperbarui.', deleted: 'Kategori dihapus.' },
+      errors: { load: 'Tidak dapat memuat kategori produk.', save: 'Tidak dapat menyimpan kategori produk.', delete: 'Tidak dapat menghapus kategori produk.' },
+      fields: { name: 'Nama kategori', isActive: 'Aktif' },
+      columns: { name: 'Nama', status: 'Status', actions: 'Aksi' },
+      createDialog: { title: 'Buat kategori' },
+      editDialog: { title: 'Ubah kategori' },
+      deleteDialog: { title: 'Hapus kategori', message: 'Yakin ingin menghapus "{{name}}"? Tindakan ini tidak dapat dibatalkan.' },
     },
     users: {
       title: 'Manajemen Pengguna', description: 'Tambah pengguna, kelola status aktif, dan tetapkan bundel peran.', signInRequired: 'Masuk terlebih dahulu. Konfigurasi pengguna memerlukan autentikasi.', createSection: 'Buat Pengguna', createButton: 'Buat pengguna', listSection: 'Pengguna', saveRolesButton: 'Simpan peran',
@@ -319,6 +334,15 @@ const idID = {
           available: 'Tersedia {{quantity}}',
           noWarehouseBalances: 'Belum ada saldo gudang untuk produk ini.',
         },
+        tabs: { stock: 'Stok', identifiers: 'Identifikator' },
+      },
+      identifiers: {
+        title: 'Identifikator Produk', addButton: 'Tambah identifikator', empty: 'Belum ada identifikator yang ditetapkan untuk produk ini.', primary: 'Utama',
+        loadError: 'Tidak dapat memuat identifikator produk.', saveError: 'Tidak dapat menyimpan identifikator produk.', deleteError: 'Tidak dapat menghapus identifikator produk.',
+        columns: { codeType: 'Tipe kode', codeValue: 'Nilai kode', isPrimary: 'Utama', status: 'Status' },
+        createDialog: { title: 'Tambah identifikator' },
+        editDialog: { title: 'Ubah identifikator' },
+        deleteDialog: { title: 'Hapus identifikator', message: 'Hapus kode {{codeType}} "{{codeValue}}"? Tindakan ini tidak dapat dibatalkan.' },
       },
     },
     warehouses: {
@@ -693,6 +717,10 @@ const idID = {
       company: {
         title: 'Profil perusahaan',
         description: 'Edit detail perusahaan utama untuk konsistensi data master.',
+      },
+      productCategories: {
+        title: 'Kategori produk',
+        description: 'Kelola taksonomi kategori produk untuk klasifikasi katalog.',
       },
     },
     openSetting: 'Buka pengaturan',

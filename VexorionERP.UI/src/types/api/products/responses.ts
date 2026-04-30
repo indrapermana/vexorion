@@ -31,3 +31,35 @@ export type ProductDetailsResponse = {
   reorderLevel: number
   isActive: boolean
 }
+
+export type ProductCategoryListItemResponse = {
+  id: string
+  name: string
+  isActive: boolean
+}
+
+export type ProductCategoryDetailsResponse = {
+  id: string
+  tenantId: string
+  name: string
+  isActive: boolean
+}
+
+export type ProductIdentifierListItemResponse = {
+  id: string
+  productId: string
+  codeType: string
+  codeValue: string
+  isPrimary: boolean
+  isActive: boolean
+}
+
+export type ProductIdentifierDetailsResponse = {
+  id: string
+  tenantId: string
+  productId: string
+  codeType: string
+  codeValue: string
+  isPrimary: boolean
+  isActive: boolean
+}

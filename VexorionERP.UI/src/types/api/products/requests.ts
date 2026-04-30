@@ -18,3 +18,26 @@ export type UpdateProductRequest = {
   reorderLevel: number
   isActive: boolean
 }
+
+export type CreateProductCategoryRequest = {
+  name: string
+}
+
+export type UpdateProductCategoryRequest = {
+  name: string
+  isActive: boolean
+}
+
+export type CreateProductIdentifierRequest = {
+  productId: string
+  codeType: string
+  codeValue: string
+  isPrimary: boolean
+}
+
+export type UpdateProductIdentifierRequest = {
+  codeType: string
+  codeValue: string
+  isPrimary: boolean
+  isActive: boolean
+}

@@ -1,8 +1,16 @@
 import type {
+  CreateProductCategoryRequest,
+  CreateProductIdentifierRequest,
   CreateProductRequest,
+  ProductCategoryDetailsResponse,
+  ProductCategoryListItemResponse,
   ProductDetailsResponse,
+  ProductIdentifierDetailsResponse,
+  ProductIdentifierListItemResponse,
   ProductListItemResponse,
   ProductSupplierLatestPurchasePriceResponse,
+  UpdateProductCategoryRequest,
+  UpdateProductIdentifierRequest,
   UpdateProductRequest,
 } from '../../types/api'
 import { requestJson } from './core'
@@ -29,4 +37,46 @@ export function deleteProduct(productId: string) {
 
 export function getProductPurchasePriceHistory(productId: string) {
   return requestJson<ProductSupplierLatestPurchasePriceResponse[]>(`/products/${productId}/purchase-price-history`)
+}
+
+// Product Categories
+export function getProductCategories() {
+  return requestJson<ProductCategoryListItemResponse[]>('/product-categories')
+}
+
+export function getProductCategory(categoryId: string) {
+  return requestJson<ProductCategoryDetailsResponse>(`/product-categories/${categoryId}`)
+}
+
+export function createProductCategory(request: CreateProductCategoryRequest) {
+  return requestJson<ProductCategoryDetailsResponse>('/product-categories', 'POST', request)
+}
+
+export function updateProductCategory(categoryId: string, request: UpdateProductCategoryRequest) {
+  return requestJson<ProductCategoryDetailsResponse>(`/product-categories/${categoryId}`, 'PUT', request)
+}
+
+export function deleteProductCategory(categoryId: string) {
+  return requestJson<void>(`/product-categories/${categoryId}`, 'DELETE')
+}
+
+// Product Identifiers
+export function getProductIdentifiers(productId: string) {
+  return requestJson<ProductIdentifierListItemResponse[]>(`/product-identifiers?productId=${productId}`)
+}
+
+export function getProductIdentifier(identifierId: string) {
+  return requestJson<ProductIdentifierDetailsResponse>(`/product-identifiers/${identifierId}`)
+}
+
+export function createProductIdentifier(request: CreateProductIdentifierRequest) {
+  return requestJson<ProductIdentifierDetailsResponse>('/product-identifiers', 'POST', request)
+}
+
+export function updateProductIdentifier(identifierId: string, request: UpdateProductIdentifierRequest) {
+  return requestJson<ProductIdentifierDetailsResponse>(`/product-identifiers/${identifierId}`, 'PUT', request)
+}
+
+export function deleteProductIdentifier(identifierId: string) {
+  return requestJson<void>(`/product-identifiers/${identifierId}`, 'DELETE')
 }

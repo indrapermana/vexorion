@@ -28,6 +28,7 @@ type CompanyDraft = {
   postalCode: string
   country: string
   isActive: boolean
+  currencyCode: string
 }
 
 function toDraft(details: CompanyDetailsResponse): CompanyDraft {
@@ -44,6 +45,7 @@ function toDraft(details: CompanyDetailsResponse): CompanyDraft {
     postalCode: details.postalCode ?? '',
     country: details.country ?? '',
     isActive: details.isActive,
+    currencyCode: details.currencyCode ?? 'USD',
   }
 }
 
@@ -134,6 +136,7 @@ export default function ConfigCompanyPage() {
       postalCode: draft.postalCode.trim() || null,
       country: draft.country.trim() || null,
       isActive: draft.isActive,
+      currencyCode: draft.currencyCode,
     }
 
     try {
@@ -220,6 +223,21 @@ export default function ConfigCompanyPage() {
               control={<Switch checked={draft.isActive} onChange={(event) => setDraft((prev) => prev ? { ...prev, isActive: event.target.checked } : prev)} />}
               label={t('config.company.fields.isActive')}
             />
+
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
+              <TextField
+                size="small"
+                select
+                label={t('config.company.fields.currencyCode')}
+                value={draft.currencyCode}
+                onChange={(event) => setDraft((prev) => prev ? { ...prev, currencyCode: event.target.value } : prev)}
+                sx={{ minWidth: 160 }}
+              >
+                {['USD', 'SGD', 'MYR', 'IDR', 'AUD'].map((code) => (
+                  <MenuItem key={code} value={code}>{code}</MenuItem>
+                ))}
+              </TextField>
+            </Stack>
           </Stack>
         </Paper>
       ) : (

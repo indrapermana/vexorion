@@ -38,6 +38,7 @@ export type UpdateCompanyRequest = {
   postalCode?: string | null
   country?: string | null
   isActive: boolean
+  currencyCode: string
 }
 
 export type UpdateMenuConfigurationRequest = {

@@ -17,5 +17,6 @@ public class CompanyDetailsResponse : IEntityResponse<Company>
     public string? State { get; set; }
     public string? PostalCode { get; set; }
     public string? Country { get; set; }
+    public string CurrencyCode { get; set; } = "USD";
     public bool IsActive { get; set; }
 }

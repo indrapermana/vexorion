@@ -10,6 +10,7 @@ const AppLayout = lazy(() => import('./components/AppLayout'))
 const AccountsPage = lazy(() => import('./pages/AccountsPage'))
 const AuditLogsPage = lazy(() => import('./pages/AuditLogsPage'))
 const ConfigCompanyPage = lazy(() => import('./pages/ConfigCompanyPage'))
+const ConfigProductCategoriesPage = lazy(() => import('./pages/ConfigProductCategoriesPage'))
 const ConfigMenuPage = lazy(() => import('./pages/ConfigMenuPage'))
 const ConfigPage = lazy(() => import('./pages/ConfigPage'))
 const ConfigRolesPage = lazy(() => import('./pages/ConfigRolesPage'))
@@ -64,6 +65,7 @@ function App() {
                 <Route path="/config/menu" element={<ConfigMenuPage />} />
                 <Route path="/config/tax-discount" element={<ConfigTaxDiscountPage />} />
                 <Route path="/config/company" element={<ConfigCompanyPage />} />
+                <Route path="/config/product-categories" element={<ConfigProductCategoriesPage />} />
                 <Route path="/fiscal-periods" element={<FiscalPeriodsPage />} />
                 <Route path="/journals" element={<JournalsPage />} />
                 <Route path="/reports" element={<ReportsPage />} />

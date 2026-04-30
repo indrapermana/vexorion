@@ -40,4 +40,8 @@ public class CreateCompanyRequest : ICreateInput<Company>
 
     [StringLength(100)]
     public string? Country { get; set; }
+
+    [Required]
+    [RegularExpression("^(USD|SGD|MYR|IDR|AUD)$", ErrorMessage = "CurrencyCode must be one of: USD, SGD, MYR, IDR, AUD.")]
+    public string CurrencyCode { get; set; } = "USD";
 }

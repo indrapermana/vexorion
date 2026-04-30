@@ -21,6 +21,11 @@ const esES = {
     yes: 'Sí',
     no: 'No',
     edit: 'Editar',
+    delete: 'Eliminar',
+    cancel: 'Cancelar',
+    create: 'Crear',
+    save: 'Guardar',
+    actions: 'Acciones',
   },
   routeGuards: {
     checkingSession: 'Comprobando tu sesión...',
@@ -146,7 +151,17 @@ const esES = {
       title: 'Perfil de la Empresa', description: 'Mantén datos legales y de contacto usados en documentos operativos.', signInRequired: 'Inicia sesión primero. La configuración de empresa requiere autenticación.', companyField: 'Empresa', saveButton: 'Guardar perfil de empresa', noRecords: 'No hay registros de empresa para este inquilino.',
       feedback: { updated: 'Perfil de empresa actualizado.' },
       errors: { loadSettings: 'No se pudo cargar la configuración de empresa.', loadSelected: 'No se pudo cargar la empresa seleccionada.', save: 'No se pudo guardar el perfil de empresa.' },
-      fields: { name: 'Nombre de la empresa', code: 'Código de empresa', taxNumber: 'Número fiscal', email: 'Correo', phone: 'Teléfono', country: 'País', address1: 'Dirección línea 1', address2: 'Dirección línea 2', city: 'Ciudad', state: 'Estado', postalCode: 'Código postal', isActive: 'Empresa activa' },
+      fields: { name: 'Nombre de la empresa', code: 'Código de empresa', taxNumber: 'Número fiscal', email: 'Correo', phone: 'Teléfono', country: 'País', address1: 'Dirección línea 1', address2: 'Dirección línea 2', city: 'Ciudad', state: 'Estado', postalCode: 'Código postal', isActive: 'Empresa activa', currencyCode: 'Moneda' },
+    },
+    productCategories: {
+      title: 'Categorías de producto', description: 'Gestiona la taxonomía de categorías de producto para clasificación del catálogo.', signInRequired: 'Inicia sesión primero. La configuración de categorías de producto requiere autenticación.', addButton: 'Agregar categoría', noRecords: 'No se encontraron categorías de producto.',
+      feedback: { created: 'Categoría creada.', updated: 'Categoría actualizada.', deleted: 'Categoría eliminada.' },
+      errors: { load: 'No se pudieron cargar las categorías de producto.', save: 'No se pudo guardar la categoría de producto.', delete: 'No se pudo eliminar la categoría de producto.' },
+      fields: { name: 'Nombre de categoría', isActive: 'Activo' },
+      columns: { name: 'Nombre', status: 'Estado', actions: 'Acciones' },
+      createDialog: { title: 'Crear categoría' },
+      editDialog: { title: 'Editar categoría' },
+      deleteDialog: { title: 'Eliminar categoría', message: '¿Seguro que deseas eliminar "{{name}}"? Esta acción no se puede deshacer.' },
     },
     users: {
       title: 'Gestión de Usuarios', description: 'Agrega usuarios, gestiona estado activo y asigna paquetes de roles.', signInRequired: 'Inicia sesión primero. La configuración de usuarios requiere autenticación.', createSection: 'Crear Usuario', createButton: 'Crear usuario', listSection: 'Usuarios', saveRolesButton: 'Guardar roles',
@@ -288,6 +303,15 @@ const esES = {
           available: 'Disponible {{quantity}}',
           noWarehouseBalances: 'Aún no hay saldos de almacén para este producto.',
         },
+        tabs: { stock: 'Stock', identifiers: 'Identificadores' },
+      },
+      identifiers: {
+        title: 'Identificadores de producto', addButton: 'Agregar identificador', empty: 'Aún no hay identificadores asignados a este producto.', primary: 'Primario',
+        loadError: 'No se pudieron cargar los identificadores de producto.', saveError: 'No se pudo guardar el identificador de producto.', deleteError: 'No se pudo eliminar el identificador de producto.',
+        columns: { codeType: 'Tipo de código', codeValue: 'Valor del código', isPrimary: 'Primario', status: 'Estado' },
+        createDialog: { title: 'Agregar identificador' },
+        editDialog: { title: 'Editar identificador' },
+        deleteDialog: { title: 'Eliminar identificador', message: 'Eliminar código {{codeType}} "{{codeValue}}"? Esta acción no se puede deshacer.' },
       },
     },
     warehouses: {
@@ -662,6 +686,10 @@ const esES = {
       company: {
         title: 'Perfil de la empresa',
         description: 'Edita los detalles principales de la empresa para mantener la coherencia de datos maestros.',
+      },
+      productCategories: {
+        title: 'Categorías de producto',
+        description: 'Gestiona la taxonomía de categorías de producto para clasificación del catálogo.',
       },
     },
     openSetting: 'Abrir configuración',

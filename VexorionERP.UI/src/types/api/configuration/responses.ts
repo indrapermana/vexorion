@@ -37,6 +37,7 @@ export type CompanyListItemResponse = {
   code: string
   email?: string | null
   isActive: boolean
+  currencyCode: string
 }
 
 export type CompanyDetailsResponse = {
@@ -54,6 +55,7 @@ export type CompanyDetailsResponse = {
   postalCode?: string | null
   country?: string | null
   isActive: boolean
+  currencyCode: string
 }
 
 export type TenantPreferencesResponse = {

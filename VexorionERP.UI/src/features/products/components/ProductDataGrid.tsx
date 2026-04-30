@@ -23,7 +23,7 @@ import EditRoundedIcon from '@mui/icons-material/EditRounded'
 import { useTranslation } from 'react-i18next'
 import type { ProductGridRow } from '../../../types/ui'
 import { formatQuantity } from '../../../common/utils'
-import ProductStockPanel from './ProductStockPanel'
+import ProductExpandedPanel from './ProductExpandedPanel'
 import ProductPurchasePriceCell from './ProductPurchasePriceCell'
 
 type ProductDataGridProps = {
@@ -216,7 +216,7 @@ export default function ProductDataGrid({ rows, isLoading, expandedProductIds, o
                 <TableRow>
                   <TableCell colSpan={11} sx={{ py: 0, borderBottom: '1px solid rgba(108, 92, 231, 0.06)' }}>
                     <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-                      <ProductStockPanel row={row} />
+                      <ProductExpandedPanel row={row} />
                     </Collapse>
                   </TableCell>
                 </TableRow>
