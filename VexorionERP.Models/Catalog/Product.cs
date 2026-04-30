@@ -12,6 +12,9 @@ public class Product : TenantEntityBase
     public decimal SalesPrice { get; set; }
     public decimal ReorderLevel { get; set; }
 
+    public ICollection<ProductCategoryAssignment> ProductCategoryAssignments { get; set; } = [];
+    public ICollection<ProductIdentifier> ProductIdentifiers { get; set; } = [];
+
     public ICollection<InventoryBalance> InventoryBalances { get; set; } = [];
     public ICollection<InventoryAdjustmentLine> InventoryAdjustmentLines { get; set; } = [];
     public ICollection<StockTransferLine> StockTransferLines { get; set; } = [];

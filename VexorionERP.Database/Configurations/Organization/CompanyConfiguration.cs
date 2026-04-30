@@ -6,6 +6,8 @@ namespace VexorionERP.Database;
 
 public class CompanyConfiguration : TenantEntityConfiguration<Company>
 {
+    protected override string TableName => "Company";
+
     protected override void ConfigureTenantRelationship(EntityTypeBuilder<Company> builder)
     {
         builder.HasOne(x => x.Tenant)
@@ -16,8 +18,13 @@ public class CompanyConfiguration : TenantEntityConfiguration<Company>
 
     protected override void ConfigureTenantEntity(EntityTypeBuilder<Company> builder)
     {
+        builder.ToTable(table => table.HasCheckConstraint(
+            "CK_Company_CurrencyCode",
+            "\"CurrencyCode\" IN ('USD','SGD','MYR','IDR','AUD')"));
+
         builder.Property(x => x.Name).HasMaxLength(200).IsRequired();
         builder.Property(x => x.Code).HasMaxLength(50).IsRequired();
+        builder.Property(x => x.CurrencyCode).HasMaxLength(3).IsRequired().HasDefaultValue("USD");
         builder.Property(x => x.TaxNumber).HasMaxLength(100);
         builder.Property(x => x.Email).HasMaxLength(256);
         builder.Property(x => x.PhoneNumber).HasMaxLength(50);

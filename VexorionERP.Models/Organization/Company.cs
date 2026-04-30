@@ -6,6 +6,7 @@ public class Company : TenantEntityBase
 {
     public string Name { get; set; } = string.Empty;
     public string Code { get; set; } = string.Empty;
+    public string CurrencyCode { get; set; } = "USD";
     public string? TaxNumber { get; set; }
     public string? Email { get; set; }
     public string? PhoneNumber { get; set; }

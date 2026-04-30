@@ -16,6 +16,16 @@ public class ProductConfiguration : TenantEntityConfiguration<Product>
         builder.Property(x => x.SalesPrice).HasPrecision(18, 2);
         builder.Property(x => x.ReorderLevel).HasPrecision(18, 2);
 
+        builder.HasMany(x => x.ProductCategoryAssignments)
+            .WithOne(x => x.Product)
+            .HasForeignKey(x => x.ProductId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(x => x.ProductIdentifiers)
+            .WithOne(x => x.Product)
+            .HasForeignKey(x => x.ProductId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.HasIndex(x => new { x.TenantId, x.Sku }).IsUnique();
     }
 }
