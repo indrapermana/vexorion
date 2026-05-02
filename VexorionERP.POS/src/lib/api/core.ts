@@ -1,6 +1,33 @@
 import axios, { AxiosError } from 'axios'
 import { getApiAccessToken, handleRefresh, handleUnauthorized } from '../apiAuth'
+import { posLogger } from '../posLogger'
 import type { ValidationProblem } from '../../types/api'
+
+const RETRY_MAX = 3
+const RETRY_BASE_DELAY_MS = 1000
+
+function isTransientError(error: AxiosError): boolean {
+  // No response at all → network drop / timeout
+  if (!error.response) return true
+  const { status } = error.response
+  // 429 Too Many Requests or any 5xx server error
+  return status === 429 || status >= 500
+}
+
+function retryDelayMs(attempt: number, error: AxiosError): number {
+  // Honour Retry-After header when present (e.g. from 429 responses)
+  const retryAfter = error.response?.headers?.['retry-after']
+  if (retryAfter) {
+    const seconds = Number(retryAfter)
+    if (Number.isFinite(seconds) && seconds > 0) return seconds * 1000
+  }
+  // Exponential backoff: 1s, 2s, 4s …
+  return RETRY_BASE_DELAY_MS * Math.pow(2, attempt)
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api'
 
@@ -70,30 +97,48 @@ export class ApiError extends Error {
 }
 
 export async function requestJson<T>(path: string, method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' = 'GET', body?: unknown): Promise<T> {
-  try {
-    const response = await apiClient.request<T>({
-      url: path,
-      method,
-      data: body,
-    })
+  let attempt = 0
 
-    return response.data
-  } catch (error) {
-    if (error instanceof AxiosError) {
-      const status = error.response?.status ?? 500
-      const payload = error.response?.data
-      const message =
-        typeof payload === 'string'
-          ? payload
-          : payload?.message ?? error.message ?? 'The request could not be completed.'
-      const validation =
-        payload && typeof payload === 'object' && !Array.isArray(payload)
-          ? (payload as ValidationProblem)
-          : undefined
+  for (;;) {
+    try {
+      const response = await apiClient.request<T>({
+        url: path,
+        method,
+        data: body,
+      })
 
-      throw new ApiError(status, message, validation)
+      return response.data
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        if (isTransientError(error) && attempt < RETRY_MAX) {
+          const delay = retryDelayMs(attempt, error)
+          posLogger.warn('api.retry', {
+            path,
+            method,
+            attempt: attempt + 1,
+            status: error.response?.status,
+            delayMs: delay,
+          })
+          await sleep(delay)
+          attempt++
+          continue
+        }
+
+        const status = error.response?.status ?? 500
+        const payload = error.response?.data
+        const message =
+          typeof payload === 'string'
+            ? payload
+            : payload?.message ?? error.message ?? 'The request could not be completed.'
+        const validation =
+          payload && typeof payload === 'object' && !Array.isArray(payload)
+            ? (payload as ValidationProblem)
+            : undefined
+
+        throw new ApiError(status, message, validation)
+      }
+
+      throw error
     }
-
-    throw error
   }
 }

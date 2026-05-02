@@ -33,10 +33,10 @@ Track progress by checking each item as it is completed.
 - [x] 20. Add keyboard shortcuts for checkout, payment method, and remove line.
 
 ## F. Reliability and Observability
-- [ ] 21. Add global error boundary for POS runtime failures.
-- [ ] 22. Add API retry strategy for transient errors and network drops.
-- [ ] 23. Add structured client-side logs for checkout failures.
-- [ ] 24. Add telemetry for checkout latency and failure reasons.
+- [x] 21. Add global error boundary for POS runtime failures.
+- [x] 22. Add API retry strategy for transient errors and network drops.
+- [x] 23. Add structured client-side logs for checkout failures.
+- [x] 24. Add telemetry for checkout latency and failure reasons.
 
 ## G. Permissions and Security
 - [x] 25. Define dedicated POS permissions (checkout, refund, reprint, shift close).

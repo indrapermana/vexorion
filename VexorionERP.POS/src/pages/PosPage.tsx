@@ -11,6 +11,7 @@ import { CartSummaryPanel } from '../components/pos/CartSummaryPanel'
 import { QuickCustomerDialog } from '../components/pos/QuickCustomerDialog'
 import { StockConflictDialog } from '../components/pos/StockConflictDialog'
 import type { CartLine, QuickCustomerForm } from '../components/pos/types'
+import { posLogger } from '../lib/posLogger'
 import {
   createCustomer,
   createCustomerPayment,
@@ -301,6 +302,14 @@ export default function PosPage() {
       return
     }
 
+    const startTime = performance.now()
+    posLogger.info('checkout.start', {
+      cartLineCount: cart.length,
+      grandTotal,
+      paymentMethod,
+      warehouseId: selectedWarehouse.id,
+    })
+
     setIsProcessing(true)
 
     try {
@@ -417,6 +426,15 @@ export default function PosPage() {
 
       setCheckoutResult({ orderId: order.id, shipmentId, invoiceId: invoice.id, paymentId })
 
+      posLogger.info('checkout.success', {
+        durationMs: Math.round(performance.now() - startTime),
+        cartLineCount: cart.length,
+        grandTotal,
+        paymentMethod,
+        orderId: order.id,
+        invoiceId: invoice.id,
+      })
+
       const customerLabel =
         selectedCustomerId === GUEST_CUSTOMER_TAG
           ? 'Guest'
@@ -443,7 +461,15 @@ export default function PosPage() {
       setIsDelivery(false)
     } catch (requestError) {
       console.error(requestError)
+      const durationMs = Math.round(performance.now() - startTime)
+
       if (requestError instanceof ApiError && requestError.status === 400 && requestError.message.includes('Insufficient')) {
+        posLogger.warn('checkout.failure', {
+          reason: 'stock_conflict_concurrent',
+          durationMs,
+          errorStatus: requestError.status,
+          errorMessage: requestError.message,
+        })
         // Concurrent stock failure from shipment post — show conflict with current known stock
         await inventoryBalancesQuery.refetch()
         setStockConflict(
@@ -456,6 +482,12 @@ export default function PosPage() {
             .filter((item) => item.requested > item.available),
         )
       } else {
+        posLogger.error('checkout.failure', {
+          reason: 'api_error',
+          durationMs,
+          errorStatus: requestError instanceof ApiError ? requestError.status : undefined,
+          errorMessage: requestError instanceof Error ? requestError.message : String(requestError),
+        })
         setError(t('page.processingError'))
       }
     } finally {

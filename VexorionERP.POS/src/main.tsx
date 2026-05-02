@@ -7,6 +7,7 @@ import App from './App'
 import { createAppTheme } from './theme'
 import { ThemeModeProvider, useThemeMode } from './app/ThemeModeContext'
 import { I18nProvider } from './app/I18nContext'
+import { PosErrorBoundary } from './components/PosErrorBoundary'
 
 const queryClient = new QueryClient()
 
@@ -21,7 +22,9 @@ function ThemedApp() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <App />
+      <PosErrorBoundary>
+        <App />
+      </PosErrorBoundary>
     </ThemeProvider>
   )
 }
