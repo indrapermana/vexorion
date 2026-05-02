@@ -37,3 +37,21 @@ export function PublicOnlyRoute() {
 
   return <Outlet />
 }
+
+export function PermissionRoute({ permission }: { permission: string }) {
+  const { isAuthenticated, isLoading, user } = useAuth()
+
+  if (isLoading) {
+    return <RouteGuardLoading />
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />
+  }
+
+  if (!user?.permissions.includes(permission)) {
+    return <Navigate to="/" replace />
+  }
+
+  return <Outlet />
+}

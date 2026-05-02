@@ -47,6 +47,7 @@ type CartSummaryPanelProps = {
   paymentMethod: string
   isDelivery: boolean
   isProcessing: boolean
+  canCheckout: boolean
   onRemoveCartLine: (productId: string) => void
   onLineDiscountChange: (productId: string, discountAmount: number) => void
   onPaymentAmountChange: (value: number) => void
@@ -66,6 +67,7 @@ export function CartSummaryPanel({
   paymentMethod,
   isDelivery,
   isProcessing,
+  canCheckout,
   onRemoveCartLine,
   onLineDiscountChange,
   onPaymentAmountChange,
@@ -161,7 +163,7 @@ export function CartSummaryPanel({
           <Switch checked={isDelivery} onChange={(_, checked) => onDeliveryChange(checked)} />
         </Stack>
 
-        <Button variant="contained" size="large" onClick={onCheckout} disabled={isProcessing || cart.length === 0}>
+        <Button variant="contained" size="large" onClick={onCheckout} disabled={isProcessing || cart.length === 0 || !canCheckout}>
           {isProcessing ? t('cart.processing') : t('cart.checkout')}
         </Button>
       </Stack>

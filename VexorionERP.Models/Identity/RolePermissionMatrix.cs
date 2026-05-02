@@ -36,7 +36,11 @@ public static class RolePermissionMatrix
                 AppPermissions.Accounting.View,
                 AppPermissions.Reports.View,
                 AppPermissions.Billing.View,
-                AppPermissions.Billing.Manage
+                AppPermissions.Billing.Manage,
+                AppPermissions.Pos.Checkout,
+                AppPermissions.Pos.Refund,
+                AppPermissions.Pos.Reprint,
+                AppPermissions.Pos.ShiftClose
             ],
             [AppRoles.Staff] =
             [
@@ -68,7 +72,8 @@ public static class RolePermissionMatrix
                 AppPermissions.SalesInvoices.Manage,
                 AppPermissions.Payments.View,
                 AppPermissions.Payments.Manage,
-                AppPermissions.Inventory.View
+                AppPermissions.Inventory.View,
+                AppPermissions.Pos.Checkout
             ]
         };
 }

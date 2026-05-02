@@ -39,10 +39,10 @@ Track progress by checking each item as it is completed.
 - [ ] 24. Add telemetry for checkout latency and failure reasons.
 
 ## G. Permissions and Security
-- [ ] 25. Define dedicated POS permissions (checkout, refund, reprint, shift close).
-- [ ] 26. Enforce backend authorization per POS action endpoint.
-- [ ] 27. Add session timeout warning and safe logout flow.
-- [ ] 28. Add restricted-route guard to block non-permitted POS admin actions.
+- [x] 25. Define dedicated POS permissions (checkout, refund, reprint, shift close).
+- [x] 26. Enforce backend authorization per POS action endpoint.
+- [x] 27. Add session timeout warning and safe logout flow.
+- [x] 28. Add restricted-route guard to block non-permitted POS admin actions.
 
 ## H. Product Images (Azure Blob)
 - [x] 29. Add product image management with Azure Blob Storage using tenantId as root folder prefix (for example: {tenantId}/products/{productId}/{filename}).

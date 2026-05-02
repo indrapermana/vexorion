@@ -16,19 +16,17 @@ import {
   TableRow,
   Typography,
 } from '@mui/material'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ApiError, assignUserRoles, getUsers } from '../lib/api'
 import type { UserListItemResponse } from '../types/api'
-import { useAuth } from '../app/AuthContext'
 import { useI18n } from '../app/I18nContext'
 
 const POS_USER_ROLE = 'PosUser'
 
 export default function PosAdminPage() {
   const { t } = useI18n()
-  const { user } = useAuth()
   const queryClient = useQueryClient()
 
   const [pendingByUserId, setPendingByUserId] = useState<Record<string, boolean>>({})
@@ -38,17 +36,8 @@ export default function PosAdminPage() {
   const usersQuery = useQuery({ queryKey: ['pos-admin', 'users'], queryFn: getUsers })
   const users = usersQuery.data ?? []
 
-  const canManage = useMemo(() => {
-    return user?.permissions.includes('roles.manage') ?? false
-  }, [user])
-
   const togglePosRole = useCallback(
     async (targetUser: UserListItemResponse, grant: boolean) => {
-      if (!canManage) {
-        setError(t('admin.errorNoPermission'))
-        return
-      }
-
       setError(null)
       setFeedback(null)
       setPendingByUserId((prev) => ({ ...prev, [targetUser.id]: true }))
@@ -72,25 +61,8 @@ export default function PosAdminPage() {
         setPendingByUserId((prev) => ({ ...prev, [targetUser.id]: false }))
       }
     },
-    [canManage, queryClient],
+    [queryClient],
   )
-
-  if (!canManage) {
-    return (
-      <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', p: 2 }}>
-        <Paper sx={{ p: 3, maxWidth: 420, textAlign: 'center' }}>
-          <AdminPanelSettingsRoundedIcon color="disabled" sx={{ fontSize: 56, mb: 1 }} />
-          <Typography variant="h6">{t('admin.accessRestricted')}</Typography>
-          <Typography color="text.secondary" sx={{ mb: 2 }}>
-            {t('admin.permissionHint')}
-          </Typography>
-          <Button component={Link} to="/" startIcon={<ArrowBackRoundedIcon />}>
-            {t('admin.backToPos')}
-          </Button>
-        </Paper>
-      </Box>
-    )
-  }
 
   return (
     <Stack spacing={2} sx={{ p: 2 }}>

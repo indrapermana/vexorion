@@ -98,6 +98,10 @@ const en: Dictionary = {
   'admin.errorNoPermission': 'You do not have permission to manage roles.',
   'admin.errorUpdateRole': 'Unable to update role. Try again.',
   'admin.feedbackRoleUpdate': '{action} POS User role for {userName}.',
+  'session.expiringSoon': 'Session Expiring Soon',
+  'session.expiresIn': 'Your session will expire in {minutes} minute(s). Complete your current transaction or stay signed in.',
+  'session.extend': 'Stay Signed In',
+  'session.signOut': 'Sign Out',
 }
 
 export default en

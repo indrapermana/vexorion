@@ -1,5 +1,12 @@
 export type ValidationProblem = Record<string, string[]>
 
+export type PosSessionResponse = {
+  canCheckout: boolean
+  canRefund: boolean
+  canReprint: boolean
+  canCloseShift: boolean
+}
+
 export type LoginRequest = {
   tenantCode: string
   userNameOrEmail: string

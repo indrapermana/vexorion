@@ -115,6 +115,14 @@ public static class AppPermissions
         public const string Manage = "tenants.manage";
     }
 
+    public static class Pos
+    {
+        public const string Checkout = "pos.checkout";
+        public const string Refund = "pos.refund";
+        public const string Reprint = "pos.reprint";
+        public const string ShiftClose = "pos.shift_close";
+    }
+
     public static IReadOnlyCollection<string> All { get; } =
     [
         Users.View,
@@ -153,6 +161,10 @@ public static class AppPermissions
         Billing.View,
         Billing.Manage,
         Tenants.View,
-        Tenants.Manage
+        Tenants.Manage,
+        Pos.Checkout,
+        Pos.Refund,
+        Pos.Reprint,
+        Pos.ShiftClose
     ];
 }

@@ -98,6 +98,10 @@ const es: Dictionary = {
   'admin.errorNoPermission': 'No tiene permiso para gestionar roles.',
   'admin.errorUpdateRole': 'No se pudo actualizar el rol. Intente de nuevo.',
   'admin.feedbackRoleUpdate': '{action} rol Usuario POS para {userName}.',
+  'session.expiringSoon': 'Sesión por expirar',
+  'session.expiresIn': 'Tu sesión expira en {minutes} minuto(s). Completa tu transacción actual o permanece conectado.',
+  'session.extend': 'Continuar sesión',
+  'session.signOut': 'Cerrar sesión',
 }
 
 export default es

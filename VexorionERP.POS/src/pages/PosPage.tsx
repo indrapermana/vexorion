@@ -50,6 +50,7 @@ export default function PosPage() {
   const { user } = useAuth()
   const pushHistory = useTransactionHistory((state) => state.push)
   const canManageRoles = user?.permissions.includes('roles.manage') ?? false
+  const canCheckout = user?.permissions.includes('pos.checkout') ?? false
 
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>(GUEST_CUSTOMER_TAG)
   const [selectedWarehouseId, setSelectedWarehouseId] = useState('')
@@ -418,6 +419,7 @@ export default function PosPage() {
           paymentMethod={paymentMethod}
           isDelivery={isDelivery}
           isProcessing={isProcessing}
+          canCheckout={canCheckout}
           onRemoveCartLine={removeCartLine}
           onLineDiscountChange={updateLineDiscount}
           onPaymentAmountChange={setPaymentAmount}

@@ -98,6 +98,10 @@ const id: Dictionary = {
   'admin.errorNoPermission': 'Anda tidak memiliki izin untuk mengelola peran.',
   'admin.errorUpdateRole': 'Tidak dapat memperbarui peran. Coba lagi.',
   'admin.feedbackRoleUpdate': '{action} peran Pengguna POS untuk {userName}.',
+  'session.expiringSoon': 'Sesi Segera Berakhir',
+  'session.expiresIn': 'Sesi Anda akan berakhir dalam {minutes} menit. Selesaikan transaksi atau tetap masuk.',
+  'session.extend': 'Tetap Masuk',
+  'session.signOut': 'Keluar',
 }
 
 export default id

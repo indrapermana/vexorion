@@ -98,5 +98,9 @@ export type TranslationKey =
   | 'admin.errorNoPermission'
   | 'admin.errorUpdateRole'
   | 'admin.feedbackRoleUpdate'
+  | 'session.expiringSoon'
+  | 'session.expiresIn'
+  | 'session.extend'
+  | 'session.signOut'
 
 export type Dictionary = Record<TranslationKey, string>
