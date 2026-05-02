@@ -23,6 +23,24 @@ import { useI18n } from '../../app/I18nContext'
 import type { CustomerListItemResponse, ProductListItemResponse, WarehouseListItemResponse } from '../../types/api'
 
 const DEFAULT_PAGE_SIZE = 50
+const quantityFormatter = new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+
+function formatMoney(value: number, currencyCode: string) {
+  try {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currencyCode,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value)
+  } catch {
+    return `${currencyCode} ${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
+}
+
+function formatQuantity(value: number) {
+  return quantityFormatter.format(value)
+}
 
 function getProductCatalogLabel(product: ProductListItemResponse) {
   const skuPrefix = product.sku.split('-')[0]?.trim()
@@ -40,6 +58,7 @@ type ProductCatalogPanelProps = {
   warehouses: WarehouseListItemResponse[]
   products: ProductListItemResponse[]
   stockByProduct: Record<string, number>
+  currencyCode: string
   notes: string
   onCustomerChange: (customerId: string) => void
   onWarehouseChange: (warehouseId: string) => void
@@ -55,6 +74,7 @@ export function ProductCatalogPanel({
   warehouses,
   products,
   stockByProduct,
+  currencyCode,
   notes,
   onCustomerChange,
   onWarehouseChange,
@@ -105,6 +125,15 @@ export function ProductCatalogPanel({
 
   const updateQty = (productId: string, nextQty: number) => {
     setQtyByProduct((current) => ({ ...current, [productId]: Math.max(1, nextQty) }))
+  }
+
+  const updateQtyFromInput = (productId: string, inputValue: string) => {
+    const parsed = Number(inputValue.replace(/,/g, ''))
+    if (!Number.isFinite(parsed)) {
+      return
+    }
+
+    updateQty(productId, parsed)
   }
 
   return (
@@ -220,7 +249,7 @@ export function ProductCatalogPanel({
                     {t('catalog.uom')}: {product.unitOfMeasure}
                   </Typography>
                   <Typography variant="subtitle2" sx={{ mt: 0.5 }}>
-                    {product.salesPrice.toFixed(2)}
+                    {formatMoney(product.salesPrice, currencyCode)}
                   </Typography>
                   <Typography
                     variant="caption"
@@ -228,7 +257,7 @@ export function ProductCatalogPanel({
                     sx={{ mt: 0.25, display: 'block' }}
                   >
                     {canAdd
-                      ? `${t('catalog.stock')}: ${stockLeft.toFixed(2)}`
+                      ? `${t('catalog.stock')}: ${formatQuantity(stockLeft)}`
                       : t('catalog.outOfStock')}
                   </Typography>
                 </CardContent>
@@ -237,9 +266,20 @@ export function ProductCatalogPanel({
                     <IconButton size="small" onClick={() => updateQty(product.id, qty - 1)}>
                       <RemoveRoundedIcon fontSize="small" />
                     </IconButton>
-                    <Typography variant="body2" sx={{ minWidth: 20, textAlign: 'center' }}>
-                      {qty}
-                    </Typography>
+                    <TextField
+                      size="small"
+                      value={qty}
+                      onChange={(event) => updateQtyFromInput(product.id, event.target.value)}
+                      slotProps={{
+                        htmlInput: {
+                          inputMode: 'numeric',
+                          pattern: '[0-9]*',
+                          min: 1,
+                          style: { textAlign: 'center', paddingInline: 4 },
+                        },
+                      }}
+                      sx={{ width: 62 }}
+                    />
                     <IconButton size="small" onClick={() => updateQty(product.id, qty + 1)}>
                       <AddRoundedIcon fontSize="small" />
                     </IconButton>

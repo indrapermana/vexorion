@@ -6,6 +6,7 @@ const id: Dictionary = {
   'header.switchUser': 'Ganti Pengguna',
   'header.theme': 'Tema',
   'header.language': 'Bahasa',
+  'header.currency': 'Mata uang: {code}',
   'common.light': 'Terang',
   'common.dark': 'Gelap',
   'common.show': 'Tampilkan',

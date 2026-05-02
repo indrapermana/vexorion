@@ -136,6 +136,7 @@ public class AuthApplicationServiceFlowTests
 
         var tenant = new Tenant { Id = Guid.NewGuid(), Name = "Vexorion", Code = "VX" };
         db.Tenants.Add(tenant);
+        db.Companies.Add(new Company { Id = Guid.NewGuid(), TenantId = tenant.Id, Name = "Vexorion HQ", Code = "HQ", CurrencyCode = "IDR", IsActive = true });
 
         var user = new User { TenantId = tenant.Id, UserName = "bob", Email = "bob@vx.test", IsActive = true };
         await userManager.CreateAsync(user, "Password1!");
@@ -154,8 +155,33 @@ public class AuthApplicationServiceFlowTests
 
         Assert.True(result.Succeeded);
         Assert.Equal("bob", result.Value!.UserName);
+        Assert.Equal("IDR", result.Value.CurrencyCode);
         Assert.Contains(AppRoles.Staff, result.Value.Roles);
         Assert.Equal(new[] { "reports.view", "users.view" }, result.Value.Permissions);
+    }
+
+    [Fact]
+    public async Task GetCurrentUserAsync_WhenCompanyMissing_UsesUsdFallback()
+    {
+        using var scope = BuildScope(nameof(GetCurrentUserAsync_WhenCompanyMissing_UsesUsdFallback), out var db, out var userManager, out var signInManager, out var tokenService, out var auditLogger, out var httpContextAccessor);
+        await IdentityTestHelper.SeedRolesAsync(scope);
+
+        var tenant = new Tenant { Id = Guid.NewGuid(), Name = "Vexorion", Code = "VX" };
+        db.Tenants.Add(tenant);
+
+        var user = new User { TenantId = tenant.Id, UserName = "dina", Email = "dina@vx.test", IsActive = true };
+        await userManager.CreateAsync(user, "Password1!");
+
+        var principal = new ClaimsPrincipal(new ClaimsIdentity(
+        [
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
+        ], "Test"));
+
+        var service = new AuthApplicationService(db, userManager, signInManager, tokenService, auditLogger, httpContextAccessor);
+        var result = await service.GetCurrentUserAsync(principal);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal("USD", result.Value!.CurrencyCode);
     }
 
     [Fact]

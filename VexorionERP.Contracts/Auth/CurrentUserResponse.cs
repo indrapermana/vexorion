@@ -4,6 +4,7 @@ public class CurrentUserResponse
 {
     public Guid Id { get; set; }
     public Guid TenantId { get; set; }
+    public string CurrencyCode { get; set; } = "USD";
     public string UserName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string? FirstName { get; set; }

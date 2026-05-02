@@ -6,6 +6,7 @@ export type TranslationKey =
   | 'header.switchUser'
   | 'header.theme'
   | 'header.language'
+  | 'header.currency'
   | 'common.light'
   | 'common.dark'
   | 'common.show'

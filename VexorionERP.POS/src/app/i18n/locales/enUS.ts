@@ -6,6 +6,7 @@ const en: Dictionary = {
   'header.switchUser': 'Switch User',
   'header.theme': 'Theme',
   'header.language': 'Language',
+  'header.currency': 'Currency: {code}',
   'common.light': 'Light',
   'common.dark': 'Dark',
   'common.show': 'Show',

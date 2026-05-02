@@ -18,12 +18,31 @@ import {
 import { useI18n } from '../../app/I18nContext'
 import type { CartLine } from './types'
 
+function formatMoney(value: number, currencyCode: string) {
+  try {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currencyCode,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value)
+  } catch {
+    return `${currencyCode} ${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
+}
+
+function parseMoneyInput(input: string) {
+  const parsed = Number(input.replace(/,/g, ''))
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
 type CartSummaryPanelProps = {
   cart: CartLine[]
   subtotal: number
   discountTotal: number
   grandTotal: number
   changeAmount: number
+  currencyCode: string
   paymentAmount: number
   paymentMethod: string
   isDelivery: boolean
@@ -42,6 +61,7 @@ export function CartSummaryPanel({
   discountTotal,
   grandTotal,
   changeAmount,
+  currencyCode,
   paymentAmount,
   paymentMethod,
   isDelivery,
@@ -79,17 +99,22 @@ export function CartSummaryPanel({
               <TableRow key={line.productId}>
                 <TableCell>{line.productName}</TableCell>
                 <TableCell align="right">{line.quantity}</TableCell>
-                <TableCell align="right">{line.unitPrice.toFixed(2)}</TableCell>
+                <TableCell align="right">{formatMoney(line.unitPrice, currencyCode)}</TableCell>
                 <TableCell align="right">
                   <TextField
-                    type="number"
+                    type="text"
                     size="small"
-                    value={line.discountAmount}
-                    onChange={(event) => onLineDiscountChange(line.productId, Number(event.target.value))}
+                    value={line.discountAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    onChange={(event) => onLineDiscountChange(line.productId, parseMoneyInput(event.target.value))}
+                    slotProps={{
+                      htmlInput: {
+                        inputMode: 'decimal',
+                      },
+                    }}
                     sx={{ width: 96 }}
                   />
                 </TableCell>
-                <TableCell align="right">{(line.unitPrice * line.quantity - line.discountAmount).toFixed(2)}</TableCell>
+                <TableCell align="right">{formatMoney(line.unitPrice * line.quantity - line.discountAmount, currencyCode)}</TableCell>
                 <TableCell align="right">
                   <Button size="small" color="error" onClick={() => onRemoveCartLine(line.productId)}>
                     {t('cart.remove')}
@@ -103,9 +128,9 @@ export function CartSummaryPanel({
         <Divider />
 
         <Stack spacing={1}>
-          <Typography variant="body2">{t('cart.subtotal', { value: subtotal.toFixed(2) })}</Typography>
-          <Typography variant="body2">{t('cart.discount')}: {discountTotal.toFixed(2)}</Typography>
-          <Typography variant="h6">{t('cart.grandTotal', { value: grandTotal.toFixed(2) })}</Typography>
+          <Typography variant="body2">{t('cart.subtotal', { value: formatMoney(subtotal, currencyCode) })}</Typography>
+          <Typography variant="body2">{t('cart.discount')}: {formatMoney(discountTotal, currencyCode)}</Typography>
+          <Typography variant="h6">{t('cart.grandTotal', { value: formatMoney(grandTotal, currencyCode) })}</Typography>
         </Stack>
 
         <Stack direction="row" spacing={1.5}>
@@ -129,7 +154,7 @@ export function CartSummaryPanel({
           </TextField>
         </Stack>
 
-        <Typography variant="body2">{t('cart.change', { value: changeAmount.toFixed(2) })}</Typography>
+        <Typography variant="body2">{t('cart.change', { value: formatMoney(changeAmount, currencyCode) })}</Typography>
         <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
           <DeliveryDiningRoundedIcon fontSize="small" color={isDelivery ? 'primary' : 'disabled'} />
           <Typography variant="body2" sx={{ mr: 'auto' }}>{t('cart.deliveryTransaction')}</Typography>

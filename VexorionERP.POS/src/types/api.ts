@@ -16,6 +16,7 @@ export type LoginResponse = {
 export type CurrentUserResponse = {
   id: string
   tenantId: string
+  currencyCode: string
   userName: string
   email: string
   firstName?: string | null
@@ -220,6 +221,15 @@ export type UserListItemResponse = {
 
 export type AssignUserRolesRequest = {
   roles: string[]
+}
+
+export type CompanyListItemResponse = {
+  id: string
+  code: string
+  name: string
+  email?: string | null
+  currencyCode: string
+  isActive: boolean
 }
 
 export type InventoryBalanceListItemResponse = {

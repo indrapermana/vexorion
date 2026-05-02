@@ -69,6 +69,17 @@ public class AuthApplicationService(
         }
 
         var roles = await userManager.GetRolesAsync(user);
+        var currencyCode = await dbContext.Companies
+            .Where(x => x.TenantId == user.TenantId && x.IsActive)
+            .OrderBy(x => x.Code)
+            .Select(x => x.CurrencyCode)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (string.IsNullOrWhiteSpace(currencyCode))
+        {
+            currencyCode = "USD";
+        }
+
         var permissions = principal.Claims
             .Where(x => x.Type == AppClaimTypes.Permission)
             .Select(x => x.Value)
@@ -80,6 +91,7 @@ public class AuthApplicationService(
         {
             Id = user.Id,
             TenantId = user.TenantId,
+            CurrencyCode = currencyCode.Trim().ToUpperInvariant(),
             UserName = user.UserName ?? string.Empty,
             Email = user.Email ?? string.Empty,
             FirstName = user.FirstName,

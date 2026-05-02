@@ -74,6 +74,19 @@ export default function PosPage() {
   const inventoryBalances = inventoryBalancesQuery.data?.filter((x) => x.isActive) ?? []
   const products = productsQuery.data?.filter((x) => x.isActive) ?? []
   const warehouses = warehousesQuery.data?.filter((x) => x.isActive) ?? []
+  const currencyCode = useMemo(() => {
+    const authCurrency = user?.currencyCode?.trim().toUpperCase()
+    if (authCurrency) {
+      return authCurrency
+    }
+
+    const envCurrency = import.meta.env.VITE_POS_CURRENCY_CODE?.trim().toUpperCase()
+    if (envCurrency) {
+      return envCurrency
+    }
+
+    return 'USD'
+  }, [user?.currencyCode])
 
   useEffect(() => {
     if (selectedWarehouseId || warehouses.length === 0) {
@@ -243,7 +256,7 @@ export default function PosPage() {
         orderDate: new Date().toISOString().slice(0, 10),
         requiredDate: new Date().toISOString().slice(0, 10),
         status: 2,
-        currencyCode: 'USD',
+        currencyCode,
         notes: notes.trim() || null,
       })
 
@@ -297,7 +310,7 @@ export default function PosPage() {
         dueDate: new Date().toISOString().slice(0, 10),
         paymentTermId: null,
         status: 2,
-        currencyCode: 'USD',
+        currencyCode,
         notes: notes.trim() || null,
       })
 
@@ -319,7 +332,7 @@ export default function PosPage() {
           salesInvoiceId: invoice.id,
           paymentDate: new Date().toISOString().slice(0, 10),
           amount: paymentAmount,
-          currencyCode: 'USD',
+          currencyCode,
           paymentMethod,
           notes: 'POS checkout payment',
           referenceNumber: null,
@@ -363,7 +376,7 @@ export default function PosPage() {
 
   return (
     <Stack spacing={2} sx={{ p: 2 }}>
-      <PosHeader canManageRoles={canManageRoles} />
+      <PosHeader canManageRoles={canManageRoles} currencyCode={currencyCode} />
 
       {error ? <Alert severity="error">{error}</Alert> : null}
       {checkoutResult ? (
@@ -385,6 +398,7 @@ export default function PosPage() {
           warehouses={warehouses}
           products={products}
           stockByProduct={stockByProduct}
+          currencyCode={currencyCode}
           notes={notes}
           onCustomerChange={setSelectedCustomerId}
           onWarehouseChange={setSelectedWarehouseId}
@@ -399,6 +413,7 @@ export default function PosPage() {
           discountTotal={discountTotal}
           grandTotal={grandTotal}
           changeAmount={changeAmount}
+          currencyCode={currencyCode}
           paymentAmount={paymentAmount}
           paymentMethod={paymentMethod}
           isDelivery={isDelivery}

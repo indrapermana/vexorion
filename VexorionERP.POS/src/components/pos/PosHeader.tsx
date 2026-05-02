@@ -3,7 +3,7 @@ import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded'
 import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded'
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded'
 import PointOfSaleRoundedIcon from '@mui/icons-material/PointOfSaleRounded'
-import { Button, IconButton, MenuItem, Paper, Stack, TextField, Tooltip, Typography } from '@mui/material'
+import { Button, Chip, IconButton, MenuItem, Paper, Stack, TextField, Tooltip, Typography } from '@mui/material'
 import { Link } from 'react-router-dom'
 import { useThemeMode } from '../../app/ThemeModeContext'
 import { useI18n } from '../../app/I18nContext'
@@ -11,9 +11,10 @@ import type { Locale } from '../../app/i18n/types'
 
 type PosHeaderProps = {
   canManageRoles: boolean
+  currencyCode: string
 }
 
-export function PosHeader({ canManageRoles }: PosHeaderProps) {
+export function PosHeader({ canManageRoles, currencyCode }: PosHeaderProps) {
   const { themeMode, toggleThemeMode } = useThemeMode()
   const { locale, setLocale, t } = useI18n()
 
@@ -25,6 +26,7 @@ export function PosHeader({ canManageRoles }: PosHeaderProps) {
           <Typography variant="h5">{t('header.title')}</Typography>
         </Stack>
         <Stack direction="row" spacing={1}>
+          <Chip label={t('header.currency', { code: currencyCode })} color="primary" variant="outlined" />
           <TextField
             select
             size="small"
