@@ -9,10 +9,10 @@ Track progress by checking each item as it is completed.
 - [x] 4. Add reprint action from transaction history panel.
 
 ## B. Shift and Cash Control
-- [ ] 5. Add shift open flow with opening cash float input.
-- [ ] 6. Add shift close flow with counted cash input.
-- [ ] 7. Build end-of-shift summary (sales, tenders, discounts, taxes).
-- [ ] 8. Add variance report (expected cash vs counted cash).
+- [x] 5. Add shift open flow with opening cash float input.
+- [x] 6. Add shift close flow with counted cash input.
+- [x] 7. Build end-of-shift summary (sales, tenders, discounts, taxes).
+- [x] 8. Add variance report (expected cash vs counted cash).
 
 ## C. Return and Refund
 - [ ] 9. Add invoice search for return initiation.

@@ -3,12 +3,15 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTransactionHistory } from '../app/transactionHistoryStore'
 import { useAuth } from '../app/AuthContext'
+import { useShift } from '../app/shiftStore'
 import { TransactionHistoryPanel } from '../components/TransactionHistoryPanel'
 import { useI18n } from '../app/I18nContext'
 import { PosHeader } from '../components/pos/PosHeader'
 import { ProductCatalogPanel } from '../components/pos/ProductCatalogPanel'
 import { CartSummaryPanel } from '../components/pos/CartSummaryPanel'
 import { QuickCustomerDialog } from '../components/pos/QuickCustomerDialog'
+import { ShiftOpenDialog } from '../components/pos/ShiftOpenDialog'
+import { ShiftCloseDialog } from '../components/pos/ShiftCloseDialog'
 import { StockConflictDialog } from '../components/pos/StockConflictDialog'
 import { ReceiptModal, type ReceiptData } from '../components/pos/ReceiptModal'
 import type { CartLine, QuickCustomerForm } from '../components/pos/types'
@@ -55,8 +58,16 @@ export default function PosPage() {
   const { t } = useI18n()
   const { user } = useAuth()
   const pushHistory = useTransactionHistory((state) => state.push)
+  const { currentShift, openShift, closeShift } = useShift()
   const canManageRoles = user?.permissions.includes('roles.manage') ?? false
   const canCheckout = user?.permissions.includes('pos.checkout') ?? false
+  const canCloseShift = user?.permissions.includes('pos.shift.close') ?? false
+
+  const isShiftOpen = currentShift !== null
+  const cashierName =
+    [user?.firstName, user?.lastName].filter(Boolean).join(' ').trim() || user?.userName || ''
+
+  const [isCloseShiftOpen, setIsCloseShiftOpen] = useState(false)
 
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>(GUEST_CUSTOMER_TAG)
   const [selectedWarehouseId, setSelectedWarehouseId] = useState('')
@@ -289,6 +300,11 @@ export default function PosPage() {
     setCheckoutResult(null)
     setStockConflict(null)
 
+    if (!currentShift) {
+      setError(t('shift.noShift'))
+      return
+    }
+
     if (cart.length === 0) {
       setError(t('page.cartEmpty'))
       return
@@ -460,6 +476,7 @@ export default function PosPage() {
 
       pushHistory({
         id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        shiftId: currentShift?.id,
         completedAt: new Date().toISOString(),
         customerLabel,
         currencyCode,
@@ -517,7 +534,14 @@ export default function PosPage() {
 
   return (
     <Stack spacing={2} sx={{ p: 2 }}>
-      <PosHeader canManageRoles={canManageRoles} currencyCode={currencyCode} />
+      <PosHeader
+        canManageRoles={canManageRoles}
+        currencyCode={currencyCode}
+        isShiftOpen={isShiftOpen}
+        canCloseShift={canCloseShift}
+        shiftOpenedAt={currentShift?.openedAt}
+        onCloseShift={() => setIsCloseShiftOpen(true)}
+      />
 
       {error ? <Alert severity="error">{error}</Alert> : null}
       {checkoutResult ? (
@@ -597,6 +621,33 @@ export default function PosPage() {
         data={receiptData}
         onClose={() => setReceiptData(null)}
       />
+
+      <ShiftOpenDialog
+        open={!isShiftOpen}
+        currencyCode={currencyCode}
+        cashierName={cashierName}
+        onOpen={(openingFloat) =>
+          openShift({
+            openingFloat,
+            userId: user?.id ?? '',
+            userName: cashierName,
+            currencyCode,
+          })
+        }
+      />
+
+      {currentShift ? (
+        <ShiftCloseDialog
+          open={isCloseShiftOpen}
+          shift={currentShift}
+          currencyCode={currencyCode}
+          onClose={() => setIsCloseShiftOpen(false)}
+          onConfirm={() => {
+            closeShift()
+            setIsCloseShiftOpen(false)
+          }}
+        />
+      ) : null}
     </Stack>
   )
 }

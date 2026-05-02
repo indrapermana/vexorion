@@ -1,6 +1,7 @@
 import AdminPanelSettingsRoundedIcon from '@mui/icons-material/AdminPanelSettingsRounded'
 import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded'
 import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded'
+import LockRoundedIcon from '@mui/icons-material/LockRounded'
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded'
 import PointOfSaleRoundedIcon from '@mui/icons-material/PointOfSaleRounded'
 import { Button, Chip, IconButton, MenuItem, Paper, Stack, TextField, Tooltip, Typography } from '@mui/material'
@@ -12,9 +13,13 @@ import type { Locale } from '../../app/i18n/types'
 type PosHeaderProps = {
   canManageRoles: boolean
   currencyCode: string
+  isShiftOpen: boolean
+  canCloseShift: boolean
+  shiftOpenedAt?: string
+  onCloseShift: () => void
 }
 
-export function PosHeader({ canManageRoles, currencyCode }: PosHeaderProps) {
+export function PosHeader({ canManageRoles, currencyCode, isShiftOpen, canCloseShift, shiftOpenedAt, onCloseShift }: PosHeaderProps) {
   const { themeMode, toggleThemeMode } = useThemeMode()
   const { locale, setLocale, t } = useI18n()
 
@@ -27,6 +32,22 @@ export function PosHeader({ canManageRoles, currencyCode }: PosHeaderProps) {
         </Stack>
         <Stack direction="row" spacing={1}>
           <Chip label={t('header.currency', { code: currencyCode })} color="primary" variant="outlined" />
+          <Chip
+            label={
+              isShiftOpen && shiftOpenedAt
+                ? t('shift.status.open', {
+                    time: new Date(shiftOpenedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                  })
+                : t('shift.noShift')
+            }
+            color={isShiftOpen ? 'success' : 'default'}
+            variant="outlined"
+          />
+          {isShiftOpen && canCloseShift ? (
+            <Button variant="outlined" color="warning" startIcon={<LockRoundedIcon />} onClick={onCloseShift}>
+              {t('shift.close.button')}
+            </Button>
+          ) : null}
           <TextField
             select
             size="small"

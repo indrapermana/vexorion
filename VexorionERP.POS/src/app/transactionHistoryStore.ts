@@ -4,6 +4,7 @@ import type { ReceiptLine } from '../components/pos/ReceiptModal'
 
 export type PosTransaction = {
   id: string
+  shiftId?: string
   completedAt: string
   customerLabel: string
   currencyCode: string
