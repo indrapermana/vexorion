@@ -67,9 +67,11 @@ public static class IdentityServiceCollectionExtensions
         services.AddScoped<IInvoiceApprovalService, InvoiceApprovalService>();
         services.AddScoped<IReportingService, ReportingService>();
         services.AddScoped<IInvoiceCommandService, InvoiceCommandService>();
+        services.AddScoped<IProductImageCommandService, ProductImageCommandService>();
         services.AddScoped<IPurchaseReceiptPostingService, PurchaseReceiptCommandService>();
         services.AddScoped<IRoleManagementService, RoleManagementService>();
         services.AddScoped<ISalesShipmentPostingService, SalesShipmentCommandService>();
+        services.AddScoped<IProductImageStorageService, AzureBlobProductImageStorageService>();
         services.AddScoped<ITenantOnboardingService, TenantOnboardingService>();
         services.AddScoped<IUserManagementService, UserManagementService>();
 

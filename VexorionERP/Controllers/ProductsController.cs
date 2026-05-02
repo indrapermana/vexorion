@@ -89,4 +89,27 @@ public class ProductsController(IMediator mediator) : ServiceResultControllerBas
         var result = await mediator.Send(new DeleteProductCommand(productId), HttpContext.RequestAborted);
         return ToActionResult(result);
     }
+
+    [HttpPost("{productId:guid}/image")]
+    [Authorize(Policy = AppPermissions.Products.Manage)]
+    [Consumes("multipart/form-data")]
+    public async Task<ActionResult<ProductImageUploadResponse>> UploadImage(Guid productId, [FromForm] IFormFile file)
+    {
+        if (file is null)
+        {
+            return BadRequest("Image file is required.");
+        }
+
+        await using var stream = file.OpenReadStream();
+        await using var memory = new MemoryStream();
+        await stream.CopyToAsync(memory, HttpContext.RequestAborted);
+
+        var result = await mediator.Send(new UploadProductImageCommand(
+            productId,
+            file.FileName,
+            file.ContentType,
+            memory.ToArray()), HttpContext.RequestAborted);
+
+        return ToActionResult(result);
+    }
 }

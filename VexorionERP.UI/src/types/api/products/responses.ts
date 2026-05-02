@@ -2,6 +2,7 @@ export type ProductListItemResponse = {
   id: string
   sku: string
   name: string
+  imageUrl?: string | null
   unitOfMeasure: string
   standardCost: number
   salesPrice: number
@@ -24,6 +25,7 @@ export type ProductDetailsResponse = {
   tenantId: string
   sku: string
   name: string
+  imageUrl?: string | null
   description?: string | null
   unitOfMeasure: string
   standardCost: number

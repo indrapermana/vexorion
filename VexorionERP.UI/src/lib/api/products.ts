@@ -13,7 +13,7 @@ import type {
   UpdateProductIdentifierRequest,
   UpdateProductRequest,
 } from '../../types/api'
-import { requestJson } from './core'
+import { apiClient, requestJson } from './core'
 
 export function getProducts() {
   return requestJson<ProductListItemResponse[]>('/products')
@@ -25,6 +25,14 @@ export function getProduct(productId: string) {
 
 export function createProduct(request: CreateProductRequest) {
   return requestJson<ProductDetailsResponse>('/products', 'POST', request)
+}
+
+export async function uploadProductImage(productId: string, file: File) {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const response = await apiClient.post<{ productId: string; imageUrl: string }>(`/products/${productId}/image`, formData)
+  return response.data
 }
 
 export function updateProduct(productId: string, request: UpdateProductRequest) {

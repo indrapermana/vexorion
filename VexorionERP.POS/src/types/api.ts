@@ -62,6 +62,8 @@ export type ProductListItemResponse = {
   id: string
   sku: string
   name: string
+  imageUrl?: string | null
+  thumbnailUrl?: string | null
   unitOfMeasure: string
   standardCost: number
   salesPrice: number

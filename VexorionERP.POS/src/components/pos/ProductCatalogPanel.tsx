@@ -237,9 +237,19 @@ export function ProductCatalogPanel({
                     placeItems: 'center',
                     py: 1,
                     bgcolor: 'action.hover',
+                    minHeight: 64,
                   }}
                 >
-                  <Inventory2RoundedIcon color="action" sx={{ fontSize: 28 }} />
+                  {(product.thumbnailUrl ?? product.imageUrl) ? (
+                    <Box
+                      component="img"
+                      src={product.thumbnailUrl ?? product.imageUrl!}
+                      alt={product.name}
+                      sx={{ width: '100%', height: 64, objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <Inventory2RoundedIcon color="action" sx={{ fontSize: 28 }} />
+                  )}
                 </Box>
                 <CardContent sx={{ p: 1.25, pb: 0.75 }}>
                   <Typography variant="body2" sx={{ fontWeight: 700, lineHeight: 1.2 }} noWrap>

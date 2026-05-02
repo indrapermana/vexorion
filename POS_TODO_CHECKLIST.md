@@ -45,4 +45,4 @@ Track progress by checking each item as it is completed.
 - [ ] 28. Add restricted-route guard to block non-permitted POS admin actions.
 
 ## H. Product Images (Azure Blob)
-- [ ] 29. Add product image management with Azure Blob Storage using tenantId as root folder prefix (for example: {tenantId}/products/{productId}/{filename}).
+- [x] 29. Add product image management with Azure Blob Storage using tenantId as root folder prefix (for example: {tenantId}/products/{productId}/{filename}).

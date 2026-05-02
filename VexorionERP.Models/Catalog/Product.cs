@@ -6,6 +6,8 @@ public class Product : TenantEntityBase
 {
     public string Sku { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
+    public string? ImageUrl { get; set; }
+    public string? ThumbnailUrl { get; set; }
     public string? Description { get; set; }
     public string UnitOfMeasure { get; set; } = "EA";
     public decimal StandardCost { get; set; }
