@@ -113,6 +113,15 @@ const en: Dictionary = {
   'scan.notFound': 'No product found for: {barcode}',
   'scan.added': 'Added {productName}',
   'shortcut.hint': 'F2 = Checkout · Alt+1/2/3 = Cash/Card/Transfer · F8 = Undo last line',
+  'receipt.title': 'Receipt',
+  'receipt.close': 'Close',
+  'receipt.print': 'Print',
+  'receipt.reprint': 'Reprint',
+  'receipt.order': 'Order',
+  'receipt.invoice': 'Invoice',
+  'receipt.shipment': 'Shipment',
+  'receipt.payment': 'Payment',
+  'receipt.noLines': 'No line items recorded.',
 }
 
 export default en

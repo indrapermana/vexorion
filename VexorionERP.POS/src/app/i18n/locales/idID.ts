@@ -113,6 +113,15 @@ const id: Dictionary = {
   'scan.notFound': 'Produk tidak ditemukan untuk: {barcode}',
   'scan.added': '{productName} ditambahkan',
   'shortcut.hint': 'F2 = Bayar · Alt+1/2/3 = Tunai/Kartu/Transfer · F8 = Batalkan item terakhir',
+  'receipt.title': 'Struk',
+  'receipt.close': 'Tutup',
+  'receipt.print': 'Cetak',
+  'receipt.reprint': 'Cetak Ulang',
+  'receipt.order': 'Pesanan',
+  'receipt.invoice': 'Faktur',
+  'receipt.shipment': 'Pengiriman',
+  'receipt.payment': 'Pembayaran',
+  'receipt.noLines': 'Tidak ada item yang dicatat.',
 }
 
 export default id

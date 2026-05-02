@@ -1,10 +1,12 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import type { ReceiptLine } from '../components/pos/ReceiptModal'
 
 export type PosTransaction = {
   id: string
   completedAt: string
   customerLabel: string
+  currencyCode: string
   grandTotal: number
   paymentAmount: number
   paymentMethod: string
@@ -14,6 +16,7 @@ export type PosTransaction = {
   invoiceId: string
   shipmentId?: string
   paymentId?: string
+  lines?: ReceiptLine[]
 }
 
 type HistoryState = {

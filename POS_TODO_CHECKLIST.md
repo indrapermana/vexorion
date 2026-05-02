@@ -3,10 +3,10 @@
 Track progress by checking each item as it is completed.
 
 ## A. Receipt and Reprint
-- [ ] 1. Add post-checkout receipt preview modal.
-- [ ] 2. Implement browser print layout optimized for thermal paper.
-- [ ] 3. Include order, shipment, invoice, and payment references on receipt.
-- [ ] 4. Add reprint action from transaction history panel.
+- [x] 1. Add post-checkout receipt preview modal.
+- [x] 2. Implement browser print layout optimized for thermal paper.
+- [x] 3. Include order, shipment, invoice, and payment references on receipt.
+- [x] 4. Add reprint action from transaction history panel.
 
 ## B. Shift and Cash Control
 - [ ] 5. Add shift open flow with opening cash float input.

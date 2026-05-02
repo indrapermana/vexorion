@@ -1,6 +1,7 @@
 import DeleteSweepRoundedIcon from '@mui/icons-material/DeleteSweepRounded'
 import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded'
 import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded'
+import PrintRoundedIcon from '@mui/icons-material/PrintRounded'
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded'
 import {
   Box,
@@ -8,6 +9,7 @@ import {
   Chip,
   Collapse,
   Divider,
+  IconButton,
   Paper,
   Stack,
   Table,
@@ -21,11 +23,13 @@ import {
 import { useState } from 'react'
 import { useI18n } from '../app/I18nContext'
 import { useTransactionHistory } from '../app/transactionHistoryStore'
+import { ReceiptModal, type ReceiptData } from './pos/ReceiptModal'
 
 export function TransactionHistoryPanel() {
   const { transactions, clear } = useTransactionHistory()
   const [open, setOpen] = useState(false)
   const { t } = useI18n()
+  const [reprintData, setReprintData] = useState<ReceiptData | null>(null)
 
   if (transactions.length === 0 && !open) {
     return null
@@ -71,8 +75,7 @@ export function TransactionHistoryPanel() {
                 <TableCell>{t('history.method')}</TableCell>
                 <TableCell align="right">{t('history.lines')}</TableCell>
                 <TableCell>{t('history.flags')}</TableCell>
-                <TableCell>{t('history.invoice')}</TableCell>
-              </TableRow>
+                <TableCell>{t('history.invoice')}</TableCell>                <TableCell />              </TableRow>
             </TableHead>
             <TableBody>
               {transactions.map((transaction) => (
@@ -118,12 +121,42 @@ export function TransactionHistoryPanel() {
                       {transaction.invoiceId.slice(0, 8)}…
                     </Typography>
                   </TableCell>
+                  <TableCell>
+                    <Tooltip title={t('receipt.reprint')}>
+                      <IconButton
+                        size="small"
+                        onClick={() =>
+                          setReprintData({
+                            completedAt: transaction.completedAt,
+                            customerLabel: transaction.customerLabel,
+                            currencyCode: transaction.currencyCode ?? '',
+                            lines: transaction.lines ?? [],
+                            paymentAmount: transaction.paymentAmount,
+                            paymentMethod: transaction.paymentMethod,
+                            isDelivery: transaction.isDelivery,
+                            orderId: transaction.orderId,
+                            invoiceId: transaction.invoiceId,
+                            shipmentId: transaction.shipmentId,
+                            paymentId: transaction.paymentId,
+                          })
+                        }
+                      >
+                        <PrintRoundedIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         )}
       </Collapse>
+
+      <ReceiptModal
+        open={reprintData !== null}
+        data={reprintData}
+        onClose={() => setReprintData(null)}
+      />
     </Paper>
   )
 }

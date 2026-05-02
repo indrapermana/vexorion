@@ -10,6 +10,7 @@ import { ProductCatalogPanel } from '../components/pos/ProductCatalogPanel'
 import { CartSummaryPanel } from '../components/pos/CartSummaryPanel'
 import { QuickCustomerDialog } from '../components/pos/QuickCustomerDialog'
 import { StockConflictDialog } from '../components/pos/StockConflictDialog'
+import { ReceiptModal, type ReceiptData } from '../components/pos/ReceiptModal'
 import type { CartLine, QuickCustomerForm } from '../components/pos/types'
 import { posLogger } from '../lib/posLogger'
 import {
@@ -65,6 +66,7 @@ export default function PosPage() {
   const [isDelivery, setIsDelivery] = useState(false)
   const [cart, setCart] = useState<CartLine[]>([])
   const [checkoutResult, setCheckoutResult] = useState<CheckoutResult | null>(null)
+  const [receiptData, setReceiptData] = useState<ReceiptData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [stockConflict, setStockConflict] = useState<PosStockInsufficientItem[] | null>(null)
@@ -435,24 +437,42 @@ export default function PosPage() {
         invoiceId: invoice.id,
       })
 
+      const cartSnapshot = [...cart]
       const customerLabel =
         selectedCustomerId === GUEST_CUSTOMER_TAG
           ? 'Guest'
           : (activeCustomerOptions.find((c) => c.id === customerId)?.name ?? customerId)
 
-      pushHistory({
-        id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      // Build receipt data before clearing the cart (Items 1–3)
+      setReceiptData({
         completedAt: new Date().toISOString(),
         customerLabel,
-        grandTotal,
+        currencyCode,
+        lines: cartSnapshot,
         paymentAmount,
         paymentMethod,
-        lineCount: cart.length,
         isDelivery,
         orderId: order.id,
         invoiceId: invoice.id,
         shipmentId,
         paymentId,
+      })
+
+      pushHistory({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        completedAt: new Date().toISOString(),
+        customerLabel,
+        currencyCode,
+        grandTotal,
+        paymentAmount,
+        paymentMethod,
+        lineCount: cartSnapshot.length,
+        isDelivery,
+        orderId: order.id,
+        invoiceId: invoice.id,
+        shipmentId,
+        paymentId,
+        lines: cartSnapshot,
       })
 
       setCart([])
@@ -570,6 +590,12 @@ export default function PosPage() {
           void inventoryBalancesQuery.refetch()
         }}
         onCancel={() => setStockConflict(null)}
+      />
+
+      <ReceiptModal
+        open={receiptData !== null}
+        data={receiptData}
+        onClose={() => setReceiptData(null)}
       />
     </Stack>
   )

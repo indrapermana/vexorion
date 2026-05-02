@@ -113,5 +113,14 @@ export type TranslationKey =
   | 'scan.notFound'
   | 'scan.added'
   | 'shortcut.hint'
+  | 'receipt.title'
+  | 'receipt.close'
+  | 'receipt.print'
+  | 'receipt.reprint'
+  | 'receipt.order'
+  | 'receipt.invoice'
+  | 'receipt.shipment'
+  | 'receipt.payment'
+  | 'receipt.noLines'
 
 export type Dictionary = Record<TranslationKey, string>
