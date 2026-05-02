@@ -17,6 +17,8 @@ const esES = {
     password: 'Contraseña',
     signingIn: 'Iniciando sesión...',
     signInButton: 'Iniciar sesión',
+    systemAdminOnly: 'Solo SystemAdmin',
+    helpHint: 'Usa el código de inquilino demo con tus credenciales de SystemAdmin en desarrollo.',
   },
   pages: {
     tenantManagement: {

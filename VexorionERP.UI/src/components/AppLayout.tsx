@@ -53,7 +53,7 @@ import {
   LanguageOptions,
   normalizeTranslationLanguage,
 } from '../i18n/translationConstant'
-import { getTenantPreferences } from '../lib/api'
+import { getTenantPreferences, trackPageVisit } from '../lib/api'
 import { getHiddenMenuLinks, saveHiddenMenuLinks, subscribeToMenuConfigChange } from '../lib/menuConfig'
 
 const drawerWidth = 280
@@ -191,6 +191,16 @@ export default function AppLayout() {
       setHiddenMenuLinks(getHiddenMenuLinks())
     })
   }, [])
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return
+    }
+
+    void trackPageVisit(location.pathname).catch(() => {
+      // Page telemetry must not block navigation rendering.
+    })
+  }, [isAuthenticated, location.pathname])
 
   useEffect(() => {
     if (!isAuthenticated) {

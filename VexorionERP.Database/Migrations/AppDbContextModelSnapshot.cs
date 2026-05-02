@@ -2717,6 +2717,56 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("Tenant", (string)null);
                 });
 
+            modelBuilder.Entity("VexorionERP.Models.TenantPageVisit", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<DateTime>("LastVisitedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Path")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("VisitCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<DateOnly>("VisitDate")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "LastVisitedAtUtc");
+
+                    b.HasIndex("TenantId", "VisitDate");
+
+                    b.HasIndex("TenantId", "Path", "VisitDate")
+                        .IsUnique();
+
+                    b.ToTable("TenantPageVisit", (string)null);
+                });
+
             modelBuilder.Entity("VexorionERP.Models.TenantPreference", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3984,6 +4034,17 @@ namespace VexorionERP.Database.Migrations
                 });
 
             modelBuilder.Entity("VexorionERP.Models.TaxCode", b =>
+                {
+                    b.HasOne("VexorionERP.Models.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.TenantPageVisit", b =>
                 {
                     b.HasOne("VexorionERP.Models.Tenant", "Tenant")
                         .WithMany()

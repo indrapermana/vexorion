@@ -1,7 +1,7 @@
 import { Alert, Box, Paper, Stack, Typography } from '@mui/material'
 import { lazy, useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { getTenants } from '../../../lib/api'
+import { deleteTenant, getTenants } from '../../../lib/api'
 import type { TenantListItemResponse } from '../../../types/api'
 import { TenantDataGrid } from '../components/TenantDataGrid'
 
@@ -48,6 +48,16 @@ export default function TenantManagementPage() {
     handleEditorClose()
   }
 
+  const handleTenantRemove = async (tenant: TenantListItemResponse) => {
+    try {
+      await deleteTenant(tenant.id)
+      setTenants((prev) => prev.filter((item) => item.id !== tenant.id))
+    } catch (err) {
+      setError('Failed to remove tenant.')
+      console.error(err)
+    }
+  }
+
   const activeTenants = tenants.filter((t) => t.isActive).length
 
   return (
@@ -79,7 +89,7 @@ export default function TenantManagementPage() {
 
         {error && <Alert severity="error">{error}</Alert>}
 
-        <TenantDataGrid rows={tenants} isLoading={isLoading} onEdit={handleEdit} />
+        <TenantDataGrid rows={tenants} isLoading={isLoading} onEdit={handleEdit} onRemove={handleTenantRemove} />
 
         <TenantEditorDialog
           open={isEditorOpen}

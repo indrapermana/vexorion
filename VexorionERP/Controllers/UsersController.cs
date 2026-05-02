@@ -20,6 +20,14 @@ public class UsersController(IMediator mediator) : ServiceResultControllerBase
         return ToActionResult(result);
     }
 
+    [HttpGet("admin")]
+    [Authorize(Policy = AppPermissions.Tenants.View)]
+    public async Task<ActionResult<IReadOnlyCollection<UserListItemResponse>>> GetAllForAdmin([FromQuery] Guid? tenantId)
+    {
+        var result = await mediator.Send(new GetUsersForAdminQuery(tenantId), HttpContext.RequestAborted);
+        return ToActionResult(result);
+    }
+
     [HttpPost]
     [Authorize(Policy = AppPermissions.Users.Manage)]
     public async Task<ActionResult<UserListItemResponse>> Create([FromBody] CreateUserRequest request)

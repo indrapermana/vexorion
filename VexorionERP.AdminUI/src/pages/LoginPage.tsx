@@ -1,95 +1,84 @@
-import { Box, Button, Card, Container, Stack, TextField, Typography } from '@mui/material'
+import { Alert, Box, Button, Divider, Stack, TextField, Typography } from '@mui/material'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
+import { ApiError } from '../lib/api'
 import { useAuth } from '../app/AuthContext'
 
 export default function LoginPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { login } = useAuth()
-  const [tenantCode, setTenantCode] = useState('demo')
-  const [userNameOrEmail, setUserNameOrEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const { login, error, validation, clearFeedback } = useAuth()
+  const [form, setForm] = useState({
+    tenantCode: 'demo',
+    userNameOrEmail: 'admin@demo.local',
+    password: 'DemoAdmin123!',
+  })
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setIsLoading(true)
+  const getValidationMessage = (key: string) => {
+    const value = validation?.[key]
+    if (!value) return undefined
+    return Array.isArray(value) ? value[0] : value
+  }
+
+  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setIsSubmitting(true)
+    clearFeedback()
 
     try {
-      await login({ tenantCode, userNameOrEmail, password })
+      await login(form)
       navigate('/')
-    } catch (err) {
-      setError('Invalid credentials')
-      console.error('Login error:', err)
+    } catch (requestError) {
+      if (!(requestError instanceof ApiError)) {
+        console.error(requestError)
+      }
     } finally {
-      setIsLoading(false)
+      setIsSubmitting(false)
     }
   }
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '100vh',
-        backgroundColor: '#f5f5f5',
-      }}
-    >
-      <Container maxWidth="sm">
-        <Card sx={{ p: 4 }}>
-          <Stack spacing={3}>
-            <Box>
-              <Typography variant="h4" sx={{ mb: 1 }}>
-                {t('login.title')}
-              </Typography>
-              <Typography variant="body2" color="textSecondary">
-                {t('login.description')}
-              </Typography>
-            </Box>
+    <Stack component="form" spacing={2.5} onSubmit={onSubmit} className="public-form-card public-form-card--login">
+      <Box>
+        <Typography variant="h4" sx={{ mb: 1 }}>{t('login.title')}</Typography>
+        <Typography color="text.secondary">{t('login.description')}</Typography>
+      </Box>
 
-            {error && (
-              <Typography color="error" variant="body2">
-                {error}
-              </Typography>
-            )}
+      {error ? <Alert severity="error">{error}</Alert> : null}
 
-            <form onSubmit={handleSubmit}>
-              <Stack spacing={2}>
-                <TextField
-                  label={t('login.tenantCode')}
-                  value={tenantCode}
-                  onChange={(e) => setTenantCode(e.target.value)}
-                  fullWidth
-                  required
-                />
-                <TextField
-                  label={t('login.emailOrUsername')}
-                  value={userNameOrEmail}
-                  onChange={(e) => setUserNameOrEmail(e.target.value)}
-                  fullWidth
-                  required
-                />
-                <TextField
-                  label={t('login.password')}
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  fullWidth
-                  required
-                />
-                <Button variant="contained" type="submit" fullWidth disabled={isLoading}>
-                  {isLoading ? t('login.signingIn') : t('login.signInButton')}
-                </Button>
-              </Stack>
-            </form>
-          </Stack>
-        </Card>
-      </Container>
-    </Box>
+      <TextField
+        label={t('login.tenantCode')}
+        value={form.tenantCode}
+        onChange={(event) => setForm((current) => ({ ...current, tenantCode: event.target.value }))}
+        error={Boolean(validation?.TenantCode)}
+        helperText={getValidationMessage('TenantCode')}
+      />
+      <TextField
+        label={t('login.emailOrUsername')}
+        value={form.userNameOrEmail}
+        onChange={(event) => setForm((current) => ({ ...current, userNameOrEmail: event.target.value }))}
+        error={Boolean(validation?.UserNameOrEmail)}
+        helperText={getValidationMessage('UserNameOrEmail')}
+      />
+      <TextField
+        type="password"
+        label={t('login.password')}
+        value={form.password}
+        onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
+        error={Boolean(validation?.Password)}
+        helperText={getValidationMessage('Password')}
+      />
+
+      <Button type="submit" variant="contained" size="large" disabled={isSubmitting}>
+        {isSubmitting ? t('login.signingIn') : t('login.signInButton')}
+      </Button>
+
+      <Divider>{t('login.systemAdminOnly')}</Divider>
+      <Typography variant="body2" color="text.secondary">
+        {t('login.helpHint')}
+      </Typography>
+    </Stack>
   )
 }

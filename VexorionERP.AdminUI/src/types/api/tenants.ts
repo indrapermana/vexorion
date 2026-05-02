@@ -12,3 +12,21 @@ export type UpdateTenantRequest = {
   domain?: string | null
   isActive: boolean
 }
+
+export type TenantPreferencesResponse = {
+  hiddenMenuLinks: string[]
+  defaultDiscountPercent: number
+  maxManualDiscountPercent: number
+  allowNegativeDiscount: boolean
+}
+
+export type TenantTelemetryListItemResponse = {
+  tenantId: string
+  loginCount: number
+  mostVisitedPage?: string | null
+  mostVisitedPageVisits: number
+}
+
+export type TenantTelemetryResponse = {
+  tenants: TenantTelemetryListItemResponse[]
+}

@@ -1,4 +1,3 @@
-import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded'
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
 import PublishRoundedIcon from '@mui/icons-material/PublishRounded'
 import { Chip } from '@mui/material'

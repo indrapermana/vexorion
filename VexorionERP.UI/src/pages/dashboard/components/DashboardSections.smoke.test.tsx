@@ -1,3 +1,5 @@
+/// <reference types="vitest/globals" />
+
 import { render, screen } from '@testing-library/react'
 import DashboardQuickStatsSection from './DashboardQuickStatsSection'
 import DashboardRecentOrdersSection from './DashboardRecentOrdersSection'

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Alert,
   Box,
@@ -20,9 +20,8 @@ import {
 } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { ApiError, createPurchaseReceipt, getPurchaseOrderLines } from '../../../lib/api'
-import { useProductsLookup, useWarehousesLookup } from '../../../hooks/useLookups'
+import { useProductsLookup } from '../../../hooks/useLookups'
 import LookupSelectField from '../../../components/LookupSelectField'
-import type { PurchaseReceiptDetailsResponse } from '../../../types/api'
 import type { PurchaseReceiptEditorDialogProps } from '../../../types/ui'
 
 type LineEntry = {
@@ -154,7 +153,7 @@ export default function CreatePurchaseReceiptDialog({ open, purchaseOrderId, war
               required
               fullWidth
               size="small"
-              InputLabelProps={{ shrink: true }}
+              slotProps={{ inputLabel: { shrink: true } }}
             />
           </Stack>
 
@@ -203,7 +202,7 @@ export default function CreatePurchaseReceiptDialog({ open, purchaseOrderId, war
                       <TextField
                         size="small"
                         type="number"
-                        inputProps={{ min: 0, step: 0.01 }}
+                        slotProps={{ htmlInput: { min: 0, step: 0.01 } }}
                         value={line.receivedQuantity}
                         onChange={e => handleQtyChange(line.purchaseOrderLineId, e.target.value)}
                         sx={{ width: 110 }}

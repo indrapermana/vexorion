@@ -23,7 +23,6 @@ import { useCurrency } from '../../../app/CurrencyContext'
 import { ApiError, createSalesShipment, getSalesOrderLines } from '../../../lib/api'
 import { useProductsLookup } from '../../../hooks/useLookups'
 import LookupSelectField from '../../../components/LookupSelectField'
-import type { SalesShipmentDetailsResponse } from '../../../types/api'
 import type { SalesShipmentEditorDialogProps } from '../../../types/ui'
 
 type LineEntry = {
@@ -154,7 +153,7 @@ export default function CreateSalesShipmentDialog({ open, salesOrderId, warehous
               required
               fullWidth
               size="small"
-              InputLabelProps={{ shrink: true }}
+              slotProps={{ inputLabel: { shrink: true } }}
             />
           </Stack>
 
@@ -203,7 +202,7 @@ export default function CreateSalesShipmentDialog({ open, salesOrderId, warehous
                       <TextField
                         size="small"
                         type="number"
-                        inputProps={{ min: 0, step: 0.01 }}
+                        slotProps={{ htmlInput: { min: 0, step: 0.01 } }}
                         value={line.shippedQuantity}
                         onChange={e => handleQtyChange(line.salesOrderLineId, e.target.value)}
                         sx={{ width: 110 }}

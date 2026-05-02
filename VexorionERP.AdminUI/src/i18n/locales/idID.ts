@@ -17,6 +17,8 @@ const idID = {
     password: 'Kata sandi',
     signingIn: 'Masuk...',
     signInButton: 'Masuk',
+    systemAdminOnly: 'Hanya SystemAdmin',
+    helpHint: 'Gunakan kode tenant demo dengan kredensial SystemAdmin Anda di lingkungan development.',
   },
   pages: {
     tenantManagement: {

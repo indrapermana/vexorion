@@ -34,4 +34,51 @@ public class TenantsController(IMediator mediator) : ServiceResultControllerBase
         var result = await mediator.Send(new UpdateTenantCommand(tenantId, request), HttpContext.RequestAborted);
         return ToActionResult(result);
     }
+
+    [HttpDelete("{tenantId:guid}")]
+    [Authorize(Policy = AppPermissions.Tenants.Manage)]
+    public async Task<ActionResult> Delete(Guid tenantId)
+    {
+        var result = await mediator.Send(new DeleteTenantCommand(tenantId), HttpContext.RequestAborted);
+        return ToActionResult(result);
+    }
+
+    [HttpGet("{tenantId:guid}/preferences/menu")]
+    [Authorize(Policy = AppPermissions.Tenants.View)]
+    public async Task<ActionResult<TenantPreferencesResponse>> GetTenantMenuConfiguration(Guid tenantId)
+    {
+        var result = await mediator.Send(new GetTenantMenuConfigurationQuery(tenantId), HttpContext.RequestAborted);
+        return ToActionResult(result);
+    }
+
+    [HttpPut("{tenantId:guid}/preferences/menu")]
+    [Authorize(Policy = AppPermissions.Tenants.Manage)]
+    public async Task<ActionResult<TenantPreferencesResponse>> UpdateTenantMenuConfiguration(Guid tenantId, [FromBody] UpdateMenuConfigurationRequest request)
+    {
+        var result = await mediator.Send(new UpdateTenantMenuConfigurationForTenantCommand(tenantId, request), HttpContext.RequestAborted);
+        return ToActionResult(result);
+    }
+
+    [HttpGet("telemetry")]
+    [Authorize(Policy = AppPermissions.Tenants.View)]
+    public async Task<ActionResult<TenantTelemetryResponse>> GetTelemetry(
+        [FromQuery] int? rangeDays,
+        [FromQuery] DateTime? fromUtc,
+        [FromQuery] DateTime? toUtc)
+    {
+        if (rangeDays.HasValue)
+        {
+            if (rangeDays.Value != 7 && rangeDays.Value != 30)
+            {
+                return BadRequest("rangeDays only supports 7 or 30.");
+            }
+
+            var now = DateTime.UtcNow;
+            fromUtc = now.AddDays(-rangeDays.Value);
+            toUtc ??= now;
+        }
+
+        var result = await mediator.Send(new GetTenantTelemetryQuery(fromUtc, toUtc), HttpContext.RequestAborted);
+        return ToActionResult(result);
+    }
 }

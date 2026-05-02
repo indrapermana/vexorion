@@ -227,7 +227,7 @@ export default function ConfigUsersPage() {
             label={t('config.users.fields.roles')}
             size="small"
             select
-            SelectProps={{ multiple: true }}
+            slotProps={{ select: { multiple: true } }}
             value={createDraft.roles}
             onChange={(event) => {
               const rolesValue = event.target.value
@@ -276,7 +276,7 @@ export default function ConfigUsersPage() {
                   <TextField
                     size="small"
                     select
-                    SelectProps={{ multiple: true }}
+                    slotProps={{ select: { multiple: true } }}
                     value={roleDraftByUserId[user.id] ?? user.roles}
                     onChange={(event) => updateRoleDraft(user.id, event.target.value)}
                     fullWidth

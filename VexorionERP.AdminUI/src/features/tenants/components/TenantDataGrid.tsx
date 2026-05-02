@@ -9,9 +9,10 @@ interface TenantDataGridProps {
   rows: TenantGridRow[]
   isLoading: boolean
   onEdit: (tenant: TenantListItemResponse) => void
+  onRemove: (tenant: TenantListItemResponse) => void
 }
 
-export function TenantDataGrid({ rows, isLoading, onEdit }: TenantDataGridProps) {
+export function TenantDataGrid({ rows, isLoading, onEdit, onRemove }: TenantDataGridProps) {
   const { t } = useTranslation()
 
   const columns = useMemo<GridColDef<TenantGridRow>[]>(
@@ -67,20 +68,36 @@ export function TenantDataGrid({ rows, isLoading, onEdit }: TenantDataGridProps)
         sortable: false,
         filterable: false,
         renderCell: (params) => (
-          <button
-            onClick={() => onEdit(params.row)}
-            style={{
-              padding: '4px 12px',
-              backgroundColor: '#6C5CE7',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '12px',
-            }}
-          >
-            Edit
-          </button>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <button
+              onClick={() => onEdit(params.row)}
+              style={{
+                padding: '4px 12px',
+                backgroundColor: '#6C5CE7',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '12px',
+              }}
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => onRemove(params.row)}
+              style={{
+                padding: '4px 12px',
+                backgroundColor: '#F3F0FF',
+                color: '#6C5CE7',
+                border: '1px solid #CFC4FF',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '12px',
+              }}
+            >
+              Remove
+            </button>
+          </Box>
         ),
       },
     ],

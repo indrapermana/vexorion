@@ -211,7 +211,7 @@ export default function ReportsPage() {
         <Typography color="text.secondary">Assets: {balanceSheet ? balanceSheet.totalAssets.toFixed(2) : '0.00'}</Typography>
         <Typography color="text.secondary">Liabilities + Equity: {balanceSheet ? balanceSheet.totalLiabilitiesAndEquity.toFixed(2) : '0.00'}</Typography>
         <Typography color="text.secondary">Current Earnings: {balanceSheet ? balanceSheet.currentEarnings.toFixed(2) : '0.00'}</Typography>
-        {showComparative && priorBalanceSheet ? (
+        {showComparative && priorBalanceSheet && balanceSheet ? (
           <>
             <Typography color="text.secondary" sx={{ mt: 1 }}>
               Prior Assets: {priorBalanceSheet.totalAssets.toFixed(2)}

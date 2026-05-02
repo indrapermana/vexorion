@@ -17,6 +17,8 @@ const enUS = {
     password: 'Password',
     signingIn: 'Signing in...',
     signInButton: 'Sign in',
+    systemAdminOnly: 'SystemAdmin only',
+    helpHint: 'Use tenant code demo with your SystemAdmin credentials in development.',
   },
   pages: {
     tenantManagement: {
