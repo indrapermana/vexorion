@@ -4,6 +4,8 @@ import type {
   CreateSalesInvoiceRequest,
   CustomerPaymentDetailsResponse,
   SalesInvoiceDetailsResponse,
+  SalesInvoiceLineListItemResponse,
+  SalesInvoiceListItemResponse,
 } from '../../types/api'
 import { requestJson } from './core'
 
@@ -17,4 +19,12 @@ export function createSalesInvoiceLine(salesInvoiceId: string, request: CreateSa
 
 export function createCustomerPayment(request: CreateCustomerPaymentRequest) {
   return requestJson<CustomerPaymentDetailsResponse>('/customer-payments', 'POST', request)
+}
+
+export function getSalesInvoices() {
+  return requestJson<SalesInvoiceListItemResponse[]>('/sales-invoices')
+}
+
+export function getSalesInvoiceLines(salesInvoiceId: string) {
+  return requestJson<SalesInvoiceLineListItemResponse[]>(`/sales-invoices/${salesInvoiceId}/lines`)
 }

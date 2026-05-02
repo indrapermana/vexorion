@@ -4,6 +4,7 @@ import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded'
 import LockRoundedIcon from '@mui/icons-material/LockRounded'
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded'
 import PointOfSaleRoundedIcon from '@mui/icons-material/PointOfSaleRounded'
+import UndoRoundedIcon from '@mui/icons-material/UndoRounded'
 import { Button, Chip, IconButton, MenuItem, Paper, Stack, TextField, Tooltip, Typography } from '@mui/material'
 import { Link } from 'react-router-dom'
 import { useThemeMode } from '../../app/ThemeModeContext'
@@ -17,9 +18,11 @@ type PosHeaderProps = {
   canCloseShift: boolean
   shiftOpenedAt?: string
   onCloseShift: () => void
+  canRefund: boolean
+  onOpenReturn: () => void
 }
 
-export function PosHeader({ canManageRoles, currencyCode, isShiftOpen, canCloseShift, shiftOpenedAt, onCloseShift }: PosHeaderProps) {
+export function PosHeader({ canManageRoles, currencyCode, isShiftOpen, canCloseShift, shiftOpenedAt, onCloseShift, canRefund, onOpenReturn }: PosHeaderProps) {
   const { themeMode, toggleThemeMode } = useThemeMode()
   const { locale, setLocale, t } = useI18n()
 
@@ -46,6 +49,11 @@ export function PosHeader({ canManageRoles, currencyCode, isShiftOpen, canCloseS
           {isShiftOpen && canCloseShift ? (
             <Button variant="outlined" color="warning" startIcon={<LockRoundedIcon />} onClick={onCloseShift}>
               {t('shift.close.button')}
+            </Button>
+          ) : null}
+          {canRefund ? (
+            <Button variant="outlined" color="secondary" startIcon={<UndoRoundedIcon />} onClick={onOpenReturn}>
+              {t('return.button')}
             </Button>
           ) : null}
           <TextField

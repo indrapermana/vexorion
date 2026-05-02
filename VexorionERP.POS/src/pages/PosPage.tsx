@@ -12,6 +12,7 @@ import { CartSummaryPanel } from '../components/pos/CartSummaryPanel'
 import { QuickCustomerDialog } from '../components/pos/QuickCustomerDialog'
 import { ShiftOpenDialog } from '../components/pos/ShiftOpenDialog'
 import { ShiftCloseDialog } from '../components/pos/ShiftCloseDialog'
+import ReturnRefundDialog from '../components/pos/ReturnRefundDialog'
 import { StockConflictDialog } from '../components/pos/StockConflictDialog'
 import { ReceiptModal, type ReceiptData } from '../components/pos/ReceiptModal'
 import type { CartLine, QuickCustomerForm } from '../components/pos/types'
@@ -62,12 +63,14 @@ export default function PosPage() {
   const canManageRoles = user?.permissions.includes('roles.manage') ?? false
   const canCheckout = user?.permissions.includes('pos.checkout') ?? false
   const canCloseShift = user?.permissions.includes('pos.shift.close') ?? false
+  const canRefund = user?.permissions.includes('pos.refund') ?? false
 
   const isShiftOpen = currentShift !== null
   const cashierName =
     [user?.firstName, user?.lastName].filter(Boolean).join(' ').trim() || user?.userName || ''
 
   const [isCloseShiftOpen, setIsCloseShiftOpen] = useState(false)
+  const [isReturnOpen, setIsReturnOpen] = useState(false)
 
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>(GUEST_CUSTOMER_TAG)
   const [selectedWarehouseId, setSelectedWarehouseId] = useState('')
@@ -541,6 +544,8 @@ export default function PosPage() {
         canCloseShift={canCloseShift}
         shiftOpenedAt={currentShift?.openedAt}
         onCloseShift={() => setIsCloseShiftOpen(true)}
+        canRefund={canRefund}
+        onOpenReturn={() => setIsReturnOpen(true)}
       />
 
       {error ? <Alert severity="error">{error}</Alert> : null}
@@ -646,6 +651,17 @@ export default function PosPage() {
             closeShift()
             setIsCloseShiftOpen(false)
           }}
+        />
+      ) : null}
+
+      {canRefund ? (
+        <ReturnRefundDialog
+          open={isReturnOpen}
+          onClose={() => setIsReturnOpen(false)}
+          products={products}
+          currencyCode={currencyCode}
+          cashierId={user?.id ?? ''}
+          cashierName={cashierName}
         />
       ) : null}
     </Stack>

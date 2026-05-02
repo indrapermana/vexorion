@@ -262,6 +262,29 @@ export type CompanyListItemResponse = {
   isActive: boolean
 }
 
+export type SalesInvoiceListItemResponse = {
+  id: string
+  invoiceNumber: string
+  customerId: string
+  invoiceDate: string
+  currencyCode: string
+  grandTotal: number
+  paidTotal: number
+  balanceDue: number
+  isActive: boolean
+}
+
+export type SalesInvoiceLineListItemResponse = {
+  id: string
+  salesInvoiceId: string
+  productId: string
+  quantity: number
+  unitPrice: number
+  discountAmount: number
+  lineTotal: number
+  isActive: boolean
+}
+
 export type InventoryBalanceListItemResponse = {
   id: string
   productId: string

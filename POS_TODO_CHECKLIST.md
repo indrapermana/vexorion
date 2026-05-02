@@ -15,10 +15,10 @@ Track progress by checking each item as it is completed.
 - [x] 8. Add variance report (expected cash vs counted cash).
 
 ## C. Return and Refund
-- [ ] 9. Add invoice search for return initiation.
-- [ ] 10. Support partial line returns by quantity.
-- [ ] 11. Auto-create credit note and refund payment records.
-- [ ] 12. Capture mandatory return/refund reason and actor audit trail.
+- [x] 9. Add invoice search for return initiation.
+- [x] 10. Support partial line returns by quantity.
+- [x] 11. Auto-create credit note and refund payment records.
+- [x] 12. Capture mandatory return/refund reason and actor audit trail.
 
 ## D. Inventory and Oversell Protection
 - [x] 13. Revalidate stock at checkout submission on server side.
