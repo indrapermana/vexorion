@@ -56,6 +56,19 @@ public static class RolePermissionMatrix
                 AppPermissions.Accounting.View,
                 AppPermissions.Reports.View,
                 AppPermissions.Billing.View
+            ],
+            [AppRoles.PosUser] =
+            [
+                AppPermissions.Customers.View,
+                AppPermissions.Customers.Manage,
+                AppPermissions.Products.View,
+                AppPermissions.Sales.View,
+                AppPermissions.Sales.Manage,
+                AppPermissions.SalesInvoices.View,
+                AppPermissions.SalesInvoices.Manage,
+                AppPermissions.Payments.View,
+                AppPermissions.Payments.Manage,
+                AppPermissions.Inventory.View
             ]
         };
 }
