@@ -108,6 +108,11 @@ const es: Dictionary = {
   'stock.conflictItem': '{productName}: solicitado {requested}, disponible {available}',
   'stock.conflictAdjust': 'Ajustar carrito',
   'stock.conflictCancel': 'Cancelar checkout',
+  'scan.label': 'Escanear / Agregar rapido',
+  'scan.placeholder': 'Escanee el codigo o escriba el SKU, luego Enter',
+  'scan.notFound': 'No se encontro producto para: {barcode}',
+  'scan.added': '{productName} agregado',
+  'shortcut.hint': 'F2 = Cobrar · Alt+1/2/3 = Efectivo/Tarjeta/Trans. · F8 = Deshacer ultimo articulo',
 }
 
 export default es

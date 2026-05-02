@@ -1,6 +1,7 @@
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded'
 import PersonAddAltRoundedIcon from '@mui/icons-material/PersonAddAltRounded'
+import QrCodeScannerRoundedIcon from '@mui/icons-material/QrCodeScannerRounded'
 import RemoveRoundedIcon from '@mui/icons-material/RemoveRounded'
 import {
   Alert,
@@ -11,6 +12,7 @@ import {
   CardContent,
   Divider,
   IconButton,
+  InputAdornment,
   MenuItem,
   Paper,
   Pagination,
@@ -18,8 +20,9 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useI18n } from '../../app/I18nContext'
+import { useBarcodeScanner } from '../../hooks/useBarcodeScanner'
 import type { CustomerListItemResponse, ProductListItemResponse, WarehouseListItemResponse } from '../../types/api'
 
 const DEFAULT_PAGE_SIZE = 50
@@ -87,6 +90,55 @@ export function ProductCatalogPanel({
   const [productSearch, setProductSearch] = useState('')
   const [page, setPage] = useState(1)
   const [qtyByProduct, setQtyByProduct] = useState<Record<string, number>>({})
+  const [scanInput, setScanInput] = useState('')
+  const [scanFeedback, setScanFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const scanInputRef = useRef<HTMLInputElement>(null)
+  const scanFeedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const showScanFeedback = (type: 'success' | 'error', message: string) => {
+    if (scanFeedbackTimerRef.current) clearTimeout(scanFeedbackTimerRef.current)
+    setScanFeedback({ type, message })
+    scanFeedbackTimerRef.current = setTimeout(() => setScanFeedback(null), type === 'error' ? 3000 : 2000)
+  }
+
+  const handleScanSubmit = (barcode: string) => {
+    const needle = barcode.trim().toLowerCase()
+    if (!needle) return
+
+    // 1. Exact SKU match
+    const exactMatch = products.find((p) => p.sku.toLowerCase() === needle)
+    if (exactMatch) {
+      onAddToCart(exactMatch, 1)
+      setScanInput('')
+      showScanFeedback('success', t('scan.added', { productName: exactMatch.name }))
+      scanInputRef.current?.focus()
+      return
+    }
+
+    // 2. SKU contains or name contains → if unique, auto-add; if multiple, filter grid
+    const fuzzyMatches = products.filter(
+      (p) => p.sku.toLowerCase().includes(needle) || p.name.toLowerCase().includes(needle),
+    )
+    if (fuzzyMatches.length === 1) {
+      onAddToCart(fuzzyMatches[0], 1)
+      setScanInput('')
+      showScanFeedback('success', t('scan.added', { productName: fuzzyMatches[0].name }))
+      scanInputRef.current?.focus()
+      return
+    }
+    if (fuzzyMatches.length > 1) {
+      setProductSearch(barcode.trim())
+      setScanInput('')
+      scanInputRef.current?.focus()
+      return
+    }
+
+    showScanFeedback('error', t('scan.notFound', { barcode }))
+    scanInputRef.current?.select()
+  }
+
+  // Global barcode wedge fallback — fires when no input element is focused
+  useBarcodeScanner(handleScanSubmit)
 
   const catalogOptions = useMemo(() => {
     const unique = new Set(products.map(getProductCatalogLabel))
@@ -195,6 +247,36 @@ export function ProductCatalogPanel({
             fullWidth
           />
         </Stack>
+
+        <TextField
+          inputRef={scanInputRef}
+          label={t('scan.label')}
+          placeholder={t('scan.placeholder')}
+          value={scanInput}
+          onChange={(event) => setScanInput(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault()
+              handleScanSubmit(scanInput)
+            }
+          }}
+          autoFocus
+          fullWidth
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <QrCodeScannerRoundedIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
+        {scanFeedback ? (
+          <Alert severity={scanFeedback.type} sx={{ py: 0.5 }}>
+            {scanFeedback.message}
+          </Alert>
+        ) : null}
 
         <Divider />
 

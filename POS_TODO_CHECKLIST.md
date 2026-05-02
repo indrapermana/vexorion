@@ -21,16 +21,16 @@ Track progress by checking each item as it is completed.
 - [ ] 12. Capture mandatory return/refund reason and actor audit trail.
 
 ## D. Inventory and Oversell Protection
-- [ ] 13. Revalidate stock at checkout submission on server side.
-- [ ] 14. Show low-stock warning for cart lines before payment.
-- [ ] 15. Show conflict message when stock changed concurrently.
-- [ ] 16. Add retry flow that refreshes stock and preserves cart.
+- [x] 13. Revalidate stock at checkout submission on server side.
+- [x] 14. Show low-stock warning for cart lines before payment.
+- [x] 15. Show conflict message when stock changed concurrently.
+- [x] 16. Add retry flow that refreshes stock and preserves cart.
 
 ## E. Barcode and Speed UX
-- [ ] 17. Add focused scan input mode (barcode keyboard wedge).
-- [ ] 18. Resolve barcode/SKU to product and auto-add to cart.
-- [ ] 19. Add quick quantity override shortcuts for cashier speed.
-- [ ] 20. Add keyboard shortcuts for checkout, payment method, and remove line.
+- [x] 17. Add focused scan input mode (barcode keyboard wedge).
+- [x] 18. Resolve barcode/SKU to product and auto-add to cart.
+- [x] 19. Add quick quantity override shortcuts for cashier speed.
+- [x] 20. Add keyboard shortcuts for checkout, payment method, and remove line.
 
 ## F. Reliability and Observability
 - [ ] 21. Add global error boundary for POS runtime failures.

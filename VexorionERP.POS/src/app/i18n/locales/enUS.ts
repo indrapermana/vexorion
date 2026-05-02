@@ -108,6 +108,11 @@ const en: Dictionary = {
   'stock.conflictItem': '{productName}: requested {requested}, available {available}',
   'stock.conflictAdjust': 'Adjust Cart',
   'stock.conflictCancel': 'Cancel Checkout',
+  'scan.label': 'Scan / Quick Add',
+  'scan.placeholder': 'Scan barcode or type SKU, then Enter',
+  'scan.notFound': 'No product found for: {barcode}',
+  'scan.added': 'Added {productName}',
+  'shortcut.hint': 'F2 = Checkout · Alt+1/2/3 = Cash/Card/Transfer · F8 = Undo last line',
 }
 
 export default en

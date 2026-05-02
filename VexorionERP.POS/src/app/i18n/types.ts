@@ -108,5 +108,10 @@ export type TranslationKey =
   | 'stock.conflictItem'
   | 'stock.conflictAdjust'
   | 'stock.conflictCancel'
+  | 'scan.label'
+  | 'scan.placeholder'
+  | 'scan.notFound'
+  | 'scan.added'
+  | 'shortcut.hint'
 
 export type Dictionary = Record<TranslationKey, string>

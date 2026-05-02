@@ -1,6 +1,7 @@
 import DeliveryDiningRoundedIcon from '@mui/icons-material/DeliveryDiningRounded'
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded'
 import {
+  Box,
   Button,
   Chip,
   Divider,
@@ -17,6 +18,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
+import { useState } from 'react'
 import { useI18n } from '../../app/I18nContext'
 import type { CartLine } from './types'
 
@@ -53,6 +55,7 @@ type CartSummaryPanelProps = {
   stockByProduct: Record<string, number>
   onRemoveCartLine: (productId: string) => void
   onLineDiscountChange: (productId: string, discountAmount: number) => void
+  onLineQtyChange: (productId: string, quantity: number) => void
   onPaymentAmountChange: (value: number) => void
   onPaymentMethodChange: (value: string) => void
   onDeliveryChange: (value: boolean) => void
@@ -74,12 +77,20 @@ export function CartSummaryPanel({
   stockByProduct,
   onRemoveCartLine,
   onLineDiscountChange,
+  onLineQtyChange,
   onPaymentAmountChange,
   onPaymentMethodChange,
   onDeliveryChange,
   onCheckout,
 }: CartSummaryPanelProps) {
   const { t } = useI18n()
+  const [editingQty, setEditingQty] = useState<{ productId: string; value: string } | null>(null)
+
+  const commitQtyEdit = (productId: string, rawValue: string) => {
+    const qty = Math.max(1, Number(rawValue) || 1)
+    onLineQtyChange(productId, qty)
+    setEditingQty(null)
+  }
 
   return (
     <Paper sx={{ p: 2 }}>
@@ -115,7 +126,32 @@ export function CartSummaryPanel({
                       {line.productName}
                     </Stack>
                   </TableCell>
-                <TableCell align="right">{line.quantity}</TableCell>
+                <TableCell align="right">
+                  {editingQty?.productId === line.productId ? (
+                    <TextField
+                      type="number"
+                      size="small"
+                      value={editingQty.value}
+                      autoFocus
+                      onChange={(e) => setEditingQty({ productId: line.productId, value: e.target.value })}
+                      onBlur={() => commitQtyEdit(line.productId, editingQty.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') commitQtyEdit(line.productId, editingQty.value)
+                        if (e.key === 'Escape') setEditingQty(null)
+                      }}
+                      slotProps={{ htmlInput: { min: 1, style: { textAlign: 'center', padding: '2px 4px' } } }}
+                      sx={{ width: 64 }}
+                    />
+                  ) : (
+                    <Box
+                      component="span"
+                      onClick={() => setEditingQty({ productId: line.productId, value: String(line.quantity) })}
+                      sx={{ cursor: 'pointer', px: 0.75, borderRadius: 0.5, '&:hover': { bgcolor: 'action.hover' } }}
+                    >
+                      {line.quantity}
+                    </Box>
+                  )}
+                </TableCell>
                 <TableCell align="right">{formatMoney(line.unitPrice, currencyCode)}</TableCell>
                 <TableCell align="right">
                   <TextField
@@ -178,6 +214,10 @@ export function CartSummaryPanel({
           <Typography variant="body2" sx={{ mr: 'auto' }}>{t('cart.deliveryTransaction')}</Typography>
           <Switch checked={isDelivery} onChange={(_, checked) => onDeliveryChange(checked)} />
         </Stack>
+
+        <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', display: 'block' }}>
+          {t('shortcut.hint')}
+        </Typography>
 
         <Button variant="contained" size="large" onClick={onCheckout} disabled={isProcessing || cart.length === 0 || !canCheckout}>
           {isProcessing ? t('cart.processing') : t('cart.checkout')}

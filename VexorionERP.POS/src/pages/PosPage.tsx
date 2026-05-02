@@ -1,5 +1,5 @@
 import { Alert, Box, Stack } from '@mui/material'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTransactionHistory } from '../app/transactionHistoryStore'
 import { useAuth } from '../app/AuthContext'
@@ -175,6 +175,60 @@ export default function PosPage() {
       ),
     )
   }
+
+  const updateLineQuantity = (productId: string, quantity: number) => {
+    const safeQty = Math.max(1, quantity)
+    setCart((current) =>
+      current.map((line) =>
+        line.productId === productId ? { ...line, quantity: safeQty } : line,
+      ),
+    )
+  }
+
+  // Stable ref so the keyboard handler always calls the latest checkout closure
+  const checkoutRef = useRef<() => Promise<void>>(() => Promise.resolve())
+  useEffect(() => {
+    checkoutRef.current = checkout
+  })
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement
+      const isInput =
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable
+
+      // F2 → trigger checkout from anywhere
+      if (event.key === 'F2') {
+        event.preventDefault()
+        if (!isProcessing && cart.length > 0 && canCheckout) {
+          void checkoutRef.current()
+        }
+        return
+      }
+
+      if (isInput) return
+
+      // Alt+1/2/3 → select payment method
+      if (event.altKey) {
+        if (event.key === '1') { event.preventDefault(); setPaymentMethod('Cash') }
+        else if (event.key === '2') { event.preventDefault(); setPaymentMethod('Card') }
+        else if (event.key === '3') { event.preventDefault(); setPaymentMethod('Transfer') }
+        return
+      }
+
+      // F8 → remove the last cart line (undo accidental scan)
+      if (event.key === 'F8' && cart.length > 0) {
+        event.preventDefault()
+        removeCartLine(cart[cart.length - 1].productId)
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isProcessing, cart, canCheckout, removeCartLine])
 
   const ensureGuestCustomer = async (existingCustomers: CustomerListItemResponse[]) => {
     const existingGuest = existingCustomers.find((customer) => customer.name.trim().toLowerCase() === 'guest' && customer.isActive)
@@ -457,6 +511,7 @@ export default function PosPage() {
           canCheckout={canCheckout}
           onRemoveCartLine={removeCartLine}
           onLineDiscountChange={updateLineDiscount}
+          onLineQtyChange={updateLineQuantity}
           onPaymentAmountChange={setPaymentAmount}
           onPaymentMethodChange={setPaymentMethod}
           onDeliveryChange={setIsDelivery}

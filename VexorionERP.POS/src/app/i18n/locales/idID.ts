@@ -108,6 +108,11 @@ const id: Dictionary = {
   'stock.conflictItem': '{productName}: diminta {requested}, tersedia {available}',
   'stock.conflictAdjust': 'Sesuaikan Keranjang',
   'stock.conflictCancel': 'Batal Checkout',
+  'scan.label': 'Scan / Tambah Cepat',
+  'scan.placeholder': 'Scan barcode atau ketik SKU, lalu Enter',
+  'scan.notFound': 'Produk tidak ditemukan untuk: {barcode}',
+  'scan.added': '{productName} ditambahkan',
+  'shortcut.hint': 'F2 = Bayar · Alt+1/2/3 = Tunai/Kartu/Transfer · F8 = Batalkan item terakhir',
 }
 
 export default id
