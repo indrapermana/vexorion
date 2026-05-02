@@ -7,6 +7,27 @@ export type PosSessionResponse = {
   canCloseShift: boolean
 }
 
+export type PosStockValidationLine = {
+  productId: string
+  warehouseId: string
+  quantity: number
+}
+
+export type PosStockValidationRequest = {
+  lines: PosStockValidationLine[]
+}
+
+export type PosStockInsufficientItem = {
+  productId: string
+  available: number
+  requested: number
+}
+
+export type PosStockValidationResponse = {
+  isValid: boolean
+  insufficientItems: PosStockInsufficientItem[]
+}
+
 export type LoginRequest = {
   tenantCode: string
   userNameOrEmail: string

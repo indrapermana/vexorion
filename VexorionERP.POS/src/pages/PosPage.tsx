@@ -9,6 +9,7 @@ import { PosHeader } from '../components/pos/PosHeader'
 import { ProductCatalogPanel } from '../components/pos/ProductCatalogPanel'
 import { CartSummaryPanel } from '../components/pos/CartSummaryPanel'
 import { QuickCustomerDialog } from '../components/pos/QuickCustomerDialog'
+import { StockConflictDialog } from '../components/pos/StockConflictDialog'
 import type { CartLine, QuickCustomerForm } from '../components/pos/types'
 import {
   createCustomer,
@@ -23,12 +24,15 @@ import {
   getProducts,
   getWarehouses,
   postSalesShipment,
+  validatePosStock,
 } from '../lib/api'
 import type {
   CreateCustomerRequest,
   CustomerListItemResponse,
+  PosStockInsufficientItem,
   ProductListItemResponse,
 } from '../types/api'
+import { ApiError } from '../lib/api/core'
 
 type CheckoutResult = {
   orderId: string
@@ -62,6 +66,7 @@ export default function PosPage() {
   const [checkoutResult, setCheckoutResult] = useState<CheckoutResult | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [stockConflict, setStockConflict] = useState<PosStockInsufficientItem[] | null>(null)
 
   const [isQuickCreateOpen, setIsQuickCreateOpen] = useState(false)
   const [quickCustomer, setQuickCustomer] = useState<QuickCustomerForm>({ name: '', phoneNumber: '', email: '' })
@@ -225,6 +230,7 @@ export default function PosPage() {
   const checkout = async () => {
     setError(null)
     setCheckoutResult(null)
+    setStockConflict(null)
 
     if (cart.length === 0) {
       setError(t('page.cartEmpty'))
@@ -244,6 +250,20 @@ export default function PosPage() {
     setIsProcessing(true)
 
     try {
+      // Item 13: server-side stock pre-check before creating any documents
+      const stockCheck = await validatePosStock({
+        lines: cart.map((line) => ({
+          productId: line.productId,
+          warehouseId: selectedWarehouse.id,
+          quantity: line.quantity,
+        })),
+      })
+
+      if (!stockCheck.isValid) {
+        setStockConflict(stockCheck.insufficientItems)
+        return
+      }
+
       let customerId = selectedCustomerId
       const customerSnapshot = customersQuery.data ?? []
       if (selectedCustomerId === GUEST_CUSTOMER_TAG) {
@@ -369,7 +389,21 @@ export default function PosPage() {
       setIsDelivery(false)
     } catch (requestError) {
       console.error(requestError)
-      setError(t('page.processingError'))
+      if (requestError instanceof ApiError && requestError.status === 400 && requestError.message.includes('Insufficient')) {
+        // Concurrent stock failure from shipment post — show conflict with current known stock
+        await inventoryBalancesQuery.refetch()
+        setStockConflict(
+          cart
+            .map((line) => ({
+              productId: line.productId,
+              available: stockByProduct[line.productId] ?? 0,
+              requested: line.quantity,
+            }))
+            .filter((item) => item.requested > item.available),
+        )
+      } else {
+        setError(t('page.processingError'))
+      }
     } finally {
       setIsProcessing(false)
     }
@@ -410,6 +444,7 @@ export default function PosPage() {
 
         <CartSummaryPanel
           cart={cart}
+          stockByProduct={stockByProduct}
           subtotal={subtotal}
           discountTotal={discountTotal}
           grandTotal={grandTotal}
@@ -437,6 +472,17 @@ export default function PosPage() {
         onClose={() => setIsQuickCreateOpen(false)}
         onChange={setQuickCustomer}
         onCreate={() => void createQuickCustomer()}
+      />
+
+      <StockConflictDialog
+        open={stockConflict !== null}
+        insufficientItems={stockConflict ?? []}
+        cart={cart}
+        onAdjust={() => {
+          setStockConflict(null)
+          void inventoryBalancesQuery.refetch()
+        }}
+        onCancel={() => setStockConflict(null)}
       />
     </Stack>
   )

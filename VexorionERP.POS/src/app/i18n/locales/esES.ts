@@ -102,6 +102,12 @@ const es: Dictionary = {
   'session.expiresIn': 'Tu sesión expira en {minutes} minuto(s). Completa tu transacción actual o permanece conectado.',
   'session.extend': 'Continuar sesión',
   'session.signOut': 'Cerrar sesión',
+  'cart.lowStock': 'Stock bajo',
+  'stock.conflictTitle': 'Conflicto de stock',
+  'stock.conflictMessage': 'Algunos artículos en su carrito superan el stock disponible. Ajuste las cantidades e intente nuevamente.',
+  'stock.conflictItem': '{productName}: solicitado {requested}, disponible {available}',
+  'stock.conflictAdjust': 'Ajustar carrito',
+  'stock.conflictCancel': 'Cancelar checkout',
 }
 
 export default es

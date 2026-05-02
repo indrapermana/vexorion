@@ -102,5 +102,11 @@ export type TranslationKey =
   | 'session.expiresIn'
   | 'session.extend'
   | 'session.signOut'
+  | 'cart.lowStock'
+  | 'stock.conflictTitle'
+  | 'stock.conflictMessage'
+  | 'stock.conflictItem'
+  | 'stock.conflictAdjust'
+  | 'stock.conflictCancel'
 
 export type Dictionary = Record<TranslationKey, string>

@@ -102,6 +102,12 @@ const id: Dictionary = {
   'session.expiresIn': 'Sesi Anda akan berakhir dalam {minutes} menit. Selesaikan transaksi atau tetap masuk.',
   'session.extend': 'Tetap Masuk',
   'session.signOut': 'Keluar',
+  'cart.lowStock': 'Stok rendah',
+  'stock.conflictTitle': 'Konflik Stok',
+  'stock.conflictMessage': 'Beberapa item di keranjang melebihi stok yang tersedia. Sesuaikan jumlah dan coba lagi.',
+  'stock.conflictItem': '{productName}: diminta {requested}, tersedia {available}',
+  'stock.conflictAdjust': 'Sesuaikan Keranjang',
+  'stock.conflictCancel': 'Batal Checkout',
 }
 
 export default id

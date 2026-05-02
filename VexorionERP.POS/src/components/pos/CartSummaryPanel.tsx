@@ -1,4 +1,5 @@
 import DeliveryDiningRoundedIcon from '@mui/icons-material/DeliveryDiningRounded'
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded'
 import {
   Button,
   Chip,
@@ -13,6 +14,7 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material'
 import { useI18n } from '../../app/I18nContext'
@@ -48,6 +50,7 @@ type CartSummaryPanelProps = {
   isDelivery: boolean
   isProcessing: boolean
   canCheckout: boolean
+  stockByProduct: Record<string, number>
   onRemoveCartLine: (productId: string) => void
   onLineDiscountChange: (productId: string, discountAmount: number) => void
   onPaymentAmountChange: (value: number) => void
@@ -68,6 +71,7 @@ export function CartSummaryPanel({
   isDelivery,
   isProcessing,
   canCheckout,
+  stockByProduct,
   onRemoveCartLine,
   onLineDiscountChange,
   onPaymentAmountChange,
@@ -97,9 +101,20 @@ export function CartSummaryPanel({
             </TableRow>
           </TableHead>
           <TableBody>
-            {cart.map((line) => (
-              <TableRow key={line.productId}>
-                <TableCell>{line.productName}</TableCell>
+            {cart.map((line) => {
+              const isLowStock = line.quantity > (stockByProduct[line.productId] ?? 0)
+              return (
+                <TableRow key={line.productId}>
+                  <TableCell>
+                    <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+                      {isLowStock ? (
+                        <Tooltip title={t('cart.lowStock')}>
+                          <WarningAmberRoundedIcon fontSize="small" color="warning" />
+                        </Tooltip>
+                      ) : null}
+                      {line.productName}
+                    </Stack>
+                  </TableCell>
                 <TableCell align="right">{line.quantity}</TableCell>
                 <TableCell align="right">{formatMoney(line.unitPrice, currencyCode)}</TableCell>
                 <TableCell align="right">
@@ -122,8 +137,9 @@ export function CartSummaryPanel({
                     {t('cart.remove')}
                   </Button>
                 </TableCell>
-              </TableRow>
-            ))}
+                </TableRow>
+              )
+            })}
           </TableBody>
         </Table>
 

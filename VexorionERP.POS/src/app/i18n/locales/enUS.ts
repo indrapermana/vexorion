@@ -102,6 +102,12 @@ const en: Dictionary = {
   'session.expiresIn': 'Your session will expire in {minutes} minute(s). Complete your current transaction or stay signed in.',
   'session.extend': 'Stay Signed In',
   'session.signOut': 'Sign Out',
+  'cart.lowStock': 'Low stock',
+  'stock.conflictTitle': 'Stock Conflict',
+  'stock.conflictMessage': 'Some items in your cart exceed available stock. Adjust quantities and try again.',
+  'stock.conflictItem': '{productName}: requested {requested}, available {available}',
+  'stock.conflictAdjust': 'Adjust Cart',
+  'stock.conflictCancel': 'Cancel Checkout',
 }
 
 export default en
