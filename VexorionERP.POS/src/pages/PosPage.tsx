@@ -39,6 +39,7 @@ import type {
   ProductListItemResponse,
 } from '../types/api'
 import { ApiError } from '../lib/api/core'
+import { generateDocumentNumber } from '../lib/posDocuments'
 
 type CheckoutResult = {
   orderId: string
@@ -48,12 +49,6 @@ type CheckoutResult = {
 }
 
 const GUEST_CUSTOMER_TAG = '__guest__'
-
-function generateDocumentNumber(prefix: string) {
-  const now = new Date()
-  const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`
-  return `${prefix}-${stamp}`
-}
 
 export default function PosPage() {
   const { t } = useI18n()

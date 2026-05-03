@@ -10,8 +10,8 @@
 
 ### 1b. Pure logic / utility tests
 - [x] 5. posLogger — ring buffer capped at 200, all three levels, DevTools accessor.
-- [ ] 6. printReceipt — escapeHtml sanitises XSS chars, subtotal/discount/change math, refs format.
-- [ ] 7. generateDocumentNumber (PosPage helper) — format PREFIX-YYYYMMDDHHMMSS, unique outputs.
+- [x] 6. printReceipt — escapeHtml sanitises XSS chars, subtotal/discount/change math, refs format.
+- [x] 7. generateDocumentNumber (PosPage helper) — format PREFIX-YYYYMMDDHHMMSS, unique outputs.
 - [x] 8. i18n translations — all TranslationKeys present in enUS, idID, esES; no missing keys.
 
 ### 1c. Zustand store tests
@@ -26,9 +26,9 @@
 - [x] 15. PosHeader — shows "Return / Refund" button only when canRefund=true; shift chip colour.
 
 ## 2. Frontend Unit Testing (AdminUI — Vitest)
-- [ ] 16. Mirror setup (install, vitest config, setup.ts) in AdminUI project.
-- [ ] 17. Shared utility / hook tests (date formatters, permission guards, API error helpers).
-- [ ] 18. Key form component tests (create/edit dialogs — required fields, submit calls, cancel).
+- [x] 16. Mirror setup (install, vitest config, setup.ts) in AdminUI project.
+- [x] 17. Shared utility / hook tests (date formatters, permission guards, API error helpers).
+- [x] 18. Key form component tests (create/edit dialogs — required fields, submit calls, cancel).
 
 ## 3. Frontend Unit Testing (UI component library — if exists)
 - [ ] 19. Identify shared UI package; add vitest if separate from AdminUI/POS.
