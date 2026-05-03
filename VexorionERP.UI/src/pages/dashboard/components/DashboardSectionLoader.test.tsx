@@ -1,6 +1,6 @@
 /// <reference types="vitest/globals" />
 
-import { render, screen } from '@testing-library/react'
+import { render } from '@testing-library/react'
 import DashboardSectionLoader from './DashboardSectionLoader'
 
 describe('DashboardSectionLoader', () => {

@@ -1,9 +1,21 @@
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return
+          if (id.includes('react') || id.includes('react-dom')) return 'vendor-react'
+          if (id.includes('@mui/icons-material')) return 'vendor-mui-icons'
+          if (id.includes('@mui/material') || id.includes('@mui/system')) return 'vendor-mui'
+        },
+      },
+    },
+  },
   server: {
     port: 5174,
   },

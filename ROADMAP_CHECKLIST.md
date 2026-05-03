@@ -49,15 +49,15 @@
 - [x] 30. Migrate POS frontend shiftStore from localStorage to backend shift API.
 
 ## 6. CI/CD — GitHub Actions
-- [ ] 31. Backend workflow: dotnet build → dotnet test → on push to main/develop.
-- [ ] 32. POS frontend workflow: npm ci → tsc -b → vitest run → vite build → on push.
-- [ ] 33. AdminUI workflow: same pattern as POS.
-- [ ] 34. PR status checks — block merge if any workflow fails.
-- [ ] 35. Coverage report artifact upload (lcov → GitHub summary comment).
+- [x] 31. Backend workflow: dotnet build → dotnet test → on push to main/develop.
+- [x] 32. POS frontend workflow: npm ci → tsc -b → vitest run → vite build → on push.
+- [x] 33. AdminUI workflow: same pattern as POS.
+- [x] 34. PR status checks — block merge if any workflow fails.
+- [x] 35. Coverage report artifact upload (lcov → GitHub summary comment).
 
 ## 7. Production Hardening
-- [ ] 36. Bundle splitting — dynamic import() for POS route, AdminUI route, and MUI icons.
-- [ ] 37. Content Security Policy (CSP) headers on the ASP.NET backend (Helmet equivalent).
-- [ ] 38. HTTPS enforcement — HSTS header, redirect HTTP → HTTPS in Program.cs.
-- [ ] 39. API rate limiting — AddRateLimiter middleware (fixed window per tenant/IP).
-- [ ] 40. Structured backend logging — Serilog + seq/Application Insights sink.
+- [x] 36. Bundle splitting — dynamic import() for POS route, AdminUI route, and MUI icons.
+- [x] 37. Content Security Policy (CSP) headers on the ASP.NET backend (Helmet equivalent).
+- [x] 38. HTTPS enforcement — HSTS header, redirect HTTP → HTTPS in Program.cs.
+- [x] 39. API rate limiting — AddRateLimiter middleware (fixed window per tenant/IP).
+- [x] 40. Structured backend logging — Serilog + seq/Application Insights sink.

@@ -7,6 +7,20 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (!id.includes('node_modules')) return
+            if (id.includes('react') || id.includes('react-dom')) return 'vendor-react'
+            if (id.includes('@mui/icons-material')) return 'vendor-mui-icons'
+            if (id.includes('@mui/material') || id.includes('@mui/system')) return 'vendor-mui'
+            if (id.includes('i18next') || id.includes('react-i18next')) return 'vendor-i18n'
+            if (id.includes('@tanstack')) return 'vendor-query'
+          },
+        },
+      },
+    },
     resolve: {
       dedupe: ['react', 'react-dom'],
     },

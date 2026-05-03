@@ -1,8 +1,30 @@
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
+using Serilog;
 using VexorionERP;
+
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+    .CreateBootstrapLogger();
+
+try
+{
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Host.UseSerilog((ctx, services, cfg) =>
+    cfg.ReadFrom.Configuration(ctx.Configuration)
+       .ReadFrom.Services(services)
+       .Enrich.FromLogContext()
+       .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {SourceContext} {Message:lj}{NewLine}{Exception}")
+       .WriteTo.File(
+           path: "logs/vexorionerp-.log",
+           rollingInterval: RollingInterval.Day,
+           retainedFileCountLimit: 14,
+           outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext} {Message:lj}{NewLine}{Exception}"));
+
 const string LocalDevCorsPolicy = "LocalDevCors";
+const string TenantRateLimitPolicy = "tenant-fixed";
 
 builder.Services.AddApplicationIdentity(builder.Configuration);
 builder.Services.AddApplicationAuthorization();
@@ -26,7 +48,25 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Item 39 — fixed-window rate limiting per tenant/IP
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddFixedWindowLimiter(TenantRateLimitPolicy, limiter =>
+    {
+        limiter.Window = TimeSpan.FromSeconds(10);
+        limiter.PermitLimit = 200;
+        limiter.QueueLimit = 0;
+        limiter.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+    });
+});
+
 var app = builder.Build();
+
+app.UseSerilogRequestLogging(opts =>
+{
+    opts.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
+});
 
 await app.InitializeApplicationAsync();
 
@@ -36,15 +76,45 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// Item 38 — HTTPS enforcement + HSTS
 app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts();
+}
+
+// Item 37 — Content Security Policy
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Append(
+        "Content-Security-Policy",
+        "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'");
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Append("X-Frame-Options", "DENY");
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+    await next();
+});
 
 app.UseCors(LocalDevCorsPolicy);
+
+// Item 39 — apply rate limiter
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllers();
+app.MapControllers().RequireRateLimiting(TenantRateLimitPolicy);
 
 app.Run();
+
+}
+catch (Exception ex) when (ex is not HostAbortedException)
+{
+    Log.Fatal(ex, "Application terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}
 
 public partial class Program;

@@ -1,0 +1,59 @@
+name: AdminUI Frontend
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'VexorionERP.AdminUI/**'
+      - '.github/workflows/adminui.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'VexorionERP.AdminUI/**'
+      - '.github/workflows/adminui.yml'
+
+defaults:
+  run:
+    working-directory: VexorionERP.AdminUI
+
+jobs:
+  build-and-test:
+    name: Build & Test (AdminUI)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: VexorionERP.AdminUI/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npx tsc -b --noEmit
+
+      - name: Unit tests (with coverage)
+        run: npm test -- --coverage --reporter=default --reporter=junit --outputFile=test-results.xml
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: adminui-test-results
+          path: VexorionERP.AdminUI/test-results.xml
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: adminui-coverage
+          path: VexorionERP.AdminUI/coverage/

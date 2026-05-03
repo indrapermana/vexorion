@@ -9,6 +9,20 @@ export default defineConfig(({ mode }) => {
     resolve: {
       dedupe: ['react', 'react-dom'],
     },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (!id.includes('node_modules')) return
+            if (id.includes('react') || id.includes('react-dom')) return 'vendor-react'
+            if (id.includes('@mui/icons-material')) return 'vendor-mui-icons'
+            if (id.includes('@mui/material') || id.includes('@mui/system')) return 'vendor-mui'
+            if (id.includes('zustand')) return 'vendor-zustand'
+            if (id.includes('@tanstack')) return 'vendor-query'
+          },
+        },
+      },
+    },
     server: {
       port: 5175,
       proxy: {

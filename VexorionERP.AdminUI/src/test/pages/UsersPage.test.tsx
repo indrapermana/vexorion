@@ -1,3 +1,4 @@
+import type React from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -25,7 +26,7 @@ vi.mock('@mui/x-data-grid', () => ({
               <span>{column.headerName}</span>
               <div>
                 {column.renderCell
-                  ? column.renderCell({ row })
+                  ? column.renderCell({ row }) as React.ReactNode
                   : column.valueGetter
                     ? String(column.valueGetter(undefined, row) ?? '')
                     : String((row as Record<string, unknown>)[column.field] ?? '')}

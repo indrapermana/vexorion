@@ -22,7 +22,7 @@ const agingData: AgingPoint[] = [
   { name: '31-60', value: 2000 },
 ]
 
-const totals = { total: 7000, dueOver90: 500 }
+const totals = { current: 0, due1To30: 0, due31To60: 0, due61To90: 0, total: 7000, dueOver90: 500 }
 
 describe('DashboardAgingSection', () => {
   it('renders AR and AP aging card titles', () => {

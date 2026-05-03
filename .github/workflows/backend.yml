@@ -1,0 +1,83 @@
+name: Backend
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - '**.cs'
+      - '**.csproj'
+      - '**.sln'
+      - '.github/workflows/backend.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - '**.cs'
+      - '**.csproj'
+      - '**.sln'
+      - '.github/workflows/backend.yml'
+
+jobs:
+  build-and-test:
+    name: Build & Test (.NET 8)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: vexorionerp_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+      DOTNET_NOLOGO: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Run tests (with coverage)
+        run: >-
+          dotnet test
+          --no-build
+          --configuration Release
+          --logger "trx;LogFileName=test-results.trx"
+          --collect:"XPlat Code Coverage"
+          --results-directory ./TestResults
+        env:
+          ConnectionStrings__DefaultConnection: >-
+            Host=localhost;Port=5432;Database=vexorionerp_test;
+            Username=postgres;Password=postgres
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: TestResults/
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: TestResults/**/coverage.cobertura.xml
