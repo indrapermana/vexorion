@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { getCompanies, getCompany } from '../lib/api/configurationCompanies'
+import { useAuthStore } from './authStore'
 
 interface CurrencyContextValue {
   currencyCode: string
@@ -18,6 +19,7 @@ const CurrencyContext = createContext<CurrencyContextValue>({
 
 export function CurrencyProvider({ children }: { children: ReactNode }) {
   const [currencyCode, setCurrencyCode] = useState('USD')
+  const isAuthenticated = useAuthStore((state) => Boolean(state.session?.accessToken))
 
   const refreshCurrency = useCallback(async () => {
     const companies = await getCompanies()
@@ -32,6 +34,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
+    if (!isAuthenticated) return
     let cancelled = false
     async function load() {
       try {
@@ -47,7 +50,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     }
     void load()
     return () => { cancelled = true }
-  }, [])
+  }, [isAuthenticated])
 
   const formatMoney = useCallback((value: number) =>
     value.toLocaleString(undefined, { style: 'currency', currency: currencyCode, maximumFractionDigits: 2 }), [currencyCode])
