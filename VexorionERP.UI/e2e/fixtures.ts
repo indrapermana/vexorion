@@ -79,6 +79,37 @@ export class GenericCrudPage {
 }
 
 // ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns a unique value suffixed with the current epoch ms.
+ * Use for names, numbers, codes that must be unique per test run.
+ */
+export const uid = (prefix: string) => `${prefix}-${Date.now()}`
+
+/**
+ * Select an option from a MUI LookupSelectField (renders as a combobox/listbox).
+ * Clicks the field, waits for the dropdown, and picks the first available option.
+ */
+export async function selectFirstOption(page: Page, label: string | RegExp) {
+  const field = page.getByLabel(label).or(page.getByRole('combobox', { name: label })).first()
+  await field.click()
+  const option = page.getByRole('option').first()
+  await expect(option).toBeVisible({ timeout: 5_000 })
+  await option.click()
+}
+
+/**
+ * Fill a MUI TextField by its label. Clears first to avoid stale text.
+ */
+export async function fillField(page: Page, label: string | RegExp, value: string) {
+  const field = page.getByLabel(label).first()
+  await field.clear()
+  await field.fill(value)
+}
+
+// ---------------------------------------------------------------------------
 // Extended fixture
 // ---------------------------------------------------------------------------
 
