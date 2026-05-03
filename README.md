@@ -1,5 +1,10 @@
 # VexorionERP
 
+[![Backend](https://github.com/indrapermana/vexorion/actions/workflows/backend.yml/badge.svg)](https://github.com/indrapermana/vexorion/actions/workflows/backend.yml)
+[![UI Frontend](https://github.com/indrapermana/vexorion/actions/workflows/ui.yml/badge.svg)](https://github.com/indrapermana/vexorion/actions/workflows/ui.yml)
+[![AdminUI Frontend](https://github.com/indrapermana/vexorion/actions/workflows/adminui.yml/badge.svg)](https://github.com/indrapermana/vexorion/actions/workflows/adminui.yml)
+[![POS Frontend](https://github.com/indrapermana/vexorion/actions/workflows/pos.yml/badge.svg)](https://github.com/indrapermana/vexorion/actions/workflows/pos.yml)
+
 A full-stack SME ERP platform built with **ASP.NET Core 8**, **Entity Framework Core**, **PostgreSQL**, and three **React + Vite + MUI v6** frontends.
 
 ---
@@ -131,6 +136,10 @@ Runs at **`http://localhost:5173`** (default Vite port). Proxies `/api/*` to `ht
 | `npm run lint` | Run ESLint |
 | `npm run test:run` | Run unit tests once (Vitest) |
 | `npm test` | Run unit tests in watch mode |
+| `npm run e2e` | Run Playwright E2E tests |
+| `npm run e2e:headed` | Run E2E tests with browser visible |
+| `npm run e2e:ui` | Open Playwright interactive UI |
+| `npm run e2e:report` | Open the last HTML report |
 
 ---
 
@@ -172,6 +181,10 @@ Runs at **`http://localhost:5174`**. Proxies `/api/*` to `http://localhost:5000`
 | `npm test` | Run unit tests once (Vitest) |
 | `npm run test:watch` | Run unit tests in watch mode |
 | `npm run test:coverage` | Run tests with V8 coverage report |
+| `npm run e2e` | Run Playwright E2E tests |
+| `npm run e2e:headed` | Run E2E tests with browser visible |
+| `npm run e2e:ui` | Open Playwright interactive UI |
+| `npm run e2e:report` | Open the last HTML report |
 
 ---
 
@@ -241,8 +254,8 @@ Override credentials with environment variables if needed:
 | Env var | Default |
 |---|---|
 | `E2E_TENANT_CODE` | `demo` |
-| `E2E_USERNAME` | `admin@demo.com` |
-| `E2E_PASSWORD` | `Admin@123` |
+| `E2E_USERNAME` | `admin@demo.local` |
+| `E2E_PASSWORD` | `DemoAdmin123!` |
 | `POS_BASE_URL` | `http://localhost:5175` |
 
 ---
@@ -272,10 +285,25 @@ cd VexorionERP.POS && npm install && npm run dev
 | VexorionERP.Services.Tests | xUnit | `dotnet test` | backend services |
 | VexorionERP.Handler.Tests | xUnit | `dotnet test` | CQRS handlers |
 | VexorionERP.Web.Tests | xUnit | `dotnet test` | integration |
-| VexorionERP.UI | Vitest | `npm run test:run` | 64 unit tests |
-| VexorionERP.AdminUI | Vitest | `npm test` | 21 unit tests |
-| VexorionERP.POS | Vitest | `npm test` | 62 unit tests |
-| VexorionERP.POS | Playwright | `npm run e2e` | 7 E2E tests |
+| VexorionERP.UI | Vitest | `npm run test:run` | frontend unit tests |
+| VexorionERP.UI | Playwright | `npm run e2e` | frontend E2E workflows |
+| VexorionERP.AdminUI | Vitest | `npm test` | admin panel unit tests |
+| VexorionERP.AdminUI | Playwright | `npm run e2e` | admin panel E2E workflows |
+| VexorionERP.POS | Vitest | `npm test` | POS unit tests |
+| VexorionERP.POS | Playwright | `npm run e2e` | POS E2E workflows |
+
+## CI workflows
+
+GitHub Actions is split into four path-scoped workflows, and the badges at the top of this README show the latest status for each workflow.
+
+| Workflow | File | Triggered by changes in |
+|---|---|---|
+| Backend | `.github/workflows/backend.yml` | `**.cs`, `**.csproj`, `**.sln`, or the workflow file itself |
+| UI Frontend | `.github/workflows/ui.yml` | `VexorionERP.UI/**` or the workflow file itself |
+| AdminUI Frontend | `.github/workflows/adminui.yml` | `VexorionERP.AdminUI/**` or the workflow file itself |
+| POS Frontend | `.github/workflows/pos.yml` | `VexorionERP.POS/**` or the workflow file itself |
+
+Each frontend workflow runs build, unit tests, and Playwright E2E tests. The backend workflow runs restore, release build, `.NET` tests, and uploads test/coverage artifacts.
 
 ## Migration commands
 
