@@ -11,19 +11,20 @@ public class RoleManagementServiceTests
     // ── GetRolePermissions ────────────────────────────────────────────────────
 
     [Fact]
-    public void GetRolePermissions_ReturnsAllFourRoles()
+    public void GetRolePermissions_ReturnsAllFiveRoles()
     {
-        var (userManager, _) = IdentityTestHelper.CreateUserManager(nameof(GetRolePermissions_ReturnsAllFourRoles));
+        var (userManager, _) = IdentityTestHelper.CreateUserManager(nameof(GetRolePermissions_ReturnsAllFiveRoles));
         var service = new RoleManagementService(userManager, new FixedTenantProvider(Guid.NewGuid()), new NoOpAuditLogger());
 
         var result = service.GetRolePermissions();
 
         Assert.True(result.Succeeded);
-        Assert.Equal(4, result.Value!.Count);
+        Assert.Equal(5, result.Value!.Count);
         Assert.Contains(result.Value, r => r.Role == AppRoles.SystemAdmin);
         Assert.Contains(result.Value, r => r.Role == AppRoles.TenantAdmin);
         Assert.Contains(result.Value, r => r.Role == AppRoles.Manager);
         Assert.Contains(result.Value, r => r.Role == AppRoles.Staff);
+        Assert.Contains(result.Value, r => r.Role == AppRoles.PosUser);
     }
 
     [Fact]
