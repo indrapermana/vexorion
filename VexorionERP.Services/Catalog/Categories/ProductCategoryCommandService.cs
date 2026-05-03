@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using VexorionERP.Contracts;
 using VexorionERP.Database;
 using VexorionERP.Models;
@@ -25,9 +26,9 @@ public class ProductCategoryCommandService : BaseCommandService<ProductCategory>
         }
 
         var normalized = request.Name.Trim().ToUpperInvariant();
-        var exists = context.ProductCategories
+        var exists = await context.ProductCategories
             .GetByTenant(tenantId.Value)
-            .Any(x => x.NormalizedName == normalized);
+            .AnyAsync(x => x.NormalizedName == normalized, cancellationToken);
 
         if (exists)
         {
@@ -54,9 +55,9 @@ public class ProductCategoryCommandService : BaseCommandService<ProductCategory>
         }
 
         var normalized = request.Name.Trim().ToUpperInvariant();
-        var exists = context.ProductCategories
+        var exists = await context.ProductCategories
             .GetByTenant(tenantId.Value)
-            .Any(x => x.NormalizedName == normalized && x.Id != id);
+            .AnyAsync(x => x.NormalizedName == normalized && x.Id != id, cancellationToken);
 
         if (exists)
         {
@@ -82,18 +83,18 @@ public class ProductCategoryCommandService : BaseCommandService<ProductCategory>
         return Task.FromResult(entity);
     }
 
-    protected override Task<ProductCategory> GetUpdatedDbObjectAsync(
+    protected override async Task<ProductCategory> GetUpdatedDbObjectAsync(
         Guid id,
         IUpdateInput<ProductCategory> input,
         AppDbContext context,
         CancellationToken cancellationToken = default)
     {
         var request = (UpdateProductCategoryRequest)input;
-        var entity = context.ProductCategories.GetByTenant(TenantId).FirstOrDefault(x => x.Id == id);
+        var entity = await context.ProductCategories.GetByTenant(TenantId).FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
         if (entity is null)
         {
-            return Task.FromResult<ProductCategory>(null!);
+            return null!;
         }
 
         entity.Name = request.Name.Trim();
@@ -101,15 +102,15 @@ public class ProductCategoryCommandService : BaseCommandService<ProductCategory>
         entity.IsActive = request.IsActive;
         entity.UpdatedAtUtc = DateTime.UtcNow;
 
-        return Task.FromResult(entity);
+        return entity;
     }
 
-    protected override Task<ProductCategory> GetDeleteObjectAsync(
+    protected override async Task<ProductCategory> GetDeleteObjectAsync(
         Guid id,
         AppDbContext context,
         CancellationToken cancellationToken = default)
     {
-        var entity = context.ProductCategories.GetByTenant(TenantId).FirstOrDefault(x => x.Id == id);
-        return Task.FromResult(entity!);
+        var entity = await context.ProductCategories.GetByTenant(TenantId).FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        return entity!;
     }
 }
