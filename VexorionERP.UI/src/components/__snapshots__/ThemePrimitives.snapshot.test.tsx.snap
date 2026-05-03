@@ -1,0 +1,217 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`UI theme primitives snapshots > matches the dark theme lookup select states 1`] = `
+<DocumentFragment>
+  <div
+    class="MuiStack-root css-lkr0zo-MuiStack-root"
+  >
+    <div
+      class="MuiFormControl-root MuiFormControl-fullWidth MuiTextField-root css-cmpglg-MuiFormControl-root-MuiTextField-root"
+    >
+      <div
+        class="MuiFormLabel-root MuiInputLabel-root MuiInputLabel-formControl MuiInputLabel-animated MuiInputLabel-outlined MuiFormLabel-colorPrimary MuiInputLabel-root MuiInputLabel-formControl MuiInputLabel-animated MuiInputLabel-outlined css-1fwkutb-MuiFormLabel-root-MuiInputLabel-root"
+        data-shrink="false"
+        id="_r_4_-label"
+      >
+        Category
+      </div>
+      <div
+        class="MuiInputBase-root MuiOutlinedInput-root MuiInputBase-colorPrimary MuiInputBase-fullWidth MuiInputBase-formControl MuiSelect-root css-1rr3pp0-MuiInputBase-root-MuiOutlinedInput-root"
+      >
+        <div
+          aria-describedby="_r_4_-helper-text"
+          aria-expanded="false"
+          aria-haspopup="listbox"
+          aria-labelledby="_r_4_-label _r_4_"
+          class="MuiSelect-select MuiSelect-outlined MuiInputBase-input MuiOutlinedInput-input css-121wwrg-MuiNativeSelect-root-MuiSelect-select-MuiInputBase-input-MuiOutlinedInput-input"
+          id="_r_4_"
+          role="combobox"
+          tabindex="0"
+        >
+          <span
+            aria-hidden="true"
+            class="notranslate"
+          >
+            ​
+          </span>
+        </div>
+        <input
+          aria-hidden="true"
+          aria-invalid="false"
+          class="MuiSelect-nativeInput css-j0riat-MuiSelect-nativeInput"
+          id="_r_6_"
+          tabindex="-1"
+          value=""
+        />
+        <svg
+          aria-hidden="true"
+          class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium MuiSelect-icon css-1jontv8-MuiSvgIcon-root-MuiNativeSelect-root-MuiSelect-icon"
+          data-testid="ArrowDropDownIcon"
+          focusable="false"
+          viewBox="0 0 24 24"
+        >
+          <path
+            d="M7 10l5 5 5-5z"
+          />
+        </svg>
+        <fieldset
+          aria-hidden="true"
+          class="MuiOutlinedInput-notchedOutline css-vy4cj6-MuiNotchedOutlined-root-MuiOutlinedInput-notchedOutline"
+        >
+          <legend
+            class="css-1n64csd-MuiNotchedOutlined-root"
+          >
+            <span>
+              Category
+            </span>
+          </legend>
+        </fieldset>
+      </div>
+      <p
+        class="MuiFormHelperText-root MuiFormHelperText-sizeMedium MuiFormHelperText-contained css-306hrl-MuiFormHelperText-root"
+        id="_r_4_-helper-text"
+      >
+        Required
+      </p>
+    </div>
+    <div
+      class="MuiFormControl-root MuiFormControl-fullWidth MuiTextField-root css-cmpglg-MuiFormControl-root-MuiTextField-root"
+    >
+      <div
+        class="MuiFormLabel-root MuiInputLabel-root MuiInputLabel-formControl MuiInputLabel-animated MuiInputLabel-outlined MuiFormLabel-colorPrimary Mui-disabled Mui-error MuiInputLabel-root MuiInputLabel-formControl MuiInputLabel-animated MuiInputLabel-outlined css-1fwkutb-MuiFormLabel-root-MuiInputLabel-root"
+        data-shrink="false"
+        id="_r_7_-label"
+      >
+        Category
+      </div>
+      <div
+        class="MuiInputBase-root MuiOutlinedInput-root MuiInputBase-colorPrimary Mui-disabled Mui-error MuiInputBase-fullWidth MuiInputBase-formControl MuiSelect-root css-1rr3pp0-MuiInputBase-root-MuiOutlinedInput-root"
+      >
+        <div
+          aria-describedby="_r_7_-helper-text"
+          aria-disabled="true"
+          aria-expanded="false"
+          aria-haspopup="listbox"
+          aria-invalid="true"
+          aria-labelledby="_r_7_-label _r_7_"
+          class="MuiSelect-select MuiSelect-outlined Mui-disabled Mui-error MuiInputBase-input MuiOutlinedInput-input Mui-disabled css-121wwrg-MuiNativeSelect-root-MuiSelect-select-MuiInputBase-input-MuiOutlinedInput-input"
+          id="_r_7_"
+          role="combobox"
+        >
+          <span
+            aria-hidden="true"
+            class="notranslate"
+          >
+            ​
+          </span>
+        </div>
+        <input
+          aria-hidden="true"
+          aria-invalid="true"
+          class="MuiSelect-nativeInput css-j0riat-MuiSelect-nativeInput"
+          disabled=""
+          id="_r_9_"
+          tabindex="-1"
+          value=""
+        />
+        <svg
+          aria-hidden="true"
+          class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium MuiSelect-icon Mui-disabled css-1jontv8-MuiSvgIcon-root-MuiNativeSelect-root-MuiSelect-icon"
+          data-testid="ArrowDropDownIcon"
+          focusable="false"
+          viewBox="0 0 24 24"
+        >
+          <path
+            d="M7 10l5 5 5-5z"
+          />
+        </svg>
+        <fieldset
+          aria-hidden="true"
+          class="MuiOutlinedInput-notchedOutline css-vy4cj6-MuiNotchedOutlined-root-MuiOutlinedInput-notchedOutline"
+        >
+          <legend
+            class="css-1n64csd-MuiNotchedOutlined-root"
+          >
+            <span>
+              Category
+            </span>
+          </legend>
+        </fieldset>
+      </div>
+      <p
+        class="MuiFormHelperText-root Mui-disabled Mui-error MuiFormHelperText-sizeMedium MuiFormHelperText-contained css-306hrl-MuiFormHelperText-root"
+        id="_r_7_-helper-text"
+      >
+        No options available
+      </p>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`UI theme primitives snapshots > matches the light theme button, chip, and input primitives 1`] = `
+<DocumentFragment>
+  <div
+    class="MuiStack-root css-lkr0zo-MuiStack-root"
+  >
+    <button
+      class="MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-sizeMedium MuiButton-colorPrimary MuiButton-root MuiButton-contained MuiButton-sizeMedium MuiButton-colorPrimary css-eazmic-MuiButtonBase-root-MuiButton-root"
+      tabindex="0"
+      type="button"
+    >
+      Primary Action
+    </button>
+    <div
+      class="MuiChip-root MuiChip-filled MuiChip-sizeMedium MuiChip-colorSuccess css-1ym7y3g-MuiChip-root"
+    >
+      <span
+        class="MuiChip-label css-1dybbl5-MuiChip-label"
+      >
+        Active
+      </span>
+    </div>
+    <div
+      class="MuiFormControl-root MuiTextField-root css-1xp5r68-MuiFormControl-root-MuiTextField-root"
+    >
+      <label
+        class="MuiFormLabel-root MuiInputLabel-root MuiInputLabel-formControl MuiInputLabel-animated MuiInputLabel-shrink MuiInputLabel-outlined MuiFormLabel-colorPrimary MuiFormLabel-filled MuiInputLabel-root MuiInputLabel-formControl MuiInputLabel-animated MuiInputLabel-shrink MuiInputLabel-outlined css-1mvzzqx-MuiFormLabel-root-MuiInputLabel-root"
+        data-shrink="true"
+        for="_r_2_"
+        id="_r_2_-label"
+      >
+        Workspace name
+      </label>
+      <div
+        class="MuiInputBase-root MuiOutlinedInput-root MuiInputBase-colorPrimary MuiInputBase-formControl css-jqnj18-MuiInputBase-root-MuiOutlinedInput-root"
+      >
+        <input
+          aria-describedby="_r_2_-helper-text"
+          aria-invalid="false"
+          class="MuiInputBase-input MuiOutlinedInput-input css-16wblaj-MuiInputBase-input-MuiOutlinedInput-input"
+          id="_r_2_"
+          type="text"
+          value="Acme ERP"
+        />
+        <fieldset
+          aria-hidden="true"
+          class="MuiOutlinedInput-notchedOutline css-18p5xg2-MuiNotchedOutlined-root-MuiOutlinedInput-notchedOutline"
+        >
+          <legend
+            class="css-ex8a5f-MuiNotchedOutlined-root"
+          >
+            <span>
+              Workspace name
+            </span>
+          </legend>
+        </fieldset>
+      </div>
+      <p
+        class="MuiFormHelperText-root MuiFormHelperText-sizeMedium MuiFormHelperText-contained MuiFormHelperText-filled css-1nsc75b-MuiFormHelperText-root"
+        id="_r_2_-helper-text"
+      >
+        Required
+      </p>
+    </div>
+  </div>
+</DocumentFragment>
+`;

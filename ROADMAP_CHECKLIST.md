@@ -31,16 +31,16 @@
 - [x] 18. Key form component tests (create/edit dialogs — required fields, submit calls, cancel).
 
 ## 3. Frontend Unit Testing (UI component library — if exists)
-- [ ] 19. Identify shared UI package; add vitest if separate from AdminUI/POS.
-- [ ] 20. Snapshot tests for design-system primitives (buttons, chips, inputs).
+- [x] 19. Identify shared UI package; add vitest if separate from AdminUI/POS.
+- [x] 20. Snapshot tests for design-system primitives (buttons, chips, inputs).
 
 ## 4. E2E — Playwright (POS cashier journey)
-- [ ] 21. Install Playwright, add e2e/ directory, configure baseURL and auth fixture.
-- [ ] 22. Login → open shift → add product to cart → checkout → receipt modal visible.
-- [ ] 23. Reprint from transaction history panel.
-- [ ] 24. Return flow — search invoice → partial lines → submit → success message.
-- [ ] 25. Shift close — enter counted cash → variance chip → confirm close.
-- [ ] 26. Permission guard — user without pos.refund cannot see Return button.
+- [x] 21. Install Playwright, add e2e/ directory, configure baseURL and auth fixture.
+- [x] 22. Login → open shift → add product to cart → checkout → receipt modal visible.
+- [x] 23. Reprint from transaction history panel.
+- [x] 24. Return flow — search invoice → partial lines → submit → success message.
+- [x] 25. Shift close — enter counted cash → variance chip → confirm close.
+- [x] 26. Permission guard — user without pos.refund cannot see Return button.
 
 ## 5. Backend Enhancements
 - [ ] 27. Dedicated credit note endpoint (POST /api/sales-invoices/{id}/credit-note) — negates lines, links original invoice.

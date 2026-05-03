@@ -160,7 +160,7 @@ export function ReceiptModal({ open, data, onClose }: Props) {
             <Typography variant="subtitle2">{fmt(grandTotal)}</Typography>
           </Stack>
           <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
-            <Typography variant="body2" color="text.secondary">
+            <Typography component="span" variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               {t('cart.method')}: <Chip size="small" label={data.paymentMethod} />
             </Typography>
             <Typography variant="body2">{fmt(data.paymentAmount)}</Typography>
