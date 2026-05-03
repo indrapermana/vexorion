@@ -43,10 +43,10 @@
 - [x] 26. Permission guard — user without pos.refund cannot see Return button.
 
 ## 5. Backend Enhancements
-- [ ] 27. Dedicated credit note endpoint (POST /api/sales-invoices/{id}/credit-note) — negates lines, links original invoice.
-- [ ] 28. Shift persistence — ShiftSession table (tenantId, cashierId, openedAt, closedAt?, openingFloat, countedCash?, notes?).
-- [ ] 29. Shift API (POST /api/pos/shifts/open, POST /api/pos/shifts/close, GET /api/pos/shifts/current).
-- [ ] 30. Migrate POS frontend shiftStore from localStorage to backend shift API.
+- [x] 27. Dedicated credit note endpoint (POST /api/sales-invoices/{id}/credit-note) — negates lines, links original invoice.
+- [x] 28. Shift persistence — ShiftSession table (tenantId, cashierId, openedAt, closedAt?, openingFloat, countedCash?, notes?).
+- [x] 29. Shift API (POST /api/pos/shifts/open, POST /api/pos/shifts/close, GET /api/pos/shifts/current).
+- [x] 30. Migrate POS frontend shiftStore from localStorage to backend shift API.
 
 ## 6. CI/CD — GitHub Actions
 - [ ] 31. Backend workflow: dotnet build → dotnet test → on push to main/develop.

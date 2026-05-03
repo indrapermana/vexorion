@@ -22,5 +22,6 @@ public class SalesInvoiceDetailsResponse
     public decimal PaidTotal { get; set; }
     public decimal BalanceDue { get; set; }
     public string? Notes { get; set; }
+    public Guid? CreditNoteOfInvoiceId { get; set; }
     public bool IsActive { get; set; }
 }

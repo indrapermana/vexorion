@@ -20,6 +20,7 @@ public class SalesInvoice : TenantEntityBase
     public InvoiceStatus Status { get; set; } = InvoiceStatus.Draft;
     public DateTime? PostedAtUtc { get; set; }
     public DateTime? ReversedAtUtc { get; set; }
+    public Guid? CreditNoteOfInvoiceId { get; set; }
     public string? Notes { get; set; }
 
     public Customer? Customer { get; set; }

@@ -2001,6 +2001,9 @@ namespace VexorionERP.Database.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("CreditNoteOfInvoiceId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("CurrencyCode")
                         .IsRequired()
                         .HasMaxLength(3)
@@ -2070,6 +2073,8 @@ namespace VexorionERP.Database.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreditNoteOfInvoiceId");
 
                     b.HasIndex("CustomerId");
 
@@ -2377,6 +2382,71 @@ namespace VexorionERP.Database.Migrations
                     b.HasIndex("TenantId", "SalesShipmentId");
 
                     b.ToTable("SalesShipmentLine", (string)null);
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.ShiftSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CashierId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CashierName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime?>("ClosedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal?>("CountedCash")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CurrencyCode")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime>("OpenedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("OpeningFloat")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "OpenedAtUtc");
+
+                    b.HasIndex("TenantId", "CashierId", "Status");
+
+                    b.ToTable("ShiftSession", (string)null);
                 });
 
             modelBuilder.Entity("VexorionERP.Models.StockCount", b =>
@@ -3749,6 +3819,11 @@ namespace VexorionERP.Database.Migrations
 
             modelBuilder.Entity("VexorionERP.Models.SalesInvoice", b =>
                 {
+                    b.HasOne("VexorionERP.Models.SalesInvoice", null)
+                        .WithMany()
+                        .HasForeignKey("CreditNoteOfInvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("VexorionERP.Models.Customer", "Customer")
                         .WithMany("SalesInvoices")
                         .HasForeignKey("CustomerId")
@@ -3926,6 +4001,17 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("SalesOrderLine");
 
                     b.Navigation("SalesShipment");
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.ShiftSession", b =>
+                {
+                    b.HasOne("VexorionERP.Models.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Tenant");
                 });

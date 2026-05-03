@@ -1,56 +1,113 @@
 # VexorionERP
 
-ERP platform built with ASP.NET Core, Entity Framework Core, PostgreSQL, and a React + Vite frontend.
+A full-stack SME ERP platform built with **ASP.NET Core 8**, **Entity Framework Core**, **PostgreSQL**, and three **React + Vite + MUI v6** frontends.
 
-For the repo-specific SME ERP MVP roadmap and implementation breakdown, see `SME_ERP_MVP_IMPLEMENTATION_SPEC.md`.
+---
 
-## Solution layout
+## Repository structure
 
-- `VexorionERP` ASP.NET Core Web API
-- `VexorionERP.Models` domain models
-- `VexorionERP.Database` EF Core persistence layer and migrations
-- `VexorionERP.Services` application services and CQRS handlers
-- `VexorionERP.Contracts` request and response contracts
-- `VexorionERP.Services.Tests` focused service tests
-- `VexorionERP.Web.Tests` web and integration tests
-- `VexorionERP.UI` React + Vite + MUI frontend
+```
+VexorionERP/
+├── VexorionERP/              # ASP.NET Core Web API (entry point)
+├── VexorionERP.Models/       # Domain models and enumerations
+├── VexorionERP.Database/     # EF Core DbContext, migrations, and seeding
+├── VexorionERP.Services/     # Application services and CQRS handlers (Mediator)
+├── VexorionERP.Handler/      # Additional CQRS command/query handlers
+├── VexorionERP.Contracts/    # Request and response DTO contracts
+├── VexorionERP.Services.Tests/   # Service-level unit tests
+├── VexorionERP.Handler.Tests/    # Handler-level unit tests
+├── VexorionERP.Web.Tests/        # Integration and web-layer tests
+├── VexorionERP.UI/           # Main ERP frontend (finance dashboard, modules)
+├── VexorionERP.AdminUI/      # Admin panel (tenants, users, roles, config)
+└── VexorionERP.POS/          # Point-of-Sale cashier terminal
+```
+
+---
 
 ## Prerequisites
 
-- .NET 8 SDK
-- Node.js 20+ and npm
-- PostgreSQL running locally on port `5432`
-- `dotnet-ef` CLI tool for migration commands
+| Tool | Version |
+|---|---|
+| .NET SDK | 8.x |
+| Node.js | 20+ |
+| npm | 10+ |
+| PostgreSQL | 14+ (running on port 5432) |
+| dotnet-ef | latest |
 
-Install EF CLI if needed:
+Install the EF CLI tool globally if not already present:
 
 ```bash
 dotnet tool install --global dotnet-ef
 ```
 
-## Backend setup and run
+---
 
-Restore and run the backend from the repository root:
+## 1. Backend — `VexorionERP` (ASP.NET Core Web API)
+
+The Web API serves all three frontends. It applies pending EF Core migrations automatically on startup.
+
+### Setup
 
 ```bash
+# From the repository root
 dotnet restore
+```
+
+### Run
+
+```bash
 dotnet watch --project VexorionERP/VexorionERP.csproj --no-hot-reload
 ```
 
-Development URLs from launch settings:
+| URL | Purpose |
+|---|---|
+| `http://localhost:5000` | HTTP |
+| `https://localhost:7171` | HTTPS |
+| `https://localhost:7171/swagger` | Swagger UI (development only) |
 
-- `http://localhost:5000`
-- `https://localhost:7171`
+### Database
 
-Swagger UI is available in development at:
+The development connection string is in `VexorionERP/appsettings.Development.json`. Bootstrap seeding is enabled in development and runs once on first startup.
 
-- `https://localhost:7171/swagger`
+**Dev seed credentials:**
 
-The application applies pending EF Core migrations automatically on startup when using the relational PostgreSQL database.
+| Field | Value |
+|---|---|
+| Tenant code | `demo` |
+| Admin username | `admin` |
+| Admin email | `admin@demo.local` |
+| Admin password | `DemoAdmin123!` |
 
-## Frontend setup and run
+> Re-seeding does not overwrite existing tenant data. To reset, drop and recreate the database.
 
-From the repository root:
+### Run backend tests
+
+```bash
+# All test projects
+dotnet test
+
+# Specific project
+dotnet test VexorionERP.Services.Tests/VexorionERP.Services.Tests.csproj
+```
+
+---
+
+## 2. VexorionERP.UI — Main ERP Frontend
+
+**Tech:** React 19 · TypeScript · Vite · MUI v6 · TanStack Query · react-i18next · Zustand · react-hook-form
+
+The main ERP frontend used by finance and operations staff. Covers the finance dashboard, sales/purchase orders, invoices, inventory, journals, reports, and configuration pages.
+
+### Key features
+
+- Finance dashboard with KPI cards, aging analysis, cash flow charts, and health metrics
+- Sales & purchase order management (orders → shipments/receipts → invoices → payments)
+- Inventory adjustments, stock counts, and warehouse transfers
+- Journal entries and fiscal period management
+- Multi-language support (en-US, id-ID, es-ES)
+- Light / dark theme toggle
+
+### Dev server
 
 ```bash
 cd VexorionERP.UI
@@ -58,25 +115,167 @@ npm install
 npm run dev
 ```
 
-The Vite development server proxies `/api/*` requests to `http://localhost:5000` by default. You can override that target with `VITE_API_PROXY_TARGET`.
+Runs at **`http://localhost:5173`** (default Vite port). Proxies `/api/*` to `http://localhost:5000`.
 
-The frontend API client uses `/api` by default and can be pointed elsewhere with `VITE_API_BASE_URL`.
+| Env var | Default | Purpose |
+|---|---|---|
+| `VITE_API_PROXY_TARGET` | `http://localhost:5000` | Backend target for Vite proxy |
+| `VITE_API_BASE_URL` | `/api` | API base URL used in the browser |
 
-## Local development database
+### Commands
 
-The development backend configuration uses the `DefaultConnection` value in `VexorionERP/appsettings.Development.json`.
+| Command | Description |
+|---|---|
+| `npm run dev` | Start development server |
+| `npm run build` | Type-check and build for production |
+| `npm run lint` | Run ESLint |
+| `npm run test:run` | Run unit tests once (Vitest) |
+| `npm test` | Run unit tests in watch mode |
 
-Bootstrap seed data is enabled in development. On first startup, the app seeds:
+---
 
-- Tenant code: `demo`
-- Admin username: `admin`
-- Admin email: `admin@demo.local`
+## 3. VexorionERP.AdminUI — Admin Panel
 
-The current development password in config is:
+**Tech:** React 19 · TypeScript · Vite · MUI v6 · MUI X DataGrid · TanStack Query · react-i18next · react-hook-form
 
-- `DemoAdmin123!`
+The internal admin panel for platform operators. Used to manage tenants, users, roles, product categories, tax/discount config, and menu visibility.
 
-If you change bootstrap settings after the first seed, existing tenant data will not be recreated automatically.
+### Key features
+
+- Tenant CRUD with company configuration
+- User management: create, assign roles, reset password
+- Role management and permission scopes
+- Product categories, tax rates, and discount configuration
+- Menu link visibility configuration per tenant
+
+### Dev server
+
+```bash
+cd VexorionERP.AdminUI
+npm install
+npm run dev
+```
+
+Runs at **`http://localhost:5174`**. Proxies `/api/*` to `http://localhost:5000`.
+
+| Env var | Default | Purpose |
+|---|---|---|
+| `VITE_API_PROXY_TARGET` | `http://localhost:5000` | Backend target for Vite proxy |
+
+### Commands
+
+| Command | Description |
+|---|---|
+| `npm run dev` | Start development server |
+| `npm run build` | Type-check and build for production |
+| `npm run lint` | Run ESLint |
+| `npm test` | Run unit tests once (Vitest) |
+| `npm run test:watch` | Run unit tests in watch mode |
+| `npm run test:coverage` | Run tests with V8 coverage report |
+
+---
+
+## 4. VexorionERP.POS — Point-of-Sale Terminal
+
+**Tech:** React 19 · TypeScript · Vite · MUI v6 · TanStack Query · Zustand · i18next · Playwright
+
+A cashier-facing POS terminal for managing shifts, processing sales, handling returns/refunds, and printing receipts.
+
+### Key features
+
+- Shift open / close with opening float and variance reporting
+- Product catalogue with cart management, discounts, and quantity editing
+- Checkout with multiple payment methods and change calculation
+- Receipt modal with print support and document references
+- Return / refund flow with invoice search and partial-line selection
+- Transaction history with reprint capability
+- Role-based permission guards (e.g. `pos.refund` scope)
+- Multi-language support (en-US, id-ID, es-ES)
+
+### Dev server
+
+```bash
+cd VexorionERP.POS
+npm install
+npm run dev
+```
+
+Runs at **`http://localhost:5175`**. Proxies `/api/*` to `http://localhost:5000`.
+
+| Env var | Default | Purpose |
+|---|---|---|
+| `VITE_API_PROXY_TARGET` | `http://localhost:5000` | Backend target for Vite proxy |
+
+### Commands
+
+| Command | Description |
+|---|---|
+| `npm run dev` | Start development server |
+| `npm run build` | Type-check and build for production |
+| `npm run lint` | Run ESLint |
+| `npm test` | Run unit tests once (Vitest) |
+| `npm run test:watch` | Run unit tests in watch mode |
+| `npm run test:coverage` | Run tests with V8 coverage report |
+| `npm run e2e` | Run Playwright E2E tests (headless) |
+| `npm run e2e:headed` | Run E2E tests with browser visible |
+| `npm run e2e:ui` | Open Playwright interactive UI |
+| `npm run e2e:report` | Open last HTML test report |
+
+### Running E2E tests
+
+The E2E tests require the backend and POS dev server to be running. Before the first run, the Playwright setup project authenticates via the UI and saves the session to `e2e/.auth/user.json`.
+
+```bash
+# In one terminal — start the backend
+dotnet watch --project VexorionERP/VexorionERP.csproj --no-hot-reload
+
+# In another terminal — start the POS dev server
+cd VexorionERP.POS && npm run dev
+
+# In a third terminal — run E2E tests
+cd VexorionERP.POS && npm run e2e
+```
+
+Override credentials with environment variables if needed:
+
+| Env var | Default |
+|---|---|
+| `E2E_TENANT_CODE` | `demo` |
+| `E2E_USERNAME` | `admin@demo.com` |
+| `E2E_PASSWORD` | `Admin@123` |
+| `POS_BASE_URL` | `http://localhost:5175` |
+
+---
+
+## Running everything locally
+
+```bash
+# Terminal 1 — backend
+dotnet watch --project VexorionERP/VexorionERP.csproj --no-hot-reload
+
+# Terminal 2 — main ERP UI  (http://localhost:5173)
+cd VexorionERP.UI && npm install && npm run dev
+
+# Terminal 3 — admin panel  (http://localhost:5174)
+cd VexorionERP.AdminUI && npm install && npm run dev
+
+# Terminal 4 — POS terminal  (http://localhost:5175)
+cd VexorionERP.POS && npm install && npm run dev
+```
+
+---
+
+## Testing summary
+
+| Project | Runner | Command | Tests |
+|---|---|---|---|
+| VexorionERP.Services.Tests | xUnit | `dotnet test` | backend services |
+| VexorionERP.Handler.Tests | xUnit | `dotnet test` | CQRS handlers |
+| VexorionERP.Web.Tests | xUnit | `dotnet test` | integration |
+| VexorionERP.UI | Vitest | `npm run test:run` | 64 unit tests |
+| VexorionERP.AdminUI | Vitest | `npm test` | 21 unit tests |
+| VexorionERP.POS | Vitest | `npm test` | 62 unit tests |
+| VexorionERP.POS | Playwright | `npm run e2e` | 7 E2E tests |
 
 ## Migration commands
 

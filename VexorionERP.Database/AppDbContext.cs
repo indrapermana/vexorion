@@ -71,6 +71,7 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
     public DbSet<TaxCode> TaxCodes => Set<TaxCode>();
     public DbSet<TenantPreference> TenantPreferences => Set<TenantPreference>();
     public DbSet<TenantPageVisit> TenantPageVisits => Set<TenantPageVisit>();
+    public DbSet<ShiftSession> ShiftSessions => Set<ShiftSession>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

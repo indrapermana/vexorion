@@ -54,4 +54,15 @@ public class SalesInvoicesController(IMediator mediator) : ServiceResultControll
         var result = await mediator.Send(new DeleteSalesInvoiceCommand(salesInvoiceId), HttpContext.RequestAborted);
         return ToActionResult(result);
     }
+
+    [HttpPost("{salesInvoiceId:guid}/credit-note")]
+    [Authorize(Policy = AppPermissions.Sales.Manage)]
+    public async Task<ActionResult<SalesInvoiceDetailsResponse>> CreateCreditNote(Guid salesInvoiceId, [FromBody] CreateCreditNoteRequest request)
+    {
+        var result = await mediator.Send(new CreateCreditNoteForSalesInvoiceCommand(salesInvoiceId, request), HttpContext.RequestAborted);
+        if (!result.Succeeded)
+            return ToActionResult(result);
+
+        return CreatedAtAction(nameof(GetById), new { salesInvoiceId = result.Value!.Id }, result.Value);
+    }
 }

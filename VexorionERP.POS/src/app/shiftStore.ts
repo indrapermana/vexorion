@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { openShiftApi, closeShiftApi, getCurrentShiftApi } from '../lib/api/pos'
 
 export type Shift = {
   id: string
@@ -12,32 +12,64 @@ export type Shift = {
 
 type ShiftState = {
   currentShift: Shift | null
+  loading: boolean
   openShift: (params: {
     openingFloat: number
     userId: string
     userName: string
     currencyCode: string
-  }) => void
-  closeShift: () => void
+  }) => Promise<void>
+  closeShift: (countedCash?: number) => Promise<void>
+  fetchCurrentShift: () => Promise<void>
 }
 
-export const useShift = create<ShiftState>()(
-  persist(
-    (set) => ({
-      currentShift: null,
-      openShift: ({ openingFloat, userId, userName, currencyCode }) =>
-        set({
-          currentShift: {
-            id: `shift-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-            openedAt: new Date().toISOString(),
-            openedBy: userId,
-            openedByName: userName,
-            openingFloat,
-            currencyCode,
-          },
-        }),
-      closeShift: () => set({ currentShift: null }),
-    }),
-    { name: 'vexorionerp.pos.shift' },
-  ),
-)
+function mapResponse(r: import('../types/api').ShiftSessionResponse): Shift {
+  return {
+    id: r.id,
+    openedAt: r.openedAtUtc,
+    openedBy: r.cashierId,
+    openedByName: r.cashierName,
+    openingFloat: r.openingFloat,
+    currencyCode: r.currencyCode,
+  }
+}
+
+export const useShift = create<ShiftState>()((set, get) => ({
+  currentShift: null,
+  loading: false,
+
+  openShift: async ({ openingFloat, currencyCode }) => {
+    set({ loading: true })
+    try {
+      const response = await openShiftApi({ openingFloat, currencyCode })
+      set({ currentShift: mapResponse(response) })
+    } finally {
+      set({ loading: false })
+    }
+  },
+
+  closeShift: async (countedCash = 0) => {
+    const shift = get().currentShift
+    if (!shift) return
+    set({ loading: true })
+    try {
+      await closeShiftApi(shift.id, { countedCash })
+      set({ currentShift: null })
+    } finally {
+      set({ loading: false })
+    }
+  },
+
+  fetchCurrentShift: async () => {
+    set({ loading: true })
+    try {
+      const response = await getCurrentShiftApi()
+      set({ currentShift: mapResponse(response) })
+    } catch {
+      // 404 means no active shift — this is normal
+      set({ currentShift: null })
+    } finally {
+      set({ loading: false })
+    }
+  },
+}))

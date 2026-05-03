@@ -191,6 +191,70 @@ public class SalesInvoiceCommandService : BaseCommandService<SalesInvoice>
         return ServiceResult<bool>.Success(true);
     }
 
+    public async Task<ServiceResult<SalesInvoiceDetailsResponse>> CreateCreditNoteAsync(Guid originalInvoiceId, CreateCreditNoteRequest request, CancellationToken cancellationToken = default)
+    {
+        var tenantId = TryGetTenantId();
+        if (!tenantId.HasValue)
+            return ServiceResult<SalesInvoiceDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+
+        var original = await dbContext.SalesInvoices.GetByTenant(tenantId.Value)
+            .Include(x => x.Lines)
+            .FirstOrDefaultAsync(x => x.Id == originalInvoiceId, cancellationToken);
+
+        if (original is null)
+            return ServiceResult<SalesInvoiceDetailsResponse>.Failure(StatusCodes.Status404NotFound, "Sales invoice not found.");
+
+        if (original.Status is InvoiceStatus.Draft or InvoiceStatus.Cancelled)
+            return ServiceResult<SalesInvoiceDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "A credit note can only be issued for a posted or paid invoice.");
+
+        if (original.CreditNoteOfInvoiceId.HasValue)
+            return ServiceResult<SalesInvoiceDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "A credit note cannot be created for another credit note.");
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var creditNoteNumberResult = await ResolveInvoiceNumberAsync(request.CreditNoteNumber ?? string.Empty, today, cancellationToken);
+        if (!creditNoteNumberResult.Succeeded)
+            return ServiceResult<SalesInvoiceDetailsResponse>.Failure(creditNoteNumberResult.StatusCode ?? StatusCodes.Status400BadRequest, creditNoteNumberResult.ErrorMessage ?? "Failed to generate credit note number.");
+
+        var creditNote = new SalesInvoice
+        {
+            TenantId = tenantId.Value,
+            InvoiceNumber = creditNoteNumberResult.Value!,
+            CustomerId = original.CustomerId,
+            CurrencyCode = original.CurrencyCode,
+            InvoiceDate = today,
+            DueDate = today,
+            PaymentTermId = original.PaymentTermId,
+            CreditNoteOfInvoiceId = original.Id,
+            Status = InvoiceStatus.Issued,
+            Notes = NormalizeOptional(request.Notes) ?? $"Credit note for {original.InvoiceNumber}",
+            // Totals are the negation of the original invoice
+            Subtotal = -original.Subtotal,
+            TaxTotal = -original.TaxTotal,
+            GrandTotal = -original.GrandTotal,
+            PaidTotal = 0m,
+        };
+
+        // Copy lines as reference records (positive values show what was credited)
+        creditNote.Lines = original.Lines
+            .Where(x => x.IsActive)
+            .Select(line => new SalesInvoiceLine
+            {
+                TenantId = tenantId.Value,
+                SalesInvoiceId = creditNote.Id,
+                ProductId = line.ProductId,
+                TaxCodeId = line.TaxCodeId,
+                Quantity = line.Quantity,
+                UnitPrice = line.UnitPrice,
+                DiscountAmount = line.DiscountAmount,
+                TaxAmount = line.TaxAmount,
+            })
+            .ToList();
+
+        dbContext.SalesInvoices.Add(creditNote);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return ServiceResult<SalesInvoiceDetailsResponse>.Success(creditNote.Adapt<SalesInvoiceDetailsResponse>());
+    }
+
     public async Task<ServiceResult<SalesInvoiceDetailsResponse>> ApplyPaymentAsync(Guid salesInvoiceId, decimal amount, CancellationToken cancellationToken = default)
     {
         var tenantId = TryGetTenantId();

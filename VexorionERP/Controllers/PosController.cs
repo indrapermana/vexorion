@@ -1,6 +1,8 @@
+using Mapster;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using VexorionERP.Contracts;
 using VexorionERP.Database;
 using VexorionERP.Models;
@@ -72,5 +74,129 @@ public class PosController(AppDbContext dbContext, ICurrentTenantProvider curren
         }
 
         return Ok(response);
+    }
+
+    /// <summary>
+    /// Opens a new shift for the currently authenticated cashier.
+    /// Returns 409 Conflict if the cashier already has an open shift.
+    /// </summary>
+    [HttpPost("shifts/open")]
+    [Authorize(Policy = AppPermissions.Pos.Checkout)]
+    public async Task<ActionResult<ShiftSessionResponse>> OpenShift(
+        [FromBody] OpenShiftRequest request,
+        CancellationToken cancellationToken)
+    {
+        var tenantId = currentTenantProvider.TenantId;
+        if (!tenantId.HasValue)
+            return BadRequest("Tenant context is required.");
+
+        var cashierId = GetCurrentUserId();
+        if (!cashierId.HasValue)
+            return Unauthorized();
+
+        var existingOpen = await dbContext.ShiftSessions
+            .GetByTenant(tenantId.Value)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.CashierId == cashierId.Value && x.Status == ShiftStatus.Open, cancellationToken);
+
+        if (existingOpen is not null)
+            return Conflict("Cashier already has an open shift.");
+
+        var cashierUser = await dbContext.Users.FindAsync([cashierId.Value], cancellationToken);
+        var cashierName = cashierUser is null
+            ? string.Empty
+            : $"{cashierUser.FirstName} {cashierUser.LastName}".Trim();
+        if (string.IsNullOrWhiteSpace(cashierName))
+            cashierName = cashierUser?.UserName ?? string.Empty;
+
+        var shift = new ShiftSession
+        {
+            TenantId = tenantId.Value,
+            CashierId = cashierId.Value,
+            CashierName = cashierName,
+            OpeningFloat = request.OpeningFloat,
+            CurrencyCode = request.CurrencyCode.Trim().ToUpperInvariant(),
+            Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim(),
+            Status = ShiftStatus.Open,
+            OpenedAtUtc = DateTime.UtcNow,
+        };
+
+        dbContext.ShiftSessions.Add(shift);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return Ok(shift.Adapt<ShiftSessionResponse>());
+    }
+
+    /// <summary>
+    /// Closes the currently open shift for the authenticated cashier.
+    /// </summary>
+    [HttpPost("shifts/{shiftId:guid}/close")]
+    [Authorize(Policy = AppPermissions.Pos.ShiftClose)]
+    public async Task<ActionResult<ShiftSessionResponse>> CloseShift(
+        Guid shiftId,
+        [FromBody] CloseShiftRequest request,
+        CancellationToken cancellationToken)
+    {
+        var tenantId = currentTenantProvider.TenantId;
+        if (!tenantId.HasValue)
+            return BadRequest("Tenant context is required.");
+
+        var cashierId = GetCurrentUserId();
+        if (!cashierId.HasValue)
+            return Unauthorized();
+
+        var shift = await dbContext.ShiftSessions
+            .GetByTenant(tenantId.Value)
+            .FirstOrDefaultAsync(x => x.Id == shiftId, cancellationToken);
+
+        if (shift is null)
+            return NotFound("Shift not found.");
+
+        if (shift.CashierId != cashierId.Value)
+            return Forbid();
+
+        if (shift.Status == ShiftStatus.Closed)
+            return Conflict("Shift is already closed.");
+
+        shift.Status = ShiftStatus.Closed;
+        shift.ClosedAtUtc = DateTime.UtcNow;
+        shift.CountedCash = request.CountedCash;
+        shift.Notes = string.IsNullOrWhiteSpace(request.Notes) ? shift.Notes : request.Notes.Trim();
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return Ok(shift.Adapt<ShiftSessionResponse>());
+    }
+
+    /// <summary>
+    /// Returns the current open shift for the authenticated cashier, or 404 if none.
+    /// </summary>
+    [HttpGet("shifts/current")]
+    [Authorize(Policy = AppPermissions.Pos.Checkout)]
+    public async Task<ActionResult<ShiftSessionResponse>> GetCurrentShift(CancellationToken cancellationToken)
+    {
+        var tenantId = currentTenantProvider.TenantId;
+        if (!tenantId.HasValue)
+            return BadRequest("Tenant context is required.");
+
+        var cashierId = GetCurrentUserId();
+        if (!cashierId.HasValue)
+            return Unauthorized();
+
+        var shift = await dbContext.ShiftSessions
+            .GetByTenant(tenantId.Value)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.CashierId == cashierId.Value && x.Status == ShiftStatus.Open, cancellationToken);
+
+        if (shift is null)
+            return NotFound();
+
+        return Ok(shift.Adapt<ShiftSessionResponse>());
+    }
+
+    private Guid? GetCurrentUserId()
+    {
+        var sub = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        return Guid.TryParse(sub, out var id) ? id : null;
     }
 }

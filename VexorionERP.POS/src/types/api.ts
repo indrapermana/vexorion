@@ -28,6 +28,31 @@ export type PosStockValidationResponse = {
   insufficientItems: PosStockInsufficientItem[]
 }
 
+export type OpenShiftRequest = {
+  openingFloat: number
+  currencyCode: string
+  notes?: string | null
+}
+
+export type CloseShiftRequest = {
+  countedCash: number
+  notes?: string | null
+}
+
+export type ShiftSessionResponse = {
+  id: string
+  tenantId: string
+  cashierId: string
+  cashierName: string
+  openedAtUtc: string
+  closedAtUtc?: string | null
+  openingFloat: number
+  countedCash?: number | null
+  currencyCode: string
+  status: 'Open' | 'Closed' | number
+  notes?: string | null
+}
+
 export type LoginRequest = {
   tenantCode: string
   userNameOrEmail: string

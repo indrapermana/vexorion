@@ -54,7 +54,7 @@ export default function PosPage() {
   const { t } = useI18n()
   const { user } = useAuth()
   const pushHistory = useTransactionHistory((state) => state.push)
-  const { currentShift, openShift, closeShift } = useShift()
+  const { currentShift, openShift, closeShift, fetchCurrentShift } = useShift()
   const canManageRoles = user?.permissions.includes('roles.manage') ?? false
   const canCheckout = user?.permissions.includes('pos.checkout') ?? false
   const canCloseShift = user?.permissions.includes('pos.shift.close') ?? false
@@ -105,6 +105,12 @@ export default function PosPage() {
 
     return 'USD'
   }, [user?.currencyCode])
+
+  // Rehydrate shift state from the backend on first load
+  useEffect(() => {
+    fetchCurrentShift()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     if (selectedWarehouseId || warehouses.length === 0) {
@@ -627,7 +633,7 @@ export default function PosPage() {
         currencyCode={currencyCode}
         cashierName={cashierName}
         onOpen={(openingFloat) =>
-          openShift({
+          void openShift({
             openingFloat,
             userId: user?.id ?? '',
             userName: cashierName,
@@ -642,8 +648,8 @@ export default function PosPage() {
           shift={currentShift}
           currencyCode={currencyCode}
           onClose={() => setIsCloseShiftOpen(false)}
-          onConfirm={() => {
-            closeShift()
+          onConfirm={(countedCash) => {
+            void closeShift(countedCash)
             setIsCloseShiftOpen(false)
           }}
         />

@@ -74,6 +74,7 @@ public static class IdentityServiceCollectionExtensions
         services.AddScoped<IProductImageStorageService, AzureBlobProductImageStorageService>();
         services.AddScoped<ITenantOnboardingService, TenantOnboardingService>();
         services.AddScoped<IUserManagementService, UserManagementService>();
+        services.AddScoped<SalesInvoiceCommandService>();
 
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
         {

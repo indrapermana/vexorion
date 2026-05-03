@@ -36,5 +36,10 @@ public class SalesInvoiceConfiguration : TenantEntityConfiguration<SalesInvoice>
             .WithMany()
             .HasForeignKey(x => x.PaymentTermId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasOne<SalesInvoice>()
+            .WithMany()
+            .HasForeignKey(x => x.CreditNoteOfInvoiceId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
