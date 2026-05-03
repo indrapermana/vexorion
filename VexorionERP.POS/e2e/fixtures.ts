@@ -10,8 +10,8 @@ import { test as base, expect, type Page } from '@playwright/test'
  */
 export const AUTH_CREDENTIALS = {
   tenantCode: process.env.E2E_TENANT_CODE ?? 'demo',
-  username: process.env.E2E_USERNAME ?? 'admin@demo.com',
-  password: process.env.E2E_PASSWORD ?? 'Admin@123',
+  username: process.env.E2E_USERNAME ?? 'admin@demo.local',
+  password: process.env.E2E_PASSWORD ?? 'DemoAdmin123!',
 }
 
 // ---------------------------------------------------------------------------
