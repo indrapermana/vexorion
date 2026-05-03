@@ -1,5 +1,6 @@
 using Mapster;
 using Microsoft.AspNetCore.Http;
+using Serilog;
 using VexorionERP.Contracts;
 using VexorionERP.Database;
 using VexorionERP.Models;
@@ -15,16 +16,21 @@ public abstract class BaseCommandService<T> : BaseService, ICommandService<T>
 
     public virtual async Task<ServiceResult<IEntityResponse<T>>> CreateAsync(ICreateInput<T> request, AppDbContext dbContext, CancellationToken cancellationToken = default)
     {
+        var log = Log.ForContext(GetType());
+        log.Information("{Service}.CreateAsync called", GetType().Name);
+
         ArgumentNullException.ThrowIfNull(request, nameof(request));
         ArgumentNullException.ThrowIfNull(dbContext, nameof(dbContext));
 
         if (RequiresTenantContext() && !HasTenantContext)
         {
+            log.Error("{Service}.CreateAsync failed: tenant context missing", GetType().Name);
             return ServiceResult<IEntityResponse<T>>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
         }
 
         if (!ValidateAddInput(request, out IDictionary<string, string[]>? errors, out string? errorMessage))
         {
+            log.Error("{Service}.CreateAsync failed: input validation failed", GetType().Name);
             if (errors is not null && errors.Count > 0)
             {
                 return ServiceResult<IEntityResponse<T>>.ValidationFailure(errors);
@@ -36,6 +42,7 @@ public abstract class BaseCommandService<T> : BaseService, ICommandService<T>
         var createBusinessRule = await ValidateCreateBusinessRulesAsync(request, dbContext, cancellationToken);
         if (createBusinessRule is not null)
         {
+            log.Error("{Service}.CreateAsync failed: business rule violation", GetType().Name);
             return createBusinessRule;
         }
 
@@ -43,6 +50,7 @@ public abstract class BaseCommandService<T> : BaseService, ICommandService<T>
 
         if (created is null)
         {
+            log.Error("{Service}.CreateAsync failed: AddProcessAsync returned null", GetType().Name);
             return ServiceResult<IEntityResponse<T>>.Failure(StatusCodes.Status500InternalServerError, "Failed to create entity");
         }
 
@@ -104,16 +112,21 @@ public abstract class BaseCommandService<T> : BaseService, ICommandService<T>
 
     public virtual async Task<ServiceResult<IEntityResponse<T>>> UpdateAsync(Guid id, IUpdateInput<T> request, AppDbContext dbContext, CancellationToken cancellationToken = default)
     {
+        var log = Log.ForContext(GetType());
+        log.Information("{Service}.UpdateAsync called for {EntityId}", GetType().Name, id);
+
         ArgumentNullException.ThrowIfNull(request, nameof(request));
         ArgumentNullException.ThrowIfNull(dbContext, nameof(dbContext));
 
         if (RequiresTenantContext() && !HasTenantContext)
         {
+            log.Error("{Service}.UpdateAsync failed: tenant context missing", GetType().Name);
             return ServiceResult<IEntityResponse<T>>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
         }
 
         if (!ValidateUpdateInput(request, out IDictionary<string, string[]>? errors, out string? errorMessage))
         {
+            log.Error("{Service}.UpdateAsync failed: input validation failed for {EntityId}", GetType().Name, id);
             if (errors is not null && errors.Count > 0)
             {
                 return ServiceResult<IEntityResponse<T>>.ValidationFailure(errors);
@@ -125,6 +138,7 @@ public abstract class BaseCommandService<T> : BaseService, ICommandService<T>
         var updateBusinessRule = await ValidateUpdateBusinessRulesAsync(id, request, dbContext, cancellationToken);
         if (updateBusinessRule is not null)
         {
+            log.Error("{Service}.UpdateAsync failed: business rule violation for {EntityId}", GetType().Name, id);
             return updateBusinessRule;
         }
 
@@ -132,12 +146,14 @@ public abstract class BaseCommandService<T> : BaseService, ICommandService<T>
 
         if (updated is null)
         {
+            log.Error("{Service}.UpdateAsync failed: entity not found {EntityId}", GetType().Name, id);
             return ServiceResult<IEntityResponse<T>>.Failure(StatusCodes.Status404NotFound, GetNotFoundMessage());
         }
 
         var updateSideEffects = await ProcessUpdateSideEffectsAsync(id, request, updated, dbContext, cancellationToken);
         if (updateSideEffects is not null)
         {
+            log.Error("{Service}.UpdateAsync failed: side effect error for {EntityId}", GetType().Name, id);
             return updateSideEffects;
         }
 
@@ -200,16 +216,21 @@ public abstract class BaseCommandService<T> : BaseService, ICommandService<T>
 
     public virtual async Task<ServiceResult<bool>> DeleteAsync(Guid id, AppDbContext dbContext, CancellationToken cancellationToken = default)
     {
+        var log = Log.ForContext(GetType());
+        log.Information("{Service}.DeleteAsync called for {EntityId}", GetType().Name, id);
+
         ArgumentNullException.ThrowIfNull(dbContext, nameof(dbContext));
 
         if (RequiresTenantContext() && !HasTenantContext)
         {
+            log.Error("{Service}.DeleteAsync failed: tenant context missing", GetType().Name);
             return ServiceResult<bool>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
         }
 
         var deleteBusinessRule = await ValidateDeleteBusinessRulesAsync(id, dbContext, cancellationToken);
         if (deleteBusinessRule is not null)
         {
+            log.Error("{Service}.DeleteAsync failed: business rule violation for {EntityId}", GetType().Name, id);
             return deleteBusinessRule;
         }
 
@@ -217,6 +238,7 @@ public abstract class BaseCommandService<T> : BaseService, ICommandService<T>
 
         if (deleted is null)
         {
+            log.Error("{Service}.DeleteAsync failed: entity not found {EntityId}", GetType().Name, id);
             return ServiceResult<bool>.Failure(StatusCodes.Status404NotFound, GetNotFoundMessage());
         }
 

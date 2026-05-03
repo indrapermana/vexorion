@@ -1,7 +1,9 @@
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
 using Serilog;
+using Serilog.Sinks.Grafana.Loki;
 using VexorionERP;
+using VexorionERP.Filters;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
@@ -13,15 +15,36 @@ try
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseSerilog((ctx, services, cfg) =>
+{
     cfg.ReadFrom.Configuration(ctx.Configuration)
        .ReadFrom.Services(services)
        .Enrich.FromLogContext()
+       .Enrich.WithProperty("app", "vexorionerp")
+       .Enrich.WithProperty("env", ctx.HostingEnvironment.EnvironmentName)
        .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {SourceContext} {Message:lj}{NewLine}{Exception}")
        .WriteTo.File(
            path: "logs/vexorionerp-.log",
            rollingInterval: RollingInterval.Day,
            retainedFileCountLimit: 14,
-           outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext} {Message:lj}{NewLine}{Exception}"));
+           outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext} {Message:lj}{NewLine}{Exception}");
+
+    var lokiKey = ctx.Configuration["GrafanaLoki:ApiKey"];
+    if (!string.IsNullOrWhiteSpace(lokiKey))
+    {
+        cfg.WriteTo.GrafanaLoki(
+            uri: ctx.Configuration["GrafanaLoki:Url"] ?? "https://logs-prod-020.grafana.net",
+            credentials: new LokiCredentials
+            {
+                Login = ctx.Configuration["GrafanaLoki:User"] ?? "1579336",
+                Password = lokiKey
+            },
+            labels:
+            [
+                new LokiLabel { Key = "app", Value = "vexorionerp" },
+                new LokiLabel { Key = "env", Value = ctx.HostingEnvironment.EnvironmentName }
+            ]);
+    }
+});
 
 const string LocalDevCorsPolicy = "LocalDevCors";
 const string TenantRateLimitPolicy = "tenant-fixed";
@@ -29,7 +52,7 @@ const string TenantRateLimitPolicy = "tenant-fixed";
 builder.Services.AddApplicationIdentity(builder.Configuration);
 builder.Services.AddApplicationAuthorization();
 builder.Services.AddMediator(options => options.ServiceLifetime = Microsoft.Extensions.DependencyInjection.ServiceLifetime.Scoped);
-builder.Services.AddControllers();
+builder.Services.AddControllers(opts => opts.Filters.Add<LoggingActionFilter>());
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddCors(options =>
@@ -67,6 +90,19 @@ app.UseSerilogRequestLogging(opts =>
 {
     opts.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
 });
+
+// Global exception handler — logs unhandled exceptions before returning 500
+app.UseExceptionHandler(errorApp => errorApp.Run(async httpContext =>
+{
+    var feature = httpContext.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
+    if (feature?.Error is { } ex)
+    {
+        Log.Error(ex, "Unhandled exception for {Method} {Path}", httpContext.Request.Method, httpContext.Request.Path);
+    }
+    httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
+    httpContext.Response.ContentType = "application/json";
+    await httpContext.Response.WriteAsync("{\"message\":\"An unexpected error occurred.\"}");
+}));
 
 await app.InitializeApplicationAsync();
 
