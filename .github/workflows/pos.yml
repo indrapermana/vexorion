@@ -2,12 +2,12 @@ name: POS Frontend
 
 on:
   push:
-    branches: [main, develop]
+    branches: [master, develop]
     paths:
       - 'VexorionERP.POS/**'
       - '.github/workflows/pos.yml'
   pull_request:
-    branches: [main, develop]
+    branches: [master, develop]
     paths:
       - 'VexorionERP.POS/**'
       - '.github/workflows/pos.yml'
