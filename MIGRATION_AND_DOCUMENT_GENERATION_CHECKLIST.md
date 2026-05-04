@@ -136,18 +136,26 @@ Build two foundation capabilities before deployment/CD hardening:
 - [x] Add endpoint: download existing document
 - [ ] Add endpoint: list generated documents per source entity
 - [x] Add endpoint: regenerate document (admin/privileged)
+- [ ] Add endpoint: stream document content inline (for viewer; returns raw bytes with Content-Disposition: inline)
+- [ ] Add endpoint: get PDF preview of a DOCX document (server-side render to PDF for in-browser viewing)
 
 ## B4. Main UI Integration
 - [ ] Add Export button on SO/PO/Invoice/Payment pages
 - [ ] Add format selector (DOCX/PDF)
 - [ ] Add generated-document history panel per record
 - [ ] Add download/re-generate actions based on permission
+- [ ] Add inline document viewer panel (PDF rendered in-browser via PDF.js / iframe)
+- [ ] DOCX format: show Preview as PDF button (calls server-side PDF preview endpoint)
+- [ ] Viewer supports zoom, page navigation, and full-screen mode
+- [ ] Add permission guard on viewer (requires documents.download permission)
 
 ## B5. Security, Audit, and Reliability
 - [x] Add permission scopes for generate/download/regenerate
 - [ ] Store tenant-scoped blob paths and metadata only (no public blobs)
-- [ ] Add signed URL strategy (short-lived links)
+- [ ] Add signed URL strategy (short-lived links, used by viewer to stream from blob directly)
 - [x] Add audit logs for generation/download
+- [ ] Inline viewer must use short-lived signed URL — never expose permanent blob URL to client
+- [ ] Add documents.view permission scope (read-only viewer without download capability)
 
 ## B6. Testing
 - [ ] Unit tests for data mappers and renderers
@@ -155,6 +163,9 @@ Build two foundation capabilities before deployment/CD hardening:
 - [ ] Blob integration tests (mock + optional real container)
 - [ ] Web tests for endpoints and permission behavior
 - [ ] E2E tests from UI export to successful download
+- [ ] E2E test: generate -> open viewer -> verify PDF renders inline
+- [ ] E2E test: DOCX preview endpoint returns valid PDF bytes
+- [ ] Permission test: viewer blocked without documents.view or documents.download
 
 ---
 
@@ -191,6 +202,10 @@ Build two foundation capabilities before deployment/CD hardening:
   Decision: Yes. Posted/approved source documents keep immutable generated artifacts; re-generation creates a new version.
 - [x] Retention policy for generated files in Blob storage?
   Decision: Keep active versions indefinitely by default; allow lifecycle cleanup only for superseded versions after 365 days.
+- [ ] Document viewer strategy: render PDF inline or require download for DOCX?
+  Decision needed: PDF renders in-browser via PDF.js (no install, works in all modern browsers). DOCX cannot be rendered natively in-browser — options are (a) server-side PDF preview endpoint (QuestPDF re-render of same canonical model), (b) mammoth.js client-side DOCX→HTML (lower fidelity), or (c) download-only for DOCX. Recommended: option (a) — server-side PDF preview keeps fidelity and avoids client-side parsing of sensitive content.
+- [ ] Separate view vs download permission?
+  Decision needed: Current plan has documents.download permission gating both viewer and file download. A finer-grained documents.view permission (viewer only, no file download) may be useful for read-only roles. Requires adding a new permission scope and splitting the signed-URL endpoint from the file-download endpoint.
 
 ---
 
