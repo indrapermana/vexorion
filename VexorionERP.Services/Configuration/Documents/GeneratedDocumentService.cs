@@ -55,6 +55,38 @@ public class GeneratedDocumentService(
             cancellationToken);
     }
 
+    public async Task<ServiceResult<IReadOnlyCollection<GeneratedDocumentResponse>>> ListBySourceAsync(
+        GeneratedDocumentSourceType sourceType,
+        Guid sourceEntityId,
+        CancellationToken cancellationToken = default)
+    {
+        var tenantId = currentTenantProvider.TenantId;
+        if (!tenantId.HasValue)
+        {
+            return ServiceResult<IReadOnlyCollection<GeneratedDocumentResponse>>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+        }
+
+        if (sourceEntityId == Guid.Empty)
+        {
+            return ServiceResult<IReadOnlyCollection<GeneratedDocumentResponse>>.Failure(StatusCodes.Status400BadRequest, "Source entity id is required.");
+        }
+
+        var entities = await dbContext.GeneratedDocuments
+            .AsNoTracking()
+            .Where(x => x.TenantId == tenantId.Value
+                && x.SourceType == sourceType
+                && x.SourceEntityId == sourceEntityId)
+            .OrderByDescending(x => x.GeneratedAtUtc)
+            .ThenByDescending(x => x.Version)
+            .ToListAsync(cancellationToken);
+
+        var response = entities
+            .Select(x => ToResponse(x, null))
+            .ToArray();
+
+        return ServiceResult<IReadOnlyCollection<GeneratedDocumentResponse>>.Success(response);
+    }
+
     public async Task<ServiceResult<GetDocumentDownloadLinkResponse>> GetDownloadLinkAsync(Guid generatedDocumentId, CancellationToken cancellationToken = default)
     {
         var tenantId = currentTenantProvider.TenantId;
@@ -95,6 +127,51 @@ public class GeneratedDocumentService(
         {
             GeneratedDocumentId = entity.Id,
             DownloadUrl = downloadUrlResult.Value ?? string.Empty,
+        });
+    }
+
+    public async Task<ServiceResult<DocumentInlineContentResponse>> GetInlineContentAsync(Guid generatedDocumentId, CancellationToken cancellationToken = default)
+    {
+        var tenantId = currentTenantProvider.TenantId;
+        if (!tenantId.HasValue)
+        {
+            return ServiceResult<DocumentInlineContentResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+        }
+
+        var entity = await dbContext.GeneratedDocuments
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == generatedDocumentId && x.TenantId == tenantId.Value, cancellationToken);
+
+        if (entity is null)
+        {
+            return ServiceResult<DocumentInlineContentResponse>.Failure(StatusCodes.Status404NotFound, "Generated document not found.");
+        }
+
+        var downloadResult = await documentStorageService.DownloadAsync(entity.BlobPath, cancellationToken);
+        if (!downloadResult.Succeeded)
+        {
+            return ServiceResult<DocumentInlineContentResponse>.Failure(
+                downloadResult.StatusCode ?? StatusCodes.Status500InternalServerError,
+                downloadResult.ErrorMessage ?? "Failed to download document content.");
+        }
+
+        await auditLogger.LogAsync(
+            eventType: "documents.inline.requested",
+            tenantId: tenantId.Value,
+            actorUserId: null,
+            targetUserId: null,
+            entityName: nameof(GeneratedDocument),
+            entityId: entity.Id.ToString(),
+            description: "Document inline content requested.",
+            metadata: new { entity.SourceType, entity.SourceEntityId, entity.Format, entity.Version },
+            cancellationToken: cancellationToken);
+
+        return ServiceResult<DocumentInlineContentResponse>.Success(new DocumentInlineContentResponse
+        {
+            GeneratedDocumentId = entity.Id,
+            FileName = entity.FileName,
+            ContentType = entity.ContentType,
+            Content = downloadResult.Value ?? [],
         });
     }
 

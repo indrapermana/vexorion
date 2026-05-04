@@ -5,6 +5,8 @@ namespace VexorionERP.Services;
 
 public interface IImportJobService
 {
+    Task<ServiceResult<IReadOnlyCollection<AvailableImportTypeResponse>>> GetAvailableImportTypesAsync(CancellationToken cancellationToken = default);
+
     Task<ServiceResult<ImportTemplateResponse>> DownloadTemplateAsync(string importType, CancellationToken cancellationToken = default);
 
     Task<ServiceResult<ImportValidationResultResponse>> ValidateAsync(ValidateImportFileRequest request, CancellationToken cancellationToken = default);

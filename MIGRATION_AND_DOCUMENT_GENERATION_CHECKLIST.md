@@ -53,14 +53,14 @@ Build two foundation capabilities before deployment/CD hardening:
   - [x] type conversion validation
   - [x] reference existence validation
   - [x] business rule validation
-- [ ] Build import executor service with transaction batching and detailed per-row result logging
+- [x] Build import executor service with transaction batching and detailed per-row result logging
 
 ## A2. Object Adapters (Wave 1)
-- [ ] Customer import definition + mapping + validators
-- [ ] Supplier import definition + mapping + validators
-- [ ] Product import definition + mapping + validators
-- [ ] Sales Order import definition + mapping + validators
-- [ ] Purchase Order import definition + mapping + validators
+- [x] Customer import definition + mapping + validators
+- [x] Supplier import definition + mapping + validators
+- [x] Product import definition + mapping + validators
+- [x] Sales Order import definition + mapping + validators
+- [x] Purchase Order import definition + mapping + validators
 
 ## A3. API Surface
 - [x] Add import controller endpoints (under configuration scope)

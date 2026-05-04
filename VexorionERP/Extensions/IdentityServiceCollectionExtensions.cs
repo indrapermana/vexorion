@@ -40,7 +40,8 @@ public static class IdentityServiceCollectionExtensions
                     || interfaceType.GetGenericTypeDefinition() == typeof(IQueryService<>)
                     || interfaceType.GetGenericTypeDefinition() == typeof(IFilteredQueryService<,>)
                     || interfaceType.GetGenericTypeDefinition() == typeof(IChildQueryService<,>)
-                    || interfaceType.GetGenericTypeDefinition() == typeof(ILineQueryService<,>)))
+                    || interfaceType.GetGenericTypeDefinition() == typeof(ILineQueryService<,>)
+                    || interfaceType.GetGenericTypeDefinition() == typeof(IImportExecutor<>)))
                 .ToArray();
 
             if (serviceInterfaces.Length == 0)
@@ -51,6 +52,13 @@ public static class IdentityServiceCollectionExtensions
             foreach (Type serviceInterface in serviceInterfaces)
             {
                 services.AddScoped(serviceInterface, type);
+                // Also register as the non-generic IImportExecutor so ImportJobService
+                // can resolve IEnumerable<IImportExecutor> for its dispatch dictionary.
+                if (serviceInterface.IsGenericType &&
+                    serviceInterface.GetGenericTypeDefinition() == typeof(IImportExecutor<>))
+                {
+                    services.AddScoped(typeof(IImportExecutor), type);
+                }
             }
         }
 
@@ -73,6 +81,7 @@ public static class IdentityServiceCollectionExtensions
         services.AddScoped<ISalesShipmentPostingService, SalesShipmentCommandService>();
         services.AddScoped<IProductImageStorageService, AzureBlobProductImageStorageService>();
         services.AddScoped<IDocumentStorageService, AzureBlobDocumentStorageService>();
+        services.AddScoped<DocumentDataLoader>();
         services.AddScoped<IImportWorkbookService, ImportWorkbookService>();
         services.AddScoped<IImportValidationEngine, ImportValidationEngine>();
         services.AddScoped<IImportJobService, ImportJobService>();

@@ -102,6 +102,45 @@ public class AzureBlobDocumentStorageService(IConfiguration configuration) : IDo
         return Task.FromResult(ServiceResult<string>.Success(blobClient.Uri.ToString()));
     }
 
+    public async Task<ServiceResult<byte[]>> DownloadAsync(string blobPath, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(blobPath))
+        {
+            return ServiceResult<byte[]>.Failure(StatusCodes.Status400BadRequest, "Blob path is required.");
+        }
+
+        var connectionString = configuration[ConnectionStringKey];
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            return ServiceResult<byte[]>.Failure(StatusCodes.Status500InternalServerError, $"Missing required configuration: {ConnectionStringKey}");
+        }
+
+        var containerName = configuration[ContainerNameKey];
+        if (string.IsNullOrWhiteSpace(containerName))
+        {
+            containerName = "generated-documents";
+        }
+
+        try
+        {
+            var containerClient = new BlobContainerClient(connectionString, containerName);
+            var blobClient = containerClient.GetBlobClient(blobPath);
+
+            var exists = await blobClient.ExistsAsync(cancellationToken);
+            if (!exists.Value)
+            {
+                return ServiceResult<byte[]>.Failure(StatusCodes.Status404NotFound, "Document blob was not found.");
+            }
+
+            var content = await blobClient.DownloadContentAsync(cancellationToken);
+            return ServiceResult<byte[]>.Success(content.Value.Content.ToArray());
+        }
+        catch (Exception ex)
+        {
+            return ServiceResult<byte[]>.Failure(StatusCodes.Status500InternalServerError, $"Failed to download document blob: {ex.Message}");
+        }
+    }
+
     private static string ComputeSha256(Stream stream)
     {
         using var sha = SHA256.Create();

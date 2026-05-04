@@ -13,6 +13,14 @@ namespace VexorionERP;
 public class ImportsController(
     IMediator mediator) : ServiceResultControllerBase
 {
+    [HttpGet("types")]
+    [Authorize(Policy = AppPermissions.Imports.Validate)]
+    public async Task<ActionResult<IReadOnlyCollection<AvailableImportTypeResponse>>> GetAvailableTypes()
+    {
+        var result = await mediator.Send(new GetAvailableImportTypesQuery(), HttpContext.RequestAborted);
+        return ToActionResult(result);
+    }
+
     [HttpGet("template/{importType}")]
     [Authorize(Policy = AppPermissions.Imports.Validate)]
     public async Task<ActionResult<ImportTemplateResponse>> DownloadTemplate(string importType)

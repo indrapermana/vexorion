@@ -2,7 +2,7 @@ using VexorionERP.Contracts;
 
 namespace VexorionERP.Services;
 
-public record ImportWorkbookRow(int RowNumber, IReadOnlyDictionary<string, string> Values);
+public record ImportWorkbookRow(int RowNumber, Dictionary<string, string> Values);
 
 public record ImportWorkbookReadResult(IReadOnlyCollection<string> Headers, IReadOnlyCollection<ImportWorkbookRow> Rows);
 

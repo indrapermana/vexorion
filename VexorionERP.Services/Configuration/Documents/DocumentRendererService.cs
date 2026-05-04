@@ -1,27 +1,38 @@
-using System.Text;
 using VexorionERP.Models;
 
 namespace VexorionERP.Services;
 
-public class DocumentRendererService : IDocumentRendererService
+public class DocumentRendererService(DocumentDataLoader dataLoader) : IDocumentRendererService
 {
-    public Task<RenderedDocumentResult> RenderAsync(
+    public async Task<RenderedDocumentResult> RenderAsync(
         Guid tenantId,
         GeneratedDocumentSourceType sourceType,
         Guid sourceEntityId,
         GeneratedDocumentFormat format,
         CancellationToken cancellationToken = default)
     {
-        var extension = format == GeneratedDocumentFormat.Docx ? "docx" : "pdf";
-        var contentType = format == GeneratedDocumentFormat.Docx
-            ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            : "application/pdf";
+        var model = await dataLoader.LoadAsync(tenantId, sourceType, sourceEntityId, cancellationToken);
 
-        // Baseline renderer output; this is the pluggable seam for full template renderers.
-        var payload = $"Vexorion ERP Generated Document\nTenant: {tenantId}\nSourceType: {sourceType}\nSourceEntityId: {sourceEntityId}\nGeneratedAtUtc: {DateTime.UtcNow:O}\nFormat: {format}";
-        var content = Encoding.UTF8.GetBytes(payload);
-        var fileName = $"{sourceType.ToString().ToLowerInvariant()}-{sourceEntityId:N}-v1.{extension}";
+        byte[] content;
+        string extension;
+        string contentType;
 
-        return Task.FromResult(new RenderedDocumentResult(fileName, contentType, content));
+        if (format == GeneratedDocumentFormat.Docx)
+        {
+            content = DocxDocumentRenderer.Render(model);
+            extension = "docx";
+            contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+        }
+        else
+        {
+            content = PdfDocumentRenderer.Render(model);
+            extension = "pdf";
+            contentType = "application/pdf";
+        }
+
+        var slug = sourceType.ToString().ToLowerInvariant();
+        var fileName = $"{slug}-{sourceEntityId:N}.{extension}";
+
+        return new RenderedDocumentResult(fileName, contentType, content);
     }
 }

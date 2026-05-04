@@ -19,4 +19,6 @@ public interface IDocumentStorageService
         CancellationToken cancellationToken = default);
 
     Task<ServiceResult<string>> GetDownloadUrlAsync(string blobPath, CancellationToken cancellationToken = default);
+
+    Task<ServiceResult<byte[]>> DownloadAsync(string blobPath, CancellationToken cancellationToken = default);
 }

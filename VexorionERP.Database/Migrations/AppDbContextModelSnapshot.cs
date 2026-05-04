@@ -876,6 +876,9 @@ namespace VexorionERP.Database.Migrations
                     b.Property<DateTime?>("ValidatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("ValidatedRowsJson")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.HasIndex("TenantId");

@@ -17,4 +17,5 @@ public class ImportJob : TenantEntityBase
     public DateTime? CompletedAtUtc { get; set; }
     public string? ErrorSummary { get; set; }
     public string? IdempotencyKey { get; set; }
+    public string? ValidatedRowsJson { get; set; }
 }

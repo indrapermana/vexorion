@@ -1,5 +1,6 @@
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
+using QuestPDF.Infrastructure;
 using Serilog;
 using Serilog.Sinks.Grafana.Loki;
 using VexorionERP;
@@ -11,6 +12,9 @@ Log.Logger = new LoggerConfiguration()
 
 try
 {
+
+// QuestPDF community license — free for open-source and revenue < $1M USD/year.
+QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 

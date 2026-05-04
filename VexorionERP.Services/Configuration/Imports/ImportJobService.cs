@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using VexorionERP.Contracts;
@@ -12,8 +13,12 @@ public class ImportJobService(
     ICurrentTenantProvider currentTenantProvider,
     IImportWorkbookService importWorkbookService,
     IImportValidationEngine importValidationEngine,
+    IEnumerable<IImportExecutor> importExecutors,
     IAuditLogger auditLogger) : IImportJobService
 {
+    private readonly IReadOnlyDictionary<string, IImportExecutor> _executors =
+        importExecutors.ToDictionary(e => e.ImportType, StringComparer.OrdinalIgnoreCase);
+
     private static readonly Dictionary<string, string[]> SupportedTemplates = new(StringComparer.OrdinalIgnoreCase)
     {
         ["customer"] = ["CustomerNumber", "Name", "Email", "PhoneNumber", "BillingAddress"],
@@ -22,6 +27,20 @@ public class ImportJobService(
         ["sales-order"] = ["OrderNumber", "OrderDate", "CustomerNumber", "WarehouseCode", "CurrencyCode"],
         ["purchase-order"] = ["OrderNumber", "OrderDate", "SupplierNumber", "WarehouseCode", "CurrencyCode"],
     };
+
+    public Task<ServiceResult<IReadOnlyCollection<AvailableImportTypeResponse>>> GetAvailableImportTypesAsync(CancellationToken cancellationToken = default)
+    {
+        var types = SupportedTemplates
+            .OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase)
+            .Select(x => new AvailableImportTypeResponse
+            {
+                ImportType = x.Key,
+                Columns = x.Value,
+            })
+            .ToArray();
+
+        return Task.FromResult(ServiceResult<IReadOnlyCollection<AvailableImportTypeResponse>>.Success(types));
+    }
 
     public Task<ServiceResult<ImportTemplateResponse>> DownloadTemplateAsync(string importType, CancellationToken cancellationToken = default)
     {
@@ -128,6 +147,9 @@ public class ImportJobService(
             RequestedByUserId = Guid.Empty,
             ValidatedAtUtc = DateTime.UtcNow,
             ErrorSummary = errors.Count == 0 ? null : string.Join(" | ", errors.Select(x => x.Message)),
+            ValidatedRowsJson = status == ImportJobStatus.Validated
+                ? JsonSerializer.Serialize(workbookReadResult.Rows)
+                : null,
         };
 
         dbContext.ImportJobs.Add(importJob);
@@ -194,11 +216,40 @@ public class ImportJobService(
             return ServiceResult<ImportJobStatusResponse>.Failure(StatusCodes.Status400BadRequest, "Only validated import jobs can be submitted.");
         }
 
-        var now = DateTime.UtcNow;
-        job.SubmittedAtUtc = now;
-        job.CompletedAtUtc = now;
+        if (string.IsNullOrEmpty(job.ValidatedRowsJson))
+        {
+            return ServiceResult<ImportJobStatusResponse>.Failure(StatusCodes.Status422UnprocessableEntity, "Import job has no validated row data. Please re-validate the file.");
+        }
+
+        if (!_executors.TryGetValue(job.ImportType, out var executor))
+        {
+            return ServiceResult<ImportJobStatusResponse>.Failure(StatusCodes.Status400BadRequest, $"No executor registered for import type '{job.ImportType}'.");
+        }
+
+        var rows = JsonSerializer.Deserialize<List<ImportWorkbookRow>>(job.ValidatedRowsJson) ?? [];
+
+        job.SubmittedAtUtc = DateTime.UtcNow;
         job.Status = ImportJobStatus.Imported;
 
+        ImportExecuteResult executeResult;
+        try
+        {
+            executeResult = await executor.ExecuteAsync(tenantId.Value, rows, cancellationToken);
+
+            if (executeResult.Errors.Count > 0)
+            {
+                job.Status = ImportJobStatus.ImportFailed;
+                job.ErrorSummary = string.Join(" | ", executeResult.Errors.Take(10));
+            }
+        }
+        catch (Exception ex)
+        {
+            job.Status = ImportJobStatus.ImportFailed;
+            job.ErrorSummary = ex.Message;
+            executeResult = new ImportExecuteResult(0, 0, 0, [ex.Message]);
+        }
+
+        job.CompletedAtUtc = DateTime.UtcNow;
         await dbContext.SaveChangesAsync(cancellationToken);
 
         await auditLogger.LogAsync(
