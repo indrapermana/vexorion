@@ -109,6 +109,20 @@ public static class AppPermissions
         public const string Manage = "billing.manage";
     }
 
+    public static class Imports
+    {
+        public const string Validate = "imports.validate";
+        public const string Submit = "imports.submit";
+        public const string ViewHistory = "imports.history.view";
+    }
+
+    public static class Documents
+    {
+        public const string Generate = "documents.generate";
+        public const string Download = "documents.download";
+        public const string Regenerate = "documents.regenerate";
+    }
+
     public static class Tenants
     {
         public const string View = "tenants.view";
@@ -160,6 +174,12 @@ public static class AppPermissions
         Reports.View,
         Billing.View,
         Billing.Manage,
+        Imports.Validate,
+        Imports.Submit,
+        Imports.ViewHistory,
+        Documents.Generate,
+        Documents.Download,
+        Documents.Regenerate,
         Tenants.View,
         Tenants.Manage,
         Pos.Checkout,

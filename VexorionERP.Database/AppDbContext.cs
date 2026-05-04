@@ -72,6 +72,8 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
     public DbSet<TenantPreference> TenantPreferences => Set<TenantPreference>();
     public DbSet<TenantPageVisit> TenantPageVisits => Set<TenantPageVisit>();
     public DbSet<ShiftSession> ShiftSessions => Set<ShiftSession>();
+    public DbSet<ImportJob> ImportJobs => Set<ImportJob>();
+    public DbSet<GeneratedDocument> GeneratedDocuments => Set<GeneratedDocument>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
