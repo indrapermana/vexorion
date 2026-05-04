@@ -55,6 +55,7 @@ const string TenantRateLimitPolicy = "tenant-fixed";
 
 builder.Services.AddApplicationIdentity(builder.Configuration);
 builder.Services.AddApplicationAuthorization();
+builder.Services.Configure<ImportsOptions>(builder.Configuration.GetSection("Imports"));
 builder.Services.AddMediator(options => options.ServiceLifetime = Microsoft.Extensions.DependencyInjection.ServiceLifetime.Scoped);
 builder.Services.AddControllers(opts => opts.Filters.Add<LoggingActionFilter>());
 builder.Services.AddEndpointsApiExplorer();

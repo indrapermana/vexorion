@@ -203,20 +203,38 @@ public class ImportJobService(
             return ServiceResult<ImportJobStatusResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
         }
 
-        var job = await dbContext.ImportJobs
-            .FirstOrDefaultAsync(x => x.Id == importJobId && x.TenantId == tenantId.Value, cancellationToken);
+        // Atomic lock: stamp SubmittedAtUtc only while the job is still unsubmitted (Status=Validated,
+        // SubmittedAtUtc=null). A second concurrent call sees 0 rows affected and returns 409,
+        // preventing double-execution of the import.
+        var locked = await dbContext.ImportJobs
+            .Where(x => x.Id == importJobId && x.TenantId == tenantId.Value
+                     && x.Status == ImportJobStatus.Validated
+                     && x.SubmittedAtUtc == null)
+            .ExecuteUpdateAsync(
+                s => s.SetProperty(j => j.SubmittedAtUtc, DateTime.UtcNow),
+                cancellationToken);
 
-        if (job is null)
+        if (locked == 0)
         {
-            return ServiceResult<ImportJobStatusResponse>.Failure(StatusCodes.Status404NotFound, "Import job was not found.");
-        }
+            var existing = await dbContext.ImportJobs
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == importJobId && x.TenantId == tenantId.Value, cancellationToken);
 
-        if (job.Status != ImportJobStatus.Validated)
-        {
+            if (existing is null)
+                return ServiceResult<ImportJobStatusResponse>.Failure(StatusCodes.Status404NotFound, "Import job was not found.");
+
+            if (existing.SubmittedAtUtc.HasValue ||
+                existing.Status is ImportJobStatus.Imported or ImportJobStatus.ImportFailed)
+                return ServiceResult<ImportJobStatusResponse>.Failure(StatusCodes.Status409Conflict, "This import job has already been submitted.");
+
             return ServiceResult<ImportJobStatusResponse>.Failure(StatusCodes.Status400BadRequest, "Only validated import jobs can be submitted.");
         }
 
-        if (string.IsNullOrEmpty(job.ValidatedRowsJson))
+        // ExecuteUpdateAsync bypasses the change tracker; reload fresh from DB.
+        var job = await dbContext.ImportJobs
+            .FirstOrDefaultAsync(x => x.Id == importJobId && x.TenantId == tenantId.Value, cancellationToken);
+
+        if (string.IsNullOrEmpty(job!.ValidatedRowsJson))
         {
             return ServiceResult<ImportJobStatusResponse>.Failure(StatusCodes.Status422UnprocessableEntity, "Import job has no validated row data. Please re-validate the file.");
         }
@@ -228,7 +246,7 @@ public class ImportJobService(
 
         var rows = JsonSerializer.Deserialize<List<ImportWorkbookRow>>(job.ValidatedRowsJson) ?? [];
 
-        job.SubmittedAtUtc = DateTime.UtcNow;
+        // SubmittedAtUtc is already set by the atomic update above.
         job.Status = ImportJobStatus.Imported;
 
         ImportExecuteResult executeResult;

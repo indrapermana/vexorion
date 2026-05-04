@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Mediator;
 using VexorionERP.Contracts;
 using VexorionERP.Handler;
@@ -11,7 +12,8 @@ namespace VexorionERP;
 [Route("api/imports")]
 [Authorize]
 public class ImportsController(
-    IMediator mediator) : ServiceResultControllerBase
+    IMediator mediator,
+    IOptions<ImportsOptions> importsOptions) : ServiceResultControllerBase
 {
     [HttpGet("types")]
     [Authorize(Policy = AppPermissions.Imports.Validate)]
@@ -33,6 +35,10 @@ public class ImportsController(
     [Authorize(Policy = AppPermissions.Imports.Validate)]
     public async Task<ActionResult<ImportValidationResultResponse>> Validate([FromForm] IFormFile file, [FromForm] string importType)
     {
+        var maxBytes = (long)importsOptions.Value.MaxFileSizeMb * 1024L * 1024L;
+        if (file.Length > maxBytes)
+            return BadRequest($"File exceeds the maximum allowed size of {importsOptions.Value.MaxFileSizeMb} MB.");
+
         using var ms = new MemoryStream();
         await file.CopyToAsync(ms, HttpContext.RequestAborted);
 

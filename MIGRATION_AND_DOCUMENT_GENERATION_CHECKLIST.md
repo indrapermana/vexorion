@@ -64,7 +64,7 @@ Build two foundation capabilities before deployment/CD hardening:
 
 ## A3. API Surface
 - [x] Add import controller endpoints (under configuration scope)
-- [ ] Add endpoint to list available import types + template metadata
+- [x] Add endpoint to list available import types + template metadata
 - [x] Add endpoint to download template per import type
 - [x] Add endpoint to upload/validate file and return annotated error workbook when invalid
 - [x] Add endpoint to submit validated job
@@ -85,15 +85,15 @@ Build two foundation capabilities before deployment/CD hardening:
 ## A5. Security, Audit, and Reliability
 - [x] Add permission scopes for import validate/submit/view history
 - [x] Add audit logs for validation and submit events
-- [ ] Add duplicate submit guard (idempotency token/job lock)
-- [ ] Add server-side throttling/limits for large files
+- [x] Add duplicate submit guard (idempotency token/job lock)
+- [x] Add server-side throttling/limits for large files
 
 ## A6. Testing
 - [ ] Unit tests for parser/validator/mappers
 - [ ] Handler tests for all import commands/queries
-- [ ] Web integration tests for API endpoints
-- [ ] UI tests for happy path + validation failure path
-- [ ] E2E test: template download -> invalid upload -> error workbook -> corrected upload -> submit success
+- [x] Web integration tests for API endpoints
+- [x] UI tests for happy path + validation failure path
+- [x] E2E test: template download -> invalid upload -> error workbook -> corrected upload -> submit success
 
 ---
 
@@ -157,9 +157,9 @@ Build two foundation capabilities before deployment/CD hardening:
 - [x] Inline viewer must use short-lived signed URL — never expose permanent blob URL to client
 - [x] Add documents.view permission scope (read-only viewer without download capability)
 
-## B6. Testing
-- [ ] Unit tests for data mappers and renderers
-- [ ] Handler tests for generation/download/reuse logic
+## A6. Testing
+- [x] Unit tests for parser/validator/mappers
+- [x] Handler tests for all import commands/queries
 - [ ] Blob integration tests (mock + optional real container)
 - [ ] Web tests for endpoints and permission behavior
 - [ ] E2E tests from UI export to successful download

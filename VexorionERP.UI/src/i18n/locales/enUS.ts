@@ -982,6 +982,7 @@ const enUS = {
       validating: 'Validating…',
       submit: 'Submit import',
       submitting: 'Submitting…',
+      downloadErrorWorkbook: 'Download error workbook',
       importAnother: 'Import another',
       allRowsValid: 'All rows are valid. Click Submit to import.',
       totalRows: 'Total rows',

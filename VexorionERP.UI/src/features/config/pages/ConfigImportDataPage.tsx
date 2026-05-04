@@ -67,6 +67,25 @@ function getJobStatusLabel(status: number): string {
   }
 }
 
+function downloadBase64File(base64Content: string, fileName: string, contentType: string) {
+  const bytes = atob(base64Content)
+  const buffer = new Uint8Array(bytes.length)
+
+  for (let i = 0; i < bytes.length; i += 1) {
+    buffer[i] = bytes.charCodeAt(i)
+  }
+
+  const blob = new Blob([buffer], { type: contentType })
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = fileName
+  document.body.appendChild(anchor)
+  anchor.click()
+  document.body.removeChild(anchor)
+  URL.revokeObjectURL(url)
+}
+
 interface ImportFlowPanelProps {
   importType: string
   onSubmitted?: () => void
@@ -132,6 +151,17 @@ function ImportFlowPanel({ importType, onSubmitted }: ImportFlowPanelProps) {
   const isValidated = flow.phase === 'validated'
   const validationResult = isValidated ? flow.result : flow.phase === 'submitting' ? flow.result : null
   const isValid = validationResult ? validationResult.invalidRows === 0 : false
+
+  const handleDownloadErrorWorkbook = () => {
+    if (!validationResult?.errorWorkbookContent) return
+
+    downloadBase64File(
+      validationResult.errorWorkbookContent,
+      validationResult.errorWorkbookFileName ?? `${importType}-validation-errors.xlsx`,
+      validationResult.errorWorkbookContentType
+        ?? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+  }
 
   return (
     <Stack spacing={3}>
@@ -256,35 +286,49 @@ function ImportFlowPanel({ importType, onSubmitted }: ImportFlowPanelProps) {
               )}
 
               {!isValid && validationResult.errors.length > 0 && (
-                <Box sx={{ overflowX: 'auto' }}>
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>{t('config.importData.table.row')}</TableCell>
-                        <TableCell>{t('config.importData.table.column')}</TableCell>
-                        <TableCell>{t('config.importData.table.category')}</TableCell>
-                        <TableCell>{t('config.importData.table.message')}</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {validationResult.errors.slice(0, 50).map((err, idx) => (
-                        <TableRow key={idx}>
-                          <TableCell>{err.rowNumber}</TableCell>
-                          <TableCell>{err.columnName}</TableCell>
-                          <TableCell>{err.category}</TableCell>
-                          <TableCell>{err.message}</TableCell>
-                        </TableRow>
-                      ))}
-                      {validationResult.errors.length > 50 && (
+                <Stack spacing={1.5}>
+                  {validationResult.errorWorkbookContent && (
+                    <Box>
+                      <Button
+                        variant="outlined"
+                        startIcon={<DownloadRoundedIcon />}
+                        onClick={handleDownloadErrorWorkbook}
+                        size="small"
+                      >
+                        {t('config.importData.downloadErrorWorkbook')}
+                      </Button>
+                    </Box>
+                  )}
+                  <Box sx={{ overflowX: 'auto' }}>
+                    <Table size="small">
+                      <TableHead>
                         <TableRow>
-                          <TableCell colSpan={4} sx={{ textAlign: 'center', color: 'text.secondary', fontStyle: 'italic' }}>
-                            {t('config.importData.moreErrors', { count: validationResult.errors.length - 50 })}
-                          </TableCell>
+                          <TableCell>{t('config.importData.table.row')}</TableCell>
+                          <TableCell>{t('config.importData.table.column')}</TableCell>
+                          <TableCell>{t('config.importData.table.category')}</TableCell>
+                          <TableCell>{t('config.importData.table.message')}</TableCell>
                         </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </Box>
+                      </TableHead>
+                      <TableBody>
+                        {validationResult.errors.slice(0, 50).map((err, idx) => (
+                          <TableRow key={idx}>
+                            <TableCell>{err.rowNumber}</TableCell>
+                            <TableCell>{err.columnName}</TableCell>
+                            <TableCell>{err.category}</TableCell>
+                            <TableCell>{err.message}</TableCell>
+                          </TableRow>
+                        ))}
+                        {validationResult.errors.length > 50 && (
+                          <TableRow>
+                            <TableCell colSpan={4} sx={{ textAlign: 'center', color: 'text.secondary', fontStyle: 'italic' }}>
+                              {t('config.importData.moreErrors', { count: validationResult.errors.length - 50 })}
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </Box>
+                </Stack>
               )}
 
               {isValid && (
