@@ -1,5 +1,6 @@
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Azure.Storage.Sas;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using System.Security.Cryptography;
@@ -11,6 +12,7 @@ public class AzureBlobDocumentStorageService(IConfiguration configuration) : IDo
 {
     private const string ConnectionStringKey = "AzureBlob:ConnectionString";
     private const string ContainerNameKey = "AzureBlob:DocumentContainerName";
+    private const string SignedUrlLifetimeMinutesKey = "AzureBlob:DocumentSignedUrlLifetimeMinutes";
 
     public async Task<ServiceResult<DocumentStorageUploadResult>> UploadAsync(
         Guid tenantId,
@@ -78,17 +80,17 @@ public class AzureBlobDocumentStorageService(IConfiguration configuration) : IDo
         return ServiceResult<DocumentStorageUploadResult>.Success(result);
     }
 
-    public Task<ServiceResult<string>> GetDownloadUrlAsync(string blobPath, CancellationToken cancellationToken = default)
+    public async Task<ServiceResult<string>> GetDownloadUrlAsync(string blobPath, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(blobPath))
         {
-            return Task.FromResult(ServiceResult<string>.Failure(StatusCodes.Status400BadRequest, "Blob path is required."));
+            return ServiceResult<string>.Failure(StatusCodes.Status400BadRequest, "Blob path is required.");
         }
 
         var connectionString = configuration[ConnectionStringKey];
         if (string.IsNullOrWhiteSpace(connectionString))
         {
-            return Task.FromResult(ServiceResult<string>.Failure(StatusCodes.Status500InternalServerError, $"Missing required configuration: {ConnectionStringKey}"));
+            return ServiceResult<string>.Failure(StatusCodes.Status500InternalServerError, $"Missing required configuration: {ConnectionStringKey}");
         }
 
         var containerName = configuration[ContainerNameKey];
@@ -99,7 +101,33 @@ public class AzureBlobDocumentStorageService(IConfiguration configuration) : IDo
 
         var containerClient = new BlobContainerClient(connectionString, containerName);
         var blobClient = containerClient.GetBlobClient(blobPath);
-        return Task.FromResult(ServiceResult<string>.Success(blobClient.Uri.ToString()));
+
+        var exists = await blobClient.ExistsAsync(cancellationToken);
+        if (!exists.Value)
+        {
+            return ServiceResult<string>.Failure(StatusCodes.Status404NotFound, "Document blob was not found.");
+        }
+
+        if (!blobClient.CanGenerateSasUri)
+        {
+            return ServiceResult<string>.Failure(
+                StatusCodes.Status500InternalServerError,
+                "Document blob client cannot generate a signed download URL with the current storage configuration.");
+        }
+
+        var lifetimeMinutes = ResolveSignedUrlLifetimeMinutes();
+        var now = DateTimeOffset.UtcNow;
+        var sasBuilder = new BlobSasBuilder
+        {
+            BlobContainerName = blobClient.BlobContainerName,
+            BlobName = blobClient.Name,
+            Resource = "b",
+            StartsOn = now.AddMinutes(-1),
+            ExpiresOn = now.AddMinutes(lifetimeMinutes),
+        };
+        sasBuilder.SetPermissions(BlobSasPermissions.Read);
+
+        return ServiceResult<string>.Success(blobClient.GenerateSasUri(sasBuilder).ToString());
     }
 
     public async Task<ServiceResult<byte[]>> DownloadAsync(string blobPath, CancellationToken cancellationToken = default)
@@ -146,5 +174,13 @@ public class AzureBlobDocumentStorageService(IConfiguration configuration) : IDo
         using var sha = SHA256.Create();
         var hash = sha.ComputeHash(stream);
         return Convert.ToHexString(hash);
+    }
+
+    private int ResolveSignedUrlLifetimeMinutes()
+    {
+        var configuredValue = configuration[SignedUrlLifetimeMinutesKey];
+        return int.TryParse(configuredValue, out var lifetimeMinutes) && lifetimeMinutes > 0
+            ? lifetimeMinutes
+            : 5;
     }
 }

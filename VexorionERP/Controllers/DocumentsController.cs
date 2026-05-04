@@ -14,7 +14,7 @@ public class DocumentsController(
     IMediator mediator) : ServiceResultControllerBase
 {
     [HttpGet("source/{sourceType}/{sourceEntityId:guid}")]
-    [Authorize(Policy = AppPermissions.Documents.Download)]
+    [Authorize(Policy = AppPermissions.Documents.ViewOrDownloadPolicy)]
     public async Task<ActionResult<IReadOnlyCollection<GeneratedDocumentResponse>>> ListBySource(GeneratedDocumentSourceType sourceType, Guid sourceEntityId)
     {
         var result = await mediator.Send(new ListGeneratedDocumentsQuery(sourceType, sourceEntityId), HttpContext.RequestAborted);
@@ -38,10 +38,26 @@ public class DocumentsController(
     }
 
     [HttpGet("{generatedDocumentId:guid}/inline")]
-    [Authorize(Policy = AppPermissions.Documents.Download)]
+    [Authorize(Policy = AppPermissions.Documents.ViewOrDownloadPolicy)]
     public async Task<ActionResult> GetInline(Guid generatedDocumentId)
     {
         var result = await mediator.Send(new GetDocumentInlineContentQuery(generatedDocumentId), HttpContext.RequestAborted);
+        if (!result.Succeeded)
+        {
+            var failure = ToActionResult(result);
+            return failure.Result ?? BadRequest();
+        }
+
+        var payload = result.Value!;
+        Response.Headers.ContentDisposition = $"inline; filename=\"{payload.FileName}\"";
+        return File(payload.Content, payload.ContentType);
+    }
+
+    [HttpGet("{generatedDocumentId:guid}/preview/pdf")]
+    [Authorize(Policy = AppPermissions.Documents.ViewOrDownloadPolicy)]
+    public async Task<ActionResult> GetPdfPreview(Guid generatedDocumentId)
+    {
+        var result = await mediator.Send(new GetDocumentPdfPreviewQuery(generatedDocumentId), HttpContext.RequestAborted);
         if (!result.Succeeded)
         {
             var failure = ToActionResult(result);

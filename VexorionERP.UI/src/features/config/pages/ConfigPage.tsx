@@ -40,6 +40,12 @@ const configCards = [
     to: '/config/product-categories',
     accent: '#0e7490',
   },
+  {
+    titleKey: 'configCenter.cards.importData.title',
+    descriptionKey: 'configCenter.cards.importData.description',
+    to: '/config/import-data',
+    accent: '#4f46e5',
+  },
 ]
 
 export default function ConfigPage() {

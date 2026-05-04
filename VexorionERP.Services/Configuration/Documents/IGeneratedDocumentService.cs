@@ -16,5 +16,7 @@ public interface IGeneratedDocumentService
 
     Task<ServiceResult<DocumentInlineContentResponse>> GetInlineContentAsync(Guid generatedDocumentId, CancellationToken cancellationToken = default);
 
+    Task<ServiceResult<DocumentInlineContentResponse>> GetPdfPreviewAsync(Guid generatedDocumentId, CancellationToken cancellationToken = default);
+
     Task<ServiceResult<GeneratedDocumentResponse>> RegenerateAsync(Guid generatedDocumentId, CancellationToken cancellationToken = default);
 }

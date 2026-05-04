@@ -175,6 +175,55 @@ public class GeneratedDocumentService(
         });
     }
 
+    public async Task<ServiceResult<DocumentInlineContentResponse>> GetPdfPreviewAsync(Guid generatedDocumentId, CancellationToken cancellationToken = default)
+    {
+        var tenantId = currentTenantProvider.TenantId;
+        if (!tenantId.HasValue)
+        {
+            return ServiceResult<DocumentInlineContentResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+        }
+
+        var entity = await dbContext.GeneratedDocuments
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == generatedDocumentId && x.TenantId == tenantId.Value, cancellationToken);
+
+        if (entity is null)
+        {
+            return ServiceResult<DocumentInlineContentResponse>.Failure(StatusCodes.Status404NotFound, "Generated document not found.");
+        }
+
+        if (entity.Format != GeneratedDocumentFormat.Docx)
+        {
+            return ServiceResult<DocumentInlineContentResponse>.Failure(StatusCodes.Status400BadRequest, "PDF preview is only supported for DOCX generated documents.");
+        }
+
+        var renderedPreview = await documentRendererService.RenderAsync(
+            tenantId.Value,
+            entity.SourceType,
+            entity.SourceEntityId,
+            GeneratedDocumentFormat.Pdf,
+            cancellationToken);
+
+        await auditLogger.LogAsync(
+            eventType: "documents.preview_pdf.requested",
+            tenantId: tenantId.Value,
+            actorUserId: null,
+            targetUserId: null,
+            entityName: nameof(GeneratedDocument),
+            entityId: entity.Id.ToString(),
+            description: "Document PDF preview requested.",
+            metadata: new { entity.SourceType, entity.SourceEntityId, SourceFormat = entity.Format, PreviewFormat = GeneratedDocumentFormat.Pdf, entity.Version },
+            cancellationToken: cancellationToken);
+
+        return ServiceResult<DocumentInlineContentResponse>.Success(new DocumentInlineContentResponse
+        {
+            GeneratedDocumentId = entity.Id,
+            FileName = Path.ChangeExtension(entity.FileName, ".pdf") ?? $"document-preview-{entity.Id:N}.pdf",
+            ContentType = renderedPreview.ContentType,
+            Content = renderedPreview.Content,
+        });
+    }
+
     public async Task<ServiceResult<GeneratedDocumentResponse>> RegenerateAsync(Guid generatedDocumentId, CancellationToken cancellationToken = default)
     {
         var tenantId = currentTenantProvider.TenantId;

@@ -62,4 +62,16 @@ public class ImportsController(
         var result = await mediator.Send(new GetImportJobStatusQuery(importJobId), HttpContext.RequestAborted);
         return ToActionResult(result);
     }
+
+    [HttpGet("history")]
+    [Authorize(Policy = AppPermissions.Imports.ViewHistory)]
+    public async Task<ActionResult<IReadOnlyCollection<ImportJobHistoryItemResponse>>> GetHistory(
+        [FromQuery] string? importType,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20)
+    {
+        var result = await mediator.Send(
+            new GetImportHistoryQuery(importType, page, pageSize), HttpContext.RequestAborted);
+        return ToActionResult(result);
+    }
 }

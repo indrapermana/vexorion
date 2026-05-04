@@ -119,8 +119,10 @@ public static class AppPermissions
     public static class Documents
     {
         public const string Generate = "documents.generate";
+        public const string View = "documents.view";
         public const string Download = "documents.download";
         public const string Regenerate = "documents.regenerate";
+        public const string ViewOrDownloadPolicy = "documents.view-or-download";
     }
 
     public static class Tenants
@@ -178,6 +180,7 @@ public static class AppPermissions
         Imports.Submit,
         Imports.ViewHistory,
         Documents.Generate,
+        Documents.View,
         Documents.Download,
         Documents.Regenerate,
         Tenants.View,

@@ -9,6 +9,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
 import { useSuppliersLookup } from '../../../hooks/useLookups'
 import { ApiError, getPurchaseInvoices, getVendorPayments } from '../../../lib/api'
+import DocumentsPanel from '../../../components/DocumentsPanel'
 import type { PurchaseInvoiceListItemResponse, VendorPaymentDetailsResponse, VendorPaymentListItemResponse } from '../../../types/api'
 import type { VendorPaymentFormValues, VendorPaymentGridRow } from '../../../types/ui'
 
@@ -46,6 +47,7 @@ export default function VendorPaymentsPage() {
   const [error, setError] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
   const [isEditorOpen, setIsEditorOpen] = useState(false)
+  const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null)
   const [editorDefaults, setEditorDefaults] = useState<Partial<VendorPaymentFormValues> | undefined>(undefined)
 
   const loadData = useCallback(async () => {
@@ -171,9 +173,11 @@ export default function VendorPaymentsPage() {
 
       <Paper elevation={0} className="panel-card products-grid-panel">
         <Suspense fallback={<VendorPaymentSurfaceFallback />}>
-          <VendorPaymentDataGrid rows={rows} isLoading={isLoading} />
+          <VendorPaymentDataGrid rows={rows} isLoading={isLoading} onSelectPayment={setSelectedPaymentId} />
         </Suspense>
       </Paper>
+
+      <DocumentsPanel sourceType="VendorPaymentReceipt" sourceEntityId={selectedPaymentId} />
 
       {isEditorOpen ? (
         <Suspense fallback={<VendorPaymentSurfaceFallback />}>

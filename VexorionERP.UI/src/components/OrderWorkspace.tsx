@@ -18,6 +18,7 @@ type OrderWorkspaceProps = {
   alerts?: Array<{ severity: 'warning' | 'error' | 'success' | 'info', message: string }>
   grid: ReactNode
   linesPanel: ReactNode
+  documentsPanel?: ReactNode
   editor?: ReactNode
   deleteDialog?: ReactNode
 }
@@ -32,6 +33,7 @@ export default function OrderWorkspace({
   alerts = [],
   grid,
   linesPanel,
+  documentsPanel,
   editor,
   deleteDialog,
 }: OrderWorkspaceProps) {
@@ -66,6 +68,7 @@ export default function OrderWorkspace({
       </Paper>
 
       {linesPanel}
+      {documentsPanel}
       {editor}
       {deleteDialog}
     </Stack>

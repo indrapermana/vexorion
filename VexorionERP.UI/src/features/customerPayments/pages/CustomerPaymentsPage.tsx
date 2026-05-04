@@ -10,6 +10,7 @@ import { useAuth } from '../../../app/AuthContext'
 import { useCurrency } from '../../../app/CurrencyContext'
 import { useCustomersLookup } from '../../../hooks/useLookups'
 import { ApiError, getCustomerPayments, getSalesInvoices } from '../../../lib/api'
+import DocumentsPanel from '../../../components/DocumentsPanel'
 import type { CustomerPaymentDetailsResponse, CustomerPaymentListItemResponse, SalesInvoiceListItemResponse } from '../../../types/api'
 import type { CustomerPaymentFormValues, CustomerPaymentGridRow } from '../../../types/ui'
 
@@ -48,6 +49,7 @@ export default function CustomerPaymentsPage() {
   const [error, setError] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
   const [isEditorOpen, setIsEditorOpen] = useState(false)
+  const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null)
   const [editorDefaults, setEditorDefaults] = useState<Partial<CustomerPaymentFormValues> | undefined>(undefined)
 
   const loadData = useCallback(async () => {
@@ -173,9 +175,11 @@ export default function CustomerPaymentsPage() {
 
       <Paper elevation={0} className="panel-card products-grid-panel">
         <Suspense fallback={<CustomerPaymentSurfaceFallback />}>
-          <CustomerPaymentDataGrid rows={rows} isLoading={isLoading} />
+          <CustomerPaymentDataGrid rows={rows} isLoading={isLoading} onSelectPayment={setSelectedPaymentId} />
         </Suspense>
       </Paper>
+
+      <DocumentsPanel sourceType="CustomerPaymentReceipt" sourceEntityId={selectedPaymentId} />
 
       {isEditorOpen ? (
         <Suspense fallback={<CustomerPaymentSurfaceFallback />}>

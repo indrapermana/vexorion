@@ -286,6 +286,53 @@ public class ImportJobService(
         return ServiceResult<ImportJobStatusResponse>.Success(MapStatus(job));
     }
 
+    public async Task<ServiceResult<IReadOnlyCollection<ImportJobHistoryItemResponse>>> GetHistoryAsync(
+        string? importType, int page, int pageSize, CancellationToken cancellationToken = default)
+    {
+        var tenantId = currentTenantProvider.TenantId;
+        if (!tenantId.HasValue)
+        {
+            return ServiceResult<IReadOnlyCollection<ImportJobHistoryItemResponse>>.Failure(
+                StatusCodes.Status400BadRequest, "Tenant context is required.");
+        }
+
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
+        var query = dbContext.ImportJobs
+            .AsNoTracking()
+            .Where(x => x.TenantId == tenantId.Value);
+
+        if (!string.IsNullOrWhiteSpace(importType))
+        {
+            var normalised = importType.Trim().ToLowerInvariant();
+            query = query.Where(x => x.ImportType == normalised);
+        }
+
+        var items = await query
+            .OrderByDescending(x => x.ValidatedAtUtc ?? x.SubmittedAtUtc ?? x.CompletedAtUtc)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(x => new ImportJobHistoryItemResponse
+            {
+                ImportJobId = x.Id,
+                ImportType = x.ImportType,
+                SourceFileName = x.SourceFileName,
+                Status = x.Status,
+                TotalRows = x.TotalRows,
+                ValidRows = x.ValidRows,
+                InvalidRows = x.InvalidRows,
+                RequestedByUserId = x.RequestedByUserId,
+                ValidatedAtUtc = x.ValidatedAtUtc,
+                SubmittedAtUtc = x.SubmittedAtUtc,
+                CompletedAtUtc = x.CompletedAtUtc,
+                ErrorSummary = x.ErrorSummary,
+            })
+            .ToListAsync(cancellationToken);
+
+        return ServiceResult<IReadOnlyCollection<ImportJobHistoryItemResponse>>.Success(items);
+    }
+
     private static ImportJobStatusResponse MapStatus(ImportJob job)
     {
         return new ImportJobStatusResponse

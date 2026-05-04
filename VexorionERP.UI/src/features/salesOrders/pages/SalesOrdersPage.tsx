@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
 import { useCurrency } from '../../../app/CurrencyContext'
+import DocumentsPanel from '../../../components/DocumentsPanel'
 import OrderWorkspace from '../../../components/OrderWorkspace'
 import { ApiError, deleteSalesOrder, getSalesOrderLines, getSalesOrders } from '../../../lib/api'
 import { useCustomersLookup, useWarehousesLookup } from '../../../hooks/useLookups'
@@ -215,6 +216,7 @@ export default function SalesOrdersPage() {
       ]}
       grid={<Suspense fallback={<SalesOrderSurfaceFallback />}><SalesOrderDataGrid rows={rows} isLoading={isLoading} onEdit={openEditDialog} onDelete={setDeleteTarget} onManageLines={(row) => void handleManageLines(row)} onCreateInvoice={handleCreateInvoice} onViewShipments={handleViewShipments} /></Suspense>}
       linesPanel={<Suspense fallback={<SalesOrderSurfaceFallback />}><SalesOrderLinesPanel order={activeLinesOrder} lines={lines} isLoading={linesLoading} error={linesError} onRefresh={() => activeLinesOrder ? loadLines(activeLinesOrder.id) : Promise.resolve()} /></Suspense>}
+      documentsPanel={<DocumentsPanel sourceType="SalesOrder" sourceEntityId={activeLinesOrder?.id ?? null} />}
       editor={isEditorOpen ? <Suspense fallback={<SalesOrderSurfaceFallback />}><SalesOrderEditorDialog key={`${dialogMode}:${selectedSalesOrderId ?? 'new'}`} open={isEditorOpen} mode={dialogMode} salesOrderId={selectedSalesOrderId} customers={customers} warehouses={warehouses} onClose={handleEditorClose} onSaved={(salesOrder, mode) => void handleSaved(salesOrder, mode)} /></Suspense> : null}
       deleteDialog={deleteTarget ? <Suspense fallback={null}><SalesOrderDeleteDialog target={deleteTarget} isDeleting={isDeleting} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} /></Suspense> : null}
     />

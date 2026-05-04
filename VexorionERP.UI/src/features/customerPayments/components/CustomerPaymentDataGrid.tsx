@@ -6,9 +6,10 @@ import type { CustomerPaymentGridRow } from '../../../types/ui'
 type CustomerPaymentDataGridProps = {
   rows: CustomerPaymentGridRow[]
   isLoading: boolean
+  onSelectPayment?: (paymentId: string) => void
 }
 
-export default function CustomerPaymentDataGrid({ rows, isLoading }: CustomerPaymentDataGridProps) {
+export default function CustomerPaymentDataGrid({ rows, isLoading, onSelectPayment }: CustomerPaymentDataGridProps) {
   const { t } = useTranslation()
   const columns: GridColDef<CustomerPaymentGridRow>[] = [
     {
@@ -59,7 +60,8 @@ export default function CustomerPaymentDataGrid({ rows, isLoading }: CustomerPay
       rows={rows}
       columns={columns}
       loading={isLoading}
-      disableRowSelectionOnClick
+      disableRowSelectionOnClick={!onSelectPayment}
+      onRowClick={onSelectPayment ? ({ row }) => onSelectPayment(row.id) : undefined}
       pageSizeOptions={[5, 10, 25]}
       initialState={{ pagination: { paginationModel: { pageSize: 10, page: 0 } }, sorting: { sortModel: [{ field: 'paymentDate', sort: 'desc' }] } }}
       showToolbar

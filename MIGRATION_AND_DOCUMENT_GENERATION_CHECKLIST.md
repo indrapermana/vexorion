@@ -71,16 +71,16 @@ Build two foundation capabilities before deployment/CD hardening:
 - [x] Add endpoint to query import history/status/detail
 
 ## A4. Main UI (Configuration -> Import Data)
-- [ ] Add new menu item `/config/import-data`
-- [ ] Build Import Data landing page with entity list/cards
-- [ ] Build per-entity import page with:
-  - [ ] Download template button
-  - [ ] Upload file section
-  - [ ] Validate button
-  - [ ] Validation result summary (rows ok/error)
-  - [ ] Download error workbook button
-  - [ ] Submit import button (enabled only after valid)
-- [ ] Build import history panel with status + timestamps + initiator
+- [x] Add new menu item `/config/import-data`
+- [x] Build Import Data landing page with entity list/cards
+- [x] Build per-entity import page with:
+  - [x] Download template button
+  - [x] Upload file section
+  - [x] Validate button
+  - [x] Validation result summary (rows ok/error)
+  - [x] Download error workbook button
+  - [x] Submit import button (enabled only after valid)
+- [x] Build import history panel with status + timestamps + initiator
 
 ## A5. Security, Audit, and Reliability
 - [x] Add permission scopes for import validate/submit/view history
@@ -100,16 +100,16 @@ Build two foundation capabilities before deployment/CD hardening:
 ## Track B: Document Creation (SO/PO/Invoice/Payment)
 
 ## B0. Architecture & Standards
-- [ ] Define document types for wave 1:
-  - [ ] Sales Order
-  - [ ] Purchase Order
-  - [ ] Sales Invoice
-  - [ ] Purchase Invoice
-  - [ ] Customer Payment Receipt
-  - [ ] Vendor Payment Receipt
-- [ ] Define format options: DOCX and PDF
-- [ ] Define template versioning strategy per document type
-- [ ] Define regeneration rules (when to reuse stored document vs regenerate)
+- [x] Define document types for wave 1:
+  - [x] Sales Order
+  - [x] Purchase Order
+  - [x] Sales Invoice
+  - [x] Purchase Invoice
+  - [x] Customer Payment Receipt
+  - [x] Vendor Payment Receipt
+- [x] Define format options: DOCX and PDF
+- [x] Define template versioning strategy per document type
+- [x] Define regeneration rules (when to reuse stored document vs regenerate)
 
 ## B1. Generic Backend Framework (CQRS-first)
 - [x] Create `GeneratedDocument` domain model + EF configuration + migration
@@ -126,36 +126,36 @@ Build two foundation capabilities before deployment/CD hardening:
 - [x] Add checksum/hash for deterministic cache/reuse
 
 ## B2. Template Authoring (Internal Templates)
-- [ ] Create default templates for each wave-1 type (DOCX)
-- [ ] Map template placeholders to canonical data model
-- [ ] Define header/footer, company identity block, totals/tax sections
-- [ ] Define localization-ready date/currency formatting
+- [x] Create default templates for each wave-1 type (DOCX)
+- [x] Map template placeholders to canonical data model
+- [x] Define header/footer, company identity block, totals/tax sections
+- [x] Define localization-ready date/currency formatting
 
 ## B3. API Surface
 - [x] Add endpoint: generate document by type + entity id + format
 - [x] Add endpoint: download existing document
-- [ ] Add endpoint: list generated documents per source entity
+- [x] Add endpoint: list generated documents per source entity
 - [x] Add endpoint: regenerate document (admin/privileged)
-- [ ] Add endpoint: stream document content inline (for viewer; returns raw bytes with Content-Disposition: inline)
-- [ ] Add endpoint: get PDF preview of a DOCX document (server-side render to PDF for in-browser viewing)
+- [x] Add endpoint: stream document content inline (for viewer; returns raw bytes with Content-Disposition: inline)
+- [x] Add endpoint: get PDF preview of a DOCX document (server-side render to PDF for in-browser viewing)
 
 ## B4. Main UI Integration
-- [ ] Add Export button on SO/PO/Invoice/Payment pages
-- [ ] Add format selector (DOCX/PDF)
-- [ ] Add generated-document history panel per record
-- [ ] Add download/re-generate actions based on permission
-- [ ] Add inline document viewer panel (PDF rendered in-browser via PDF.js / iframe)
-- [ ] DOCX format: show Preview as PDF button (calls server-side PDF preview endpoint)
-- [ ] Viewer supports zoom, page navigation, and full-screen mode
-- [ ] Add permission guard on viewer (requires documents.download permission)
+- [x] Add Export button on SO/PO/Invoice/Payment pages
+- [x] Add format selector (DOCX/PDF)
+- [x] Add generated-document history panel per record
+- [x] Add download/re-generate actions based on permission
+- [x] Add inline document viewer panel (PDF rendered in-browser via PDF.js / iframe)
+- [x] DOCX format: show Preview as PDF button (calls server-side PDF preview endpoint)
+- [x] Viewer supports zoom, page navigation, and full-screen mode
+- [x] Add permission guard on viewer (requires documents.view or documents.download permission)
 
 ## B5. Security, Audit, and Reliability
-- [x] Add permission scopes for generate/download/regenerate
+- [x] Add permission scopes for generate/view/download/regenerate
 - [ ] Store tenant-scoped blob paths and metadata only (no public blobs)
-- [ ] Add signed URL strategy (short-lived links, used by viewer to stream from blob directly)
+- [x] Add signed URL strategy (short-lived links, used by viewer to stream from blob directly)
 - [x] Add audit logs for generation/download
-- [ ] Inline viewer must use short-lived signed URL — never expose permanent blob URL to client
-- [ ] Add documents.view permission scope (read-only viewer without download capability)
+- [x] Inline viewer must use short-lived signed URL — never expose permanent blob URL to client
+- [x] Add documents.view permission scope (read-only viewer without download capability)
 
 ## B6. Testing
 - [ ] Unit tests for data mappers and renderers
@@ -202,10 +202,10 @@ Build two foundation capabilities before deployment/CD hardening:
   Decision: Yes. Posted/approved source documents keep immutable generated artifacts; re-generation creates a new version.
 - [x] Retention policy for generated files in Blob storage?
   Decision: Keep active versions indefinitely by default; allow lifecycle cleanup only for superseded versions after 365 days.
-- [ ] Document viewer strategy: render PDF inline or require download for DOCX?
-  Decision needed: PDF renders in-browser via PDF.js (no install, works in all modern browsers). DOCX cannot be rendered natively in-browser — options are (a) server-side PDF preview endpoint (QuestPDF re-render of same canonical model), (b) mammoth.js client-side DOCX→HTML (lower fidelity), or (c) download-only for DOCX. Recommended: option (a) — server-side PDF preview keeps fidelity and avoids client-side parsing of sensitive content.
-- [ ] Separate view vs download permission?
-  Decision needed: Current plan has documents.download permission gating both viewer and file download. A finer-grained documents.view permission (viewer only, no file download) may be useful for read-only roles. Requires adding a new permission scope and splitting the signed-URL endpoint from the file-download endpoint.
+- [x] Document viewer strategy: render PDF inline or require download for DOCX?
+  Decision: PDF renders in-browser. DOCX uses a server-side PDF preview endpoint backed by the canonical document model renderer, avoiding client-side DOCX parsing and preserving rendering fidelity.
+- [x] Separate view vs download permission?
+  Decision: Separate permissions are enabled. Viewer endpoints accept documents.view or documents.download, while file-download link resolution remains gated by documents.download.
 
 ---
 

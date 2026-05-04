@@ -136,6 +136,7 @@ const routeTitleKeys: Record<string, string> = {
   '/config/menu': 'nav.routeTitles.configMenu',
   '/config/roles': 'nav.routeTitles.configRoles',
   '/config/tax-discount': 'nav.routeTitles.configTaxDiscount',
+  '/config/import-data': 'nav.routeTitles.configImportData',
   '/config/users': 'nav.routeTitles.configUsers',
   '/fiscal-periods': 'nav.routeTitles.fiscalPeriods',
   '/journals': 'nav.routeTitles.journals',

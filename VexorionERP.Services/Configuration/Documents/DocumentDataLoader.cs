@@ -22,6 +22,8 @@ public sealed class DocumentDataLoader(AppDbContext dbContext)
             GeneratedDocumentSourceType.PurchaseOrder => await LoadPurchaseOrderAsync(tenantId, sourceEntityId, cancellationToken),
             GeneratedDocumentSourceType.SalesInvoice => await LoadSalesInvoiceAsync(tenantId, sourceEntityId, cancellationToken),
             GeneratedDocumentSourceType.PurchaseInvoice => await LoadPurchaseInvoiceAsync(tenantId, sourceEntityId, cancellationToken),
+            GeneratedDocumentSourceType.CustomerPaymentReceipt => await LoadCustomerPaymentReceiptAsync(tenantId, sourceEntityId, cancellationToken),
+            GeneratedDocumentSourceType.VendorPaymentReceipt => await LoadVendorPaymentReceiptAsync(tenantId, sourceEntityId, cancellationToken),
             _ => throw new NotSupportedException($"Document source type '{sourceType}' is not supported by the renderer.")
         };
     }
@@ -59,7 +61,7 @@ public sealed class DocumentDataLoader(AppDbContext dbContext)
             SecondaryDateLabel = "Required Date",
             SecondaryDate = order.RequiredDate,
             CurrencyCode = order.CurrencyCode,
-            FromParty = CompanyParty(order.Warehouse?.Name ?? "Warehouse"),
+            FromParty = await LoadCompanyPartyAsync(tenantId, order.Warehouse?.Name, ct),
             ToParty = new DocumentPartyModel(
                 Label: "BILL TO",
                 Name: order.Customer?.Name ?? string.Empty,
@@ -107,7 +109,7 @@ public sealed class DocumentDataLoader(AppDbContext dbContext)
             SecondaryDateLabel = "Expected Receipt",
             SecondaryDate = order.ExpectedReceiptDate,
             CurrencyCode = order.CurrencyCode,
-            FromParty = CompanyParty(order.Warehouse?.Name ?? "Warehouse"),
+            FromParty = await LoadCompanyPartyAsync(tenantId, order.Warehouse?.Name, ct),
             ToParty = new DocumentPartyModel(
                 Label: "SUPPLIER",
                 Name: order.Supplier?.Name ?? string.Empty,
@@ -152,7 +154,7 @@ public sealed class DocumentDataLoader(AppDbContext dbContext)
             SecondaryDateLabel = "Due Date",
             SecondaryDate = invoice.DueDate,
             CurrencyCode = invoice.CurrencyCode,
-            FromParty = CompanyParty("Vexorion ERP"),
+            FromParty = await LoadCompanyPartyAsync(tenantId, null, ct),
             ToParty = new DocumentPartyModel(
                 Label: "BILL TO",
                 Name: invoice.Customer?.Name ?? string.Empty,
@@ -203,7 +205,7 @@ public sealed class DocumentDataLoader(AppDbContext dbContext)
                 Address: invoice.Supplier?.Address,
                 Phone: invoice.Supplier?.PhoneNumber,
                 Email: invoice.Supplier?.Email),
-            ToParty = CompanyParty("Vexorion ERP"),
+            ToParty = await LoadCompanyPartyAsync(tenantId, null, ct),
             Lines = lines,
             Subtotal = invoice.Subtotal,
             TaxTotal = invoice.TaxTotal,
@@ -212,8 +214,149 @@ public sealed class DocumentDataLoader(AppDbContext dbContext)
         };
     }
 
+    // ─── Customer Payment Receipt ──────────────────────────────────────────────
+
+    private async Task<DocumentRenderModel> LoadCustomerPaymentReceiptAsync(Guid tenantId, Guid id, CancellationToken ct)
+    {
+        var payment = await dbContext.CustomerPayments
+            .AsNoTracking()
+            .Include(p => p.Customer)
+            .Include(p => p.SalesInvoice)
+            .FirstOrDefaultAsync(p => p.Id == id && p.TenantId == tenantId, ct)
+            ?? throw new InvalidOperationException($"CustomerPayment {id} not found for tenant {tenantId}.");
+
+        var docNumber = payment.ReferenceNumber ?? payment.Id.ToString("N")[..8].ToUpperInvariant();
+        var invoiceNumber = payment.SalesInvoice?.InvoiceNumber ?? string.Empty;
+        var invoiceDate = payment.SalesInvoice?.InvoiceDate ?? payment.PaymentDate;
+
+        var lines = new List<DocumentLineModel>
+        {
+            new(
+                LineNumber: 1,
+                Sku: string.Empty,
+                ProductName: $"Payment for Invoice {invoiceNumber}" + (string.IsNullOrWhiteSpace(payment.PaymentMethod) ? string.Empty : $" via {payment.PaymentMethod}"),
+                Quantity: 1,
+                Unit: string.Empty,
+                UnitPrice: payment.Amount,
+                DiscountAmount: 0m,
+                TaxAmount: 0m,
+                LineTotal: payment.Amount)
+        };
+
+        return new DocumentRenderModel
+        {
+            DocumentTitle = "PAYMENT RECEIPT",
+            DocumentNumber = docNumber,
+            DocumentDate = payment.PaymentDate,
+            SecondaryDateLabel = "Invoice Date",
+            SecondaryDate = invoiceDate,
+            CurrencyCode = payment.CurrencyCode,
+            FromParty = await LoadCompanyPartyAsync(tenantId, null, ct),
+            ToParty = new DocumentPartyModel(
+                Label: "RECEIVED FROM",
+                Name: payment.Customer?.Name ?? string.Empty,
+                Address: payment.Customer?.BillingAddress,
+                Phone: payment.Customer?.PhoneNumber,
+                Email: payment.Customer?.Email),
+            Lines = lines,
+            Subtotal = payment.Amount,
+            TaxTotal = 0m,
+            GrandTotal = payment.Amount,
+            Notes = payment.Notes,
+        };
+    }
+
+    // ─── Vendor Payment Receipt ────────────────────────────────────────────────
+
+    private async Task<DocumentRenderModel> LoadVendorPaymentReceiptAsync(Guid tenantId, Guid id, CancellationToken ct)
+    {
+        var payment = await dbContext.VendorPayments
+            .AsNoTracking()
+            .Include(p => p.Supplier)
+            .Include(p => p.PurchaseInvoice)
+            .FirstOrDefaultAsync(p => p.Id == id && p.TenantId == tenantId, ct)
+            ?? throw new InvalidOperationException($"VendorPayment {id} not found for tenant {tenantId}.");
+
+        var docNumber = payment.ReferenceNumber ?? payment.Id.ToString("N")[..8].ToUpperInvariant();
+        var invoiceNumber = payment.PurchaseInvoice?.InvoiceNumber ?? string.Empty;
+        var invoiceDate = payment.PurchaseInvoice?.InvoiceDate ?? payment.PaymentDate;
+
+        var lines = new List<DocumentLineModel>
+        {
+            new(
+                LineNumber: 1,
+                Sku: string.Empty,
+                ProductName: $"Payment for Invoice {invoiceNumber}" + (string.IsNullOrWhiteSpace(payment.PaymentMethod) ? string.Empty : $" via {payment.PaymentMethod}"),
+                Quantity: 1,
+                Unit: string.Empty,
+                UnitPrice: payment.Amount,
+                DiscountAmount: 0m,
+                TaxAmount: 0m,
+                LineTotal: payment.Amount)
+        };
+
+        return new DocumentRenderModel
+        {
+            DocumentTitle = "PAYMENT VOUCHER",
+            DocumentNumber = docNumber,
+            DocumentDate = payment.PaymentDate,
+            SecondaryDateLabel = "Invoice Date",
+            SecondaryDate = invoiceDate,
+            CurrencyCode = payment.CurrencyCode,
+            FromParty = await LoadCompanyPartyAsync(tenantId, null, ct),
+            ToParty = new DocumentPartyModel(
+                Label: "PAID TO",
+                Name: payment.Supplier?.Name ?? string.Empty,
+                Address: payment.Supplier?.Address,
+                Phone: payment.Supplier?.PhoneNumber,
+                Email: payment.Supplier?.Email),
+            Lines = lines,
+            Subtotal = payment.Amount,
+            TaxTotal = 0m,
+            GrandTotal = payment.Amount,
+            Notes = payment.Notes,
+        };
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
-    private static DocumentPartyModel CompanyParty(string locationHint) =>
-        new(Label: "FROM", Name: "Vexorion ERP", Address: locationHint, Phone: null, Email: null);
+    /// <summary>
+    /// Loads the first active Company for the tenant and maps it to a FROM party.
+    /// Falls back to the warehouse/location hint if no company record exists.
+    /// </summary>
+    private async Task<DocumentPartyModel> LoadCompanyPartyAsync(Guid tenantId, string? locationHint, CancellationToken ct)
+    {
+        var company = await dbContext.Companies
+            .AsNoTracking()
+            .Where(c => c.TenantId == tenantId && c.IsActive)
+            .OrderBy(c => c.Code)
+            .FirstOrDefaultAsync(ct);
+
+        if (company is null)
+        {
+            return new DocumentPartyModel(Label: "FROM", Name: locationHint ?? "Your Company", Address: null, Phone: null, Email: null);
+        }
+
+        var addressParts = new[]
+        {
+            company.AddressLine1,
+            company.AddressLine2,
+            company.City,
+            company.State,
+            company.PostalCode,
+            company.Country,
+        }.Where(p => !string.IsNullOrWhiteSpace(p));
+
+        var address = string.Join(", ", addressParts);
+        if (!string.IsNullOrWhiteSpace(locationHint))
+            address = string.IsNullOrWhiteSpace(address) ? locationHint : $"{address} ({locationHint})";
+
+        return new DocumentPartyModel(
+            Label: "FROM",
+            Name: company.Name,
+            Address: string.IsNullOrWhiteSpace(address) ? null : address,
+            Phone: company.PhoneNumber,
+            Email: company.Email);
+    }
 }
+
