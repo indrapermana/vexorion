@@ -66,7 +66,12 @@ public class TenantOnboardingService(
             return ServiceResult<OnboardTenantResponse>.ValidationFailure(createResult.Errors.GroupBy(x => x.Code).ToDictionary(group => group.Key, group => group.Select(x => x.Description).ToArray()));
         }
 
-        await userManager.AddToRolesAsync(adminUser, [AppRoles.SystemAdmin, AppRoles.TenantAdmin]);
+        // First tenant admin gets SystemAdmin role; subsequent ones get TenantAdmin only
+        var rolesToAssign = hasExistingTenants 
+            ? new[] { AppRoles.TenantAdmin } 
+            : new[] { AppRoles.SystemAdmin, AppRoles.TenantAdmin };
+        
+        await userManager.AddToRolesAsync(adminUser, rolesToAssign);
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
