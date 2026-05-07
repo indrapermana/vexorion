@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Alert, Box, Button, Divider, Link, Stack, TextField, Typography } from '@mui/material'
+import { Alert, Box, Button, Stack, TextField, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
-import { Link as RouterLink, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { ApiError } from '../lib/api'
 import { useAuth } from '../app/AuthContext'
 
@@ -70,15 +70,6 @@ export default function LoginPage() {
       <Button type="submit" variant="contained" size="large" disabled={isSubmitting}>
         {isSubmitting ? t('pages.auth.login.signingIn') : t('pages.auth.login.signInButton')}
       </Button>
-
-      <Divider>{t('pages.auth.or')}</Divider>
-
-      <Typography variant="body2" color="text.secondary">
-        {t('pages.auth.login.needWorkspace')}{' '}
-        <Link component={RouterLink} to="/tenants" underline="hover">
-          {t('pages.auth.login.createTenantLink')}
-        </Link>
-      </Typography>
     </Stack>
   )
 }

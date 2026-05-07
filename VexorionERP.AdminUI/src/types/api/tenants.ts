@@ -13,6 +13,26 @@ export type UpdateTenantRequest = {
   isActive: boolean
 }
 
+export type OnboardTenantRequest = {
+  tenantName: string
+  tenantCode: string
+  domain?: string
+  companyName: string
+  companyCode: string
+  adminUserName: string
+  adminEmail: string
+  adminPassword: string
+  firstName: string
+  lastName: string
+}
+
+export type OnboardTenantResponse = {
+  tenantId: string
+  tenantCode: string
+  adminUserId: string
+  adminUserName: string
+}
+
 export type TenantPreferencesResponse = {
   hiddenMenuLinks: string[]
   defaultDiscountPercent: number

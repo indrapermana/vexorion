@@ -1,5 +1,7 @@
 import { requestJson } from './core'
 import type {
+  OnboardTenantRequest,
+  OnboardTenantResponse,
   TenantListItemResponse,
   TenantPreferencesResponse,
   TenantTelemetryResponse,
@@ -8,6 +10,10 @@ import type {
 
 export function getTenants() {
   return requestJson<TenantListItemResponse[]>('/tenants')
+}
+
+export function onboardTenant(request: OnboardTenantRequest) {
+  return requestJson<OnboardTenantResponse>('/tenants/onboard', 'POST', request)
 }
 
 export function updateTenant(tenantId: string, request: UpdateTenantRequest) {

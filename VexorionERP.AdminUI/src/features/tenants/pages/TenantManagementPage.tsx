@@ -1,9 +1,10 @@
-import { Alert, Box, Paper, Stack, Typography } from '@mui/material'
+import { Alert, Box, Button, Paper, Stack, Typography } from '@mui/material'
 import { lazy, useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { deleteTenant, getTenants } from '../../../lib/api'
 import type { TenantListItemResponse } from '../../../types/api'
 import { TenantDataGrid } from '../components/TenantDataGrid'
+import { TenantOnboardingDialog } from '../components/TenantOnboardingDialog'
 
 const TenantEditorDialog = lazy(() => import('../components/TenantEditorDialog').then((m) => ({ default: m.TenantEditorDialog })))
 
@@ -13,6 +14,7 @@ export default function TenantManagementPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isEditorOpen, setIsEditorOpen] = useState(false)
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false)
   const [selectedTenant, setSelectedTenant] = useState<TenantListItemResponse | null>(null)
 
   const loadTenants = useCallback(async () => {
@@ -58,18 +60,27 @@ export default function TenantManagementPage() {
     }
   }
 
+  const handleTenantCreated = (newTenant: TenantListItemResponse) => {
+    setTenants((prev) => [newTenant, ...prev])
+  }
+
   const activeTenants = tenants.filter((t) => t.isActive).length
 
   return (
     <Box sx={{ p: 3 }}>
       <Stack spacing={3}>
-        <Box>
-          <Typography variant="h4" sx={{ mb: 1 }}>
-            {t('pages.tenantManagement.loadingTools')}
-          </Typography>
-          <Typography variant="body2" color="textSecondary">
-            {t('pages.tenantManagement.description')}
-          </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <Box>
+            <Typography variant="h4" sx={{ mb: 1 }}>
+              {t('pages.tenantManagement.loadingTools')}
+            </Typography>
+            <Typography variant="body2" color="textSecondary">
+              {t('pages.tenantManagement.description')}
+            </Typography>
+          </Box>
+          <Button variant="contained" onClick={() => setIsOnboardingOpen(true)}>
+            New Tenant
+          </Button>
         </Box>
 
         <Stack direction="row" spacing={2}>
@@ -96,6 +107,12 @@ export default function TenantManagementPage() {
           tenant={selectedTenant}
           onClose={handleEditorClose}
           onSaved={handleTenantSaved}
+        />
+
+        <TenantOnboardingDialog
+          open={isOnboardingOpen}
+          onClose={() => setIsOnboardingOpen(false)}
+          onCreated={handleTenantCreated}
         />
       </Stack>
     </Box>

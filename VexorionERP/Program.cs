@@ -51,6 +51,7 @@ builder.Host.UseSerilog((ctx, services, cfg) =>
 });
 
 const string LocalDevCorsPolicy = "LocalDevCors";
+const string ProductionCorsPolicy = "ProductionCors";
 const string TenantRateLimitPolicy = "tenant-fixed";
 
 builder.Services.AddApplicationIdentity(builder.Configuration);
@@ -71,6 +72,17 @@ builder.Services.AddCors(options =>
                 "https://localhost:5173",
                 "https://localhost:5174",
                 "https://localhost:5175")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+
+    var productionOrigins = builder.Configuration
+        .GetSection("Cors:AllowedOrigins")
+        .Get<string[]>() ?? [];
+
+    options.AddPolicy(ProductionCorsPolicy, policy =>
+    {
+        policy.WithOrigins(productionOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -137,6 +149,7 @@ app.Use(async (context, next) =>
 });
 
 app.UseCors(LocalDevCorsPolicy);
+app.UseCors(ProductionCorsPolicy);
 
 // Item 39 — apply rate limiter
 app.UseRateLimiter();
