@@ -83,10 +83,10 @@ export default function PosPage() {
   const [isQuickCreateOpen, setIsQuickCreateOpen] = useState(false)
   const [quickCustomer, setQuickCustomer] = useState<QuickCustomerForm>({ name: '', phoneNumber: '', email: '' })
 
-  const customersQuery = useQuery({ queryKey: ['pos', 'customers'], queryFn: getCustomers })
-  const inventoryBalancesQuery = useQuery({ queryKey: ['pos', 'inventory-balances'], queryFn: getInventoryBalances })
-  const productsQuery = useQuery({ queryKey: ['pos', 'products'], queryFn: getProducts })
-  const warehousesQuery = useQuery({ queryKey: ['pos', 'warehouses'], queryFn: getWarehouses })
+  const customersQuery = useQuery({ queryKey: ['pos', 'customers'], queryFn: getCustomers, staleTime: 60_000 })
+  const inventoryBalancesQuery = useQuery({ queryKey: ['pos', 'inventory-balances'], queryFn: getInventoryBalances, staleTime: 15_000 })
+  const productsQuery = useQuery({ queryKey: ['pos', 'products'], queryFn: getProducts, staleTime: 300_000 })
+  const warehousesQuery = useQuery({ queryKey: ['pos', 'warehouses'], queryFn: getWarehouses, staleTime: 300_000 })
 
   const customers = customersQuery.data ?? []
   const inventoryBalances = inventoryBalancesQuery.data?.filter((x) => x.isActive) ?? []

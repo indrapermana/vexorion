@@ -63,6 +63,7 @@ public static class IdentityServiceCollectionExtensions
         }
 
         services.AddScoped<ICurrentTenantProvider, HttpContextCurrentTenantProvider>();
+        services.AddScoped<ITenantMemoryCache, TenantMemoryCache>();
         services.AddScoped<IUserClaimsPrincipalFactory<User>, AppUserClaimsPrincipalFactory>();
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IAuditLogger, AuditLogger>();

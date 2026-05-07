@@ -1,5 +1,6 @@
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.OutputCaching;
 using QuestPDF.Infrastructure;
 using Serilog;
 using Serilog.Sinks.Grafana.Loki;
@@ -51,6 +52,7 @@ builder.Host.UseSerilog((ctx, services, cfg) =>
 });
 
 const string CorsPolicy = "CorsPolicy";
+const string ShortLivedAuthorizedGetPolicy = "ShortLivedAuthorizedGet";
 const string TenantRateLimitPolicy = "tenant-fixed";
 
 builder.Services.AddApplicationIdentity(builder.Configuration);
@@ -60,6 +62,19 @@ builder.Services.AddMediator(options => options.ServiceLifetime = Microsoft.Exte
 builder.Services.AddControllers(opts => opts.Filters.Add<LoggingActionFilter>());
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddMemoryCache(options =>
+{
+    options.SizeLimit = builder.Configuration.GetValue<long?>("Caching:MemoryCacheEntryLimit") ?? 1024;
+});
+builder.Services.AddOutputCache(options =>
+{
+    options.AddPolicy(ShortLivedAuthorizedGetPolicy, policy =>
+    {
+        policy.Expire(TimeSpan.FromSeconds(30))
+            .SetVaryByHeader("Authorization")
+            .SetVaryByQuery("*");
+    });
+});
 
 var defaultCorsOrigins = new[]
 {
@@ -158,6 +173,7 @@ app.Use(async (context, next) =>
 });
 
 app.UseCors(CorsPolicy);
+app.UseOutputCache();
 
 // Item 39 — apply rate limiter
 app.UseRateLimiter();

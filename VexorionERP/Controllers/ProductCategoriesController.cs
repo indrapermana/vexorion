@@ -10,22 +10,47 @@ namespace VexorionERP;
 [ApiController]
 [Route("api/product-categories")]
 [Authorize]
-public class ProductCategoriesController(IMediator mediator) : ServiceResultControllerBase
+public class ProductCategoriesController(IMediator mediator, ITenantMemoryCache tenantMemoryCache) : ServiceResultControllerBase
 {
+    private const string CacheArea = "product-categories";
+
     [HttpGet]
     [Authorize(Policy = AppPermissions.Products.View)]
     public async Task<ActionResult<IReadOnlyCollection<ProductCategoryListItemResponse>>> GetAll()
     {
+        if (tenantMemoryCache.TryGetValue<IReadOnlyCollection<ProductCategoryListItemResponse>>(CacheArea, "all", out var cached) && cached is not null)
+        {
+            return Ok(cached);
+        }
+
         var result = await mediator.Send(new GetProductCategoriesQuery(), HttpContext.RequestAborted);
-        return ToActionResult(result);
+        if (!result.Succeeded)
+        {
+            return ToActionResult(result);
+        }
+
+        tenantMemoryCache.Set(CacheArea, "all", result.Value!, TimeSpan.FromMinutes(5));
+        return Ok(result.Value);
     }
 
     [HttpGet("{categoryId:guid}")]
     [Authorize(Policy = AppPermissions.Products.View)]
     public async Task<ActionResult<ProductCategoryDetailsResponse>> GetById(Guid categoryId)
     {
+        var detailsKey = $"details:{categoryId}";
+        if (tenantMemoryCache.TryGetValue<ProductCategoryDetailsResponse>(CacheArea, detailsKey, out var cached) && cached is not null)
+        {
+            return Ok(cached);
+        }
+
         var result = await mediator.Send(new GetProductCategoryByIdQuery(categoryId), HttpContext.RequestAborted);
-        return ToActionResult(result);
+        if (!result.Succeeded)
+        {
+            return ToActionResult(result);
+        }
+
+        tenantMemoryCache.Set(CacheArea, detailsKey, result.Value!, TimeSpan.FromMinutes(5));
+        return Ok(result.Value);
     }
 
     [HttpPost]
@@ -36,6 +61,8 @@ public class ProductCategoriesController(IMediator mediator) : ServiceResultCont
         if (!result.Succeeded)
             return ToActionResult(result);
 
+        tenantMemoryCache.Remove(CacheArea, "all");
+
         return CreatedAtAction(nameof(GetById), new { categoryId = result.Value!.Id }, result.Value);
     }
 
@@ -44,7 +71,12 @@ public class ProductCategoriesController(IMediator mediator) : ServiceResultCont
     public async Task<ActionResult<ProductCategoryDetailsResponse>> Update(Guid categoryId, [FromBody] UpdateProductCategoryRequest request)
     {
         var result = await mediator.Send(new UpdateProductCategoryCommand(categoryId, request), HttpContext.RequestAborted);
-        return ToActionResult(result);
+        if (!result.Succeeded)
+            return ToActionResult(result);
+
+        tenantMemoryCache.Remove(CacheArea, "all");
+        tenantMemoryCache.Remove(CacheArea, $"details:{categoryId}");
+        return Ok(result.Value);
     }
 
     [HttpDelete("{categoryId:guid}")]
@@ -52,6 +84,11 @@ public class ProductCategoriesController(IMediator mediator) : ServiceResultCont
     public async Task<ActionResult> Delete(Guid categoryId)
     {
         var result = await mediator.Send(new DeleteProductCategoryCommand(categoryId), HttpContext.RequestAborted);
-        return ToActionResult(result);
+        if (!result.Succeeded)
+            return ToActionResult(result);
+
+        tenantMemoryCache.Remove(CacheArea, "all");
+        tenantMemoryCache.Remove(CacheArea, $"details:{categoryId}");
+        return NoContent();
     }
 }

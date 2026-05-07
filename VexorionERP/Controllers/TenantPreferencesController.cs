@@ -11,14 +11,28 @@ namespace VexorionERP;
 [Route("api/configuration/preferences")]
 [Authorize]
 public class TenantPreferencesController(
-    IMediator mediator) : ServiceResultControllerBase
+    IMediator mediator,
+    ITenantMemoryCache tenantMemoryCache) : ServiceResultControllerBase
 {
+    private const string CacheArea = "tenant-preferences";
+
     [HttpGet]
     [Authorize(Policy = AppPermissions.Organization.View)]
     public async Task<ActionResult<TenantPreferencesResponse>> Get()
     {
+        if (tenantMemoryCache.TryGetValue<TenantPreferencesResponse>(CacheArea, "current", out var cached) && cached is not null)
+        {
+            return Ok(cached);
+        }
+
         var result = await mediator.Send(new GetTenantPreferencesQuery(), HttpContext.RequestAborted);
-        return ToActionResult(result);
+        if (!result.Succeeded)
+        {
+            return ToActionResult(result);
+        }
+
+        tenantMemoryCache.Set(CacheArea, "current", result.Value!, TimeSpan.FromMinutes(5));
+        return Ok(result.Value);
     }
 
     [HttpPut("menu")]
@@ -26,7 +40,13 @@ public class TenantPreferencesController(
     public async Task<ActionResult<TenantPreferencesResponse>> UpdateMenu([FromBody] UpdateMenuConfigurationRequest request)
     {
         var result = await mediator.Send(new UpdateTenantMenuConfigurationCommand(request), HttpContext.RequestAborted);
-        return ToActionResult(result);
+        if (!result.Succeeded)
+        {
+            return ToActionResult(result);
+        }
+
+        tenantMemoryCache.Remove(CacheArea, "current");
+        return Ok(result.Value);
     }
 
     [HttpPut("discount")]
@@ -34,6 +54,12 @@ public class TenantPreferencesController(
     public async Task<ActionResult<TenantPreferencesResponse>> UpdateDiscount([FromBody] UpdateDiscountConfigurationRequest request)
     {
         var result = await mediator.Send(new UpdateTenantDiscountConfigurationCommand(request), HttpContext.RequestAborted);
-        return ToActionResult(result);
+        if (!result.Succeeded)
+        {
+            return ToActionResult(result);
+        }
+
+        tenantMemoryCache.Remove(CacheArea, "current");
+        return Ok(result.Value);
     }
 }

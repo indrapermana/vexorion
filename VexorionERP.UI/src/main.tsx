@@ -10,7 +10,16 @@ import { ThemeModeProvider } from './app/ThemeModeContext'
 import { createAppTheme, type ThemeMode } from './theme.ts'
 
 const THEME_MODE_STORAGE_KEY = 'vexorion.themeMode'
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      gcTime: 30 * 60_000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+})
 
 function normalizeThemeMode(value: string | null): ThemeMode {
   return value === 'dark' ? 'dark' : 'light'

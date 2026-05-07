@@ -9,7 +9,16 @@ import { ThemeModeProvider, useThemeMode } from './app/ThemeModeContext'
 import { I18nProvider } from './app/I18nContext'
 import { PosErrorBoundary } from './components/PosErrorBoundary'
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      gcTime: 30 * 60_000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+})
 
 function ThemedApp() {
   const { themeMode } = useThemeMode()

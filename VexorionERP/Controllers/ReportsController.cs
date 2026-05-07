@@ -2,6 +2,7 @@ using System.Text;
 using Mediator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using VexorionERP.Contracts;
 using VexorionERP.Handler;
 using VexorionERP.Models;
@@ -15,6 +16,7 @@ public class ReportsController(IMediator mediator) : ServiceResultControllerBase
 {
     [HttpGet("profit-and-loss")]
     [Authorize(Policy = AppPermissions.Reports.View)]
+    [OutputCache(PolicyName = "ShortLivedAuthorizedGet")]
     public async Task<ActionResult<ProfitAndLossReportResponse>> GetProfitAndLoss(
         [FromQuery] DateOnly? startDate,
         [FromQuery] DateOnly? endDate,
@@ -58,6 +60,7 @@ public class ReportsController(IMediator mediator) : ServiceResultControllerBase
 
     [HttpGet("balance-sheet")]
     [Authorize(Policy = AppPermissions.Reports.View)]
+    [OutputCache(PolicyName = "ShortLivedAuthorizedGet")]
     public async Task<ActionResult<BalanceSheetReportResponse>> GetBalanceSheet([FromQuery] DateOnly? asOfDate, [FromQuery] DateOnly? priorAsOfDate)
     {
         var effectiveDate = asOfDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
@@ -98,6 +101,7 @@ public class ReportsController(IMediator mediator) : ServiceResultControllerBase
 
     [HttpGet("dashboard")]
     [Authorize(Policy = AppPermissions.Reports.View)]
+    [OutputCache(PolicyName = "ShortLivedAuthorizedGet")]
     public async Task<ActionResult<FinanceDashboardSnapshotResponse>> GetDashboardSnapshot([FromQuery] DateOnly? asOfDate, [FromQuery] int periodDays = 30)
     {
         var effectiveDate = asOfDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
@@ -107,6 +111,7 @@ public class ReportsController(IMediator mediator) : ServiceResultControllerBase
 
     [HttpGet("ar-aging")]
     [Authorize(Policy = AppPermissions.Reports.View)]
+    [OutputCache(PolicyName = "ShortLivedAuthorizedGet")]
     public async Task<ActionResult<ArAgingReportResponse>> GetArAging([FromQuery] DateOnly? asOfDate)
     {
         var effectiveDate = asOfDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
@@ -116,6 +121,7 @@ public class ReportsController(IMediator mediator) : ServiceResultControllerBase
 
     [HttpGet("ap-aging")]
     [Authorize(Policy = AppPermissions.Reports.View)]
+    [OutputCache(PolicyName = "ShortLivedAuthorizedGet")]
     public async Task<ActionResult<ApAgingReportResponse>> GetApAging([FromQuery] DateOnly? asOfDate)
     {
         var effectiveDate = asOfDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
@@ -125,6 +131,7 @@ public class ReportsController(IMediator mediator) : ServiceResultControllerBase
 
     [HttpGet("trial-balance")]
     [Authorize(Policy = AppPermissions.Reports.View)]
+    [OutputCache(PolicyName = "ShortLivedAuthorizedGet")]
     public async Task<ActionResult<TrialBalanceReportResponse>> GetTrialBalance([FromQuery] DateOnly? asOfDate)
     {
         var effectiveDate = asOfDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
@@ -158,6 +165,7 @@ public class ReportsController(IMediator mediator) : ServiceResultControllerBase
 
     [HttpGet("account-drill-down/{accountId:guid}")]
     [Authorize(Policy = AppPermissions.Reports.View)]
+    [OutputCache(PolicyName = "ShortLivedAuthorizedGet")]
     public async Task<ActionResult<AccountDrillDownResponse>> GetAccountDrillDown(
         Guid accountId,
         [FromQuery] DateOnly? startDate,

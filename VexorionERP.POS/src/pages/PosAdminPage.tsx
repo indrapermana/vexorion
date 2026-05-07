@@ -33,7 +33,7 @@ export default function PosAdminPage() {
   const [error, setError] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
 
-  const usersQuery = useQuery({ queryKey: ['pos-admin', 'users'], queryFn: getUsers })
+  const usersQuery = useQuery({ queryKey: ['pos-admin', 'users'], queryFn: getUsers, staleTime: 60_000 })
   const users = usersQuery.data ?? []
 
   const togglePosRole = useCallback(
