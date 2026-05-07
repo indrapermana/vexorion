@@ -50,8 +50,7 @@ builder.Host.UseSerilog((ctx, services, cfg) =>
     }
 });
 
-const string LocalDevCorsPolicy = "LocalDevCors";
-const string ProductionCorsPolicy = "ProductionCors";
+const string CorsPolicy = "CorsPolicy";
 const string TenantRateLimitPolicy = "tenant-fixed";
 
 builder.Services.AddApplicationIdentity(builder.Configuration);
@@ -61,28 +60,38 @@ builder.Services.AddMediator(options => options.ServiceLifetime = Microsoft.Exte
 builder.Services.AddControllers(opts => opts.Filters.Add<LoggingActionFilter>());
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+var defaultCorsOrigins = new[]
+{
+    "https://app.vexorionerp.com",
+    "https://admin.vexorionerp.com",
+    "https://pos.vexorionerp.com",
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:5175",
+    "https://localhost:5173",
+    "https://localhost:5174",
+    "https://localhost:5175"
+};
+
+var sectionOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>() ?? [];
+
+var flatOrigins = (builder.Configuration["Cors:AllowedOrigins"] ?? string.Empty)
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+var allowedOrigins = defaultCorsOrigins
+    .Concat(sectionOrigins)
+    .Concat(flatOrigins)
+    .Distinct(StringComparer.OrdinalIgnoreCase)
+    .ToArray();
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(LocalDevCorsPolicy, policy =>
+    options.AddPolicy(CorsPolicy, policy =>
     {
-        policy.WithOrigins(
-                "http://localhost:5173",
-                "http://localhost:5174",
-                "http://localhost:5175",
-                "https://localhost:5173",
-                "https://localhost:5174",
-                "https://localhost:5175")
-            .AllowAnyHeader()
-            .AllowAnyMethod();
-    });
-
-    var productionOrigins = builder.Configuration
-        .GetSection("Cors:AllowedOrigins")
-        .Get<string[]>() ?? [];
-
-    options.AddPolicy(ProductionCorsPolicy, policy =>
-    {
-        policy.WithOrigins(productionOrigins)
+        policy.WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -148,8 +157,7 @@ app.Use(async (context, next) =>
     await next();
 });
 
-app.UseCors(LocalDevCorsPolicy);
-app.UseCors(ProductionCorsPolicy);
+app.UseCors(CorsPolicy);
 
 // Item 39 — apply rate limiter
 app.UseRateLimiter();
