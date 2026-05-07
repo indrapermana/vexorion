@@ -930,48 +930,6 @@ const enUS = {
       backToSignIn: 'Back to sign in',
       backToOnboarding: 'Back to onboarding',
     },
-  },
-  dialogs: {
-    cancel: 'Cancel',
-    delete: 'Delete',
-    deleting: 'Deleting...',
-  },
-  configCenter: {
-    title: 'Configuration Center',
-    subtitle: 'Central workspace for tenant-level controls and system setup.',
-    cards: {
-      users: {
-        title: 'Users',
-        description: 'Create tenant users, activate/deactivate accounts, and assign roles.',
-      },
-      roles: {
-        title: 'Role permissions',
-        description: 'Review the permission matrix used by the role model.',
-      },
-      menu: {
-        title: 'Menu configuration',
-        description: 'Choose which menu entries are visible in the admin sidebar.',
-      },
-      taxDiscount: {
-        title: 'Tax and discount',
-        description: 'Manage tenant tax codes and discount policy defaults.',
-      },
-      company: {
-        title: 'Company profile',
-        description: 'Edit primary company details for master data consistency.',
-      },
-      productCategories: {
-        title: 'Product categories',
-        description: 'Manage product category taxonomy for catalog classification.',
-      },
-      importData: {
-        title: 'Import data',
-        description: 'Bulk-import master data from Excel or CSV templates.',
-      },
-    },
-    openSetting: 'Open setting',
-  },
-  config: {
     importData: {
       title: 'Import Data',
       description: 'Download a template, fill it in, then upload, validate, and submit to bulk-import entity records.',
@@ -1039,6 +997,46 @@ const enUS = {
         },
       },
     },
+  },
+  dialogs: {
+    cancel: 'Cancel',
+    delete: 'Delete',
+    deleting: 'Deleting...',
+  },
+  configCenter: {
+    title: 'Configuration Center',
+    subtitle: 'Central workspace for tenant-level controls and system setup.',
+    cards: {
+      users: {
+        title: 'Users',
+        description: 'Create tenant users, activate/deactivate accounts, and assign roles.',
+      },
+      roles: {
+        title: 'Role permissions',
+        description: 'Review the permission matrix used by the role model.',
+      },
+      menu: {
+        title: 'Menu configuration',
+        description: 'Choose which menu entries are visible in the admin sidebar.',
+      },
+      taxDiscount: {
+        title: 'Tax and discount',
+        description: 'Manage tenant tax codes and discount policy defaults.',
+      },
+      company: {
+        title: 'Company profile',
+        description: 'Edit primary company details for master data consistency.',
+      },
+      productCategories: {
+        title: 'Product categories',
+        description: 'Manage product category taxonomy for catalog classification.',
+      },
+      importData: {
+        title: 'Import data',
+        description: 'Bulk-import master data from Excel or CSV templates.',
+      },
+    },
+    openSetting: 'Open setting',
   },
 }
 

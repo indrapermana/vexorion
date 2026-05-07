@@ -663,48 +663,6 @@ const esES = {
       backToSignIn: 'Volver a iniciar sesión',
       backToOnboarding: 'Volver a onboarding',
     },
-  },
-  dialogs: {
-    cancel: 'Cancelar',
-    delete: 'Eliminar',
-    deleting: 'Eliminando...',
-  },
-  configCenter: {
-    title: 'Centro de Configuración',
-    subtitle: 'Espacio central para controles a nivel de inquilino y configuración del sistema.',
-    cards: {
-      users: {
-        title: 'Usuarios',
-        description: 'Crea usuarios del inquilino, activa/desactiva cuentas y asigna roles.',
-      },
-      roles: {
-        title: 'Permisos de rol',
-        description: 'Revisa la matriz de permisos utilizada por el modelo de roles.',
-      },
-      menu: {
-        title: 'Configuración de menú',
-        description: 'Elige qué elementos del menú se muestran en la barra lateral de administración.',
-      },
-      taxDiscount: {
-        title: 'Impuestos y descuentos',
-        description: 'Gestiona códigos de impuestos del inquilino y políticas de descuento predeterminadas.',
-      },
-      company: {
-        title: 'Perfil de la empresa',
-        description: 'Edita los detalles principales de la empresa para mantener la coherencia de datos maestros.',
-      },
-      productCategories: {
-        title: 'Categorías de producto',
-        description: 'Gestiona la taxonomía de categorías de producto para clasificación del catálogo.',
-      },
-      importData: {
-        title: 'Importar datos',
-        description: 'Importación masiva de datos maestros desde plantillas Excel o CSV.',
-      },
-    },
-    openSetting: 'Abrir configuración',
-  },
-  config: {
     importData: {
       title: 'Importar Datos',
       description: 'Descarga una plantilla, complétala y luego sube, valida y envía para importar registros de entidades de forma masiva.',
@@ -771,6 +729,46 @@ const esES = {
         },
       },
     },
+  },
+  dialogs: {
+    cancel: 'Cancelar',
+    delete: 'Eliminar',
+    deleting: 'Eliminando...',
+  },
+  configCenter: {
+    title: 'Centro de Configuración',
+    subtitle: 'Espacio central para controles a nivel de inquilino y configuración del sistema.',
+    cards: {
+      users: {
+        title: 'Usuarios',
+        description: 'Crea usuarios del inquilino, activa/desactiva cuentas y asigna roles.',
+      },
+      roles: {
+        title: 'Permisos de rol',
+        description: 'Revisa la matriz de permisos utilizada por el modelo de roles.',
+      },
+      menu: {
+        title: 'Configuración de menú',
+        description: 'Elige qué elementos del menú se muestran en la barra lateral de administración.',
+      },
+      taxDiscount: {
+        title: 'Impuestos y descuentos',
+        description: 'Gestiona códigos de impuestos del inquilino y políticas de descuento predeterminadas.',
+      },
+      company: {
+        title: 'Perfil de la empresa',
+        description: 'Edita los detalles principales de la empresa para mantener la coherencia de datos maestros.',
+      },
+      productCategories: {
+        title: 'Categorías de producto',
+        description: 'Gestiona la taxonomía de categorías de producto para clasificación del catálogo.',
+      },
+      importData: {
+        title: 'Importar datos',
+        description: 'Importación masiva de datos maestros desde plantillas Excel o CSV.',
+      },
+    },
+    openSetting: 'Abrir configuración',
   },
 }
 
