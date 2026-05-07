@@ -97,3 +97,41 @@ jobs:
         with:
           name: adminui-playwright-report
           path: VexorionERP.AdminUI/playwright-report/
+
+  deploy:
+    name: Deploy to Azure Static Web Apps (AdminUI)
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: VexorionERP.AdminUI/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: VexorionERP.AdminUI
+
+      - name: Build
+        run: npm run build
+        working-directory: VexorionERP.AdminUI
+        env:
+          VITE_API_BASE_URL: https://api.vexorionerp.com/api
+
+      - name: Deploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_ADMIN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: upload
+          app_location: VexorionERP.AdminUI
+          output_location: dist
+          skip_app_build: true
