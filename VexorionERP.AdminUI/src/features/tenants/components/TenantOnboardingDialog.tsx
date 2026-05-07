@@ -96,7 +96,7 @@ export function TenantOnboardingDialog({ open, onClose, onCreated }: Props) {
               onChange={(e) => setField('tenantCode', e.target.value)}
               required
               fullWidth
-              inputProps={{ style: { textTransform: 'lowercase' } }}
+              slotProps={{ htmlInput: { style: { textTransform: 'lowercase' } } }}
             />
           </Stack>
           <TextField
@@ -124,7 +124,7 @@ export function TenantOnboardingDialog({ open, onClose, onCreated }: Props) {
               onChange={(e) => setField('companyCode', e.target.value)}
               required
               fullWidth
-              inputProps={{ style: { textTransform: 'uppercase' } }}
+              slotProps={{ htmlInput: { style: { textTransform: 'uppercase' } } }}
             />
           </Stack>
 
