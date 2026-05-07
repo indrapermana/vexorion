@@ -25,6 +25,10 @@ namespace VexorionERP.Database
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            // Legacy migration designer snapshot contains corrupted entity type names.
+            // Keep a minimal target model so EF can execute migration operations.
+            return;
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
                 {
                     b.Property<Guid>("Id")
