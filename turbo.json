@@ -5,6 +5,10 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**", "build/**"]
     },
+    "@vexorion/ui#build": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
     "typecheck": {
       "dependsOn": ["^typecheck"]
     },
