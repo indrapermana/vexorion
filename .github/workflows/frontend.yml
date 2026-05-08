@@ -57,6 +57,12 @@ jobs:
       - name: Install dependencies
         run: npm ci --include=optional
 
+      - name: Ensure Linux rolldown bindings
+        run: |
+          npm --workspace VexorionERP.POS install --no-save @rolldown/binding-linux-x64-gnu@1.0.0-rc.17
+          npm --workspace VexorionERP.AdminUI install --no-save @rolldown/binding-linux-x64-gnu@1.0.0-rc.17
+          npm --workspace VexorionERP.UI install --no-save @rolldown/binding-linux-x64-gnu@1.0.0-rc.15
+
       # Turbo builds only packages affected since the previous commit.
       # The dependency graph means: if packages/ui changed → all 3 apps rebuild.
       # If only VexorionERP.UI changed → only that app + @vexorion/ui (cached) rebuild.
@@ -136,6 +142,12 @@ jobs:
 
       - name: Install dependencies
         run: npm ci --include=optional
+
+      - name: Ensure Linux rolldown bindings
+        run: |
+          npm --workspace VexorionERP.POS install --no-save @rolldown/binding-linux-x64-gnu@1.0.0-rc.17
+          npm --workspace VexorionERP.AdminUI install --no-save @rolldown/binding-linux-x64-gnu@1.0.0-rc.17
+          npm --workspace VexorionERP.UI install --no-save @rolldown/binding-linux-x64-gnu@1.0.0-rc.15
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
