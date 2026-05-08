@@ -1,0 +1,23 @@
+{
+  "name": "vexorionerp-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "npm@10.9.4",
+  "workspaces": [
+    "VexorionERP.UI",
+    "VexorionERP.AdminUI",
+    "VexorionERP.POS",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "test:run": "turbo run test:run",
+    "preview": "turbo run preview"
+  },
+  "devDependencies": {
+    "turbo": "^2.1.3"
+  }
+}

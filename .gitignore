@@ -43,3 +43,9 @@ CoverageReport/
 **/CoverageReport/
 **/.vite/
 **/.cache/
+
+# Monorepo tooling
+node_modules/
+.turbo/
+packages/*/node_modules/
+packages/*/dist/
