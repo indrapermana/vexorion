@@ -1,9 +1,7 @@
 # VexorionERP
 
 [![Backend](https://github.com/indrapermana/vexorion/actions/workflows/backend.yml/badge.svg)](https://github.com/indrapermana/vexorion/actions/workflows/backend.yml)
-[![UI Frontend](https://github.com/indrapermana/vexorion/actions/workflows/ui.yml/badge.svg)](https://github.com/indrapermana/vexorion/actions/workflows/ui.yml)
-[![AdminUI Frontend](https://github.com/indrapermana/vexorion/actions/workflows/adminui.yml/badge.svg)](https://github.com/indrapermana/vexorion/actions/workflows/adminui.yml)
-[![POS Frontend](https://github.com/indrapermana/vexorion/actions/workflows/pos.yml/badge.svg)](https://github.com/indrapermana/vexorion/actions/workflows/pos.yml)
+[![Frontend](https://github.com/indrapermana/vexorion/actions/workflows/frontend.yml/badge.svg)](https://github.com/indrapermana/vexorion/actions/workflows/frontend.yml)
 
 A full-stack SME ERP platform built with **ASP.NET Core 8**, **Entity Framework Core**, **PostgreSQL**, and three **React + Vite + MUI v6** frontends.
 
