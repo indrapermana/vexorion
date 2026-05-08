@@ -15,7 +15,11 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "test:run": "turbo run test:run",
-    "preview": "turbo run preview"
+    "preview": "turbo run preview",
+    "ui:version": "node scripts/bump-ui-version.mjs",
+    "ui:version:patch": "node scripts/bump-ui-version.mjs patch",
+    "ui:version:minor": "node scripts/bump-ui-version.mjs minor",
+    "ui:version:major": "node scripts/bump-ui-version.mjs major"
   },
   "devDependencies": {
     "turbo": "^2.1.3"

@@ -4,21 +4,19 @@ import StackedBarChartRoundedIcon from '@mui/icons-material/StackedBarChartRound
 import TravelExploreRoundedIcon from '@mui/icons-material/TravelExploreRounded'
 import { Alert, Box, Chip, Paper, Stack, Typography } from '@mui/material'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { VxCard } from '@vexorion/ui'
 import { getTenantTelemetry, getTenants, getUsersForAdmin } from '../lib/api'
 import type { TenantListItemResponse, TenantTelemetryListItemResponse } from '../types/api'
 import type { UserListItemResponse } from '../types/api/users'
 
 function DashboardMetricCard({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
   return (
-    <Paper className="stat-card dashboard-stat-card" elevation={0}>
+    <VxCard title={label} className="stat-card dashboard-stat-card">
       <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
         <Box className="metric-icon">{icon}</Box>
-        <Box>
-          <Typography variant="overline" color="text.secondary">{label}</Typography>
-          <Typography variant="h5">{value}</Typography>
-        </Box>
+        <Typography variant="h5">{value}</Typography>
       </Stack>
-    </Paper>
+    </VxCard>
   )
 }
 

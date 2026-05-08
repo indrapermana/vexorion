@@ -47,6 +47,53 @@ dotnet tool install --global dotnet-ef
 
 ---
 
+## Frontend Monorepo (Turborepo + Shared UI Package)
+
+The three frontend apps are now managed as a JavaScript workspace monorepo at the repository root using **npm workspaces** and **Turborepo**.
+
+### Workspace packages
+
+- `VexorionERP.UI`
+- `VexorionERP.AdminUI`
+- `VexorionERP.POS`
+- `packages/ui` (`@vexorion/ui` shared UI package)
+
+### Root commands
+
+Run these from repository root:
+
+| Command | Description |
+|---|---|
+| `npm run dev` | Run all frontend `dev` tasks via Turbo (parallel) |
+| `npm run build` | Build all frontend packages via Turbo |
+| `npm run lint` | Run lint tasks via Turbo |
+| `npm run test` | Run test tasks via Turbo |
+| `npx turbo run build --filter=vexorionerp-adminui` | Build only AdminUI and its dependencies |
+| `npx turbo run build --filter=vexorionerp-ui --filter=vexorionerp-pos` | Build selected apps only |
+
+### Shared UI package version bump workflow
+
+Use the root helper script to bump `@vexorion/ui` and automatically sync its dependency version in all three frontend apps.
+
+| Command | Description |
+|---|---|
+| `npm run ui:version:patch` | Bump `packages/ui` patch version and sync app dependencies |
+| `npm run ui:version:minor` | Bump minor version and sync app dependencies |
+| `npm run ui:version:major` | Bump major version and sync app dependencies |
+| `npm run ui:version -- 0.2.0` | Set an explicit target version |
+| `npm run ui:version -- patch --dry-run` | Preview changes without writing files |
+
+After a version bump, run:
+
+```bash
+npm install
+npx turbo run build --filter=@vexorion/ui --filter=vexorionerp-ui --filter=vexorionerp-adminui --filter=vexorionerp-pos
+```
+
+This keeps the shared package and all app manifests in sync and validates downstream builds before commit.
+
+---
+
 ## 1. Backend — `VexorionERP` (ASP.NET Core Web API)
 
 The Web API serves all three frontends. It applies pending EF Core migrations automatically on startup.
