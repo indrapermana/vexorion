@@ -1,4 +1,4 @@
-import ApartmentRoundedIcon from '@mui/icons-material/ApartmentRounded'
+import ApartmentRoundedIcon from '@mui/icons-material/Apartment'
 import ShieldMoonRoundedIcon from '@mui/icons-material/ShieldMoonRounded'
 import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded'
 import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded'

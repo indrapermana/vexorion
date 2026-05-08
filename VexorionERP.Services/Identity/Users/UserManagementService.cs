@@ -109,7 +109,7 @@ public class UserManagementService(
 
     public async Task<ServiceResult<bool>> SetStatusAsync(Guid userId, DisableUserRequest request, ClaimsPrincipal principal, CancellationToken cancellationToken = default)
     {
-        var user = await GetTenantUserAsync(userId, cancellationToken);
+        var user = await GetManagedUserAsync(userId, principal, cancellationToken);
         if (user is null)
         {
             return ServiceResult<bool>.Failure(StatusCodes.Status404NotFound, "User not found.");
@@ -134,7 +134,7 @@ public class UserManagementService(
 
     public async Task<ServiceResult<bool>> ResetPasswordAsync(Guid userId, ResetPasswordRequest request, ClaimsPrincipal principal, CancellationToken cancellationToken = default)
     {
-        var user = await GetTenantUserAsync(userId, cancellationToken);
+        var user = await GetManagedUserAsync(userId, principal, cancellationToken);
         if (user is null)
         {
             return ServiceResult<bool>.Failure(StatusCodes.Status404NotFound, "User not found.");
@@ -160,7 +160,7 @@ public class UserManagementService(
 
     public async Task<ServiceResult<bool>> UnlockAsync(Guid userId, ClaimsPrincipal principal, CancellationToken cancellationToken = default)
     {
-        var user = await GetTenantUserAsync(userId, cancellationToken);
+        var user = await GetManagedUserAsync(userId, principal, cancellationToken);
         if (user is null)
         {
             return ServiceResult<bool>.Failure(StatusCodes.Status404NotFound, "User not found.");
@@ -179,8 +179,15 @@ public class UserManagementService(
         return ServiceResult<bool>.Success(true);
     }
 
-    private async Task<User?> GetTenantUserAsync(Guid userId, CancellationToken cancellationToken)
+    private async Task<User?> GetManagedUserAsync(Guid userId, ClaimsPrincipal principal, CancellationToken cancellationToken)
     {
+        if (principal.IsInRole(AppRoles.SystemAdmin))
+        {
+            return await userManager.Users
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(x => x.Id == userId, cancellationToken);
+        }
+
         if (!currentTenantProvider.TenantId.HasValue)
         {
             return null;
