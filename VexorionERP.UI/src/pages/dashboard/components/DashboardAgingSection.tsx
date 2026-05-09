@@ -1,5 +1,5 @@
 import { Box, Grid, Paper, Stack, Typography } from '@mui/material'
-import { BarChart } from '@mui/x-charts'
+import { VxBarChart } from '@vexorion/ui'
 import type { TFunction } from 'i18next'
 import { useCurrency } from '../../../app/CurrencyContext'
 import type { AgingBucketTotalsResponse } from '../../../types/api'
@@ -20,7 +20,7 @@ function AgingCard({ t, title, data, totals, emptyText }: AgingCardProps) {
       <Typography variant="h6" sx={{ mb: 2 }}>{title}</Typography>
       {data.length > 0 ? (
         <Box sx={{ width: '100%', height: 300 }}>
-          <BarChart
+          <VxBarChart
             dataset={data}
             xAxis={[{ scaleType: 'band', dataKey: 'name' }]}
             series={[{ dataKey: 'value', label: t('dashboard.table.amount') }]}

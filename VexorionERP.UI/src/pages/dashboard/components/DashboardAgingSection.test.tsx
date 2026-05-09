@@ -5,11 +5,15 @@ import DashboardAgingSection from './DashboardAgingSection'
 import type { TFunction } from 'i18next'
 import type { AgingPoint } from '../types'
 
-vi.mock('@mui/x-charts', () => ({
-  BarChart: ({ dataset }: { dataset: unknown[] }) => (
-    <div data-testid="bar-chart" data-count={dataset.length} />
-  ),
-}))
+vi.mock('@vexorion/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@vexorion/ui')>()
+  return {
+    ...actual,
+    VxBarChart: ({ dataset }: { dataset: unknown[] }) => (
+      <div data-testid="bar-chart" data-count={dataset.length} />
+    ),
+  }
+})
 
 vi.mock('../../../app/CurrencyContext', () => ({
   useCurrency: () => ({ formatMoney: (v: number) => `$${v.toFixed(2)}` }),

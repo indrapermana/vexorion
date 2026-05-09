@@ -5,10 +5,14 @@ import DashboardChartsSection from './DashboardChartsSection'
 import type { TFunction } from 'i18next'
 import type { BalancePoint, CashFlowPoint } from '../types'
 
-vi.mock('@mui/x-charts', () => ({
-  LineChart: () => <div data-testid="line-chart" />,
-  BarChart: () => <div data-testid="bar-chart" />,
-}))
+vi.mock('@vexorion/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@vexorion/ui')>()
+  return {
+    ...actual,
+    VxLineChart: () => <div data-testid="line-chart" />,
+    VxBarChart: () => <div data-testid="bar-chart" />,
+  }
+})
 
 const t = ((key: string) => key) as unknown as TFunction
 
