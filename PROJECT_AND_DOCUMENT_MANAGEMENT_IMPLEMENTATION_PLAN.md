@@ -46,28 +46,33 @@ Provide a secure multi-tenant module set that supports:
 ## Phase 1: Data Model and Backend Foundation
 
 ### 1.1 Core Entities
-- [ ] Add `ProjectCategory` entity and configuration
-- [ ] Add `Project` entity and configuration
-- [ ] Add `ProjectParty` entity (links project and tenant with role)
-- [ ] Add `TenantRelationship` entity and configuration
+- [x] Add `ProjectCategory` entity and configuration
+- [x] Add `Project` entity and configuration
+- [x] Add `ProjectParty` entity (links project and tenant with role)
+- [x] Add `TenantRelationship` entity and configuration
 - [ ] Add `Employee` entity and configuration
-- [ ] Add `Consultant` entity and configuration
-- [ ] Add `ProjectAssignment` entity and configuration
-- [ ] Add `DocumentFolder` entity and configuration
-- [ ] Add `Document` entity and configuration
-- [ ] Add `DocumentVersion` entity and configuration
-- [ ] Add `DocumentAccessPolicy` entity and configuration
-- [ ] Add `TenantPlan` entity and configuration
-- [ ] Add `StorageUsageLedger` entity and configuration
-- [ ] Add `StorageUsageSummary` entity and configuration
-- [ ] Add `TenantModuleConfig` entity and configuration
+- [x] Add `Consultant` entity and configuration
+- [x] Add `ProjectAssignment` entity and configuration
+- [x] Add `DocumentFolder` entity and configuration
+- [x] Add `Document` entity and configuration
+- [x] Add `DocumentVersion` entity and configuration
+- [x] Add `DocumentAccessPolicy` entity and configuration
+- [x] Add `TenantPlan` entity and configuration
+- [x] Add `StorageUsageLedger` entity and configuration
+- [x] Add `StorageUsageSummary` entity and configuration
+- [x] Add `TenantModuleConfig` entity and configuration
 
 ### 1.2 Persistence and Migrations
-- [ ] Register new DbSets in `AppDbContext`
-- [ ] Add EF Core configurations and indexes
-- [ ] Create migration(s) for all new entities
+- [x] Register new DbSets in `AppDbContext`
+- [x] Add EF Core configurations and indexes
+- [x] Create migration(s) for all new entities
 - [ ] Seed baseline data for statuses and relationship types
-- [ ] Add migration rollout notes
+- [x] Add migration rollout notes
+
+Migration rollout notes:
+- Created migration: `AddProjectAndDocumentManagementFoundation`
+- Apply in non-production first: `dotnet ef database update --project VexorionERP.Database --startup-project VexorionERP`
+- Validate tenant query filters and unique indexes with seed/test tenants before production rollout.
 
 ### 1.3 Backend Service Layer
 - [ ] Add command/query services for ProjectCategory
@@ -261,14 +266,14 @@ Provide a secure multi-tenant module set that supports:
 ## Progress Tracker
 
 ### Current Overall Status
-- Overall completion: 0%
-- Current phase: Phase 0
+- Overall completion: 12%
+- Current phase: Phase 1
 - Target MVP cutoff: End of Phase 4
 
 ### Weekly Tracking Log
 - Week 1:
-  - Focus:
-  - Completed:
+  - Focus: Phase 1 backend scaffolding for Project/Document/Tenant governance
+  - Completed: Added core entities, enums, EF configurations, DbSet registrations, and migration `AddProjectAndDocumentManagementFoundation`.
   - Blockers:
 - Week 2:
   - Focus:

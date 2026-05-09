@@ -366,6 +366,65 @@ namespace VexorionERP.Database.Migrations
                         });
                 });
 
+            modelBuilder.Entity("VexorionERP.Models.Consultant", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ConsultantNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("OrganizationName")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Specialty")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "ConsultantNumber")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "Email");
+
+                    b.ToTable("Consultant", (string)null);
+                });
+
             modelBuilder.Entity("VexorionERP.Models.Customer", b =>
                 {
                     b.Property<Guid>("Id")
@@ -545,6 +604,61 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("Department", (string)null);
                 });
 
+            modelBuilder.Entity("VexorionERP.Models.DocumentAccessPolicy", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("CanDownload")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("CanUploadVersion")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("CanView")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<Guid>("ProjectDocumentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SubjectTenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ValidFromUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ValidToUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectDocumentId");
+
+                    b.HasIndex("SubjectTenantId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "ProjectDocumentId", "SubjectTenantId")
+                        .IsUnique();
+
+                    b.ToTable("DocumentAccessPolicy", (string)null);
+                });
+
             modelBuilder.Entity("VexorionERP.Models.DocumentApproval", b =>
                 {
                     b.Property<Guid>("Id")
@@ -601,6 +715,127 @@ namespace VexorionERP.Database.Migrations
                     b.HasIndex("TenantId", "DocumentType", "DocumentId", "Status");
 
                     b.ToTable("DocumentApproval", (string)null);
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.DocumentFolder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid?>("ParentFolderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParentFolderId");
+
+                    b.HasIndex("ProjectId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "ProjectId", "ParentFolderId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("DocumentFolder", (string)null);
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.DocumentVersion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Checksum")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<long>("FileSizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<Guid>("ProjectDocumentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("StoragePath")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("UploadedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UploadedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("VersionNumber")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectDocumentId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("UploadedByUserId");
+
+                    b.HasIndex("TenantId", "ProjectDocumentId", "VersionNumber")
+                        .IsUnique();
+
+                    b.ToTable("DocumentVersion", (string)null);
                 });
 
             modelBuilder.Entity("VexorionERP.Models.Employee", b =>
@@ -1704,6 +1939,324 @@ namespace VexorionERP.Database.Migrations
                         {
                             t.HasCheckConstraint("CK_ProductIdentifier_CodeType", "\"CodeType\" IN ('Barcode','QrCode')");
                         });
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.Project", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly?>("EndDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("GovernmentAgency")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid>("ProjectCategoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ProjectNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SubmissionReference")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectCategoryId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "ProjectNumber")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "Status");
+
+                    b.ToTable("Project", (string)null);
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.ProjectAssignment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ConsultantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("EmployeeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("EndDate")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("IsPrimaryAssignment")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RoleTitle")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConsultantId");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("ProjectId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "ProjectId", "StartDate");
+
+                    b.ToTable("ProjectAssignment", (string)null);
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.ProjectCategory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "Code")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "Name");
+
+                    b.ToTable("ProjectCategory", (string)null);
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.ProjectDocument", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CurrentVersionNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("DocumentFolderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DocumentNumber")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<long>("FileSizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("StoragePath")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Tags")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DocumentFolderId");
+
+                    b.HasIndex("ProjectId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "DocumentNumber")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "ProjectId", "Status");
+
+                    b.ToTable("ProjectDocument", (string)null);
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.ProjectParty", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("CanAssignPeople")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("CanUploadDocuments")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("CanViewDocuments")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly?>("EffectiveFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("EffectiveTo")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RelatedTenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("RelationshipType")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
+
+                    b.HasIndex("RelatedTenantId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "ProjectId", "RelatedTenantId", "RelationshipType")
+                        .IsUnique();
+
+                    b.ToTable("ProjectParty", (string)null);
                 });
 
             modelBuilder.Entity("VexorionERP.Models.PurchaseInvoice", b =>
@@ -2811,6 +3364,105 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("StockTransferLine", (string)null);
                 });
 
+            modelBuilder.Entity("VexorionERP.Models.StorageUsageLedger", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("DeltaBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<DateTime>("OccurredAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("OperationType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid?>("PerformedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ProjectDocumentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Reference")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<long>("ResultingUsedBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PerformedByUserId");
+
+                    b.HasIndex("ProjectDocumentId");
+
+                    b.HasIndex("ProjectId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "OccurredAtUtc");
+
+                    b.ToTable("StorageUsageLedger", (string)null);
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.StorageUsageSummary", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<DateTime>("LastCalculatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("ReservedBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("UsedBytes")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId")
+                        .IsUnique();
+
+                    b.ToTable("StorageUsageSummary", (string)null);
+                });
+
             modelBuilder.Entity("VexorionERP.Models.Supplier", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2960,6 +3612,57 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("Tenant", (string)null);
                 });
 
+            modelBuilder.Entity("VexorionERP.Models.TenantModuleConfig", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("DocumentManagementEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("EmployeeManagementEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("InventoryEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("ProjectManagementEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("PurchasingEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("SalesEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId")
+                        .IsUnique();
+
+                    b.HasIndex("UpdatedByUserId");
+
+                    b.ToTable("TenantModuleConfig", (string)null);
+                });
+
             modelBuilder.Entity("VexorionERP.Models.TenantPageVisit", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3010,6 +3713,72 @@ namespace VexorionERP.Database.Migrations
                     b.ToTable("TenantPageVisit", (string)null);
                 });
 
+            modelBuilder.Entity("VexorionERP.Models.TenantPlan", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("EffectiveFromUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("EffectiveToUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("HardBlockThresholdPercent")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean");
+
+                    b.Property<long>("MaxFileSizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("MaxStorageBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("PlanCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("PlanName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<int>("SoftBlockThresholdPercent")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("WarningThresholdPercent")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "IsDefault");
+
+                    b.HasIndex("TenantId", "PlanCode", "EffectiveFromUtc")
+                        .IsUnique();
+
+                    b.ToTable("TenantPlan", (string)null);
+                });
+
             modelBuilder.Entity("VexorionERP.Models.TenantPreference", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3055,6 +3824,63 @@ namespace VexorionERP.Database.Migrations
                         .IsUnique();
 
                     b.ToTable("TenantPreference", (string)null);
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.TenantRelationship", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContractReference")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly?>("EffectiveFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("EffectiveTo")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<Guid>("RelatedTenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("RelationshipType")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ScopeJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("character varying(8000)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RelatedTenantId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "Status");
+
+                    b.HasIndex("TenantId", "RelatedTenantId", "RelationshipType")
+                        .IsUnique();
+
+                    b.ToTable("TenantRelationship", (string)null);
                 });
 
             modelBuilder.Entity("VexorionERP.Models.User", b =>
@@ -3379,6 +4205,17 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("VexorionERP.Models.Consultant", b =>
+                {
+                    b.HasOne("VexorionERP.Models.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
+                });
+
             modelBuilder.Entity("VexorionERP.Models.Customer", b =>
                 {
                     b.HasOne("VexorionERP.Models.Tenant", "Tenant")
@@ -3443,6 +4280,33 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("VexorionERP.Models.DocumentAccessPolicy", b =>
+                {
+                    b.HasOne("VexorionERP.Models.ProjectDocument", "ProjectDocument")
+                        .WithMany("AccessPolicies")
+                        .HasForeignKey("ProjectDocumentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VexorionERP.Models.Tenant", "SubjectTenant")
+                        .WithMany()
+                        .HasForeignKey("SubjectTenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("VexorionERP.Models.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ProjectDocument");
+
+                    b.Navigation("SubjectTenant");
+
+                    b.Navigation("Tenant");
+                });
+
             modelBuilder.Entity("VexorionERP.Models.DocumentApproval", b =>
                 {
                     b.HasOne("VexorionERP.Models.Tenant", "Tenant")
@@ -3452,6 +4316,58 @@ namespace VexorionERP.Database.Migrations
                         .IsRequired();
 
                     b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.DocumentFolder", b =>
+                {
+                    b.HasOne("VexorionERP.Models.DocumentFolder", "ParentFolder")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentFolderId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("VexorionERP.Models.Project", "Project")
+                        .WithMany("Folders")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VexorionERP.Models.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ParentFolder");
+
+                    b.Navigation("Project");
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.DocumentVersion", b =>
+                {
+                    b.HasOne("VexorionERP.Models.ProjectDocument", "ProjectDocument")
+                        .WithMany("Versions")
+                        .HasForeignKey("ProjectDocumentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VexorionERP.Models.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("VexorionERP.Models.User", "UploadedByUser")
+                        .WithMany()
+                        .HasForeignKey("UploadedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("ProjectDocument");
+
+                    b.Navigation("Tenant");
+
+                    b.Navigation("UploadedByUser");
                 });
 
             modelBuilder.Entity("VexorionERP.Models.Employee", b =>
@@ -3798,6 +4714,122 @@ namespace VexorionERP.Database.Migrations
                         .IsRequired();
 
                     b.Navigation("Product");
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.Project", b =>
+                {
+                    b.HasOne("VexorionERP.Models.ProjectCategory", "Category")
+                        .WithMany("Projects")
+                        .HasForeignKey("ProjectCategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("VexorionERP.Models.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.ProjectAssignment", b =>
+                {
+                    b.HasOne("VexorionERP.Models.Consultant", "Consultant")
+                        .WithMany("Assignments")
+                        .HasForeignKey("ConsultantId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("VexorionERP.Models.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("VexorionERP.Models.Project", "Project")
+                        .WithMany("Assignments")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VexorionERP.Models.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Consultant");
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("Project");
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.ProjectCategory", b =>
+                {
+                    b.HasOne("VexorionERP.Models.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.ProjectDocument", b =>
+                {
+                    b.HasOne("VexorionERP.Models.DocumentFolder", "Folder")
+                        .WithMany("Documents")
+                        .HasForeignKey("DocumentFolderId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("VexorionERP.Models.Project", "Project")
+                        .WithMany("Documents")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VexorionERP.Models.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Folder");
+
+                    b.Navigation("Project");
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.ProjectParty", b =>
+                {
+                    b.HasOne("VexorionERP.Models.Project", "Project")
+                        .WithMany("Parties")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VexorionERP.Models.Tenant", "RelatedTenant")
+                        .WithMany()
+                        .HasForeignKey("RelatedTenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("VexorionERP.Models.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Project");
+
+                    b.Navigation("RelatedTenant");
 
                     b.Navigation("Tenant");
                 });
@@ -4303,6 +5335,49 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("VexorionERP.Models.StorageUsageLedger", b =>
+                {
+                    b.HasOne("VexorionERP.Models.User", "PerformedByUser")
+                        .WithMany()
+                        .HasForeignKey("PerformedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("VexorionERP.Models.ProjectDocument", "ProjectDocument")
+                        .WithMany()
+                        .HasForeignKey("ProjectDocumentId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("VexorionERP.Models.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("VexorionERP.Models.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("PerformedByUser");
+
+                    b.Navigation("Project");
+
+                    b.Navigation("ProjectDocument");
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.StorageUsageSummary", b =>
+                {
+                    b.HasOne("VexorionERP.Models.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
+                });
+
             modelBuilder.Entity("VexorionERP.Models.Supplier", b =>
                 {
                     b.HasOne("VexorionERP.Models.Tenant", "Tenant")
@@ -4325,7 +5400,36 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("VexorionERP.Models.TenantModuleConfig", b =>
+                {
+                    b.HasOne("VexorionERP.Models.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("VexorionERP.Models.User", "UpdatedByUser")
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Tenant");
+
+                    b.Navigation("UpdatedByUser");
+                });
+
             modelBuilder.Entity("VexorionERP.Models.TenantPageVisit", b =>
+                {
+                    b.HasOne("VexorionERP.Models.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.TenantPlan", b =>
                 {
                     b.HasOne("VexorionERP.Models.Tenant", "Tenant")
                         .WithMany()
@@ -4343,6 +5447,25 @@ namespace VexorionERP.Database.Migrations
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.TenantRelationship", b =>
+                {
+                    b.HasOne("VexorionERP.Models.Tenant", "RelatedTenant")
+                        .WithMany()
+                        .HasForeignKey("RelatedTenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("VexorionERP.Models.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("RelatedTenant");
 
                     b.Navigation("Tenant");
                 });
@@ -4415,6 +5538,11 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Employees");
                 });
 
+            modelBuilder.Entity("VexorionERP.Models.Consultant", b =>
+                {
+                    b.Navigation("Assignments");
+                });
+
             modelBuilder.Entity("VexorionERP.Models.Customer", b =>
                 {
                     b.Navigation("CustomerPayments");
@@ -4429,6 +5557,13 @@ namespace VexorionERP.Database.Migrations
             modelBuilder.Entity("VexorionERP.Models.Department", b =>
                 {
                     b.Navigation("Employees");
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.DocumentFolder", b =>
+                {
+                    b.Navigation("Children");
+
+                    b.Navigation("Documents");
                 });
 
             modelBuilder.Entity("VexorionERP.Models.FiscalPeriod", b =>
@@ -4479,6 +5614,29 @@ namespace VexorionERP.Database.Migrations
             modelBuilder.Entity("VexorionERP.Models.ProductCategory", b =>
                 {
                     b.Navigation("ProductCategoryAssignments");
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.Project", b =>
+                {
+                    b.Navigation("Assignments");
+
+                    b.Navigation("Documents");
+
+                    b.Navigation("Folders");
+
+                    b.Navigation("Parties");
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.ProjectCategory", b =>
+                {
+                    b.Navigation("Projects");
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.ProjectDocument", b =>
+                {
+                    b.Navigation("AccessPolicies");
+
+                    b.Navigation("Versions");
                 });
 
             modelBuilder.Entity("VexorionERP.Models.PurchaseInvoice", b =>
