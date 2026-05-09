@@ -22,7 +22,7 @@ exports[`UI theme primitives snapshots > matches the dark theme lookup select st
           aria-describedby="_r_4_-helper-text"
           aria-expanded="false"
           aria-haspopup="listbox"
-          aria-labelledby="_r_4_-label _r_4_"
+          aria-labelledby="_r_4_-label"
           class="MuiSelect-select MuiSelect-outlined MuiInputBase-input MuiOutlinedInput-input css-121wwrg-MuiNativeSelect-root-MuiSelect-select-MuiInputBase-input-MuiOutlinedInput-input"
           id="_r_4_"
           role="combobox"
@@ -93,7 +93,7 @@ exports[`UI theme primitives snapshots > matches the dark theme lookup select st
           aria-expanded="false"
           aria-haspopup="listbox"
           aria-invalid="true"
-          aria-labelledby="_r_7_-label _r_7_"
+          aria-labelledby="_r_7_-label"
           class="MuiSelect-select MuiSelect-outlined Mui-disabled Mui-error MuiInputBase-input MuiOutlinedInput-input Mui-disabled css-121wwrg-MuiNativeSelect-root-MuiSelect-select-MuiInputBase-input-MuiOutlinedInput-input"
           id="_r_7_"
           role="combobox"
@@ -155,7 +155,7 @@ exports[`UI theme primitives snapshots > matches the light theme button, chip, a
     class="MuiStack-root css-lkr0zo-MuiStack-root"
   >
     <button
-      class="MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-sizeMedium MuiButton-colorPrimary MuiButton-root MuiButton-contained MuiButton-sizeMedium MuiButton-colorPrimary css-eazmic-MuiButtonBase-root-MuiButton-root"
+      class="MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-sizeMedium MuiButton-colorPrimary css-eazmic-MuiButtonBase-root-MuiButton-root"
       tabindex="0"
       type="button"
     >
