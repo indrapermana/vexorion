@@ -33,6 +33,10 @@ const emptyForm: OnboardTenantRequest = {
   lastName: '',
 }
 
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Failed to create tenant.'
+}
+
 export function TenantOnboardingDialog({ open, onClose, onCreated }: Props) {
   const [form, setForm] = useState<OnboardTenantRequest>(emptyForm)
   const [error, setError] = useState<string | null>(null)
@@ -65,8 +69,8 @@ export function TenantOnboardingDialog({ open, onClose, onCreated }: Props) {
       }
       onCreated(newTenant)
       handleClose()
-    } catch (err: any) {
-      setError(err?.message ?? 'Failed to create tenant.')
+    } catch (error: unknown) {
+      setError(getErrorMessage(error))
     } finally {
       setIsSaving(false)
     }

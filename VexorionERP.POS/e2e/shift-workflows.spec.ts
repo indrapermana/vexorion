@@ -20,7 +20,6 @@ test.describe('POS Shift Workflows', () => {
     await page.waitForLoadState('networkidle')
 
     // If shift already open, skip (another test may have opened it)
-    const noShiftText = page.getByText(/no active shift/i)
     const openBtn = page.getByRole('button', { name: /open shift/i })
 
     if (await openBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {

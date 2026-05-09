@@ -16,7 +16,7 @@ import { request } from '@playwright/test'
 // TC-4.1.1 — Unauthenticated API → 401
 // ---------------------------------------------------------------------------
 
-test('TC-4.1.1: unauthenticated API call returns 401', async ({ page }) => {
+test('TC-4.1.1: unauthenticated API call returns 401', async () => {
   // Make a direct API call without auth cookies/token
   const apiContext = await request.newContext({ baseURL: process.env.API_BASE_URL ?? 'http://localhost:5000' })
   const response = await apiContext.get('/api/customers', {

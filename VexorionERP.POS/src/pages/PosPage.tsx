@@ -205,9 +205,6 @@ export default function PosPage() {
 
   // Stable ref so the keyboard handler always calls the latest checkout closure
   const checkoutRef = useRef<() => Promise<void>>(() => Promise.resolve())
-  useEffect(() => {
-    checkoutRef.current = checkout
-  })
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -535,6 +532,10 @@ export default function PosPage() {
       setIsProcessing(false)
     }
   }
+
+    useEffect(() => {
+      checkoutRef.current = checkout
+    }, [checkout])
 
   return (
     <Stack spacing={2} sx={{ p: 2 }}>

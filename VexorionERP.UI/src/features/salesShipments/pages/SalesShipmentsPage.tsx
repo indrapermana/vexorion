@@ -15,7 +15,7 @@ import { useLocation } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
 import { ApiError, deleteSalesShipment, getSalesOrders, getSalesShipmentsForOrder, postSalesShipment } from '../../../lib/api'
 import { useWarehousesLookup } from '../../../hooks/useLookups'
-import type { SalesOrderListItemResponse, SalesShipmentDetailsResponse, SalesShipmentListItemResponse } from '../../../types/api'
+import type { SalesOrderListItemResponse, SalesShipmentListItemResponse } from '../../../types/api'
 import type { SalesShipmentGridRow } from '../../../types/ui'
 
 const SalesShipmentDataGrid = lazy(() => import('../components/SalesShipmentDataGrid'))
@@ -111,7 +111,7 @@ export default function SalesShipmentsPage() {
     }
   }
 
-  const handleSaved = async (_shipment: SalesShipmentDetailsResponse) => {
+  const handleSaved = async () => {
     setIsCreateOpen(false)
     await loadShipments()
   }

@@ -101,7 +101,7 @@ export function TenantDataGrid({ rows, isLoading, onEdit, onRemove }: TenantData
         ),
       },
     ],
-    [t],
+    [onEdit, onRemove, t],
   )
 
   return (

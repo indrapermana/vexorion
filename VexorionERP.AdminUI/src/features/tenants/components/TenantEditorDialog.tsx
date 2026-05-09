@@ -7,10 +7,10 @@ import { useState } from 'react'
 import { updateTenant } from '../../../lib/api'
 import type { TenantEditorDialogProps } from '../../../types/ui'
 
-const validationSchema = yup.object().shape({
+const validationSchema: yup.ObjectSchema<FormData> = yup.object({
   name: yup.string().required('Name is required').min(2, 'Name must be at least 2 characters').max(200),
-  domain: yup.string().nullable(),
-  isActive: yup.boolean(),
+  domain: yup.string().nullable().defined(),
+  isActive: yup.boolean().required(),
 })
 
 type FormData = {
@@ -29,13 +29,13 @@ export function TenantEditorDialog({ open, tenant, onClose, onSaved }: TenantEdi
     reset,
     watch,
   } = useForm<FormData>({
-    resolver: yupResolver(validationSchema) as any,
+    resolver: yupResolver(validationSchema),
     defaultValues: tenant
       ? { name: tenant.name, domain: tenant.domain ?? null, isActive: tenant.isActive }
       : { name: '', domain: null, isActive: true },
   })
 
-  const watch_isActive = watch('isActive')
+  const isActive = watch('isActive')
 
   const onSubmit = async (data: FormData) => {
     if (!tenant) return
@@ -81,14 +81,14 @@ export function TenantEditorDialog({ open, tenant, onClose, onSaved }: TenantEdi
             helperText={errors.domain?.message}
           />
           <FormControlLabel
-            control={<Checkbox {...register('isActive')} checked={watch_isActive} />}
+            control={<Checkbox {...register('isActive')} checked={isActive} />}
             label={t('components.tenants.editor.activeLabel')}
           />
         </Stack>
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>{t('common.cancel') ?? 'Cancel'}</Button>
-        <Button onClick={handleSubmit(onSubmit as any)} variant="contained" disabled={isSaving}>
+        <Button onClick={handleSubmit(onSubmit)} variant="contained" disabled={isSaving}>
           {isSaving ? t('common.saving') ?? 'Saving...' : t('common.save') ?? 'Save'}
         </Button>
       </DialogActions>

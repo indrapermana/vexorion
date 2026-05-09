@@ -15,7 +15,7 @@ import { useLocation } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
 import { ApiError, deletePurchaseReceipt, getPurchaseOrders, getPurchaseReceiptsForOrder, postPurchaseReceipt } from '../../../lib/api'
 import { useWarehousesLookup } from '../../../hooks/useLookups'
-import type { PurchaseOrderListItemResponse, PurchaseReceiptDetailsResponse, PurchaseReceiptListItemResponse } from '../../../types/api'
+import type { PurchaseOrderListItemResponse, PurchaseReceiptListItemResponse } from '../../../types/api'
 import type { PurchaseReceiptGridRow } from '../../../types/ui'
 
 const PurchaseReceiptDataGrid = lazy(() => import('../components/PurchaseReceiptDataGrid'))
@@ -111,7 +111,7 @@ export default function PurchaseReceiptsPage() {
     }
   }
 
-  const handleSaved = async (_receipt: PurchaseReceiptDetailsResponse) => {
+  const handleSaved = async () => {
     setIsCreateOpen(false)
     await loadReceipts()
   }

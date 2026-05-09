@@ -11,11 +11,12 @@
  * Covers TEST_PLAN: 2.2.1, 2.2.2, 2.2.3, 2.2.5, 2.3.1
  */
 import { test, expect } from './fixtures'
+import type { Page } from '@playwright/test'
 
 // ---------------------------------------------------------------------------
 // Helper: ensure a shift is open and at least one item is in the cart
 // ---------------------------------------------------------------------------
-async function ensureShiftAndItem(page: Parameters<typeof expect>[0] extends never ? never : any) {
+async function ensureShiftAndItem(page: Page) {
   await page.goto('/')
   await page.waitForLoadState('networkidle')
 
@@ -34,8 +35,6 @@ async function ensureShiftAndItem(page: Parameters<typeof expect>[0] extends nev
   // Add first available product to cart
   const productCard = page.locator('[data-testid="product-card"], .product-card').first()
   const productBtn = page.getByRole('button').filter({ hasText: /add|add to cart/i }).first()
-  const clickable = page.getByText(/stock left|in stock/i).first()
-
   // Try multiple strategies to add a product
   if (await productCard.isVisible({ timeout: 2_000 }).catch(() => false)) {
     await productCard.click()
