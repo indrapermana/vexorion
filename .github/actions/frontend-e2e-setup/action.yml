@@ -30,4 +30,4 @@ runs:
 
     - name: Install Playwright browsers
       shell: bash
-      run: npx playwright install --with-deps chromium
+      run: npm --workspace VexorionERP.UI exec -- playwright install --with-deps chromium
