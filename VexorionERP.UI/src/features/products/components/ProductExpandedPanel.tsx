@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Box, Tab, Tabs } from '@mui/material'
+import { Box, Tab, Tabs } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import type { ProductGridRow } from '../../../types/ui'
 import ProductIdentifiersPanel from './ProductIdentifiersPanel'

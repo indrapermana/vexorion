@@ -16,7 +16,7 @@ import {
   TableRow,
   Tabs,
   Typography,
-} from '@mui/material'
+} from '@vexorion/ui'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {

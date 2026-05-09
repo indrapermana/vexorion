@@ -9,7 +9,7 @@ import {
   Stack,
   TextField,
   Typography,
-} from '@mui/material'
+} from '@vexorion/ui'
 import { useState } from 'react'
 import { onboardTenant } from '../../../lib/api'
 import type { OnboardTenantRequest, OnboardTenantResponse, TenantListItemResponse } from '../../../types/api'

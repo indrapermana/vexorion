@@ -10,7 +10,7 @@ import {
   Stack,
   Switch,
   Typography,
-} from '@mui/material'
+} from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { useCurrency } from '../../../app/CurrencyContext'

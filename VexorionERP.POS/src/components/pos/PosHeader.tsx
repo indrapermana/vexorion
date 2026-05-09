@@ -1,5 +1,5 @@
 import { AdminPanelSettingsRoundedIcon, DarkModeRoundedIcon, LightModeRoundedIcon, LockRoundedIcon, LogoutRoundedIcon, PointOfSaleRoundedIcon, UndoRoundedIcon } from '@vexorion/ui'
-import { Button, Chip, IconButton, MenuItem, Paper, Stack, TextField, Tooltip, Typography } from '@mui/material'
+import { Button, Chip, IconButton, MenuItem, Paper, Stack, TextField, Tooltip, Typography } from '@vexorion/ui'
 import { Link } from 'react-router-dom'
 import { useThemeMode } from '../../app/ThemeModeContext'
 import { useI18n } from '../../app/I18nContext'

@@ -5,7 +5,7 @@ import {
   DialogContent,
   DialogTitle,
   Typography,
-} from '@mui/material'
+} from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import type { SupplierGridRow } from '../../../types/ui'
 

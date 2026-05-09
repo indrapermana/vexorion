@@ -9,7 +9,7 @@ import {
   Stack,
   TextField,
   Typography,
-} from '@mui/material'
+} from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'

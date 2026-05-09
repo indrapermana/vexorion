@@ -1,6 +1,6 @@
 import './App.css'
 import { Suspense, lazy } from 'react'
-import { Alert } from '@mui/material'
+import { Alert } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './app/AuthContext'

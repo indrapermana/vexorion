@@ -1,4 +1,4 @@
-import { Alert, Box, Button, Chip, MenuItem, Paper, Stack, Switch, TextField, Typography } from '@mui/material'
+import { Alert, Box, Button, Chip, MenuItem, Paper, Stack, Switch, TextField, Typography } from '@vexorion/ui'
 import { useEffect, useMemo, useState } from 'react'
 import { getTenantMenuConfiguration, getTenants, updateTenantMenuConfiguration } from '../lib/api'
 import type { TenantListItemResponse } from '../types/api'

@@ -1,4 +1,4 @@
-import { Box, Chip, Typography } from '@mui/material'
+import { Box, Chip, Typography } from '@vexorion/ui'
 import { DeleteOutlineRoundedIcon, EditRoundedIcon, FormatListBulletedRoundedIcon, LocalShippingRoundedIcon, PostAddRoundedIcon, VxDataGrid, VxGridActionsCellItem, type VxGridColDef } from '@vexorion/ui'
 import { getDocumentStatusLabel, type SalesOrderGridRow } from '../../../types/ui'
 import { useTranslation } from 'react-i18next'

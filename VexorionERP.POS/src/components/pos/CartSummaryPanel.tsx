@@ -16,7 +16,7 @@ import {
   TextField,
   Tooltip,
   Typography,
-} from '@mui/material'
+} from '@vexorion/ui'
 import { useState } from 'react'
 import { useI18n } from '../../app/I18nContext'
 import type { CartLine } from './types'

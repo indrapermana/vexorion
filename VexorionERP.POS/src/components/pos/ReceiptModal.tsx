@@ -15,7 +15,7 @@ import {
   TableHead,
   TableRow,
   Typography,
-} from '@mui/material'
+} from '@vexorion/ui'
 import { useI18n } from '../../app/I18nContext'
 import { printReceipt } from '../../lib/printReceipt'
 

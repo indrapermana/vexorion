@@ -1,5 +1,5 @@
 import { EditRoundedIcon, LockOpenRoundedIcon, LockRoundedIcon, VxDataGrid, VxGridActionsCellItem, type VxGridColDef } from '@vexorion/ui'
-import { Chip } from '@mui/material'
+import { Chip } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import type { FiscalPeriodGridRow } from '../../../types/ui'
 

@@ -1,4 +1,4 @@
-import { Alert } from '@mui/material'
+import { Alert } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '../app/AuthContext'

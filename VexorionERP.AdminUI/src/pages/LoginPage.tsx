@@ -1,4 +1,4 @@
-import { Alert, Box, Button, Divider, Stack, TextField, Typography } from '@mui/material'
+import { Alert, Box, Button, Divider, Stack, TextField, Typography } from '@vexorion/ui'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'

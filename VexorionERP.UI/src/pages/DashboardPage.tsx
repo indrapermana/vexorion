@@ -1,4 +1,4 @@
-import { Stack } from '@mui/material'
+import { Stack } from '@vexorion/ui'
 import { Suspense, lazy, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCurrency } from '../app/CurrencyContext'

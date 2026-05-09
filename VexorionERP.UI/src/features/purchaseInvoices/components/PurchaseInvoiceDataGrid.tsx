@@ -1,5 +1,5 @@
 import { DeleteOutlineRoundedIcon, EditRoundedIcon, FormatListBulletedRoundedIcon, PaidRoundedIcon, VxDataGrid, VxGridActionsCellItem, type VxGridColDef } from '@vexorion/ui'
-import { Box, Chip, Typography } from '@mui/material'
+import { Box, Chip, Typography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { getInvoiceStatusLabel, type PurchaseInvoiceGridRow } from '../../../types/ui'
 import { useCurrency } from '../../../app/CurrencyContext'

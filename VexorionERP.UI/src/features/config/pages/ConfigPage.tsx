@@ -1,5 +1,5 @@
 import { OpenInNewRoundedIcon } from '@vexorion/ui'
-import { Box, IconButton, Paper, Stack, Tooltip, Typography } from '@mui/material'
+import { Box, IconButton, Paper, Stack, Tooltip, Typography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
 

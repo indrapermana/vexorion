@@ -1,6 +1,6 @@
 import './App.css'
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
-import { Alert, CssBaseline, ThemeProvider } from '@mui/material'
+import { Alert, CssBaseline, ThemeProvider } from '@vexorion/ui'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './app/AuthContext'
 import { ThemeModeProvider } from './app/ThemeModeContext'

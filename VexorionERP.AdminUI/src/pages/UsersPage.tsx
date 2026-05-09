@@ -13,7 +13,7 @@ import {
   Stack,
   TextField,
   Typography,
-} from '@mui/material'
+} from '@vexorion/ui'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { assignUserRoles, createUser, getRoles, getTenants, getUsersForAdmin, resetUserPassword, setUserStatus } from '../lib/api'
 import type { CreateUserRequest, UserListItemResponse } from '../types/api/users'

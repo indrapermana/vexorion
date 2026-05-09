@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Alert, Box, Button, Divider, Grid, Link, Stack, TextField, Typography } from '@mui/material'
+import { Alert, Box, Button, Divider, Grid, Link, Stack, TextField, Typography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
 import { ApiError, onboardTenant } from '../lib/api'

@@ -1,7 +1,7 @@
 /// <reference types="vitest/globals" />
 
 import { render } from '@testing-library/react'
-import { Button, Chip, CssBaseline, Stack, TextField, ThemeProvider } from '@mui/material'
+import { Button, Chip, CssBaseline, Stack, TextField, ThemeProvider } from '@vexorion/ui'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import LookupSelectField from './LookupSelectField'

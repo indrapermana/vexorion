@@ -1,4 +1,4 @@
-import { Box, Grid, LinearProgress, Paper, Stack, Typography } from '@mui/material'
+import { Box, Grid, LinearProgress, Paper, Stack, Typography } from '@vexorion/ui'
 import type { TFunction } from 'i18next'
 import { useCurrency } from '../../../app/CurrencyContext'
 

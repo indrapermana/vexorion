@@ -1,4 +1,4 @@
-import { Box, Button, Chip, Stack, Typography } from '@mui/material'
+import { Box, Button, Chip, Stack, Typography } from '@vexorion/ui'
 import { LaunchRoundedIcon } from '@vexorion/ui'
 import { Link as RouterLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'

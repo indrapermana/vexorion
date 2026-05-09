@@ -17,7 +17,7 @@ import {
   Toolbar,
   Tooltip,
   Typography,
-} from '@mui/material'
+} from '@vexorion/ui'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'

@@ -23,7 +23,7 @@ import {
   TableRow,
   TextField,
   Typography,
-} from '@mui/material'
+} from '@vexorion/ui'
 import { useI18n } from '../../app/I18nContext'
 import { posLogger } from '../../lib/posLogger'
 import {

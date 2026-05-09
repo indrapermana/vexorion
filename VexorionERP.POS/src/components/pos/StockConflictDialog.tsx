@@ -1,4 +1,4 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, List, ListItem, ListItemText, Typography } from '@mui/material'
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, List, ListItem, ListItemText, Typography } from '@vexorion/ui'
 import React from 'react'
 import { useI18n } from '../../app/I18nContext'
 import type { PosStockInsufficientItem } from '../../types/api'

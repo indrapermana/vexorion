@@ -1,4 +1,4 @@
-import { Box, Chip, Typography } from '@mui/material'
+import { Box, Chip, Typography } from '@vexorion/ui'
 import { VxDataGrid, type VxGridColDef } from '@vexorion/ui'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'

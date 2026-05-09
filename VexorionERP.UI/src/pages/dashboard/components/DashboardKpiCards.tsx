@@ -1,5 +1,5 @@
 import { InsightsRoundedIcon, Inventory2RoundedIcon, PaidRoundedIcon, TrendingDownRoundedIcon, TrendingUpRoundedIcon } from '@vexorion/ui'
-import { Box, Grid, Paper, Stack, Typography } from '@mui/material'
+import { Box, Grid, Paper, Stack, Typography } from '@vexorion/ui'
 import type { TFunction } from 'i18next'
 import { useCurrency } from '../../../app/CurrencyContext'
 import type { FinanceDashboardSnapshotResponse } from '../../../types/api'

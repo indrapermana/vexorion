@@ -13,7 +13,7 @@ import {
   TableRow,
   TextField,
   Typography,
-} from '@mui/material'
+} from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import {

@@ -1,5 +1,5 @@
 import { ApartmentRoundedIcon, AutoGraphRoundedIcon, ShieldMoonRoundedIcon, StorefrontRoundedIcon, TrendingUpRoundedIcon } from '@vexorion/ui'
-import { Box, Chip, Stack, Typography } from '@mui/material'
+import { Box, Chip, Stack, Typography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { Outlet, useLocation } from 'react-router-dom'
 

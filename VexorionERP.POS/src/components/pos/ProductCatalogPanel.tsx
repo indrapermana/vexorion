@@ -15,7 +15,7 @@ import {
   Stack,
   TextField,
   Typography,
-} from '@mui/material'
+} from '@vexorion/ui'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useI18n } from '../../app/I18nContext'
 import { useBarcodeScanner } from '../../hooks/useBarcodeScanner'

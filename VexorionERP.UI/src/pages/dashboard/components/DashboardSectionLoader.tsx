@@ -1,4 +1,4 @@
-import { Paper, Skeleton, Stack } from '@mui/material'
+import { Paper, Skeleton, Stack } from '@vexorion/ui'
 
 type DashboardSectionLoaderProps = {
   minHeight?: number

@@ -1,4 +1,4 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material'
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@vexorion/ui'
 import { useEffect, useState } from 'react'
 import { useI18n } from '../app/I18nContext'
 import { useAuth } from '../app/AuthContext'

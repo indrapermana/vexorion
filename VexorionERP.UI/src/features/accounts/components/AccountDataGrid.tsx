@@ -1,5 +1,5 @@
 import { DeleteOutlineRoundedIcon, EditRoundedIcon, VxDataGrid, VxGridActionsCellItem, type VxGridColDef } from '@vexorion/ui'
-import { Box, Chip, Typography } from '@mui/material'
+import { Box, Chip, Typography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { getAccountTypeLabel, getNormalBalanceLabel, type AccountGridRow } from '../../../types/ui'
 

@@ -1,4 +1,4 @@
-import { MenuItem, TextField } from '@mui/material'
+import { MenuItem, TextField } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 
 type LookupOption = {

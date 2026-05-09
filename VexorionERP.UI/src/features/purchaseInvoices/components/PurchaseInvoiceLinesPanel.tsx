@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { AddRoundedIcon, DeleteOutlineRoundedIcon, EditRoundedIcon } from '@vexorion/ui'
-import { Alert, Box, Button, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material'
+import { Alert, Box, Button, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { ApiError, createPurchaseInvoiceLine, deletePurchaseInvoiceLine, updatePurchaseInvoiceLine } from '../../../lib/api'
 import { useProductsLookup } from '../../../hooks/useLookups'

@@ -10,7 +10,7 @@ import {
   Stack,
   TextField,
   Typography,
-} from '@mui/material'
+} from '@vexorion/ui'
 import { useI18n } from '../../app/I18nContext'
 
 type Props = {

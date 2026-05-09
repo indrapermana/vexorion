@@ -1,4 +1,4 @@
-import { Alert, Box, Chip, Paper, Stack, Typography } from '@mui/material'
+import { Alert, Box, Chip, Paper, Stack, Typography } from '@vexorion/ui'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ApartmentRoundedIcon, PersonRoundedIcon, StackedBarChartRoundedIcon, TravelExploreRoundedIcon, VxCard } from '@vexorion/ui'
 import { getTenantTelemetry, getTenants, getUsersForAdmin } from '../lib/api'

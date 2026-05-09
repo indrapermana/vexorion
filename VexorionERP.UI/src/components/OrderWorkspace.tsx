@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Alert, Box, Button, Paper, Stack, Typography } from '@mui/material'
+import { Alert, Box, Button, Paper, Stack, Typography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 
 type MetricCard = {

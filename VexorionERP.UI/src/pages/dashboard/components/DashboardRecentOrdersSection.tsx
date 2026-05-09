@@ -10,7 +10,7 @@ import {
   TableHead,
   TableRow,
   Typography,
-} from '@mui/material'
+} from '@vexorion/ui'
 import type { TFunction } from 'i18next'
 import { useCurrency } from '../../../app/CurrencyContext'
 import type { RecentOrderView } from '../types'

@@ -13,7 +13,7 @@ import {
   Switch,
   TextField,
   Typography,
-} from '@mui/material'
+} from '@vexorion/ui'
 import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'

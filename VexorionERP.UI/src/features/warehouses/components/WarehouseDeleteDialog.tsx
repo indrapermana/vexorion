@@ -1,4 +1,4 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material'
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import type { WarehouseGridRow } from '../../../types/ui'
 

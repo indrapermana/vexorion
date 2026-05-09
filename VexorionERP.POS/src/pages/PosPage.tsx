@@ -1,4 +1,4 @@
-import { Alert, Box, Stack } from '@mui/material'
+import { Alert, Box, Stack } from '@vexorion/ui'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTransactionHistory } from '../app/transactionHistoryStore'

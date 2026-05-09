@@ -1,4 +1,4 @@
-import { Box, Grid, Paper, Typography } from '@mui/material'
+import { Box, Grid, Paper, Typography } from '@vexorion/ui'
 import { VxBarChart, VxLineChart } from '@vexorion/ui'
 import type { TFunction } from 'i18next'
 import type { BalancePoint, CashFlowPoint } from '../types'

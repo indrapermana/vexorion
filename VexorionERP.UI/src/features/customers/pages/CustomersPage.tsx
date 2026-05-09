@@ -8,7 +8,7 @@ import {
   Paper,
   Stack,
   Typography,
-} from '@mui/material'
+} from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { ApiError, deleteCustomer, getCustomers } from '../../../lib/api'

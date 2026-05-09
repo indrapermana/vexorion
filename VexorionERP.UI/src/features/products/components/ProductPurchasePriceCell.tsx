@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Box, CircularProgress, Stack, Tooltip, Typography } from '@mui/material'
+import { Box, CircularProgress, Stack, Tooltip, Typography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useCurrency } from '../../../app/CurrencyContext'
 import type { ProductSupplierLatestPurchasePriceResponse } from '../../../types/api'

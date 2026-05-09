@@ -15,7 +15,7 @@ import {
   TableSortLabel,
   Tooltip,
   Typography,
-} from '@mui/material'
+} from '@vexorion/ui'
 import { DeleteOutlineRoundedIcon, EditRoundedIcon, KeyboardArrowDownRoundedIcon, KeyboardArrowUpRoundedIcon } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useCurrency } from '../../../app/CurrencyContext'

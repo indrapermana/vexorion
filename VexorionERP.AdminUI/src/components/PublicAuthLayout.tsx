@@ -1,5 +1,5 @@
 import { ApartmentRoundedIcon, ShieldMoonRoundedIcon, StorefrontRoundedIcon, TrendingUpRoundedIcon } from '@vexorion/ui'
-import { Box, Chip, Stack, Typography } from '@mui/material'
+import { Box, Chip, Stack, Typography } from '@vexorion/ui'
 import { Outlet } from 'react-router-dom'
 
 export default function PublicAuthLayout() {

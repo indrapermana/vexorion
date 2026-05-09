@@ -14,7 +14,7 @@ import {
   TableHead,
   TableRow,
   Typography,
-} from '@mui/material'
+} from '@vexorion/ui'
 import { useCallback, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'

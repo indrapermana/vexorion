@@ -1,4 +1,4 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField } from '@mui/material'
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField } from '@vexorion/ui'
 import { useI18n } from '../../app/I18nContext'
 import type { QuickCustomerForm } from './types'
 

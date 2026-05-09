@@ -23,7 +23,7 @@ import {
   TableRow,
   Tooltip,
   Typography,
-} from '@mui/material'
+} from '@vexorion/ui'
 import { useAuth } from '../app/AuthContext'
 import {
   fetchDocumentInlineBlob,

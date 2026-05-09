@@ -1,4 +1,4 @@
-import { Alert, Box, Stack, TextField, Typography } from '@mui/material'
+import { Alert, Box, Stack, TextField, Typography } from '@vexorion/ui'
 import type { TFunction } from 'i18next'
 
 type DashboardHeaderFiltersProps = {

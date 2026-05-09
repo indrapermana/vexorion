@@ -2,7 +2,7 @@ import {
   Box,
   Chip,
   Typography,
-} from '@mui/material'
+} from '@vexorion/ui'
 import { DeleteOutlineRoundedIcon, EditRoundedIcon, VxDataGrid, VxGridActionsCellItem, type VxGridColDef } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import type { CustomerGridRow } from '../../../types/ui'

@@ -17,7 +17,7 @@ import {
   TableRow,
   TextField,
   Typography,
-} from '@mui/material'
+} from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useCurrency } from '../../../app/CurrencyContext'
 import { ApiError, createSalesShipment, getSalesOrderLines } from '../../../lib/api'
