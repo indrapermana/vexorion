@@ -156,9 +156,6 @@ jobs:
     if: >-
       needs.build-and-test.result == 'success' &&
       github.event_name != 'pull_request' &&
-      secrets.E2E_API_BASE_URL != '' &&
-      secrets.E2E_USERNAME != '' &&
-      secrets.E2E_PASSWORD != '' &&
       needs.build-and-test.outputs.ui_built == 'true'
     env:
       CI: true
@@ -171,14 +168,36 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Check required E2E secrets
+        id: e2e-secrets
+        shell: bash
+        run: |
+          missing=0
+          [[ -z "${{ secrets.E2E_API_BASE_URL }}" ]] && missing=1
+          [[ -z "${{ secrets.E2E_USERNAME }}" ]] && missing=1
+          [[ -z "${{ secrets.E2E_PASSWORD }}" ]] && missing=1
+
+          if [[ "$missing" -eq 1 ]]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping UI e2e because required secrets are missing."
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip E2E (UI)
+        if: steps.e2e-secrets.outputs.ready != 'true'
+        run: echo "UI e2e skipped due to missing secrets"
+
       - name: Setup frontend e2e environment
+        if: steps.e2e-secrets.outputs.ready == 'true'
         uses: ./.github/actions/frontend-e2e-setup
 
       - name: Run E2E (UI)
+        if: steps.e2e-secrets.outputs.ready == 'true'
         run: npx turbo run e2e --filter=vexorionerp-ui
 
       - name: Upload Playwright reports
-        if: always()
+        if: always() && steps.e2e-secrets.outputs.ready == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: playwright-reports-ui
@@ -194,9 +213,6 @@ jobs:
     if: >-
       needs.build-and-test.result == 'success' &&
       github.event_name != 'pull_request' &&
-      secrets.E2E_API_BASE_URL != '' &&
-      secrets.E2E_USERNAME != '' &&
-      secrets.E2E_PASSWORD != '' &&
       needs.build-and-test.outputs.adminui_built == 'true'
     env:
       CI: true
@@ -209,14 +225,36 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Check required E2E secrets
+        id: e2e-secrets
+        shell: bash
+        run: |
+          missing=0
+          [[ -z "${{ secrets.E2E_API_BASE_URL }}" ]] && missing=1
+          [[ -z "${{ secrets.E2E_USERNAME }}" ]] && missing=1
+          [[ -z "${{ secrets.E2E_PASSWORD }}" ]] && missing=1
+
+          if [[ "$missing" -eq 1 ]]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping AdminUI e2e because required secrets are missing."
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip E2E (AdminUI)
+        if: steps.e2e-secrets.outputs.ready != 'true'
+        run: echo "AdminUI e2e skipped due to missing secrets"
+
       - name: Setup frontend e2e environment
+        if: steps.e2e-secrets.outputs.ready == 'true'
         uses: ./.github/actions/frontend-e2e-setup
 
       - name: Run E2E (AdminUI)
+        if: steps.e2e-secrets.outputs.ready == 'true'
         run: npx turbo run e2e --filter=vexorionerp-adminui
 
       - name: Upload Playwright reports
-        if: always()
+        if: always() && steps.e2e-secrets.outputs.ready == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: playwright-reports-adminui
@@ -232,9 +270,6 @@ jobs:
     if: >-
       needs.build-and-test.result == 'success' &&
       github.event_name != 'pull_request' &&
-      secrets.E2E_API_BASE_URL != '' &&
-      secrets.E2E_USERNAME != '' &&
-      secrets.E2E_PASSWORD != '' &&
       needs.build-and-test.outputs.pos_built == 'true'
     env:
       CI: true
@@ -247,14 +282,36 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Check required E2E secrets
+        id: e2e-secrets
+        shell: bash
+        run: |
+          missing=0
+          [[ -z "${{ secrets.E2E_API_BASE_URL }}" ]] && missing=1
+          [[ -z "${{ secrets.E2E_USERNAME }}" ]] && missing=1
+          [[ -z "${{ secrets.E2E_PASSWORD }}" ]] && missing=1
+
+          if [[ "$missing" -eq 1 ]]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping POS e2e because required secrets are missing."
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip E2E (POS)
+        if: steps.e2e-secrets.outputs.ready != 'true'
+        run: echo "POS e2e skipped due to missing secrets"
+
       - name: Setup frontend e2e environment
+        if: steps.e2e-secrets.outputs.ready == 'true'
         uses: ./.github/actions/frontend-e2e-setup
 
       - name: Run E2E (POS)
+        if: steps.e2e-secrets.outputs.ready == 'true'
         run: npx turbo run e2e --filter=vexorionerp-pos
 
       - name: Upload Playwright reports
-        if: always()
+        if: always() && steps.e2e-secrets.outputs.ready == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: playwright-reports-pos
