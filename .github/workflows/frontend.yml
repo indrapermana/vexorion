@@ -72,10 +72,22 @@ jobs:
           npm --workspace VexorionERP.AdminUI install --no-save @rolldown/binding-linux-x64-gnu@1.0.0-rc.17
           npm --workspace VexorionERP.UI install --no-save @rolldown/binding-linux-x64-gnu@1.0.0-rc.15
 
+      - name: Validate production API base URL secret
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" || ( "${{ github.event_name }}" == "push" && ( "${{ github.ref }}" == "refs/heads/master" || "${{ github.ref }}" == "refs/heads/main" ) ) ]]; then
+            if [[ -z "${{ secrets.FRONTEND_PROD_API_BASE_URL }}" ]]; then
+              echo "FRONTEND_PROD_API_BASE_URL is required for production/frontend deploy builds."
+              exit 1
+            fi
+          fi
+
       # Turbo builds only packages affected since the previous commit.
       # The dependency graph means: if packages/ui changed → all 3 apps rebuild.
       # If only VexorionERP.UI changed → only that app + @vexorion/ui (cached) rebuild.
       - name: Build frontend packages
+        env:
+          VITE_API_BASE_URL: ${{ secrets.FRONTEND_PROD_API_BASE_URL }}
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.deploy_all }}" == "true" ]]; then
             npx turbo run build --filter=vexorionerp-ui --filter=vexorionerp-adminui --filter=vexorionerp-pos
