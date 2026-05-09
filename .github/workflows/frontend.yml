@@ -24,6 +24,12 @@ on:
       - 'turbo.json'
       - '.github/workflows/frontend.yml'
   workflow_dispatch:
+    inputs:
+      deploy_all:
+        description: 'Build and deploy all frontend apps regardless of affected graph'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   # ─────────────────────────────────────────────
@@ -67,8 +73,13 @@ jobs:
       # Turbo builds only packages affected since the previous commit.
       # The dependency graph means: if packages/ui changed → all 3 apps rebuild.
       # If only VexorionERP.UI changed → only that app + @vexorion/ui (cached) rebuild.
-      - name: Build affected packages
-        run: npx turbo run build --filter=...[HEAD^1]
+      - name: Build frontend packages
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.deploy_all }}" == "true" ]]; then
+            npx turbo run build --filter=vexorionerp-ui --filter=vexorionerp-adminui --filter=vexorionerp-pos
+          else
+            npx turbo run build --filter=...[HEAD^1]
+          fi
 
       - name: Type check affected packages
         run: npx turbo run typecheck --filter=...[HEAD^1]
@@ -86,9 +97,21 @@ jobs:
       - name: Detect built apps
         id: detect
         run: |
-          echo "ui_built=$([[ -d VexorionERP.UI/dist ]] && echo 'true' || echo 'false')" >> "$GITHUB_OUTPUT"
-          echo "adminui_built=$([[ -d VexorionERP.AdminUI/dist ]] && echo 'true' || echo 'false')" >> "$GITHUB_OUTPUT"
-          echo "pos_built=$([[ -d VexorionERP.POS/dist ]] && echo 'true' || echo 'false')" >> "$GITHUB_OUTPUT"
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.deploy_all }}" == "true" ]]; then
+            echo "ui_built=true" >> "$GITHUB_OUTPUT"
+            echo "adminui_built=true" >> "$GITHUB_OUTPUT"
+            echo "pos_built=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ui_built=$([[ -d VexorionERP.UI/dist ]] && echo 'true' || echo 'false')" >> "$GITHUB_OUTPUT"
+            echo "adminui_built=$([[ -d VexorionERP.AdminUI/dist ]] && echo 'true' || echo 'false')" >> "$GITHUB_OUTPUT"
+            echo "pos_built=$([[ -d VexorionERP.POS/dist ]] && echo 'true' || echo 'false')" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Print build detection flags
+        run: |
+          echo "ui_built=${{ steps.detect.outputs.ui_built }}"
+          echo "adminui_built=${{ steps.detect.outputs.adminui_built }}"
+          echo "pos_built=${{ steps.detect.outputs.pos_built }}"
 
       - name: Upload test results
         if: always()
@@ -171,7 +194,10 @@ jobs:
           (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
         )
       ) &&
-      needs.build-and-test.outputs.ui_built == 'true'
+      (
+        needs.build-and-test.outputs.ui_built == 'true' ||
+        (github.event_name == 'workflow_dispatch' && inputs.deploy_all == true)
+      )
     environment: production
 
     steps:
@@ -202,7 +228,10 @@ jobs:
           (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
         )
       ) &&
-      needs.build-and-test.outputs.adminui_built == 'true'
+      (
+        needs.build-and-test.outputs.adminui_built == 'true' ||
+        (github.event_name == 'workflow_dispatch' && inputs.deploy_all == true)
+      )
     environment: production
 
     steps:
@@ -233,7 +262,10 @@ jobs:
           (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
         )
       ) &&
-      needs.build-and-test.outputs.pos_built == 'true'
+      (
+        needs.build-and-test.outputs.pos_built == 'true' ||
+        (github.event_name == 'workflow_dispatch' && inputs.deploy_all == true)
+      )
     environment: production
 
     steps:
