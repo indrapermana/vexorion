@@ -1,6 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
 import { AddRoundedIcon } from '@vexorion/ui'
-import { Alert, Box, Button, CircularProgress, Paper, Stack, Typography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxCircularProgress, VxPaper, VxStack, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { ApiError, deleteAccount, getAccounts } from '../../../lib/api'
@@ -11,9 +11,9 @@ const AccountEditorDialog = lazy(() => import('../components/AccountEditorDialog
 
 function AccountSurfaceFallback() {
   return (
-    <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
-      <CircularProgress size={28} />
-    </Box>
+    <VxBox sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
+      <VxCircularProgress size={28} />
+    </VxBox>
   )
 }
 
@@ -89,35 +89,35 @@ export default function AccountsPage() {
   }
 
   if (!isAuthenticated) {
-    return <Alert severity="info">{t('pages.accounts.signInRequired')}</Alert>
+    return <VxAlert severity="info">{t('pages.accounts.signInRequired')}</VxAlert>
   }
 
   return (
-    <Stack spacing={3}>
-      <Paper elevation={0} className="panel-card">
-        <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2.5} sx={{ justifyContent: 'space-between' }}>
-          <Box>
-            <Typography variant="h4" sx={{ mb: 1 }}>{t('nav.routeTitles.accounts')}</Typography>
-            <Typography color="text.secondary">{t('pages.accounts.description')}</Typography>
-          </Box>
-          <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate}>{t('pages.accounts.newButton')}</Button>
-        </Stack>
-      </Paper>
+    <VxStack spacing={3}>
+      <VxPaper elevation={0} className="panel-card">
+        <VxStack direction={{ xs: 'column', lg: 'row' }} spacing={2.5} sx={{ justifyContent: 'space-between' }}>
+          <VxBox>
+            <VxTypography variant="h4" sx={{ mb: 1 }}>{t('nav.routeTitles.accounts')}</VxTypography>
+            <VxTypography color="text.secondary">{t('pages.accounts.description')}</VxTypography>
+          </VxBox>
+          <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate}>{t('pages.accounts.newButton')}</VxButton>
+        </VxStack>
+      </VxPaper>
 
-      {error ? <Alert severity="error">{error}</Alert> : null}
-      {feedback ? <Alert severity="success">{feedback}</Alert> : null}
+      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
+      {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
 
-      <Paper elevation={0} className="panel-card products-grid-panel">
+      <VxPaper elevation={0} className="panel-card products-grid-panel">
         <Suspense fallback={<AccountSurfaceFallback />}>
           <AccountDataGrid rows={rows} isLoading={isLoading} onEdit={openEdit} onDelete={handleDelete} />
         </Suspense>
-      </Paper>
+      </VxPaper>
 
       {isEditorOpen ? (
         <Suspense fallback={<AccountSurfaceFallback />}>
           <AccountEditorDialog open={isEditorOpen} mode={editorMode} accountId={selectedId} onClose={() => setIsEditorOpen(false)} onSaved={(account, mode) => void handleSaved(account, mode)} />
         </Suspense>
       ) : null}
-    </Stack>
+    </VxStack>
   )
 }

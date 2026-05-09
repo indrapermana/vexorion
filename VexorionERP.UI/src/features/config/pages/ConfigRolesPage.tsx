@@ -1,16 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import {
-  Alert,
-  Chip,
-  Paper,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Typography,
-} from '@vexorion/ui'
+import { VxAlert, VxChip, VxPaper, VxStack, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { ApiError, getRolePermissions } from '../../../lib/api'
@@ -46,44 +35,44 @@ export default function ConfigRolesPage() {
   }, [loadRoles])
 
   if (!isAuthenticated) {
-    return <Alert severity="info">{t('config.roles.signInRequired')}</Alert>
+    return <VxAlert severity="info">{t('config.roles.signInRequired')}</VxAlert>
   }
 
   return (
-    <Stack spacing={3}>
-      <Paper elevation={0} className="panel-card">
-        <Typography variant="h4" sx={{ mb: 1 }}>{t('config.roles.title')}</Typography>
-        <Typography color="text.secondary">
+    <VxStack spacing={3}>
+      <VxPaper elevation={0} className="panel-card">
+        <VxTypography variant="h4" sx={{ mb: 1 }}>{t('config.roles.title')}</VxTypography>
+        <VxTypography color="text.secondary">
           {t('config.roles.description')}
-        </Typography>
-      </Paper>
+        </VxTypography>
+      </VxPaper>
 
-      {error ? <Alert severity="error">{error}</Alert> : null}
+      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
 
-      <Paper elevation={0} className="panel-card">
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ width: 180 }}>{t('config.roles.columns.role')}</TableCell>
-              <TableCell>{t('config.roles.columns.permissions')}</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
+      <VxPaper elevation={0} className="panel-card">
+        <VxTable size="small">
+          <VxTableHead>
+            <VxTableRow>
+              <VxTableCell sx={{ width: 180 }}>{t('config.roles.columns.role')}</VxTableCell>
+              <VxTableCell>{t('config.roles.columns.permissions')}</VxTableCell>
+            </VxTableRow>
+          </VxTableHead>
+          <VxTableBody>
             {items.map((item) => (
-              <TableRow key={item.role}>
-                <TableCell sx={{ fontWeight: 700 }}>{item.role}</TableCell>
-                <TableCell>
-                  <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', rowGap: 1 }}>
+              <VxTableRow key={item.role}>
+                <VxTableCell sx={{ fontWeight: 700 }}>{item.role}</VxTableCell>
+                <VxTableCell>
+                  <VxStack direction="row" spacing={1} sx={{ flexWrap: 'wrap', rowGap: 1 }}>
                     {item.permissions.map((permission) => (
-                      <Chip key={permission} size="small" label={permission} variant="outlined" />
+                      <VxChip key={permission} size="small" label={permission} variant="outlined" />
                     ))}
-                  </Stack>
-                </TableCell>
-              </TableRow>
+                  </VxStack>
+                </VxTableCell>
+              </VxTableRow>
             ))}
-          </TableBody>
-        </Table>
-      </Paper>
-    </Stack>
+          </VxTableBody>
+        </VxTable>
+      </VxPaper>
+    </VxStack>
   )
 }

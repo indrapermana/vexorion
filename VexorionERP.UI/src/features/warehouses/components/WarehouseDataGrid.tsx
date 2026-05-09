@@ -1,4 +1,4 @@
-import { Box, Chip, Typography } from '@vexorion/ui'
+import { VxBox, VxChip, VxTypography } from '@vexorion/ui'
 import { DeleteOutlineRoundedIcon, EditRoundedIcon, VxDataGrid, VxGridActionsCellItem, type VxGridColDef } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import type { WarehouseGridRow } from '../../../types/ui'
@@ -20,10 +20,10 @@ export default function WarehouseDataGrid({ rows, isLoading, highlightedWarehous
       flex: 1.2,
       minWidth: 220,
       renderCell: ({ row }) => (
-        <Box sx={{ py: 1 }}>
-          <Typography sx={{ fontWeight: 700 }}>{row.name}</Typography>
-          <Typography variant="body2" color="text.secondary">{t('components.warehouses.grid.codePrefix')} {row.code}</Typography>
-        </Box>
+        <VxBox sx={{ py: 1 }}>
+          <VxTypography sx={{ fontWeight: 700 }}>{row.name}</VxTypography>
+          <VxTypography variant="body2" color="text.secondary">{t('components.warehouses.grid.codePrefix')} {row.code}</VxTypography>
+        </VxBox>
       ),
     },
     {
@@ -32,7 +32,7 @@ export default function WarehouseDataGrid({ rows, isLoading, highlightedWarehous
       minWidth: 140,
       flex: 0.7,
       sortable: false,
-      renderCell: ({ value }) => <Chip size="small" color={value ? 'primary' : 'default'} label={value ? t('components.warehouses.grid.active') : t('components.warehouses.grid.inactive')} variant={value ? 'filled' : 'outlined'} />,
+      renderCell: ({ value }) => <VxChip size="small" color={value ? 'primary' : 'default'} label={value ? t('components.warehouses.grid.active') : t('components.warehouses.grid.inactive')} variant={value ? 'filled' : 'outlined'} />,
     },
     {
       field: 'actions',

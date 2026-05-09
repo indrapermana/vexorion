@@ -1,18 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import {
-  Alert,
-  Button,
-  MenuItem,
-  Paper,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TextField,
-  Typography,
-} from '@vexorion/ui'
+import { VxAlert, VxButton, VxMenuItem, VxPaper, VxStack, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { ApiError, getAuditLogs } from '../../../lib/api'
@@ -51,20 +38,20 @@ export default function AuditLogsPage() {
   }, [loadLogs])
 
   if (!isAuthenticated) {
-    return <Alert severity="info">{t('pages.auditLogs.signInRequired')}</Alert>
+    return <VxAlert severity="info">{t('pages.auditLogs.signInRequired')}</VxAlert>
   }
 
   return (
-    <Stack spacing={3}>
-      <Paper elevation={0} className="panel-card">
-        <Typography variant="h4" sx={{ mb: 1 }}>{t('nav.routeTitles.auditLogs')}</Typography>
-        <Typography color="text.secondary" sx={{ mb: 2 }}>
+    <VxStack spacing={3}>
+      <VxPaper elevation={0} className="panel-card">
+        <VxTypography variant="h4" sx={{ mb: 1 }}>{t('nav.routeTitles.auditLogs')}</VxTypography>
+        <VxTypography color="text.secondary" sx={{ mb: 2 }}>
           {t('pages.auditLogs.description')}
-        </Typography>
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={1}>
-          <TextField size="small" label={t('pages.auditLogs.eventType')} value={eventType} onChange={(event) => setEventType(event.target.value)} />
-          <TextField size="small" label={t('pages.auditLogs.entity')} value={entityName} onChange={(event) => setEntityName(event.target.value)} />
-          <TextField
+        </VxTypography>
+        <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1}>
+          <VxTextField size="small" label={t('pages.auditLogs.eventType')} value={eventType} onChange={(event) => setEventType(event.target.value)} />
+          <VxTextField size="small" label={t('pages.auditLogs.entity')} value={entityName} onChange={(event) => setEntityName(event.target.value)} />
+          <VxTextField
             size="small"
             label={t('pages.auditLogs.pageSize')}
             select
@@ -72,41 +59,41 @@ export default function AuditLogsPage() {
             onChange={(event) => setPageSize(Number(event.target.value))}
             sx={{ minWidth: 140 }}
           >
-            <MenuItem value={20}>20</MenuItem>
-            <MenuItem value={50}>50</MenuItem>
-            <MenuItem value={100}>100</MenuItem>
-          </TextField>
-          <Button variant="outlined" onClick={() => void loadLogs()}>{t('pages.auditLogs.refresh')}</Button>
-        </Stack>
-      </Paper>
+            <VxMenuItem value={20}>20</VxMenuItem>
+            <VxMenuItem value={50}>50</VxMenuItem>
+            <VxMenuItem value={100}>100</VxMenuItem>
+          </VxTextField>
+          <VxButton variant="outlined" onClick={() => void loadLogs()}>{t('pages.auditLogs.refresh')}</VxButton>
+        </VxStack>
+      </VxPaper>
 
-      {error ? <Alert severity="error">{error}</Alert> : null}
+      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
 
-      <Paper elevation={0} className="panel-card">
-        <Typography color="text.secondary" sx={{ mb: 1 }}>
+      <VxPaper elevation={0} className="panel-card">
+        <VxTypography color="text.secondary" sx={{ mb: 1 }}>
           {t('pages.auditLogs.showingEntries', { shown: items.length, total: totalCount })}
-        </Typography>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>Created UTC</TableCell>
-              <TableCell>Event</TableCell>
-              <TableCell>Entity</TableCell>
-              <TableCell>Description</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
+        </VxTypography>
+        <VxTable size="small">
+          <VxTableHead>
+            <VxTableRow>
+              <VxTableCell>Created UTC</VxTableCell>
+              <VxTableCell>Event</VxTableCell>
+              <VxTableCell>Entity</VxTableCell>
+              <VxTableCell>Description</VxTableCell>
+            </VxTableRow>
+          </VxTableHead>
+          <VxTableBody>
             {items.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell>{item.createdAtUtc}</TableCell>
-                <TableCell>{item.eventType}</TableCell>
-                <TableCell>{item.entityName ?? '-'}</TableCell>
-                <TableCell>{item.description ?? '-'}</TableCell>
-              </TableRow>
+              <VxTableRow key={item.id}>
+                <VxTableCell>{item.createdAtUtc}</VxTableCell>
+                <VxTableCell>{item.eventType}</VxTableCell>
+                <VxTableCell>{item.entityName ?? '-'}</VxTableCell>
+                <VxTableCell>{item.description ?? '-'}</VxTableCell>
+              </VxTableRow>
             ))}
-          </TableBody>
-        </Table>
-      </Paper>
-    </Stack>
+          </VxTableBody>
+        </VxTable>
+      </VxPaper>
+    </VxStack>
   )
 }

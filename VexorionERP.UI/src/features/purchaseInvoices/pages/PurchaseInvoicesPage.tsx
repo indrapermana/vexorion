@@ -1,6 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
 import { DescriptionRoundedIcon, PaidRoundedIcon, ScheduleRoundedIcon } from '@vexorion/ui'
-import { Box, CircularProgress, FormControlLabel, Stack, Switch, Typography } from '@vexorion/ui'
+import { VxBox, VxCircularProgress, VxFormControlLabel, VxStack, VxSwitch, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
@@ -21,12 +21,12 @@ function PurchaseInvoiceSurfaceFallback() {
   const { t } = useTranslation()
 
   return (
-    <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
-      <Stack spacing={1.5} sx={{ alignItems: 'center' }}>
-        <CircularProgress size={28} />
-        <Typography color="text.secondary">{t('pages.purchaseInvoices.loadingTools')}</Typography>
-      </Stack>
-    </Box>
+    <VxBox sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
+      <VxStack spacing={1.5} sx={{ alignItems: 'center' }}>
+        <VxCircularProgress size={28} />
+        <VxTypography color="text.secondary">{t('pages.purchaseInvoices.loadingTools')}</VxTypography>
+      </VxStack>
+    </VxBox>
   )
 }
 
@@ -200,7 +200,7 @@ export default function PurchaseInvoicesPage() {
         ...(feedback ? [{ severity: 'success' as const, message: feedback }] : []),
         { severity: 'info' as const, message: outstandingOnly ? t('pages.purchaseInvoices.showingOutstandingOnly') : t('pages.purchaseInvoices.showingAll') },
       ]}
-      grid={<Suspense fallback={<PurchaseInvoiceSurfaceFallback />}><Stack spacing={1.5}><FormControlLabel control={<Switch checked={outstandingOnly} onChange={(_, checked) => setOutstandingOnly(checked)} />} label={t('pages.purchaseInvoices.outstandingOnly')} /><PurchaseInvoiceDataGrid rows={rows} isLoading={isLoading} onEdit={openEditDialog} onDelete={setDeleteTarget} onManageLines={(row) => void handleManageLines(row)} onRecordPayment={handleRecordPayment} /></Stack></Suspense>}
+      grid={<Suspense fallback={<PurchaseInvoiceSurfaceFallback />}><VxStack spacing={1.5}><VxFormControlLabel control={<VxSwitch checked={outstandingOnly} onChange={(_, checked) => setOutstandingOnly(checked)} />} label={t('pages.purchaseInvoices.outstandingOnly')} /><PurchaseInvoiceDataGrid rows={rows} isLoading={isLoading} onEdit={openEditDialog} onDelete={setDeleteTarget} onManageLines={(row) => void handleManageLines(row)} onRecordPayment={handleRecordPayment} /></VxStack></Suspense>}
       linesPanel={<Suspense fallback={<PurchaseInvoiceSurfaceFallback />}><PurchaseInvoiceLinesPanel invoice={activeLinesInvoice} lines={lines} isLoading={linesLoading} error={linesError} onRefresh={() => activeLinesInvoice ? loadLines(activeLinesInvoice.id) : Promise.resolve()} /></Suspense>}
       documentsPanel={<DocumentsPanel sourceType="PurchaseInvoice" sourceEntityId={activeLinesInvoice?.id ?? null} />}
       editor={isEditorOpen ? <Suspense fallback={<PurchaseInvoiceSurfaceFallback />}><PurchaseInvoiceEditorDialog key={`${dialogMode}:${selectedPurchaseInvoiceId ?? 'new'}:${editorDefaults?.sourcePurchaseOrderId ?? 'manual'}`} open={isEditorOpen} mode={dialogMode} purchaseInvoiceId={selectedPurchaseInvoiceId} suppliers={suppliers} initialValues={editorDefaults} onClose={handleEditorClose} onSaved={(purchaseInvoice, mode) => void handleSaved(purchaseInvoice, mode)} /></Suspense> : null}

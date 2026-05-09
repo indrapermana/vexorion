@@ -1,4 +1,4 @@
-import { Alert, Box, Button, Divider, Stack, TextField, Typography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxDivider, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
@@ -40,29 +40,29 @@ export default function LoginPage() {
   }
 
   return (
-    <Stack component="form" spacing={2.5} onSubmit={onSubmit} className="public-form-card public-form-card--login">
-      <Box>
-        <Typography variant="h4" sx={{ mb: 1 }}>{t('login.title')}</Typography>
-        <Typography color="text.secondary">{t('login.description')}</Typography>
-      </Box>
+    <VxStack component="form" spacing={2.5} onSubmit={onSubmit} className="public-form-card public-form-card--login">
+      <VxBox>
+        <VxTypography variant="h4" sx={{ mb: 1 }}>{t('login.title')}</VxTypography>
+        <VxTypography color="text.secondary">{t('login.description')}</VxTypography>
+      </VxBox>
 
-      {error ? <Alert severity="error">{error}</Alert> : null}
+      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
 
-      <TextField
+      <VxTextField
         label={t('login.tenantCode')}
         value={form.tenantCode}
         onChange={(event) => setForm((current) => ({ ...current, tenantCode: event.target.value }))}
         error={Boolean(validation?.TenantCode)}
         helperText={getValidationMessage('TenantCode')}
       />
-      <TextField
+      <VxTextField
         label={t('login.emailOrUsername')}
         value={form.userNameOrEmail}
         onChange={(event) => setForm((current) => ({ ...current, userNameOrEmail: event.target.value }))}
         error={Boolean(validation?.UserNameOrEmail)}
         helperText={getValidationMessage('UserNameOrEmail')}
       />
-      <TextField
+      <VxTextField
         type="password"
         label={t('login.password')}
         value={form.password}
@@ -71,14 +71,14 @@ export default function LoginPage() {
         helperText={getValidationMessage('Password')}
       />
 
-      <Button type="submit" variant="contained" size="large" disabled={isSubmitting}>
+      <VxButton type="submit" variant="contained" size="large" disabled={isSubmitting}>
         {isSubmitting ? t('login.signingIn') : t('login.signInButton')}
-      </Button>
+      </VxButton>
 
-      <Divider>{t('login.systemAdminOnly')}</Divider>
-      <Typography variant="body2" color="text.secondary">
+      <VxDivider>{t('login.systemAdminOnly')}</VxDivider>
+      <VxTypography variant="body2" color="text.secondary">
         {t('login.helpHint')}
-      </Typography>
-    </Stack>
+      </VxTypography>
+    </VxStack>
   )
 }

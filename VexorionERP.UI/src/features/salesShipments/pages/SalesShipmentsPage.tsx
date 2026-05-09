@@ -1,15 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
 import { LocalShippingRoundedIcon } from '@vexorion/ui'
-import {
-  Alert,
-  Autocomplete,
-  Box,
-  Button,
-  CircularProgress,
-  Stack,
-  TextField,
-  Typography,
-} from '@vexorion/ui'
+import { VxAlert, VxAutocomplete, VxBox, VxButton, VxCircularProgress, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
@@ -25,12 +16,12 @@ function LoadingFallback() {
   const { t } = useTranslation()
 
   return (
-    <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
-      <Stack spacing={1.5} sx={{ alignItems: 'center' }}>
-        <CircularProgress size={28} />
-        <Typography color="text.secondary">{t('pages.salesShipments.loadingTools')}</Typography>
-      </Stack>
-    </Box>
+    <VxBox sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
+      <VxStack spacing={1.5} sx={{ alignItems: 'center' }}>
+        <VxCircularProgress size={28} />
+        <VxTypography color="text.secondary">{t('pages.salesShipments.loadingTools')}</VxTypography>
+      </VxStack>
+    </VxBox>
   )
 }
 
@@ -119,27 +110,27 @@ export default function SalesShipmentsPage() {
   const rows: SalesShipmentGridRow[] = shipments
 
   if (!isAuthenticated) {
-    return <Alert severity="info">{t('pages.salesShipments.signInRequired')}</Alert>
+    return <VxAlert severity="info">{t('pages.salesShipments.signInRequired')}</VxAlert>
   }
 
   return (
-    <Stack spacing={2}>
-      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+    <VxStack spacing={2}>
+      <VxStack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+        <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
           <LocalShippingRoundedIcon color="primary" />
-          <Typography variant="h6">{t('nav.routeTitles.salesShipments')}</Typography>
-        </Stack>
-        <Button
+          <VxTypography variant="h6">{t('nav.routeTitles.salesShipments')}</VxTypography>
+        </VxStack>
+        <VxButton
           variant="contained"
           size="small"
           disabled={!selectedOrder}
           onClick={() => setIsCreateOpen(true)}
         >
           {t('pages.salesShipments.newButton')}
-        </Button>
-      </Stack>
+        </VxButton>
+      </VxStack>
 
-      <Autocomplete
+      <VxAutocomplete
         options={salesOrders}
         value={selectedOrder}
         onChange={(_, value) => {
@@ -150,17 +141,17 @@ export default function SalesShipmentsPage() {
         getOptionLabel={(o) => o.orderNumber}
         isOptionEqualToValue={(a, b) => a.id === b.id}
         renderInput={(params) => (
-          <TextField {...params} label={t('pages.salesShipments.filterByOrder')} size="small" />
+          <VxTextField {...params} label={t('pages.salesShipments.filterByOrder')} size="small" />
         )}
         sx={{ maxWidth: 320 }}
       />
 
       {!selectedOrder && (
-        <Alert severity="info">{t('pages.salesShipments.selectOrderPrompt')}</Alert>
+        <VxAlert severity="info">{t('pages.salesShipments.selectOrderPrompt')}</VxAlert>
       )}
 
-      {error && <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>}
-      {feedback && <Alert severity="success" onClose={() => setFeedback(null)}>{feedback}</Alert>}
+      {error && <VxAlert severity="error" onClose={() => setError(null)}>{error}</VxAlert>}
+      {feedback && <VxAlert severity="success" onClose={() => setFeedback(null)}>{feedback}</VxAlert>}
 
       {selectedOrder && (
         <Suspense fallback={<LoadingFallback />}>
@@ -184,6 +175,6 @@ export default function SalesShipmentsPage() {
           />
         </Suspense>
       )}
-    </Stack>
+    </VxStack>
   )
 }

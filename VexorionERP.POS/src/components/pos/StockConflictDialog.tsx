@@ -1,4 +1,4 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, List, ListItem, ListItemText, Typography } from '@vexorion/ui'
+import { VxButton, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxList, VxListItem, VxListItemText, VxTypography } from '@vexorion/ui'
 import React from 'react'
 import { useI18n } from '../../app/I18nContext'
 import type { PosStockInsufficientItem } from '../../types/api'
@@ -16,13 +16,13 @@ export function StockConflictDialog({ open, insufficientItems, cart, onAdjust, o
   const { t } = useI18n()
 
   return (
-    <Dialog open={open} maxWidth="sm" fullWidth>
-      <DialogTitle>{t('stock.conflictTitle')}</DialogTitle>
-      <DialogContent>
-        <Typography variant="body2" sx={{ mb: 1 }}>
+    <VxDialog open={open} maxWidth="sm" fullWidth>
+      <VxDialogTitle>{t('stock.conflictTitle')}</VxDialogTitle>
+      <VxDialogContent>
+        <VxTypography variant="body2" sx={{ mb: 1 }}>
           {t('stock.conflictMessage')}
-        </Typography>
-        <List dense>
+        </VxTypography>
+        <VxList dense>
           {insufficientItems.map((item) => {
             const productName = cart.find((line) => line.productId === item.productId)?.productName ?? item.productId
             const label = t('stock.conflictItem', {
@@ -31,24 +31,24 @@ export function StockConflictDialog({ open, insufficientItems, cart, onAdjust, o
               available: item.available,
             })
             return (
-              <ListItem key={item.productId} disablePadding>
-                  <ListItemText
+              <VxListItem key={item.productId} disablePadding>
+                  <VxListItemText
                     primary={label}
-                    slotProps={{ primary: { color: 'error', variant: 'body2' } as React.ComponentProps<typeof Typography> }}
+                    slotProps={{ primary: { color: 'error', variant: 'body2' } as React.ComponentProps<typeof VxTypography> }}
                   />
-              </ListItem>
+              </VxListItem>
             )
           })}
-        </List>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onCancel} color="inherit">
+        </VxList>
+      </VxDialogContent>
+      <VxDialogActions>
+        <VxButton onClick={onCancel} color="inherit">
           {t('stock.conflictCancel')}
-        </Button>
-        <Button onClick={onAdjust} variant="contained">
+        </VxButton>
+        <VxButton onClick={onAdjust} variant="contained">
           {t('stock.conflictAdjust')}
-        </Button>
-      </DialogActions>
-    </Dialog>
+        </VxButton>
+      </VxDialogActions>
+    </VxDialog>
   )
 }

@@ -1,4 +1,4 @@
-import { Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, Stack, TextField } from '@vexorion/ui'
+import { VxButton, VxCheckbox, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxFormControlLabel, VxStack, VxTextField } from '@vexorion/ui'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
@@ -63,35 +63,35 @@ export function TenantEditorDialog({ open, tenant, onClose, onSaved }: TenantEdi
   }
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{t('components.tenants.editor.editTitle')}</DialogTitle>
-      <DialogContent>
-        <Stack spacing={2} sx={{ mt: 2 }}>
-          <TextField disabled label={t('components.tenants.editor.codeLabel')} value={tenant?.code ?? ''} />
-          <TextField
+    <VxDialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+      <VxDialogTitle>{t('components.tenants.editor.editTitle')}</VxDialogTitle>
+      <VxDialogContent>
+        <VxStack spacing={2} sx={{ mt: 2 }}>
+          <VxTextField disabled label={t('components.tenants.editor.codeLabel')} value={tenant?.code ?? ''} />
+          <VxTextField
             label={t('components.tenants.editor.nameLabel')}
             {...register('name')}
             error={!!errors.name}
             helperText={errors.name?.message}
           />
-          <TextField
+          <VxTextField
             label={t('components.tenants.editor.domainLabel')}
             {...register('domain')}
             error={!!errors.domain}
             helperText={errors.domain?.message}
           />
-          <FormControlLabel
-            control={<Checkbox {...register('isActive')} checked={isActive} />}
+          <VxFormControlLabel
+            control={<VxCheckbox {...register('isActive')} checked={isActive} />}
             label={t('components.tenants.editor.activeLabel')}
           />
-        </Stack>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose}>{t('common.cancel') ?? 'Cancel'}</Button>
-        <Button onClick={handleSubmit(onSubmit)} variant="contained" disabled={isSaving}>
+        </VxStack>
+      </VxDialogContent>
+      <VxDialogActions>
+        <VxButton onClick={handleClose}>{t('common.cancel') ?? 'Cancel'}</VxButton>
+        <VxButton onClick={handleSubmit(onSubmit)} variant="contained" disabled={isSaving}>
           {isSaving ? t('common.saving') ?? 'Saving...' : t('common.save') ?? 'Save'}
-        </Button>
-      </DialogActions>
-    </Dialog>
+        </VxButton>
+      </VxDialogActions>
+    </VxDialog>
   )
 }

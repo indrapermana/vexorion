@@ -1,30 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { AddRoundedIcon, DeleteOutlineRoundedIcon, EditRoundedIcon } from '@vexorion/ui'
-import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  FormControlLabel,
-  IconButton,
-  MenuItem,
-  Stack,
-  Switch,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TextField,
-  Tooltip,
-  Typography,
-} from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxChip, VxCircularProgress, VxDialog, VxDialogActions, VxDialogContent, VxDialogContentText, VxDialogTitle, VxFormControlLabel, VxIconButton, VxMenuItem, VxStack, VxSwitch, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTextField, VxTooltip, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import {
   ApiError,
@@ -147,85 +123,85 @@ export default function ProductIdentifiersPanel({ productId }: ProductIdentifier
   }
 
   return (
-    <Box sx={{ px: { xs: 2, md: 3 }, py: 2, backgroundColor: 'rgba(15, 23, 42, 0.02)' }}>
-      <Stack spacing={1.5}>
-        <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography sx={{ fontWeight: 700 }}>{t('components.products.identifiers.title')}</Typography>
-          <Button size="small" startIcon={<AddRoundedIcon />} onClick={openCreate}>
+    <VxBox sx={{ px: { xs: 2, md: 3 }, py: 2, backgroundColor: 'rgba(15, 23, 42, 0.02)' }}>
+      <VxStack spacing={1.5}>
+        <VxStack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+          <VxTypography sx={{ fontWeight: 700 }}>{t('components.products.identifiers.title')}</VxTypography>
+          <VxButton size="small" startIcon={<AddRoundedIcon />} onClick={openCreate}>
             {t('components.products.identifiers.addButton')}
-          </Button>
-        </Stack>
+          </VxButton>
+        </VxStack>
 
-        {error ? <Alert severity="error" onClose={() => setError(null)}>{error}</Alert> : null}
+        {error ? <VxAlert severity="error" onClose={() => setError(null)}>{error}</VxAlert> : null}
 
         {isLoading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
-            <CircularProgress size={24} />
-          </Box>
+          <VxBox sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+            <VxCircularProgress size={24} />
+          </VxBox>
         ) : identifiers.length === 0 ? (
-          <Typography color="text.secondary" variant="body2">
+          <VxTypography color="text.secondary" variant="body2">
             {t('components.products.identifiers.empty')}
-          </Typography>
+          </VxTypography>
         ) : (
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>{t('components.products.identifiers.columns.codeType')}</TableCell>
-                <TableCell>{t('components.products.identifiers.columns.codeValue')}</TableCell>
-                <TableCell>{t('components.products.identifiers.columns.isPrimary')}</TableCell>
-                <TableCell>{t('components.products.identifiers.columns.status')}</TableCell>
-                <TableCell align="right">{t('common.actions')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
+          <VxTable size="small">
+            <VxTableHead>
+              <VxTableRow>
+                <VxTableCell>{t('components.products.identifiers.columns.codeType')}</VxTableCell>
+                <VxTableCell>{t('components.products.identifiers.columns.codeValue')}</VxTableCell>
+                <VxTableCell>{t('components.products.identifiers.columns.isPrimary')}</VxTableCell>
+                <VxTableCell>{t('components.products.identifiers.columns.status')}</VxTableCell>
+                <VxTableCell align="right">{t('common.actions')}</VxTableCell>
+              </VxTableRow>
+            </VxTableHead>
+            <VxTableBody>
               {identifiers.map((item) => (
-                <TableRow key={item.id} hover>
-                  <TableCell>
-                    <Chip size="small" label={item.codeType} variant="outlined" />
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>{item.codeValue}</Typography>
-                  </TableCell>
-                  <TableCell>
+                <VxTableRow key={item.id} hover>
+                  <VxTableCell>
+                    <VxChip size="small" label={item.codeType} variant="outlined" />
+                  </VxTableCell>
+                  <VxTableCell>
+                    <VxTypography variant="body2" sx={{ fontFamily: 'monospace' }}>{item.codeValue}</VxTypography>
+                  </VxTableCell>
+                  <VxTableCell>
                     {item.isPrimary ? (
-                      <Chip size="small" label={t('components.products.identifiers.primary')} color="primary" />
+                      <VxChip size="small" label={t('components.products.identifiers.primary')} color="primary" />
                     ) : null}
-                  </TableCell>
-                  <TableCell>
-                    <Chip
+                  </VxTableCell>
+                  <VxTableCell>
+                    <VxChip
                       size="small"
                       label={item.isActive ? t('components.products.grid.active') : t('components.products.grid.inactive')}
                       color={item.isActive ? 'success' : 'default'}
                       variant={item.isActive ? 'filled' : 'outlined'}
                     />
-                  </TableCell>
-                  <TableCell align="right">
-                    <Stack direction="row" spacing={0.5} sx={{ justifyContent: 'flex-end' }}>
-                      <Tooltip title={t('common.edit')}>
-                        <IconButton size="small" onClick={() => openEdit(item)}>
+                  </VxTableCell>
+                  <VxTableCell align="right">
+                    <VxStack direction="row" spacing={0.5} sx={{ justifyContent: 'flex-end' }}>
+                      <VxTooltip title={t('common.edit')}>
+                        <VxIconButton size="small" onClick={() => openEdit(item)}>
                           <EditRoundedIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title={t('dialogs.delete')}>
-                        <IconButton size="small" color="error" onClick={() => setDeleteTarget(item)}>
+                        </VxIconButton>
+                      </VxTooltip>
+                      <VxTooltip title={t('dialogs.delete')}>
+                        <VxIconButton size="small" color="error" onClick={() => setDeleteTarget(item)}>
                           <DeleteOutlineRoundedIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
+                        </VxIconButton>
+                      </VxTooltip>
+                    </VxStack>
+                  </VxTableCell>
+                </VxTableRow>
               ))}
-            </TableBody>
-          </Table>
+            </VxTableBody>
+          </VxTable>
         )}
-      </Stack>
+      </VxStack>
 
       {/* Create dialog */}
-      <Dialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>{t('components.products.identifiers.createDialog.title')}</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            <TextField
+      <VxDialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="xs" fullWidth>
+        <VxDialogTitle>{t('components.products.identifiers.createDialog.title')}</VxDialogTitle>
+        <VxDialogContent>
+          <VxStack spacing={2} sx={{ pt: 1 }}>
+            <VxTextField
               select
               size="small"
               label={t('components.products.identifiers.columns.codeType')}
@@ -234,10 +210,10 @@ export default function ProductIdentifiersPanel({ productId }: ProductIdentifier
               fullWidth
             >
               {CODE_TYPE_OPTIONS.map((opt) => (
-                <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                <VxMenuItem key={opt} value={opt}>{opt}</VxMenuItem>
               ))}
-            </TextField>
-            <TextField
+            </VxTextField>
+            <VxTextField
               size="small"
               label={t('components.products.identifiers.columns.codeValue')}
               value={createCodeValue}
@@ -245,30 +221,30 @@ export default function ProductIdentifiersPanel({ productId }: ProductIdentifier
               fullWidth
               slotProps={{ htmlInput: { maxLength: 100 } }}
             />
-            <FormControlLabel
-              control={<Switch checked={createIsPrimary} onChange={(e) => setCreateIsPrimary(e.target.checked)} />}
+            <VxFormControlLabel
+              control={<VxSwitch checked={createIsPrimary} onChange={(e) => setCreateIsPrimary(e.target.checked)} />}
               label={t('components.products.identifiers.columns.isPrimary')}
             />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCreateOpen(false)}>{t('common.cancel')}</Button>
-          <Button
+          </VxStack>
+        </VxDialogContent>
+        <VxDialogActions>
+          <VxButton onClick={() => setCreateOpen(false)}>{t('common.cancel')}</VxButton>
+          <VxButton
             variant="contained"
             onClick={() => void handleCreate()}
             disabled={isSaving || !createCodeValue.trim()}
           >
             {t('common.create')}
-          </Button>
-        </DialogActions>
-      </Dialog>
+          </VxButton>
+        </VxDialogActions>
+      </VxDialog>
 
       {/* Edit dialog */}
-      <Dialog open={editTarget !== null} onClose={() => setEditTarget(null)} maxWidth="xs" fullWidth>
-        <DialogTitle>{t('components.products.identifiers.editDialog.title')}</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            <TextField
+      <VxDialog open={editTarget !== null} onClose={() => setEditTarget(null)} maxWidth="xs" fullWidth>
+        <VxDialogTitle>{t('components.products.identifiers.editDialog.title')}</VxDialogTitle>
+        <VxDialogContent>
+          <VxStack spacing={2} sx={{ pt: 1 }}>
+            <VxTextField
               select
               size="small"
               label={t('components.products.identifiers.columns.codeType')}
@@ -277,10 +253,10 @@ export default function ProductIdentifiersPanel({ productId }: ProductIdentifier
               fullWidth
             >
               {CODE_TYPE_OPTIONS.map((opt) => (
-                <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                <VxMenuItem key={opt} value={opt}>{opt}</VxMenuItem>
               ))}
-            </TextField>
-            <TextField
+            </VxTextField>
+            <VxTextField
               size="small"
               label={t('components.products.identifiers.columns.codeValue')}
               value={editCodeValue}
@@ -288,51 +264,51 @@ export default function ProductIdentifiersPanel({ productId }: ProductIdentifier
               fullWidth
               slotProps={{ htmlInput: { maxLength: 100 } }}
             />
-            <FormControlLabel
-              control={<Switch checked={editIsPrimary} onChange={(e) => setEditIsPrimary(e.target.checked)} />}
+            <VxFormControlLabel
+              control={<VxSwitch checked={editIsPrimary} onChange={(e) => setEditIsPrimary(e.target.checked)} />}
               label={t('components.products.identifiers.columns.isPrimary')}
             />
-            <FormControlLabel
-              control={<Switch checked={editIsActive} onChange={(e) => setEditIsActive(e.target.checked)} />}
+            <VxFormControlLabel
+              control={<VxSwitch checked={editIsActive} onChange={(e) => setEditIsActive(e.target.checked)} />}
               label={t('components.products.grid.active')}
             />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setEditTarget(null)}>{t('common.cancel')}</Button>
-          <Button
+          </VxStack>
+        </VxDialogContent>
+        <VxDialogActions>
+          <VxButton onClick={() => setEditTarget(null)}>{t('common.cancel')}</VxButton>
+          <VxButton
             variant="contained"
             onClick={() => void handleUpdate()}
             disabled={isSaving || !editCodeValue.trim()}
           >
             {t('common.save')}
-          </Button>
-        </DialogActions>
-      </Dialog>
+          </VxButton>
+        </VxDialogActions>
+      </VxDialog>
 
       {/* Delete dialog */}
-      <Dialog open={deleteTarget !== null} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
-        <DialogTitle>{t('components.products.identifiers.deleteDialog.title')}</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
+      <VxDialog open={deleteTarget !== null} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
+        <VxDialogTitle>{t('components.products.identifiers.deleteDialog.title')}</VxDialogTitle>
+        <VxDialogContent>
+          <VxDialogContentText>
             {t('components.products.identifiers.deleteDialog.message', {
               codeType: deleteTarget?.codeType,
               codeValue: deleteTarget?.codeValue,
             })}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
-          <Button
+          </VxDialogContentText>
+        </VxDialogContent>
+        <VxDialogActions>
+          <VxButton onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</VxButton>
+          <VxButton
             color="error"
             variant="contained"
             onClick={() => void handleDelete()}
             disabled={isDeleting}
           >
             {t('common.delete')}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+          </VxButton>
+        </VxDialogActions>
+      </VxDialog>
+    </VxBox>
   )
 }

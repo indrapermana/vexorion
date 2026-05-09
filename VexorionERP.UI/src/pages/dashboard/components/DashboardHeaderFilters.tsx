@@ -1,4 +1,4 @@
-import { Alert, Box, Stack, TextField, Typography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
 import type { TFunction } from 'i18next'
 
 type DashboardHeaderFiltersProps = {
@@ -21,14 +21,14 @@ export default function DashboardHeaderFilters({
   onPeriodChange,
 }: DashboardHeaderFiltersProps) {
   return (
-    <Box>
-      <Typography variant="h4" sx={{ mb: 1 }}>{t('dashboard.hero.title')}</Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 2.5 }}>
+    <VxBox>
+      <VxTypography variant="h4" sx={{ mb: 1 }}>{t('dashboard.hero.title')}</VxTypography>
+      <VxTypography variant="body1" color="text.secondary" sx={{ mb: 2.5 }}>
         {t('dashboard.hero.description')}
-      </Typography>
+      </VxTypography>
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-        <TextField
+      <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+        <VxTextField
           type="date"
           label={t('dashboard.filters.asOfDate')}
           value={asOfDate}
@@ -36,7 +36,7 @@ export default function DashboardHeaderFilters({
           slotProps={{ inputLabel: { shrink: true } }}
           sx={{ maxWidth: 220 }}
         />
-        <TextField
+        <VxTextField
           select
           label={t('dashboard.filters.window')}
           value={periodDays}
@@ -47,9 +47,9 @@ export default function DashboardHeaderFilters({
           {periodOptions.map((option) => (
             <option key={option} value={option}>{t('dashboard.filters.daysOption', { days: option })}</option>
           ))}
-        </TextField>
-        {error ? <Alert severity="error" sx={{ flex: 1 }}>{error}</Alert> : null}
-      </Stack>
-    </Box>
+        </VxTextField>
+        {error ? <VxAlert severity="error" sx={{ flex: 1 }}>{error}</VxAlert> : null}
+      </VxStack>
+    </VxBox>
   )
 }

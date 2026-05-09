@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { AddRoundedIcon, DeleteOutlineRoundedIcon, EditRoundedIcon, WarehouseRoundedIcon } from '@vexorion/ui'
-import { Alert, Box, Button, Chip, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxChip, VxPaper, VxStack, VxTable, VxTableBody, VxTableCell, VxTableContainer, VxTableHead, VxTableRow, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { ApiError, createPurchaseOrderLine, deletePurchaseOrderLine, updatePurchaseOrderLine } from '../../../lib/api'
 import { useInventoryBalancesLookup, useProductsLookup, useWarehousesLookup } from '../../../hooks/useLookups'
@@ -43,10 +43,10 @@ export default function PurchaseOrderLinesPanel({ order, lines, isLoading, error
 
   if (!order) {
     return (
-      <Paper elevation={0} className="panel-card">
-        <Typography variant="h6" sx={{ mb: 1 }}>Order lines</Typography>
-        <Typography color="text.secondary">Pick a purchase order from the grid to manage its lines.</Typography>
-      </Paper>
+      <VxPaper elevation={0} className="panel-card">
+        <VxTypography variant="h6" sx={{ mb: 1 }}>Order lines</VxTypography>
+        <VxTypography color="text.secondary">Pick a purchase order from the grid to manage its lines.</VxTypography>
+      </VxPaper>
     )
   }
 
@@ -98,62 +98,62 @@ export default function PurchaseOrderLinesPanel({ order, lines, isLoading, error
   }
 
   return (
-    <Paper elevation={0} className="panel-card">
-      <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ justifyContent: 'space-between', mb: 2 }}>
-        <Box>
-          <Typography variant="h6">Order lines for {order.orderNumber}</Typography>
-          <Typography color="text.secondary">Attach products to this purchasing header and track inbound value.</Typography>
-        </Box>
-        <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate} disabled={!products.length}>Add line</Button>
-      </Stack>
-      <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 2, alignItems: { md: 'center' } }}>
-        <Chip icon={<WarehouseRoundedIcon />} label={warehouseName ? `Receiving warehouse: ${warehouseName}` : `Receiving warehouse: ${order.warehouseId}`} color="primary" variant="outlined" />
-        <Typography color="text.secondary">Inventory context is calculated from the warehouse assigned on the purchase order header.</Typography>
-      </Stack>
-      {error ? <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert> : null}
-      {productsError ? <Alert severity="warning" sx={{ mb: 2 }}>{productsError}</Alert> : null}
-      {warehousesError ? <Alert severity="warning" sx={{ mb: 2 }}>{warehousesError}</Alert> : null}
-      {balancesError ? <Alert severity="warning" sx={{ mb: 2 }}>{balancesError}</Alert> : null}
-      {mutationError ? <Alert severity="error" sx={{ mb: 2 }}>{mutationError}</Alert> : null}
-      {feedback ? <Alert severity="success" sx={{ mb: 2 }}>{feedback}</Alert> : null}
-      <TableContainer>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>Product</TableCell>
-              <TableCell align="right">On hand</TableCell>
-              <TableCell align="right">Qty</TableCell>
-              <TableCell align="right">Unit cost</TableCell>
-              <TableCell align="right">Line total</TableCell>
-              <TableCell align="right">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
+    <VxPaper elevation={0} className="panel-card">
+      <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ justifyContent: 'space-between', mb: 2 }}>
+        <VxBox>
+          <VxTypography variant="h6">Order lines for {order.orderNumber}</VxTypography>
+          <VxTypography color="text.secondary">Attach products to this purchasing header and track inbound value.</VxTypography>
+        </VxBox>
+        <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate} disabled={!products.length}>Add line</VxButton>
+      </VxStack>
+      <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 2, alignItems: { md: 'center' } }}>
+        <VxChip icon={<WarehouseRoundedIcon />} label={warehouseName ? `Receiving warehouse: ${warehouseName}` : `Receiving warehouse: ${order.warehouseId}`} color="primary" variant="outlined" />
+        <VxTypography color="text.secondary">Inventory context is calculated from the warehouse assigned on the purchase order header.</VxTypography>
+      </VxStack>
+      {error ? <VxAlert severity="error" sx={{ mb: 2 }}>{error}</VxAlert> : null}
+      {productsError ? <VxAlert severity="warning" sx={{ mb: 2 }}>{productsError}</VxAlert> : null}
+      {warehousesError ? <VxAlert severity="warning" sx={{ mb: 2 }}>{warehousesError}</VxAlert> : null}
+      {balancesError ? <VxAlert severity="warning" sx={{ mb: 2 }}>{balancesError}</VxAlert> : null}
+      {mutationError ? <VxAlert severity="error" sx={{ mb: 2 }}>{mutationError}</VxAlert> : null}
+      {feedback ? <VxAlert severity="success" sx={{ mb: 2 }}>{feedback}</VxAlert> : null}
+      <VxTableContainer>
+        <VxTable size="small">
+          <VxTableHead>
+            <VxTableRow>
+              <VxTableCell>Product</VxTableCell>
+              <VxTableCell align="right">On hand</VxTableCell>
+              <VxTableCell align="right">Qty</VxTableCell>
+              <VxTableCell align="right">Unit cost</VxTableCell>
+              <VxTableCell align="right">Line total</VxTableCell>
+              <VxTableCell align="right">Actions</VxTableCell>
+            </VxTableRow>
+          </VxTableHead>
+          <VxTableBody>
             {lines.map((line) => {
               const product = productById.get(line.productId)
               return (
-                <TableRow key={line.id} hover>
-                  <TableCell>{product ? `${product.name} (${product.sku})` : line.productId}</TableCell>
-                  <TableCell align="right">{order.warehouseId ? (balanceByProductId.get(line.productId) ?? 0).toFixed(2) : '-'}</TableCell>
-                  <TableCell align="right">{line.quantity}</TableCell>
-                  <TableCell align="right">${line.unitCost.toFixed(2)}</TableCell>
-                  <TableCell align="right">${line.lineTotal.toFixed(2)}</TableCell>
-                  <TableCell align="right">
-                    <Button size="small" startIcon={<EditRoundedIcon />} onClick={() => openEdit(line)}>Edit</Button>
-                    <Button size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => void handleDelete(line.id)}>Delete</Button>
-                  </TableCell>
-                </TableRow>
+                <VxTableRow key={line.id} hover>
+                  <VxTableCell>{product ? `${product.name} (${product.sku})` : line.productId}</VxTableCell>
+                  <VxTableCell align="right">{order.warehouseId ? (balanceByProductId.get(line.productId) ?? 0).toFixed(2) : '-'}</VxTableCell>
+                  <VxTableCell align="right">{line.quantity}</VxTableCell>
+                  <VxTableCell align="right">${line.unitCost.toFixed(2)}</VxTableCell>
+                  <VxTableCell align="right">${line.lineTotal.toFixed(2)}</VxTableCell>
+                  <VxTableCell align="right">
+                    <VxButton size="small" startIcon={<EditRoundedIcon />} onClick={() => openEdit(line)}>Edit</VxButton>
+                    <VxButton size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => void handleDelete(line.id)}>Delete</VxButton>
+                  </VxTableCell>
+                </VxTableRow>
               )
             })}
             {!isLoading && lines.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6}><Typography color="text.secondary">No lines yet.</Typography></TableCell>
-              </TableRow>
+              <VxTableRow>
+                <VxTableCell colSpan={6}><VxTypography color="text.secondary">No lines yet.</VxTypography></VxTableCell>
+              </VxTableRow>
             ) : null}
-          </TableBody>
-        </Table>
-      </TableContainer>
+          </VxTableBody>
+        </VxTable>
+      </VxTableContainer>
       <PurchaseOrderLineEditorDialog open={isEditorOpen} mode={dialogMode} line={selectedLine} products={products} onClose={() => setIsEditorOpen(false)} onSaved={handleSave} />
-    </Paper>
+    </VxPaper>
   )
 }

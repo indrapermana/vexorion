@@ -1,5 +1,5 @@
 import { VisibilityRoundedIcon, VxDataGrid, VxGridActionsCellItem, type VxGridColDef } from '@vexorion/ui'
-import { Chip } from '@vexorion/ui'
+import { VxChip } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import type { JournalGridRow } from '../../../types/ui'
 
@@ -30,7 +30,7 @@ export default function JournalDataGrid({ rows, isLoading, onOpen }: JournalData
       minWidth: 120,
       flex: 0.5,
       renderCell: ({ row }) => (
-        <Chip size="small" color={row.status === 2 ? 'success' : row.status === 3 ? 'default' : 'primary'} label={getJournalStatusLabel(row.status)} />
+        <VxChip size="small" color={row.status === 2 ? 'success' : row.status === 3 ? 'default' : 'primary'} label={getJournalStatusLabel(row.status)} />
       ),
     },
     {

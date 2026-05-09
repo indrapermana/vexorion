@@ -1,6 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
 import { AddRoundedIcon, CheckCircleRoundedIcon, PlaceRoundedIcon, WarehouseRoundedIcon } from '@vexorion/ui'
-import { Alert, Box, Button, CircularProgress, Paper, Stack, Typography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxCircularProgress, VxPaper, VxStack, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
@@ -16,12 +16,12 @@ function WarehouseSurfaceFallback() {
   const { t } = useTranslation()
 
   return (
-    <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
-      <Stack spacing={1.5} sx={{ alignItems: 'center' }}>
-        <CircularProgress size={28} />
-        <Typography color="text.secondary">{t('pages.warehouses.loadingTools')}</Typography>
-      </Stack>
-    </Box>
+    <VxBox sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
+      <VxStack spacing={1.5} sx={{ alignItems: 'center' }}>
+        <VxCircularProgress size={28} />
+        <VxTypography color="text.secondary">{t('pages.warehouses.loadingTools')}</VxTypography>
+      </VxStack>
+    </VxBox>
   )
 }
 
@@ -134,35 +134,35 @@ export default function WarehousesPage() {
   }
 
   if (!isAuthenticated) {
-    return <Alert severity="info">{t('pages.warehouses.signInRequired')}</Alert>
+    return <VxAlert severity="info">{t('pages.warehouses.signInRequired')}</VxAlert>
   }
 
   return (
-    <Stack spacing={3}>
-      <Paper elevation={0} className="panel-card">
-        <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2.5} sx={{ justifyContent: 'space-between' }}>
-          <Box>
-            <Typography variant="h4" sx={{ mb: 1 }}>{t('nav.routeTitles.warehouses')}</Typography>
-            <Typography color="text.secondary">{t('pages.warehouses.description')}</Typography>
-          </Box>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
-            <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog}>{t('pages.warehouses.newButton')}</Button>
-            <Paper elevation={0} className="products-metric-card"><WarehouseRoundedIcon fontSize="small" /><Box><Typography variant="body2" color="text.secondary">{t('pages.warehouses.metrics.rows')}</Typography><Typography variant="h6">{warehouses.length}</Typography></Box></Paper>
-            <Paper elevation={0} className="products-metric-card"><CheckCircleRoundedIcon fontSize="small" /><Box><Typography variant="body2" color="text.secondary">{t('pages.warehouses.metrics.activeLocations')}</Typography><Typography variant="h6">{warehouses.filter((warehouse) => warehouse.isActive).length}</Typography></Box></Paper>
-            <Paper elevation={0} className="products-metric-card"><PlaceRoundedIcon fontSize="small" /><Box><Typography variant="body2" color="text.secondary">{t('pages.warehouses.metrics.codesReady')}</Typography><Typography variant="h6">{warehouses.filter((warehouse) => warehouse.code.length > 0).length}</Typography></Box></Paper>
-          </Stack>
-        </Stack>
-      </Paper>
+    <VxStack spacing={3}>
+      <VxPaper elevation={0} className="panel-card">
+        <VxStack direction={{ xs: 'column', lg: 'row' }} spacing={2.5} sx={{ justifyContent: 'space-between' }}>
+          <VxBox>
+            <VxTypography variant="h4" sx={{ mb: 1 }}>{t('nav.routeTitles.warehouses')}</VxTypography>
+            <VxTypography color="text.secondary">{t('pages.warehouses.description')}</VxTypography>
+          </VxBox>
+          <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
+            <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog}>{t('pages.warehouses.newButton')}</VxButton>
+            <VxPaper elevation={0} className="products-metric-card"><WarehouseRoundedIcon fontSize="small" /><VxBox><VxTypography variant="body2" color="text.secondary">{t('pages.warehouses.metrics.rows')}</VxTypography><VxTypography variant="h6">{warehouses.length}</VxTypography></VxBox></VxPaper>
+            <VxPaper elevation={0} className="products-metric-card"><CheckCircleRoundedIcon fontSize="small" /><VxBox><VxTypography variant="body2" color="text.secondary">{t('pages.warehouses.metrics.activeLocations')}</VxTypography><VxTypography variant="h6">{warehouses.filter((warehouse) => warehouse.isActive).length}</VxTypography></VxBox></VxPaper>
+            <VxPaper elevation={0} className="products-metric-card"><PlaceRoundedIcon fontSize="small" /><VxBox><VxTypography variant="body2" color="text.secondary">{t('pages.warehouses.metrics.codesReady')}</VxTypography><VxTypography variant="h6">{warehouses.filter((warehouse) => warehouse.code.length > 0).length}</VxTypography></VxBox></VxPaper>
+          </VxStack>
+        </VxStack>
+      </VxPaper>
 
-      {error ? <Alert severity="error">{error}</Alert> : null}
-      {highlightedWarehouseId ? <Alert severity="info">{t('pages.warehouses.focusedMovedTop')}</Alert> : null}
-      {feedback ? <Alert severity="success">{feedback}</Alert> : null}
+      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
+      {highlightedWarehouseId ? <VxAlert severity="info">{t('pages.warehouses.focusedMovedTop')}</VxAlert> : null}
+      {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
 
-      <Paper elevation={0} className="panel-card products-grid-panel">
+      <VxPaper elevation={0} className="panel-card products-grid-panel">
         <Suspense fallback={<WarehouseSurfaceFallback />}>
           <WarehouseDataGrid rows={visibleWarehouses} isLoading={isLoading} highlightedWarehouseId={highlightedWarehouseId} onEdit={openEditDialog} onDelete={setDeleteTarget} />
         </Suspense>
-      </Paper>
+      </VxPaper>
 
       {isEditorOpen ? (
         <Suspense fallback={<WarehouseSurfaceFallback />}>
@@ -175,6 +175,6 @@ export default function WarehousesPage() {
           <WarehouseDeleteDialog target={deleteTarget} isDeleting={isDeleting} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} />
         </Suspense>
       ) : null}
-    </Stack>
+    </VxStack>
   )
 }

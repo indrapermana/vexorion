@@ -1,5 +1,5 @@
 import { ApartmentRoundedIcon, AutoGraphRoundedIcon, ShieldMoonRoundedIcon, StorefrontRoundedIcon, TrendingUpRoundedIcon } from '@vexorion/ui'
-import { Box, Chip, Stack, Typography } from '@vexorion/ui'
+import { VxBox, VxChip, VxStack, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { Outlet, useLocation } from 'react-router-dom'
 
@@ -40,54 +40,54 @@ export default function PublicAuthLayout() {
   const content = pageContent[location.pathname] ?? pageContent['/login']
 
   return (
-    <Box className="public-shell">
-      <Box className="public-shell__panel public-shell__panel--content">
-        <Stack spacing={3} className="public-shell__content">
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-            <Box className="brand-mark">
+    <VxBox className="public-shell">
+      <VxBox className="public-shell__panel public-shell__panel--content">
+        <VxStack spacing={3} className="public-shell__content">
+          <VxStack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+            <VxBox className="brand-mark">
               <AutoGraphRoundedIcon />
-            </Box>
-            <Box>
-              <Typography variant="overline" sx={{ color: 'rgba(255,255,255,0.72)', letterSpacing: '0.18em' }}>
+            </VxBox>
+            <VxBox>
+              <VxTypography variant="overline" sx={{ color: 'rgba(255,255,255,0.72)', letterSpacing: '0.18em' }}>
                 {t('app.brand')}
-              </Typography>
-              <Typography variant="h6" sx={{ color: '#fff' }}>{t('publicAuth.workspaceAccess')}</Typography>
-            </Box>
-          </Stack>
+              </VxTypography>
+              <VxTypography variant="h6" sx={{ color: '#fff' }}>{t('publicAuth.workspaceAccess')}</VxTypography>
+            </VxBox>
+          </VxStack>
 
-          <Box>
-            <Typography className="public-shell__eyebrow">{content.eyebrow}</Typography>
-            <Typography variant="h2" className="public-shell__title">{content.title}</Typography>
-            <Typography className="public-shell__description">{content.description}</Typography>
-          </Box>
+          <VxBox>
+            <VxTypography className="public-shell__eyebrow">{content.eyebrow}</VxTypography>
+            <VxTypography variant="h2" className="public-shell__title">{content.title}</VxTypography>
+            <VxTypography className="public-shell__description">{content.description}</VxTypography>
+          </VxBox>
 
-          <Chip
+          <VxChip
             icon={<ApartmentRoundedIcon />}
             label={content.cta}
             className="public-shell__chip"
           />
 
-          <Stack spacing={2.25}>
+          <VxStack spacing={2.25}>
             {featureRows.map((feature) => (
-              <Box key={feature.title} className="public-feature-row">
-                <Box className="public-feature-row__icon">{feature.icon}</Box>
-                <Box>
-                  <Typography variant="subtitle1" sx={{ color: '#fff', fontWeight: 700 }}>
+              <VxBox key={feature.title} className="public-feature-row">
+                <VxBox className="public-feature-row__icon">{feature.icon}</VxBox>
+                <VxBox>
+                  <VxTypography variant="subtitle1" sx={{ color: '#fff', fontWeight: 700 }}>
                     {feature.title}
-                  </Typography>
-                  <Typography className="public-feature-row__description">{feature.description}</Typography>
-                </Box>
-              </Box>
+                  </VxTypography>
+                  <VxTypography className="public-feature-row__description">{feature.description}</VxTypography>
+                </VxBox>
+              </VxBox>
             ))}
-          </Stack>
-        </Stack>
-      </Box>
+          </VxStack>
+        </VxStack>
+      </VxBox>
 
-      <Box className="public-shell__panel public-shell__panel--form">
-        <Box className="public-shell__form-wrap">
+      <VxBox className="public-shell__panel public-shell__panel--form">
+        <VxBox className="public-shell__form-wrap">
           <Outlet />
-        </Box>
-      </Box>
-    </Box>
+        </VxBox>
+      </VxBox>
+    </VxBox>
   )
 }

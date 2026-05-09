@@ -1,15 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import {
-  Alert,
-  Button,
-  FormControlLabel,
-  MenuItem,
-  Paper,
-  Stack,
-  Switch,
-  TextField,
-  Typography,
-} from '@vexorion/ui'
+import { VxAlert, VxButton, VxFormControlLabel, VxMenuItem, VxPaper, VxStack, VxSwitch, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { useCurrency } from '../../../app/CurrencyContext'
@@ -161,24 +151,24 @@ export default function ConfigCompanyPage() {
   }
 
   if (!isAuthenticated) {
-    return <Alert severity="info">{t('config.company.signInRequired')}</Alert>
+    return <VxAlert severity="info">{t('config.company.signInRequired')}</VxAlert>
   }
 
   return (
-    <Stack spacing={3}>
-      <Paper elevation={0} className="panel-card">
-        <Typography variant="h4" sx={{ mb: 1 }}>{t('config.company.title')}</Typography>
-        <Typography color="text.secondary">
+    <VxStack spacing={3}>
+      <VxPaper elevation={0} className="panel-card">
+        <VxTypography variant="h4" sx={{ mb: 1 }}>{t('config.company.title')}</VxTypography>
+        <VxTypography color="text.secondary">
           {t('config.company.description')}
-        </Typography>
-      </Paper>
+        </VxTypography>
+      </VxPaper>
 
-      {error ? <Alert severity="error">{error}</Alert> : null}
-      {feedback ? <Alert severity="success">{feedback}</Alert> : null}
+      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
+      {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
 
-      <Paper elevation={0} className="panel-card">
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ alignItems: { md: 'center' } }}>
-          <TextField
+      <VxPaper elevation={0} className="panel-card">
+        <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ alignItems: { md: 'center' } }}>
+          <VxTextField
             size="small"
             label={t('config.company.companyField')}
             value={selectedCompanyId}
@@ -187,50 +177,50 @@ export default function ConfigCompanyPage() {
             sx={{ minWidth: 260 }}
           >
             {companies.map((company) => (
-              <MenuItem key={company.id} value={company.id}>
+              <VxMenuItem key={company.id} value={company.id}>
                 {company.code} - {company.name}
-              </MenuItem>
+              </VxMenuItem>
             ))}
-          </TextField>
-          <Button variant="contained" onClick={() => void save()} disabled={!draft || isSaving || !selectedCompanyId}>
+          </VxTextField>
+          <VxButton variant="contained" onClick={() => void save()} disabled={!draft || isSaving || !selectedCompanyId}>
             {t('config.company.saveButton')}
-          </Button>
-        </Stack>
-      </Paper>
+          </VxButton>
+        </VxStack>
+      </VxPaper>
 
       {draft ? (
-        <Paper elevation={0} className="panel-card">
-          <Stack spacing={1.5}>
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
-              <TextField size="small" label={t('config.company.fields.name')} value={draft.name} onChange={(event) => setDraft((prev) => prev ? { ...prev, name: event.target.value } : prev)} fullWidth />
-              <TextField size="small" label={t('config.company.fields.code')} value={draft.code} onChange={(event) => setDraft((prev) => prev ? { ...prev, code: event.target.value } : prev)} fullWidth />
-              <TextField size="small" label={t('config.company.fields.taxNumber')} value={draft.taxNumber} onChange={(event) => setDraft((prev) => prev ? { ...prev, taxNumber: event.target.value } : prev)} fullWidth />
-            </Stack>
+        <VxPaper elevation={0} className="panel-card">
+          <VxStack spacing={1.5}>
+            <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
+              <VxTextField size="small" label={t('config.company.fields.name')} value={draft.name} onChange={(event) => setDraft((prev) => prev ? { ...prev, name: event.target.value } : prev)} fullWidth />
+              <VxTextField size="small" label={t('config.company.fields.code')} value={draft.code} onChange={(event) => setDraft((prev) => prev ? { ...prev, code: event.target.value } : prev)} fullWidth />
+              <VxTextField size="small" label={t('config.company.fields.taxNumber')} value={draft.taxNumber} onChange={(event) => setDraft((prev) => prev ? { ...prev, taxNumber: event.target.value } : prev)} fullWidth />
+            </VxStack>
 
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
-              <TextField size="small" label={t('config.company.fields.email')} value={draft.email} onChange={(event) => setDraft((prev) => prev ? { ...prev, email: event.target.value } : prev)} fullWidth />
-              <TextField size="small" label={t('config.company.fields.phone')} value={draft.phoneNumber} onChange={(event) => setDraft((prev) => prev ? { ...prev, phoneNumber: event.target.value } : prev)} fullWidth />
-              <TextField size="small" label={t('config.company.fields.country')} value={draft.country} onChange={(event) => setDraft((prev) => prev ? { ...prev, country: event.target.value } : prev)} fullWidth />
-            </Stack>
+            <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
+              <VxTextField size="small" label={t('config.company.fields.email')} value={draft.email} onChange={(event) => setDraft((prev) => prev ? { ...prev, email: event.target.value } : prev)} fullWidth />
+              <VxTextField size="small" label={t('config.company.fields.phone')} value={draft.phoneNumber} onChange={(event) => setDraft((prev) => prev ? { ...prev, phoneNumber: event.target.value } : prev)} fullWidth />
+              <VxTextField size="small" label={t('config.company.fields.country')} value={draft.country} onChange={(event) => setDraft((prev) => prev ? { ...prev, country: event.target.value } : prev)} fullWidth />
+            </VxStack>
 
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
-              <TextField size="small" label={t('config.company.fields.address1')} value={draft.addressLine1} onChange={(event) => setDraft((prev) => prev ? { ...prev, addressLine1: event.target.value } : prev)} fullWidth />
-              <TextField size="small" label={t('config.company.fields.address2')} value={draft.addressLine2} onChange={(event) => setDraft((prev) => prev ? { ...prev, addressLine2: event.target.value } : prev)} fullWidth />
-            </Stack>
+            <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
+              <VxTextField size="small" label={t('config.company.fields.address1')} value={draft.addressLine1} onChange={(event) => setDraft((prev) => prev ? { ...prev, addressLine1: event.target.value } : prev)} fullWidth />
+              <VxTextField size="small" label={t('config.company.fields.address2')} value={draft.addressLine2} onChange={(event) => setDraft((prev) => prev ? { ...prev, addressLine2: event.target.value } : prev)} fullWidth />
+            </VxStack>
 
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
-              <TextField size="small" label={t('config.company.fields.city')} value={draft.city} onChange={(event) => setDraft((prev) => prev ? { ...prev, city: event.target.value } : prev)} fullWidth />
-              <TextField size="small" label={t('config.company.fields.state')} value={draft.state} onChange={(event) => setDraft((prev) => prev ? { ...prev, state: event.target.value } : prev)} fullWidth />
-              <TextField size="small" label={t('config.company.fields.postalCode')} value={draft.postalCode} onChange={(event) => setDraft((prev) => prev ? { ...prev, postalCode: event.target.value } : prev)} fullWidth />
-            </Stack>
+            <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
+              <VxTextField size="small" label={t('config.company.fields.city')} value={draft.city} onChange={(event) => setDraft((prev) => prev ? { ...prev, city: event.target.value } : prev)} fullWidth />
+              <VxTextField size="small" label={t('config.company.fields.state')} value={draft.state} onChange={(event) => setDraft((prev) => prev ? { ...prev, state: event.target.value } : prev)} fullWidth />
+              <VxTextField size="small" label={t('config.company.fields.postalCode')} value={draft.postalCode} onChange={(event) => setDraft((prev) => prev ? { ...prev, postalCode: event.target.value } : prev)} fullWidth />
+            </VxStack>
 
-            <FormControlLabel
-              control={<Switch checked={draft.isActive} onChange={(event) => setDraft((prev) => prev ? { ...prev, isActive: event.target.checked } : prev)} />}
+            <VxFormControlLabel
+              control={<VxSwitch checked={draft.isActive} onChange={(event) => setDraft((prev) => prev ? { ...prev, isActive: event.target.checked } : prev)} />}
               label={t('config.company.fields.isActive')}
             />
 
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
-              <TextField
+            <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
+              <VxTextField
                 size="small"
                 select
                 label={t('config.company.fields.currencyCode')}
@@ -239,15 +229,15 @@ export default function ConfigCompanyPage() {
                 sx={{ minWidth: 160 }}
               >
                 {['USD', 'SGD', 'MYR', 'IDR', 'AUD'].map((code) => (
-                  <MenuItem key={code} value={code}>{code}</MenuItem>
+                  <VxMenuItem key={code} value={code}>{code}</VxMenuItem>
                 ))}
-              </TextField>
-            </Stack>
-          </Stack>
-        </Paper>
+              </VxTextField>
+            </VxStack>
+          </VxStack>
+        </VxPaper>
       ) : (
-        <Alert severity="info">{t('config.company.noRecords')}</Alert>
+        <VxAlert severity="info">{t('config.company.noRecords')}</VxAlert>
       )}
-    </Stack>
+    </VxStack>
   )
 }

@@ -1,15 +1,4 @@
-import {
-  Alert,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  Stack,
-  TextField,
-  Typography,
-} from '@vexorion/ui'
+import { VxAlert, VxButton, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxDivider, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
 import { useState } from 'react'
 import { onboardTenant } from '../../../lib/api'
 import type { OnboardTenantRequest, OnboardTenantResponse, TenantListItemResponse } from '../../../types/api'
@@ -77,24 +66,24 @@ export function TenantOnboardingDialog({ open, onClose, onCreated }: Props) {
   }
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>New Tenant</DialogTitle>
-      <DialogContent>
-        <Stack component="form" id="onboard-form" spacing={2} sx={{ mt: 2 }} onSubmit={handleSubmit}>
-          {error && <Alert severity="error">{error}</Alert>}
+    <VxDialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+      <VxDialogTitle>New Tenant</VxDialogTitle>
+      <VxDialogContent>
+        <VxStack component="form" id="onboard-form" spacing={2} sx={{ mt: 2 }} onSubmit={handleSubmit}>
+          {error && <VxAlert severity="error">{error}</VxAlert>}
 
-          <Typography variant="subtitle2" color="text.secondary">
+          <VxTypography variant="subtitle2" color="text.secondary">
             Tenant
-          </Typography>
-          <Stack direction="row" spacing={2}>
-            <TextField
+          </VxTypography>
+          <VxStack direction="row" spacing={2}>
+            <VxTextField
               label="Tenant Name"
               value={form.tenantName}
               onChange={(e) => setField('tenantName', e.target.value)}
               required
               fullWidth
             />
-            <TextField
+            <VxTextField
               label="Tenant Code"
               value={form.tenantCode}
               onChange={(e) => setField('tenantCode', e.target.value)}
@@ -102,27 +91,27 @@ export function TenantOnboardingDialog({ open, onClose, onCreated }: Props) {
               fullWidth
               slotProps={{ htmlInput: { style: { textTransform: 'lowercase' } } }}
             />
-          </Stack>
-          <TextField
+          </VxStack>
+          <VxTextField
             label="Domain (optional)"
             value={form.domain}
             onChange={(e) => setField('domain', e.target.value)}
             fullWidth
           />
 
-          <Divider />
-          <Typography variant="subtitle2" color="text.secondary">
+          <VxDivider />
+          <VxTypography variant="subtitle2" color="text.secondary">
             Company
-          </Typography>
-          <Stack direction="row" spacing={2}>
-            <TextField
+          </VxTypography>
+          <VxStack direction="row" spacing={2}>
+            <VxTextField
               label="Company Name"
               value={form.companyName}
               onChange={(e) => setField('companyName', e.target.value)}
               required
               fullWidth
             />
-            <TextField
+            <VxTextField
               label="Company Code"
               value={form.companyCode}
               onChange={(e) => setField('companyCode', e.target.value)}
@@ -130,36 +119,36 @@ export function TenantOnboardingDialog({ open, onClose, onCreated }: Props) {
               fullWidth
               slotProps={{ htmlInput: { style: { textTransform: 'uppercase' } } }}
             />
-          </Stack>
+          </VxStack>
 
-          <Divider />
-          <Typography variant="subtitle2" color="text.secondary">
+          <VxDivider />
+          <VxTypography variant="subtitle2" color="text.secondary">
             Admin User
-          </Typography>
-          <Stack direction="row" spacing={2}>
-            <TextField
+          </VxTypography>
+          <VxStack direction="row" spacing={2}>
+            <VxTextField
               label="First Name"
               value={form.firstName}
               onChange={(e) => setField('firstName', e.target.value)}
               required
               fullWidth
             />
-            <TextField
+            <VxTextField
               label="Last Name"
               value={form.lastName}
               onChange={(e) => setField('lastName', e.target.value)}
               required
               fullWidth
             />
-          </Stack>
-          <TextField
+          </VxStack>
+          <VxTextField
             label="Username"
             value={form.adminUserName}
             onChange={(e) => setField('adminUserName', e.target.value)}
             required
             fullWidth
           />
-          <TextField
+          <VxTextField
             label="Email"
             type="email"
             value={form.adminEmail}
@@ -167,7 +156,7 @@ export function TenantOnboardingDialog({ open, onClose, onCreated }: Props) {
             required
             fullWidth
           />
-          <TextField
+          <VxTextField
             label="Password"
             type="password"
             value={form.adminPassword}
@@ -175,16 +164,16 @@ export function TenantOnboardingDialog({ open, onClose, onCreated }: Props) {
             required
             fullWidth
           />
-        </Stack>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose} disabled={isSaving}>
+        </VxStack>
+      </VxDialogContent>
+      <VxDialogActions>
+        <VxButton onClick={handleClose} disabled={isSaving}>
           Cancel
-        </Button>
-        <Button type="submit" form="onboard-form" variant="contained" disabled={isSaving}>
+        </VxButton>
+        <VxButton type="submit" form="onboard-form" variant="contained" disabled={isSaving}>
           {isSaving ? 'Creating...' : 'Create Tenant'}
-        </Button>
-      </DialogActions>
-    </Dialog>
+        </VxButton>
+      </VxDialogActions>
+    </VxDialog>
   )
 }

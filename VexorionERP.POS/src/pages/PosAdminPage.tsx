@@ -1,20 +1,5 @@
 import { AdminPanelSettingsRoundedIcon, ArrowBackRoundedIcon } from '@vexorion/ui'
-import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  CircularProgress,
-  Paper,
-  Stack,
-  Switch,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Typography,
-} from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxChip, VxCircularProgress, VxPaper, VxStack, VxSwitch, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTypography } from '@vexorion/ui'
 import { useCallback, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -64,62 +49,62 @@ export default function PosAdminPage() {
   )
 
   return (
-    <Stack spacing={2} sx={{ p: 2 }}>
-      <Paper sx={{ p: 2 }}>
-        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+    <VxStack spacing={2} sx={{ p: 2 }}>
+      <VxPaper sx={{ p: 2 }}>
+        <VxStack direction="row" spacing={1.5} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+          <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
             <AdminPanelSettingsRoundedIcon color="primary" />
-            <Box>
-              <Typography variant="h5">{t('admin.title')}</Typography>
-              <Typography variant="body2" color="text.secondary">{t('admin.subtitle')}</Typography>
-            </Box>
-          </Stack>
-          <Button component={Link} to="/" startIcon={<ArrowBackRoundedIcon />} variant="outlined">
+            <VxBox>
+              <VxTypography variant="h5">{t('admin.title')}</VxTypography>
+              <VxTypography variant="body2" color="text.secondary">{t('admin.subtitle')}</VxTypography>
+            </VxBox>
+          </VxStack>
+          <VxButton component={Link} to="/" startIcon={<ArrowBackRoundedIcon />} variant="outlined">
             {t('admin.back')}
-          </Button>
-        </Stack>
-      </Paper>
+          </VxButton>
+        </VxStack>
+      </VxPaper>
 
-      {error ? <Alert severity="error">{error}</Alert> : null}
-      {feedback ? <Alert severity="success">{feedback}</Alert> : null}
+      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
+      {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
 
-      <Paper sx={{ p: 2 }}>
+      <VxPaper sx={{ p: 2 }}>
         {usersQuery.isLoading ? (
-          <Box sx={{ display: 'grid', placeItems: 'center', py: 4 }}>
-            <CircularProgress size={28} />
-          </Box>
+          <VxBox sx={{ display: 'grid', placeItems: 'center', py: 4 }}>
+            <VxCircularProgress size={28} />
+          </VxBox>
         ) : (
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>{t('admin.user')}</TableCell>
-                <TableCell>{t('admin.email')}</TableCell>
-                <TableCell>{t('admin.currentRoles')}</TableCell>
-                <TableCell>{t('admin.status')}</TableCell>
-                <TableCell align="center">{t('admin.posUser')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
+          <VxTable size="small">
+            <VxTableHead>
+              <VxTableRow>
+                <VxTableCell>{t('admin.user')}</VxTableCell>
+                <VxTableCell>{t('admin.email')}</VxTableCell>
+                <VxTableCell>{t('admin.currentRoles')}</VxTableCell>
+                <VxTableCell>{t('admin.status')}</VxTableCell>
+                <VxTableCell align="center">{t('admin.posUser')}</VxTableCell>
+              </VxTableRow>
+            </VxTableHead>
+            <VxTableBody>
               {users.map((u) => {
                 const hasPosRole = u.roles.includes(POS_USER_ROLE)
                 const isPending = pendingByUserId[u.id] ?? false
                 return (
-                  <TableRow key={u.id}>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  <VxTableRow key={u.id}>
+                    <VxTableCell>
+                      <VxTypography variant="body2" sx={{ fontWeight: 600 }}>
                         {u.userName}
-                      </Typography>
+                      </VxTypography>
                       {(u.firstName || u.lastName) ? (
-                        <Typography variant="caption" color="text.secondary">
+                        <VxTypography variant="caption" color="text.secondary">
                           {[u.firstName, u.lastName].filter(Boolean).join(' ')}
-                        </Typography>
+                        </VxTypography>
                       ) : null}
-                    </TableCell>
-                    <TableCell>{u.email}</TableCell>
-                    <TableCell>
-                      <Stack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap' }}>
+                    </VxTableCell>
+                    <VxTableCell>{u.email}</VxTableCell>
+                    <VxTableCell>
+                      <VxStack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap' }}>
                         {u.roles.map((role) => (
-                          <Chip
+                          <VxChip
                             key={role}
                             size="small"
                             label={role}
@@ -128,28 +113,28 @@ export default function PosAdminPage() {
                           />
                         ))}
                         {u.roles.length === 0 ? (
-                          <Typography variant="caption" color="text.secondary">{t('admin.noRoles')}</Typography>
+                          <VxTypography variant="caption" color="text.secondary">{t('admin.noRoles')}</VxTypography>
                         ) : null}
-                      </Stack>
-                    </TableCell>
-                    <TableCell>
-                      <Chip size="small" color={u.isActive ? 'success' : 'default'} label={u.isActive ? t('admin.active') : t('admin.inactive')} />
-                    </TableCell>
-                    <TableCell align="center">
-                      <Switch
+                      </VxStack>
+                    </VxTableCell>
+                    <VxTableCell>
+                      <VxChip size="small" color={u.isActive ? 'success' : 'default'} label={u.isActive ? t('admin.active') : t('admin.inactive')} />
+                    </VxTableCell>
+                    <VxTableCell align="center">
+                      <VxSwitch
                         checked={hasPosRole}
                         disabled={isPending || !u.isActive}
                         onChange={(_, checked) => void togglePosRole(u, checked)}
                         size="small"
                       />
-                    </TableCell>
-                  </TableRow>
+                    </VxTableCell>
+                  </VxTableRow>
                 )
               })}
-            </TableBody>
-          </Table>
+            </VxTableBody>
+          </VxTable>
         )}
-      </Paper>
-    </Stack>
+      </VxPaper>
+    </VxStack>
   )
 }

@@ -1,19 +1,5 @@
 import { AddRoundedIcon, LockResetRoundedIcon, ManageAccountsRoundedIcon, PersonOffRoundedIcon, VxDataGrid, type VxGridColDef } from '@vexorion/ui'
-import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  MenuItem,
-  Paper,
-  Stack,
-  TextField,
-  Typography,
-} from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxChip, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxMenuItem, VxPaper, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { assignUserRoles, createUser, getRoles, getTenants, getUsersForAdmin, resetUserPassword, setUserStatus } from '../lib/api'
 import type { CreateUserRequest, UserListItemResponse } from '../types/api/users'
@@ -168,10 +154,10 @@ export default function UsersPage() {
         flex: 1,
         minWidth: 180,
         renderCell: (params) => (
-          <Box>
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>{params.row.userName}</Typography>
-            <Typography variant="caption" color="text.secondary">{params.row.email}</Typography>
-          </Box>
+          <VxBox>
+            <VxTypography variant="body2" sx={{ fontWeight: 600 }}>{params.row.userName}</VxTypography>
+            <VxTypography variant="caption" color="text.secondary">{params.row.email}</VxTypography>
+          </VxBox>
         ),
       },
       {
@@ -187,18 +173,18 @@ export default function UsersPage() {
         flex: 1,
         minWidth: 180,
         renderCell: (params) => (
-          <Stack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap' }}>
+          <VxStack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap' }}>
             {params.row.roles.map((role) => (
-              <Chip key={`${params.row.id}-${role}`} size="small" label={role} />
+              <VxChip key={`${params.row.id}-${role}`} size="small" label={role} />
             ))}
-          </Stack>
+          </VxStack>
         ),
       },
       {
         field: 'isActive',
         headerName: 'Status',
         width: 120,
-        renderCell: (params) => <Chip size="small" color={params.row.isActive ? 'success' : 'default'} label={params.row.isActive ? 'Active' : 'Inactive'} />,
+        renderCell: (params) => <VxChip size="small" color={params.row.isActive ? 'success' : 'default'} label={params.row.isActive ? 'Active' : 'Inactive'} />,
       },
       {
         field: 'id',
@@ -207,8 +193,8 @@ export default function UsersPage() {
         sortable: false,
         filterable: false,
         renderCell: (params) => (
-          <Stack direction="row" spacing={1}>
-            <Button
+          <VxStack direction="row" spacing={1}>
+            <VxButton
               size="small"
               variant="outlined"
               startIcon={<ManageAccountsRoundedIcon />}
@@ -218,8 +204,8 @@ export default function UsersPage() {
               }}
             >
               Update Roles
-            </Button>
-            <Button
+            </VxButton>
+            <VxButton
               size="small"
               variant="outlined"
               startIcon={<LockResetRoundedIcon />}
@@ -229,8 +215,8 @@ export default function UsersPage() {
               }}
             >
               Reset Password
-            </Button>
-            <Button
+            </VxButton>
+            <VxButton
               size="small"
               color={params.row.isActive ? 'warning' : 'success'}
               variant="outlined"
@@ -238,8 +224,8 @@ export default function UsersPage() {
               onClick={() => void handleSetUserStatus(params.row, !params.row.isActive)}
             >
               {params.row.isActive ? 'Remove' : 'Activate'}
-            </Button>
-          </Stack>
+            </VxButton>
+          </VxStack>
         ),
       },
     ],
@@ -247,15 +233,15 @@ export default function UsersPage() {
   )
 
   return (
-    <Stack spacing={2.5}>
-      <Paper className="hero-panel" elevation={0}>
-        <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-          <Box>
-            <Typography variant="h5">Users</Typography>
-            <Typography color="text.secondary">Manage tenant users, roles, password reset, and activation status.</Typography>
-          </Box>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} sx={{ alignItems: { xs: 'stretch', sm: 'center' } }}>
-            <TextField
+    <VxStack spacing={2.5}>
+      <VxPaper className="hero-panel" elevation={0}>
+        <VxStack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+          <VxBox>
+            <VxTypography variant="h5">Users</VxTypography>
+            <VxTypography color="text.secondary">Manage tenant users, roles, password reset, and activation status.</VxTypography>
+          </VxBox>
+          <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} sx={{ alignItems: { xs: 'stretch', sm: 'center' } }}>
+            <VxTextField
               select
               size="small"
               label="Tenant filter"
@@ -263,21 +249,21 @@ export default function UsersPage() {
               onChange={(event) => setSelectedTenantId(event.target.value)}
               sx={{ minWidth: 220 }}
             >
-              <MenuItem value="">All tenants</MenuItem>
+              <VxMenuItem value="">All tenants</VxMenuItem>
               {tenants.map((tenant) => (
-                <MenuItem key={tenant.id} value={tenant.id}>{tenant.name} ({tenant.code})</MenuItem>
+                <VxMenuItem key={tenant.id} value={tenant.id}>{tenant.name} ({tenant.code})</VxMenuItem>
               ))}
-            </TextField>
-            <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setIsCreateOpen(true)}>
+            </VxTextField>
+            <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setIsCreateOpen(true)}>
               Add Tenant User
-            </Button>
-          </Stack>
-        </Stack>
-      </Paper>
+            </VxButton>
+          </VxStack>
+        </VxStack>
+      </VxPaper>
 
-      {error ? <Alert severity="error">{error}</Alert> : null}
+      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
 
-      <Paper className="panel-card products-grid-panel" elevation={0}>
+      <VxPaper className="panel-card products-grid-panel" elevation={0}>
         <VxDataGrid
           rows={users}
           columns={columns}
@@ -286,18 +272,18 @@ export default function UsersPage() {
           pageSizeOptions={[10, 25, 50]}
           sx={{ height: 620 }}
         />
-      </Paper>
+      </VxPaper>
 
-      <Dialog open={isCreateOpen} onClose={() => setIsCreateOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Add Tenant User</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField label="Username" value={createForm.userName} onChange={(event) => setCreateForm((x) => ({ ...x, userName: event.target.value }))} />
-            <TextField label="Email" value={createForm.email} onChange={(event) => setCreateForm((x) => ({ ...x, email: event.target.value }))} />
-            <TextField label="Password" type="password" value={createForm.password} onChange={(event) => setCreateForm((x) => ({ ...x, password: event.target.value }))} />
-            <TextField label="First name" value={createForm.firstName} onChange={(event) => setCreateForm((x) => ({ ...x, firstName: event.target.value }))} />
-            <TextField label="Last name" value={createForm.lastName} onChange={(event) => setCreateForm((x) => ({ ...x, lastName: event.target.value }))} />
-            <TextField
+      <VxDialog open={isCreateOpen} onClose={() => setIsCreateOpen(false)} maxWidth="sm" fullWidth>
+        <VxDialogTitle>Add Tenant User</VxDialogTitle>
+        <VxDialogContent>
+          <VxStack spacing={2} sx={{ mt: 1 }}>
+            <VxTextField label="Username" value={createForm.userName} onChange={(event) => setCreateForm((x) => ({ ...x, userName: event.target.value }))} />
+            <VxTextField label="Email" value={createForm.email} onChange={(event) => setCreateForm((x) => ({ ...x, email: event.target.value }))} />
+            <VxTextField label="Password" type="password" value={createForm.password} onChange={(event) => setCreateForm((x) => ({ ...x, password: event.target.value }))} />
+            <VxTextField label="First name" value={createForm.firstName} onChange={(event) => setCreateForm((x) => ({ ...x, firstName: event.target.value }))} />
+            <VxTextField label="Last name" value={createForm.lastName} onChange={(event) => setCreateForm((x) => ({ ...x, lastName: event.target.value }))} />
+            <VxTextField
               select
               label="Roles"
               value={createRoles}
@@ -309,21 +295,21 @@ export default function UsersPage() {
               }}
             >
               {roleOptions.map((role) => (
-                <MenuItem key={role} value={role}>{role}</MenuItem>
+                <VxMenuItem key={role} value={role}>{role}</VxMenuItem>
               ))}
-            </TextField>
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setIsCreateOpen(false)}>Cancel</Button>
-          <Button onClick={() => void handleCreateUser()} variant="contained">Create User</Button>
-        </DialogActions>
-      </Dialog>
+            </VxTextField>
+          </VxStack>
+        </VxDialogContent>
+        <VxDialogActions>
+          <VxButton onClick={() => setIsCreateOpen(false)}>Cancel</VxButton>
+          <VxButton onClick={() => void handleCreateUser()} variant="contained">Create User</VxButton>
+        </VxDialogActions>
+      </VxDialog>
 
-      <Dialog open={Boolean(rolesDialogUser)} onClose={() => setRolesDialogUser(null)} maxWidth="sm" fullWidth>
-        <DialogTitle>Update Roles</DialogTitle>
-        <DialogContent>
-          <TextField
+      <VxDialog open={Boolean(rolesDialogUser)} onClose={() => setRolesDialogUser(null)} maxWidth="sm" fullWidth>
+        <VxDialogTitle>Update Roles</VxDialogTitle>
+        <VxDialogContent>
+          <VxTextField
             sx={{ mt: 1 }}
             select
             label="Roles"
@@ -337,20 +323,20 @@ export default function UsersPage() {
             fullWidth
           >
             {roleOptions.map((role) => (
-              <MenuItem key={role} value={role}>{role}</MenuItem>
+              <VxMenuItem key={role} value={role}>{role}</VxMenuItem>
             ))}
-          </TextField>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setRolesDialogUser(null)}>Cancel</Button>
-          <Button onClick={() => void handleAssignRoles()} variant="contained">Save Roles</Button>
-        </DialogActions>
-      </Dialog>
+          </VxTextField>
+        </VxDialogContent>
+        <VxDialogActions>
+          <VxButton onClick={() => setRolesDialogUser(null)}>Cancel</VxButton>
+          <VxButton onClick={() => void handleAssignRoles()} variant="contained">Save Roles</VxButton>
+        </VxDialogActions>
+      </VxDialog>
 
-      <Dialog open={Boolean(resetDialogUser)} onClose={() => setResetDialogUser(null)} maxWidth="sm" fullWidth>
-        <DialogTitle>Reset Password</DialogTitle>
-        <DialogContent>
-          <TextField
+      <VxDialog open={Boolean(resetDialogUser)} onClose={() => setResetDialogUser(null)} maxWidth="sm" fullWidth>
+        <VxDialogTitle>Reset Password</VxDialogTitle>
+        <VxDialogContent>
+          <VxTextField
             sx={{ mt: 1 }}
             fullWidth
             type="password"
@@ -358,12 +344,12 @@ export default function UsersPage() {
             value={newPassword}
             onChange={(event) => setNewPassword(event.target.value)}
           />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setResetDialogUser(null)}>Cancel</Button>
-          <Button onClick={() => void handleResetPassword()} variant="contained">Reset</Button>
-        </DialogActions>
-      </Dialog>
-    </Stack>
+        </VxDialogContent>
+        <VxDialogActions>
+          <VxButton onClick={() => setResetDialogUser(null)}>Cancel</VxButton>
+          <VxButton onClick={() => void handleResetPassword()} variant="contained">Reset</VxButton>
+        </VxDialogActions>
+      </VxDialog>
+    </VxStack>
   )
 }

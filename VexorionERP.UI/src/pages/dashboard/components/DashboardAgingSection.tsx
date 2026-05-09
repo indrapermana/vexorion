@@ -1,4 +1,4 @@
-import { Box, Grid, Paper, Stack, Typography } from '@vexorion/ui'
+import { VxBox, VxGrid, VxPaper, VxStack, VxTypography } from '@vexorion/ui'
 import { VxBarChart } from '@vexorion/ui'
 import type { TFunction } from 'i18next'
 import { useCurrency } from '../../../app/CurrencyContext'
@@ -16,33 +16,33 @@ type AgingCardProps = {
 function AgingCard({ t, title, data, totals, emptyText }: AgingCardProps) {
   const { formatMoney } = useCurrency()
   return (
-    <Paper elevation={0} sx={{ p: 3, borderRadius: 2 }}>
-      <Typography variant="h6" sx={{ mb: 2 }}>{title}</Typography>
+    <VxPaper elevation={0} sx={{ p: 3, borderRadius: 2 }}>
+      <VxTypography variant="h6" sx={{ mb: 2 }}>{title}</VxTypography>
       {data.length > 0 ? (
-        <Box sx={{ width: '100%', height: 300 }}>
+        <VxBox sx={{ width: '100%', height: 300 }}>
           <VxBarChart
             dataset={data}
             xAxis={[{ scaleType: 'band', dataKey: 'name' }]}
             series={[{ dataKey: 'value', label: t('dashboard.table.amount') }]}
             margin={{ top: 10, bottom: 30, left: 60, right: 10 }}
           />
-        </Box>
+        </VxBox>
       ) : (
-        <Typography color="text.secondary" sx={{ textAlign: 'center', py: 3 }}>{emptyText}</Typography>
+        <VxTypography color="text.secondary" sx={{ textAlign: 'center', py: 3 }}>{emptyText}</VxTypography>
       )}
       {totals && (
-        <Stack spacing={1} sx={{ mt: 2 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Typography variant="body2">{t('dashboard.aging.total')}</Typography>
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>{formatMoney(totals.total)}</Typography>
-          </Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Typography variant="body2">{t('dashboard.aging.overdue90')}</Typography>
-            <Typography variant="body2" sx={{ fontWeight: 600, color: 'error.main' }}>{formatMoney(totals.dueOver90)}</Typography>
-          </Box>
-        </Stack>
+        <VxStack spacing={1} sx={{ mt: 2 }}>
+          <VxBox sx={{ display: 'flex', justifyContent: 'space-between' }}>
+            <VxTypography variant="body2">{t('dashboard.aging.total')}</VxTypography>
+            <VxTypography variant="body2" sx={{ fontWeight: 600 }}>{formatMoney(totals.total)}</VxTypography>
+          </VxBox>
+          <VxBox sx={{ display: 'flex', justifyContent: 'space-between' }}>
+            <VxTypography variant="body2">{t('dashboard.aging.overdue90')}</VxTypography>
+            <VxTypography variant="body2" sx={{ fontWeight: 600, color: 'error.main' }}>{formatMoney(totals.dueOver90)}</VxTypography>
+          </VxBox>
+        </VxStack>
       )}
-    </Paper>
+    </VxPaper>
   )
 }
 
@@ -62,8 +62,8 @@ export default function DashboardAgingSection({
   apTotals,
 }: DashboardAgingSectionProps) {
   return (
-    <Grid container spacing={2}>
-      <Grid size={{ xs: 12, md: 6 }}>
+    <VxGrid container spacing={2}>
+      <VxGrid size={{ xs: 12, md: 6 }}>
         <AgingCard
           t={t}
           title={t('dashboard.aging.arTitle')}
@@ -71,8 +71,8 @@ export default function DashboardAgingSection({
           totals={arTotals}
           emptyText={t('dashboard.aging.emptyAr')}
         />
-      </Grid>
-      <Grid size={{ xs: 12, md: 6 }}>
+      </VxGrid>
+      <VxGrid size={{ xs: 12, md: 6 }}>
         <AgingCard
           t={t}
           title={t('dashboard.aging.apTitle')}
@@ -80,7 +80,7 @@ export default function DashboardAgingSection({
           totals={apTotals}
           emptyText={t('dashboard.aging.emptyAp')}
         />
-      </Grid>
-    </Grid>
+      </VxGrid>
+    </VxGrid>
   )
 }

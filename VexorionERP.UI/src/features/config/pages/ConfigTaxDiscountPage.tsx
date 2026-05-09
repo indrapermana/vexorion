@@ -1,19 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import {
-  Alert,
-  Button,
-  FormControlLabel,
-  Paper,
-  Stack,
-  Switch,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TextField,
-  Typography,
-} from '@vexorion/ui'
+import { VxAlert, VxButton, VxFormControlLabel, VxPaper, VxStack, VxSwitch, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import {
@@ -187,27 +173,27 @@ export default function ConfigTaxDiscountPage() {
   }
 
   if (!isAuthenticated) {
-    return <Alert severity="info">{t('config.taxDiscount.signInRequired')}</Alert>
+    return <VxAlert severity="info">{t('config.taxDiscount.signInRequired')}</VxAlert>
   }
 
   return (
-    <Stack spacing={3}>
-      <Paper elevation={0} className="panel-card">
-        <Typography variant="h4" sx={{ mb: 1 }}>{t('config.taxDiscount.title')}</Typography>
-        <Typography color="text.secondary">
+    <VxStack spacing={3}>
+      <VxPaper elevation={0} className="panel-card">
+        <VxTypography variant="h4" sx={{ mb: 1 }}>{t('config.taxDiscount.title')}</VxTypography>
+        <VxTypography color="text.secondary">
           {t('config.taxDiscount.description')}
-        </Typography>
-      </Paper>
+        </VxTypography>
+      </VxPaper>
 
-      {error ? <Alert severity="error">{error}</Alert> : null}
-      {feedback ? <Alert severity="success">{feedback}</Alert> : null}
+      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
+      {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
 
-      <Paper elevation={0} className="panel-card">
-        <Typography variant="h6" sx={{ mb: 2 }}>{editTargetId ? t('config.taxDiscount.editTaxCode') : t('config.taxDiscount.newTaxCode')}</Typography>
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ alignItems: { md: 'center' } }}>
-          <TextField size="small" label={t('config.taxDiscount.fields.code')} value={draft.code} onChange={(event) => setDraft((prev) => ({ ...prev, code: event.target.value }))} />
-          <TextField size="small" label={t('config.taxDiscount.fields.name')} value={draft.name} onChange={(event) => setDraft((prev) => ({ ...prev, name: event.target.value }))} />
-          <TextField
+      <VxPaper elevation={0} className="panel-card">
+        <VxTypography variant="h6" sx={{ mb: 2 }}>{editTargetId ? t('config.taxDiscount.editTaxCode') : t('config.taxDiscount.newTaxCode')}</VxTypography>
+        <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ alignItems: { md: 'center' } }}>
+          <VxTextField size="small" label={t('config.taxDiscount.fields.code')} value={draft.code} onChange={(event) => setDraft((prev) => ({ ...prev, code: event.target.value }))} />
+          <VxTextField size="small" label={t('config.taxDiscount.fields.name')} value={draft.name} onChange={(event) => setDraft((prev) => ({ ...prev, name: event.target.value }))} />
+          <VxTextField
             size="small"
             label={t('config.taxDiscount.fields.ratePercent')}
             type="number"
@@ -215,52 +201,52 @@ export default function ConfigTaxDiscountPage() {
             onChange={(event) => setDraft((prev) => ({ ...prev, ratePercent: event.target.value }))}
             sx={{ width: 140 }}
           />
-          <FormControlLabel
-            control={<Switch checked={draft.isInclusive} onChange={(event) => setDraft((prev) => ({ ...prev, isInclusive: event.target.checked }))} />}
+          <VxFormControlLabel
+            control={<VxSwitch checked={draft.isInclusive} onChange={(event) => setDraft((prev) => ({ ...prev, isInclusive: event.target.checked }))} />}
             label={t('config.taxDiscount.fields.inclusive')}
           />
-          <Button variant="contained" onClick={() => void submitTaxCode()} disabled={isSaving}>{t('config.taxDiscount.saveTaxButton')}</Button>
-          {editTargetId ? <Button variant="outlined" onClick={clearTaxDraft}>{t('config.taxDiscount.cancelEdit')}</Button> : null}
-        </Stack>
-      </Paper>
+          <VxButton variant="contained" onClick={() => void submitTaxCode()} disabled={isSaving}>{t('config.taxDiscount.saveTaxButton')}</VxButton>
+          {editTargetId ? <VxButton variant="outlined" onClick={clearTaxDraft}>{t('config.taxDiscount.cancelEdit')}</VxButton> : null}
+        </VxStack>
+      </VxPaper>
 
-      <Paper elevation={0} className="panel-card">
-        <Typography variant="h6" sx={{ mb: 1.5 }}>{t('config.taxDiscount.taxCodesSection')}</Typography>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>{t('config.taxDiscount.columns.code')}</TableCell>
-              <TableCell>{t('config.taxDiscount.columns.name')}</TableCell>
-              <TableCell>{t('config.taxDiscount.columns.ratePercent')}</TableCell>
-              <TableCell>{t('config.taxDiscount.columns.inclusive')}</TableCell>
-              <TableCell align="right">{t('config.taxDiscount.columns.actions')}</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
+      <VxPaper elevation={0} className="panel-card">
+        <VxTypography variant="h6" sx={{ mb: 1.5 }}>{t('config.taxDiscount.taxCodesSection')}</VxTypography>
+        <VxTable size="small">
+          <VxTableHead>
+            <VxTableRow>
+              <VxTableCell>{t('config.taxDiscount.columns.code')}</VxTableCell>
+              <VxTableCell>{t('config.taxDiscount.columns.name')}</VxTableCell>
+              <VxTableCell>{t('config.taxDiscount.columns.ratePercent')}</VxTableCell>
+              <VxTableCell>{t('config.taxDiscount.columns.inclusive')}</VxTableCell>
+              <VxTableCell align="right">{t('config.taxDiscount.columns.actions')}</VxTableCell>
+            </VxTableRow>
+          </VxTableHead>
+          <VxTableBody>
             {taxCodes.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell>{item.code}</TableCell>
-                <TableCell>{item.name}</TableCell>
-                <TableCell>{item.ratePercent}</TableCell>
-                <TableCell>{item.isInclusive ? t('common.yes') : t('common.no')}</TableCell>
-                <TableCell align="right">
-                  <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
-                    <Button size="small" variant="outlined" onClick={() => startEdit(item)}>{t('common.edit')}</Button>
-                    <Button size="small" color="error" variant="outlined" onClick={() => void removeTaxCode(item.id)}>
+              <VxTableRow key={item.id}>
+                <VxTableCell>{item.code}</VxTableCell>
+                <VxTableCell>{item.name}</VxTableCell>
+                <VxTableCell>{item.ratePercent}</VxTableCell>
+                <VxTableCell>{item.isInclusive ? t('common.yes') : t('common.no')}</VxTableCell>
+                <VxTableCell align="right">
+                  <VxStack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
+                    <VxButton size="small" variant="outlined" onClick={() => startEdit(item)}>{t('common.edit')}</VxButton>
+                    <VxButton size="small" color="error" variant="outlined" onClick={() => void removeTaxCode(item.id)}>
                       {t('dialogs.delete')}
-                    </Button>
-                  </Stack>
-                </TableCell>
-              </TableRow>
+                    </VxButton>
+                  </VxStack>
+                </VxTableCell>
+              </VxTableRow>
             ))}
-          </TableBody>
-        </Table>
-      </Paper>
+          </VxTableBody>
+        </VxTable>
+      </VxPaper>
 
-      <Paper elevation={0} className="panel-card">
-        <Typography variant="h6" sx={{ mb: 2 }}>{t('config.taxDiscount.discountSection')}</Typography>
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ alignItems: { md: 'center' } }}>
-          <TextField
+      <VxPaper elevation={0} className="panel-card">
+        <VxTypography variant="h6" sx={{ mb: 2 }}>{t('config.taxDiscount.discountSection')}</VxTypography>
+        <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ alignItems: { md: 'center' } }}>
+          <VxTextField
             size="small"
             type="number"
             label={t('config.taxDiscount.fields.defaultDiscountPercent')}
@@ -268,7 +254,7 @@ export default function ConfigTaxDiscountPage() {
             onChange={(event) => setDiscountConfig((prev) => ({ ...prev, defaultDiscountPercent: Number(event.target.value) }))}
             sx={{ width: 200 }}
           />
-          <TextField
+          <VxTextField
             size="small"
             type="number"
             label={t('config.taxDiscount.fields.maxManualDiscountPercent')}
@@ -276,18 +262,18 @@ export default function ConfigTaxDiscountPage() {
             onChange={(event) => setDiscountConfig((prev) => ({ ...prev, maxManualDiscountPercent: Number(event.target.value) }))}
             sx={{ width: 220 }}
           />
-          <FormControlLabel
+          <VxFormControlLabel
             control={
-              <Switch
+              <VxSwitch
                 checked={discountConfig.allowNegativeDiscount}
                 onChange={(event) => setDiscountConfig((prev) => ({ ...prev, allowNegativeDiscount: event.target.checked }))}
               />
             }
             label={t('config.taxDiscount.fields.allowNegativeDiscount')}
           />
-          <Button variant="contained" onClick={() => void saveDiscounts()} disabled={isSaving}>{t('config.taxDiscount.saveDiscountButton')}</Button>
-        </Stack>
-      </Paper>
-    </Stack>
+          <VxButton variant="contained" onClick={() => void saveDiscounts()} disabled={isSaving}>{t('config.taxDiscount.saveDiscountButton')}</VxButton>
+        </VxStack>
+      </VxPaper>
+    </VxStack>
   )
 }

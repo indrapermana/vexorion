@@ -1,4 +1,4 @@
-import { Stack } from '@vexorion/ui'
+import { VxStack } from '@vexorion/ui'
 import { Suspense, lazy, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCurrency } from '../app/CurrencyContext'
@@ -210,7 +210,7 @@ export default function DashboardPage() {
   }, [snapshot, t, totalReceivables, totalPayables])
 
   return (
-    <Stack spacing={3}>
+    <VxStack spacing={3}>
       <Suspense fallback={<DashboardSectionLoader minHeight={180} />}>
         <DashboardHeaderFilters
           t={t}
@@ -290,6 +290,6 @@ export default function DashboardPage() {
       <Suspense fallback={<DashboardSectionLoader minHeight={240} />}>
         {financeQuery.isPending ? <DashboardSectionLoader minHeight={240} /> : <DashboardCashFlowTable t={t} periodDays={periodDays} cashRows={cashRows} />}
       </Suspense>
-    </Stack>
+    </VxStack>
   )
 }

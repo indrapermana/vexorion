@@ -1,4 +1,4 @@
-import { Box, Grid, LinearProgress, Paper, Stack, Typography } from '@vexorion/ui'
+import { VxBox, VxGrid, VxLinearProgress, VxPaper, VxStack, VxTypography } from '@vexorion/ui'
 import type { TFunction } from 'i18next'
 import { useCurrency } from '../../../app/CurrencyContext'
 
@@ -19,44 +19,44 @@ export default function DashboardHealthSection({
 }: DashboardHealthSectionProps) {
   const { formatMoney } = useCurrency()
   return (
-    <Grid container spacing={2}>
-      <Grid size={{ xs: 12, md: 6 }}>
-        <Paper elevation={0} sx={{ p: 2.5, borderRadius: 2 }}>
-          <Typography variant="h6" sx={{ mb: 2.5 }}>{t('dashboard.health.receivables')}</Typography>
-          <Stack spacing={2}>
-            <Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                <Typography variant="body2" color="text.secondary">{t('dashboard.health.current')}</Typography>
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>{receivablesHealthPercent}%</Typography>
-              </Box>
-              <LinearProgress variant="determinate" value={receivablesHealthPercent} sx={{ height: 8, borderRadius: 4 }} />
-            </Box>
-            <Box sx={{ pt: 1 }}>
-              <Typography variant="caption" color="text.secondary">{t('dashboard.health.totalReceivables')}</Typography>
-              <Typography variant="h6">{formatMoney(totalReceivables)}</Typography>
-            </Box>
-          </Stack>
-        </Paper>
-      </Grid>
+    <VxGrid container spacing={2}>
+      <VxGrid size={{ xs: 12, md: 6 }}>
+        <VxPaper elevation={0} sx={{ p: 2.5, borderRadius: 2 }}>
+          <VxTypography variant="h6" sx={{ mb: 2.5 }}>{t('dashboard.health.receivables')}</VxTypography>
+          <VxStack spacing={2}>
+            <VxBox>
+              <VxBox sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                <VxTypography variant="body2" color="text.secondary">{t('dashboard.health.current')}</VxTypography>
+                <VxTypography variant="body2" sx={{ fontWeight: 600 }}>{receivablesHealthPercent}%</VxTypography>
+              </VxBox>
+              <VxLinearProgress variant="determinate" value={receivablesHealthPercent} sx={{ height: 8, borderRadius: 4 }} />
+            </VxBox>
+            <VxBox sx={{ pt: 1 }}>
+              <VxTypography variant="caption" color="text.secondary">{t('dashboard.health.totalReceivables')}</VxTypography>
+              <VxTypography variant="h6">{formatMoney(totalReceivables)}</VxTypography>
+            </VxBox>
+          </VxStack>
+        </VxPaper>
+      </VxGrid>
 
-      <Grid size={{ xs: 12, md: 6 }}>
-        <Paper elevation={0} sx={{ p: 2.5, borderRadius: 2 }}>
-          <Typography variant="h6" sx={{ mb: 2.5 }}>{t('dashboard.health.payables')}</Typography>
-          <Stack spacing={2}>
-            <Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                <Typography variant="body2" color="text.secondary">{t('dashboard.health.current')}</Typography>
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>{payablesHealthPercent}%</Typography>
-              </Box>
-              <LinearProgress variant="determinate" value={payablesHealthPercent} sx={{ height: 8, borderRadius: 4 }} />
-            </Box>
-            <Box sx={{ pt: 1 }}>
-              <Typography variant="caption" color="text.secondary">{t('dashboard.health.totalPayables')}</Typography>
-              <Typography variant="h6">{formatMoney(totalPayables)}</Typography>
-            </Box>
-          </Stack>
-        </Paper>
-      </Grid>
-    </Grid>
+      <VxGrid size={{ xs: 12, md: 6 }}>
+        <VxPaper elevation={0} sx={{ p: 2.5, borderRadius: 2 }}>
+          <VxTypography variant="h6" sx={{ mb: 2.5 }}>{t('dashboard.health.payables')}</VxTypography>
+          <VxStack spacing={2}>
+            <VxBox>
+              <VxBox sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                <VxTypography variant="body2" color="text.secondary">{t('dashboard.health.current')}</VxTypography>
+                <VxTypography variant="body2" sx={{ fontWeight: 600 }}>{payablesHealthPercent}%</VxTypography>
+              </VxBox>
+              <VxLinearProgress variant="determinate" value={payablesHealthPercent} sx={{ height: 8, borderRadius: 4 }} />
+            </VxBox>
+            <VxBox sx={{ pt: 1 }}>
+              <VxTypography variant="caption" color="text.secondary">{t('dashboard.health.totalPayables')}</VxTypography>
+              <VxTypography variant="h6">{formatMoney(totalPayables)}</VxTypography>
+            </VxBox>
+          </VxStack>
+        </VxPaper>
+      </VxGrid>
+    </VxGrid>
   )
 }

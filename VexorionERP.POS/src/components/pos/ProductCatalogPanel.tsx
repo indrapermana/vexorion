@@ -1,21 +1,5 @@
 import { AddRoundedIcon, Inventory2RoundedIcon, PersonAddAltRoundedIcon, QrCodeScannerRoundedIcon, RemoveRoundedIcon } from '@vexorion/ui'
-import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardActions,
-  CardContent,
-  Divider,
-  IconButton,
-  InputAdornment,
-  MenuItem,
-  Paper,
-  Pagination,
-  Stack,
-  TextField,
-  Typography,
-} from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxDivider, VxIconButton, VxInputAdornment, VxMenuItem, VxMuiCard, VxMuiCardActions, VxMuiCardContent, VxPaper, VxPagination, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useI18n } from '../../app/I18nContext'
 import { useBarcodeScanner } from '../../hooks/useBarcodeScanner'
@@ -185,31 +169,31 @@ export function ProductCatalogPanel({
   }
 
   return (
-    <Paper sx={{ p: 2 }}>
-      <Typography variant="h6" sx={{ mb: 1.5 }}>{t('catalog.title')}</Typography>
-      <Stack spacing={1.5}>
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
-          <TextField
+    <VxPaper sx={{ p: 2 }}>
+      <VxTypography variant="h6" sx={{ mb: 1.5 }}>{t('catalog.title')}</VxTypography>
+      <VxStack spacing={1.5}>
+        <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
+          <VxTextField
             select
             label={t('catalog.customer')}
             value={selectedCustomerId}
             onChange={(event) => onCustomerChange(event.target.value)}
             fullWidth
           >
-            <MenuItem value="__guest__">{t('catalog.guest')}</MenuItem>
+            <VxMenuItem value="__guest__">{t('catalog.guest')}</VxMenuItem>
             {activeCustomerOptions.map((customer) => (
-              <MenuItem key={customer.id} value={customer.id}>
+              <VxMenuItem key={customer.id} value={customer.id}>
                 {customer.name} ({customer.customerNumber})
-              </MenuItem>
+              </VxMenuItem>
             ))}
-          </TextField>
-          <Button variant="outlined" startIcon={<PersonAddAltRoundedIcon />} onClick={onOpenQuickCustomer}>
+          </VxTextField>
+          <VxButton variant="outlined" startIcon={<PersonAddAltRoundedIcon />} onClick={onOpenQuickCustomer}>
             {t('catalog.quickCustomer')}
-          </Button>
-        </Stack>
+          </VxButton>
+        </VxStack>
 
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
-          <TextField
+        <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
+          <VxTextField
             select
             label={t('catalog.warehouse')}
             value={selectedWarehouseId}
@@ -217,12 +201,12 @@ export function ProductCatalogPanel({
             fullWidth
           >
             {warehouses.map((warehouse) => (
-              <MenuItem key={warehouse.id} value={warehouse.id}>
+              <VxMenuItem key={warehouse.id} value={warehouse.id}>
                 {warehouse.name} ({warehouse.code})
-              </MenuItem>
+              </VxMenuItem>
             ))}
-          </TextField>
-          <TextField
+          </VxTextField>
+          <VxTextField
             select
             label={t('catalog.catalog')}
             value={selectedCatalog}
@@ -230,21 +214,21 @@ export function ProductCatalogPanel({
             sx={{ minWidth: 180 }}
           >
             {catalogOptions.map((catalog) => (
-              <MenuItem key={catalog} value={catalog}>
+              <VxMenuItem key={catalog} value={catalog}>
                 {catalog}
-              </MenuItem>
+              </VxMenuItem>
             ))}
-          </TextField>
-          <TextField
+          </VxTextField>
+          <VxTextField
             label={t('catalog.search')}
             placeholder={t('catalog.searchPlaceholder')}
             value={productSearch}
             onChange={(event) => setProductSearch(event.target.value)}
             fullWidth
           />
-        </Stack>
+        </VxStack>
 
-        <TextField
+        <VxTextField
           inputRef={scanInputRef}
           label={t('scan.label')}
           placeholder={t('scan.placeholder')}
@@ -261,22 +245,22 @@ export function ProductCatalogPanel({
           slotProps={{
             input: {
               startAdornment: (
-                <InputAdornment position="start">
+                <VxInputAdornment position="start">
                   <QrCodeScannerRoundedIcon fontSize="small" />
-                </InputAdornment>
+                </VxInputAdornment>
               ),
             },
           }}
         />
         {scanFeedback ? (
-          <Alert severity={scanFeedback.type} sx={{ py: 0.5 }}>
+          <VxAlert severity={scanFeedback.type} sx={{ py: 0.5 }}>
             {scanFeedback.message}
-          </Alert>
+          </VxAlert>
         ) : null}
 
-        <Divider />
+        <VxDivider />
 
-        <Box
+        <VxBox
           sx={{
             display: 'grid',
             gap: 1,
@@ -294,8 +278,8 @@ export function ProductCatalogPanel({
             const canAdd = stockLeft > 0
 
             return (
-              <Card key={product.id} variant="outlined" sx={{ display: 'flex', flexDirection: 'column' }}>
-                <Box
+              <VxMuiCard key={product.id} variant="outlined" sx={{ display: 'flex', flexDirection: 'column' }}>
+                <VxBox
                   sx={{
                     px: 1,
                     py: 0.5,
@@ -306,10 +290,10 @@ export function ProductCatalogPanel({
                     justifyContent: 'space-between',
                   }}
                 >
-                  <Typography variant="caption" sx={{ fontWeight: 700 }}>{getProductCatalogLabel(product)}</Typography>
-                  <Typography variant="caption">{product.sku}</Typography>
-                </Box>
-                <Box
+                  <VxTypography variant="caption" sx={{ fontWeight: 700 }}>{getProductCatalogLabel(product)}</VxTypography>
+                  <VxTypography variant="caption">{product.sku}</VxTypography>
+                </VxBox>
+                <VxBox
                   sx={{
                     display: 'grid',
                     placeItems: 'center',
@@ -319,7 +303,7 @@ export function ProductCatalogPanel({
                   }}
                 >
                   {(product.thumbnailUrl ?? product.imageUrl) ? (
-                    <Box
+                    <VxBox
                       component="img"
                       src={product.thumbnailUrl ?? product.imageUrl!}
                       alt={product.name}
@@ -328,18 +312,18 @@ export function ProductCatalogPanel({
                   ) : (
                     <Inventory2RoundedIcon color="action" sx={{ fontSize: 28 }} />
                   )}
-                </Box>
-                <CardContent sx={{ p: 1.25, pb: 0.75 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 700, lineHeight: 1.2 }} noWrap>
+                </VxBox>
+                <VxMuiCardContent sx={{ p: 1.25, pb: 0.75 }}>
+                  <VxTypography variant="body2" sx={{ fontWeight: 700, lineHeight: 1.2 }} noWrap>
                     {product.name}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.25, display: 'block' }} noWrap>
+                  </VxTypography>
+                  <VxTypography variant="caption" color="text.secondary" sx={{ mt: 0.25, display: 'block' }} noWrap>
                     {t('catalog.uom')}: {product.unitOfMeasure}
-                  </Typography>
-                  <Typography variant="subtitle2" sx={{ mt: 0.5 }}>
+                  </VxTypography>
+                  <VxTypography variant="subtitle2" sx={{ mt: 0.5 }}>
                     {formatMoney(product.salesPrice, currencyCode)}
-                  </Typography>
-                  <Typography
+                  </VxTypography>
+                  <VxTypography
                     variant="caption"
                     color={canAdd ? 'text.secondary' : 'error.main'}
                     sx={{ mt: 0.25, display: 'block' }}
@@ -347,14 +331,14 @@ export function ProductCatalogPanel({
                     {canAdd
                       ? `${t('catalog.stock')}: ${formatQuantity(stockLeft)}`
                       : t('catalog.outOfStock')}
-                  </Typography>
-                </CardContent>
-                <CardActions sx={{ px: 1, pb: 1, pt: 0, display: 'flex', gap: 0.75, alignItems: 'center' }}>
-                  <Stack direction="row" spacing={0.25} sx={{ alignItems: 'center' }}>
-                    <IconButton size="small" onClick={() => updateQty(product.id, qty - 1)}>
+                  </VxTypography>
+                </VxMuiCardContent>
+                <VxMuiCardActions sx={{ px: 1, pb: 1, pt: 0, display: 'flex', gap: 0.75, alignItems: 'center' }}>
+                  <VxStack direction="row" spacing={0.25} sx={{ alignItems: 'center' }}>
+                    <VxIconButton size="small" onClick={() => updateQty(product.id, qty - 1)}>
                       <RemoveRoundedIcon fontSize="small" />
-                    </IconButton>
-                    <TextField
+                    </VxIconButton>
+                    <VxTextField
                       size="small"
                       value={qty}
                       onChange={(event) => updateQtyFromInput(product.id, event.target.value)}
@@ -368,11 +352,11 @@ export function ProductCatalogPanel({
                       }}
                       sx={{ width: 62 }}
                     />
-                    <IconButton size="small" onClick={() => updateQty(product.id, qty + 1)}>
+                    <VxIconButton size="small" onClick={() => updateQty(product.id, qty + 1)}>
                       <AddRoundedIcon fontSize="small" />
-                    </IconButton>
-                  </Stack>
-                  <Button
+                    </VxIconButton>
+                  </VxStack>
+                  <VxButton
                     size="small"
                     fullWidth
                     variant="contained"
@@ -381,32 +365,32 @@ export function ProductCatalogPanel({
                     onClick={() => onAddToCart(product, qty)}
                   >
                     {t('catalog.add')}
-                  </Button>
-                </CardActions>
-              </Card>
+                  </VxButton>
+                </VxMuiCardActions>
+              </VxMuiCard>
             )
           })}
-        </Box>
+        </VxBox>
 
         {filteredProducts.length === 0 ? (
-          <Alert severity="info">{t('catalog.noProducts')}</Alert>
+          <VxAlert severity="info">{t('catalog.noProducts')}</VxAlert>
         ) : null}
 
-        <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ justifyContent: 'space-between', alignItems: { sm: 'center' } }}>
-          <Typography variant="caption" color="text.secondary">
+        <VxStack direction={{ xs: 'column', sm: 'row' }} sx={{ justifyContent: 'space-between', alignItems: { sm: 'center' } }}>
+          <VxTypography variant="caption" color="text.secondary">
             {t('catalog.showing', { current: pagedProducts.length, total: filteredProducts.length, size: DEFAULT_PAGE_SIZE })}
-          </Typography>
-          <Pagination page={page} count={pageCount} onChange={(_, next) => setPage(next)} size="small" color="primary" />
-        </Stack>
+          </VxTypography>
+          <VxPagination page={page} count={pageCount} onChange={(_, next) => setPage(next)} size="small" color="primary" />
+        </VxStack>
 
-        <TextField
+        <VxTextField
           multiline
           minRows={2}
           label={t('catalog.notes')}
           value={notes}
           onChange={(event) => onNotesChange(event.target.value)}
         />
-      </Stack>
-    </Paper>
+      </VxStack>
+    </VxPaper>
   )
 }

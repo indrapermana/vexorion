@@ -1,15 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
 import { LocalShippingRoundedIcon } from '@vexorion/ui'
-import {
-  Alert,
-  Autocomplete,
-  Box,
-  Button,
-  CircularProgress,
-  Stack,
-  TextField,
-  Typography,
-} from '@vexorion/ui'
+import { VxAlert, VxAutocomplete, VxBox, VxButton, VxCircularProgress, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
@@ -25,12 +16,12 @@ function LoadingFallback() {
   const { t } = useTranslation()
 
   return (
-    <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
-      <Stack spacing={1.5} sx={{ alignItems: 'center' }}>
-        <CircularProgress size={28} />
-        <Typography color="text.secondary">{t('pages.purchaseReceipts.loadingTools')}</Typography>
-      </Stack>
-    </Box>
+    <VxBox sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
+      <VxStack spacing={1.5} sx={{ alignItems: 'center' }}>
+        <VxCircularProgress size={28} />
+        <VxTypography color="text.secondary">{t('pages.purchaseReceipts.loadingTools')}</VxTypography>
+      </VxStack>
+    </VxBox>
   )
 }
 
@@ -120,28 +111,28 @@ export default function PurchaseReceiptsPage() {
 
   if (!isAuthenticated) {
     return (
-      <Alert severity="info">{t('pages.purchaseReceipts.signInRequired')}</Alert>
+      <VxAlert severity="info">{t('pages.purchaseReceipts.signInRequired')}</VxAlert>
     )
   }
 
   return (
-    <Stack spacing={2}>
-      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+    <VxStack spacing={2}>
+      <VxStack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+        <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
           <LocalShippingRoundedIcon color="primary" />
-          <Typography variant="h6">{t('nav.routeTitles.purchaseReceipts')}</Typography>
-        </Stack>
-        <Button
+          <VxTypography variant="h6">{t('nav.routeTitles.purchaseReceipts')}</VxTypography>
+        </VxStack>
+        <VxButton
           variant="contained"
           size="small"
           disabled={!selectedOrder}
           onClick={() => setIsCreateOpen(true)}
         >
           {t('pages.purchaseReceipts.newButton')}
-        </Button>
-      </Stack>
+        </VxButton>
+      </VxStack>
 
-      <Autocomplete
+      <VxAutocomplete
         options={purchaseOrders}
         value={selectedOrder}
         onChange={(_, value) => {
@@ -152,17 +143,17 @@ export default function PurchaseReceiptsPage() {
         getOptionLabel={(o) => o.orderNumber}
         isOptionEqualToValue={(a, b) => a.id === b.id}
         renderInput={(params) => (
-          <TextField {...params} label={t('pages.purchaseReceipts.filterByOrder')} size="small" />
+          <VxTextField {...params} label={t('pages.purchaseReceipts.filterByOrder')} size="small" />
         )}
         sx={{ maxWidth: 320 }}
       />
 
       {!selectedOrder && (
-        <Alert severity="info">{t('pages.purchaseReceipts.selectOrderPrompt')}</Alert>
+        <VxAlert severity="info">{t('pages.purchaseReceipts.selectOrderPrompt')}</VxAlert>
       )}
 
-      {error && <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>}
-      {feedback && <Alert severity="success" onClose={() => setFeedback(null)}>{feedback}</Alert>}
+      {error && <VxAlert severity="error" onClose={() => setError(null)}>{error}</VxAlert>}
+      {feedback && <VxAlert severity="success" onClose={() => setFeedback(null)}>{feedback}</VxAlert>}
 
       {selectedOrder && (
         <Suspense fallback={<LoadingFallback />}>
@@ -186,6 +177,6 @@ export default function PurchaseReceiptsPage() {
           />
         </Suspense>
       )}
-    </Stack>
+    </VxStack>
   )
 }

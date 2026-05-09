@@ -1,4 +1,4 @@
-import { Box, Chip, Typography } from '@vexorion/ui'
+import { VxBox, VxChip, VxTypography } from '@vexorion/ui'
 import { DeleteOutlineRoundedIcon, EditRoundedIcon, FormatListBulletedRoundedIcon, LocalShippingRoundedIcon, PostAddRoundedIcon, VxDataGrid, VxGridActionsCellItem, type VxGridColDef } from '@vexorion/ui'
 import { getDocumentStatusLabel, type SalesOrderGridRow } from '../../../types/ui'
 import { useTranslation } from 'react-i18next'
@@ -37,10 +37,10 @@ export default function SalesOrderDataGrid({ rows, isLoading, onEdit, onDelete, 
       minWidth: 180,
       flex: 1,
       renderCell: ({ row }) => (
-        <Box sx={{ py: 1 }}>
-          <Typography sx={{ fontWeight: 700 }}>{row.orderNumber}</Typography>
-          <Typography variant="body2" color="text.secondary">{row.customerName ?? row.customerId}</Typography>
-        </Box>
+        <VxBox sx={{ py: 1 }}>
+          <VxTypography sx={{ fontWeight: 700 }}>{row.orderNumber}</VxTypography>
+          <VxTypography variant="body2" color="text.secondary">{row.customerName ?? row.customerId}</VxTypography>
+        </VxBox>
       ),
     },
     {
@@ -54,7 +54,7 @@ export default function SalesOrderDataGrid({ rows, isLoading, onEdit, onDelete, 
       headerName: 'Status',
       minWidth: 160,
       flex: 0.8,
-      renderCell: ({ value }) => <Chip size="small" color={getStatusColor(Number(value))} label={getDocumentStatusLabel(Number(value))} variant="outlined" />,
+      renderCell: ({ value }) => <VxChip size="small" color={getStatusColor(Number(value))} label={getDocumentStatusLabel(Number(value))} variant="outlined" />,
     },
     {
       field: 'totalAmount',

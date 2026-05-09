@@ -1,21 +1,5 @@
 import { DeleteSweepRoundedIcon, HistoryRoundedIcon, LocalShippingRoundedIcon, PrintRoundedIcon, ReceiptLongRoundedIcon } from '@vexorion/ui'
-import {
-  Box,
-  Button,
-  Chip,
-  Collapse,
-  Divider,
-  IconButton,
-  Paper,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Tooltip,
-  Typography,
-} from '@vexorion/ui'
+import { VxBox, VxButton, VxChip, VxCollapse, VxDivider, VxIconButton, VxPaper, VxStack, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTooltip, VxTypography } from '@vexorion/ui'
 import { useState } from 'react'
 import { useI18n } from '../app/I18nContext'
 import { useTransactionHistory } from '../app/transactionHistoryStore'
@@ -32,94 +16,94 @@ export function TransactionHistoryPanel() {
   }
 
   return (
-    <Paper sx={{ p: 2 }}>
-      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+    <VxPaper sx={{ p: 2 }}>
+      <VxStack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+        <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
           <HistoryRoundedIcon color="action" fontSize="small" />
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+          <VxTypography variant="subtitle1" sx={{ fontWeight: 600 }}>
             {t('history.title', { count: transactions.length })}
-          </Typography>
-        </Stack>
-        <Stack direction="row" spacing={1}>
+          </VxTypography>
+        </VxStack>
+        <VxStack direction="row" spacing={1}>
           {transactions.length > 0 ? (
-            <Tooltip title={t('history.clearTooltip')}>
-              <Button size="small" startIcon={<DeleteSweepRoundedIcon />} color="inherit" onClick={clear}>
+            <VxTooltip title={t('history.clearTooltip')}>
+              <VxButton size="small" startIcon={<DeleteSweepRoundedIcon />} color="inherit" onClick={clear}>
                 {t('history.clear')}
-              </Button>
-            </Tooltip>
+              </VxButton>
+            </VxTooltip>
           ) : null}
-          <Button size="small" onClick={() => setOpen((previous) => !previous)}>
+          <VxButton size="small" onClick={() => setOpen((previous) => !previous)}>
             {open ? t('common.collapse') : t('common.show')}
-          </Button>
-        </Stack>
-      </Stack>
+          </VxButton>
+        </VxStack>
+      </VxStack>
 
-      <Collapse in={open} timeout="auto">
-        <Divider sx={{ my: 1 }} />
+      <VxCollapse in={open} timeout="auto">
+        <VxDivider sx={{ my: 1 }} />
         {transactions.length === 0 ? (
-          <Box sx={{ py: 2, textAlign: 'center' }}>
-            <Typography variant="body2" color="text.secondary">{t('history.empty')}</Typography>
-          </Box>
+          <VxBox sx={{ py: 2, textAlign: 'center' }}>
+            <VxTypography variant="body2" color="text.secondary">{t('history.empty')}</VxTypography>
+          </VxBox>
         ) : (
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>{t('history.time')}</TableCell>
-                <TableCell>{t('history.customer')}</TableCell>
-                <TableCell align="right">{t('history.total')}</TableCell>
-                <TableCell align="right">{t('history.paid')}</TableCell>
-                <TableCell>{t('history.method')}</TableCell>
-                <TableCell align="right">{t('history.lines')}</TableCell>
-                <TableCell>{t('history.flags')}</TableCell>
-                <TableCell>{t('history.invoice')}</TableCell>                <TableCell />              </TableRow>
-            </TableHead>
-            <TableBody>
+          <VxTable size="small">
+            <VxTableHead>
+              <VxTableRow>
+                <VxTableCell>{t('history.time')}</VxTableCell>
+                <VxTableCell>{t('history.customer')}</VxTableCell>
+                <VxTableCell align="right">{t('history.total')}</VxTableCell>
+                <VxTableCell align="right">{t('history.paid')}</VxTableCell>
+                <VxTableCell>{t('history.method')}</VxTableCell>
+                <VxTableCell align="right">{t('history.lines')}</VxTableCell>
+                <VxTableCell>{t('history.flags')}</VxTableCell>
+                <VxTableCell>{t('history.invoice')}</VxTableCell>                <VxTableCell />              </VxTableRow>
+            </VxTableHead>
+            <VxTableBody>
               {transactions.map((transaction) => (
-                <TableRow key={transaction.id} hover>
-                  <TableCell>
-                    <Typography variant="caption" sx={{ whiteSpace: 'nowrap' }}>
+                <VxTableRow key={transaction.id} hover>
+                  <VxTableCell>
+                    <VxTypography variant="caption" sx={{ whiteSpace: 'nowrap' }}>
                       {new Date(transaction.completedAt).toLocaleTimeString()}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">{transaction.customerLabel}</Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    </VxTypography>
+                  </VxTableCell>
+                  <VxTableCell>
+                    <VxTypography variant="body2">{transaction.customerLabel}</VxTypography>
+                  </VxTableCell>
+                  <VxTableCell align="right">
+                    <VxTypography variant="body2" sx={{ fontWeight: 600 }}>
                       {transaction.grandTotal.toFixed(2)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Typography variant="body2">{transaction.paymentAmount.toFixed(2)}</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Chip size="small" label={transaction.paymentMethod} />
-                  </TableCell>
-                  <TableCell align="right">
-                    <Typography variant="body2">{transaction.lineCount}</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Stack direction="row" spacing={0.5}>
+                    </VxTypography>
+                  </VxTableCell>
+                  <VxTableCell align="right">
+                    <VxTypography variant="body2">{transaction.paymentAmount.toFixed(2)}</VxTypography>
+                  </VxTableCell>
+                  <VxTableCell>
+                    <VxChip size="small" label={transaction.paymentMethod} />
+                  </VxTableCell>
+                  <VxTableCell align="right">
+                    <VxTypography variant="body2">{transaction.lineCount}</VxTypography>
+                  </VxTableCell>
+                  <VxTableCell>
+                    <VxStack direction="row" spacing={0.5}>
                       {transaction.isDelivery ? (
-                        <Tooltip title={t('history.delivery')}>
+                        <VxTooltip title={t('history.delivery')}>
                           <LocalShippingRoundedIcon fontSize="small" color="primary" />
-                        </Tooltip>
+                        </VxTooltip>
                       ) : null}
                       {transaction.paymentId ? (
-                        <Tooltip title={t('history.paymentRecorded')}>
+                        <VxTooltip title={t('history.paymentRecorded')}>
                           <ReceiptLongRoundedIcon fontSize="small" color="success" />
-                        </Tooltip>
+                        </VxTooltip>
                       ) : null}
-                    </Stack>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
+                    </VxStack>
+                  </VxTableCell>
+                  <VxTableCell>
+                    <VxTypography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
                       {transaction.invoiceId.slice(0, 8)}…
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Tooltip title={t('receipt.reprint')}>
-                      <IconButton
+                    </VxTypography>
+                  </VxTableCell>
+                  <VxTableCell>
+                    <VxTooltip title={t('receipt.reprint')}>
+                      <VxIconButton
                         size="small"
                         onClick={() =>
                           setReprintData({
@@ -138,21 +122,21 @@ export function TransactionHistoryPanel() {
                         }
                       >
                         <PrintRoundedIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
+                      </VxIconButton>
+                    </VxTooltip>
+                  </VxTableCell>
+                </VxTableRow>
               ))}
-            </TableBody>
-          </Table>
+            </VxTableBody>
+          </VxTable>
         )}
-      </Collapse>
+      </VxCollapse>
 
       <ReceiptModal
         open={reprintData !== null}
         data={reprintData}
         onClose={() => setReprintData(null)}
       />
-    </Paper>
+    </VxPaper>
   )
 }

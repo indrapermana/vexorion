@@ -1,4 +1,4 @@
-import { Box, Chip, Typography } from '@vexorion/ui'
+import { VxBox, VxChip, VxTypography } from '@vexorion/ui'
 import { VxDataGrid, type VxGridColDef } from '@vexorion/ui'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -23,14 +23,14 @@ export function TenantDataGrid({ rows, isLoading, onEdit, onRemove }: TenantData
         flex: 1,
         minWidth: 200,
         renderCell: (params) => (
-          <Box>
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+          <VxBox>
+            <VxTypography variant="body2" sx={{ fontWeight: 600 }}>
               {params.row.name}
-            </Typography>
-            <Typography variant="caption" color="textSecondary">
+            </VxTypography>
+            <VxTypography variant="caption" color="textSecondary">
               {t('components.tenants.grid.codePrefix')} {params.row.code}
-            </Typography>
-          </Box>
+            </VxTypography>
+          </VxBox>
         ),
       },
       {
@@ -53,7 +53,7 @@ export function TenantDataGrid({ rows, isLoading, onEdit, onRemove }: TenantData
         flex: 0.8,
         minWidth: 120,
         renderCell: (params) => (
-          <Chip
+          <VxChip
             label={params.row.isActive ? t('components.tenants.grid.active') : t('components.tenants.grid.inactive')}
             color={params.row.isActive ? 'success' : 'default'}
             size="small"
@@ -68,7 +68,7 @@ export function TenantDataGrid({ rows, isLoading, onEdit, onRemove }: TenantData
         sortable: false,
         filterable: false,
         renderCell: (params) => (
-          <Box sx={{ display: 'flex', gap: 1 }}>
+          <VxBox sx={{ display: 'flex', gap: 1 }}>
             <button
               onClick={() => onEdit(params.row)}
               style={{
@@ -97,7 +97,7 @@ export function TenantDataGrid({ rows, isLoading, onEdit, onRemove }: TenantData
             >
               Remove
             </button>
-          </Box>
+          </VxBox>
         ),
       },
     ],

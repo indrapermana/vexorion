@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react'
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField } from '@vexorion/ui'
+import { VxButton, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxStack, VxTextField } from '@vexorion/ui'
 import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
@@ -124,10 +124,10 @@ export default function VendorPaymentEditorDialog({ open, suppliers, outstanding
   })
 
   return (
-    <Dialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="md">
-      <DialogTitle>{t('components.vendorPayments.editor.title')}</DialogTitle>
-      <DialogContent dividers>
-        <Stack spacing={2.5} sx={{ pt: 1 }}>
+    <VxDialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="md">
+      <VxDialogTitle>{t('components.vendorPayments.editor.title')}</VxDialogTitle>
+      <VxDialogContent dividers>
+        <VxStack spacing={2.5} sx={{ pt: 1 }}>
           <Controller
             name="supplierId"
             control={control}
@@ -162,12 +162,12 @@ export default function VendorPaymentEditorDialog({ open, suppliers, outstanding
             )}
           />
 
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+          <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
             <Controller
               name="paymentDate"
               control={control}
               render={({ field }) => (
-                <TextField
+                <VxTextField
                   {...field}
                   fullWidth
                   type="date"
@@ -182,7 +182,7 @@ export default function VendorPaymentEditorDialog({ open, suppliers, outstanding
               name="amount"
               control={control}
               render={({ field }) => (
-                <TextField
+                <VxTextField
                   {...field}
                   fullWidth
                   label={t('components.vendorPayments.editor.fields.amount')}
@@ -198,7 +198,7 @@ export default function VendorPaymentEditorDialog({ open, suppliers, outstanding
               name="currencyCode"
               control={control}
               render={({ field }) => (
-                <TextField
+                <VxTextField
                   {...field}
                   fullWidth
                   label={t('components.vendorPayments.editor.fields.currency')}
@@ -207,14 +207,14 @@ export default function VendorPaymentEditorDialog({ open, suppliers, outstanding
                 />
               )}
             />
-          </Stack>
+          </VxStack>
 
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+          <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
             <Controller
               name="referenceNumber"
               control={control}
               render={({ field }) => (
-                <TextField
+                <VxTextField
                   {...field}
                   fullWidth
                   label={t('components.vendorPayments.editor.fields.reference')}
@@ -227,7 +227,7 @@ export default function VendorPaymentEditorDialog({ open, suppliers, outstanding
               name="paymentMethod"
               control={control}
               render={({ field }) => (
-                <TextField
+                <VxTextField
                   {...field}
                   fullWidth
                   label={t('components.vendorPayments.editor.fields.paymentMethod')}
@@ -236,13 +236,13 @@ export default function VendorPaymentEditorDialog({ open, suppliers, outstanding
                 />
               )}
             />
-          </Stack>
+          </VxStack>
 
           <Controller
             name="notes"
             control={control}
             render={({ field }) => (
-              <TextField
+              <VxTextField
                 {...field}
                 fullWidth
                 multiline
@@ -253,18 +253,18 @@ export default function VendorPaymentEditorDialog({ open, suppliers, outstanding
               />
             )}
           />
-        </Stack>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose} disabled={isSubmitting}>{t('dialogs.cancel')}</Button>
-        <Button
+        </VxStack>
+      </VxDialogContent>
+      <VxDialogActions sx={{ px: 3, py: 2 }}>
+        <VxButton onClick={onClose} disabled={isSubmitting}>{t('dialogs.cancel')}</VxButton>
+        <VxButton
           onClick={() => void onSubmit()}
           variant="contained"
           disabled={isSubmitting || !suppliers.length || !outstandingInvoices.length}
         >
           {isSubmitting ? t('components.vendorPayments.editor.saving') : t('components.vendorPayments.editor.recordAction')}
-        </Button>
-      </DialogActions>
-    </Dialog>
+        </VxButton>
+      </VxDialogActions>
+    </VxDialog>
   )
 }

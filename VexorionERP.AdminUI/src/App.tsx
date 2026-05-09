@@ -1,6 +1,6 @@
 import './App.css'
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
-import { Alert, CssBaseline, ThemeProvider } from '@vexorion/ui'
+import { VxAlert, VxCssBaseline, VxThemeProvider } from '@vexorion/ui'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './app/AuthContext'
 import { ThemeModeProvider } from './app/ThemeModeContext'
@@ -23,7 +23,7 @@ function normalizeThemeMode(value: string | null): ThemeMode {
 }
 
 function RouteFallback() {
-  return <Alert severity="info">Loading...</Alert>
+  return <VxAlert severity="info">Loading...</VxAlert>
 }
 
 export default function App() {
@@ -48,8 +48,8 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <ThemeModeProvider value={themeModeValue}>
-          <ThemeProvider theme={theme}>
-            <CssBaseline />
+          <VxThemeProvider theme={theme}>
+            <VxCssBaseline />
             <Suspense fallback={<RouteFallback />}>
               <Routes>
                 <Route element={<AppLayout />}>
@@ -70,7 +70,7 @@ export default function App() {
                 <Route path="*" element={<Navigate to="/login" replace />} />
               </Routes>
             </Suspense>
-          </ThemeProvider>
+          </VxThemeProvider>
         </ThemeModeProvider>
       </AuthProvider>
     </BrowserRouter>

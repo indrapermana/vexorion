@@ -1,4 +1,4 @@
-import { MenuItem, TextField } from '@vexorion/ui'
+import { VxMenuItem, VxTextField } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 
 type LookupOption = {
@@ -29,7 +29,7 @@ export default function LookupSelectField({
 }: LookupSelectFieldProps) {
   useTranslation()
   return (
-    <TextField
+    <VxTextField
       fullWidth
       select
       label={label}
@@ -40,10 +40,10 @@ export default function LookupSelectField({
       disabled={disabled}
     >
       {options.map((option) => (
-        <MenuItem key={option.value} value={option.value}>
+        <VxMenuItem key={option.value} value={option.value}>
           {option.label}
-        </MenuItem>
+        </VxMenuItem>
       ))}
-    </TextField>
+    </VxTextField>
   )
 }

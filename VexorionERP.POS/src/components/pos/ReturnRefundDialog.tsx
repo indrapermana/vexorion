@@ -1,29 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { UndoRoundedIcon } from '@vexorion/ui'
-import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TextField,
-  Typography,
-} from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxChip, VxCircularProgress, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxDivider, VxFormControl, VxInputLabel, VxMenuItem, VxSelect, VxStack, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
 import { useI18n } from '../../app/I18nContext'
 import { posLogger } from '../../lib/posLogger'
 import {
@@ -263,22 +240,22 @@ export default function ReturnRefundDialog({
   }
 
   return (
-    <Dialog
+    <VxDialog
       open={open}
       onClose={step === 'success' ? onClose : undefined}
       fullWidth
       maxWidth="md"
     >
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <VxDialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <UndoRoundedIcon />
         {t('return.title')}
-      </DialogTitle>
+      </VxDialogTitle>
 
-      <DialogContent dividers>
+      <VxDialogContent dividers>
         {/* ---- Step: Search ---- */}
         {step === 'search' && (
-          <Stack spacing={2}>
-            <TextField
+          <VxStack spacing={2}>
+            <VxTextField
               label={t('return.searchLabel')}
               placeholder={t('return.searchPlaceholder')}
               value={searchQuery}
@@ -289,71 +266,71 @@ export default function ReturnRefundDialog({
               autoFocus
               fullWidth
             />
-            {searchError ? <Alert severity="warning">{searchError}</Alert> : null}
-          </Stack>
+            {searchError ? <VxAlert severity="warning">{searchError}</VxAlert> : null}
+          </VxStack>
         )}
 
         {/* ---- Step: Review (Item 10: partial line selection; Item 12: reason) ---- */}
         {step === 'review' && foundInvoice && (
-          <Stack spacing={2}>
+          <VxStack spacing={2}>
             {/* Invoice summary card */}
-            <Box sx={{ p: 1.5, border: 1, borderColor: 'divider', borderRadius: 1 }}>
-              <Stack direction="row" spacing={4}>
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
+            <VxBox sx={{ p: 1.5, border: 1, borderColor: 'divider', borderRadius: 1 }}>
+              <VxStack direction="row" spacing={4}>
+                <VxBox>
+                  <VxTypography variant="caption" color="text.secondary">
                     {t('return.invoice')}
-                  </Typography>
-                  <Typography sx={{ fontWeight: 600 }}>{foundInvoice.invoiceNumber}</Typography>
-                </Box>
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
+                  </VxTypography>
+                  <VxTypography sx={{ fontWeight: 600 }}>{foundInvoice.invoiceNumber}</VxTypography>
+                </VxBox>
+                <VxBox>
+                  <VxTypography variant="caption" color="text.secondary">
                     {t('return.date')}
-                  </Typography>
-                  <Typography>{foundInvoice.invoiceDate}</Typography>
-                </Box>
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
+                  </VxTypography>
+                  <VxTypography>{foundInvoice.invoiceDate}</VxTypography>
+                </VxBox>
+                <VxBox>
+                  <VxTypography variant="caption" color="text.secondary">
                     {t('return.total')}
-                  </Typography>
-                  <Typography>
+                  </VxTypography>
+                  <VxTypography>
                     {currencyCode} {foundInvoice.grandTotal.toFixed(2)}
-                  </Typography>
-                </Box>
-              </Stack>
-            </Box>
+                  </VxTypography>
+                </VxBox>
+              </VxStack>
+            </VxBox>
 
             {/* Invoice lines table */}
-            <Typography variant="subtitle2">{t('return.linesTitle')}</Typography>
+            <VxTypography variant="subtitle2">{t('return.linesTitle')}</VxTypography>
             {isLoadingLines ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
-                <CircularProgress size={28} />
-              </Box>
+              <VxBox sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                <VxCircularProgress size={28} />
+              </VxBox>
             ) : (
-              <Box sx={{ overflowX: 'auto' }}>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>{t('return.product')}</TableCell>
-                      <TableCell align="right">{t('return.qtySold')}</TableCell>
-                      <TableCell align="right">{t('return.unitPrice')}</TableCell>
-                      <TableCell align="right">{t('return.qtyLabel')}</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
+              <VxBox sx={{ overflowX: 'auto' }}>
+                <VxTable size="small">
+                  <VxTableHead>
+                    <VxTableRow>
+                      <VxTableCell>{t('return.product')}</VxTableCell>
+                      <VxTableCell align="right">{t('return.qtySold')}</VxTableCell>
+                      <VxTableCell align="right">{t('return.unitPrice')}</VxTableCell>
+                      <VxTableCell align="right">{t('return.qtyLabel')}</VxTableCell>
+                    </VxTableRow>
+                  </VxTableHead>
+                  <VxTableBody>
                     {lines.map((line) => {
                       const product = productMap.get(line.productId)
                       const productLabel = product
                         ? `${product.sku} — ${product.name}`
                         : line.productId
                       return (
-                        <TableRow key={line.id}>
-                          <TableCell>{productLabel}</TableCell>
-                          <TableCell align="right">{line.quantity}</TableCell>
-                          <TableCell align="right">
+                        <VxTableRow key={line.id}>
+                          <VxTableCell>{productLabel}</VxTableCell>
+                          <VxTableCell align="right">{line.quantity}</VxTableCell>
+                          <VxTableCell align="right">
                             {line.unitPrice.toFixed(2)}
-                          </TableCell>
-                          <TableCell align="right" sx={{ width: 110 }}>
-                            <TextField
+                          </VxTableCell>
+                          <VxTableCell align="right" sx={{ width: 110 }}>
+                            <VxTextField
                               type="number"
                               size="small"
                               value={returnQtys[line.id] ?? 0}
@@ -369,35 +346,35 @@ export default function ReturnRefundDialog({
                               }}
                               sx={{ width: 84 }}
                             />
-                          </TableCell>
-                        </TableRow>
+                          </VxTableCell>
+                        </VxTableRow>
                       )
                     })}
-                  </TableBody>
-                </Table>
-              </Box>
+                  </VxTableBody>
+                </VxTable>
+              </VxBox>
             )}
 
-            <Divider />
+            <VxDivider />
 
             {/* Item 12: Mandatory return reason */}
-            <FormControl fullWidth>
-              <InputLabel>{t('return.reason')}</InputLabel>
-              <Select
+            <VxFormControl fullWidth>
+              <VxInputLabel>{t('return.reason')}</VxInputLabel>
+              <VxSelect
                 value={reason}
                 label={t('return.reason')}
                 onChange={(e) => setReason(e.target.value as Reason)}
               >
                 {REASONS.map((r) => (
-                  <MenuItem key={r} value={r}>
+                  <VxMenuItem key={r} value={r}>
                     {t(r)}
-                  </MenuItem>
+                  </VxMenuItem>
                 ))}
-              </Select>
-            </FormControl>
+              </VxSelect>
+            </VxFormControl>
 
             {reason === 'return.reason.other' && (
-              <TextField
+              <VxTextField
                 label={t('return.reasonOther')}
                 value={otherReason}
                 onChange={(e) => setOtherReason(e.target.value)}
@@ -408,7 +385,7 @@ export default function ReturnRefundDialog({
 
             {/* Refund total summary chip */}
             {returnLines.length > 0 && (
-              <Box
+              <VxBox
                 sx={{
                   p: 1.5,
                   bgcolor: 'rgba(46,125,50,0.08)',
@@ -417,50 +394,50 @@ export default function ReturnRefundDialog({
                   borderColor: 'success.light',
                 }}
               >
-                <Stack
+                <VxStack
                   direction="row"
                   sx={{ justifyContent: 'space-between', alignItems: 'center' }}
                 >
-                  <Typography variant="subtitle2">{t('return.refundTotal')}</Typography>
-                  <Chip
+                  <VxTypography variant="subtitle2">{t('return.refundTotal')}</VxTypography>
+                  <VxChip
                     label={`${currencyCode} ${refundTotal.toFixed(2)}`}
                     color="success"
                     size="small"
                   />
-                </Stack>
-              </Box>
+                </VxStack>
+              </VxBox>
             )}
 
-            {processError ? <Alert severity="error">{processError}</Alert> : null}
-          </Stack>
+            {processError ? <VxAlert severity="error">{processError}</VxAlert> : null}
+          </VxStack>
         )}
 
         {/* ---- Step: Success ---- */}
         {step === 'success' && successCreditNoteId && (
-          <Alert severity="success">
+          <VxAlert severity="success">
             {t('return.success').replace('{creditNoteId}', successCreditNoteId)}
-          </Alert>
+          </VxAlert>
         )}
-      </DialogContent>
+      </VxDialogContent>
 
-      <DialogActions>
+      <VxDialogActions>
         {step === 'search' && (
           <>
-            <Button onClick={onClose}>{t('common.cancel')}</Button>
-            <Button
+            <VxButton onClick={onClose}>{t('common.cancel')}</VxButton>
+            <VxButton
               variant="contained"
               onClick={() => void handleSearch()}
               disabled={!searchQuery.trim() || isSearching}
-              startIcon={isSearching ? <CircularProgress size={16} /> : null}
+              startIcon={isSearching ? <VxCircularProgress size={16} /> : null}
             >
               {t('return.searchButton')}
-            </Button>
+            </VxButton>
           </>
         )}
 
         {step === 'review' && (
           <>
-            <Button
+            <VxButton
               onClick={() => {
                 setStep('search')
                 setFoundInvoice(null)
@@ -468,9 +445,9 @@ export default function ReturnRefundDialog({
               }}
             >
               {t('return.back')}
-            </Button>
-            <Button onClick={onClose}>{t('common.cancel')}</Button>
-            <Button
+            </VxButton>
+            <VxButton onClick={onClose}>{t('common.cancel')}</VxButton>
+            <VxButton
               variant="contained"
               color="warning"
               onClick={() => void handleConfirm()}
@@ -480,19 +457,19 @@ export default function ReturnRefundDialog({
                 !effectiveReason ||
                 isLoadingLines
               }
-              startIcon={isProcessing ? <CircularProgress size={16} /> : null}
+              startIcon={isProcessing ? <VxCircularProgress size={16} /> : null}
             >
               {isProcessing ? t('return.processing') : t('return.confirm')}
-            </Button>
+            </VxButton>
           </>
         )}
 
         {step === 'success' && (
-          <Button variant="contained" onClick={onClose}>
+          <VxButton variant="contained" onClick={onClose}>
             {t('return.close')}
-          </Button>
+          </VxButton>
         )}
-      </DialogActions>
-    </Dialog>
+      </VxDialogActions>
+    </VxDialog>
   )
 }

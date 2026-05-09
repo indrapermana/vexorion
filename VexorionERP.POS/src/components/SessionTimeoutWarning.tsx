@@ -1,4 +1,4 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@vexorion/ui'
+import { VxButton, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxTypography } from '@vexorion/ui'
 import { useEffect, useState } from 'react'
 import { useI18n } from '../app/I18nContext'
 import { useAuth } from '../app/AuthContext'
@@ -38,21 +38,21 @@ export function SessionTimeoutWarning() {
   if (!isAuthenticated) return null
 
   return (
-    <Dialog open={open} maxWidth="xs" fullWidth>
-      <DialogTitle>{t('session.expiringSoon')}</DialogTitle>
-      <DialogContent>
-        <Typography>
+    <VxDialog open={open} maxWidth="xs" fullWidth>
+      <VxDialogTitle>{t('session.expiringSoon')}</VxDialogTitle>
+      <VxDialogContent>
+        <VxTypography>
           {t('session.expiresIn').replace('{minutes}', String(minutesLeft))}
-        </Typography>
-      </DialogContent>
-      <DialogActions>
-        <Button color="error" onClick={() => { setOpen(false); void logout() }}>
+        </VxTypography>
+      </VxDialogContent>
+      <VxDialogActions>
+        <VxButton color="error" onClick={() => { setOpen(false); void logout() }}>
           {t('session.signOut')}
-        </Button>
-        <Button variant="contained" onClick={() => setOpen(false)}>
+        </VxButton>
+        <VxButton variant="contained" onClick={() => setOpen(false)}>
           {t('session.extend')}
-        </Button>
-      </DialogActions>
-    </Dialog>
+        </VxButton>
+      </VxDialogActions>
+    </VxDialog>
   )
 }

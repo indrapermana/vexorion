@@ -1,13 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import {
-  Alert,
-  Button,
-  Checkbox,
-  FormControlLabel,
-  Paper,
-  Stack,
-  Typography,
-} from '@vexorion/ui'
+import { VxAlert, VxButton, VxCheckbox, VxFormControlLabel, VxPaper, VxStack, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { ApiError, getTenantPreferences, updateMenuConfiguration } from '../../../lib/api'
@@ -114,42 +106,42 @@ export default function ConfigMenuPage() {
   }
 
   if (!isAuthenticated) {
-    return <Alert severity="info">{t('config.menu.signInRequired')}</Alert>
+    return <VxAlert severity="info">{t('config.menu.signInRequired')}</VxAlert>
   }
 
   return (
-    <Stack spacing={3}>
-      <Paper elevation={0} className="panel-card">
-        <Typography variant="h4" sx={{ mb: 1 }}>{t('config.menu.title')}</Typography>
-        <Typography color="text.secondary" sx={{ mb: 2 }}>
+    <VxStack spacing={3}>
+      <VxPaper elevation={0} className="panel-card">
+        <VxTypography variant="h4" sx={{ mb: 1 }}>{t('config.menu.title')}</VxTypography>
+        <VxTypography color="text.secondary" sx={{ mb: 2 }}>
           {t('config.menu.description')}
-        </Typography>
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-          <Button variant="contained" onClick={() => void save()} disabled={isSaving}>{t('config.menu.saveChanges')}</Button>
-          <Button variant="outlined" onClick={() => void reset()} disabled={isSaving}>{t('config.menu.resetDefaults')}</Button>
-        </Stack>
-      </Paper>
+        </VxTypography>
+        <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+          <VxButton variant="contained" onClick={() => void save()} disabled={isSaving}>{t('config.menu.saveChanges')}</VxButton>
+          <VxButton variant="outlined" onClick={() => void reset()} disabled={isSaving}>{t('config.menu.resetDefaults')}</VxButton>
+        </VxStack>
+      </VxPaper>
 
-      {error ? <Alert severity="error">{error}</Alert> : null}
-      {feedback ? <Alert severity="success">{feedback}</Alert> : null}
+      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
+      {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
 
       {Object.entries(groupedItems).map(([section, items]) => (
-        <Paper key={section} elevation={0} className="panel-card">
-          <Typography variant="h6" sx={{ mb: 1.5 }}>{section}</Typography>
-          <Stack spacing={1}>
+        <VxPaper key={section} elevation={0} className="panel-card">
+          <VxTypography variant="h6" sx={{ mb: 1.5 }}>{section}</VxTypography>
+          <VxStack spacing={1}>
             {items.map((item) => {
               const isHidden = hiddenLinks.includes(item.path)
               return (
-                <FormControlLabel
+                <VxFormControlLabel
                   key={item.path}
-                  control={<Checkbox checked={!isHidden} onChange={(event) => toggleHidden(item.path, !event.target.checked)} />}
+                  control={<VxCheckbox checked={!isHidden} onChange={(event) => toggleHidden(item.path, !event.target.checked)} />}
                   label={`${item.label} (${item.path})`}
                 />
               )
             })}
-          </Stack>
-        </Paper>
+          </VxStack>
+        </VxPaper>
       ))}
-    </Stack>
+    </VxStack>
   )
 }

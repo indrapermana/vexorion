@@ -1,6 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
 import { AddRoundedIcon, PaidRoundedIcon, ReceiptLongRoundedIcon, ScheduleRoundedIcon } from '@vexorion/ui'
-import { Alert, Box, Button, CircularProgress, Paper, Stack, Typography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxCircularProgress, VxPaper, VxStack, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
@@ -18,12 +18,12 @@ function CustomerPaymentSurfaceFallback() {
   const { t } = useTranslation()
 
   return (
-    <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
-      <Stack spacing={1.5} sx={{ alignItems: 'center' }}>
-        <CircularProgress size={28} />
-        <Typography color="text.secondary">{t('pages.customerPayments.loadingTools')}</Typography>
-      </Stack>
-    </Box>
+    <VxBox sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
+      <VxStack spacing={1.5} sx={{ alignItems: 'center' }}>
+        <VxCircularProgress size={28} />
+        <VxTypography color="text.secondary">{t('pages.customerPayments.loadingTools')}</VxTypography>
+      </VxStack>
+    </VxBox>
   )
 }
 
@@ -125,56 +125,56 @@ export default function CustomerPaymentsPage() {
   }
 
   if (!isAuthenticated) {
-    return <Alert severity="info">{t('pages.customerPayments.signInRequired')}</Alert>
+    return <VxAlert severity="info">{t('pages.customerPayments.signInRequired')}</VxAlert>
   }
 
   return (
-    <Stack spacing={3}>
-      <Paper elevation={0} className="panel-card">
-        <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2.5} sx={{ justifyContent: 'space-between' }}>
-          <Box>
-            <Typography variant="h4" sx={{ mb: 1 }}>{t('nav.routeTitles.customerPayments')}</Typography>
-            <Typography color="text.secondary">{t('pages.customerPayments.description')}</Typography>
-          </Box>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
-            <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog} disabled={!outstandingInvoices.length}>
+    <VxStack spacing={3}>
+      <VxPaper elevation={0} className="panel-card">
+        <VxStack direction={{ xs: 'column', lg: 'row' }} spacing={2.5} sx={{ justifyContent: 'space-between' }}>
+          <VxBox>
+            <VxTypography variant="h4" sx={{ mb: 1 }}>{t('nav.routeTitles.customerPayments')}</VxTypography>
+            <VxTypography color="text.secondary">{t('pages.customerPayments.description')}</VxTypography>
+          </VxBox>
+          <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
+            <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog} disabled={!outstandingInvoices.length}>
               {t('pages.customerPayments.recordPayment')}
-            </Button>
-            <Paper elevation={0} className="products-metric-card">
+            </VxButton>
+            <VxPaper elevation={0} className="products-metric-card">
               <PaidRoundedIcon fontSize="small" />
-              <Box>
-                <Typography variant="body2" color="text.secondary">{t('pages.customerPayments.metrics.payments')}</Typography>
-                <Typography variant="h6">{payments.length}</Typography>
-              </Box>
-            </Paper>
-            <Paper elevation={0} className="products-metric-card">
+              <VxBox>
+                <VxTypography variant="body2" color="text.secondary">{t('pages.customerPayments.metrics.payments')}</VxTypography>
+                <VxTypography variant="h6">{payments.length}</VxTypography>
+              </VxBox>
+            </VxPaper>
+            <VxPaper elevation={0} className="products-metric-card">
               <ScheduleRoundedIcon fontSize="small" />
-              <Box>
-                <Typography variant="body2" color="text.secondary">{t('pages.customerPayments.metrics.outstandingInvoices')}</Typography>
-                <Typography variant="h6">{outstandingInvoices.length}</Typography>
-              </Box>
-            </Paper>
-            <Paper elevation={0} className="products-metric-card">
+              <VxBox>
+                <VxTypography variant="body2" color="text.secondary">{t('pages.customerPayments.metrics.outstandingInvoices')}</VxTypography>
+                <VxTypography variant="h6">{outstandingInvoices.length}</VxTypography>
+              </VxBox>
+            </VxPaper>
+            <VxPaper elevation={0} className="products-metric-card">
               <ReceiptLongRoundedIcon fontSize="small" />
-              <Box>
-                <Typography variant="body2" color="text.secondary">{t('pages.customerPayments.metrics.openBalance')}</Typography>
-                <Typography variant="h6">{formatMoney(outstandingInvoices.reduce((sum, invoice) => sum + invoice.balanceDue, 0))}</Typography>
-              </Box>
-            </Paper>
-          </Stack>
-        </Stack>
-      </Paper>
+              <VxBox>
+                <VxTypography variant="body2" color="text.secondary">{t('pages.customerPayments.metrics.openBalance')}</VxTypography>
+                <VxTypography variant="h6">{formatMoney(outstandingInvoices.reduce((sum, invoice) => sum + invoice.balanceDue, 0))}</VxTypography>
+              </VxBox>
+            </VxPaper>
+          </VxStack>
+        </VxStack>
+      </VxPaper>
 
-      {customersError ? <Alert severity="warning">{customersError}</Alert> : null}
-      {error ? <Alert severity="error">{error}</Alert> : null}
-      {feedback ? <Alert severity="success">{feedback}</Alert> : null}
-      {!outstandingInvoices.length ? <Alert severity="info">{t('pages.customerPayments.noOutstandingInvoices')}</Alert> : null}
+      {customersError ? <VxAlert severity="warning">{customersError}</VxAlert> : null}
+      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
+      {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+      {!outstandingInvoices.length ? <VxAlert severity="info">{t('pages.customerPayments.noOutstandingInvoices')}</VxAlert> : null}
 
-      <Paper elevation={0} className="panel-card products-grid-panel">
+      <VxPaper elevation={0} className="panel-card products-grid-panel">
         <Suspense fallback={<CustomerPaymentSurfaceFallback />}>
           <CustomerPaymentDataGrid rows={rows} isLoading={isLoading} onSelectPayment={setSelectedPaymentId} />
         </Suspense>
-      </Paper>
+      </VxPaper>
 
       <DocumentsPanel sourceType="CustomerPaymentReceipt" sourceEntityId={selectedPaymentId} />
 
@@ -190,6 +190,6 @@ export default function CustomerPaymentsPage() {
           />
         </Suspense>
       ) : null}
-    </Stack>
+    </VxStack>
   )
 }

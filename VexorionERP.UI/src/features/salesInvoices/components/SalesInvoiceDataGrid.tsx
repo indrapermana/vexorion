@@ -1,5 +1,5 @@
 import { DeleteOutlineRoundedIcon, DescriptionRoundedIcon, EditRoundedIcon, FormatListBulletedRoundedIcon, PaidRoundedIcon, VxDataGrid, VxGridActionsCellItem, type VxGridColDef } from '@vexorion/ui'
-import { Box, Chip, Typography } from '@vexorion/ui'
+import { VxBox, VxChip, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useCurrency } from '../../../app/CurrencyContext'
 import { getInvoiceStatusLabel, type SalesInvoiceGridRow } from '../../../types/ui'
@@ -31,10 +31,10 @@ export default function SalesInvoiceDataGrid({ rows, isLoading, onEdit, onDelete
       minWidth: 180,
       flex: 1,
       renderCell: ({ row }) => (
-        <Box sx={{ py: 1 }}>
-          <Typography sx={{ fontWeight: 700 }}>{row.invoiceNumber}</Typography>
-          <Typography variant="body2" color="text.secondary">{row.customerName ?? row.customerId}</Typography>
-        </Box>
+        <VxBox sx={{ py: 1 }}>
+          <VxTypography sx={{ fontWeight: 700 }}>{row.invoiceNumber}</VxTypography>
+          <VxTypography variant="body2" color="text.secondary">{row.customerName ?? row.customerId}</VxTypography>
+        </VxBox>
       ),
     },
     { field: 'invoiceDate', headerName: 'Invoice date', minWidth: 130, flex: 0.7 },
@@ -44,7 +44,7 @@ export default function SalesInvoiceDataGrid({ rows, isLoading, onEdit, onDelete
       headerName: 'Status',
       minWidth: 150,
       flex: 0.8,
-      renderCell: ({ value }) => <Chip size="small" color={getStatusColor(Number(value))} label={getInvoiceStatusLabel(Number(value))} variant="outlined" />,
+      renderCell: ({ value }) => <VxChip size="small" color={getStatusColor(Number(value))} label={getInvoiceStatusLabel(Number(value))} variant="outlined" />,
     },
     {
       field: 'grandTotal',

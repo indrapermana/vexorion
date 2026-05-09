@@ -1,25 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import {
-  Alert,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  Paper,
-  Stack,
-  Switch,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
-  Tooltip,
-  Typography,
-} from '@vexorion/ui'
+import { VxAlert, VxButton, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxIconButton, VxPaper, VxStack, VxSwitch, VxTable, VxTableBody, VxTableCell, VxTableContainer, VxTableHead, VxTableRow, VxTextField, VxTooltip, VxTypography } from '@vexorion/ui'
 import { AddIcon, DeleteIcon, EditIcon } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
@@ -125,82 +105,82 @@ export default function ConfigProductCategoriesPage() {
   }
 
   if (!isAuthenticated) {
-    return <Alert severity="info">{t('common.signInRequired')}</Alert>
+    return <VxAlert severity="info">{t('common.signInRequired')}</VxAlert>
   }
 
   return (
-    <Stack spacing={3}>
-      <Paper elevation={0} className="panel-card">
-        <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+    <VxStack spacing={3}>
+      <VxPaper elevation={0} className="panel-card">
+        <VxStack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <Typography variant="h4" sx={{ mb: 1 }}>{t('config.productCategories.title')}</Typography>
-            <Typography color="text.secondary">{t('config.productCategories.description')}</Typography>
+            <VxTypography variant="h4" sx={{ mb: 1 }}>{t('config.productCategories.title')}</VxTypography>
+            <VxTypography color="text.secondary">{t('config.productCategories.description')}</VxTypography>
           </div>
-          <Button
+          <VxButton
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => { setCreateName(''); setCreateOpen(true) }}
           >
             {t('config.productCategories.addButton')}
-          </Button>
-        </Stack>
-      </Paper>
+          </VxButton>
+        </VxStack>
+      </VxPaper>
 
-      {error ? <Alert severity="error">{error}</Alert> : null}
-      {feedback ? <Alert severity="success">{feedback}</Alert> : null}
+      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
+      {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
 
-      <Paper elevation={0} className="panel-card" sx={{ p: 0 }}>
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>{t('config.productCategories.fields.name')}</TableCell>
-                <TableCell>{t('config.productCategories.fields.isActive')}</TableCell>
-                <TableCell align="right">{t('common.actions')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
+      <VxPaper elevation={0} className="panel-card" sx={{ p: 0 }}>
+        <VxTableContainer>
+          <VxTable size="small">
+            <VxTableHead>
+              <VxTableRow>
+                <VxTableCell>{t('config.productCategories.fields.name')}</VxTableCell>
+                <VxTableCell>{t('config.productCategories.fields.isActive')}</VxTableCell>
+                <VxTableCell align="right">{t('common.actions')}</VxTableCell>
+              </VxTableRow>
+            </VxTableHead>
+            <VxTableBody>
               {categories.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={3} align="center">
-                    <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+                <VxTableRow>
+                  <VxTableCell colSpan={3} align="center">
+                    <VxTypography variant="body2" color="text.secondary" sx={{ py: 2 }}>
                       {t('config.productCategories.noRecords')}
-                    </Typography>
-                  </TableCell>
-                </TableRow>
+                    </VxTypography>
+                  </VxTableCell>
+                </VxTableRow>
               ) : (
                 categories.map((cat) => (
-                  <TableRow key={cat.id}>
-                    <TableCell>{cat.name}</TableCell>
-                    <TableCell>{cat.isActive ? t('common.yes') : t('common.no')}</TableCell>
-                    <TableCell align="right">
-                      <Tooltip title={t('common.edit')}>
-                        <IconButton
+                  <VxTableRow key={cat.id}>
+                    <VxTableCell>{cat.name}</VxTableCell>
+                    <VxTableCell>{cat.isActive ? t('common.yes') : t('common.no')}</VxTableCell>
+                    <VxTableCell align="right">
+                      <VxTooltip title={t('common.edit')}>
+                        <VxIconButton
                           size="small"
                           onClick={() => { setEditTarget(cat); setEditName(cat.name); setEditIsActive(cat.isActive) }}
                         >
                           <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title={t('common.delete')}>
-                        <IconButton size="small" color="error" onClick={() => setDeleteTarget(cat)}>
+                        </VxIconButton>
+                      </VxTooltip>
+                      <VxTooltip title={t('common.delete')}>
+                        <VxIconButton size="small" color="error" onClick={() => setDeleteTarget(cat)}>
                           <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
+                        </VxIconButton>
+                      </VxTooltip>
+                    </VxTableCell>
+                  </VxTableRow>
                 ))
               )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
+            </VxTableBody>
+          </VxTable>
+        </VxTableContainer>
+      </VxPaper>
 
-      {/* Create Dialog */}
-      <Dialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>{t('config.productCategories.createDialog.title')}</DialogTitle>
-        <DialogContent>
-          <TextField
+      {/* Create VxDialog */}
+      <VxDialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="xs" fullWidth>
+        <VxDialogTitle>{t('config.productCategories.createDialog.title')}</VxDialogTitle>
+        <VxDialogContent>
+          <VxTextField
             autoFocus
             size="small"
             label={t('config.productCategories.fields.name')}
@@ -210,21 +190,21 @@ export default function ConfigProductCategoriesPage() {
             sx={{ mt: 1 }}
             slotProps={{ htmlInput: { maxLength: 120 } }}
           />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCreateOpen(false)}>{t('common.cancel')}</Button>
-          <Button variant="contained" onClick={() => void handleCreate()} disabled={!createName.trim() || createLoading}>
+        </VxDialogContent>
+        <VxDialogActions>
+          <VxButton onClick={() => setCreateOpen(false)}>{t('common.cancel')}</VxButton>
+          <VxButton variant="contained" onClick={() => void handleCreate()} disabled={!createName.trim() || createLoading}>
             {t('common.create')}
-          </Button>
-        </DialogActions>
-      </Dialog>
+          </VxButton>
+        </VxDialogActions>
+      </VxDialog>
 
-      {/* Edit Dialog */}
-      <Dialog open={!!editTarget} onClose={() => setEditTarget(null)} maxWidth="xs" fullWidth>
-        <DialogTitle>{t('config.productCategories.editDialog.title')}</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField
+      {/* Edit VxDialog */}
+      <VxDialog open={!!editTarget} onClose={() => setEditTarget(null)} maxWidth="xs" fullWidth>
+        <VxDialogTitle>{t('config.productCategories.editDialog.title')}</VxDialogTitle>
+        <VxDialogContent>
+          <VxStack spacing={2} sx={{ mt: 1 }}>
+            <VxTextField
               autoFocus
               size="small"
               label={t('config.productCategories.fields.name')}
@@ -233,35 +213,35 @@ export default function ConfigProductCategoriesPage() {
               fullWidth
               slotProps={{ htmlInput: { maxLength: 120 } }}
             />
-            <Switch
+            <VxSwitch
               checked={editIsActive}
               onChange={(e) => setEditIsActive(e.target.checked)}
             />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setEditTarget(null)}>{t('common.cancel')}</Button>
-          <Button variant="contained" onClick={() => void handleEdit()} disabled={!editName.trim() || editLoading}>
+          </VxStack>
+        </VxDialogContent>
+        <VxDialogActions>
+          <VxButton onClick={() => setEditTarget(null)}>{t('common.cancel')}</VxButton>
+          <VxButton variant="contained" onClick={() => void handleEdit()} disabled={!editName.trim() || editLoading}>
             {t('common.save')}
-          </Button>
-        </DialogActions>
-      </Dialog>
+          </VxButton>
+        </VxDialogActions>
+      </VxDialog>
 
-      {/* Delete Dialog */}
-      <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
-        <DialogTitle>{t('config.productCategories.deleteDialog.title')}</DialogTitle>
-        <DialogContent>
-          <Typography>
+      {/* Delete VxDialog */}
+      <VxDialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
+        <VxDialogTitle>{t('config.productCategories.deleteDialog.title')}</VxDialogTitle>
+        <VxDialogContent>
+          <VxTypography>
             {t('config.productCategories.deleteDialog.message', { name: deleteTarget?.name })}
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
-          <Button variant="contained" color="error" onClick={() => void handleDelete()} disabled={deleteLoading}>
+          </VxTypography>
+        </VxDialogContent>
+        <VxDialogActions>
+          <VxButton onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</VxButton>
+          <VxButton variant="contained" color="error" onClick={() => void handleDelete()} disabled={deleteLoading}>
             {t('common.delete')}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Stack>
+          </VxButton>
+        </VxDialogActions>
+      </VxDialog>
+    </VxStack>
   )
 }

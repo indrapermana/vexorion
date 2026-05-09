@@ -1,5 +1,5 @@
 import { InsightsRoundedIcon, Inventory2RoundedIcon, PaidRoundedIcon, TrendingDownRoundedIcon, TrendingUpRoundedIcon } from '@vexorion/ui'
-import { Box, Grid, Paper, Stack, Typography } from '@vexorion/ui'
+import { VxBox, VxGrid, VxPaper, VxStack, VxTypography } from '@vexorion/ui'
 import type { TFunction } from 'i18next'
 import { useCurrency } from '../../../app/CurrencyContext'
 import type { FinanceDashboardSnapshotResponse } from '../../../types/api'
@@ -13,107 +13,107 @@ type DashboardKpiCardsProps = {
 export default function DashboardKpiCards({ t, snapshot, periodDays }: DashboardKpiCardsProps) {
   const { formatMoney } = useCurrency()
   return (
-    <Grid container spacing={2}>
-      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-        <Paper elevation={0} sx={{ p: 2.5, borderRadius: 2, backgroundColor: 'rgba(108, 92, 231, 0.08)' }}>
-          <Stack spacing={1.5}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <Box>
-                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+    <VxGrid container spacing={2}>
+      <VxGrid size={{ xs: 12, sm: 6, md: 3 }}>
+        <VxPaper elevation={0} sx={{ p: 2.5, borderRadius: 2, backgroundColor: 'rgba(108, 92, 231, 0.08)' }}>
+          <VxStack spacing={1.5}>
+            <VxBox sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <VxBox>
+                <VxTypography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
                   {t('dashboard.summary.openReceivables')}
-                </Typography>
-                <Typography variant="h5" sx={{ mt: 0.5 }}>
+                </VxTypography>
+                <VxTypography variant="h5" sx={{ mt: 0.5 }}>
                   {formatMoney(snapshot?.receivablesOpen ?? 0)}
-                </Typography>
-              </Box>
+                </VxTypography>
+              </VxBox>
               <PaidRoundedIcon sx={{ color: 'primary.main', fontSize: 28, opacity: 0.7 }} />
-            </Box>
+            </VxBox>
             {(snapshot?.receivablesOverdue ?? 0) > 0 && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <VxBox sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <TrendingDownRoundedIcon sx={{ fontSize: 18, color: 'warning.main' }} />
-                <Typography variant="caption" color="warning.main">
+                <VxTypography variant="caption" color="warning.main">
                   {t('dashboard.summary.overdueAmount', { amount: formatMoney(snapshot?.receivablesOverdue ?? 0) })}
-                </Typography>
-              </Box>
+                </VxTypography>
+              </VxBox>
             )}
-          </Stack>
-        </Paper>
-      </Grid>
+          </VxStack>
+        </VxPaper>
+      </VxGrid>
 
-      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-        <Paper elevation={0} sx={{ p: 2.5, borderRadius: 2, backgroundColor: 'rgba(160, 107, 213, 0.08)' }}>
-          <Stack spacing={1.5}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <Box>
-                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+      <VxGrid size={{ xs: 12, sm: 6, md: 3 }}>
+        <VxPaper elevation={0} sx={{ p: 2.5, borderRadius: 2, backgroundColor: 'rgba(160, 107, 213, 0.08)' }}>
+          <VxStack spacing={1.5}>
+            <VxBox sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <VxBox>
+                <VxTypography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
                   {t('dashboard.summary.openPayables')}
-                </Typography>
-                <Typography variant="h5" sx={{ mt: 0.5 }}>
+                </VxTypography>
+                <VxTypography variant="h5" sx={{ mt: 0.5 }}>
                   {formatMoney(snapshot?.payablesOpen ?? 0)}
-                </Typography>
-              </Box>
+                </VxTypography>
+              </VxBox>
               <Inventory2RoundedIcon sx={{ color: 'secondary.main', fontSize: 28, opacity: 0.7 }} />
-            </Box>
+            </VxBox>
             {(snapshot?.payablesOverdue ?? 0) > 0 && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <VxBox sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <TrendingDownRoundedIcon sx={{ fontSize: 18, color: 'warning.main' }} />
-                <Typography variant="caption" color="warning.main">
+                <VxTypography variant="caption" color="warning.main">
                   {t('dashboard.summary.overdueAmount', { amount: formatMoney(snapshot?.payablesOverdue ?? 0) })}
-                </Typography>
-              </Box>
+                </VxTypography>
+              </VxBox>
             )}
-          </Stack>
-        </Paper>
-      </Grid>
+          </VxStack>
+        </VxPaper>
+      </VxGrid>
 
-      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-        <Paper elevation={0} sx={{ p: 2.5, borderRadius: 2, backgroundColor: 'rgba(0, 170, 68, 0.08)' }}>
-          <Stack spacing={1.5}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <Box>
-                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+      <VxGrid size={{ xs: 12, sm: 6, md: 3 }}>
+        <VxPaper elevation={0} sx={{ p: 2.5, borderRadius: 2, backgroundColor: 'rgba(0, 170, 68, 0.08)' }}>
+          <VxStack spacing={1.5}>
+            <VxBox sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <VxBox>
+                <VxTypography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
                   {t('dashboard.summary.revenuePeriod', { days: periodDays })}
-                </Typography>
-                <Typography variant="h5" sx={{ mt: 0.5 }}>
+                </VxTypography>
+                <VxTypography variant="h5" sx={{ mt: 0.5 }}>
                   {formatMoney(snapshot?.revenueInPeriod ?? 0)}
-                </Typography>
-              </Box>
+                </VxTypography>
+              </VxBox>
               <InsightsRoundedIcon sx={{ color: 'success.main', fontSize: 28, opacity: 0.7 }} />
-            </Box>
+            </VxBox>
             {(snapshot?.revenueInPeriod ?? 0) > 0 && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <VxBox sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <TrendingUpRoundedIcon sx={{ fontSize: 18, color: 'success.main' }} />
-                <Typography variant="caption" color="success.main">
+                <VxTypography variant="caption" color="success.main">
                   {t('dashboard.summary.netCashAmount', { amount: formatMoney(snapshot?.netCashInPeriod ?? 0) })}
-                </Typography>
-              </Box>
+                </VxTypography>
+              </VxBox>
             )}
-          </Stack>
-        </Paper>
-      </Grid>
+          </VxStack>
+        </VxPaper>
+      </VxGrid>
 
-      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-        <Paper elevation={0} sx={{ p: 2.5, borderRadius: 2, backgroundColor: 'rgba(255, 153, 0, 0.08)' }}>
-          <Stack spacing={1.5}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <Box>
-                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+      <VxGrid size={{ xs: 12, sm: 6, md: 3 }}>
+        <VxPaper elevation={0} sx={{ p: 2.5, borderRadius: 2, backgroundColor: 'rgba(255, 153, 0, 0.08)' }}>
+          <VxStack spacing={1.5}>
+            <VxBox sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <VxBox>
+                <VxTypography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
                   {t('dashboard.summary.netCashFlow')}
-                </Typography>
-                <Typography variant="h5" sx={{ mt: 0.5 }}>
+                </VxTypography>
+                <VxTypography variant="h5" sx={{ mt: 0.5 }}>
                   {formatMoney(snapshot?.netCashInPeriod ?? 0)}
-                </Typography>
-              </Box>
+                </VxTypography>
+              </VxBox>
               <PaidRoundedIcon sx={{ color: 'warning.main', fontSize: 28, opacity: 0.7 }} />
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Typography variant="caption" color={(snapshot?.netCashInPeriod ?? 0) >= 0 ? 'success.main' : 'error.main'}>
+            </VxBox>
+            <VxBox sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <VxTypography variant="caption" color={(snapshot?.netCashInPeriod ?? 0) >= 0 ? 'success.main' : 'error.main'}>
                 {(snapshot?.netCashInPeriod ?? 0) >= 0 ? t('dashboard.summary.positiveFlow') : t('dashboard.summary.negativeFlow')}
-              </Typography>
-            </Box>
-          </Stack>
-        </Paper>
-      </Grid>
-    </Grid>
+              </VxTypography>
+            </VxBox>
+          </VxStack>
+        </VxPaper>
+      </VxGrid>
+    </VxGrid>
   )
 }

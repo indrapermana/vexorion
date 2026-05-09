@@ -1,11 +1,11 @@
-import { createTheme } from '@vexorion/ui'
+import { VxCreateTheme } from '@vexorion/ui'
 
 export type ThemeMode = 'light' | 'dark'
 
 export function createAppTheme(mode: ThemeMode) {
   const isDark = mode === 'dark'
 
-  return createTheme({
+  return VxCreateTheme({
     palette: {
       mode,
       primary: {

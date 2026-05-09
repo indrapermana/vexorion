@@ -1,4 +1,4 @@
-import { Alert, Box, Button, Stack, Typography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxStack, VxTypography } from '@vexorion/ui'
 import { lazy, useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { VxCard } from '@vexorion/ui'
@@ -68,32 +68,32 @@ export default function TenantManagementPage() {
   const activeTenants = tenants.filter((t) => t.isActive).length
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Stack spacing={3}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <Box>
-            <Typography variant="h4" sx={{ mb: 1 }}>
+    <VxBox sx={{ p: 3 }}>
+      <VxStack spacing={3}>
+        <VxBox sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <VxBox>
+            <VxTypography variant="h4" sx={{ mb: 1 }}>
               {t('pages.tenantManagement.loadingTools')}
-            </Typography>
-            <Typography variant="body2" color="textSecondary">
+            </VxTypography>
+            <VxTypography variant="body2" color="textSecondary">
               {t('pages.tenantManagement.description')}
-            </Typography>
-          </Box>
-          <Button variant="contained" onClick={() => setIsOnboardingOpen(true)}>
+            </VxTypography>
+          </VxBox>
+          <VxButton variant="contained" onClick={() => setIsOnboardingOpen(true)}>
             New Tenant
-          </Button>
-        </Box>
+          </VxButton>
+        </VxBox>
 
-        <Stack direction="row" spacing={2}>
+        <VxStack direction="row" spacing={2}>
           <VxCard title={t('pages.tenantManagement.metrics.rows')} className="panel-card" style={{ flex: 1 }}>
-            <Typography variant="h5">{tenants.length}</Typography>
+            <VxTypography variant="h5">{tenants.length}</VxTypography>
           </VxCard>
           <VxCard title={t('pages.tenantManagement.metrics.active')} className="panel-card" style={{ flex: 1 }}>
-            <Typography variant="h5">{activeTenants}</Typography>
+            <VxTypography variant="h5">{activeTenants}</VxTypography>
           </VxCard>
-        </Stack>
+        </VxStack>
 
-        {error && <Alert severity="error">{error}</Alert>}
+        {error && <VxAlert severity="error">{error}</VxAlert>}
 
         <TenantDataGrid rows={tenants} isLoading={isLoading} onEdit={handleEdit} onRemove={handleTenantRemove} />
 
@@ -109,7 +109,7 @@ export default function TenantManagementPage() {
           onClose={() => setIsOnboardingOpen(false)}
           onCreated={handleTenantCreated}
         />
-      </Stack>
-    </Box>
+      </VxStack>
+    </VxBox>
   )
 }

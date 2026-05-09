@@ -1,6 +1,6 @@
 import './App.css'
 import { Suspense, lazy } from 'react'
-import { Alert } from '@vexorion/ui'
+import { VxAlert } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './app/AuthContext'
@@ -43,7 +43,7 @@ const VendorPaymentsPage = lazy(() => import('./pages/VendorPaymentsPage'))
 const WarehousesPage = lazy(() => import('./pages/WarehousesPage'))
 
 function RouteFallback() {
-  return <Alert severity="info">Loading workspace...</Alert>
+  return <VxAlert severity="info">Loading workspace...</VxAlert>
 }
 
 function App() {

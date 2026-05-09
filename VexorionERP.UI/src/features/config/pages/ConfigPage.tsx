@@ -1,5 +1,5 @@
 import { OpenInNewRoundedIcon } from '@vexorion/ui'
-import { Box, IconButton, Paper, Stack, Tooltip, Typography } from '@vexorion/ui'
+import { VxBox, VxIconButton, VxPaper, VxStack, VxTooltip, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
 
@@ -52,15 +52,15 @@ export default function ConfigPage() {
   const { t } = useTranslation()
 
   return (
-    <Stack spacing={3}>
-      <Paper elevation={0} className="panel-card">
-        <Typography variant="h4" sx={{ mb: 1 }}>{t('configCenter.title')}</Typography>
-        <Typography color="text.secondary">
+    <VxStack spacing={3}>
+      <VxPaper elevation={0} className="panel-card">
+        <VxTypography variant="h4" sx={{ mb: 1 }}>{t('configCenter.title')}</VxTypography>
+        <VxTypography color="text.secondary">
           {t('configCenter.subtitle')}
-        </Typography>
-      </Paper>
+        </VxTypography>
+      </VxPaper>
 
-      <Box
+      <VxBox
         sx={{
           display: 'grid',
           gap: 2,
@@ -71,7 +71,7 @@ export default function ConfigPage() {
         }}
       >
         {configCards.map((item) => (
-          <Paper
+          <VxPaper
             key={item.to}
             elevation={0}
             className="panel-card"
@@ -81,11 +81,11 @@ export default function ConfigPage() {
               minHeight: 150,
             }}
           >
-            <Stack spacing={1.5} sx={{ height: '100%' }}>
-              <Stack direction="row" sx={{ alignItems: 'start', justifyContent: 'space-between' }}>
-                <Typography variant="h6" sx={{ fontSize: '1.02rem', pr: 1 }}>{t(item.titleKey)}</Typography>
-                <Tooltip title={t('configCenter.openSetting')}>
-                  <IconButton
+            <VxStack spacing={1.5} sx={{ height: '100%' }}>
+              <VxStack direction="row" sx={{ alignItems: 'start', justifyContent: 'space-between' }}>
+                <VxTypography variant="h6" sx={{ fontSize: '1.02rem', pr: 1 }}>{t(item.titleKey)}</VxTypography>
+                <VxTooltip title={t('configCenter.openSetting')}>
+                  <VxIconButton
                     component={RouterLink}
                     to={item.to}
                     size="small"
@@ -93,14 +93,14 @@ export default function ConfigPage() {
                     sx={{ mt: -0.5, mr: -0.5 }}
                   >
                     <OpenInNewRoundedIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              </Stack>
-              <Typography variant="body2" color="text.secondary">{t(item.descriptionKey)}</Typography>
-            </Stack>
-          </Paper>
+                  </VxIconButton>
+                </VxTooltip>
+              </VxStack>
+              <VxTypography variant="body2" color="text.secondary">{t(item.descriptionKey)}</VxTypography>
+            </VxStack>
+          </VxPaper>
         ))}
-      </Box>
-    </Stack>
+      </VxBox>
+    </VxStack>
   )
 }

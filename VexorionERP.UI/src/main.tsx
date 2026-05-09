@@ -1,6 +1,6 @@
 import { StrictMode, useEffect, useMemo, useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { CssBaseline, ThemeProvider } from '@vexorion/ui'
+import { VxCssBaseline, VxThemeProvider } from '@vexorion/ui'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import './index.css'
@@ -39,10 +39,10 @@ function Root() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeModeProvider value={{ mode: themeMode, setMode: setThemeMode }}>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
+        <VxThemeProvider theme={theme}>
+          <VxCssBaseline />
           <App />
-        </ThemeProvider>
+        </VxThemeProvider>
       </ThemeModeProvider>
     </QueryClientProvider>
   )

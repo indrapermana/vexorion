@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, Stack, Switch, TextField } from '@vexorion/ui'
+import { VxAlert, VxButton, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxFormControlLabel, VxStack, VxSwitch, VxTextField } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
@@ -110,52 +110,52 @@ export default function FiscalPeriodEditorDialog({ open, mode, fiscalPeriodId, o
   })
 
   return (
-    <Dialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="sm">
-      <DialogTitle>{title}</DialogTitle>
-      <DialogContent dividers>
-        <Stack spacing={2.5} sx={{ pt: 1 }}>
-          {submitError ? <Alert severity="error">{submitError}</Alert> : null}
+    <VxDialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="sm">
+      <VxDialogTitle>{title}</VxDialogTitle>
+      <VxDialogContent dividers>
+        <VxStack spacing={2.5} sx={{ pt: 1 }}>
+          {submitError ? <VxAlert severity="error">{submitError}</VxAlert> : null}
 
           <Controller
             name="periodCode"
             control={control}
             render={({ field }) => (
-              <TextField {...field} fullWidth label="Period code" error={Boolean(errors.periodCode)} helperText={errors.periodCode?.message} disabled={isLoading} />
+              <VxTextField {...field} fullWidth label="Period code" error={Boolean(errors.periodCode)} helperText={errors.periodCode?.message} disabled={isLoading} />
             )}
           />
 
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+          <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
             <Controller
               name="startDate"
               control={control}
               render={({ field }) => (
-                <TextField {...field} fullWidth type="date" label="Start date" slotProps={{ inputLabel: { shrink: true } }} error={Boolean(errors.startDate)} helperText={errors.startDate?.message} disabled={isLoading} />
+                <VxTextField {...field} fullWidth type="date" label="Start date" slotProps={{ inputLabel: { shrink: true } }} error={Boolean(errors.startDate)} helperText={errors.startDate?.message} disabled={isLoading} />
               )}
             />
             <Controller
               name="endDate"
               control={control}
               render={({ field }) => (
-                <TextField {...field} fullWidth type="date" label="End date" slotProps={{ inputLabel: { shrink: true } }} error={Boolean(errors.endDate)} helperText={errors.endDate?.message} disabled={isLoading} />
+                <VxTextField {...field} fullWidth type="date" label="End date" slotProps={{ inputLabel: { shrink: true } }} error={Boolean(errors.endDate)} helperText={errors.endDate?.message} disabled={isLoading} />
               )}
             />
-          </Stack>
+          </VxStack>
 
           <Controller
             name="isClosed"
             control={control}
             render={({ field }) => (
-              <FormControlLabel control={<Switch checked={field.value} onChange={(_, checked) => field.onChange(checked)} />} label="Closed" />
+              <VxFormControlLabel control={<VxSwitch checked={field.value} onChange={(_, checked) => field.onChange(checked)} />} label="Closed" />
             )}
           />
-        </Stack>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose} disabled={isSubmitting}>Cancel</Button>
-        <Button onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoading}>
+        </VxStack>
+      </VxDialogContent>
+      <VxDialogActions sx={{ px: 3, py: 2 }}>
+        <VxButton onClick={onClose} disabled={isSubmitting}>Cancel</VxButton>
+        <VxButton onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoading}>
           {isSubmitting ? 'Saving...' : mode === 'create' ? 'Create period' : 'Save changes'}
-        </Button>
-      </DialogActions>
-    </Dialog>
+        </VxButton>
+      </VxDialogActions>
+    </VxDialog>
   )
 }

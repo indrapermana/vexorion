@@ -1,8 +1,4 @@
-import {
-  Box,
-  Chip,
-  Typography,
-} from '@vexorion/ui'
+import { VxBox, VxChip, VxTypography } from '@vexorion/ui'
 import { DeleteOutlineRoundedIcon, EditRoundedIcon, VxDataGrid, VxGridActionsCellItem, type VxGridColDef } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import type { CustomerGridRow } from '../../../types/ui'
@@ -23,10 +19,10 @@ export default function CustomerDataGrid({ rows, isLoading, onEdit, onDelete }: 
       flex: 1.2,
       minWidth: 220,
       renderCell: ({ row }) => (
-        <Box sx={{ py: 1 }}>
-          <Typography sx={{ fontWeight: 700 }}>{row.name}</Typography>
-          <Typography variant="body2" color="text.secondary">{t('components.customers.grid.numberPrefix')} {row.customerNumber}</Typography>
-        </Box>
+        <VxBox sx={{ py: 1 }}>
+          <VxTypography sx={{ fontWeight: 700 }}>{row.name}</VxTypography>
+          <VxTypography variant="body2" color="text.secondary">{t('components.customers.grid.numberPrefix')} {row.customerNumber}</VxTypography>
+        </VxBox>
       ),
     },
     {
@@ -35,7 +31,7 @@ export default function CustomerDataGrid({ rows, isLoading, onEdit, onDelete }: 
       minWidth: 220,
       flex: 1,
       renderCell: ({ value }) => (
-        <Typography variant="body2" color="text.secondary">{value || t('components.customers.grid.noEmail')}</Typography>
+        <VxTypography variant="body2" color="text.secondary">{value || t('components.customers.grid.noEmail')}</VxTypography>
       ),
     },
     {
@@ -45,7 +41,7 @@ export default function CustomerDataGrid({ rows, isLoading, onEdit, onDelete }: 
       flex: 0.7,
       sortable: false,
       renderCell: ({ value }) => (
-        <Chip
+        <VxChip
           size="small"
           color={value ? 'primary' : 'default'}
           label={value ? t('components.customers.grid.active') : t('components.customers.grid.inactive')}

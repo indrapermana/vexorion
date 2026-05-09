@@ -1,12 +1,12 @@
-import { Box, CircularProgress } from '@vexorion/ui'
+import { VxBox, VxCircularProgress } from '@vexorion/ui'
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '../app/AuthContext'
 
 function RouteGuardLoading() {
   return (
-    <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>
-      <CircularProgress size={28} />
-    </Box>
+    <VxBox sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>
+      <VxCircularProgress size={28} />
+    </VxBox>
   )
 }
 

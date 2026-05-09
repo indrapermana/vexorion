@@ -1,4 +1,4 @@
-import { Alert } from '@vexorion/ui'
+import { VxAlert } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../app/AuthContext'
@@ -9,7 +9,7 @@ export function ProtectedRoute() {
   const { isAuthenticated, isLoading } = useAuth()
 
   if (isLoading) {
-    return <Alert severity="info">{t('routeGuards.checkingSession')}</Alert>
+    return <VxAlert severity="info">{t('routeGuards.checkingSession')}</VxAlert>
   }
 
   if (!isAuthenticated) {
@@ -24,7 +24,7 @@ export function PublicOnlyRoute() {
   const { isAuthenticated, isLoading } = useAuth()
 
   if (isLoading) {
-    return <Alert severity="info">{t('routeGuards.loadingWorkspace')}</Alert>
+    return <VxAlert severity="info">{t('routeGuards.loadingWorkspace')}</VxAlert>
   }
 
   if (isAuthenticated) {

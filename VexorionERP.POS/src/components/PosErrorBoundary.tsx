@@ -1,5 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
-import { Alert, Box, Button, Stack, Typography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxStack, VxTypography } from '@vexorion/ui'
 import { RefreshRoundedIcon } from '@vexorion/ui'
 import { posLogger } from '../lib/posLogger'
 
@@ -35,7 +35,7 @@ export class PosErrorBoundary extends Component<Props, State> {
   override render() {
     if (this.state.error) {
       return (
-        <Box
+        <VxBox
           sx={{
             display: 'flex',
             alignItems: 'center',
@@ -44,32 +44,32 @@ export class PosErrorBoundary extends Component<Props, State> {
             p: 4,
           }}
         >
-          <Stack spacing={3} sx={{ maxWidth: 520, width: '100%' }}>
-            <Alert severity="error" variant="filled">
-              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+          <VxStack spacing={3} sx={{ maxWidth: 520, width: '100%' }}>
+            <VxAlert severity="error" variant="filled">
+              <VxTypography variant="subtitle1" sx={{ fontWeight: 600 }}>
                 Something went wrong
-              </Typography>
-              <Typography variant="body2" sx={{ mt: 0.5 }}>
+              </VxTypography>
+              <VxTypography variant="body2" sx={{ mt: 0.5 }}>
                 An unexpected error occurred in the POS application. Your last transaction data is
                 preserved. Reload the page to recover.
-              </Typography>
-            </Alert>
+              </VxTypography>
+            </VxAlert>
 
-            <Box sx={{ bgcolor: 'action.hover', borderRadius: 1, p: 2 }}>
-              <Typography variant="caption" component="pre" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+            <VxBox sx={{ bgcolor: 'action.hover', borderRadius: 1, p: 2 }}>
+              <VxTypography variant="caption" component="pre" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
                 {this.state.error.message}
-              </Typography>
-            </Box>
+              </VxTypography>
+            </VxBox>
 
-            <Button
+            <VxButton
               variant="contained"
               startIcon={<RefreshRoundedIcon />}
               onClick={this.handleReload}
             >
               Reload POS
-            </Button>
-          </Stack>
-        </Box>
+            </VxButton>
+          </VxStack>
+        </VxBox>
       )
     }
 

@@ -1,16 +1,6 @@
 import { useState } from 'react'
 import { LockOpenRoundedIcon } from '@vexorion/ui'
-import {
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  InputAdornment,
-  Stack,
-  TextField,
-  Typography,
-} from '@vexorion/ui'
+import { VxButton, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxInputAdornment, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
 import { useI18n } from '../../app/I18nContext'
 
 type Props = {
@@ -37,17 +27,17 @@ export function ShiftOpenDialog({ open, currencyCode, cashierName, onOpen }: Pro
   }
 
   return (
-    <Dialog open={open} maxWidth="xs" fullWidth>
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+    <VxDialog open={open} maxWidth="xs" fullWidth>
+      <VxDialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <LockOpenRoundedIcon color="primary" />
         {t('shift.open.title')}
-      </DialogTitle>
-      <DialogContent>
-        <Stack spacing={2} sx={{ pt: 1 }}>
-          <Typography variant="body2" color="text.secondary">
+      </VxDialogTitle>
+      <VxDialogContent>
+        <VxStack spacing={2} sx={{ pt: 1 }}>
+          <VxTypography variant="body2" color="text.secondary">
             {cashierName} — {t('shift.open.hint')}
-          </Typography>
-          <TextField
+          </VxTypography>
+          <VxTextField
             autoFocus
             label={t('shift.open.float')}
             type="number"
@@ -56,19 +46,19 @@ export function ShiftOpenDialog({ open, currencyCode, cashierName, onOpen }: Pro
             onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit() }}
             slotProps={{
               htmlInput: { min: 0, step: 0.01 },
-              input: { startAdornment: <InputAdornment position="start">{currencyCode}</InputAdornment> },
+              input: { startAdornment: <VxInputAdornment position="start">{currencyCode}</VxInputAdornment> },
             }}
             error={inputError !== null}
             helperText={inputError ?? ' '}
             fullWidth
           />
-        </Stack>
-      </DialogContent>
-      <DialogActions>
-        <Button variant="contained" onClick={handleSubmit}>
+        </VxStack>
+      </VxDialogContent>
+      <VxDialogActions>
+        <VxButton variant="contained" onClick={handleSubmit}>
           {t('shift.open.submit')}
-        </Button>
-      </DialogActions>
-    </Dialog>
+        </VxButton>
+      </VxDialogActions>
+    </VxDialog>
   )
 }

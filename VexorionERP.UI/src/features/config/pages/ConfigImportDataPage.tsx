@@ -1,22 +1,5 @@
 import { CheckCircleOutlineRoundedIcon, CloudUploadRoundedIcon, DownloadRoundedIcon, ErrorOutlineRoundedIcon, FileUploadRoundedIcon, SendRoundedIcon } from '@vexorion/ui'
-import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  CircularProgress,
-  Divider,
-  Paper,
-  Stack,
-  Tab,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Tabs,
-  Typography,
-} from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxChip, VxCircularProgress, VxDivider, VxPaper, VxStack, VxTab, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTabs, VxTypography } from '@vexorion/ui'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -159,48 +142,48 @@ function ImportFlowPanel({ importType, onSubmitted }: ImportFlowPanelProps) {
   }
 
   return (
-    <Stack spacing={3}>
+    <VxStack spacing={3}>
       {/* Step 1: Download Template */}
-      <Paper elevation={0} className="panel-card" sx={{ p: 2.5 }}>
-        <Stack spacing={1.5}>
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+      <VxPaper elevation={0} className="panel-card" sx={{ p: 2.5 }}>
+        <VxStack spacing={1.5}>
+          <VxStack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
             <DownloadRoundedIcon color="action" />
-            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+            <VxTypography variant="subtitle1" sx={{ fontWeight: 600 }}>
               {t('config.importData.steps.downloadTemplate')}
-            </Typography>
-          </Stack>
-          <Typography variant="body2" color="text.secondary">
+            </VxTypography>
+          </VxStack>
+          <VxTypography variant="body2" color="text.secondary">
             {t('config.importData.steps.downloadTemplateDesc')}
-          </Typography>
-          <Box>
-            <Button
+          </VxTypography>
+          <VxBox>
+            <VxButton
               variant="outlined"
-              startIcon={flow.phase === 'downloading' ? <CircularProgress size={16} /> : <DownloadRoundedIcon />}
+              startIcon={flow.phase === 'downloading' ? <VxCircularProgress size={16} /> : <DownloadRoundedIcon />}
               onClick={handleDownloadTemplate}
               disabled={flow.phase === 'downloading' || flow.phase === 'validating' || flow.phase === 'submitting'}
               size="small"
             >
               {flow.phase === 'downloading' ? t('config.importData.downloading') : t('config.importData.downloadTemplate')}
-            </Button>
-          </Box>
-        </Stack>
-      </Paper>
+            </VxButton>
+          </VxBox>
+        </VxStack>
+      </VxPaper>
 
-      <Divider />
+      <VxDivider />
 
       {/* Step 2: Upload File */}
-      <Paper elevation={0} className="panel-card" sx={{ p: 2.5 }}>
-        <Stack spacing={1.5}>
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+      <VxPaper elevation={0} className="panel-card" sx={{ p: 2.5 }}>
+        <VxStack spacing={1.5}>
+          <VxStack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
             <CloudUploadRoundedIcon color="action" />
-            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+            <VxTypography variant="subtitle1" sx={{ fontWeight: 600 }}>
               {t('config.importData.steps.uploadFile')}
-            </Typography>
-          </Stack>
-          <Typography variant="body2" color="text.secondary">
+            </VxTypography>
+          </VxStack>
+          <VxTypography variant="body2" color="text.secondary">
             {t('config.importData.steps.uploadFileDesc')}
-          </Typography>
-          <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+          </VxTypography>
+          <VxStack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
             <input
               ref={fileInputRef}
               type="file"
@@ -210,7 +193,7 @@ function ImportFlowPanel({ importType, onSubmitted }: ImportFlowPanelProps) {
               id={`file-input-${importType}`}
             />
             <label htmlFor={`file-input-${importType}`}>
-              <Button
+              <VxButton
                 component="span"
                 variant="outlined"
                 startIcon={<FileUploadRoundedIcon />}
@@ -218,164 +201,164 @@ function ImportFlowPanel({ importType, onSubmitted }: ImportFlowPanelProps) {
                 disabled={flow.phase === 'validating' || flow.phase === 'submitting'}
               >
                 {t('config.importData.chooseFile')}
-              </Button>
+              </VxButton>
             </label>
             {selectedFile && (
-              <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+              <VxTypography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
                 {selectedFile.name}
-              </Typography>
+              </VxTypography>
             )}
-          </Stack>
+          </VxStack>
           {selectedFile && (
-            <Box>
-              <Button
+            <VxBox>
+              <VxButton
                 variant="contained"
-                startIcon={flow.phase === 'validating' ? <CircularProgress size={16} color="inherit" /> : <CheckCircleOutlineRoundedIcon />}
+                startIcon={flow.phase === 'validating' ? <VxCircularProgress size={16} color="inherit" /> : <CheckCircleOutlineRoundedIcon />}
                 onClick={handleValidate}
                 disabled={flow.phase === 'validating' || flow.phase === 'submitting'}
                 size="small"
               >
                 {flow.phase === 'validating' ? t('config.importData.validating') : t('config.importData.validate')}
-              </Button>
-            </Box>
+              </VxButton>
+            </VxBox>
           )}
-        </Stack>
-      </Paper>
+        </VxStack>
+      </VxPaper>
 
       {/* Validation Result */}
       {validationResult && (
         <>
-          <Divider />
-          <Paper elevation={0} className="panel-card" sx={{ p: 2.5 }}>
-            <Stack spacing={2}>
-              <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+          <VxDivider />
+          <VxPaper elevation={0} className="panel-card" sx={{ p: 2.5 }}>
+            <VxStack spacing={2}>
+              <VxStack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
                 {isValid
                   ? <CheckCircleOutlineRoundedIcon color="success" />
                   : <ErrorOutlineRoundedIcon color="error" />}
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                <VxTypography variant="subtitle1" sx={{ fontWeight: 600 }}>
                   {t('config.importData.steps.validationResult')}
-                </Typography>
-              </Stack>
+                </VxTypography>
+              </VxStack>
 
-              <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap' }}>
-                <Chip
+              <VxStack direction="row" spacing={2} sx={{ flexWrap: 'wrap' }}>
+                <VxChip
                   label={`${t('config.importData.totalRows')}: ${validationResult.totalRows}`}
                   size="small"
                 />
-                <Chip
+                <VxChip
                   color="success"
                   label={`${t('config.importData.validRows')}: ${validationResult.validRows}`}
                   size="small"
                 />
                 {validationResult.invalidRows > 0 && (
-                  <Chip
+                  <VxChip
                     color="error"
                     label={`${t('config.importData.invalidRows')}: ${validationResult.invalidRows}`}
                     size="small"
                   />
                 )}
-              </Stack>
+              </VxStack>
 
               {isValid && (
-                <Alert severity="success">{t('config.importData.allRowsValid')}</Alert>
+                <VxAlert severity="success">{t('config.importData.allRowsValid')}</VxAlert>
               )}
 
               {!isValid && validationResult.errors.length > 0 && (
-                <Stack spacing={1.5}>
+                <VxStack spacing={1.5}>
                   {validationResult.errorWorkbookContent && (
-                    <Box>
-                      <Button
+                    <VxBox>
+                      <VxButton
                         variant="outlined"
                         startIcon={<DownloadRoundedIcon />}
                         onClick={handleDownloadErrorWorkbook}
                         size="small"
                       >
                         {t('config.importData.downloadErrorWorkbook')}
-                      </Button>
-                    </Box>
+                      </VxButton>
+                    </VxBox>
                   )}
-                  <Box sx={{ overflowX: 'auto' }}>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>{t('config.importData.table.row')}</TableCell>
-                          <TableCell>{t('config.importData.table.column')}</TableCell>
-                          <TableCell>{t('config.importData.table.category')}</TableCell>
-                          <TableCell>{t('config.importData.table.message')}</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
+                  <VxBox sx={{ overflowX: 'auto' }}>
+                    <VxTable size="small">
+                      <VxTableHead>
+                        <VxTableRow>
+                          <VxTableCell>{t('config.importData.table.row')}</VxTableCell>
+                          <VxTableCell>{t('config.importData.table.column')}</VxTableCell>
+                          <VxTableCell>{t('config.importData.table.category')}</VxTableCell>
+                          <VxTableCell>{t('config.importData.table.message')}</VxTableCell>
+                        </VxTableRow>
+                      </VxTableHead>
+                      <VxTableBody>
                         {validationResult.errors.slice(0, 50).map((err, idx) => (
-                          <TableRow key={idx}>
-                            <TableCell>{err.rowNumber}</TableCell>
-                            <TableCell>{err.columnName}</TableCell>
-                            <TableCell>{err.category}</TableCell>
-                            <TableCell>{err.message}</TableCell>
-                          </TableRow>
+                          <VxTableRow key={idx}>
+                            <VxTableCell>{err.rowNumber}</VxTableCell>
+                            <VxTableCell>{err.columnName}</VxTableCell>
+                            <VxTableCell>{err.category}</VxTableCell>
+                            <VxTableCell>{err.message}</VxTableCell>
+                          </VxTableRow>
                         ))}
                         {validationResult.errors.length > 50 && (
-                          <TableRow>
-                            <TableCell colSpan={4} sx={{ textAlign: 'center', color: 'text.secondary', fontStyle: 'italic' }}>
+                          <VxTableRow>
+                            <VxTableCell colSpan={4} sx={{ textAlign: 'center', color: 'text.secondary', fontStyle: 'italic' }}>
                               {t('config.importData.moreErrors', { count: validationResult.errors.length - 50 })}
-                            </TableCell>
-                          </TableRow>
+                            </VxTableCell>
+                          </VxTableRow>
                         )}
-                      </TableBody>
-                    </Table>
-                  </Box>
-                </Stack>
+                      </VxTableBody>
+                    </VxTable>
+                  </VxBox>
+                </VxStack>
               )}
 
               {isValid && (
-                <Box>
-                  <Button
+                <VxBox>
+                  <VxButton
                     variant="contained"
                     color="success"
-                    startIcon={flow.phase === 'submitting' ? <CircularProgress size={16} color="inherit" /> : <SendRoundedIcon />}
+                    startIcon={flow.phase === 'submitting' ? <VxCircularProgress size={16} color="inherit" /> : <SendRoundedIcon />}
                     onClick={handleSubmit}
                     disabled={flow.phase === 'submitting'}
                     size="small"
                   >
                     {flow.phase === 'submitting' ? t('config.importData.submitting') : t('config.importData.submit')}
-                  </Button>
-                </Box>
+                  </VxButton>
+                </VxBox>
               )}
-            </Stack>
-          </Paper>
+            </VxStack>
+          </VxPaper>
         </>
       )}
 
       {/* Submitted */}
       {flow.phase === 'submitted' && (
-        <Alert
+        <VxAlert
           severity="success"
           action={
-            <Button color="inherit" size="small" onClick={reset}>
+            <VxButton color="inherit" size="small" onClick={reset}>
               {t('config.importData.importAnother')}
-            </Button>
+            </VxButton>
           }
         >
           {t('config.importData.submitSuccess', {
             status: getJobStatusLabel(flow.jobStatus.status),
             jobId: flow.jobStatus.importJobId,
           })}
-        </Alert>
+        </VxAlert>
       )}
 
       {/* Error */}
       {flow.phase === 'error' && (
-        <Alert
+        <VxAlert
           severity="error"
           action={
-            <Button color="inherit" size="small" onClick={reset}>
+            <VxButton color="inherit" size="small" onClick={reset}>
               {t('common.retry')}
-            </Button>
+            </VxButton>
           }
         >
           {flow.message}
-        </Alert>
+        </VxAlert>
       )}
-    </Stack>
+    </VxStack>
   )
 }
 
@@ -398,14 +381,14 @@ export default function ConfigImportDataPage() {
   const activeImportType = importTypes[selectedTab]?.importType ?? ''
 
   return (
-    <Stack spacing={3}>
-      <Paper elevation={0} className="panel-card">
-        <Typography variant="h5" sx={{ mb: 1 }}>{t('config.importData.title')}</Typography>
-        <Typography color="text.secondary">{t('config.importData.description')}</Typography>
-      </Paper>
+    <VxStack spacing={3}>
+      <VxPaper elevation={0} className="panel-card">
+        <VxTypography variant="h5" sx={{ mb: 1 }}>{t('config.importData.title')}</VxTypography>
+        <VxTypography color="text.secondary">{t('config.importData.description')}</VxTypography>
+      </VxPaper>
 
-      <Paper elevation={0} className="panel-card" sx={{ p: 0 }}>
-        <Tabs
+      <VxPaper elevation={0} className="panel-card" sx={{ p: 0 }}>
+        <VxTabs
           value={selectedTab}
           onChange={(_, v: number) => setSelectedTab(v)}
           variant="scrollable"
@@ -413,14 +396,14 @@ export default function ConfigImportDataPage() {
           sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}
         >
           {importTypes.map((dt) => (
-            <Tab
+            <VxTab
               key={dt.importType}
               label={t(`config.importData.entityTypes.${dt.importType}`, { defaultValue: dt.importType })}
             />
           ))}
-        </Tabs>
+        </VxTabs>
 
-        <Box sx={{ p: 3 }}>
+        <VxBox sx={{ p: 3 }}>
           {activeImportType && (
             <>
               <ImportFlowPanel
@@ -428,7 +411,7 @@ export default function ConfigImportDataPage() {
                 importType={activeImportType}
                 onSubmitted={() => setHistoryRefresh((n) => n + 1)}
               />
-              <Divider sx={{ my: 3 }} />
+              <VxDivider sx={{ my: 3 }} />
               <ImportHistoryPanel
                 key={`history-${activeImportType}`}
                 importType={activeImportType}
@@ -436,8 +419,8 @@ export default function ConfigImportDataPage() {
               />
             </>
           )}
-        </Box>
-      </Paper>
-    </Stack>
+        </VxBox>
+      </VxPaper>
+    </VxStack>
   )
 }

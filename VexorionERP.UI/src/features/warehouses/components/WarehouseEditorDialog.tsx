@@ -1,19 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormControlLabel,
-  Stack,
-  Switch,
-  TextField,
-  Typography,
-} from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxCircularProgress, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxFormControlLabel, VxStack, VxSwitch, VxTextField, VxTypography } from '@vexorion/ui'
 import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
@@ -149,33 +135,33 @@ export default function WarehouseEditorDialog({ open, mode, warehouseId, onClose
   })
 
   return (
-    <Dialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="sm">
-      <DialogTitle>{title}</DialogTitle>
-      <DialogContent dividers>
+    <VxDialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="sm">
+      <VxDialogTitle>{title}</VxDialogTitle>
+      <VxDialogContent dividers>
         {isLoadingWarehouse ? (
-          <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 220 }}><Stack spacing={1.5} sx={{ alignItems: 'center' }}><CircularProgress size={28} /><Typography color="text.secondary">{t('components.warehouses.editor.loading')}</Typography></Stack></Box>
+          <VxBox sx={{ display: 'grid', placeItems: 'center', minHeight: 220 }}><VxStack spacing={1.5} sx={{ alignItems: 'center' }}><VxCircularProgress size={28} /><VxTypography color="text.secondary">{t('components.warehouses.editor.loading')}</VxTypography></VxStack></VxBox>
         ) : (
-          <Stack spacing={2.5} sx={{ pt: 1 }}>
-            {submitError ? <Alert severity="error">{submitError}</Alert> : null}
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-              <Controller name="code" control={control} render={({ field }) => <TextField {...field} fullWidth label={t('components.warehouses.editor.fields.code')} error={Boolean(errors.code)} helperText={errors.code?.message} />} />
-              <Controller name="name" control={control} render={({ field }) => <TextField {...field} fullWidth label={t('components.warehouses.editor.fields.name')} error={Boolean(errors.name)} helperText={errors.name?.message} />} />
-            </Stack>
-            <Controller name="locationDescription" control={control} render={({ field }) => <TextField {...field} fullWidth multiline minRows={3} label={t('components.warehouses.editor.fields.locationDescription')} error={Boolean(errors.locationDescription)} helperText={errors.locationDescription?.message ?? t('components.warehouses.editor.optional')} />} />
+          <VxStack spacing={2.5} sx={{ pt: 1 }}>
+            {submitError ? <VxAlert severity="error">{submitError}</VxAlert> : null}
+            <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+              <Controller name="code" control={control} render={({ field }) => <VxTextField {...field} fullWidth label={t('components.warehouses.editor.fields.code')} error={Boolean(errors.code)} helperText={errors.code?.message} />} />
+              <Controller name="name" control={control} render={({ field }) => <VxTextField {...field} fullWidth label={t('components.warehouses.editor.fields.name')} error={Boolean(errors.name)} helperText={errors.name?.message} />} />
+            </VxStack>
+            <Controller name="locationDescription" control={control} render={({ field }) => <VxTextField {...field} fullWidth multiline minRows={3} label={t('components.warehouses.editor.fields.locationDescription')} error={Boolean(errors.locationDescription)} helperText={errors.locationDescription?.message ?? t('components.warehouses.editor.optional')} />} />
             {mode === 'edit' ? (
               <Controller
                 name="isActive"
                 control={control}
-                render={({ field }) => <FormControlLabel control={<Switch checked={field.value} onChange={(_, checked) => field.onChange(checked)} />} label={field.value ? t('components.warehouses.editor.active') : t('components.warehouses.editor.inactive')} />}
+                render={({ field }) => <VxFormControlLabel control={<VxSwitch checked={field.value} onChange={(_, checked) => field.onChange(checked)} />} label={field.value ? t('components.warehouses.editor.active') : t('components.warehouses.editor.inactive')} />}
               />
             ) : null}
-          </Stack>
+          </VxStack>
         )}
-      </DialogContent>
-      <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose} disabled={isSubmitting}>{t('dialogs.cancel')}</Button>
-        <Button onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoadingWarehouse}>{isSubmitting ? t('components.warehouses.editor.saving') : mode === 'create' ? t('components.warehouses.editor.createAction') : t('components.warehouses.editor.saveAction')}</Button>
-      </DialogActions>
-    </Dialog>
+      </VxDialogContent>
+      <VxDialogActions sx={{ px: 3, py: 2 }}>
+        <VxButton onClick={onClose} disabled={isSubmitting}>{t('dialogs.cancel')}</VxButton>
+        <VxButton onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoadingWarehouse}>{isSubmitting ? t('components.warehouses.editor.saving') : mode === 'create' ? t('components.warehouses.editor.createAction') : t('components.warehouses.editor.saveAction')}</VxButton>
+      </VxDialogActions>
+    </VxDialog>
   )
 }

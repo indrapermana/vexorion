@@ -1,27 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AddRoundedIcon, AutoGraphRoundedIcon, CheckCircleRoundedIcon, DeleteOutlineRoundedIcon, EditRoundedIcon, FormatListBulletedRoundedIcon, Inventory2RoundedIcon } from '@vexorion/ui'
-import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  MenuItem,
-  Paper,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
-  Typography,
-} from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxChip, VxCircularProgress, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxMenuItem, VxPaper, VxStack, VxTable, VxTableBody, VxTableCell, VxTableContainer, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { useCurrency } from '../../../app/CurrencyContext'
@@ -419,185 +398,185 @@ export default function InventoryAdjustmentsPage() {
         ...(feedback ? [{ severity: 'success' as const, message: feedback }] : []),
       ]}
       grid={
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Adjustment #</TableCell>
-                <TableCell>Warehouse</TableCell>
-                <TableCell>Date</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Reason</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
+        <VxTableContainer>
+          <VxTable size="small">
+            <VxTableHead>
+              <VxTableRow>
+                <VxTableCell>Adjustment #</VxTableCell>
+                <VxTableCell>Warehouse</VxTableCell>
+                <VxTableCell>Date</VxTableCell>
+                <VxTableCell>Status</VxTableCell>
+                <VxTableCell>Reason</VxTableCell>
+                <VxTableCell align="right">Actions</VxTableCell>
+              </VxTableRow>
+            </VxTableHead>
+            <VxTableBody>
               {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={6}>
-                    <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 160 }}>
-                      <CircularProgress size={28} />
-                    </Box>
-                  </TableCell>
-                </TableRow>
+                <VxTableRow>
+                  <VxTableCell colSpan={6}>
+                    <VxBox sx={{ display: 'grid', placeItems: 'center', minHeight: 160 }}>
+                      <VxCircularProgress size={28} />
+                    </VxBox>
+                  </VxTableCell>
+                </VxTableRow>
               ) : null}
               {!isLoading && gridRows.map((row) => (
-                <TableRow key={row.id} hover selected={selectedAdjustment?.id === row.id}>
-                  <TableCell>{row.adjustmentNumber}</TableCell>
-                  <TableCell>{row.warehouseName ?? row.warehouseId}</TableCell>
-                  <TableCell>{row.adjustmentDate}</TableCell>
-                  <TableCell>{getDocumentStatusLabel(row.status)}</TableCell>
-                  <TableCell>{row.reason}</TableCell>
-                  <TableCell align="right">
-                    <Button size="small" startIcon={<FormatListBulletedRoundedIcon />} onClick={() => void loadDetails(row.id)}>Lines</Button>
-                    <Button size="small" startIcon={<EditRoundedIcon />} onClick={() => void openEditDialog(row)}>Edit</Button>
-                    <Button size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => setDeleteTarget(row)}>Delete</Button>
-                  </TableCell>
-                </TableRow>
+                <VxTableRow key={row.id} hover selected={selectedAdjustment?.id === row.id}>
+                  <VxTableCell>{row.adjustmentNumber}</VxTableCell>
+                  <VxTableCell>{row.warehouseName ?? row.warehouseId}</VxTableCell>
+                  <VxTableCell>{row.adjustmentDate}</VxTableCell>
+                  <VxTableCell>{getDocumentStatusLabel(row.status)}</VxTableCell>
+                  <VxTableCell>{row.reason}</VxTableCell>
+                  <VxTableCell align="right">
+                    <VxButton size="small" startIcon={<FormatListBulletedRoundedIcon />} onClick={() => void loadDetails(row.id)}>Lines</VxButton>
+                    <VxButton size="small" startIcon={<EditRoundedIcon />} onClick={() => void openEditDialog(row)}>Edit</VxButton>
+                    <VxButton size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => setDeleteTarget(row)}>Delete</VxButton>
+                  </VxTableCell>
+                </VxTableRow>
               ))}
               {!isLoading && gridRows.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6}>
-                    <Typography color="text.secondary">No inventory adjustments found.</Typography>
-                  </TableCell>
-                </TableRow>
+                <VxTableRow>
+                  <VxTableCell colSpan={6}>
+                    <VxTypography color="text.secondary">No inventory adjustments found.</VxTypography>
+                  </VxTableCell>
+                </VxTableRow>
               ) : null}
-            </TableBody>
-          </Table>
-        </TableContainer>
+            </VxTableBody>
+          </VxTable>
+        </VxTableContainer>
       }
       linesPanel={
-        <Paper elevation={0} className="panel-card">
+        <VxPaper elevation={0} className="panel-card">
           {!selectedAdjustment ? (
             <>
-              <Typography variant="h6" sx={{ mb: 1 }}>Adjustment lines</Typography>
-              <Typography color="text.secondary">Pick an inventory adjustment from the grid to manage its lines.</Typography>
+              <VxTypography variant="h6" sx={{ mb: 1 }}>Adjustment lines</VxTypography>
+              <VxTypography color="text.secondary">Pick an inventory adjustment from the grid to manage its lines.</VxTypography>
             </>
           ) : (
             <>
-              <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ justifyContent: 'space-between', mb: 2 }}>
-                <Box>
-                  <Typography variant="h6">Adjustment lines for {selectedAdjustment.adjustmentNumber}</Typography>
-                  <Typography color="text.secondary">Positive deltas increase stock. Negative deltas reduce stock.</Typography>
-                </Box>
-                <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateLine} disabled={selectedAdjustment.status !== 1 || products.length === 0}>Add line</Button>
-              </Stack>
-              <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 2 }}>
-                <Chip icon={<Inventory2RoundedIcon />} label={`Status: ${getDocumentStatusLabel(selectedAdjustment.status)}`} variant="outlined" color={selectedAdjustment.status === 4 ? 'success' : 'default'} />
-                <Chip icon={<AutoGraphRoundedIcon />} label={`Warehouse: ${warehouseNameById.get(selectedAdjustment.warehouseId) ?? selectedAdjustment.warehouseId}`} variant="outlined" color="primary" />
-              </Stack>
-              {selectedAdjustment.status !== 1 ? <Alert severity="info" sx={{ mb: 2 }}>Lines are locked once the document leaves Draft status.</Alert> : null}
-              {lineError ? <Alert severity="error" sx={{ mb: 2 }}>{lineError}</Alert> : null}
-              <TableContainer>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Product</TableCell>
-                      <TableCell align="right">On hand</TableCell>
-                      <TableCell align="right">Delta</TableCell>
-                      <TableCell align="right">Unit cost</TableCell>
-                      <TableCell align="right">Extended</TableCell>
-                      <TableCell>Reason</TableCell>
-                      <TableCell align="right">Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
+              <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ justifyContent: 'space-between', mb: 2 }}>
+                <VxBox>
+                  <VxTypography variant="h6">Adjustment lines for {selectedAdjustment.adjustmentNumber}</VxTypography>
+                  <VxTypography color="text.secondary">Positive deltas increase stock. Negative deltas reduce stock.</VxTypography>
+                </VxBox>
+                <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateLine} disabled={selectedAdjustment.status !== 1 || products.length === 0}>Add line</VxButton>
+              </VxStack>
+              <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 2 }}>
+                <VxChip icon={<Inventory2RoundedIcon />} label={`Status: ${getDocumentStatusLabel(selectedAdjustment.status)}`} variant="outlined" color={selectedAdjustment.status === 4 ? 'success' : 'default'} />
+                <VxChip icon={<AutoGraphRoundedIcon />} label={`Warehouse: ${warehouseNameById.get(selectedAdjustment.warehouseId) ?? selectedAdjustment.warehouseId}`} variant="outlined" color="primary" />
+              </VxStack>
+              {selectedAdjustment.status !== 1 ? <VxAlert severity="info" sx={{ mb: 2 }}>Lines are locked once the document leaves Draft status.</VxAlert> : null}
+              {lineError ? <VxAlert severity="error" sx={{ mb: 2 }}>{lineError}</VxAlert> : null}
+              <VxTableContainer>
+                <VxTable size="small">
+                  <VxTableHead>
+                    <VxTableRow>
+                      <VxTableCell>Product</VxTableCell>
+                      <VxTableCell align="right">On hand</VxTableCell>
+                      <VxTableCell align="right">Delta</VxTableCell>
+                      <VxTableCell align="right">Unit cost</VxTableCell>
+                      <VxTableCell align="right">Extended</VxTableCell>
+                      <VxTableCell>Reason</VxTableCell>
+                      <VxTableCell align="right">Actions</VxTableCell>
+                    </VxTableRow>
+                  </VxTableHead>
+                  <VxTableBody>
                     {selectedAdjustment.lines.map((line) => {
                       const product = productById.get(line.productId)
                       return (
-                        <TableRow key={line.id} hover>
-                          <TableCell>{product ? `${product.name} (${product.sku})` : line.productId}</TableCell>
-                          <TableCell align="right">{(balanceByProductId.get(line.productId) ?? 0).toFixed(2)}</TableCell>
-                          <TableCell align="right">{line.quantityDelta.toFixed(2)}</TableCell>
-                          <TableCell align="right">${line.unitCost.toFixed(2)}</TableCell>
-                          <TableCell align="right">${(line.quantityDelta * line.unitCost).toFixed(2)}</TableCell>
-                          <TableCell>{line.reason ?? '-'}</TableCell>
-                          <TableCell align="right">
-                            <Button size="small" startIcon={<EditRoundedIcon />} onClick={() => openEditLine(line)} disabled={selectedAdjustment.status !== 1}>Edit</Button>
-                            <Button size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => void deleteLine(line.id)} disabled={selectedAdjustment.status !== 1}>Delete</Button>
-                          </TableCell>
-                        </TableRow>
+                        <VxTableRow key={line.id} hover>
+                          <VxTableCell>{product ? `${product.name} (${product.sku})` : line.productId}</VxTableCell>
+                          <VxTableCell align="right">{(balanceByProductId.get(line.productId) ?? 0).toFixed(2)}</VxTableCell>
+                          <VxTableCell align="right">{line.quantityDelta.toFixed(2)}</VxTableCell>
+                          <VxTableCell align="right">${line.unitCost.toFixed(2)}</VxTableCell>
+                          <VxTableCell align="right">${(line.quantityDelta * line.unitCost).toFixed(2)}</VxTableCell>
+                          <VxTableCell>{line.reason ?? '-'}</VxTableCell>
+                          <VxTableCell align="right">
+                            <VxButton size="small" startIcon={<EditRoundedIcon />} onClick={() => openEditLine(line)} disabled={selectedAdjustment.status !== 1}>Edit</VxButton>
+                            <VxButton size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => void deleteLine(line.id)} disabled={selectedAdjustment.status !== 1}>Delete</VxButton>
+                          </VxTableCell>
+                        </VxTableRow>
                       )
                     })}
                     {selectedAdjustment.lines.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={7}>
-                          <Typography color="text.secondary">No lines yet.</Typography>
-                        </TableCell>
-                      </TableRow>
+                      <VxTableRow>
+                        <VxTableCell colSpan={7}>
+                          <VxTypography color="text.secondary">No lines yet.</VxTypography>
+                        </VxTableCell>
+                      </VxTableRow>
                     ) : null}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                  </VxTableBody>
+                </VxTable>
+              </VxTableContainer>
             </>
           )}
-        </Paper>
+        </VxPaper>
       }
       editor={
-        <Dialog open={editorOpen} onClose={editorLoading ? undefined : () => setEditorOpen(false)} fullWidth maxWidth="md">
-          <DialogTitle>{editorMode === 'create' ? 'Create inventory adjustment' : 'Edit inventory adjustment'}</DialogTitle>
-          <DialogContent dividers>
+        <VxDialog open={editorOpen} onClose={editorLoading ? undefined : () => setEditorOpen(false)} fullWidth maxWidth="md">
+          <VxDialogTitle>{editorMode === 'create' ? 'Create inventory adjustment' : 'Edit inventory adjustment'}</VxDialogTitle>
+          <VxDialogContent dividers>
             {editorLoading ? (
-              <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
-                <CircularProgress size={28} />
-              </Box>
+              <VxBox sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
+                <VxCircularProgress size={28} />
+              </VxBox>
             ) : (
-              <Stack spacing={2.5} sx={{ pt: 1 }}>
-                {editorError ? <Alert severity="error">{editorError}</Alert> : null}
-                {editorMode === 'create' ? <Alert severity="info">New inventory adjustments start in Draft status. Add lines before completing them.</Alert> : null}
-                <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-                  <TextField label="Adjustment number" value={editorForm.adjustmentNumber} onChange={(event) => setEditorForm((current) => ({ ...current, adjustmentNumber: event.target.value }))} fullWidth />
-                  <TextField label="Adjustment date" type="date" value={editorForm.adjustmentDate} onChange={(event) => setEditorForm((current) => ({ ...current, adjustmentDate: event.target.value }))} slotProps={{ inputLabel: { shrink: true } }} fullWidth />
-                </Stack>
+              <VxStack spacing={2.5} sx={{ pt: 1 }}>
+                {editorError ? <VxAlert severity="error">{editorError}</VxAlert> : null}
+                {editorMode === 'create' ? <VxAlert severity="info">New inventory adjustments start in Draft status. Add lines before completing them.</VxAlert> : null}
+                <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                  <VxTextField label="Adjustment number" value={editorForm.adjustmentNumber} onChange={(event) => setEditorForm((current) => ({ ...current, adjustmentNumber: event.target.value }))} fullWidth />
+                  <VxTextField label="Adjustment date" type="date" value={editorForm.adjustmentDate} onChange={(event) => setEditorForm((current) => ({ ...current, adjustmentDate: event.target.value }))} slotProps={{ inputLabel: { shrink: true } }} fullWidth />
+                </VxStack>
                 <LookupSelectField label="Warehouse" value={editorForm.warehouseId} onChange={(value) => setEditorForm((current) => ({ ...current, warehouseId: value }))} options={warehouses.map((warehouse) => ({ value: warehouse.id, label: `${warehouse.name} (${warehouse.code})` }))} disabled={!warehouses.length} emptyText="No warehouses available" />
-                <TextField label="Reason" value={editorForm.reason} onChange={(event) => setEditorForm((current) => ({ ...current, reason: event.target.value }))} fullWidth />
+                <VxTextField label="Reason" value={editorForm.reason} onChange={(event) => setEditorForm((current) => ({ ...current, reason: event.target.value }))} fullWidth />
                 {editorMode === 'edit' ? (
-                  <TextField select label="Status" value={editorForm.status} onChange={(event) => setEditorForm((current) => ({ ...current, status: Number(event.target.value) }))} fullWidth>
-                    {documentStatusOptions.map((option) => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}
-                  </TextField>
+                  <VxTextField select label="Status" value={editorForm.status} onChange={(event) => setEditorForm((current) => ({ ...current, status: Number(event.target.value) }))} fullWidth>
+                    {documentStatusOptions.map((option) => <VxMenuItem key={option.value} value={option.value}>{option.label}</VxMenuItem>)}
+                  </VxTextField>
                 ) : null}
-                <TextField label="Notes" value={editorForm.notes} onChange={(event) => setEditorForm((current) => ({ ...current, notes: event.target.value }))} multiline minRows={3} fullWidth />
-              </Stack>
+                <VxTextField label="Notes" value={editorForm.notes} onChange={(event) => setEditorForm((current) => ({ ...current, notes: event.target.value }))} multiline minRows={3} fullWidth />
+              </VxStack>
             )}
-          </DialogContent>
-          <DialogActions sx={{ px: 3, py: 2 }}>
-            <Button onClick={() => setEditorOpen(false)} disabled={editorLoading}>Cancel</Button>
-            <Button variant="contained" onClick={() => void saveEditor()} disabled={editorLoading || warehouses.length === 0}>{editorMode === 'create' ? 'Create adjustment' : 'Save changes'}</Button>
-          </DialogActions>
-        </Dialog>
+          </VxDialogContent>
+          <VxDialogActions sx={{ px: 3, py: 2 }}>
+            <VxButton onClick={() => setEditorOpen(false)} disabled={editorLoading}>Cancel</VxButton>
+            <VxButton variant="contained" onClick={() => void saveEditor()} disabled={editorLoading || warehouses.length === 0}>{editorMode === 'create' ? 'Create adjustment' : 'Save changes'}</VxButton>
+          </VxDialogActions>
+        </VxDialog>
       }
       deleteDialog={
         <>
-          <Dialog open={Boolean(deleteTarget)} onClose={isDeleting ? undefined : () => setDeleteTarget(null)} fullWidth maxWidth="xs">
-            <DialogTitle>Delete inventory adjustment</DialogTitle>
-            <DialogContent>
-              <Typography color="text.secondary">{deleteTarget ? `Delete ${deleteTarget.adjustmentNumber}? This action cannot be undone.` : 'Delete this inventory adjustment?'}</Typography>
-            </DialogContent>
-            <DialogActions sx={{ px: 3, py: 2 }}>
-              <Button onClick={() => setDeleteTarget(null)} disabled={isDeleting}>Cancel</Button>
-              <Button color="error" variant="contained" onClick={() => void handleDelete()} disabled={isDeleting}>{isDeleting ? 'Deleting...' : 'Delete'}</Button>
-            </DialogActions>
-          </Dialog>
-          <Dialog open={lineOpen} onClose={lineSaving ? undefined : () => setLineOpen(false)} fullWidth maxWidth="sm">
-            <DialogTitle>{lineMode === 'create' ? 'Add adjustment line' : 'Edit adjustment line'}</DialogTitle>
-            <DialogContent dividers>
-              <Stack spacing={2.5} sx={{ pt: 1 }}>
-                {!products.length ? <Alert severity="warning">Create products before adding adjustment lines.</Alert> : null}
-                {lineError ? <Alert severity="error">{lineError}</Alert> : null}
+          <VxDialog open={Boolean(deleteTarget)} onClose={isDeleting ? undefined : () => setDeleteTarget(null)} fullWidth maxWidth="xs">
+            <VxDialogTitle>Delete inventory adjustment</VxDialogTitle>
+            <VxDialogContent>
+              <VxTypography color="text.secondary">{deleteTarget ? `Delete ${deleteTarget.adjustmentNumber}? This action cannot be undone.` : 'Delete this inventory adjustment?'}</VxTypography>
+            </VxDialogContent>
+            <VxDialogActions sx={{ px: 3, py: 2 }}>
+              <VxButton onClick={() => setDeleteTarget(null)} disabled={isDeleting}>Cancel</VxButton>
+              <VxButton color="error" variant="contained" onClick={() => void handleDelete()} disabled={isDeleting}>{isDeleting ? 'Deleting...' : 'Delete'}</VxButton>
+            </VxDialogActions>
+          </VxDialog>
+          <VxDialog open={lineOpen} onClose={lineSaving ? undefined : () => setLineOpen(false)} fullWidth maxWidth="sm">
+            <VxDialogTitle>{lineMode === 'create' ? 'Add adjustment line' : 'Edit adjustment line'}</VxDialogTitle>
+            <VxDialogContent dividers>
+              <VxStack spacing={2.5} sx={{ pt: 1 }}>
+                {!products.length ? <VxAlert severity="warning">Create products before adding adjustment lines.</VxAlert> : null}
+                {lineError ? <VxAlert severity="error">{lineError}</VxAlert> : null}
                 <LookupSelectField label="Product" value={lineForm.productId} onChange={(value) => void handleLineProductChange(value)} options={products.map((product) => ({ value: product.id, label: `${product.name} (${product.sku})` }))} disabled={!products.length} emptyText="No products available" />
-                {lineAutofillHint ? <Typography variant="body2" color="text.secondary">{lineAutofillHint}</Typography> : null}
-                <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-                  <TextField label="Quantity delta" type="number" value={lineForm.quantityDelta} onChange={(event) => setLineForm((current) => ({ ...current, quantityDelta: event.target.value }))} helperText="Positive increases stock. Negative decreases stock." fullWidth />
-                  <TextField label="Unit cost" type="number" value={lineForm.unitCost} onChange={(event) => setLineForm((current) => ({ ...current, unitCost: event.target.value }))} fullWidth />
-                </Stack>
-                <TextField label="Line reason" value={lineForm.reason} onChange={(event) => setLineForm((current) => ({ ...current, reason: event.target.value }))} fullWidth />
-              </Stack>
-            </DialogContent>
-            <DialogActions sx={{ px: 3, py: 2 }}>
-              <Button onClick={() => setLineOpen(false)} disabled={lineSaving}>Cancel</Button>
-              <Button variant="contained" onClick={() => void saveLine()} disabled={lineSaving || !products.length}>{lineSaving ? 'Saving...' : lineMode === 'create' ? 'Add line' : 'Save line'}</Button>
-            </DialogActions>
-          </Dialog>
+                {lineAutofillHint ? <VxTypography variant="body2" color="text.secondary">{lineAutofillHint}</VxTypography> : null}
+                <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                  <VxTextField label="Quantity delta" type="number" value={lineForm.quantityDelta} onChange={(event) => setLineForm((current) => ({ ...current, quantityDelta: event.target.value }))} helperText="Positive increases stock. Negative decreases stock." fullWidth />
+                  <VxTextField label="Unit cost" type="number" value={lineForm.unitCost} onChange={(event) => setLineForm((current) => ({ ...current, unitCost: event.target.value }))} fullWidth />
+                </VxStack>
+                <VxTextField label="Line reason" value={lineForm.reason} onChange={(event) => setLineForm((current) => ({ ...current, reason: event.target.value }))} fullWidth />
+              </VxStack>
+            </VxDialogContent>
+            <VxDialogActions sx={{ px: 3, py: 2 }}>
+              <VxButton onClick={() => setLineOpen(false)} disabled={lineSaving}>Cancel</VxButton>
+              <VxButton variant="contained" onClick={() => void saveLine()} disabled={lineSaving || !products.length}>{lineSaving ? 'Saving...' : lineMode === 'create' ? 'Add line' : 'Save line'}</VxButton>
+            </VxDialogActions>
+          </VxDialog>
         </>
       }
     />

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Alert, Box, Button, Paper, Stack, Typography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxPaper, VxStack, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 
 type MetricCard = {
@@ -39,38 +39,38 @@ export default function OrderWorkspace({
 }: OrderWorkspaceProps) {
   useTranslation()
   return (
-    <Stack spacing={3}>
-      <Paper elevation={0} className="panel-card">
-        <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2.5} sx={{ justifyContent: 'space-between' }}>
-          <Box>
-            <Typography variant="h4" sx={{ mb: 1 }}>{title}</Typography>
-            <Typography color="text.secondary">{description}</Typography>
-          </Box>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
-            <Button variant="contained" onClick={onCreate} disabled={disableCreate}>{createLabel}</Button>
+    <VxStack spacing={3}>
+      <VxPaper elevation={0} className="panel-card">
+        <VxStack direction={{ xs: 'column', lg: 'row' }} spacing={2.5} sx={{ justifyContent: 'space-between' }}>
+          <VxBox>
+            <VxTypography variant="h4" sx={{ mb: 1 }}>{title}</VxTypography>
+            <VxTypography color="text.secondary">{description}</VxTypography>
+          </VxBox>
+          <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
+            <VxButton variant="contained" onClick={onCreate} disabled={disableCreate}>{createLabel}</VxButton>
             {metrics.map((metric) => (
-              <Paper key={metric.label} elevation={0} className="products-metric-card">
+              <VxPaper key={metric.label} elevation={0} className="products-metric-card">
                 {metric.icon}
-                <Box>
-                  <Typography variant="body2" color="text.secondary">{metric.label}</Typography>
-                  <Typography variant="h6">{metric.value}</Typography>
-                </Box>
-              </Paper>
+                <VxBox>
+                  <VxTypography variant="body2" color="text.secondary">{metric.label}</VxTypography>
+                  <VxTypography variant="h6">{metric.value}</VxTypography>
+                </VxBox>
+              </VxPaper>
             ))}
-          </Stack>
-        </Stack>
-      </Paper>
+          </VxStack>
+        </VxStack>
+      </VxPaper>
 
-      {alerts.map((alert) => <Alert key={`${alert.severity}:${alert.message}`} severity={alert.severity}>{alert.message}</Alert>)}
+      {alerts.map((alert) => <VxAlert key={`${alert.severity}:${alert.message}`} severity={alert.severity}>{alert.message}</VxAlert>)}
 
-      <Paper elevation={0} className="panel-card products-grid-panel">
+      <VxPaper elevation={0} className="panel-card products-grid-panel">
         {grid}
-      </Paper>
+      </VxPaper>
 
       {linesPanel}
       {documentsPanel}
       {editor}
       {deleteDialog}
-    </Stack>
+    </VxStack>
   )
 }

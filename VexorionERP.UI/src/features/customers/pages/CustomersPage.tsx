@@ -1,14 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
 import { AddRoundedIcon, Groups2RoundedIcon, MailOutlineRoundedIcon, MonetizationOnRoundedIcon } from '@vexorion/ui'
-import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  Paper,
-  Stack,
-  Typography,
-} from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxCircularProgress, VxPaper, VxStack, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { ApiError, deleteCustomer, getCustomers } from '../../../lib/api'
@@ -23,12 +15,12 @@ function CustomerSurfaceFallback() {
   const { t } = useTranslation()
 
   return (
-    <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
-      <Stack spacing={1.5} sx={{ alignItems: 'center' }}>
-        <CircularProgress size={28} />
-        <Typography color="text.secondary">{t('pages.customers.loadingTools')}</Typography>
-      </Stack>
-    </Box>
+    <VxBox sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
+      <VxStack spacing={1.5} sx={{ alignItems: 'center' }}>
+        <VxCircularProgress size={28} />
+        <VxTypography color="text.secondary">{t('pages.customers.loadingTools')}</VxTypography>
+      </VxStack>
+    </VxBox>
   )
 }
 
@@ -124,53 +116,53 @@ export default function CustomersPage() {
 
   if (!isAuthenticated) {
     return (
-      <Alert severity="info">{t('pages.customers.signInRequired')}</Alert>
+      <VxAlert severity="info">{t('pages.customers.signInRequired')}</VxAlert>
     )
   }
 
   return (
-    <Stack spacing={3}>
-      <Paper elevation={0} className="panel-card">
-        <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2.5} sx={{ justifyContent: 'space-between' }}>
-          <Box>
-            <Typography variant="h4" sx={{ mb: 1 }}>{t('nav.routeTitles.customers')}</Typography>
-            <Typography color="text.secondary">
+    <VxStack spacing={3}>
+      <VxPaper elevation={0} className="panel-card">
+        <VxStack direction={{ xs: 'column', lg: 'row' }} spacing={2.5} sx={{ justifyContent: 'space-between' }}>
+          <VxBox>
+            <VxTypography variant="h4" sx={{ mb: 1 }}>{t('nav.routeTitles.customers')}</VxTypography>
+            <VxTypography color="text.secondary">
               {t('pages.customers.description')}
-            </Typography>
-          </Box>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
-            <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog}>
+            </VxTypography>
+          </VxBox>
+          <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
+            <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog}>
               {t('pages.customers.newButton')}
-            </Button>
-            <Paper elevation={0} className="products-metric-card">
+            </VxButton>
+            <VxPaper elevation={0} className="products-metric-card">
               <Groups2RoundedIcon fontSize="small" />
-              <Box>
-                <Typography variant="body2" color="text.secondary">{t('pages.customers.metrics.rows')}</Typography>
-                <Typography variant="h6">{customers.length}</Typography>
-              </Box>
-            </Paper>
-            <Paper elevation={0} className="products-metric-card">
+              <VxBox>
+                <VxTypography variant="body2" color="text.secondary">{t('pages.customers.metrics.rows')}</VxTypography>
+                <VxTypography variant="h6">{customers.length}</VxTypography>
+              </VxBox>
+            </VxPaper>
+            <VxPaper elevation={0} className="products-metric-card">
               <MailOutlineRoundedIcon fontSize="small" />
-              <Box>
-                <Typography variant="body2" color="text.secondary">{t('pages.common.withEmail')}</Typography>
-                <Typography variant="h6">{customers.filter((customer) => Boolean(customer.email)).length}</Typography>
-              </Box>
-            </Paper>
-            <Paper elevation={0} className="products-metric-card">
+              <VxBox>
+                <VxTypography variant="body2" color="text.secondary">{t('pages.common.withEmail')}</VxTypography>
+                <VxTypography variant="h6">{customers.filter((customer) => Boolean(customer.email)).length}</VxTypography>
+              </VxBox>
+            </VxPaper>
+            <VxPaper elevation={0} className="products-metric-card">
               <MonetizationOnRoundedIcon fontSize="small" />
-              <Box>
-                <Typography variant="body2" color="text.secondary">{t('pages.customers.metrics.active')}</Typography>
-                <Typography variant="h6">{customers.filter((customer) => customer.isActive).length}</Typography>
-              </Box>
-            </Paper>
-          </Stack>
-        </Stack>
-      </Paper>
+              <VxBox>
+                <VxTypography variant="body2" color="text.secondary">{t('pages.customers.metrics.active')}</VxTypography>
+                <VxTypography variant="h6">{customers.filter((customer) => customer.isActive).length}</VxTypography>
+              </VxBox>
+            </VxPaper>
+          </VxStack>
+        </VxStack>
+      </VxPaper>
 
-      {error ? <Alert severity="error">{error}</Alert> : null}
-      {feedback ? <Alert severity="success">{feedback}</Alert> : null}
+      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
+      {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
 
-      <Paper elevation={0} className="panel-card products-grid-panel">
+      <VxPaper elevation={0} className="panel-card products-grid-panel">
         <Suspense fallback={<CustomerSurfaceFallback />}>
           <CustomerDataGrid
             rows={customers}
@@ -179,7 +171,7 @@ export default function CustomersPage() {
             onDelete={setDeleteTarget}
           />
         </Suspense>
-      </Paper>
+      </VxPaper>
 
       {isEditorOpen ? (
         <Suspense fallback={<CustomerSurfaceFallback />}>
@@ -204,6 +196,6 @@ export default function CustomersPage() {
           />
         </Suspense>
       ) : null}
-    </Stack>
+    </VxStack>
   )
 }

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, MenuItem, Stack, Switch, TextField } from '@vexorion/ui'
+import { VxAlert, VxButton, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxFormControlLabel, VxMenuItem, VxStack, VxSwitch, VxTextField } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
@@ -122,86 +122,86 @@ export default function AccountEditorDialog({ open, mode, accountId, onClose, on
   })
 
   return (
-    <Dialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="md">
-      <DialogTitle>{title}</DialogTitle>
-      <DialogContent dividers>
-        <Stack spacing={2.5} sx={{ pt: 1 }}>
-          {submitError ? <Alert severity="error">{submitError}</Alert> : null}
+    <VxDialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="md">
+      <VxDialogTitle>{title}</VxDialogTitle>
+      <VxDialogContent dividers>
+        <VxStack spacing={2.5} sx={{ pt: 1 }}>
+          {submitError ? <VxAlert severity="error">{submitError}</VxAlert> : null}
 
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+          <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
             <Controller
               name="code"
               control={control}
               render={({ field }) => (
-                <TextField {...field} fullWidth label="Code" error={Boolean(errors.code)} helperText={errors.code?.message} disabled={isLoading} />
+                <VxTextField {...field} fullWidth label="Code" error={Boolean(errors.code)} helperText={errors.code?.message} disabled={isLoading} />
               )}
             />
             <Controller
               name="name"
               control={control}
               render={({ field }) => (
-                <TextField {...field} fullWidth label="Name" error={Boolean(errors.name)} helperText={errors.name?.message} disabled={isLoading} />
+                <VxTextField {...field} fullWidth label="Name" error={Boolean(errors.name)} helperText={errors.name?.message} disabled={isLoading} />
               )}
             />
-          </Stack>
+          </VxStack>
 
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+          <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
             <Controller
               name="accountType"
               control={control}
               render={({ field }) => (
-                <TextField select fullWidth label="Account type" value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} disabled={isLoading}>
+                <VxTextField select fullWidth label="Account type" value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} disabled={isLoading}>
                   {accountTypeOptions.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
+                    <VxMenuItem key={option.value} value={option.value}>{option.label}</VxMenuItem>
                   ))}
-                </TextField>
+                </VxTextField>
               )}
             />
             <Controller
               name="normalBalance"
               control={control}
               render={({ field }) => (
-                <TextField select fullWidth label="Normal balance" value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} disabled={isLoading}>
+                <VxTextField select fullWidth label="Normal balance" value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} disabled={isLoading}>
                   {normalBalanceOptions.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
+                    <VxMenuItem key={option.value} value={option.value}>{option.label}</VxMenuItem>
                   ))}
-                </TextField>
+                </VxTextField>
               )}
             />
-          </Stack>
+          </VxStack>
 
           <Controller
             name="description"
             control={control}
             render={({ field }) => (
-              <TextField {...field} fullWidth label="Description" multiline minRows={3} error={Boolean(errors.description)} helperText={errors.description?.message ?? 'Optional'} disabled={isLoading} />
+              <VxTextField {...field} fullWidth label="Description" multiline minRows={3} error={Boolean(errors.description)} helperText={errors.description?.message ?? 'Optional'} disabled={isLoading} />
             )}
           />
 
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+          <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
             <Controller
               name="isPostingAllowed"
               control={control}
               render={({ field }) => (
-                <FormControlLabel control={<Switch checked={field.value} onChange={(_, checked) => field.onChange(checked)} />} label="Posting allowed" />
+                <VxFormControlLabel control={<VxSwitch checked={field.value} onChange={(_, checked) => field.onChange(checked)} />} label="Posting allowed" />
               )}
             />
             <Controller
               name="isActive"
               control={control}
               render={({ field }) => (
-                <FormControlLabel control={<Switch checked={field.value} onChange={(_, checked) => field.onChange(checked)} />} label="Active" />
+                <VxFormControlLabel control={<VxSwitch checked={field.value} onChange={(_, checked) => field.onChange(checked)} />} label="Active" />
               )}
             />
-          </Stack>
-        </Stack>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose} disabled={isSubmitting}>Cancel</Button>
-        <Button onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoading}>
+          </VxStack>
+        </VxStack>
+      </VxDialogContent>
+      <VxDialogActions sx={{ px: 3, py: 2 }}>
+        <VxButton onClick={onClose} disabled={isSubmitting}>Cancel</VxButton>
+        <VxButton onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoading}>
           {isSubmitting ? 'Saving...' : mode === 'create' ? 'Create account' : 'Save changes'}
-        </Button>
-      </DialogActions>
-    </Dialog>
+        </VxButton>
+      </VxDialogActions>
+    </VxDialog>
   )
 }

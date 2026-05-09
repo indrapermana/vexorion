@@ -1,4 +1,4 @@
-import { Box, Chip, Typography } from '@vexorion/ui'
+import { VxBox, VxChip, VxTypography } from '@vexorion/ui'
 import { DeleteOutlineRoundedIcon, EditRoundedIcon, VxDataGrid, VxGridActionsCellItem, type VxGridColDef } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import type { SupplierGridRow } from '../../../types/ui'
@@ -19,10 +19,10 @@ export default function SupplierDataGrid({ rows, isLoading, onEdit, onDelete }: 
       flex: 1.2,
       minWidth: 220,
       renderCell: ({ row }) => (
-        <Box sx={{ py: 1 }}>
-          <Typography sx={{ fontWeight: 700 }}>{row.name}</Typography>
-          <Typography variant="body2" color="text.secondary">{t('components.suppliers.grid.numberPrefix')} {row.supplierNumber}</Typography>
-        </Box>
+        <VxBox sx={{ py: 1 }}>
+          <VxTypography sx={{ fontWeight: 700 }}>{row.name}</VxTypography>
+          <VxTypography variant="body2" color="text.secondary">{t('components.suppliers.grid.numberPrefix')} {row.supplierNumber}</VxTypography>
+        </VxBox>
       ),
     },
     {
@@ -30,7 +30,7 @@ export default function SupplierDataGrid({ rows, isLoading, onEdit, onDelete }: 
       headerName: t('components.suppliers.grid.columns.email'),
       minWidth: 220,
       flex: 1,
-      renderCell: ({ value }) => <Typography variant="body2" color="text.secondary">{value || t('components.suppliers.grid.noEmail')}</Typography>,
+      renderCell: ({ value }) => <VxTypography variant="body2" color="text.secondary">{value || t('components.suppliers.grid.noEmail')}</VxTypography>,
     },
     {
       field: 'isActive',
@@ -39,7 +39,7 @@ export default function SupplierDataGrid({ rows, isLoading, onEdit, onDelete }: 
       flex: 0.7,
       sortable: false,
       renderCell: ({ value }) => (
-        <Chip size="small" color={value ? 'primary' : 'default'} label={value ? t('components.suppliers.grid.active') : t('components.suppliers.grid.inactive')} variant={value ? 'filled' : 'outlined'} />
+        <VxChip size="small" color={value ? 'primary' : 'default'} label={value ? t('components.suppliers.grid.active') : t('components.suppliers.grid.inactive')} variant={value ? 'filled' : 'outlined'} />
       ),
     },
     {

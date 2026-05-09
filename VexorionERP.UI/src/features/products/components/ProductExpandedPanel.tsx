@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Box, Tab, Tabs } from '@vexorion/ui'
+import { VxBox, VxTab, VxTabs } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import type { ProductGridRow } from '../../../types/ui'
 import ProductIdentifiersPanel from './ProductIdentifiersPanel'
@@ -14,17 +14,17 @@ export default function ProductExpandedPanel({ row }: ProductExpandedPanelProps)
   const [tab, setTab] = useState(0)
 
   return (
-    <Box>
-      <Tabs
+    <VxBox>
+      <VxTabs
         value={tab}
         onChange={(_, value: number) => setTab(value)}
         sx={{ px: 2, borderBottom: 1, borderColor: 'divider' }}
       >
-        <Tab label={t('components.products.grid.tabs.stock')} />
-        <Tab label={t('components.products.grid.tabs.identifiers')} />
-      </Tabs>
+        <VxTab label={t('components.products.grid.tabs.stock')} />
+        <VxTab label={t('components.products.grid.tabs.identifiers')} />
+      </VxTabs>
       {tab === 0 && <ProductStockPanel row={row} />}
       {tab === 1 && <ProductIdentifiersPanel productId={row.id} />}
-    </Box>
+    </VxBox>
   )
 }

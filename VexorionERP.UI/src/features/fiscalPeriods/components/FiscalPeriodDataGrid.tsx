@@ -1,5 +1,5 @@
 import { EditRoundedIcon, LockOpenRoundedIcon, LockRoundedIcon, VxDataGrid, VxGridActionsCellItem, type VxGridColDef } from '@vexorion/ui'
-import { Chip } from '@vexorion/ui'
+import { VxChip } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import type { FiscalPeriodGridRow } from '../../../types/ui'
 
@@ -23,7 +23,7 @@ export default function FiscalPeriodDataGrid({ rows, isLoading, onEdit, onCloseP
       minWidth: 120,
       flex: 0.4,
       renderCell: ({ row }) => (
-        <Chip size="small" color={row.isClosed ? 'default' : 'success'} label={row.isClosed ? 'Closed' : 'Open'} />
+        <VxChip size="small" color={row.isClosed ? 'default' : 'success'} label={row.isClosed ? 'Closed' : 'Open'} />
       ),
     },
     {

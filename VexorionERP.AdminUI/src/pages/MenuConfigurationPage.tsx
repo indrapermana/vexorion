@@ -1,4 +1,4 @@
-import { Alert, Box, Button, Chip, MenuItem, Paper, Stack, Switch, TextField, Typography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxChip, VxMenuItem, VxPaper, VxStack, VxSwitch, VxTextField, VxTypography } from '@vexorion/ui'
 import { useEffect, useMemo, useState } from 'react'
 import { getTenantMenuConfiguration, getTenants, updateTenantMenuConfiguration } from '../lib/api'
 import type { TenantListItemResponse } from '../types/api'
@@ -108,21 +108,21 @@ export default function MenuConfigurationPage() {
   }
 
   return (
-    <Stack spacing={2.5}>
-      <Paper className="hero-panel" elevation={0}>
-        <Stack spacing={1}>
-          <Typography variant="h5">Menu Configuration</Typography>
-          <Typography color="text.secondary">
+    <VxStack spacing={2.5}>
+      <VxPaper className="hero-panel" elevation={0}>
+        <VxStack spacing={1}>
+          <VxTypography variant="h5">Menu Configuration</VxTypography>
+          <VxTypography color="text.secondary">
             Enable or disable tenant app menus per tenant. Configuration is persisted in backend tenant preferences.
-          </Typography>
-        </Stack>
-      </Paper>
+          </VxTypography>
+        </VxStack>
+      </VxPaper>
 
-      {error ? <Alert severity="error">{error}</Alert> : null}
+      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
 
-      <Paper className="panel-card" elevation={0}>
-        <Stack spacing={2}>
-          <TextField
+      <VxPaper className="panel-card" elevation={0}>
+        <VxStack spacing={2}>
+          <VxTextField
             select
             label="Tenant"
             value={selectedTenantId}
@@ -130,46 +130,46 @@ export default function MenuConfigurationPage() {
             fullWidth
           >
             {tenants.map((tenant) => (
-              <MenuItem key={tenant.id} value={tenant.id}>
+              <VxMenuItem key={tenant.id} value={tenant.id}>
                 {tenant.name} ({tenant.code})
-              </MenuItem>
+              </VxMenuItem>
             ))}
-          </TextField>
+          </VxTextField>
 
           {selectedTenant ? (
-            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-              <Chip label={selectedTenant.isActive ? 'Active tenant' : 'Inactive tenant'} color={selectedTenant.isActive ? 'success' : 'default'} size="small" />
-              <Chip label={selectedTenant.domain ? `Domain: ${selectedTenant.domain}` : 'No custom domain'} size="small" />
-            </Stack>
+            <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+              <VxChip label={selectedTenant.isActive ? 'Active tenant' : 'Inactive tenant'} color={selectedTenant.isActive ? 'success' : 'default'} size="small" />
+              <VxChip label={selectedTenant.domain ? `Domain: ${selectedTenant.domain}` : 'No custom domain'} size="small" />
+            </VxStack>
           ) : null}
 
-          <Stack spacing={1}>
+          <VxStack spacing={1}>
             {tenantMenuItems.map((menuItem) => {
               const isEnabled = !hiddenMenus.includes(menuItem.key)
 
               return (
-                <Stack
+                <VxStack
                   key={menuItem.key}
                   direction="row"
                   sx={{ justifyContent: 'space-between', alignItems: 'center', p: 1.25, border: '1px solid rgba(108, 92, 231, 0.08)', borderRadius: 2 }}
                 >
-                  <Box>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{menuItem.label}</Typography>
-                    <Typography variant="caption" color="text.secondary">menu key: {menuItem.key}</Typography>
-                  </Box>
-                  <Switch checked={isEnabled} onChange={(_, checked) => toggleMenu(menuItem.key, checked)} />
-                </Stack>
+                  <VxBox>
+                    <VxTypography variant="body2" sx={{ fontWeight: 600 }}>{menuItem.label}</VxTypography>
+                    <VxTypography variant="caption" color="text.secondary">menu key: {menuItem.key}</VxTypography>
+                  </VxBox>
+                  <VxSwitch checked={isEnabled} onChange={(_, checked) => toggleMenu(menuItem.key, checked)} />
+                </VxStack>
               )
             })}
-          </Stack>
+          </VxStack>
 
-          <Stack direction="row" sx={{ justifyContent: 'flex-end' }}>
-            <Button variant="contained" onClick={() => void handleSave()} disabled={isSaving || !selectedTenantId}>
+          <VxStack direction="row" sx={{ justifyContent: 'flex-end' }}>
+            <VxButton variant="contained" onClick={() => void handleSave()} disabled={isSaving || !selectedTenantId}>
               {isSaving ? 'Saving...' : 'Save Configuration'}
-            </Button>
-          </Stack>
-        </Stack>
-      </Paper>
-    </Stack>
+            </VxButton>
+          </VxStack>
+        </VxStack>
+      </VxPaper>
+    </VxStack>
   )
 }

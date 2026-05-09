@@ -1,18 +1,6 @@
 import { useMemo, useState } from 'react'
 import { LockRoundedIcon } from '@vexorion/ui'
-import {
-  Button,
-  Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  InputAdornment,
-  Stack,
-  TextField,
-  Typography,
-} from '@vexorion/ui'
+import { VxButton, VxChip, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxDivider, VxInputAdornment, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
 import { useI18n } from '../../app/I18nContext'
 import { useTransactionHistory } from '../../app/transactionHistoryStore'
 import type { Shift } from '../../app/shiftStore'
@@ -27,14 +15,14 @@ type Props = {
 
 function SummaryRow({ label, value, bold, indent }: { label: string; value: string; bold?: boolean; indent?: boolean }) {
   return (
-    <Stack direction="row" sx={{ justifyContent: 'space-between', pl: indent ? 2 : 0 }}>
-      <Typography variant="body2" sx={{ fontWeight: bold ? 600 : 400, color: indent ? 'text.secondary' : 'inherit' }}>
+    <VxStack direction="row" sx={{ justifyContent: 'space-between', pl: indent ? 2 : 0 }}>
+      <VxTypography variant="body2" sx={{ fontWeight: bold ? 600 : 400, color: indent ? 'text.secondary' : 'inherit' }}>
         {label}
-      </Typography>
-      <Typography variant="body2" sx={{ fontWeight: bold ? 600 : 400 }}>
+      </VxTypography>
+      <VxTypography variant="body2" sx={{ fontWeight: bold ? 600 : 400 }}>
         {value}
-      </Typography>
-    </Stack>
+      </VxTypography>
+    </VxStack>
   )
 }
 
@@ -98,46 +86,46 @@ export function ShiftCloseDialog({ open, shift, currencyCode, onClose, onConfirm
   }
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+    <VxDialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <VxDialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <LockRoundedIcon color="warning" />
         {t('shift.close.title')}
-      </DialogTitle>
-      <DialogContent>
-        <Stack spacing={2} sx={{ pt: 1 }}>
+      </VxDialogTitle>
+      <VxDialogContent>
+        <VxStack spacing={2} sx={{ pt: 1 }}>
           {/* Shift meta */}
-          <Stack direction="row" spacing={3}>
-            <Typography variant="body2" color="text.secondary">
+          <VxStack direction="row" spacing={3}>
+            <VxTypography variant="body2" color="text.secondary">
               {t('shift.summary.openedAt')}: <strong>{openedAtFormatted}</strong>
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
+            </VxTypography>
+            <VxTypography variant="body2" color="text.secondary">
               {t('shift.summary.cashier')}: <strong>{shift.openedByName}</strong>
-            </Typography>
-          </Stack>
+            </VxTypography>
+          </VxStack>
 
-          <Divider />
+          <VxDivider />
 
           {/* Sales breakdown — Item 7 */}
-          <Typography variant="subtitle2">{t('shift.summary.title')}</Typography>
-          <Stack spacing={0.5}>
+          <VxTypography variant="subtitle2">{t('shift.summary.title')}</VxTypography>
+          <VxStack spacing={0.5}>
             <SummaryRow label={t('shift.summary.totalSales')} value={fmt(totalSales)} bold />
             <SummaryRow label={t('shift.summary.cashSales')} value={fmt(cashSales)} indent />
             <SummaryRow label={t('shift.summary.cardSales')} value={fmt(cardSales)} indent />
             <SummaryRow label={t('shift.summary.transferSales')} value={fmt(transferSales)} indent />
             <SummaryRow label={t('shift.summary.discounts')} value={`-${fmt(totalDiscounts)}`} />
-          </Stack>
+          </VxStack>
 
-          <Divider />
+          <VxDivider />
 
           {/* Cash reconciliation — Item 8 */}
-          <Typography variant="subtitle2">{t('shift.summary.cashReconcile')}</Typography>
-          <Stack spacing={0.5}>
+          <VxTypography variant="subtitle2">{t('shift.summary.cashReconcile')}</VxTypography>
+          <VxStack spacing={0.5}>
             <SummaryRow label={t('shift.summary.openingFloat')} value={fmt(shift.openingFloat)} />
             <SummaryRow label={t('shift.summary.cashSales')} value={fmt(cashSales)} indent />
             <SummaryRow label={t('shift.summary.expectedCash')} value={fmt(expectedCash)} bold />
-          </Stack>
+          </VxStack>
 
-          <TextField
+          <VxTextField
             autoFocus
             label={t('shift.close.counted')}
             type="number"
@@ -146,7 +134,7 @@ export function ShiftCloseDialog({ open, shift, currencyCode, onClose, onConfirm
             onKeyDown={(e) => { if (e.key === 'Enter') handleConfirm() }}
             slotProps={{
               htmlInput: { min: 0, step: 0.01 },
-              input: { startAdornment: <InputAdornment position="start">{currencyCode}</InputAdornment> },
+              input: { startAdornment: <VxInputAdornment position="start">{currencyCode}</VxInputAdornment> },
             }}
             error={inputError !== null}
             helperText={inputError ?? ' '}
@@ -155,9 +143,9 @@ export function ShiftCloseDialog({ open, shift, currencyCode, onClose, onConfirm
 
           {/* Live variance chip */}
           {variance !== null ? (
-            <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-              <Typography variant="body2">{t('shift.summary.variance')}</Typography>
-              <Chip
+            <VxStack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+              <VxTypography variant="body2">{t('shift.summary.variance')}</VxTypography>
+              <VxChip
                 size="small"
                 label={
                   variance === 0
@@ -166,16 +154,16 @@ export function ShiftCloseDialog({ open, shift, currencyCode, onClose, onConfirm
                 }
                 color={variance === 0 ? 'success' : variance > 0 ? 'info' : 'error'}
               />
-            </Stack>
+            </VxStack>
           ) : null}
-        </Stack>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>{t('common.cancel')}</Button>
-        <Button variant="contained" color="warning" onClick={handleConfirm}>
+        </VxStack>
+      </VxDialogContent>
+      <VxDialogActions>
+        <VxButton onClick={onClose}>{t('common.cancel')}</VxButton>
+        <VxButton variant="contained" color="warning" onClick={handleConfirm}>
           {t('shift.close.submit')}
-        </Button>
-      </DialogActions>
-    </Dialog>
+        </VxButton>
+      </VxDialogActions>
+    </VxDialog>
   )
 }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Box, CircularProgress, Stack, Tooltip, Typography } from '@vexorion/ui'
+import { VxBox, VxCircularProgress, VxStack, VxTooltip, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useCurrency } from '../../../app/CurrencyContext'
 import type { ProductSupplierLatestPurchasePriceResponse } from '../../../types/api'
@@ -20,36 +20,36 @@ function PurchasePriceTooltipContent({ state }: PurchasePriceTooltipContentProps
 
   if (state.status === 'idle' || state.status === 'loading') {
     return (
-      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', py: 0.5 }}>
-        <CircularProgress size={12} sx={{ color: 'inherit' }} />
-        <Typography variant="caption">{t('components.products.grid.purchasePriceTooltip.loading')}</Typography>
-      </Stack>
+      <VxStack direction="row" spacing={1} sx={{ alignItems: 'center', py: 0.5 }}>
+        <VxCircularProgress size={12} sx={{ color: 'inherit' }} />
+        <VxTypography variant="caption">{t('components.products.grid.purchasePriceTooltip.loading')}</VxTypography>
+      </VxStack>
     )
   }
 
   if (state.status === 'error' || !state.data.length) {
-    return <Typography variant="caption">{t('components.products.grid.purchasePriceTooltip.noHistory')}</Typography>
+    return <VxTypography variant="caption">{t('components.products.grid.purchasePriceTooltip.noHistory')}</VxTypography>
   }
 
   return (
-    <Stack spacing={0.5} sx={{ py: 0.25 }}>
+    <VxStack spacing={0.5} sx={{ py: 0.25 }}>
       {state.data.map((entry) => (
-        <Box key={entry.supplierId}>
-          <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <Typography variant="caption" sx={{ fontWeight: 600 }}>{entry.supplierName}</Typography>
-            <Typography variant="caption" sx={{ fontWeight: 700 }}>
+        <VxBox key={entry.supplierId}>
+          <VxStack direction="row" spacing={1} sx={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <VxTypography variant="caption" sx={{ fontWeight: 600 }}>{entry.supplierName}</VxTypography>
+            <VxTypography variant="caption" sx={{ fontWeight: 700 }}>
               {entry.latestUnitCost.toFixed(2)} {entry.currencyCode}
-            </Typography>
-          </Stack>
-          <Typography variant="caption" color="text.disabled" sx={{ display: 'block' }}>
+            </VxTypography>
+          </VxStack>
+          <VxTypography variant="caption" color="text.disabled" sx={{ display: 'block' }}>
             {t('components.products.grid.purchasePriceTooltip.lastOn', {
               date: new Date(entry.invoiceDate).toLocaleDateString(),
             })}
             {' · '}{entry.invoiceNumber}
-          </Typography>
-        </Box>
+          </VxTypography>
+        </VxBox>
       ))}
-    </Stack>
+    </VxStack>
   )
 }
 
@@ -80,7 +80,7 @@ export default function ProductPurchasePriceCell({ productId, standardCost }: Pr
   }
 
   return (
-    <Tooltip
+    <VxTooltip
       open={open}
       onOpen={handleOpen}
       onClose={() => setOpen(false)}
@@ -88,12 +88,12 @@ export default function ProductPurchasePriceCell({ productId, standardCost }: Pr
       arrow
       placement="left"
     >
-      <Typography
+      <VxTypography
         component="span"
         sx={{ cursor: 'default', borderBottom: '1px dashed currentColor' }}
       >
         ${formatMoney(standardCost)}
-      </Typography>
-    </Tooltip>
+      </VxTypography>
+    </VxTooltip>
   )
 }

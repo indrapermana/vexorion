@@ -1,20 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import {
-  Alert,
-  Button,
-  Chip,
-  MenuItem,
-  Paper,
-  Stack,
-  Switch,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TextField,
-  Typography,
-} from '@vexorion/ui'
+import { VxAlert, VxButton, VxChip, VxMenuItem, VxPaper, VxStack, VxSwitch, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import {
@@ -174,56 +159,56 @@ export default function ConfigUsersPage() {
   }
 
   if (!isAuthenticated) {
-    return <Alert severity="info">{t('config.users.signInRequired')}</Alert>
+    return <VxAlert severity="info">{t('config.users.signInRequired')}</VxAlert>
   }
 
   return (
-    <Stack spacing={3}>
-      <Paper elevation={0} className="panel-card">
-        <Typography variant="h4" sx={{ mb: 1 }}>{t('config.users.title')}</Typography>
-        <Typography color="text.secondary">
+    <VxStack spacing={3}>
+      <VxPaper elevation={0} className="panel-card">
+        <VxTypography variant="h4" sx={{ mb: 1 }}>{t('config.users.title')}</VxTypography>
+        <VxTypography color="text.secondary">
           {t('config.users.description')}
-        </Typography>
-      </Paper>
+        </VxTypography>
+      </VxPaper>
 
-      {error ? <Alert severity="error">{error}</Alert> : null}
-      {feedback ? <Alert severity="success">{feedback}</Alert> : null}
+      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
+      {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
 
-      <Paper elevation={0} className="panel-card">
-        <Typography variant="h6" sx={{ mb: 2 }}>{t('config.users.createSection')}</Typography>
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ flexWrap: 'wrap' }}>
-          <TextField
+      <VxPaper elevation={0} className="panel-card">
+        <VxTypography variant="h6" sx={{ mb: 2 }}>{t('config.users.createSection')}</VxTypography>
+        <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ flexWrap: 'wrap' }}>
+          <VxTextField
             label={t('config.users.fields.userName')}
             size="small"
             value={createDraft.userName}
             onChange={(event) => setCreateDraft((prev) => ({ ...prev, userName: event.target.value }))}
           />
-          <TextField
+          <VxTextField
             label={t('config.users.fields.email')}
             size="small"
             value={createDraft.email}
             onChange={(event) => setCreateDraft((prev) => ({ ...prev, email: event.target.value }))}
           />
-          <TextField
+          <VxTextField
             label={t('config.users.fields.password')}
             size="small"
             type="password"
             value={createDraft.password}
             onChange={(event) => setCreateDraft((prev) => ({ ...prev, password: event.target.value }))}
           />
-          <TextField
+          <VxTextField
             label={t('config.users.fields.firstName')}
             size="small"
             value={createDraft.firstName}
             onChange={(event) => setCreateDraft((prev) => ({ ...prev, firstName: event.target.value }))}
           />
-          <TextField
+          <VxTextField
             label={t('config.users.fields.lastName')}
             size="small"
             value={createDraft.lastName}
             onChange={(event) => setCreateDraft((prev) => ({ ...prev, lastName: event.target.value }))}
           />
-          <TextField
+          <VxTextField
             label={t('config.users.fields.roles')}
             size="small"
             select
@@ -239,41 +224,41 @@ export default function ConfigUsersPage() {
             sx={{ minWidth: 220 }}
           >
             {roleOptions.map((role) => (
-              <MenuItem key={role} value={role}>{role}</MenuItem>
+              <VxMenuItem key={role} value={role}>{role}</VxMenuItem>
             ))}
-          </TextField>
-          <Button variant="contained" disabled={isSaving} onClick={() => void submitCreate()}>{t('config.users.createButton')}</Button>
-        </Stack>
-      </Paper>
+          </VxTextField>
+          <VxButton variant="contained" disabled={isSaving} onClick={() => void submitCreate()}>{t('config.users.createButton')}</VxButton>
+        </VxStack>
+      </VxPaper>
 
-      <Paper elevation={0} className="panel-card">
-        <Typography variant="h6" sx={{ mb: 1.5 }}>{t('config.users.listSection')}</Typography>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>{t('config.users.columns.user')}</TableCell>
-              <TableCell>{t('config.users.columns.email')}</TableCell>
-              <TableCell sx={{ minWidth: 220 }}>{t('config.users.columns.roles')}</TableCell>
-              <TableCell>{t('config.users.columns.active')}</TableCell>
-              <TableCell align="right">{t('config.users.columns.actions')}</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
+      <VxPaper elevation={0} className="panel-card">
+        <VxTypography variant="h6" sx={{ mb: 1.5 }}>{t('config.users.listSection')}</VxTypography>
+        <VxTable size="small">
+          <VxTableHead>
+            <VxTableRow>
+              <VxTableCell>{t('config.users.columns.user')}</VxTableCell>
+              <VxTableCell>{t('config.users.columns.email')}</VxTableCell>
+              <VxTableCell sx={{ minWidth: 220 }}>{t('config.users.columns.roles')}</VxTableCell>
+              <VxTableCell>{t('config.users.columns.active')}</VxTableCell>
+              <VxTableCell align="right">{t('config.users.columns.actions')}</VxTableCell>
+            </VxTableRow>
+          </VxTableHead>
+          <VxTableBody>
             {users.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell>
-                  <Stack spacing={0.4}>
-                    <Typography sx={{ fontWeight: 700 }}>{user.userName}</Typography>
-                    <Stack direction="row" spacing={0.75}>
+              <VxTableRow key={user.id}>
+                <VxTableCell>
+                  <VxStack spacing={0.4}>
+                    <VxTypography sx={{ fontWeight: 700 }}>{user.userName}</VxTypography>
+                    <VxStack direction="row" spacing={0.75}>
                       {(roleDraftByUserId[user.id] ?? user.roles).map((role) => (
-                        <Chip key={`${user.id}:${role}`} size="small" label={role} variant="outlined" />
+                        <VxChip key={`${user.id}:${role}`} size="small" label={role} variant="outlined" />
                       ))}
-                    </Stack>
-                  </Stack>
-                </TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>
-                  <TextField
+                    </VxStack>
+                  </VxStack>
+                </VxTableCell>
+                <VxTableCell>{user.email}</VxTableCell>
+                <VxTableCell>
+                  <VxTextField
                     size="small"
                     select
                     slotProps={{ select: { multiple: true } }}
@@ -282,27 +267,27 @@ export default function ConfigUsersPage() {
                     fullWidth
                   >
                     {roleOptions.map((role) => (
-                      <MenuItem key={role} value={role}>{role}</MenuItem>
+                      <VxMenuItem key={role} value={role}>{role}</VxMenuItem>
                     ))}
-                  </TextField>
-                </TableCell>
-                <TableCell>
-                  <Switch
+                  </VxTextField>
+                </VxTableCell>
+                <VxTableCell>
+                  <VxSwitch
                     checked={user.isActive}
                     onChange={(event) => void updateUserStatus(user, event.target.checked)}
                     disabled={isSaving}
                   />
-                </TableCell>
-                <TableCell align="right">
-                  <Button size="small" variant="outlined" disabled={isSaving} onClick={() => void saveUserRoles(user.id)}>
+                </VxTableCell>
+                <VxTableCell align="right">
+                  <VxButton size="small" variant="outlined" disabled={isSaving} onClick={() => void saveUserRoles(user.id)}>
                     {t('config.users.saveRolesButton')}
-                  </Button>
-                </TableCell>
-              </TableRow>
+                  </VxButton>
+                </VxTableCell>
+              </VxTableRow>
             ))}
-          </TableBody>
-        </Table>
-      </Paper>
-    </Stack>
+          </VxTableBody>
+        </VxTable>
+      </VxPaper>
+    </VxStack>
   )
 }

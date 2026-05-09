@@ -1,4 +1,4 @@
-import { Box, Typography } from '@vexorion/ui'
+import { VxBox, VxTypography } from '@vexorion/ui'
 import { VxDataGrid, type VxGridColDef } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import type { CustomerPaymentGridRow } from '../../../types/ui'
@@ -24,10 +24,10 @@ export default function CustomerPaymentDataGrid({ rows, isLoading, onSelectPayme
       minWidth: 180,
       flex: 1,
       renderCell: ({ row }) => (
-        <Box sx={{ py: 1 }}>
-          <Typography sx={{ fontWeight: 700 }}>{row.customerName ?? row.customerId}</Typography>
-          <Typography variant="body2" color="text.secondary">{row.invoiceNumber ?? row.salesInvoiceId}</Typography>
-        </Box>
+        <VxBox sx={{ py: 1 }}>
+          <VxTypography sx={{ fontWeight: 700 }}>{row.customerName ?? row.customerId}</VxTypography>
+          <VxTypography variant="body2" color="text.secondary">{row.invoiceNumber ?? row.salesInvoiceId}</VxTypography>
+        </VxBox>
       ),
     },
     {

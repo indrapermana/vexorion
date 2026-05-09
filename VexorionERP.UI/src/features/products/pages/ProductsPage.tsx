@@ -1,16 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
 import { AddRoundedIcon, CheckCircleRoundedIcon, Inventory2RoundedIcon, ReportRoundedIcon, SellRoundedIcon } from '@vexorion/ui'
-import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  FormControlLabel,
-  Paper,
-  Stack,
-  Switch,
-  Typography,
-} from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxCircularProgress, VxFormControlLabel, VxPaper, VxStack, VxSwitch, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { useCurrency } from '../../../app/CurrencyContext'
@@ -32,12 +22,12 @@ function ProductSurfaceFallback() {
   const { t } = useTranslation()
 
   return (
-    <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
-      <Stack spacing={1.5} sx={{ alignItems: 'center' }}>
-        <CircularProgress size={28} />
-        <Typography color="text.secondary">{t('pages.products.loadingTools')}</Typography>
-      </Stack>
-    </Box>
+    <VxBox sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
+      <VxStack spacing={1.5} sx={{ alignItems: 'center' }}>
+        <VxCircularProgress size={28} />
+        <VxTypography color="text.secondary">{t('pages.products.loadingTools')}</VxTypography>
+      </VxStack>
+    </VxBox>
   )
 }
 
@@ -228,7 +218,7 @@ export default function ProductsPage() {
 
   if (!isAuthenticated) {
     return (
-      <Alert severity="info">{t('pages.products.signInRequired')}</Alert>
+      <VxAlert severity="info">{t('pages.products.signInRequired')}</VxAlert>
     )
   }
 
@@ -239,76 +229,76 @@ export default function ProductsPage() {
   const visibleProducts = showOnlyLowStock ? products.filter((product) => product.isLowStock) : products
 
   return (
-    <Stack spacing={3}>
-      <Paper elevation={0} className="panel-card">
-        <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2.5} sx={{ justifyContent: 'space-between' }}>
-          <Box>
-            <Typography variant="h4" sx={{ mb: 1 }}>{t('nav.routeTitles.products')}</Typography>
-            <Typography color="text.secondary">
+    <VxStack spacing={3}>
+      <VxPaper elevation={0} className="panel-card">
+        <VxStack direction={{ xs: 'column', lg: 'row' }} spacing={2.5} sx={{ justifyContent: 'space-between' }}>
+          <VxBox>
+            <VxTypography variant="h4" sx={{ mb: 1 }}>{t('nav.routeTitles.products')}</VxTypography>
+            <VxTypography color="text.secondary">
               {t('pages.products.description')}
-            </Typography>
-          </Box>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
-            <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog}>
+            </VxTypography>
+          </VxBox>
+          <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
+            <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog}>
               {t('pages.products.newButton')}
-            </Button>
-            <FormControlLabel
-              control={<Switch checked={showOnlyLowStock} onChange={(_, checked) => setShowOnlyLowStock(checked)} color="warning" />}
+            </VxButton>
+            <VxFormControlLabel
+              control={<VxSwitch checked={showOnlyLowStock} onChange={(_, checked) => setShowOnlyLowStock(checked)} color="warning" />}
               label={t('pages.products.onlyLowStock')}
               sx={{ mx: 0.5 }}
             />
-            <Paper elevation={0} className="products-metric-card">
+            <VxPaper elevation={0} className="products-metric-card">
               <Inventory2RoundedIcon fontSize="small" />
-              <Box>
-                <Typography variant="body2" color="text.secondary">{t('pages.products.metrics.catalogRows')}</Typography>
-                <Typography variant="h6">{products.length}</Typography>
-              </Box>
-            </Paper>
-            <Paper elevation={0} className="products-metric-card">
+              <VxBox>
+                <VxTypography variant="body2" color="text.secondary">{t('pages.products.metrics.catalogRows')}</VxTypography>
+                <VxTypography variant="h6">{products.length}</VxTypography>
+              </VxBox>
+            </VxPaper>
+            <VxPaper elevation={0} className="products-metric-card">
               <CheckCircleRoundedIcon fontSize="small" />
-              <Box>
-                <Typography variant="body2" color="text.secondary">{t('pages.products.metrics.activeItems')}</Typography>
-                <Typography variant="h6">{activeProducts.length}</Typography>
-              </Box>
-            </Paper>
-            <Paper elevation={0} className="products-metric-card">
+              <VxBox>
+                <VxTypography variant="body2" color="text.secondary">{t('pages.products.metrics.activeItems')}</VxTypography>
+                <VxTypography variant="h6">{activeProducts.length}</VxTypography>
+              </VxBox>
+            </VxPaper>
+            <VxPaper elevation={0} className="products-metric-card">
               <SellRoundedIcon fontSize="small" />
-              <Box>
-                <Typography variant="body2" color="text.secondary">{t('pages.products.metrics.averagePrice')}</Typography>
-                <Typography variant="h6">
+              <VxBox>
+                <VxTypography variant="body2" color="text.secondary">{t('pages.products.metrics.averagePrice')}</VxTypography>
+                <VxTypography variant="h6">
                   {products.length ? formatMoney(products.reduce((sum, product) => sum + product.salesPrice, 0) / products.length) : formatMoney(0)}
-                </Typography>
-              </Box>
-            </Paper>
-            <Paper elevation={0} className="products-metric-card">
+                </VxTypography>
+              </VxBox>
+            </VxPaper>
+            <VxPaper elevation={0} className="products-metric-card">
               <Inventory2RoundedIcon fontSize="small" />
-              <Box>
-                <Typography variant="body2" color="text.secondary">{t('pages.products.metrics.activeWarehouseOnHand')}</Typography>
-                <Typography variant="h6">{activeWarehouseOnHand.toFixed(2)}</Typography>
-              </Box>
-            </Paper>
-            <Paper elevation={0} className="products-metric-card">
+              <VxBox>
+                <VxTypography variant="body2" color="text.secondary">{t('pages.products.metrics.activeWarehouseOnHand')}</VxTypography>
+                <VxTypography variant="h6">{activeWarehouseOnHand.toFixed(2)}</VxTypography>
+              </VxBox>
+            </VxPaper>
+            <VxPaper elevation={0} className="products-metric-card">
               <Inventory2RoundedIcon fontSize="small" />
-              <Box>
-                <Typography variant="body2" color="text.secondary">{t('pages.products.metrics.activeWarehouseAvailable')}</Typography>
-                <Typography variant="h6">{activeWarehouseAvailable.toFixed(2)}</Typography>
-              </Box>
-            </Paper>
-            <Paper elevation={0} className="products-metric-card">
+              <VxBox>
+                <VxTypography variant="body2" color="text.secondary">{t('pages.products.metrics.activeWarehouseAvailable')}</VxTypography>
+                <VxTypography variant="h6">{activeWarehouseAvailable.toFixed(2)}</VxTypography>
+              </VxBox>
+            </VxPaper>
+            <VxPaper elevation={0} className="products-metric-card">
               <ReportRoundedIcon fontSize="small" />
-              <Box>
-                <Typography variant="body2" color="text.secondary" className="products-metric-label">{t('pages.products.metrics.lowStockActiveItems')}</Typography>
-                <Typography variant="h6">{lowStockProducts.length}</Typography>
-              </Box>
-            </Paper>
-          </Stack>
-        </Stack>
-      </Paper>
+              <VxBox>
+                <VxTypography variant="body2" color="text.secondary" className="products-metric-label">{t('pages.products.metrics.lowStockActiveItems')}</VxTypography>
+                <VxTypography variant="h6">{lowStockProducts.length}</VxTypography>
+              </VxBox>
+            </VxPaper>
+          </VxStack>
+        </VxStack>
+      </VxPaper>
 
-      {error ? <Alert severity="error">{error}</Alert> : null}
-      {feedback ? <Alert severity="success">{feedback}</Alert> : null}
+      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
+      {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
 
-      <Paper elevation={0} className="panel-card products-grid-panel">
+      <VxPaper elevation={0} className="panel-card products-grid-panel">
         <Suspense fallback={<ProductSurfaceFallback />}>
           <ProductDataGrid
             rows={visibleProducts}
@@ -319,7 +309,7 @@ export default function ProductsPage() {
             onDelete={setDeleteTarget}
           />
         </Suspense>
-      </Paper>
+      </VxPaper>
 
       {isEditorOpen ? (
         <Suspense fallback={<ProductSurfaceFallback />}>
@@ -344,6 +334,6 @@ export default function ProductsPage() {
           />
         </Suspense>
       ) : null}
-    </Stack>
+    </VxStack>
   )
 }

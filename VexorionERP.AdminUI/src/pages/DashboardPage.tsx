@@ -1,4 +1,4 @@
-import { Alert, Box, Chip, Paper, Stack, Typography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxChip, VxPaper, VxStack, VxTypography } from '@vexorion/ui'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ApartmentRoundedIcon, PersonRoundedIcon, StackedBarChartRoundedIcon, TravelExploreRoundedIcon, VxCard } from '@vexorion/ui'
 import { getTenantTelemetry, getTenants, getUsersForAdmin } from '../lib/api'
@@ -8,10 +8,10 @@ import type { UserListItemResponse } from '../types/api/users'
 function DashboardMetricCard({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
   return (
     <VxCard title={label} className="stat-card dashboard-stat-card">
-      <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-        <Box className="metric-icon">{icon}</Box>
-        <Typography variant="h5">{value}</Typography>
-      </Stack>
+      <VxStack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+        <VxBox className="metric-icon">{icon}</VxBox>
+        <VxTypography variant="h5">{value}</VxTypography>
+      </VxStack>
     </VxCard>
   )
 }
@@ -76,78 +76,78 @@ export default function DashboardPage() {
   }, [users])
 
   return (
-    <Stack spacing={2.5}>
-      <Paper className="hero-panel dashboard-banner" elevation={0}>
-        <Stack spacing={1}>
-          <Typography variant="h5">System Admin Dashboard</Typography>
-          <Typography color="text.secondary">
+    <VxStack spacing={2.5}>
+      <VxPaper className="hero-panel dashboard-banner" elevation={0}>
+        <VxStack spacing={1}>
+          <VxTypography variant="h5">System Admin Dashboard</VxTypography>
+          <VxTypography color="text.secondary">
             Snapshot across all tenants and users using backend telemetry and tenant analytics.
-          </Typography>
-          <Stack direction="row" spacing={1}>
-            <Chip
+          </VxTypography>
+          <VxStack direction="row" spacing={1}>
+            <VxChip
               label="Last 7 days"
               color={rangeDays === 7 ? 'primary' : 'default'}
               variant={rangeDays === 7 ? 'filled' : 'outlined'}
               onClick={() => setRangeDays(7)}
             />
-            <Chip
+            <VxChip
               label="Last 30 days"
               color={rangeDays === 30 ? 'primary' : 'default'}
               variant={rangeDays === 30 ? 'filled' : 'outlined'}
               onClick={() => setRangeDays(30)}
             />
-          </Stack>
-        </Stack>
-      </Paper>
+          </VxStack>
+        </VxStack>
+      </VxPaper>
 
-      {error ? <Alert severity="error">{error}</Alert> : null}
+      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
 
-      <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', md: '1fr 1fr', xl: 'repeat(4, 1fr)' } }}>
-        <Box>
+      <VxBox sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', md: '1fr 1fr', xl: 'repeat(4, 1fr)' } }}>
+        <VxBox>
           <DashboardMetricCard label="Total tenants" value={String(tenants.length)} icon={<ApartmentRoundedIcon />} />
-        </Box>
-        <Box>
+        </VxBox>
+        <VxBox>
           <DashboardMetricCard label="Active tenants" value={String(activeTenants)} icon={<StackedBarChartRoundedIcon />} />
-        </Box>
-        <Box>
+        </VxBox>
+        <VxBox>
           <DashboardMetricCard label="Total users" value={String(users.length)} icon={<PersonRoundedIcon />} />
-        </Box>
-        <Box>
+        </VxBox>
+        <VxBox>
           <DashboardMetricCard
             label="Most visited page"
             value={mostVisitedPage.visits > 0 && mostVisitedPage.page ? `${mostVisitedPage.page} (${mostVisitedPage.visits})` : 'N/A'}
             icon={<TravelExploreRoundedIcon />}
           />
-        </Box>
-      </Box>
+        </VxBox>
+      </VxBox>
 
-      <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', lg: '1fr 2fr' } }}>
-        <Box>
-          <Paper className="panel-card" elevation={0}>
-            <Typography variant="h6" sx={{ mb: 1.5 }}>Free vs Paid Tenants</Typography>
-            <Stack direction="row" spacing={1}>
-              <Chip color="success" label={`Free: ${freeTenants}`} />
-              <Chip color="primary" label={`Paid: ${paidTenants}`} />
-            </Stack>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1.25 }}>
+      <VxBox sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', lg: '1fr 2fr' } }}>
+        <VxBox>
+          <VxPaper className="panel-card" elevation={0}>
+            <VxTypography variant="h6" sx={{ mb: 1.5 }}>Free vs Paid Tenants</VxTypography>
+            <VxStack direction="row" spacing={1}>
+              <VxChip color="success" label={`Free: ${freeTenants}`} />
+              <VxChip color="primary" label={`Paid: ${paidTenants}`} />
+            </VxStack>
+            <VxTypography variant="body2" color="text.secondary" sx={{ mt: 1.25 }}>
               Paid tenants are inferred from tenants with a configured domain.
-            </Typography>
-          </Paper>
-        </Box>
+            </VxTypography>
+          </VxPaper>
+        </VxBox>
 
-        <Box>
-          <Paper className="panel-card" elevation={0}>
-            <Typography variant="h6" sx={{ mb: 1.5 }}>Tenant Login Overview</Typography>
-            <Stack spacing={1}>
+        <VxBox>
+          <VxPaper className="panel-card" elevation={0}>
+            <VxTypography variant="h6" sx={{ mb: 1.5 }}>Tenant Login Overview</VxTypography>
+            <VxStack spacing={1}>
               {tenants.map((tenant) => (
-                <Stack key={tenant.id} direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                <VxStack key={tenant.id} direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                  <VxTypography variant="body2" sx={{ fontWeight: 600 }}>
                     {tenant.name} ({tenant.code})
-                  </Typography>
-                  <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                    <Chip size="small" label={`Users: ${usersByTenant.get(tenant.id) ?? 0}`} />
-                    <Chip size="small" variant="outlined" label={`Logins: ${telemetryByTenant.get(tenant.id)?.loginCount ?? 0}`} />
-                    <Chip
+                  </VxTypography>
+                  <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                    <VxChip size="small" label={`Users: ${usersByTenant.get(tenant.id) ?? 0}`} />
+                    <VxChip size="small" variant="outlined" label={`Logins: ${telemetryByTenant.get(tenant.id)?.loginCount ?? 0}`} />
+                    <VxChip
                       size="small"
                       variant="outlined"
                       label={
@@ -156,13 +156,13 @@ export default function DashboardPage() {
                           : 'Top page: N/A'
                       }
                     />
-                  </Stack>
-                </Stack>
+                  </VxStack>
+                </VxStack>
               ))}
-            </Stack>
-          </Paper>
-        </Box>
-      </Box>
-    </Stack>
+            </VxStack>
+          </VxPaper>
+        </VxBox>
+      </VxBox>
+    </VxStack>
   )
 }

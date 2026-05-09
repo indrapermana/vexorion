@@ -1,6 +1,6 @@
 import { StrictMode, useEffect, useMemo } from 'react'
 import { createRoot } from 'react-dom/client'
-import { CssBaseline, ThemeProvider } from '@vexorion/ui'
+import { VxCssBaseline, VxThemeProvider } from '@vexorion/ui'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import './index.css'
 import App from './App'
@@ -29,12 +29,12 @@ function ThemedApp() {
   }, [themeMode])
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
+    <VxThemeProvider theme={theme}>
+      <VxCssBaseline />
       <PosErrorBoundary>
         <App />
       </PosErrorBoundary>
-    </ThemeProvider>
+    </VxThemeProvider>
   )
 }
 

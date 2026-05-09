@@ -1,23 +1,5 @@
 import { DarkModeRoundedIcon, DashboardRoundedIcon, GroupsRoundedIcon, LightModeRoundedIcon, LogoutRoundedIcon, MenuRoundedIcon, SettingsApplicationsRoundedIcon, StoreRoundedIcon } from '@vexorion/ui'
-import {
-  Box,
-  Button,
-  Chip,
-  Divider,
-  Drawer,
-  IconButton,
-  List,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  MenuItem,
-  Paper,
-  Select,
-  Stack,
-  Toolbar,
-  Tooltip,
-  Typography,
-} from '@vexorion/ui'
+import { VxBox, VxButton, VxChip, VxDivider, VxDrawer, VxIconButton, VxList, VxListItemButton, VxListItemIcon, VxListItemText, VxMenuItem, VxPaper, VxSelect, VxStack, VxToolbar, VxTooltip, VxTypography } from '@vexorion/ui'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
@@ -85,36 +67,36 @@ export default function AppLayout() {
   const desktopDrawerWidth = isSidebarCollapsed ? collapsedDrawerWidth : drawerWidth
 
   const sidebar = (collapsed: boolean) => (
-    <Box className={collapsed ? 'dashboard-sidebar-shell dashboard-sidebar-shell-collapsed' : 'dashboard-sidebar-shell'}>
-      <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', px: collapsed ? 1.25 : 2.5, py: 2.5 }}>
-        <Box className="brand-mark">
-          <Box component="img" src="/favicon.svg" alt="Vexorion" sx={{ width: 28, height: 28 }} />
-        </Box>
+    <VxBox className={collapsed ? 'dashboard-sidebar-shell dashboard-sidebar-shell-collapsed' : 'dashboard-sidebar-shell'}>
+      <VxStack direction="row" spacing={1.5} sx={{ alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', px: collapsed ? 1.25 : 2.5, py: 2.5 }}>
+        <VxBox className="brand-mark">
+          <VxBox component="img" src="/favicon.svg" alt="Vexorion" sx={{ width: 28, height: 28 }} />
+        </VxBox>
         {!collapsed ? (
-          <Box sx={{ minWidth: 0, flex: 1 }}>
-            <Typography variant="overline" sx={{ color: 'text.secondary', letterSpacing: '0.18em' }}>
+          <VxBox sx={{ minWidth: 0, flex: 1 }}>
+            <VxTypography variant="overline" sx={{ color: 'text.secondary', letterSpacing: '0.18em' }}>
               VEXORION ERP
-            </Typography>
-          </Box>
+            </VxTypography>
+          </VxBox>
         ) : null}
-      </Stack>
+      </VxStack>
 
-      <Divider />
+      <VxDivider />
 
-      <Box sx={{ px: collapsed ? 1 : 1.5, py: 1.5 }}>
-        {!collapsed ? <Typography className="sidebar-caption">Navigation</Typography> : null}
-        <Stack spacing={1.5}>
+      <VxBox sx={{ px: collapsed ? 1 : 1.5, py: 1.5 }}>
+        {!collapsed ? <VxTypography className="sidebar-caption">Navigation</VxTypography> : null}
+        <VxStack spacing={1.5}>
           {navigationSections.map((section) => (
-            <Box key={section.title}>
+            <VxBox key={section.title}>
               {!collapsed ? (
-                <Typography variant="overline" sx={{ px: 1.5, color: 'text.secondary', letterSpacing: '0.12em' }}>
+                <VxTypography variant="overline" sx={{ px: 1.5, color: 'text.secondary', letterSpacing: '0.12em' }}>
                   {section.title}
-                </Typography>
+                </VxTypography>
               ) : null}
-              <List disablePadding>
+              <VxList disablePadding>
                 {section.links.map((link) => {
                   const navItem = (
-                    <ListItemButton
+                    <VxListItemButton
                       key={link.to}
                       component={NavLink}
                       to={link.to}
@@ -123,11 +105,11 @@ export default function AppLayout() {
                       className={location.pathname === link.to ? 'dashboard-nav-item dashboard-nav-item-active nav-accent-overview' : 'dashboard-nav-item nav-accent-overview'}
                       sx={{ justifyContent: collapsed ? 'center' : 'flex-start', px: collapsed ? 1.25 : 2 }}
                     >
-                      <ListItemIcon className={collapsed ? 'dashboard-nav-icon-slot dashboard-nav-icon-slot-collapsed' : 'dashboard-nav-icon-slot'} sx={{ justifyContent: 'center' }}>
+                      <VxListItemIcon className={collapsed ? 'dashboard-nav-icon-slot dashboard-nav-icon-slot-collapsed' : 'dashboard-nav-icon-slot'} sx={{ justifyContent: 'center' }}>
                         {link.icon}
-                      </ListItemIcon>
-                      {!collapsed ? <ListItemText primary={link.label} /> : null}
-                    </ListItemButton>
+                      </VxListItemIcon>
+                      {!collapsed ? <VxListItemText primary={link.label} /> : null}
+                    </VxListItemButton>
                   )
 
                   if (!collapsed) {
@@ -135,50 +117,50 @@ export default function AppLayout() {
                   }
 
                   return (
-                    <Tooltip key={link.to} title={link.label} placement="right" arrow>
+                    <VxTooltip key={link.to} title={link.label} placement="right" arrow>
                       {navItem}
-                    </Tooltip>
+                    </VxTooltip>
                   )
                 })}
-              </List>
-            </Box>
+              </VxList>
+            </VxBox>
           ))}
-        </Stack>
-      </Box>
+        </VxStack>
+      </VxBox>
 
-      <Box sx={{ mt: 'auto', px: collapsed ? 1 : 2, pb: 2 }}>
-        <Paper elevation={0} className="sidebar-footer-card">
+      <VxBox sx={{ mt: 'auto', px: collapsed ? 1 : 2, pb: 2 }}>
+        <VxPaper elevation={0} className="sidebar-footer-card">
           {!collapsed ? (
             <>
-              <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5 }}>
+              <VxTypography variant="body2" sx={{ fontWeight: 700, mb: 0.5 }}>
                 {isAuthenticated && user ? user.displayName : 'Anonymous'}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+              </VxTypography>
+              <VxTypography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
                 {isAuthenticated && user ? user.email : 'Sign in required'}
-              </Typography>
+              </VxTypography>
             </>
           ) : null}
           {isAuthenticated ? (
             collapsed ? (
-              <IconButton color="primary" onClick={() => void handleLogout()} aria-label="Logout" sx={{ width: '100%' }}>
+              <VxIconButton color="primary" onClick={() => void handleLogout()} aria-label="Logout" sx={{ width: '100%' }}>
                 <LogoutRoundedIcon />
-              </IconButton>
+              </VxIconButton>
             ) : (
-              <Button fullWidth variant="contained" startIcon={<LogoutRoundedIcon />} onClick={() => void handleLogout()}>
+              <VxButton fullWidth variant="contained" startIcon={<LogoutRoundedIcon />} onClick={() => void handleLogout()}>
                 Logout
-              </Button>
+              </VxButton>
             )
           ) : (
-            collapsed ? <Chip size="small" label="P" variant="outlined" /> : <Chip label="Public access only" variant="outlined" />
+            collapsed ? <VxChip size="small" label="P" variant="outlined" /> : <VxChip label="Public access only" variant="outlined" />
           )}
-        </Paper>
-      </Box>
-    </Box>
+        </VxPaper>
+      </VxBox>
+    </VxBox>
   )
 
   return (
-    <Box className="dashboard-shell">
-      <Drawer
+    <VxBox className="dashboard-shell">
+      <VxDrawer
         variant="temporary"
         open={mobileOpen}
         onClose={() => setMobileOpen(false)}
@@ -189,9 +171,9 @@ export default function AppLayout() {
         }}
       >
         {sidebar(false)}
-      </Drawer>
+      </VxDrawer>
 
-      <Drawer
+      <VxDrawer
         variant="permanent"
         open
         sx={{
@@ -200,35 +182,35 @@ export default function AppLayout() {
         }}
       >
         {sidebar(isSidebarCollapsed)}
-      </Drawer>
+      </VxDrawer>
 
-      <Box className="dashboard-main" sx={{ ml: { lg: `${desktopDrawerWidth}px` }, transition: 'margin-left 180ms ease' }}>
-        <Toolbar className="dashboard-topbar" sx={{ position: 'relative' }}>
-          <Stack direction="row" spacing={1} sx={{ position: 'absolute', top: 8, right: 16 }}>
-            <Select
+      <VxBox className="dashboard-main" sx={{ ml: { lg: `${desktopDrawerWidth}px` }, transition: 'margin-left 180ms ease' }}>
+        <VxToolbar className="dashboard-topbar" sx={{ position: 'relative' }}>
+          <VxStack direction="row" spacing={1} sx={{ position: 'absolute', top: 8, right: 16 }}>
+            <VxSelect
               size="small"
               value={themeMode}
               onChange={(event) => setThemeMode(event.target.value as 'light' | 'dark')}
               aria-label="Theme"
               sx={{ minWidth: 120, display: { xs: 'none', sm: 'inline-flex' } }}
             >
-              <MenuItem value="light">
-                <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+              <VxMenuItem value="light">
+                <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                   <LightModeRoundedIcon fontSize="small" />
                   <span>Light</span>
-                </Stack>
-              </MenuItem>
-              <MenuItem value="dark">
-                <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                </VxStack>
+              </VxMenuItem>
+              <VxMenuItem value="dark">
+                <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                   <DarkModeRoundedIcon fontSize="small" />
                   <span>Dark</span>
-                </Stack>
-              </MenuItem>
-            </Select>
-            <IconButton size="small" onClick={toggleThemeMode} aria-label="Toggle theme" sx={{ display: { xs: 'inline-flex', sm: 'none' } }}>
+                </VxStack>
+              </VxMenuItem>
+            </VxSelect>
+            <VxIconButton size="small" onClick={toggleThemeMode} aria-label="Toggle theme" sx={{ display: { xs: 'inline-flex', sm: 'none' } }}>
               {themeMode === 'light' ? <DarkModeRoundedIcon fontSize="small" /> : <LightModeRoundedIcon fontSize="small" />}
-            </IconButton>
-            <Select
+            </VxIconButton>
+            <VxSelect
               size="small"
               value={currentLanguage}
               onChange={(event) => {
@@ -238,35 +220,35 @@ export default function AppLayout() {
               sx={{ minWidth: 152 }}
             >
               {languageOptions.map((option) => (
-                <MenuItem key={option.code} value={option.code}>{option.label}</MenuItem>
+                <VxMenuItem key={option.code} value={option.code}>{option.label}</VxMenuItem>
               ))}
-            </Select>
+            </VxSelect>
             {isAuthenticated ? (
-              <Chip color="secondary" label={user ? `${user.displayName} · ${user.roles[0] ?? 'User'}` : 'Signed in'} />
+              <VxChip color="secondary" label={user ? `${user.displayName} · ${user.roles[0] ?? 'User'}` : 'Signed in'} />
             ) : (
-              <Chip label="Public route" variant="outlined" />
+              <VxChip label="Public route" variant="outlined" />
             )}
-          </Stack>
-          <Stack direction="row" spacing={2} sx={{ alignItems: 'center', width: '100%' }}>
-            <IconButton sx={{ display: { lg: 'none' } }} onClick={() => setMobileOpen(true)}>
+          </VxStack>
+          <VxStack direction="row" spacing={2} sx={{ alignItems: 'center', width: '100%' }}>
+            <VxIconButton sx={{ display: { lg: 'none' } }} onClick={() => setMobileOpen(true)}>
               <MenuRoundedIcon />
-            </IconButton>
-            <IconButton sx={{ display: { xs: 'none', lg: 'inline-flex' } }} onClick={toggleSidebarCollapsed} aria-label={isSidebarCollapsed ? 'Expand navigation' : 'Collapse navigation'}>
+            </VxIconButton>
+            <VxIconButton sx={{ display: { xs: 'none', lg: 'inline-flex' } }} onClick={toggleSidebarCollapsed} aria-label={isSidebarCollapsed ? 'Expand navigation' : 'Collapse navigation'}>
               <MenuRoundedIcon />
-            </IconButton>
-            <Box sx={{ mr: 'auto', minWidth: 0 }}>
-              <Typography variant="overline" sx={{ color: 'text.secondary', letterSpacing: '0.18em' }}>
+            </VxIconButton>
+            <VxBox sx={{ mr: 'auto', minWidth: 0 }}>
+              <VxTypography variant="overline" sx={{ color: 'text.secondary', letterSpacing: '0.18em' }}>
                 ADMIN CONSOLE
-              </Typography>
-              <Typography variant="h5" noWrap>{pageTitle}</Typography>
-            </Box>
-          </Stack>
-        </Toolbar>
+              </VxTypography>
+              <VxTypography variant="h5" noWrap>{pageTitle}</VxTypography>
+            </VxBox>
+          </VxStack>
+        </VxToolbar>
 
-        <Box className="dashboard-content">
+        <VxBox className="dashboard-content">
           <Outlet />
-        </Box>
-      </Box>
-    </Box>
+        </VxBox>
+      </VxBox>
+    </VxBox>
   )
 }

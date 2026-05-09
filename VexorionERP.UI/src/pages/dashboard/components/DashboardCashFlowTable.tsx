@@ -1,4 +1,4 @@
-import { Chip, Grid, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@vexorion/ui'
+import { VxChip, VxGrid, VxPaper, VxStack, VxTable, VxTableBody, VxTableCell, VxTableContainer, VxTableHead, VxTableRow, VxTypography } from '@vexorion/ui'
 import type { TFunction } from 'i18next'
 import type { CashRowView } from '../types'
 
@@ -10,44 +10,44 @@ type DashboardCashFlowTableProps = {
 
 export default function DashboardCashFlowTable({ t, periodDays, cashRows }: DashboardCashFlowTableProps) {
   return (
-    <Grid container spacing={2}>
-      <Grid size={{ xs: 12 }}>
-        <Paper elevation={0} sx={{ p: 2.5, borderRadius: 2 }}>
-          <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6">{t('dashboard.cashSnapshot.title')}</Typography>
-            <Chip label={t('dashboard.cashSnapshot.window', { days: periodDays })} size="small" variant="outlined" />
-          </Stack>
-          <TableContainer>
-            <Table size="small">
-              <TableHead>
-                <TableRow sx={{ backgroundColor: 'rgba(0,0,0,0.03)' }}>
-                  <TableCell>{t('dashboard.table.reference')}</TableCell>
-                  <TableCell>{t('dashboard.table.source')}</TableCell>
-                  <TableCell>{t('dashboard.table.direction')}</TableCell>
-                  <TableCell align="right">{t('dashboard.table.amount')}</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
+    <VxGrid container spacing={2}>
+      <VxGrid size={{ xs: 12 }}>
+        <VxPaper elevation={0} sx={{ p: 2.5, borderRadius: 2 }}>
+          <VxStack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <VxTypography variant="h6">{t('dashboard.cashSnapshot.title')}</VxTypography>
+            <VxChip label={t('dashboard.cashSnapshot.window', { days: periodDays })} size="small" variant="outlined" />
+          </VxStack>
+          <VxTableContainer>
+            <VxTable size="small">
+              <VxTableHead>
+                <VxTableRow sx={{ backgroundColor: 'rgba(0,0,0,0.03)' }}>
+                  <VxTableCell>{t('dashboard.table.reference')}</VxTableCell>
+                  <VxTableCell>{t('dashboard.table.source')}</VxTableCell>
+                  <VxTableCell>{t('dashboard.table.direction')}</VxTableCell>
+                  <VxTableCell align="right">{t('dashboard.table.amount')}</VxTableCell>
+                </VxTableRow>
+              </VxTableHead>
+              <VxTableBody>
                 {cashRows.map((row) => (
-                  <TableRow key={row.id} hover>
-                    <TableCell sx={{ fontWeight: 600 }}>{row.id}</TableCell>
-                    <TableCell>{row.owner}</TableCell>
-                    <TableCell>
-                      <Chip
+                  <VxTableRow key={row.id} hover>
+                    <VxTableCell sx={{ fontWeight: 600 }}>{row.id}</VxTableCell>
+                    <VxTableCell>{row.owner}</VxTableCell>
+                    <VxTableCell>
+                      <VxChip
                         label={row.status}
                         size="small"
                         color={row.status === t('dashboard.cashRows.positive') || row.status === t('dashboard.cashRows.inflow') ? 'success' : 'default'}
                         variant="outlined"
                       />
-                    </TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 600 }}>{row.amount}</TableCell>
-                  </TableRow>
+                    </VxTableCell>
+                    <VxTableCell align="right" sx={{ fontWeight: 600 }}>{row.amount}</VxTableCell>
+                  </VxTableRow>
                 ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Paper>
-      </Grid>
-    </Grid>
+              </VxTableBody>
+            </VxTable>
+          </VxTableContainer>
+        </VxPaper>
+      </VxGrid>
+    </VxGrid>
   )
 }

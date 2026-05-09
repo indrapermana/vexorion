@@ -1,18 +1,5 @@
 import { RefreshIcon } from '@vexorion/ui'
-import {
-  Alert,
-  Box,
-  Chip,
-  CircularProgress,
-  IconButton,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Tooltip,
-  Typography,
-} from '@vexorion/ui'
+import { VxAlert, VxBox, VxChip, VxCircularProgress, VxIconButton, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTooltip, VxTypography } from '@vexorion/ui'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getImportHistory } from '../../../lib/api'
@@ -26,17 +13,17 @@ interface Props {
 function statusChip(status: number, t: (k: string) => string) {
   switch (status) {
     case 1:
-      return <Chip label={t('config.importData.history.statusLabels.draft')} size="small" />
+      return <VxChip label={t('config.importData.history.statusLabels.draft')} size="small" />
     case 2:
-      return <Chip label={t('config.importData.history.statusLabels.validated')} size="small" color="info" />
+      return <VxChip label={t('config.importData.history.statusLabels.validated')} size="small" color="info" />
     case 3:
-      return <Chip label={t('config.importData.history.statusLabels.failedValidation')} size="small" color="warning" />
+      return <VxChip label={t('config.importData.history.statusLabels.failedValidation')} size="small" color="warning" />
     case 4:
-      return <Chip label={t('config.importData.history.statusLabels.imported')} size="small" color="success" />
+      return <VxChip label={t('config.importData.history.statusLabels.imported')} size="small" color="success" />
     case 5:
-      return <Chip label={t('config.importData.history.statusLabels.importFailed')} size="small" color="error" />
+      return <VxChip label={t('config.importData.history.statusLabels.importFailed')} size="small" color="error" />
     default:
-      return <Chip label={String(status)} size="small" />
+      return <VxChip label={String(status)} size="small" />
   }
 }
 
@@ -86,72 +73,72 @@ export default function ImportHistoryPanel({ importType, refreshTrigger }: Props
   }, [load, refreshTrigger])
 
   return (
-    <Box sx={{ mt: 4 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-        <Typography variant="subtitle1" sx={{ fontWeight: 600, flexGrow: 1 }}>
+    <VxBox sx={{ mt: 4 }}>
+      <VxBox sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+        <VxTypography variant="subtitle1" sx={{ fontWeight: 600, flexGrow: 1 }}>
           {t('config.importData.history.title')}
-        </Typography>
-        <Tooltip title={t('config.importData.history.refresh')}>
+        </VxTypography>
+        <VxTooltip title={t('config.importData.history.refresh')}>
           <span>
-            <IconButton onClick={load} size="small" disabled={loading}>
+            <VxIconButton onClick={load} size="small" disabled={loading}>
               <RefreshIcon fontSize="small" />
-            </IconButton>
+            </VxIconButton>
           </span>
-        </Tooltip>
-      </Box>
+        </VxTooltip>
+      </VxBox>
 
       {loading && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
-          <CircularProgress size={24} />
-        </Box>
+        <VxBox sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+          <VxCircularProgress size={24} />
+        </VxBox>
       )}
 
       {!loading && error && (
-        <Alert severity="error" action={
-          <IconButton size="small" color="inherit" onClick={load}>
+        <VxAlert severity="error" action={
+          <VxIconButton size="small" color="inherit" onClick={load}>
             <RefreshIcon fontSize="small" />
-          </IconButton>
+          </VxIconButton>
         }>
           {t('config.importData.history.error')}
-        </Alert>
+        </VxAlert>
       )}
 
       {!loading && !error && items.length === 0 && (
-        <Typography color="text.secondary" variant="body2">
+        <VxTypography color="text.secondary" variant="body2">
           {t('config.importData.history.empty')}
-        </Typography>
+        </VxTypography>
       )}
 
       {!loading && !error && items.length > 0 && (
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>{t('config.importData.history.table.date')}</TableCell>
-              <TableCell>{t('config.importData.history.table.file')}</TableCell>
-              <TableCell>{t('config.importData.history.table.status')}</TableCell>
-              <TableCell align="right">{t('config.importData.history.table.totalRows')}</TableCell>
-              <TableCell align="right">{t('config.importData.history.table.validRows')}</TableCell>
-              <TableCell align="right">{t('config.importData.history.table.invalidRows')}</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
+        <VxTable size="small">
+          <VxTableHead>
+            <VxTableRow>
+              <VxTableCell>{t('config.importData.history.table.date')}</VxTableCell>
+              <VxTableCell>{t('config.importData.history.table.file')}</VxTableCell>
+              <VxTableCell>{t('config.importData.history.table.status')}</VxTableCell>
+              <VxTableCell align="right">{t('config.importData.history.table.totalRows')}</VxTableCell>
+              <VxTableCell align="right">{t('config.importData.history.table.validRows')}</VxTableCell>
+              <VxTableCell align="right">{t('config.importData.history.table.invalidRows')}</VxTableCell>
+            </VxTableRow>
+          </VxTableHead>
+          <VxTableBody>
             {items.map((item) => (
-              <TableRow key={item.importJobId} hover>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>{effectiveDate(item)}</TableCell>
-                <TableCell sx={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  <Tooltip title={item.sourceFileName}>
+              <VxTableRow key={item.importJobId} hover>
+                <VxTableCell sx={{ whiteSpace: 'nowrap' }}>{effectiveDate(item)}</VxTableCell>
+                <VxTableCell sx={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <VxTooltip title={item.sourceFileName}>
                     <span>{item.sourceFileName}</span>
-                  </Tooltip>
-                </TableCell>
-                <TableCell>{statusChip(item.status, t)}</TableCell>
-                <TableCell align="right">{item.totalRows}</TableCell>
-                <TableCell align="right">{item.validRows}</TableCell>
-                <TableCell align="right">{item.invalidRows}</TableCell>
-              </TableRow>
+                  </VxTooltip>
+                </VxTableCell>
+                <VxTableCell>{statusChip(item.status, t)}</VxTableCell>
+                <VxTableCell align="right">{item.totalRows}</VxTableCell>
+                <VxTableCell align="right">{item.validRows}</VxTableCell>
+                <VxTableCell align="right">{item.invalidRows}</VxTableCell>
+              </VxTableRow>
             ))}
-          </TableBody>
-        </Table>
+          </VxTableBody>
+        </VxTable>
       )}
-    </Box>
+    </VxBox>
   )
 }

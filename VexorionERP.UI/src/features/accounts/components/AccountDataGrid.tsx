@@ -1,5 +1,5 @@
 import { DeleteOutlineRoundedIcon, EditRoundedIcon, VxDataGrid, VxGridActionsCellItem, type VxGridColDef } from '@vexorion/ui'
-import { Box, Chip, Typography } from '@vexorion/ui'
+import { VxBox, VxChip, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { getAccountTypeLabel, getNormalBalanceLabel, type AccountGridRow } from '../../../types/ui'
 
@@ -20,12 +20,12 @@ export default function AccountDataGrid({ rows, isLoading, onEdit, onDelete }: A
       minWidth: 200,
       flex: 1,
       renderCell: ({ row }) => (
-        <Box sx={{ py: 1 }}>
-          <Typography sx={{ fontWeight: 700 }}>{row.name}</Typography>
-          <Typography variant="body2" color="text.secondary">
+        <VxBox sx={{ py: 1 }}>
+          <VxTypography sx={{ fontWeight: 700 }}>{row.name}</VxTypography>
+          <VxTypography variant="body2" color="text.secondary">
             {getAccountTypeLabel(row.accountType)} / {getNormalBalanceLabel(row.normalBalance)}
-          </Typography>
-        </Box>
+          </VxTypography>
+        </VxBox>
       ),
     },
     {
@@ -34,7 +34,7 @@ export default function AccountDataGrid({ rows, isLoading, onEdit, onDelete }: A
       minWidth: 120,
       flex: 0.4,
       renderCell: ({ row }) => (
-        <Chip size="small" color={row.isPostingAllowed ? 'success' : 'default'} label={row.isPostingAllowed ? 'Allowed' : 'Blocked'} />
+        <VxChip size="small" color={row.isPostingAllowed ? 'success' : 'default'} label={row.isPostingAllowed ? 'Allowed' : 'Blocked'} />
       ),
     },
     {
@@ -43,7 +43,7 @@ export default function AccountDataGrid({ rows, isLoading, onEdit, onDelete }: A
       minWidth: 110,
       flex: 0.4,
       renderCell: ({ row }) => (
-        <Chip size="small" color={row.isActive ? 'primary' : 'default'} label={row.isActive ? 'Active' : 'Inactive'} />
+        <VxChip size="small" color={row.isActive ? 'primary' : 'default'} label={row.isActive ? 'Active' : 'Inactive'} />
       ),
     },
     {

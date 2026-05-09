@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField, Typography } from '@vexorion/ui'
+import { VxAlert, VxButton, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useCurrency } from '../../../app/CurrencyContext'
 import { Controller, useForm } from 'react-hook-form'
@@ -71,27 +71,27 @@ export default function PurchaseInvoiceLineEditorDialog({ open, mode, line, prod
   const productOptions = products.map((product) => ({ value: product.id, label: `${product.name} (${product.sku})` }))
 
   return (
-    <Dialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="sm">
-      <DialogTitle>{mode === 'create' ? 'Add invoice line' : 'Edit invoice line'}</DialogTitle>
-      <DialogContent dividers>
-        {!products.length ? <Alert severity="warning">Create products before adding invoice lines.</Alert> : null}
-        <Stack spacing={2.5} sx={{ pt: 1 }}>
+    <VxDialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="sm">
+      <VxDialogTitle>{mode === 'create' ? 'Add invoice line' : 'Edit invoice line'}</VxDialogTitle>
+      <VxDialogContent dividers>
+        {!products.length ? <VxAlert severity="warning">Create products before adding invoice lines.</VxAlert> : null}
+        <VxStack spacing={2.5} sx={{ pt: 1 }}>
           <Controller name="productId" control={control} render={({ field }) => <LookupSelectField label="Product" value={field.value} onChange={field.onChange} options={productOptions} error={Boolean(errors.productId)} helperText={errors.productId?.message} disabled={!products.length} emptyText="No products available" />} />
-          {autofillHint ? <Typography variant="body2" color="text.secondary">{autofillHint}</Typography> : null}
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-            <Controller name="quantity" control={control} render={({ field }) => <TextField {...field} fullWidth label="Quantity" type="number" slotProps={{ htmlInput: { min: 0.01, step: '0.01' } }} error={Boolean(errors.quantity)} helperText={errors.quantity?.message} onChange={(event) => field.onChange(Number(event.target.value))} />} />
-            <Controller name="unitCost" control={control} render={({ field }) => <TextField {...field} fullWidth label="Unit cost" type="number" slotProps={{ htmlInput: { min: 0, step: '0.01' } }} error={Boolean(errors.unitCost)} helperText={errors.unitCost?.message} onChange={(event) => field.onChange(Number(event.target.value))} />} />
-          </Stack>
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-            <Controller name="discountAmount" control={control} render={({ field }) => <TextField {...field} fullWidth label="Discount" type="number" slotProps={{ htmlInput: { min: 0, step: '0.01' } }} error={Boolean(errors.discountAmount)} helperText={errors.discountAmount?.message} onChange={(event) => field.onChange(Number(event.target.value))} />} />
-            <Controller name="taxAmount" control={control} render={({ field }) => <TextField {...field} fullWidth label="Tax" type="number" slotProps={{ htmlInput: { min: 0, step: '0.01' } }} error={Boolean(errors.taxAmount)} helperText={errors.taxAmount?.message} onChange={(event) => field.onChange(Number(event.target.value))} />} />
-          </Stack>
-        </Stack>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose} disabled={isSubmitting}>Cancel</Button>
-        <Button onClick={() => void handleSubmit(async (values) => { await onSaved(mode, values) })()} variant="contained" disabled={isSubmitting || !products.length}>{isSubmitting ? 'Saving...' : mode === 'create' ? 'Add line' : 'Save line'}</Button>
-      </DialogActions>
-    </Dialog>
+          {autofillHint ? <VxTypography variant="body2" color="text.secondary">{autofillHint}</VxTypography> : null}
+          <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+            <Controller name="quantity" control={control} render={({ field }) => <VxTextField {...field} fullWidth label="Quantity" type="number" slotProps={{ htmlInput: { min: 0.01, step: '0.01' } }} error={Boolean(errors.quantity)} helperText={errors.quantity?.message} onChange={(event) => field.onChange(Number(event.target.value))} />} />
+            <Controller name="unitCost" control={control} render={({ field }) => <VxTextField {...field} fullWidth label="Unit cost" type="number" slotProps={{ htmlInput: { min: 0, step: '0.01' } }} error={Boolean(errors.unitCost)} helperText={errors.unitCost?.message} onChange={(event) => field.onChange(Number(event.target.value))} />} />
+          </VxStack>
+          <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+            <Controller name="discountAmount" control={control} render={({ field }) => <VxTextField {...field} fullWidth label="Discount" type="number" slotProps={{ htmlInput: { min: 0, step: '0.01' } }} error={Boolean(errors.discountAmount)} helperText={errors.discountAmount?.message} onChange={(event) => field.onChange(Number(event.target.value))} />} />
+            <Controller name="taxAmount" control={control} render={({ field }) => <VxTextField {...field} fullWidth label="Tax" type="number" slotProps={{ htmlInput: { min: 0, step: '0.01' } }} error={Boolean(errors.taxAmount)} helperText={errors.taxAmount?.message} onChange={(event) => field.onChange(Number(event.target.value))} />} />
+          </VxStack>
+        </VxStack>
+      </VxDialogContent>
+      <VxDialogActions sx={{ px: 3, py: 2 }}>
+        <VxButton onClick={onClose} disabled={isSubmitting}>Cancel</VxButton>
+        <VxButton onClick={() => void handleSubmit(async (values) => { await onSaved(mode, values) })()} variant="contained" disabled={isSubmitting || !products.length}>{isSubmitting ? 'Saving...' : mode === 'create' ? 'Add line' : 'Save line'}</VxButton>
+      </VxDialogActions>
+    </VxDialog>
   )
 }

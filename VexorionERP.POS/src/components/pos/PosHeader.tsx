@@ -1,5 +1,5 @@
 import { AdminPanelSettingsRoundedIcon, DarkModeRoundedIcon, LightModeRoundedIcon, LockRoundedIcon, LogoutRoundedIcon, PointOfSaleRoundedIcon, UndoRoundedIcon } from '@vexorion/ui'
-import { Button, Chip, IconButton, MenuItem, Paper, Stack, TextField, Tooltip, Typography } from '@vexorion/ui'
+import { VxButton, VxChip, VxIconButton, VxMenuItem, VxPaper, VxStack, VxTextField, VxTooltip, VxTypography } from '@vexorion/ui'
 import { Link } from 'react-router-dom'
 import { useThemeMode } from '../../app/ThemeModeContext'
 import { useI18n } from '../../app/I18nContext'
@@ -21,15 +21,15 @@ export function PosHeader({ canManageRoles, currencyCode, isShiftOpen, canCloseS
   const { locale, setLocale, t } = useI18n()
 
   return (
-    <Paper sx={{ p: 2 }}>
-      <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ alignItems: { md: 'center' }, justifyContent: 'space-between' }}>
-        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+    <VxPaper sx={{ p: 2 }}>
+      <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ alignItems: { md: 'center' }, justifyContent: 'space-between' }}>
+        <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
           <PointOfSaleRoundedIcon color="primary" />
-          <Typography variant="h5">{t('header.title')}</Typography>
-        </Stack>
-        <Stack direction="row" spacing={1}>
-          <Chip label={t('header.currency', { code: currencyCode })} color="primary" variant="outlined" />
-          <Chip
+          <VxTypography variant="h5">{t('header.title')}</VxTypography>
+        </VxStack>
+        <VxStack direction="row" spacing={1}>
+          <VxChip label={t('header.currency', { code: currencyCode })} color="primary" variant="outlined" />
+          <VxChip
             label={
               isShiftOpen && shiftOpenedAt
                 ? t('shift.status.open', {
@@ -41,16 +41,16 @@ export function PosHeader({ canManageRoles, currencyCode, isShiftOpen, canCloseS
             variant="outlined"
           />
           {isShiftOpen && canCloseShift ? (
-            <Button variant="outlined" color="warning" startIcon={<LockRoundedIcon />} onClick={onCloseShift}>
+            <VxButton variant="outlined" color="warning" startIcon={<LockRoundedIcon />} onClick={onCloseShift}>
               {t('shift.close.button')}
-            </Button>
+            </VxButton>
           ) : null}
           {canRefund ? (
-            <Button variant="outlined" color="secondary" startIcon={<UndoRoundedIcon />} onClick={onOpenReturn}>
+            <VxButton variant="outlined" color="secondary" startIcon={<UndoRoundedIcon />} onClick={onOpenReturn}>
               {t('return.button')}
-            </Button>
+            </VxButton>
           ) : null}
-          <TextField
+          <VxTextField
             select
             size="small"
             label={t('header.language')}
@@ -61,25 +61,25 @@ export function PosHeader({ canManageRoles, currencyCode, isShiftOpen, canCloseS
             }}
             sx={{ minWidth: 110 }}
           >
-            <MenuItem value="en">EN</MenuItem>
-            <MenuItem value="id">ID</MenuItem>
-            <MenuItem value="es">ES</MenuItem>
-          </TextField>
-          <Tooltip title={`${t('header.theme')}: ${themeMode === 'dark' ? t('common.dark') : t('common.light')}`}>
-            <IconButton onClick={toggleThemeMode} color="primary">
+            <VxMenuItem value="en">EN</VxMenuItem>
+            <VxMenuItem value="id">ID</VxMenuItem>
+            <VxMenuItem value="es">ES</VxMenuItem>
+          </VxTextField>
+          <VxTooltip title={`${t('header.theme')}: ${themeMode === 'dark' ? t('common.dark') : t('common.light')}`}>
+            <VxIconButton onClick={toggleThemeMode} color="primary">
               {themeMode === 'dark' ? <LightModeRoundedIcon /> : <DarkModeRoundedIcon />}
-            </IconButton>
-          </Tooltip>
+            </VxIconButton>
+          </VxTooltip>
           {canManageRoles ? (
-            <Button variant="outlined" startIcon={<AdminPanelSettingsRoundedIcon />} component={Link} to="/admin">
+            <VxButton variant="outlined" startIcon={<AdminPanelSettingsRoundedIcon />} component={Link} to="/admin">
               {t('header.posUsers')}
-            </Button>
+            </VxButton>
           ) : null}
-          <Button variant="outlined" startIcon={<LogoutRoundedIcon />} href="/login">
+          <VxButton variant="outlined" startIcon={<LogoutRoundedIcon />} href="/login">
             {t('header.switchUser')}
-          </Button>
-        </Stack>
-      </Stack>
-    </Paper>
+          </VxButton>
+        </VxStack>
+      </VxStack>
+    </VxPaper>
   )
 }

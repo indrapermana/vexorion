@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Alert, Box, Button, Stack, TextField, Typography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { ApiError } from '../lib/api'
@@ -34,31 +34,31 @@ export default function LoginPage() {
   }
 
   return (
-    <Stack component="form" spacing={2.5} onSubmit={onSubmit} className="public-form-card public-form-card--login">
-      <Box>
-        <Typography variant="h4" sx={{ mb: 1 }}>{t('pages.auth.login.title')}</Typography>
-        <Typography color="text.secondary">
+    <VxStack component="form" spacing={2.5} onSubmit={onSubmit} className="public-form-card public-form-card--login">
+      <VxBox>
+        <VxTypography variant="h4" sx={{ mb: 1 }}>{t('pages.auth.login.title')}</VxTypography>
+        <VxTypography color="text.secondary">
           {t('pages.auth.login.description')}
-        </Typography>
-      </Box>
+        </VxTypography>
+      </VxBox>
 
-      {error ? <Alert severity="error">{error}</Alert> : null}
+      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
 
-      <TextField
+      <VxTextField
         label={t('pages.auth.login.tenantCode')}
         value={form.tenantCode}
         onChange={(event) => setForm((current) => ({ ...current, tenantCode: event.target.value }))}
         error={Boolean(validation?.TenantCode)}
         helperText={validation?.TenantCode?.[0] ?? t('pages.auth.login.tenantCodeHelp')}
       />
-      <TextField
+      <VxTextField
         label={t('pages.auth.login.usernameOrEmail')}
         value={form.userNameOrEmail}
         onChange={(event) => setForm((current) => ({ ...current, userNameOrEmail: event.target.value }))}
         error={Boolean(validation?.UserNameOrEmail)}
         helperText={validation?.UserNameOrEmail?.[0]}
       />
-      <TextField
+      <VxTextField
         type="password"
         label={t('pages.auth.login.password')}
         value={form.password}
@@ -67,9 +67,9 @@ export default function LoginPage() {
         helperText={validation?.Password?.[0]}
       />
 
-      <Button type="submit" variant="contained" size="large" disabled={isSubmitting}>
+      <VxButton type="submit" variant="contained" size="large" disabled={isSubmitting}>
         {isSubmitting ? t('pages.auth.login.signingIn') : t('pages.auth.login.signInButton')}
-      </Button>
-    </Stack>
+      </VxButton>
+    </VxStack>
   )
 }

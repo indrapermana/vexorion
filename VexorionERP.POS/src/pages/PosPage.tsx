@@ -1,4 +1,4 @@
-import { Alert, Box, Stack } from '@vexorion/ui'
+import { VxAlert, VxBox, VxStack } from '@vexorion/ui'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTransactionHistory } from '../app/transactionHistoryStore'
@@ -538,7 +538,7 @@ export default function PosPage() {
     }, [checkout])
 
   return (
-    <Stack spacing={2} sx={{ p: 2 }}>
+    <VxStack spacing={2} sx={{ p: 2 }}>
       <PosHeader
         canManageRoles={canManageRoles}
         currencyCode={currencyCode}
@@ -550,19 +550,19 @@ export default function PosPage() {
         onOpenReturn={() => setIsReturnOpen(true)}
       />
 
-      {error ? <Alert severity="error">{error}</Alert> : null}
+      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
       {checkoutResult ? (
-        <Alert severity="success">
+        <VxAlert severity="success">
           {t('page.checkoutCompleted', {
             orderId: checkoutResult.orderId,
             invoiceId: checkoutResult.invoiceId,
             shipment: checkoutResult.shipmentId ? `, Shipment: ${checkoutResult.shipmentId}` : '',
             payment: checkoutResult.paymentId ? `, Payment: ${checkoutResult.paymentId}` : '',
           })}
-        </Alert>
+        </VxAlert>
       ) : null}
 
-      <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', lg: '3fr 1fr' } }}>
+      <VxBox sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', lg: '3fr 1fr' } }}>
         <ProductCatalogPanel
           selectedCustomerId={selectedCustomerId}
           selectedWarehouseId={selectedWarehouseId}
@@ -600,7 +600,7 @@ export default function PosPage() {
           onDeliveryChange={setIsDelivery}
           onCheckout={checkout}
         />
-      </Box>
+      </VxBox>
 
       <TransactionHistoryPanel />
 
@@ -666,6 +666,6 @@ export default function PosPage() {
           cashierName={cashierName}
         />
       ) : null}
-    </Stack>
+    </VxStack>
   )
 }

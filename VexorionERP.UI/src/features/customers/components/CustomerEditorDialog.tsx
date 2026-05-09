@@ -1,19 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormControlLabel,
-  Stack,
-  Switch,
-  TextField,
-  Typography,
-} from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxCircularProgress, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxFormControlLabel, VxStack, VxSwitch, VxTextField, VxTypography } from '@vexorion/ui'
 import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
@@ -184,26 +170,26 @@ export default function CustomerEditorDialog({
   })
 
   return (
-    <Dialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="md">
-      <DialogTitle>{title}</DialogTitle>
-      <DialogContent dividers>
+    <VxDialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="md">
+      <VxDialogTitle>{title}</VxDialogTitle>
+      <VxDialogContent dividers>
         {isLoadingCustomer ? (
-          <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 220 }}>
-            <Stack spacing={1.5} sx={{ alignItems: 'center' }}>
-              <CircularProgress size={28} />
-              <Typography color="text.secondary">{t('components.customers.editor.loading')}</Typography>
-            </Stack>
-          </Box>
+          <VxBox sx={{ display: 'grid', placeItems: 'center', minHeight: 220 }}>
+            <VxStack spacing={1.5} sx={{ alignItems: 'center' }}>
+              <VxCircularProgress size={28} />
+              <VxTypography color="text.secondary">{t('components.customers.editor.loading')}</VxTypography>
+            </VxStack>
+          </VxBox>
         ) : (
-          <Stack spacing={2.5} sx={{ pt: 1 }}>
-            {submitError ? <Alert severity="error">{submitError}</Alert> : null}
+          <VxStack spacing={2.5} sx={{ pt: 1 }}>
+            {submitError ? <VxAlert severity="error">{submitError}</VxAlert> : null}
 
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+            <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
               <Controller
                 name="customerNumber"
                 control={control}
                 render={({ field }) => (
-                  <TextField
+                  <VxTextField
                     {...field}
                     fullWidth
                     label={t('components.customers.editor.fields.customerNumber')}
@@ -216,7 +202,7 @@ export default function CustomerEditorDialog({
                 name="name"
                 control={control}
                 render={({ field }) => (
-                  <TextField
+                  <VxTextField
                     {...field}
                     fullWidth
                     label={t('components.customers.editor.fields.name')}
@@ -225,14 +211,14 @@ export default function CustomerEditorDialog({
                   />
                 )}
               />
-            </Stack>
+            </VxStack>
 
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+            <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
               <Controller
                 name="contactName"
                 control={control}
                 render={({ field }) => (
-                  <TextField
+                  <VxTextField
                     {...field}
                     fullWidth
                     label={t('components.customers.editor.fields.contactName')}
@@ -245,7 +231,7 @@ export default function CustomerEditorDialog({
                 name="phoneNumber"
                 control={control}
                 render={({ field }) => (
-                  <TextField
+                  <VxTextField
                     {...field}
                     fullWidth
                     label={t('components.customers.editor.fields.phoneNumber')}
@@ -254,13 +240,13 @@ export default function CustomerEditorDialog({
                   />
                 )}
               />
-            </Stack>
+            </VxStack>
 
             <Controller
               name="email"
               control={control}
               render={({ field }) => (
-                <TextField
+                <VxTextField
                   {...field}
                   fullWidth
                   label={t('components.customers.editor.fields.email')}
@@ -270,12 +256,12 @@ export default function CustomerEditorDialog({
               )}
             />
 
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+            <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
               <Controller
                 name="billingAddress"
                 control={control}
                 render={({ field }) => (
-                  <TextField
+                  <VxTextField
                     {...field}
                     fullWidth
                     multiline
@@ -290,7 +276,7 @@ export default function CustomerEditorDialog({
                 name="shippingAddress"
                 control={control}
                 render={({ field }) => (
-                  <TextField
+                  <VxTextField
                     {...field}
                     fullWidth
                     multiline
@@ -301,14 +287,14 @@ export default function CustomerEditorDialog({
                   />
                 )}
               />
-            </Stack>
+            </VxStack>
 
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ alignItems: { md: 'center' } }}>
+            <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ alignItems: { md: 'center' } }}>
               <Controller
                 name="creditLimit"
                 control={control}
                 render={({ field }) => (
-                  <TextField
+                  <VxTextField
                     {...field}
                     fullWidth
                     label={t('components.customers.editor.fields.creditLimit')}
@@ -326,27 +312,27 @@ export default function CustomerEditorDialog({
                   name="isActive"
                   control={control}
                   render={({ field }) => (
-                    <FormControlLabel
-                      control={<Switch checked={field.value} onChange={(_, checked) => field.onChange(checked)} />}
+                    <VxFormControlLabel
+                      control={<VxSwitch checked={field.value} onChange={(_, checked) => field.onChange(checked)} />}
                       label={field.value ? t('components.customers.editor.active') : t('components.customers.editor.inactive')}
                     />
                   )}
                 />
               ) : null}
-            </Stack>
-          </Stack>
+            </VxStack>
+          </VxStack>
         )}
-      </DialogContent>
-      <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose} disabled={isSubmitting}>{t('dialogs.cancel')}</Button>
-        <Button onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoadingCustomer}>
+      </VxDialogContent>
+      <VxDialogActions sx={{ px: 3, py: 2 }}>
+        <VxButton onClick={onClose} disabled={isSubmitting}>{t('dialogs.cancel')}</VxButton>
+        <VxButton onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoadingCustomer}>
           {isSubmitting
             ? t('components.customers.editor.saving')
             : mode === 'create'
               ? t('components.customers.editor.createAction')
               : t('components.customers.editor.saveAction')}
-        </Button>
-      </DialogActions>
-    </Dialog>
+        </VxButton>
+      </VxDialogActions>
+    </VxDialog>
   )
 }

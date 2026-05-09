@@ -1,5 +1,5 @@
 import { DeleteOutlineRoundedIcon, PublishRoundedIcon, VxDataGrid, VxGridActionsCellItem, type VxGridColDef } from '@vexorion/ui'
-import { Chip } from '@vexorion/ui'
+import { VxChip } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import type { PurchaseReceiptGridRow } from '../../../types/ui'
 
@@ -35,7 +35,7 @@ export default function PurchaseReceiptDataGrid({ rows, isLoading, onPost, onDel
       minWidth: 120,
       flex: 0.7,
       renderCell: ({ value }) => (
-        <Chip size="small" label={getStatusLabel(Number(value))} color={getStatusColor(Number(value))} variant="outlined" />
+        <VxChip size="small" label={getStatusLabel(Number(value))} color={getStatusColor(Number(value))} variant="outlined" />
       ),
     },
     {

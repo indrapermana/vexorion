@@ -1,27 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AddRoundedIcon, AutoGraphRoundedIcon, CheckCircleRoundedIcon, DeleteOutlineRoundedIcon, EditRoundedIcon, FormatListBulletedRoundedIcon } from '@vexorion/ui'
-import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  MenuItem,
-  Paper,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
-  Typography,
-} from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxChip, VxCircularProgress, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxMenuItem, VxPaper, VxStack, VxTable, VxTableBody, VxTableCell, VxTableContainer, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import LookupSelectField from '../../../components/LookupSelectField'
@@ -486,36 +465,36 @@ export default function StockCountsPage() {
       metrics={metrics}
       alerts={alerts}
       grid={(
-        <TableContainer component={Paper} elevation={0}>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Count number</TableCell>
-                <TableCell>Warehouse</TableCell>
-                <TableCell>Date</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
+        <VxTableContainer component={VxPaper} elevation={0}>
+          <VxTable size="small">
+            <VxTableHead>
+              <VxTableRow>
+                <VxTableCell>Count number</VxTableCell>
+                <VxTableCell>Warehouse</VxTableCell>
+                <VxTableCell>Date</VxTableCell>
+                <VxTableCell>Status</VxTableCell>
+                <VxTableCell align="right">Actions</VxTableCell>
+              </VxTableRow>
+            </VxTableHead>
+            <VxTableBody>
               {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={5}>
-                    <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                      <CircularProgress size={18} />
-                      <Typography variant="body2">Loading stock counts...</Typography>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
+                <VxTableRow>
+                  <VxTableCell colSpan={5}>
+                    <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                      <VxCircularProgress size={18} />
+                      <VxTypography variant="body2">Loading stock counts...</VxTypography>
+                    </VxStack>
+                  </VxTableCell>
+                </VxTableRow>
               ) : gridRows.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5}>
-                    <Typography variant="body2" color="text.secondary">No stock counts available.</Typography>
-                  </TableCell>
-                </TableRow>
+                <VxTableRow>
+                  <VxTableCell colSpan={5}>
+                    <VxTypography variant="body2" color="text.secondary">No stock counts available.</VxTypography>
+                  </VxTableCell>
+                </VxTableRow>
               ) : (
                 gridRows.map((row) => (
-                  <TableRow
+                  <VxTableRow
                     key={row.id}
                     hover
                     selected={selectedCount?.id === row.id}
@@ -525,113 +504,113 @@ export default function StockCountsPage() {
                       void loadDetails(row.id)
                     }}
                   >
-                    <TableCell>{row.countNumber}</TableCell>
-                    <TableCell>{row.warehouseName ?? row.warehouseId}</TableCell>
-                    <TableCell>{row.countDate}</TableCell>
-                    <TableCell>
-                      <Chip size="small" label={getDocumentStatusLabel(row.status)} color={row.status === 4 ? 'success' : row.status === 5 ? 'default' : 'primary'} />
-                    </TableCell>
-                    <TableCell align="right">
-                      <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
-                        <Button size="small" startIcon={<EditRoundedIcon />} onClick={(event) => { event.stopPropagation(); void openEditDialog(row) }}>
+                    <VxTableCell>{row.countNumber}</VxTableCell>
+                    <VxTableCell>{row.warehouseName ?? row.warehouseId}</VxTableCell>
+                    <VxTableCell>{row.countDate}</VxTableCell>
+                    <VxTableCell>
+                      <VxChip size="small" label={getDocumentStatusLabel(row.status)} color={row.status === 4 ? 'success' : row.status === 5 ? 'default' : 'primary'} />
+                    </VxTableCell>
+                    <VxTableCell align="right">
+                      <VxStack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
+                        <VxButton size="small" startIcon={<EditRoundedIcon />} onClick={(event) => { event.stopPropagation(); void openEditDialog(row) }}>
                           Edit
-                        </Button>
-                        <Button size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={(event) => { event.stopPropagation(); openDeleteDialog(row) }}>
+                        </VxButton>
+                        <VxButton size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={(event) => { event.stopPropagation(); openDeleteDialog(row) }}>
                           Delete
-                        </Button>
-                      </Stack>
-                    </TableCell>
-                  </TableRow>
+                        </VxButton>
+                      </VxStack>
+                    </VxTableCell>
+                  </VxTableRow>
                 ))
               )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+            </VxTableBody>
+          </VxTable>
+        </VxTableContainer>
       )}
       linesPanel={(
-        <Paper elevation={0} className="panel-card">
-          <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ justifyContent: 'space-between', mb: 2 }} spacing={1.5}>
-            <Box>
-              <Typography variant="h6">Count lines</Typography>
-              <Typography variant="body2" color="text.secondary">
+        <VxPaper elevation={0} className="panel-card">
+          <VxStack direction={{ xs: 'column', sm: 'row' }} sx={{ justifyContent: 'space-between', mb: 2 }} spacing={1.5}>
+            <VxBox>
+              <VxTypography variant="h6">Count lines</VxTypography>
+              <VxTypography variant="body2" color="text.secondary">
                 {selectedCount
                   ? `Lines for ${selectedCount.countNumber} (${getDocumentStatusLabel(selectedCount.status)})`
                   : 'Select a stock count to manage lines.'}
-              </Typography>
-            </Box>
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-              <Button variant="contained" color="success" onClick={() => setPostDialogOpen(true)} disabled={!canPost || statusActionLoading}>
+              </VxTypography>
+            </VxBox>
+            <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+              <VxButton variant="contained" color="success" onClick={() => setPostDialogOpen(true)} disabled={!canPost || statusActionLoading}>
                 Post
-              </Button>
-              <Button variant="outlined" color="warning" onClick={() => setReverseDialogOpen(true)} disabled={!canReverse || statusActionLoading}>
+              </VxButton>
+              <VxButton variant="outlined" color="warning" onClick={() => setReverseDialogOpen(true)} disabled={!canReverse || statusActionLoading}>
                 Reverse
-              </Button>
-              <Button
+              </VxButton>
+              <VxButton
                 variant="outlined"
                 startIcon={<AddRoundedIcon />}
                 onClick={openCreateLineDialog}
                 disabled={!selectedCount || selectedCount.status !== 1}
               >
                 Add line
-              </Button>
-            </Stack>
-          </Stack>
+              </VxButton>
+            </VxStack>
+          </VxStack>
 
           {!selectedCount ? (
-            <Alert severity="info">Choose a stock count from the list to view lines.</Alert>
+            <VxAlert severity="info">Choose a stock count from the list to view lines.</VxAlert>
           ) : selectedCount.lines.length === 0 ? (
-            <Alert severity="warning">No lines yet. Add at least one line before completing the document.</Alert>
+            <VxAlert severity="warning">No lines yet. Add at least one line before completing the document.</VxAlert>
           ) : (
-            <TableContainer>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Product</TableCell>
-                    <TableCell align="right">System qty</TableCell>
-                    <TableCell align="right">Counted qty</TableCell>
-                    <TableCell align="right">Variance</TableCell>
-                    <TableCell align="right">Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
+            <VxTableContainer>
+              <VxTable size="small">
+                <VxTableHead>
+                  <VxTableRow>
+                    <VxTableCell>Product</VxTableCell>
+                    <VxTableCell align="right">System qty</VxTableCell>
+                    <VxTableCell align="right">Counted qty</VxTableCell>
+                    <VxTableCell align="right">Variance</VxTableCell>
+                    <VxTableCell align="right">Actions</VxTableCell>
+                  </VxTableRow>
+                </VxTableHead>
+                <VxTableBody>
                   {selectedCount.lines.map((line) => {
                     const product = productById.get(line.productId)
                     const variance = line.countedQuantity - line.systemQuantity
                     return (
-                      <TableRow key={line.id}>
-                        <TableCell>{product ? `${product.sku} · ${product.name}` : line.productId}</TableCell>
-                        <TableCell align="right">{line.systemQuantity.toFixed(2)}</TableCell>
-                        <TableCell align="right">{line.countedQuantity.toFixed(2)}</TableCell>
-                        <TableCell align="right" sx={{ color: variance === 0 ? 'text.secondary' : variance > 0 ? 'success.main' : 'error.main' }}>
+                      <VxTableRow key={line.id}>
+                        <VxTableCell>{product ? `${product.sku} · ${product.name}` : line.productId}</VxTableCell>
+                        <VxTableCell align="right">{line.systemQuantity.toFixed(2)}</VxTableCell>
+                        <VxTableCell align="right">{line.countedQuantity.toFixed(2)}</VxTableCell>
+                        <VxTableCell align="right" sx={{ color: variance === 0 ? 'text.secondary' : variance > 0 ? 'success.main' : 'error.main' }}>
                           {variance.toFixed(2)}
-                        </TableCell>
-                        <TableCell align="right">
-                          <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
-                            <Button size="small" startIcon={<EditRoundedIcon />} disabled={selectedCount.status !== 1} onClick={() => openEditLineDialog(line)}>
+                        </VxTableCell>
+                        <VxTableCell align="right">
+                          <VxStack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
+                            <VxButton size="small" startIcon={<EditRoundedIcon />} disabled={selectedCount.status !== 1} onClick={() => openEditLineDialog(line)}>
                               Edit
-                            </Button>
-                            <Button size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} disabled={selectedCount.status !== 1} onClick={() => void deleteLine(line)}>
+                            </VxButton>
+                            <VxButton size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} disabled={selectedCount.status !== 1} onClick={() => void deleteLine(line)}>
                               Delete
-                            </Button>
-                          </Stack>
-                        </TableCell>
-                      </TableRow>
+                            </VxButton>
+                          </VxStack>
+                        </VxTableCell>
+                      </VxTableRow>
                     )
                   })}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                </VxTableBody>
+              </VxTable>
+            </VxTableContainer>
           )}
-        </Paper>
+        </VxPaper>
       )}
       editor={(
         <>
-          <Dialog open={editorOpen} onClose={closeEditorDialog} fullWidth maxWidth="sm">
-            <DialogTitle>{editorMode === 'create' ? 'Create stock count' : 'Edit stock count'}</DialogTitle>
-            <DialogContent>
-              <Stack spacing={2} sx={{ mt: 1 }}>
-                {editorError ? <Alert severity="error">{editorError}</Alert> : null}
-                <TextField
+          <VxDialog open={editorOpen} onClose={closeEditorDialog} fullWidth maxWidth="sm">
+            <VxDialogTitle>{editorMode === 'create' ? 'Create stock count' : 'Edit stock count'}</VxDialogTitle>
+            <VxDialogContent>
+              <VxStack spacing={2} sx={{ mt: 1 }}>
+                {editorError ? <VxAlert severity="error">{editorError}</VxAlert> : null}
+                <VxTextField
                   label="Count number"
                   value={editorForm.countNumber}
                   onChange={(event) => setEditorForm((current) => ({ ...current, countNumber: event.target.value }))}
@@ -646,7 +625,7 @@ export default function StockCountsPage() {
                   onChange={(value) => setEditorForm((current) => ({ ...current, warehouseId: value }))}
                   disabled={editorLoading}
                 />
-                <TextField
+                <VxTextField
                   label="Count date"
                   type="date"
                   value={editorForm.countDate}
@@ -656,7 +635,7 @@ export default function StockCountsPage() {
                   required
                   fullWidth
                 />
-                <TextField
+                <VxTextField
                   select
                   label="Status"
                   value={editorForm.status}
@@ -665,12 +644,12 @@ export default function StockCountsPage() {
                   fullWidth
                 >
                   {documentStatusOptions.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
+                    <VxMenuItem key={option.value} value={option.value}>
                       {option.label}
-                    </MenuItem>
+                    </VxMenuItem>
                   ))}
-                </TextField>
-                <TextField
+                </VxTextField>
+                <VxTextField
                   label="Notes"
                   value={editorForm.notes}
                   onChange={(event) => setEditorForm((current) => ({ ...current, notes: event.target.value }))}
@@ -679,21 +658,21 @@ export default function StockCountsPage() {
                   minRows={3}
                   fullWidth
                 />
-              </Stack>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={closeEditorDialog} disabled={editorLoading}>Cancel</Button>
-              <Button onClick={() => void saveHeader()} disabled={editorLoading} variant="contained">
+              </VxStack>
+            </VxDialogContent>
+            <VxDialogActions>
+              <VxButton onClick={closeEditorDialog} disabled={editorLoading}>Cancel</VxButton>
+              <VxButton onClick={() => void saveHeader()} disabled={editorLoading} variant="contained">
                 {editorLoading ? 'Saving...' : 'Save'}
-              </Button>
-            </DialogActions>
-          </Dialog>
+              </VxButton>
+            </VxDialogActions>
+          </VxDialog>
 
-          <Dialog open={lineOpen} onClose={closeLineDialog} fullWidth maxWidth="sm">
-            <DialogTitle>{lineMode === 'create' ? 'Add stock count line' : 'Edit stock count line'}</DialogTitle>
-            <DialogContent>
-              <Stack spacing={2} sx={{ mt: 1 }}>
-                {lineError ? <Alert severity="error">{lineError}</Alert> : null}
+          <VxDialog open={lineOpen} onClose={closeLineDialog} fullWidth maxWidth="sm">
+            <VxDialogTitle>{lineMode === 'create' ? 'Add stock count line' : 'Edit stock count line'}</VxDialogTitle>
+            <VxDialogContent>
+              <VxStack spacing={2} sx={{ mt: 1 }}>
+                {lineError ? <VxAlert severity="error">{lineError}</VxAlert> : null}
                 <LookupSelectField
                   label="Product"
                   options={products.map((product) => ({ value: product.id, label: `${product.sku} · ${product.name}` }))}
@@ -708,7 +687,7 @@ export default function StockCountsPage() {
                   }}
                   disabled={lineSaving}
                 />
-                <TextField
+                <VxTextField
                   label="System quantity"
                   type="number"
                   value={lineForm.systemQuantity}
@@ -717,7 +696,7 @@ export default function StockCountsPage() {
                   slotProps={{ htmlInput: { min: 0, step: '0.01' } }}
                   fullWidth
                 />
-                <TextField
+                <VxTextField
                   label="Counted quantity"
                   type="number"
                   value={lineForm.countedQuantity}
@@ -726,68 +705,68 @@ export default function StockCountsPage() {
                   slotProps={{ htmlInput: { min: 0, step: '0.01' } }}
                   fullWidth
                 />
-                <TextField
+                <VxTextField
                   label="Variance"
                   value={(Number(lineForm.countedQuantity || 0) - Number(lineForm.systemQuantity || 0)).toFixed(2)}
                   slotProps={{ htmlInput: { readOnly: true } }}
                   fullWidth
                 />
-              </Stack>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={closeLineDialog} disabled={lineSaving}>Cancel</Button>
-              <Button onClick={() => void saveLine()} disabled={lineSaving} variant="contained">
+              </VxStack>
+            </VxDialogContent>
+            <VxDialogActions>
+              <VxButton onClick={closeLineDialog} disabled={lineSaving}>Cancel</VxButton>
+              <VxButton onClick={() => void saveLine()} disabled={lineSaving} variant="contained">
                 {lineSaving ? 'Saving...' : 'Save line'}
-              </Button>
-            </DialogActions>
-          </Dialog>
+              </VxButton>
+            </VxDialogActions>
+          </VxDialog>
 
-          <Dialog open={postDialogOpen} onClose={() => setPostDialogOpen(false)} fullWidth maxWidth="xs">
-            <DialogTitle>Post stock count</DialogTitle>
-            <DialogContent>
-              <Typography>
+          <VxDialog open={postDialogOpen} onClose={() => setPostDialogOpen(false)} fullWidth maxWidth="xs">
+            <VxDialogTitle>Post stock count</VxDialogTitle>
+            <VxDialogContent>
+              <VxTypography>
                 Confirm posting this stock count to apply variance movements to inventory balances?
-              </Typography>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setPostDialogOpen(false)} disabled={statusActionLoading}>Cancel</Button>
-              <Button onClick={() => void confirmPost()} disabled={statusActionLoading} color="success" variant="contained">
+              </VxTypography>
+            </VxDialogContent>
+            <VxDialogActions>
+              <VxButton onClick={() => setPostDialogOpen(false)} disabled={statusActionLoading}>Cancel</VxButton>
+              <VxButton onClick={() => void confirmPost()} disabled={statusActionLoading} color="success" variant="contained">
                 {statusActionLoading ? 'Posting...' : 'Post'}
-              </Button>
-            </DialogActions>
-          </Dialog>
+              </VxButton>
+            </VxDialogActions>
+          </VxDialog>
 
-          <Dialog open={reverseDialogOpen} onClose={() => setReverseDialogOpen(false)} fullWidth maxWidth="xs">
-            <DialogTitle>Reverse stock count</DialogTitle>
-            <DialogContent>
-              <Typography>
+          <VxDialog open={reverseDialogOpen} onClose={() => setReverseDialogOpen(false)} fullWidth maxWidth="xs">
+            <VxDialogTitle>Reverse stock count</VxDialogTitle>
+            <VxDialogContent>
+              <VxTypography>
                 Confirm reversing this stock count to post compensating movements?
-              </Typography>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setReverseDialogOpen(false)} disabled={statusActionLoading}>Cancel</Button>
-              <Button onClick={() => void confirmReverse()} disabled={statusActionLoading} color="warning" variant="contained">
+              </VxTypography>
+            </VxDialogContent>
+            <VxDialogActions>
+              <VxButton onClick={() => setReverseDialogOpen(false)} disabled={statusActionLoading}>Cancel</VxButton>
+              <VxButton onClick={() => void confirmReverse()} disabled={statusActionLoading} color="warning" variant="contained">
                 {statusActionLoading ? 'Reversing...' : 'Reverse'}
-              </Button>
-            </DialogActions>
-          </Dialog>
+              </VxButton>
+            </VxDialogActions>
+          </VxDialog>
         </>
       )}
       deleteDialog={(
-        <Dialog open={Boolean(deleteTarget)} onClose={closeDeleteDialog} fullWidth maxWidth="xs">
-          <DialogTitle>Delete stock count</DialogTitle>
-          <DialogContent>
-            <Typography>
+        <VxDialog open={Boolean(deleteTarget)} onClose={closeDeleteDialog} fullWidth maxWidth="xs">
+          <VxDialogTitle>Delete stock count</VxDialogTitle>
+          <VxDialogContent>
+            <VxTypography>
               Delete {deleteTarget?.countNumber}? This action cannot be undone.
-            </Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={closeDeleteDialog} disabled={isDeleting}>Cancel</Button>
-            <Button onClick={() => void confirmDelete()} disabled={isDeleting} color="error" variant="contained">
+            </VxTypography>
+          </VxDialogContent>
+          <VxDialogActions>
+            <VxButton onClick={closeDeleteDialog} disabled={isDeleting}>Cancel</VxButton>
+            <VxButton onClick={() => void confirmDelete()} disabled={isDeleting} color="error" variant="contained">
               {isDeleting ? 'Deleting...' : 'Delete'}
-            </Button>
-          </DialogActions>
-        </Dialog>
+            </VxButton>
+          </VxDialogActions>
+        </VxDialog>
       )}
     />
   )

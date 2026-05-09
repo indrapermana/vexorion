@@ -1,4 +1,4 @@
-import { Box, Button, Chip, Stack, Typography } from '@vexorion/ui'
+import { VxBox, VxButton, VxChip, VxStack, VxTypography } from '@vexorion/ui'
 import { LaunchRoundedIcon } from '@vexorion/ui'
 import { Link as RouterLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -13,30 +13,30 @@ export default function ProductStockPanel({ row }: ProductStockPanelProps) {
   const { t } = useTranslation()
 
   return (
-    <Box sx={{ px: { xs: 2, md: 3 }, py: 2, backgroundColor: 'rgba(15, 23, 42, 0.02)' }}>
-      <Stack spacing={1.5}>
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ justifyContent: 'space-between', alignItems: { md: 'center' } }}>
-          <Box>
-            <Typography sx={{ fontWeight: 700 }}>{t('components.products.grid.stockPanel.warehouseStock')}</Typography>
-            <Typography variant="body2" color="text.secondary">
+    <VxBox sx={{ px: { xs: 2, md: 3 }, py: 2, backgroundColor: 'rgba(15, 23, 42, 0.02)' }}>
+      <VxStack spacing={1.5}>
+        <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ justifyContent: 'space-between', alignItems: { md: 'center' } }}>
+          <VxBox>
+            <VxTypography sx={{ fontWeight: 700 }}>{t('components.products.grid.stockPanel.warehouseStock')}</VxTypography>
+            <VxTypography variant="body2" color="text.secondary">
               {t('components.products.grid.stockPanel.activeReorder', {
                 activeQuantity: formatQuantity(row.activeQuantityAvailable),
                 reorderLevel: formatQuantity(row.reorderLevel),
               })}
-            </Typography>
-          </Box>
-          <Chip
+            </VxTypography>
+          </VxBox>
+          <VxChip
             size="small"
             color={row.isLowStock ? 'warning' : 'success'}
             variant={row.isLowStock ? 'filled' : 'outlined'}
             label={row.isLowStock ? t('components.products.grid.lowStock') : t('components.products.grid.healthy')}
           />
-        </Stack>
+        </VxStack>
 
         {row.warehouseStock.length ? (
-          <Stack spacing={1}>
+          <VxStack spacing={1}>
             {row.warehouseStock.map((warehouse) => (
-              <Box
+              <VxBox
                 key={warehouse.warehouseId}
                 sx={{
                   border: '1px solid rgba(15, 23, 42, 0.08)',
@@ -46,18 +46,18 @@ export default function ProductStockPanel({ row }: ProductStockPanelProps) {
                   backgroundColor: warehouse.isWarehouseActive ? 'rgba(15, 23, 42, 0.02)' : 'rgba(120, 113, 108, 0.08)',
                 }}
               >
-                <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1.5} sx={{ justifyContent: 'space-between', alignItems: { lg: 'center' } }}>
-                  <Box>
-                    <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
-                      <Typography sx={{ fontWeight: 700 }}>{warehouse.warehouseName}</Typography>
-                      <Chip
+                <VxStack direction={{ xs: 'column', lg: 'row' }} spacing={1.5} sx={{ justifyContent: 'space-between', alignItems: { lg: 'center' } }}>
+                  <VxBox>
+                    <VxStack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+                      <VxTypography sx={{ fontWeight: 700 }}>{warehouse.warehouseName}</VxTypography>
+                      <VxChip
                         size="small"
                         label={warehouse.isWarehouseActive ? t('components.products.grid.stockPanel.activeWarehouse') : t('components.products.grid.stockPanel.inactiveWarehouse')}
                         color={warehouse.isWarehouseActive ? 'primary' : 'default'}
                         variant={warehouse.isWarehouseActive ? 'filled' : 'outlined'}
                       />
-                    </Stack>
-                    <Button
+                    </VxStack>
+                    <VxButton
                       component={RouterLink}
                       to={`/warehouses?warehouseId=${warehouse.warehouseId}`}
                       size="small"
@@ -65,21 +65,21 @@ export default function ProductStockPanel({ row }: ProductStockPanelProps) {
                       sx={{ px: 0, mt: 0.5 }}
                     >
                       {warehouse.warehouseCode}
-                    </Button>
-                  </Box>
-                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-                    <Chip size="small" label={t('components.products.grid.stockPanel.onHand', { quantity: formatQuantity(warehouse.quantityOnHand) })} variant="outlined" />
-                    <Chip size="small" label={t('components.products.grid.stockPanel.reserved', { quantity: formatQuantity(warehouse.quantityReserved) })} variant="outlined" />
-                    <Chip size="small" label={t('components.products.grid.stockPanel.available', { quantity: formatQuantity(warehouse.quantityAvailable) })} variant="outlined" />
-                  </Stack>
-                </Stack>
-              </Box>
+                    </VxButton>
+                  </VxBox>
+                  <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                    <VxChip size="small" label={t('components.products.grid.stockPanel.onHand', { quantity: formatQuantity(warehouse.quantityOnHand) })} variant="outlined" />
+                    <VxChip size="small" label={t('components.products.grid.stockPanel.reserved', { quantity: formatQuantity(warehouse.quantityReserved) })} variant="outlined" />
+                    <VxChip size="small" label={t('components.products.grid.stockPanel.available', { quantity: formatQuantity(warehouse.quantityAvailable) })} variant="outlined" />
+                  </VxStack>
+                </VxStack>
+              </VxBox>
             ))}
-          </Stack>
+          </VxStack>
         ) : (
-          <Typography color="text.secondary">{t('components.products.grid.stockPanel.noWarehouseBalances')}</Typography>
+          <VxTypography color="text.secondary">{t('components.products.grid.stockPanel.noWarehouseBalances')}</VxTypography>
         )}
-      </Stack>
-    </Box>
+      </VxStack>
+    </VxBox>
   )
 }

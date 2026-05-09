@@ -1,23 +1,5 @@
 import { useEffect, useState } from 'react'
-import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TextField,
-  Typography,
-} from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxCircularProgress, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxDivider, VxStack, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useCurrency } from '../../../app/CurrencyContext'
 import { ApiError, createSalesShipment, getSalesOrderLines } from '../../../lib/api'
@@ -130,14 +112,14 @@ export default function CreateSalesShipmentDialog({ open, salesOrderId, warehous
   }
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Create Sales Shipment</DialogTitle>
-      <DialogContent dividers>
-        <Stack spacing={2}>
-          {submitError && <Alert severity="error">{submitError}</Alert>}
+    <VxDialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <VxDialogTitle>Create Sales Shipment</VxDialogTitle>
+      <VxDialogContent dividers>
+        <VxStack spacing={2}>
+          {submitError && <VxAlert severity="error">{submitError}</VxAlert>}
 
-          <Stack direction="row" spacing={2}>
-            <TextField
+          <VxStack direction="row" spacing={2}>
+            <VxTextField
               label="Shipment number"
               value={shipmentNumber}
               onChange={e => setShipmentNumber(e.target.value)}
@@ -145,7 +127,7 @@ export default function CreateSalesShipmentDialog({ open, salesOrderId, warehous
               fullWidth
               size="small"
             />
-            <TextField
+            <VxTextField
               label="Shipment date"
               type="date"
               value={shipmentDate}
@@ -155,7 +137,7 @@ export default function CreateSalesShipmentDialog({ open, salesOrderId, warehous
               size="small"
               slotProps={{ inputLabel: { shrink: true } }}
             />
-          </Stack>
+          </VxStack>
 
           <LookupSelectField
             label="Warehouse"
@@ -164,7 +146,7 @@ export default function CreateSalesShipmentDialog({ open, salesOrderId, warehous
             options={warehouses.map(w => ({ value: w.id, label: w.name }))}
           />
 
-          <TextField
+          <VxTextField
             label="Notes"
             value={notes}
             onChange={e => setNotes(e.target.value)}
@@ -174,32 +156,32 @@ export default function CreateSalesShipmentDialog({ open, salesOrderId, warehous
             size="small"
           />
 
-          <Divider />
+          <VxDivider />
 
-          <Typography variant="subtitle2">Lines</Typography>
+          <VxTypography variant="subtitle2">Lines</VxTypography>
 
           {isLoadingLines ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
-              <CircularProgress size={24} />
-            </Box>
+            <VxBox sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+              <VxCircularProgress size={24} />
+            </VxBox>
           ) : (
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Product</TableCell>
-                  <TableCell align="right">Ordered</TableCell>
-                  <TableCell align="right">Unit Price</TableCell>
-                  <TableCell align="right" sx={{ minWidth: 130 }}>Ship Qty</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
+            <VxTable size="small">
+              <VxTableHead>
+                <VxTableRow>
+                  <VxTableCell>Product</VxTableCell>
+                  <VxTableCell align="right">Ordered</VxTableCell>
+                  <VxTableCell align="right">Unit Price</VxTableCell>
+                  <VxTableCell align="right" sx={{ minWidth: 130 }}>Ship Qty</VxTableCell>
+                </VxTableRow>
+              </VxTableHead>
+              <VxTableBody>
                 {orderLines.map(line => (
-                  <TableRow key={line.salesOrderLineId}>
-                    <TableCell>{line.productName || line.productId}</TableCell>
-                    <TableCell align="right">{line.orderedQty}</TableCell>
-                    <TableCell align="right">{formatMoney(line.unitPrice)}</TableCell>
-                    <TableCell align="right">
-                      <TextField
+                  <VxTableRow key={line.salesOrderLineId}>
+                    <VxTableCell>{line.productName || line.productId}</VxTableCell>
+                    <VxTableCell align="right">{line.orderedQty}</VxTableCell>
+                    <VxTableCell align="right">{formatMoney(line.unitPrice)}</VxTableCell>
+                    <VxTableCell align="right">
+                      <VxTextField
                         size="small"
                         type="number"
                         slotProps={{ htmlInput: { min: 0, step: 0.01 } }}
@@ -207,20 +189,20 @@ export default function CreateSalesShipmentDialog({ open, salesOrderId, warehous
                         onChange={e => handleQtyChange(line.salesOrderLineId, e.target.value)}
                         sx={{ width: 110 }}
                       />
-                    </TableCell>
-                  </TableRow>
+                    </VxTableCell>
+                  </VxTableRow>
                 ))}
-              </TableBody>
-            </Table>
+              </VxTableBody>
+            </VxTable>
           )}
-        </Stack>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={isSubmitting}>Cancel</Button>
-        <Button variant="contained" onClick={handleSubmit} disabled={isSubmitting || isLoadingLines}>
-          {isSubmitting ? <CircularProgress size={18} /> : 'Create Shipment'}
-        </Button>
-      </DialogActions>
-    </Dialog>
+        </VxStack>
+      </VxDialogContent>
+      <VxDialogActions>
+        <VxButton onClick={onClose} disabled={isSubmitting}>Cancel</VxButton>
+        <VxButton variant="contained" onClick={handleSubmit} disabled={isSubmitting || isLoadingLines}>
+          {isSubmitting ? <VxCircularProgress size={18} /> : 'Create Shipment'}
+        </VxButton>
+      </VxDialogActions>
+    </VxDialog>
   )
 }

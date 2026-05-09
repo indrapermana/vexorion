@@ -1,7 +1,7 @@
 /// <reference types="vitest/globals" />
 
 import { render } from '@testing-library/react'
-import { Button, Chip, CssBaseline, Stack, TextField, ThemeProvider } from '@vexorion/ui'
+import { VxButton, VxChip, VxCssBaseline, VxStack, VxTextField, VxThemeProvider } from '@vexorion/ui'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import LookupSelectField from './LookupSelectField'
@@ -37,14 +37,14 @@ function LookupSelectFieldHarness(props: {
 describe('UI theme primitives snapshots', () => {
   it('matches the light theme button, chip, and input primitives', () => {
     const { asFragment } = render(
-      <ThemeProvider theme={createAppTheme('light')}>
-        <CssBaseline />
-        <Stack spacing={2} sx={{ p: 2 }}>
-          <Button variant="contained">Primary Action</Button>
-          <Chip color="success" label="Active" />
-          <TextField label="Workspace name" defaultValue="Acme ERP" helperText="Required" />
-        </Stack>
-      </ThemeProvider>,
+      <VxThemeProvider theme={createAppTheme('light')}>
+        <VxCssBaseline />
+        <VxStack spacing={2} sx={{ p: 2 }}>
+          <VxButton variant="contained">Primary Action</VxButton>
+          <VxChip color="success" label="Active" />
+          <VxTextField label="Workspace name" defaultValue="Acme ERP" helperText="Required" />
+        </VxStack>
+      </VxThemeProvider>,
     )
 
     expect(asFragment()).toMatchSnapshot()
@@ -52,9 +52,9 @@ describe('UI theme primitives snapshots', () => {
 
   it('matches the dark theme lookup select states', () => {
     const { asFragment } = render(
-      <ThemeProvider theme={createAppTheme('dark')}>
-        <CssBaseline />
-        <Stack spacing={2} sx={{ p: 2 }}>
+      <VxThemeProvider theme={createAppTheme('dark')}>
+        <VxCssBaseline />
+        <VxStack spacing={2} sx={{ p: 2 }}>
           <LookupSelectFieldHarness
             options={[
               { value: 'retail', label: 'Retail' },
@@ -67,8 +67,8 @@ describe('UI theme primitives snapshots', () => {
             error
             helperText="No options available"
           />
-        </Stack>
-      </ThemeProvider>,
+        </VxStack>
+      </VxThemeProvider>,
     )
 
     expect(asFragment()).toMatchSnapshot()

@@ -1,5 +1,5 @@
 import { PointOfSaleRoundedIcon } from '@vexorion/ui'
-import { Alert, Box, Button, Paper, Stack, TextField, Typography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxPaper, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ApiError } from '../lib/api'
@@ -41,31 +41,31 @@ export default function LoginPage() {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', p: 2 }}>
-      <Paper elevation={2} sx={{ width: '100%', maxWidth: 420, p: 3 }}>
-        <Stack component="form" spacing={2} onSubmit={onSubmit}>
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+    <VxBox sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', p: 2 }}>
+      <VxPaper elevation={2} sx={{ width: '100%', maxWidth: 420, p: 3 }}>
+        <VxStack component="form" spacing={2} onSubmit={onSubmit}>
+          <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
             <PointOfSaleRoundedIcon color="primary" />
-            <Typography variant="h5">{t('login.title')}</Typography>
-          </Stack>
+            <VxTypography variant="h5">{t('login.title')}</VxTypography>
+          </VxStack>
 
-          {error ? <Alert severity="error">{error}</Alert> : null}
+          {error ? <VxAlert severity="error">{error}</VxAlert> : null}
 
-          <TextField
+          <VxTextField
             label={t('login.tenantCode')}
             value={form.tenantCode}
             onChange={(event) => setForm((current) => ({ ...current, tenantCode: event.target.value }))}
             error={Boolean(validation?.TenantCode)}
             helperText={getValidationMessage('TenantCode')}
           />
-          <TextField
+          <VxTextField
             label={t('login.usernameOrEmail')}
             value={form.userNameOrEmail}
             onChange={(event) => setForm((current) => ({ ...current, userNameOrEmail: event.target.value }))}
             error={Boolean(validation?.UserNameOrEmail)}
             helperText={getValidationMessage('UserNameOrEmail')}
           />
-          <TextField
+          <VxTextField
             type="password"
             label={t('login.password')}
             value={form.password}
@@ -74,11 +74,11 @@ export default function LoginPage() {
             helperText={getValidationMessage('Password')}
           />
 
-          <Button type="submit" variant="contained" size="large" disabled={isSubmitting}>
+          <VxButton type="submit" variant="contained" size="large" disabled={isSubmitting}>
             {isSubmitting ? t('login.signingIn') : t('login.signIn')}
-          </Button>
-        </Stack>
-      </Paper>
-    </Box>
+          </VxButton>
+        </VxStack>
+      </VxPaper>
+    </VxBox>
   )
 }

@@ -1,29 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { DescriptionRoundedIcon, DownloadRoundedIcon, FullscreenRoundedIcon, PictureAsPdfRoundedIcon, RefreshRoundedIcon, VisibilityRoundedIcon } from '@vexorion/ui'
-import {
-  Alert,
-  Box,
-  Button,
-  ButtonGroup,
-  Chip,
-  CircularProgress,
-  Divider,
-  FormControl,
-  IconButton,
-  InputLabel,
-  MenuItem,
-  Paper,
-  Select,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Tooltip,
-  Typography,
-} from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxButtonGroup, VxChip, VxCircularProgress, VxDivider, VxFormControl, VxIconButton, VxInputLabel, VxMenuItem, VxPaper, VxSelect, VxStack, VxTable, VxTableBody, VxTableCell, VxTableContainer, VxTableHead, VxTableRow, VxTooltip, VxTypography } from '@vexorion/ui'
 import { useAuth } from '../app/AuthContext'
 import {
   fetchDocumentInlineBlob,
@@ -172,156 +149,156 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
 
   if (!sourceEntityId) {
     return (
-      <Paper elevation={0} className="panel-card">
-        <Typography variant="h6" sx={{ mb: 1 }}>Documents</Typography>
-        <Typography color="text.secondary">Select a record to view its documents.</Typography>
-      </Paper>
+      <VxPaper elevation={0} className="panel-card">
+        <VxTypography variant="h6" sx={{ mb: 1 }}>Documents</VxTypography>
+        <VxTypography color="text.secondary">VxSelect a record to view its documents.</VxTypography>
+      </VxPaper>
     )
   }
 
   const readyDocs = documents.filter((d) => d.status === 'Ready')
 
   return (
-    <Paper elevation={0} className="panel-card">
-      <Stack spacing={2}>
-        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+    <VxPaper elevation={0} className="panel-card">
+      <VxStack spacing={2}>
+        <VxStack direction="row" spacing={1.5} sx={{ alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+          <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
             <DescriptionRoundedIcon fontSize="small" color="action" />
-            <Typography variant="h6">Documents</Typography>
-          </Stack>
+            <VxTypography variant="h6">Documents</VxTypography>
+          </VxStack>
           {canGenerate && (
-            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-              <FormControl size="small" sx={{ minWidth: 100 }}>
-                <InputLabel id="doc-format-label">Format</InputLabel>
-                <Select<GeneratedDocumentFormat>
+            <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+              <VxFormControl size="small" sx={{ minWidth: 100 }}>
+                <VxInputLabel id="doc-format-label">Format</VxInputLabel>
+                <VxSelect<GeneratedDocumentFormat>
                   labelId="doc-format-label"
                   label="Format"
                   value={format}
                   onChange={(e) => setFormat(e.target.value as GeneratedDocumentFormat)}
                 >
-                  <MenuItem value="Pdf">PDF</MenuItem>
-                  <MenuItem value="Docx">DOCX</MenuItem>
-                </Select>
-              </FormControl>
-              <Button
+                  <VxMenuItem value="Pdf">PDF</VxMenuItem>
+                  <VxMenuItem value="Docx">DOCX</VxMenuItem>
+                </VxSelect>
+              </VxFormControl>
+              <VxButton
                 variant="contained"
                 size="small"
-                startIcon={isGenerating ? <CircularProgress size={14} color="inherit" /> : <DescriptionRoundedIcon fontSize="small" />}
+                startIcon={isGenerating ? <VxCircularProgress size={14} color="inherit" /> : <DescriptionRoundedIcon fontSize="small" />}
                 onClick={() => void handleGenerate()}
                 disabled={isGenerating}
               >
                 Export
-              </Button>
-            </Stack>
+              </VxButton>
+            </VxStack>
           )}
-        </Stack>
+        </VxStack>
 
-        {error && <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>}
-        {feedback && <Alert severity="success" onClose={() => setFeedback(null)}>{feedback}</Alert>}
+        {error && <VxAlert severity="error" onClose={() => setError(null)}>{error}</VxAlert>}
+        {feedback && <VxAlert severity="success" onClose={() => setFeedback(null)}>{feedback}</VxAlert>}
 
         {isLoading ? (
-          <Box sx={{ display: 'grid', placeItems: 'center', py: 3 }}>
-            <CircularProgress size={24} />
-          </Box>
+          <VxBox sx={{ display: 'grid', placeItems: 'center', py: 3 }}>
+            <VxCircularProgress size={24} />
+          </VxBox>
         ) : readyDocs.length === 0 ? (
-          <Typography color="text.secondary" variant="body2">No documents generated yet.</Typography>
+          <VxTypography color="text.secondary" variant="body2">No documents generated yet.</VxTypography>
         ) : (
-          <TableContainer>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>File</TableCell>
-                  <TableCell>Format</TableCell>
-                  <TableCell>Version</TableCell>
-                  <TableCell>Generated</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
+          <VxTableContainer>
+            <VxTable size="small">
+              <VxTableHead>
+                <VxTableRow>
+                  <VxTableCell>File</VxTableCell>
+                  <VxTableCell>Format</VxTableCell>
+                  <VxTableCell>Version</VxTableCell>
+                  <VxTableCell>Generated</VxTableCell>
+                  <VxTableCell align="right">Actions</VxTableCell>
+                </VxTableRow>
+              </VxTableHead>
+              <VxTableBody>
                 {readyDocs.map((doc) => {
                   const isActionLoading = actionLoadingId === doc.generatedDocumentId
                   return (
-                    <TableRow key={doc.generatedDocumentId} hover>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.78rem' }}>
+                    <VxTableRow key={doc.generatedDocumentId} hover>
+                      <VxTableCell>
+                        <VxTypography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.78rem' }}>
                           {doc.fileName}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Chip label={formatLabel(doc.format)} size="small" color={doc.format === 'Pdf' ? 'error' : 'primary'} variant="outlined" />
-                      </TableCell>
-                      <TableCell>v{doc.version}</TableCell>
-                      <TableCell>
-                        <Typography variant="body2" color="text.secondary">
+                        </VxTypography>
+                      </VxTableCell>
+                      <VxTableCell>
+                        <VxChip label={formatLabel(doc.format)} size="small" color={doc.format === 'Pdf' ? 'error' : 'primary'} variant="outlined" />
+                      </VxTableCell>
+                      <VxTableCell>v{doc.version}</VxTableCell>
+                      <VxTableCell>
+                        <VxTypography variant="body2" color="text.secondary">
                           {new Date(doc.generatedAtUtc).toLocaleString()}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="right">
-                        <ButtonGroup size="small" variant="outlined">
+                        </VxTypography>
+                      </VxTableCell>
+                      <VxTableCell align="right">
+                        <VxButtonGroup size="small" variant="outlined">
                           {canView && (
-                            <Tooltip title={doc.format === 'Docx' ? 'Preview as PDF' : 'View inline'}>
+                            <VxTooltip title={doc.format === 'Docx' ? 'Preview as PDF' : 'View inline'}>
                               <span>
-                                <IconButton
+                                <VxIconButton
                                   size="small"
                                   onClick={() => void handleViewInline(doc)}
                                   disabled={isActionLoading}
                                   aria-label={doc.format === 'Docx' ? 'Preview as PDF' : 'View inline'}
                                 >
                                   {doc.format === 'Docx' ? <PictureAsPdfRoundedIcon fontSize="small" /> : <VisibilityRoundedIcon fontSize="small" />}
-                                </IconButton>
+                                </VxIconButton>
                               </span>
-                            </Tooltip>
+                            </VxTooltip>
                           )}
                           {canDownload && (
-                            <Tooltip title="Download">
+                            <VxTooltip title="Download">
                               <span>
-                                <IconButton
+                                <VxIconButton
                                   size="small"
                                   onClick={() => void handleDownload(doc)}
                                   disabled={isActionLoading}
                                   aria-label="Download"
                                 >
-                                  {isActionLoading ? <CircularProgress size={14} /> : <DownloadRoundedIcon fontSize="small" />}
-                                </IconButton>
+                                  {isActionLoading ? <VxCircularProgress size={14} /> : <DownloadRoundedIcon fontSize="small" />}
+                                </VxIconButton>
                               </span>
-                            </Tooltip>
+                            </VxTooltip>
                           )}
                           {canRegenerate && (
-                            <Tooltip title="Regenerate">
+                            <VxTooltip title="Regenerate">
                               <span>
-                                <IconButton
+                                <VxIconButton
                                   size="small"
                                   onClick={() => void handleRegenerate(doc)}
                                   disabled={isActionLoading}
                                   aria-label="Regenerate"
                                 >
-                                  {isActionLoading ? <CircularProgress size={14} /> : <RefreshRoundedIcon fontSize="small" />}
-                                </IconButton>
+                                  {isActionLoading ? <VxCircularProgress size={14} /> : <RefreshRoundedIcon fontSize="small" />}
+                                </VxIconButton>
                               </span>
-                            </Tooltip>
+                            </VxTooltip>
                           )}
-                        </ButtonGroup>
-                      </TableCell>
-                    </TableRow>
+                        </VxButtonGroup>
+                      </VxTableCell>
+                    </VxTableRow>
                   )
                 })}
-              </TableBody>
-            </Table>
-          </TableContainer>
+              </VxTableBody>
+            </VxTable>
+          </VxTableContainer>
         )}
 
         {viewer.kind !== 'hidden' && (
           <>
-            <Divider />
-            <Stack spacing={1}>
-              <Stack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                <Typography variant="subtitle2" color="text.secondary">
+            <VxDivider />
+            <VxStack spacing={1}>
+              <VxStack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+                <VxTypography variant="subtitle2" color="text.secondary">
                   {viewer.kind === 'ready' ? viewer.fileName : 'Document Preview'}
-                </Typography>
-                <Stack direction="row" spacing={0.5}>
+                </VxTypography>
+                <VxStack direction="row" spacing={0.5}>
                   {viewer.kind === 'ready' && (
-                    <Tooltip title={viewer.fullscreen ? 'Exit full screen' : 'Full screen'}>
-                      <IconButton
+                    <VxTooltip title={viewer.fullscreen ? 'Exit full screen' : 'Full screen'}>
+                      <VxIconButton
                         size="small"
                         onClick={() =>
                           setViewer((prev) =>
@@ -331,21 +308,21 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
                         aria-label="Toggle full screen"
                       >
                         <FullscreenRoundedIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
+                      </VxIconButton>
+                    </VxTooltip>
                   )}
-                  <Button size="small" variant="text" onClick={closeViewer}>Close</Button>
-                </Stack>
-              </Stack>
+                  <VxButton size="small" variant="text" onClick={closeViewer}>Close</VxButton>
+                </VxStack>
+              </VxStack>
 
               {viewer.kind === 'loading' && (
-                <Box sx={{ display: 'grid', placeItems: 'center', height: 400 }}>
-                  <CircularProgress />
-                </Box>
+                <VxBox sx={{ display: 'grid', placeItems: 'center', height: 400 }}>
+                  <VxCircularProgress />
+                </VxBox>
               )}
-              {viewer.kind === 'error' && <Alert severity="error">{viewer.message}</Alert>}
+              {viewer.kind === 'error' && <VxAlert severity="error">{viewer.message}</VxAlert>}
               {viewer.kind === 'ready' && (
-                <Box
+                <VxBox
                   sx={{
                     position: viewer.fullscreen ? 'fixed' : 'relative',
                     inset: viewer.fullscreen ? 0 : undefined,
@@ -361,12 +338,12 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
                     title="Document Preview"
                     style={{ flex: 1, border: 'none', width: '100%' }}
                   />
-                </Box>
+                </VxBox>
               )}
-            </Stack>
+            </VxStack>
           </>
         )}
-      </Stack>
-    </Paper>
+      </VxStack>
+    </VxPaper>
   )
 }

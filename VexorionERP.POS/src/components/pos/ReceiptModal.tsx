@@ -1,21 +1,5 @@
 import { PrintRoundedIcon, ReceiptLongRoundedIcon } from '@vexorion/ui'
-import {
-  Box,
-  Button,
-  Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Typography,
-} from '@vexorion/ui'
+import { VxBox, VxButton, VxChip, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxDivider, VxStack, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTypography } from '@vexorion/ui'
 import { useI18n } from '../../app/I18nContext'
 import { printReceipt } from '../../lib/printReceipt'
 
@@ -69,137 +53,137 @@ export function ReceiptModal({ open, data, onClose }: Props) {
   ]
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth scroll="paper">
-      <DialogTitle>
-        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+    <VxDialog open={open} onClose={onClose} maxWidth="sm" fullWidth scroll="paper">
+      <VxDialogTitle>
+        <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
           <ReceiptLongRoundedIcon color="primary" />
           <span>{t('receipt.title')}</span>
-        </Stack>
-      </DialogTitle>
+        </VxStack>
+      </VxDialogTitle>
 
-      <DialogContent dividers>
+      <VxDialogContent dividers>
         {/* Header */}
-        <Stack spacing={0.5} sx={{ mb: 2 }}>
-          <Typography variant="body2" color="text.secondary">
+        <VxStack spacing={0.5} sx={{ mb: 2 }}>
+          <VxTypography variant="body2" color="text.secondary">
             {new Date(data.completedAt).toLocaleString()}
-          </Typography>
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-            <Typography variant="body2">{data.customerLabel}</Typography>
+          </VxTypography>
+          <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+            <VxTypography variant="body2">{data.customerLabel}</VxTypography>
             {data.isDelivery ? (
-              <Chip size="small" label="Delivery" color="primary" variant="outlined" />
+              <VxChip size="small" label="Delivery" color="primary" variant="outlined" />
             ) : null}
-          </Stack>
-        </Stack>
+          </VxStack>
+        </VxStack>
 
         {/* Line items */}
         {data.lines.length === 0 ? (
-          <Typography variant="body2" color="text.secondary">
+          <VxTypography variant="body2" color="text.secondary">
             {t('receipt.noLines')}
-          </Typography>
+          </VxTypography>
         ) : (
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>{t('cart.product')}</TableCell>
-                <TableCell align="right">{t('cart.qty')}</TableCell>
-                <TableCell align="right">{t('cart.price')}</TableCell>
-                <TableCell align="right">{t('cart.discount')}</TableCell>
-                <TableCell align="right">{t('cart.total')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
+          <VxTable size="small">
+            <VxTableHead>
+              <VxTableRow>
+                <VxTableCell>{t('cart.product')}</VxTableCell>
+                <VxTableCell align="right">{t('cart.qty')}</VxTableCell>
+                <VxTableCell align="right">{t('cart.price')}</VxTableCell>
+                <VxTableCell align="right">{t('cart.discount')}</VxTableCell>
+                <VxTableCell align="right">{t('cart.total')}</VxTableCell>
+              </VxTableRow>
+            </VxTableHead>
+            <VxTableBody>
               {data.lines.map((line) => {
                 const lineTotal = line.unitPrice * line.quantity - line.discountAmount
                 return (
-                  <TableRow key={line.productId}>
-                    <TableCell>
-                      <Typography variant="body2">{line.productName}</Typography>
-                    </TableCell>
-                    <TableCell align="right">
-                      <Typography variant="body2">{line.quantity}</Typography>
-                    </TableCell>
-                    <TableCell align="right">
-                      <Typography variant="body2">{fmt(line.unitPrice)}</Typography>
-                    </TableCell>
-                    <TableCell align="right">
-                      <Typography variant="body2" color={line.discountAmount > 0 ? 'error' : 'text.secondary'}>
+                  <VxTableRow key={line.productId}>
+                    <VxTableCell>
+                      <VxTypography variant="body2">{line.productName}</VxTypography>
+                    </VxTableCell>
+                    <VxTableCell align="right">
+                      <VxTypography variant="body2">{line.quantity}</VxTypography>
+                    </VxTableCell>
+                    <VxTableCell align="right">
+                      <VxTypography variant="body2">{fmt(line.unitPrice)}</VxTypography>
+                    </VxTableCell>
+                    <VxTableCell align="right">
+                      <VxTypography variant="body2" color={line.discountAmount > 0 ? 'error' : 'text.secondary'}>
                         {line.discountAmount > 0 ? `-${fmt(line.discountAmount)}` : '–'}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="right">
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      </VxTypography>
+                    </VxTableCell>
+                    <VxTableCell align="right">
+                      <VxTypography variant="body2" sx={{ fontWeight: 600 }}>
                         {fmt(lineTotal)}
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
+                      </VxTypography>
+                    </VxTableCell>
+                  </VxTableRow>
                 )
               })}
-            </TableBody>
-          </Table>
+            </VxTableBody>
+          </VxTable>
         )}
 
-        <Divider sx={{ my: 2 }} />
+        <VxDivider sx={{ my: 2 }} />
 
         {/* Totals */}
-        <Stack spacing={0.5} sx={{ maxWidth: 280, ml: 'auto' }}>
+        <VxStack spacing={0.5} sx={{ maxWidth: 280, ml: 'auto' }}>
           {subtotal !== grandTotal ? (
-            <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
-              <Typography variant="body2" color="text.secondary">{t('cart.subtotal', { value: '' }).replace(':', '').trim()}</Typography>
-              <Typography variant="body2">{fmt(subtotal)}</Typography>
-            </Stack>
+            <VxStack direction="row" sx={{ justifyContent: 'space-between' }}>
+              <VxTypography variant="body2" color="text.secondary">{t('cart.subtotal', { value: '' }).replace(':', '').trim()}</VxTypography>
+              <VxTypography variant="body2">{fmt(subtotal)}</VxTypography>
+            </VxStack>
           ) : null}
           {discountTotal > 0 ? (
-            <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
-              <Typography variant="body2" color="text.secondary">{t('cart.discount')}</Typography>
-              <Typography variant="body2" color="error">-{fmt(discountTotal)}</Typography>
-            </Stack>
+            <VxStack direction="row" sx={{ justifyContent: 'space-between' }}>
+              <VxTypography variant="body2" color="text.secondary">{t('cart.discount')}</VxTypography>
+              <VxTypography variant="body2" color="error">-{fmt(discountTotal)}</VxTypography>
+            </VxStack>
           ) : null}
-          <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
-            <Typography variant="subtitle2">{t('cart.grandTotal', { value: '' }).replace(':', '').trim()}</Typography>
-            <Typography variant="subtitle2">{fmt(grandTotal)}</Typography>
-          </Stack>
-          <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
-            <Typography component="span" variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              {t('cart.method')}: <Chip size="small" label={data.paymentMethod} />
-            </Typography>
-            <Typography variant="body2">{fmt(data.paymentAmount)}</Typography>
-          </Stack>
+          <VxStack direction="row" sx={{ justifyContent: 'space-between' }}>
+            <VxTypography variant="subtitle2">{t('cart.grandTotal', { value: '' }).replace(':', '').trim()}</VxTypography>
+            <VxTypography variant="subtitle2">{fmt(grandTotal)}</VxTypography>
+          </VxStack>
+          <VxStack direction="row" sx={{ justifyContent: 'space-between' }}>
+            <VxTypography component="span" variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              {t('cart.method')}: <VxChip size="small" label={data.paymentMethod} />
+            </VxTypography>
+            <VxTypography variant="body2">{fmt(data.paymentAmount)}</VxTypography>
+          </VxStack>
           {change > 0 ? (
-            <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
-              <Typography variant="body2" color="text.secondary">{t('cart.change', { value: '' }).replace(':', '').trim()}</Typography>
-              <Typography variant="body2">{fmt(change)}</Typography>
-            </Stack>
+            <VxStack direction="row" sx={{ justifyContent: 'space-between' }}>
+              <VxTypography variant="body2" color="text.secondary">{t('cart.change', { value: '' }).replace(':', '').trim()}</VxTypography>
+              <VxTypography variant="body2">{fmt(change)}</VxTypography>
+            </VxStack>
           ) : null}
-        </Stack>
+        </VxStack>
 
-        <Divider sx={{ my: 2 }} />
+        <VxDivider sx={{ my: 2 }} />
 
         {/* Document references (Item 3) */}
-        <Stack spacing={0.5}>
+        <VxStack spacing={0.5}>
           {refs.map((ref) => (
-            <Stack key={ref.label} direction="row" spacing={1}>
-              <Typography variant="caption" color="text.secondary" sx={{ minWidth: 72 }}>
+            <VxStack key={ref.label} direction="row" spacing={1}>
+              <VxTypography variant="caption" color="text.secondary" sx={{ minWidth: 72 }}>
                 {ref.label}:
-              </Typography>
-              <Typography variant="caption" sx={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
+              </VxTypography>
+              <VxTypography variant="caption" sx={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
                 {ref.value}
-              </Typography>
-            </Stack>
+              </VxTypography>
+            </VxStack>
           ))}
-        </Stack>
-      </DialogContent>
+        </VxStack>
+      </VxDialogContent>
 
-      <DialogActions>
-        <Button onClick={onClose}>{t('receipt.close')}</Button>
-        <Box sx={{ flex: 1 }} />
-        <Button
+      <VxDialogActions>
+        <VxButton onClick={onClose}>{t('receipt.close')}</VxButton>
+        <VxBox sx={{ flex: 1 }} />
+        <VxButton
           variant="contained"
           startIcon={<PrintRoundedIcon />}
           onClick={() => printReceipt(data)}
         >
           {t('receipt.print')}
-        </Button>
-      </DialogActions>
-    </Dialog>
+        </VxButton>
+      </VxDialogActions>
+    </VxDialog>
   )
 }

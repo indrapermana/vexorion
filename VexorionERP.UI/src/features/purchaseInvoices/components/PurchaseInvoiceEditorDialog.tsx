@@ -1,20 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormControlLabel,
-  MenuItem,
-  Stack,
-  Switch,
-  TextField,
-  Typography,
-} from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxCircularProgress, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxFormControlLabel, VxMenuItem, VxStack, VxSwitch, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
@@ -181,40 +166,40 @@ export default function PurchaseInvoiceEditorDialog({ open, mode, purchaseInvoic
   })
 
   return (
-    <Dialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="md">
-      <DialogTitle>{title}</DialogTitle>
-      <DialogContent dividers>
+    <VxDialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="md">
+      <VxDialogTitle>{title}</VxDialogTitle>
+      <VxDialogContent dividers>
         {isLoadingPurchaseInvoice ? (
-          <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 220 }}><Stack spacing={1.5} sx={{ alignItems: 'center' }}><CircularProgress size={28} /><Typography color="text.secondary">Loading purchase invoice details...</Typography></Stack></Box>
+          <VxBox sx={{ display: 'grid', placeItems: 'center', minHeight: 220 }}><VxStack spacing={1.5} sx={{ alignItems: 'center' }}><VxCircularProgress size={28} /><VxTypography color="text.secondary">Loading purchase invoice details...</VxTypography></VxStack></VxBox>
         ) : (
-          <Stack spacing={2.5} sx={{ pt: 1 }}>
-            {submitError ? <Alert severity="error">{submitError}</Alert> : null}
-            {sourceLocked ? <Alert severity="info">This invoice will be created from the selected purchase order. Supplier and currency will follow the source document.</Alert> : null}
-            {!suppliers.length ? <Alert severity="warning">Create at least one supplier before creating a purchase invoice.</Alert> : null}
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-              <Controller name="invoiceNumber" control={control} render={({ field }) => <TextField {...field} fullWidth label="Invoice number" error={Boolean(errors.invoiceNumber)} helperText={errors.invoiceNumber?.message} />} />
-              <Controller name="currencyCode" control={control} render={({ field }) => <TextField {...field} fullWidth label="Currency code" error={Boolean(errors.currencyCode)} helperText={errors.currencyCode?.message} slotProps={{ htmlInput: { maxLength: 3 } }} disabled={sourceLocked} />} />
-            </Stack>
+          <VxStack spacing={2.5} sx={{ pt: 1 }}>
+            {submitError ? <VxAlert severity="error">{submitError}</VxAlert> : null}
+            {sourceLocked ? <VxAlert severity="info">This invoice will be created from the selected purchase order. Supplier and currency will follow the source document.</VxAlert> : null}
+            {!suppliers.length ? <VxAlert severity="warning">Create at least one supplier before creating a purchase invoice.</VxAlert> : null}
+            <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+              <Controller name="invoiceNumber" control={control} render={({ field }) => <VxTextField {...field} fullWidth label="Invoice number" error={Boolean(errors.invoiceNumber)} helperText={errors.invoiceNumber?.message} />} />
+              <Controller name="currencyCode" control={control} render={({ field }) => <VxTextField {...field} fullWidth label="Currency code" error={Boolean(errors.currencyCode)} helperText={errors.currencyCode?.message} slotProps={{ htmlInput: { maxLength: 3 } }} disabled={sourceLocked} />} />
+            </VxStack>
             <Controller name="supplierId" control={control} render={({ field }) => <LookupSelectField label="Supplier" value={field.value} onChange={field.onChange} options={supplierOptions} error={Boolean(errors.supplierId)} helperText={errors.supplierId?.message} disabled={!suppliers.length || sourceLocked} emptyText="No suppliers available" />} />
-            <Controller name="vendorReferenceNumber" control={control} render={({ field }) => <TextField {...field} fullWidth label="Vendor reference number" error={Boolean(errors.vendorReferenceNumber)} helperText={errors.vendorReferenceNumber?.message ?? 'Optional'} />} />
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-              <Controller name="invoiceDate" control={control} render={({ field }) => <TextField {...field} fullWidth type="date" label="Invoice date" slotProps={{ inputLabel: { shrink: true } }} error={Boolean(errors.invoiceDate)} helperText={errors.invoiceDate?.message} />} />
-              <Controller name="dueDate" control={control} render={({ field }) => <TextField {...field} fullWidth type="date" label="Due date" slotProps={{ inputLabel: { shrink: true } }} error={Boolean(errors.dueDate)} helperText={errors.dueDate?.message} />} />
-            </Stack>
+            <Controller name="vendorReferenceNumber" control={control} render={({ field }) => <VxTextField {...field} fullWidth label="Vendor reference number" error={Boolean(errors.vendorReferenceNumber)} helperText={errors.vendorReferenceNumber?.message ?? 'Optional'} />} />
+            <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+              <Controller name="invoiceDate" control={control} render={({ field }) => <VxTextField {...field} fullWidth type="date" label="Invoice date" slotProps={{ inputLabel: { shrink: true } }} error={Boolean(errors.invoiceDate)} helperText={errors.invoiceDate?.message} />} />
+              <Controller name="dueDate" control={control} render={({ field }) => <VxTextField {...field} fullWidth type="date" label="Due date" slotProps={{ inputLabel: { shrink: true } }} error={Boolean(errors.dueDate)} helperText={errors.dueDate?.message} />} />
+            </VxStack>
             <Controller name="status" control={control} render={({ field }) => (
-              <TextField {...field} fullWidth select label="Status" error={Boolean(errors.status)} helperText={errors.status?.message} onChange={(event) => field.onChange(Number(event.target.value))}>
-                {invoiceStatusOptions.map((option) => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}
-              </TextField>
+              <VxTextField {...field} fullWidth select label="Status" error={Boolean(errors.status)} helperText={errors.status?.message} onChange={(event) => field.onChange(Number(event.target.value))}>
+                {invoiceStatusOptions.map((option) => <VxMenuItem key={option.value} value={option.value}>{option.label}</VxMenuItem>)}
+              </VxTextField>
             )} />
-            <Controller name="notes" control={control} render={({ field }) => <TextField {...field} fullWidth multiline minRows={3} label="Notes" error={Boolean(errors.notes)} helperText={errors.notes?.message ?? 'Optional'} />} />
-            {mode === 'edit' ? <Controller name="isActive" control={control} render={({ field }) => <FormControlLabel control={<Switch checked={field.value} onChange={(_, checked) => field.onChange(checked)} />} label={field.value ? 'Invoice is active' : 'Invoice is inactive'} />} /> : null}
-          </Stack>
+            <Controller name="notes" control={control} render={({ field }) => <VxTextField {...field} fullWidth multiline minRows={3} label="Notes" error={Boolean(errors.notes)} helperText={errors.notes?.message ?? 'Optional'} />} />
+            {mode === 'edit' ? <Controller name="isActive" control={control} render={({ field }) => <VxFormControlLabel control={<VxSwitch checked={field.value} onChange={(_, checked) => field.onChange(checked)} />} label={field.value ? 'Invoice is active' : 'Invoice is inactive'} />} /> : null}
+          </VxStack>
         )}
-      </DialogContent>
-      <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose} disabled={isSubmitting}>Cancel</Button>
-        <Button onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoadingPurchaseInvoice || suppliers.length === 0}>{isSubmitting ? 'Saving...' : mode === 'create' ? 'Create purchase invoice' : 'Save changes'}</Button>
-      </DialogActions>
-    </Dialog>
+      </VxDialogContent>
+      <VxDialogActions sx={{ px: 3, py: 2 }}>
+        <VxButton onClick={onClose} disabled={isSubmitting}>Cancel</VxButton>
+        <VxButton onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoadingPurchaseInvoice || suppliers.length === 0}>{isSubmitting ? 'Saving...' : mode === 'create' ? 'Create purchase invoice' : 'Save changes'}</VxButton>
+      </VxDialogActions>
+    </VxDialog>
   )
 }
