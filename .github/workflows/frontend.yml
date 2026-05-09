@@ -64,11 +64,14 @@ jobs:
       - name: Install dependencies
         run: npm ci --include=optional
 
-      - name: Ensure Linux rolldown bindings
+      - name: Ensure Linux native bindings
         run: |
           npm --workspace VexorionERP.POS install --no-save @rolldown/binding-linux-x64-gnu@1.0.0-rc.17
           npm --workspace VexorionERP.AdminUI install --no-save @rolldown/binding-linux-x64-gnu@1.0.0-rc.17
           npm --workspace VexorionERP.UI install --no-save @rolldown/binding-linux-x64-gnu@1.0.0-rc.15
+          npm --workspace VexorionERP.POS install --no-save lightningcss@1.32.0 lightningcss-linux-x64-gnu@1.32.0
+          npm --workspace VexorionERP.AdminUI install --no-save lightningcss@1.32.0 lightningcss-linux-x64-gnu@1.32.0
+          npm --workspace VexorionERP.UI install --no-save lightningcss@1.32.0 lightningcss-linux-x64-gnu@1.32.0
 
       # Turbo builds only packages affected since the previous commit.
       # The dependency graph means: if packages/ui changed → all 3 apps rebuild.
@@ -167,11 +170,14 @@ jobs:
       - name: Install dependencies
         run: npm ci --include=optional
 
-      - name: Ensure Linux rolldown bindings
+      - name: Ensure Linux native bindings
         run: |
           npm --workspace VexorionERP.POS install --no-save @rolldown/binding-linux-x64-gnu@1.0.0-rc.17
           npm --workspace VexorionERP.AdminUI install --no-save @rolldown/binding-linux-x64-gnu@1.0.0-rc.17
           npm --workspace VexorionERP.UI install --no-save @rolldown/binding-linux-x64-gnu@1.0.0-rc.15
+          npm --workspace VexorionERP.POS install --no-save lightningcss@1.32.0 lightningcss-linux-x64-gnu@1.32.0
+          npm --workspace VexorionERP.AdminUI install --no-save lightningcss@1.32.0 lightningcss-linux-x64-gnu@1.32.0
+          npm --workspace VexorionERP.UI install --no-save lightningcss@1.32.0 lightningcss-linux-x64-gnu@1.32.0
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
