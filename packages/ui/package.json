@@ -9,7 +9,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.json --noEmit",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "echo \"No lint configured for @vexorion/ui yet\""
+    "lint": "echo \"No lint configured for @vexorion/ui yet\"",
+    "aliases:sync": "node ./scripts/generate-ui-aliases.mjs"
   },
   "peerDependencies": {
     "@emotion/react": "^11.14.0",

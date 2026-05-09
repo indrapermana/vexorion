@@ -19,7 +19,8 @@
     "ui:version": "node scripts/bump-ui-version.mjs",
     "ui:version:patch": "node scripts/bump-ui-version.mjs patch",
     "ui:version:minor": "node scripts/bump-ui-version.mjs minor",
-    "ui:version:major": "node scripts/bump-ui-version.mjs major"
+    "ui:version:major": "node scripts/bump-ui-version.mjs major",
+    "ui:aliases:sync": "npm run aliases:sync -w @vexorion/ui"
   },
   "devDependencies": {
     "esbuild": "^0.28.0",

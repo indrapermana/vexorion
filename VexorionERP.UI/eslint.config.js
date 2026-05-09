@@ -25,6 +25,17 @@ export default defineConfig([
       'react-hooks/purity': 'off',
       'react-hooks/set-state-in-effect': 'off',
       'react-refresh/only-export-components': 'off',
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@mui/material', '@mui/material/*', '@mui/x-data-grid', '@mui/x-data-grid/*', '@mui/x-charts', '@mui/x-charts/*'],
+              message: 'Import UI components from @vexorion/ui instead of direct @mui/* imports.',
+            },
+          ],
+        },
+      ],
     },
   },
   {

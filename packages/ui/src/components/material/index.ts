@@ -1,4 +1,3 @@
-// Barrel for explicit Material aliases.
 export * from './VxAlert'
 export * from './VxAutocomplete'
 export * from './VxBox'

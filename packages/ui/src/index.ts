@@ -1,5 +1,5 @@
 export * from './components/material'
 export * from './components/charts'
+export * from './components/datagrid'
 export * from './components/VxCard'
-export * from './components/VxDataGrid'
 export * from './icons'
