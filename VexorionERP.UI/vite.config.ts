@@ -8,6 +8,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     build: {
+      cssMinify: 'esbuild',
       rollupOptions: {
         output: {
           manualChunks(id) {

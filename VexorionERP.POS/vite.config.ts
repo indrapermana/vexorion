@@ -10,6 +10,7 @@ export default defineConfig(({ mode }) => {
       dedupe: ['react', 'react-dom'],
     },
     build: {
+      cssMinify: 'esbuild',
       rollupOptions: {
         output: {
           manualChunks(id) {
