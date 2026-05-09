@@ -1,4 +1,4 @@
-import { createTheme } from '@mui/material/styles'
+import { createTheme } from '@vexorion/ui'
 
 export type ThemeMode = 'light' | 'dark'
 
