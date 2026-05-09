@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
+const isCI = !!process.env.CI
+
 /**
  * Playwright configuration for VexorionERP POS E2E tests.
  *
@@ -16,10 +18,14 @@ import { defineConfig, devices } from '@playwright/test'
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: false,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  forbidOnly: isCI,
+  retries: isCI ? 2 : 0,
   workers: 1,
-  reporter: [['html', { open: 'never' }], ['list']],
+  reporter: [
+    ['html', { open: 'never' }],
+    ['list'],
+    ...(isCI ? [['junit', { outputFile: 'test-results/playwright-pos.xml' }] as const] : []),
+  ],
 
   use: {
     baseURL: process.env.POS_BASE_URL ?? 'http://localhost:5175',
@@ -45,11 +51,10 @@ export default defineConfig({
     },
   ],
 
-  // Uncomment to auto-start the dev server before running tests:
-  // webServer: {
-  //   command: 'npm run dev',
-  //   url: 'http://localhost:5175',
-  //   reuseExistingServer: !process.env.CI,
-  //   timeout: 120_000,
-  // },
+  webServer: {
+    command: 'npm run dev -- --host 127.0.0.1 --port 5175',
+    url: process.env.POS_BASE_URL ?? 'http://127.0.0.1:5175',
+    reuseExistingServer: !isCI,
+    timeout: 120_000,
+  },
 })

@@ -11,6 +11,7 @@ on:
       - 'package.json'
       - 'package-lock.json'
       - 'turbo.json'
+      - '.github/actions/**'
       - '.github/workflows/frontend.yml'
   pull_request:
     branches: [master, develop]
@@ -22,6 +23,7 @@ on:
       - 'package.json'
       - 'package-lock.json'
       - 'turbo.json'
+      - '.github/actions/**'
       - '.github/workflows/frontend.yml'
   workflow_dispatch:
     inputs:
@@ -145,39 +147,121 @@ jobs:
           if-no-files-found: ignore
 
   # ─────────────────────────────────────────────
-  # 2. E2E — kept disabled until webServer is wired
+  # 2. E2E — split per app for isolation and reruns
   # ─────────────────────────────────────────────
-  e2e:
-    name: E2E Tests (Playwright)
+  e2e-ui:
+    name: E2E Tests (Playwright UI)
     runs-on: ubuntu-latest
     needs: build-and-test
-    if: false  # TODO: enable once webServer config is set in playwright.config.ts
+    if: >-
+      needs.build-and-test.result == 'success' &&
+      github.event_name != 'pull_request' &&
+      secrets.E2E_API_BASE_URL != '' &&
+      secrets.E2E_USERNAME != '' &&
+      secrets.E2E_PASSWORD != '' &&
+      needs.build-and-test.outputs.ui_built == 'true'
+    env:
+      CI: true
+      E2E_TENANT_CODE: ${{ secrets.E2E_TENANT_CODE }}
+      E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
+      E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+      VITE_API_BASE_URL: ${{ secrets.E2E_API_BASE_URL }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup frontend e2e environment
+        uses: ./.github/actions/frontend-e2e-setup
+
+      - name: Run E2E (UI)
+        run: npx turbo run e2e --filter=vexorionerp-ui
+
+      - name: Upload Playwright reports
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: package-lock.json
+          name: playwright-reports-ui
+          path: |
+            VexorionERP.UI/playwright-report/
+            VexorionERP.UI/test-results/
+          if-no-files-found: ignore
 
-      - name: Install dependencies
-        run: npm ci --include=optional
+  e2e-adminui:
+    name: E2E Tests (Playwright AdminUI)
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: >-
+      needs.build-and-test.result == 'success' &&
+      github.event_name != 'pull_request' &&
+      secrets.E2E_API_BASE_URL != '' &&
+      secrets.E2E_USERNAME != '' &&
+      secrets.E2E_PASSWORD != '' &&
+      needs.build-and-test.outputs.adminui_built == 'true'
+    env:
+      CI: true
+      E2E_TENANT_CODE: ${{ secrets.E2E_TENANT_CODE }}
+      E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
+      E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+      VITE_API_BASE_URL: ${{ secrets.E2E_API_BASE_URL }}
 
-      - name: Ensure Linux native bindings
-        run: |
-          npm --workspace VexorionERP.POS install --no-save @rolldown/binding-linux-x64-gnu@1.0.0-rc.17
-          npm --workspace VexorionERP.AdminUI install --no-save @rolldown/binding-linux-x64-gnu@1.0.0-rc.17
-          npm --workspace VexorionERP.UI install --no-save @rolldown/binding-linux-x64-gnu@1.0.0-rc.15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+      - name: Setup frontend e2e environment
+        uses: ./.github/actions/frontend-e2e-setup
 
-      - name: Run E2E (all apps)
-        run: npx turbo run e2e
+      - name: Run E2E (AdminUI)
+        run: npx turbo run e2e --filter=vexorionerp-adminui
+
+      - name: Upload Playwright reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-reports-adminui
+          path: |
+            VexorionERP.AdminUI/playwright-report/
+            VexorionERP.AdminUI/test-results/
+          if-no-files-found: ignore
+
+  e2e-pos:
+    name: E2E Tests (Playwright POS)
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: >-
+      needs.build-and-test.result == 'success' &&
+      github.event_name != 'pull_request' &&
+      secrets.E2E_API_BASE_URL != '' &&
+      secrets.E2E_USERNAME != '' &&
+      secrets.E2E_PASSWORD != '' &&
+      needs.build-and-test.outputs.pos_built == 'true'
+    env:
+      CI: true
+      E2E_TENANT_CODE: ${{ secrets.E2E_TENANT_CODE }}
+      E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
+      E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+      VITE_API_BASE_URL: ${{ secrets.E2E_API_BASE_URL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup frontend e2e environment
+        uses: ./.github/actions/frontend-e2e-setup
+
+      - name: Run E2E (POS)
+        run: npx turbo run e2e --filter=vexorionerp-pos
+
+      - name: Upload Playwright reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-reports-pos
+          path: |
+            VexorionERP.POS/playwright-report/
+            VexorionERP.POS/test-results/
+          if-no-files-found: ignore
 
   # ─────────────────────────────────────────────
   # 3. Deploy jobs — only if master push AND app was built

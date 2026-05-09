@@ -1,0 +1,33 @@
+name: Frontend E2E Setup
+description: Setup Node, install deps, native bindings, and Playwright browsers for frontend e2e jobs.
+
+inputs:
+  node-version:
+    description: Node.js version to use.
+    required: false
+    default: '22'
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: npm
+        cache-dependency-path: package-lock.json
+
+    - name: Install dependencies
+      shell: bash
+      run: npm ci --include=optional
+
+    - name: Ensure Linux native bindings
+      shell: bash
+      run: |
+        npm --workspace VexorionERP.POS install --no-save @rolldown/binding-linux-x64-gnu@1.0.0-rc.17
+        npm --workspace VexorionERP.AdminUI install --no-save @rolldown/binding-linux-x64-gnu@1.0.0-rc.17
+        npm --workspace VexorionERP.UI install --no-save @rolldown/binding-linux-x64-gnu@1.0.0-rc.15
+
+    - name: Install Playwright browsers
+      shell: bash
+      run: npx playwright install --with-deps chromium
