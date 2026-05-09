@@ -1,6 +1,4 @@
-import EditRoundedIcon from '@mui/icons-material/EditRounded'
-import LockOpenRoundedIcon from '@mui/icons-material/LockOpenRounded'
-import LockRoundedIcon from '@mui/icons-material/LockRounded'
+import { EditRoundedIcon, LockOpenRoundedIcon, LockRoundedIcon } from '@vexorion/ui'
 import { Chip } from '@mui/material'
 import { DataGrid, GridActionsCellItem, type GridColDef } from '@mui/x-data-grid'
 import { useTranslation } from 'react-i18next'

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import LockRoundedIcon from '@mui/icons-material/LockRounded'
+import { LockRoundedIcon } from '@vexorion/ui'
 import {
   Button,
   Chip,

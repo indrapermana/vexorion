@@ -1,8 +1,4 @@
-import AddRoundedIcon from '@mui/icons-material/AddRounded'
-import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded'
-import PersonAddAltRoundedIcon from '@mui/icons-material/PersonAddAltRounded'
-import QrCodeScannerRoundedIcon from '@mui/icons-material/QrCodeScannerRounded'
-import RemoveRoundedIcon from '@mui/icons-material/RemoveRounded'
+import { AddRoundedIcon, Inventory2RoundedIcon, PersonAddAltRoundedIcon, QrCodeScannerRoundedIcon, RemoveRoundedIcon } from '@vexorion/ui'
 import {
   Alert,
   Box,

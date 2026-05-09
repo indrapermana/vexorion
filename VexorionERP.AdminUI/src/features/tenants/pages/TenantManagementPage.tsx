@@ -1,6 +1,7 @@
-import { Alert, Box, Button, Paper, Stack, Typography } from '@mui/material'
+import { Alert, Box, Button, Stack, Typography } from '@mui/material'
 import { lazy, useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { VxCard } from '@vexorion/ui'
 import { deleteTenant, getTenants } from '../../../lib/api'
 import type { TenantListItemResponse } from '../../../types/api'
 import { TenantDataGrid } from '../components/TenantDataGrid'
@@ -84,18 +85,12 @@ export default function TenantManagementPage() {
         </Box>
 
         <Stack direction="row" spacing={2}>
-          <Paper sx={{ p: 2, flex: 1 }}>
-            <Typography variant="body2" color="textSecondary">
-              {t('pages.tenantManagement.metrics.rows')}
-            </Typography>
+          <VxCard title={t('pages.tenantManagement.metrics.rows')} className="panel-card" style={{ flex: 1 }}>
             <Typography variant="h5">{tenants.length}</Typography>
-          </Paper>
-          <Paper sx={{ p: 2, flex: 1 }}>
-            <Typography variant="body2" color="textSecondary">
-              {t('pages.tenantManagement.metrics.active')}
-            </Typography>
+          </VxCard>
+          <VxCard title={t('pages.tenantManagement.metrics.active')} className="panel-card" style={{ flex: 1 }}>
             <Typography variant="h5">{activeTenants}</Typography>
-          </Paper>
+          </VxCard>
         </Stack>
 
         {error && <Alert severity="error">{error}</Alert>}

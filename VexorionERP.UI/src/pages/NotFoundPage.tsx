@@ -1,4 +1,4 @@
-import ReportGmailerrorredRoundedIcon from '@mui/icons-material/ReportGmailerrorredRounded'
+import { ReportGmailerrorredRoundedIcon } from '@vexorion/ui'
 import { Button, Chip, Paper, Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'

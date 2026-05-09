@@ -1,7 +1,4 @@
-import AddRoundedIcon from '@mui/icons-material/AddRounded'
-import LockResetRoundedIcon from '@mui/icons-material/LockResetRounded'
-import ManageAccountsRoundedIcon from '@mui/icons-material/ManageAccountsRounded'
-import PersonOffRoundedIcon from '@mui/icons-material/PersonOffRounded'
+import { AddRoundedIcon, LockResetRoundedIcon, ManageAccountsRoundedIcon, PersonOffRoundedIcon } from '@vexorion/ui'
 import {
   Alert,
   Box,

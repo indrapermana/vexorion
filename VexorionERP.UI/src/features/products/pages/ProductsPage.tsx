@@ -1,9 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
-import AddRoundedIcon from '@mui/icons-material/AddRounded'
-import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
-import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded'
-import ReportRoundedIcon from '@mui/icons-material/ReportRounded'
-import SellRoundedIcon from '@mui/icons-material/SellRounded'
+import { AddRoundedIcon, CheckCircleRoundedIcon, Inventory2RoundedIcon, ReportRoundedIcon, SellRoundedIcon } from '@vexorion/ui'
 import {
   Alert,
   Box,

@@ -1,5 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
-import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded'
+import { LocalShippingRoundedIcon } from '@vexorion/ui'
 import {
   Alert,
   Autocomplete,

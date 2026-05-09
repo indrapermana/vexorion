@@ -1,5 +1,4 @@
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
-import PublishRoundedIcon from '@mui/icons-material/PublishRounded'
+import { DeleteOutlineRoundedIcon, PublishRoundedIcon } from '@vexorion/ui'
 import { Chip } from '@mui/material'
 import { DataGrid, GridActionsCellItem, type GridColDef } from '@mui/x-data-grid'
 import { useTranslation } from 'react-i18next'

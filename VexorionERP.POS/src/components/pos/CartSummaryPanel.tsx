@@ -1,5 +1,4 @@
-import DeliveryDiningRoundedIcon from '@mui/icons-material/DeliveryDiningRounded'
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded'
+import { DeliveryDiningRoundedIcon, WarningAmberRoundedIcon } from '@vexorion/ui'
 import {
   Box,
   Button,

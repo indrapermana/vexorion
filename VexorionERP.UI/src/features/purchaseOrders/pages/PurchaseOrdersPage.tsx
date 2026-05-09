@@ -1,7 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
-import PaidRoundedIcon from '@mui/icons-material/PaidRounded'
-import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded'
-import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded'
+import { PaidRoundedIcon, ReceiptLongRoundedIcon, ScheduleRoundedIcon } from '@vexorion/ui'
 import { Box, CircularProgress, Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'

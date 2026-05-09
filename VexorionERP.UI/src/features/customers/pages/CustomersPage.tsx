@@ -1,8 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
-import AddRoundedIcon from '@mui/icons-material/AddRounded'
-import Groups2RoundedIcon from '@mui/icons-material/Groups2Rounded'
-import MailOutlineRoundedIcon from '@mui/icons-material/MailOutlineRounded'
-import MonetizationOnRoundedIcon from '@mui/icons-material/MonetizationOnRounded'
+import { AddRoundedIcon, Groups2RoundedIcon, MailOutlineRoundedIcon, MonetizationOnRoundedIcon } from '@vexorion/ui'
 import {
   Alert,
   Box,

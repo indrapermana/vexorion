@@ -1,8 +1,4 @@
-import DeleteSweepRoundedIcon from '@mui/icons-material/DeleteSweepRounded'
-import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded'
-import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded'
-import PrintRoundedIcon from '@mui/icons-material/PrintRounded'
-import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded'
+import { DeleteSweepRoundedIcon, HistoryRoundedIcon, LocalShippingRoundedIcon, PrintRoundedIcon, ReceiptLongRoundedIcon } from '@vexorion/ui'
 import {
   Box,
   Button,

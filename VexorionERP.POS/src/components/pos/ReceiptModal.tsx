@@ -1,5 +1,4 @@
-import PrintRoundedIcon from '@mui/icons-material/PrintRounded'
-import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded'
+import { PrintRoundedIcon, ReceiptLongRoundedIcon } from '@vexorion/ui'
 import {
   Box,
   Button,

@@ -1,7 +1,5 @@
 import { useMemo, useState } from 'react'
-import AddRoundedIcon from '@mui/icons-material/AddRounded'
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
-import EditRoundedIcon from '@mui/icons-material/EditRounded'
+import { AddRoundedIcon, DeleteOutlineRoundedIcon, EditRoundedIcon } from '@vexorion/ui'
 import { Alert, Box, Button, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { ApiError, createPurchaseInvoiceLine, deletePurchaseInvoiceLine, updatePurchaseInvoiceLine } from '../../../lib/api'

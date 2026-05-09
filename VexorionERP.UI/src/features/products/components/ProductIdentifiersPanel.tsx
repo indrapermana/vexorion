@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import AddRoundedIcon from '@mui/icons-material/AddRounded'
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
-import EditRoundedIcon from '@mui/icons-material/EditRounded'
+import { AddRoundedIcon, DeleteOutlineRoundedIcon, EditRoundedIcon } from '@vexorion/ui'
 import {
   Alert,
   Box,

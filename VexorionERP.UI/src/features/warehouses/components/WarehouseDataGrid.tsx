@@ -1,7 +1,6 @@
 import { Box, Chip, Typography } from '@mui/material'
 import { DataGrid, GridActionsCellItem, type GridColDef } from '@mui/x-data-grid'
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
-import EditRoundedIcon from '@mui/icons-material/EditRounded'
+import { DeleteOutlineRoundedIcon, EditRoundedIcon } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import type { WarehouseGridRow } from '../../../types/ui'
 

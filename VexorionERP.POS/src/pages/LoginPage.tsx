@@ -1,4 +1,4 @@
-import PointOfSaleRoundedIcon from '@mui/icons-material/PointOfSaleRounded'
+import { PointOfSaleRoundedIcon } from '@vexorion/ui'
 import { Alert, Box, Button, Paper, Stack, TextField, Typography } from '@mui/material'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'

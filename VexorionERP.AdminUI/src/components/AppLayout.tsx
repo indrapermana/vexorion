@@ -1,11 +1,4 @@
-import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded'
-import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded'
-import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded'
-import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded'
-import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded'
-import MenuRoundedIcon from '@mui/icons-material/MenuRounded'
-import SettingsApplicationsRoundedIcon from '@mui/icons-material/SettingsApplicationsRounded'
-import StoreRoundedIcon from '@mui/icons-material/StoreRounded'
+import { DarkModeRoundedIcon, DashboardRoundedIcon, GroupsRoundedIcon, LightModeRoundedIcon, LogoutRoundedIcon, MenuRoundedIcon, SettingsApplicationsRoundedIcon, StoreRoundedIcon } from '@vexorion/ui'
 import {
   Box,
   Button,

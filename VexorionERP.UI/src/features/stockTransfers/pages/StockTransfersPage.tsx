@@ -1,11 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import AddRoundedIcon from '@mui/icons-material/AddRounded'
-import AutoGraphRoundedIcon from '@mui/icons-material/AutoGraphRounded'
-import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
-import EditRoundedIcon from '@mui/icons-material/EditRounded'
-import FormatListBulletedRoundedIcon from '@mui/icons-material/FormatListBulletedRounded'
-import WarehouseRoundedIcon from '@mui/icons-material/WarehouseRounded'
+import { AddRoundedIcon, AutoGraphRoundedIcon, CheckCircleRoundedIcon, DeleteOutlineRoundedIcon, EditRoundedIcon, FormatListBulletedRoundedIcon, WarehouseRoundedIcon } from '@vexorion/ui'
 import {
   Alert,
   Box,

@@ -1,6 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { Alert, Box, Button, Stack, Typography } from '@mui/material'
-import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded'
+import { RefreshRoundedIcon } from '@vexorion/ui'
 import { posLogger } from '../lib/posLogger'
 
 interface Props {

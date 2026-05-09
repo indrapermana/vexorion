@@ -1,9 +1,4 @@
-import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded'
-import CloudUploadRoundedIcon from '@mui/icons-material/CloudUploadRounded'
-import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded'
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded'
-import FileUploadRoundedIcon from '@mui/icons-material/FileUploadRounded'
-import SendRoundedIcon from '@mui/icons-material/SendRounded'
+import { CheckCircleOutlineRoundedIcon, CloudUploadRoundedIcon, DownloadRoundedIcon, ErrorOutlineRoundedIcon, FileUploadRoundedIcon, SendRoundedIcon } from '@vexorion/ui'
 import {
   Alert,
   Box,

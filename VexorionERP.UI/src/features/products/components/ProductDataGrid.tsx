@@ -16,10 +16,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
-import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded'
-import KeyboardArrowUpRoundedIcon from '@mui/icons-material/KeyboardArrowUpRounded'
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
-import EditRoundedIcon from '@mui/icons-material/EditRounded'
+import { DeleteOutlineRoundedIcon, EditRoundedIcon, KeyboardArrowDownRoundedIcon, KeyboardArrowUpRoundedIcon } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useCurrency } from '../../../app/CurrencyContext'
 import type { ProductGridRow } from '../../../types/ui'

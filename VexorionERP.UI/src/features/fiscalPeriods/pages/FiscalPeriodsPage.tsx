@@ -1,5 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
-import AddRoundedIcon from '@mui/icons-material/AddRounded'
+import { AddRoundedIcon } from '@vexorion/ui'
 import { Alert, Box, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'

@@ -1,4 +1,4 @@
-import RefreshIcon from '@mui/icons-material/Refresh'
+import { RefreshIcon } from '@vexorion/ui'
 import {
   Alert,
   Box,

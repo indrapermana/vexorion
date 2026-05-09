@@ -1,5 +1,4 @@
-import TrendingDownRoundedIcon from '@mui/icons-material/TrendingDownRounded'
-import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded'
+import { TrendingDownRoundedIcon, TrendingUpRoundedIcon } from '@vexorion/ui'
 import { Box, Grid, Paper, Typography } from '@mui/material'
 import type { TFunction } from 'i18next'
 import type { QuickStat } from '../types'

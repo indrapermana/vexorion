@@ -1,5 +1,4 @@
-import AdminPanelSettingsRoundedIcon from '@mui/icons-material/AdminPanelSettingsRounded'
-import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded'
+import { AdminPanelSettingsRoundedIcon, ArrowBackRoundedIcon } from '@vexorion/ui'
 import {
   Alert,
   Box,

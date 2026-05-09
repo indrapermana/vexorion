@@ -1,10 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded'
-import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded'
-import FullscreenRoundedIcon from '@mui/icons-material/FullscreenRounded'
-import PictureAsPdfRoundedIcon from '@mui/icons-material/PictureAsPdfRounded'
-import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded'
-import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded'
+import { DescriptionRoundedIcon, DownloadRoundedIcon, FullscreenRoundedIcon, PictureAsPdfRoundedIcon, RefreshRoundedIcon, VisibilityRoundedIcon } from '@vexorion/ui'
 import {
   Alert,
   Box,

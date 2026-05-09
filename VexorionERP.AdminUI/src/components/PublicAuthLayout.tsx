@@ -1,7 +1,4 @@
-import ApartmentRoundedIcon from '@mui/icons-material/Apartment'
-import ShieldMoonRoundedIcon from '@mui/icons-material/ShieldMoonRounded'
-import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded'
-import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded'
+import { ApartmentRoundedIcon, ShieldMoonRoundedIcon, StorefrontRoundedIcon, TrendingUpRoundedIcon } from '@vexorion/ui'
 import { Box, Chip, Stack, Typography } from '@mui/material'
 import { Outlet } from 'react-router-dom'
 

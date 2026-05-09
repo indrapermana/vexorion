@@ -1,4 +1,4 @@
-import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded'
+import { VisibilityRoundedIcon } from '@vexorion/ui'
 import { Chip } from '@mui/material'
 import { DataGrid, GridActionsCellItem, type GridColDef } from '@mui/x-data-grid'
 import { useTranslation } from 'react-i18next'

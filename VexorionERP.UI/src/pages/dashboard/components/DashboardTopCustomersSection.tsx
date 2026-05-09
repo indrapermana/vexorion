@@ -1,4 +1,4 @@
-import PersonRoundedIcon from '@mui/icons-material/PersonRounded'
+import { PersonRoundedIcon } from '@vexorion/ui'
 import {
   Chip,
   Grid,

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import LockOpenRoundedIcon from '@mui/icons-material/LockOpenRounded'
+import { LockOpenRoundedIcon } from '@vexorion/ui'
 import {
   Button,
   Dialog,

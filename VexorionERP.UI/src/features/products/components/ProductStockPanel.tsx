@@ -1,5 +1,5 @@
 import { Box, Button, Chip, Stack, Typography } from '@mui/material'
-import LaunchRoundedIcon from '@mui/icons-material/LaunchRounded'
+import { LaunchRoundedIcon } from '@vexorion/ui'
 import { Link as RouterLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { ProductGridRow } from '../../../types/ui'
