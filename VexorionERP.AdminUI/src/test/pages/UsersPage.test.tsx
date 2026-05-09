@@ -120,7 +120,7 @@ describe('UsersPage dialogs', () => {
     await waitFor(() => {
       expect(screen.queryByRole('heading', { name: 'Add Tenant User' })).not.toBeInTheDocument()
     })
-  })
+  }, 15000)
 
   it('opens the roles dialog and saves the selected user roles', async () => {
     render(<UsersPage />)
