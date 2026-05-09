@@ -1,6 +1,5 @@
 import { Box, Chip, Typography } from '@mui/material'
-import { DataGrid, GridActionsCellItem, type GridColDef } from '@mui/x-data-grid'
-import { DeleteOutlineRoundedIcon, EditRoundedIcon } from '@vexorion/ui'
+import { DeleteOutlineRoundedIcon, EditRoundedIcon, VxDataGrid, VxGridActionsCellItem, type VxGridColDef } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import type { WarehouseGridRow } from '../../../types/ui'
 
@@ -14,7 +13,7 @@ type WarehouseDataGridProps = {
 
 export default function WarehouseDataGrid({ rows, isLoading, highlightedWarehouseId, onEdit, onDelete }: WarehouseDataGridProps) {
   const { t } = useTranslation()
-  const columns: GridColDef<WarehouseGridRow>[] = [
+  const columns: VxGridColDef<WarehouseGridRow>[] = [
     {
       field: 'name',
       headerName: t('components.warehouses.grid.columns.warehouse'),
@@ -41,14 +40,14 @@ export default function WarehouseDataGrid({ rows, isLoading, highlightedWarehous
       headerName: t('components.warehouses.grid.columns.actions'),
       minWidth: 110,
       getActions: ({ row }) => [
-        <GridActionsCellItem key={`edit-${row.id}`} icon={<EditRoundedIcon />} label={t('common.edit')} onClick={() => onEdit(row.id)} showInMenu={false} />,
-        <GridActionsCellItem key={`delete-${row.id}`} icon={<DeleteOutlineRoundedIcon />} label={t('dialogs.delete')} onClick={() => onDelete(row)} showInMenu={false} />,
+        <VxGridActionsCellItem key={`edit-${row.id}`} icon={<EditRoundedIcon />} label={t('common.edit')} onClick={() => onEdit(row.id)} showInMenu={false} />,
+        <VxGridActionsCellItem key={`delete-${row.id}`} icon={<DeleteOutlineRoundedIcon />} label={t('dialogs.delete')} onClick={() => onDelete(row)} showInMenu={false} />,
       ],
     },
   ]
 
   return (
-    <DataGrid
+    <VxDataGrid
       autoHeight
       rows={rows}
       columns={columns}

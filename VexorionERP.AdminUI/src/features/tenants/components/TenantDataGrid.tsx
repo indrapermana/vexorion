@@ -1,5 +1,5 @@
 import { Box, Chip, Typography } from '@mui/material'
-import { DataGrid, type GridColDef } from '@mui/x-data-grid'
+import { VxDataGrid, type VxGridColDef } from '@vexorion/ui'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TenantGridRow } from '../../../types/ui'
@@ -15,7 +15,7 @@ interface TenantDataGridProps {
 export function TenantDataGrid({ rows, isLoading, onEdit, onRemove }: TenantDataGridProps) {
   const { t } = useTranslation()
 
-  const columns = useMemo<GridColDef<TenantGridRow>[]>(
+  const columns = useMemo<VxGridColDef<TenantGridRow>[]>(
     () => [
       {
         field: 'name',
@@ -105,7 +105,7 @@ export function TenantDataGrid({ rows, isLoading, onEdit, onRemove }: TenantData
   )
 
   return (
-    <DataGrid
+    <VxDataGrid
       rows={rows}
       columns={columns}
       loading={isLoading}

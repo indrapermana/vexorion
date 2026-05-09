@@ -16,28 +16,32 @@ const apiMocks = vi.hoisted(() => ({
   setUserStatus: vi.fn(),
 }))
 
-vi.mock('@mui/x-data-grid', () => ({
-  DataGrid: ({ rows, columns }: { rows: UserListItemResponse[]; columns: Array<{ field: string; headerName: string; renderCell?: (params: { row: UserListItemResponse }) => unknown; valueGetter?: (_value: unknown, row: UserListItemResponse) => unknown }> }) => (
-    <div>
-      {rows.map((row) => (
-        <div key={row.id}>
-          {columns.map((column) => (
-            <div key={column.field}>
-              <span>{column.headerName}</span>
-              <div>
-                {column.renderCell
-                  ? column.renderCell({ row }) as React.ReactNode
-                  : column.valueGetter
-                    ? String(column.valueGetter(undefined, row) ?? '')
-                    : String((row as Record<string, unknown>)[column.field] ?? '')}
+vi.mock('@vexorion/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@vexorion/ui')>()
+  return {
+    ...actual,
+    VxDataGrid: ({ rows, columns }: { rows: UserListItemResponse[]; columns: Array<{ field: string; headerName: string; renderCell?: (params: { row: UserListItemResponse }) => unknown; valueGetter?: (_value: unknown, row: UserListItemResponse) => unknown }> }) => (
+      <div>
+        {rows.map((row) => (
+          <div key={row.id}>
+            {columns.map((column) => (
+              <div key={column.field}>
+                <span>{column.headerName}</span>
+                <div>
+                  {column.renderCell
+                    ? column.renderCell({ row }) as React.ReactNode
+                    : column.valueGetter
+                      ? String(column.valueGetter(undefined, row) ?? '')
+                      : String((row as Record<string, unknown>)[column.field] ?? '')}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      ))}
-    </div>
-  ),
-}))
+            ))}
+          </div>
+        ))}
+      </div>
+    ),
+  }
+})
 
 vi.mock('../../lib/api', () => apiMocks)
 

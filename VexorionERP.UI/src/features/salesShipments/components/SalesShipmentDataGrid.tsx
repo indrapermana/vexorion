@@ -1,6 +1,5 @@
-import { DeleteOutlineRoundedIcon, PublishRoundedIcon } from '@vexorion/ui'
+import { DeleteOutlineRoundedIcon, PublishRoundedIcon, VxDataGrid, VxGridActionsCellItem, type VxGridColDef } from '@vexorion/ui'
 import { Chip } from '@mui/material'
-import { DataGrid, GridActionsCellItem, type GridColDef } from '@mui/x-data-grid'
 import { useTranslation } from 'react-i18next'
 import type { SalesShipmentGridRow } from '../../../types/ui'
 
@@ -25,7 +24,7 @@ type SalesShipmentDataGridProps = {
 
 export default function SalesShipmentDataGrid({ rows, isLoading, onPost, onDelete }: SalesShipmentDataGridProps) {
   useTranslation()
-  const columns: GridColDef<SalesShipmentGridRow>[] = [
+  const columns: VxGridColDef<SalesShipmentGridRow>[] = [
     { field: 'shipmentNumber', headerName: 'Shipment #', minWidth: 160, flex: 1 },
     { field: 'shipmentDate', headerName: 'Date', minWidth: 130, flex: 0.7 },
     { field: 'warehouseName', headerName: 'Warehouse', minWidth: 160, flex: 1 },
@@ -45,7 +44,7 @@ export default function SalesShipmentDataGrid({ rows, isLoading, onPost, onDelet
       headerName: '',
       minWidth: 100,
       getActions: ({ row }) => [
-        <GridActionsCellItem
+        <VxGridActionsCellItem
           key={`post-${row.id}`}
           icon={<PublishRoundedIcon />}
           label="Ship"
@@ -53,7 +52,7 @@ export default function SalesShipmentDataGrid({ rows, isLoading, onPost, onDelet
           onClick={() => onPost(row)}
           showInMenu={false}
         />,
-        <GridActionsCellItem
+        <VxGridActionsCellItem
           key={`delete-${row.id}`}
           icon={<DeleteOutlineRoundedIcon />}
           label="Delete"
@@ -66,7 +65,7 @@ export default function SalesShipmentDataGrid({ rows, isLoading, onPost, onDelet
   ]
 
   return (
-    <DataGrid
+    <VxDataGrid
       rows={rows}
       columns={columns}
       loading={isLoading}

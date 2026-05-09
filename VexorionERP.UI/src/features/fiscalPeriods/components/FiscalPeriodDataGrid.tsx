@@ -1,6 +1,5 @@
-import { EditRoundedIcon, LockOpenRoundedIcon, LockRoundedIcon } from '@vexorion/ui'
+import { EditRoundedIcon, LockOpenRoundedIcon, LockRoundedIcon, VxDataGrid, VxGridActionsCellItem, type VxGridColDef } from '@vexorion/ui'
 import { Chip } from '@mui/material'
-import { DataGrid, GridActionsCellItem, type GridColDef } from '@mui/x-data-grid'
 import { useTranslation } from 'react-i18next'
 import type { FiscalPeriodGridRow } from '../../../types/ui'
 
@@ -14,7 +13,7 @@ type FiscalPeriodDataGridProps = {
 
 export default function FiscalPeriodDataGrid({ rows, isLoading, onEdit, onClosePeriod, onReopenPeriod }: FiscalPeriodDataGridProps) {
   useTranslation()
-  const columns: GridColDef<FiscalPeriodGridRow>[] = [
+  const columns: VxGridColDef<FiscalPeriodGridRow>[] = [
     { field: 'periodCode', headerName: 'Period', minWidth: 130, flex: 0.5 },
     { field: 'startDate', headerName: 'Start date', minWidth: 130, flex: 0.5 },
     { field: 'endDate', headerName: 'End date', minWidth: 130, flex: 0.5 },
@@ -33,16 +32,16 @@ export default function FiscalPeriodDataGrid({ rows, isLoading, onEdit, onCloseP
       headerName: 'Actions',
       minWidth: 180,
       getActions: ({ row }) => [
-        <GridActionsCellItem key={`edit-${row.id}`} icon={<EditRoundedIcon />} label="Edit" onClick={() => onEdit(row.id)} showInMenu={false} />,
+        <VxGridActionsCellItem key={`edit-${row.id}`} icon={<EditRoundedIcon />} label="Edit" onClick={() => onEdit(row.id)} showInMenu={false} />,
         row.isClosed
-          ? <GridActionsCellItem key={`reopen-${row.id}`} icon={<LockOpenRoundedIcon />} label="Reopen" onClick={() => onReopenPeriod(row)} showInMenu={false} />
-          : <GridActionsCellItem key={`close-${row.id}`} icon={<LockRoundedIcon />} label="Close" onClick={() => onClosePeriod(row)} showInMenu={false} />,
+          ? <VxGridActionsCellItem key={`reopen-${row.id}`} icon={<LockOpenRoundedIcon />} label="Reopen" onClick={() => onReopenPeriod(row)} showInMenu={false} />
+          : <VxGridActionsCellItem key={`close-${row.id}`} icon={<LockRoundedIcon />} label="Close" onClick={() => onClosePeriod(row)} showInMenu={false} />,
       ],
     },
   ]
 
   return (
-    <DataGrid
+    <VxDataGrid
       autoHeight
       rows={rows}
       columns={columns}

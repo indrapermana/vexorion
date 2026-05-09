@@ -24,22 +24,26 @@ vi.mock('react-i18next', () => ({
   }),
 }))
 
-vi.mock('@mui/x-data-grid', () => ({
-  DataGrid: ({ rows, columns }: { rows: TenantListItemResponse[]; columns: Array<{ field: string; headerName: string; renderCell?: (params: { row: TenantListItemResponse }) => unknown }> }) => (
-    <div>
-      {rows.map((row) => (
-        <div key={row.id}>
-          {columns.map((column) => (
-            <div key={column.field}>
-              <span>{column.headerName}</span>
-              <div>{column.renderCell ? column.renderCell({ row }) as React.ReactNode : (row as Record<string, unknown>)[column.field] as string}</div>
-            </div>
-          ))}
-        </div>
-      ))}
-    </div>
-  ),
-}))
+vi.mock('@vexorion/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@vexorion/ui')>()
+  return {
+    ...actual,
+    VxDataGrid: ({ rows, columns }: { rows: TenantListItemResponse[]; columns: Array<{ field: string; headerName: string; renderCell?: (params: { row: TenantListItemResponse }) => unknown }> }) => (
+      <div>
+        {rows.map((row) => (
+          <div key={row.id}>
+            {columns.map((column) => (
+              <div key={column.field}>
+                <span>{column.headerName}</span>
+                <div>{column.renderCell ? column.renderCell({ row }) as React.ReactNode : (row as Record<string, unknown>)[column.field] as string}</div>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    ),
+  }
+})
 
 import { TenantDataGrid } from '../../../features/tenants/components/TenantDataGrid'
 

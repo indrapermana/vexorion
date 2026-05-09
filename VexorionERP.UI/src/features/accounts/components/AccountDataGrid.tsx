@@ -1,6 +1,5 @@
-import { DeleteOutlineRoundedIcon, EditRoundedIcon } from '@vexorion/ui'
+import { DeleteOutlineRoundedIcon, EditRoundedIcon, VxDataGrid, VxGridActionsCellItem, type VxGridColDef } from '@vexorion/ui'
 import { Box, Chip, Typography } from '@mui/material'
-import { DataGrid, GridActionsCellItem, type GridColDef } from '@mui/x-data-grid'
 import { useTranslation } from 'react-i18next'
 import { getAccountTypeLabel, getNormalBalanceLabel, type AccountGridRow } from '../../../types/ui'
 
@@ -13,7 +12,7 @@ type AccountDataGridProps = {
 
 export default function AccountDataGrid({ rows, isLoading, onEdit, onDelete }: AccountDataGridProps) {
   useTranslation()
-  const columns: GridColDef<AccountGridRow>[] = [
+  const columns: VxGridColDef<AccountGridRow>[] = [
     { field: 'code', headerName: 'Code', minWidth: 120, flex: 0.5 },
     {
       field: 'name',
@@ -53,14 +52,14 @@ export default function AccountDataGrid({ rows, isLoading, onEdit, onDelete }: A
       headerName: 'Actions',
       minWidth: 120,
       getActions: ({ row }) => [
-        <GridActionsCellItem key={`edit-${row.id}`} icon={<EditRoundedIcon />} label="Edit" onClick={() => onEdit(row.id)} showInMenu={false} />,
-        <GridActionsCellItem key={`delete-${row.id}`} icon={<DeleteOutlineRoundedIcon />} label="Delete" onClick={() => onDelete(row)} showInMenu={false} />,
+        <VxGridActionsCellItem key={`edit-${row.id}`} icon={<EditRoundedIcon />} label="Edit" onClick={() => onEdit(row.id)} showInMenu={false} />,
+        <VxGridActionsCellItem key={`delete-${row.id}`} icon={<DeleteOutlineRoundedIcon />} label="Delete" onClick={() => onDelete(row)} showInMenu={false} />,
       ],
     },
   ]
 
   return (
-    <DataGrid
+    <VxDataGrid
       autoHeight
       rows={rows}
       columns={columns}

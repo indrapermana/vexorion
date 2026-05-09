@@ -1,6 +1,5 @@
-import { DeleteOutlineRoundedIcon, EditRoundedIcon, FormatListBulletedRoundedIcon, PaidRoundedIcon } from '@vexorion/ui'
+import { DeleteOutlineRoundedIcon, EditRoundedIcon, FormatListBulletedRoundedIcon, PaidRoundedIcon, VxDataGrid, VxGridActionsCellItem, type VxGridColDef } from '@vexorion/ui'
 import { Box, Chip, Typography } from '@mui/material'
-import { DataGrid, GridActionsCellItem, type GridColDef } from '@mui/x-data-grid'
 import { useTranslation } from 'react-i18next'
 import { getInvoiceStatusLabel, type PurchaseInvoiceGridRow } from '../../../types/ui'
 import { useCurrency } from '../../../app/CurrencyContext'
@@ -25,7 +24,7 @@ function getStatusColor(status: number) {
 export default function PurchaseInvoiceDataGrid({ rows, isLoading, onEdit, onDelete, onManageLines, onRecordPayment }: PurchaseInvoiceDataGridProps) {
   useTranslation()
   const { formatMoney } = useCurrency()
-  const columns: GridColDef<PurchaseInvoiceGridRow>[] = [
+  const columns: VxGridColDef<PurchaseInvoiceGridRow>[] = [
     {
       field: 'invoiceNumber',
       headerName: 'Invoice',
@@ -69,16 +68,16 @@ export default function PurchaseInvoiceDataGrid({ rows, isLoading, onEdit, onDel
       headerName: 'Actions',
       minWidth: 210,
       getActions: ({ row }) => [
-        <GridActionsCellItem key={`lines-${row.id}`} icon={<FormatListBulletedRoundedIcon />} label="Lines" onClick={() => onManageLines(row)} showInMenu={false} />,
-        <GridActionsCellItem key={`pay-${row.id}`} icon={<PaidRoundedIcon />} label="Record payment" onClick={() => onRecordPayment(row)} showInMenu={false} disabled={row.balanceDue <= 0} />,
-        <GridActionsCellItem key={`edit-${row.id}`} icon={<EditRoundedIcon />} label="Edit" onClick={() => onEdit(row.id)} showInMenu={false} />,
-        <GridActionsCellItem key={`delete-${row.id}`} icon={<DeleteOutlineRoundedIcon />} label="Delete" onClick={() => onDelete(row)} showInMenu={false} />,
+        <VxGridActionsCellItem key={`lines-${row.id}`} icon={<FormatListBulletedRoundedIcon />} label="Lines" onClick={() => onManageLines(row)} showInMenu={false} />,
+        <VxGridActionsCellItem key={`pay-${row.id}`} icon={<PaidRoundedIcon />} label="Record payment" onClick={() => onRecordPayment(row)} showInMenu={false} disabled={row.balanceDue <= 0} />,
+        <VxGridActionsCellItem key={`edit-${row.id}`} icon={<EditRoundedIcon />} label="Edit" onClick={() => onEdit(row.id)} showInMenu={false} />,
+        <VxGridActionsCellItem key={`delete-${row.id}`} icon={<DeleteOutlineRoundedIcon />} label="Delete" onClick={() => onDelete(row)} showInMenu={false} />,
       ],
     },
   ]
 
   return (
-    <DataGrid
+    <VxDataGrid
       autoHeight
       rows={rows}
       columns={columns}

@@ -1,5 +1,5 @@
 import { Box, Typography } from '@mui/material'
-import { DataGrid, type GridColDef } from '@mui/x-data-grid'
+import { VxDataGrid, type VxGridColDef } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import type { VendorPaymentGridRow } from '../../../types/ui'
 
@@ -11,7 +11,7 @@ type VendorPaymentDataGridProps = {
 
 export default function VendorPaymentDataGrid({ rows, isLoading, onSelectPayment }: VendorPaymentDataGridProps) {
   const { t } = useTranslation()
-  const columns: GridColDef<VendorPaymentGridRow>[] = [
+  const columns: VxGridColDef<VendorPaymentGridRow>[] = [
     {
       field: 'paymentDate',
       headerName: t('components.vendorPayments.grid.columns.paymentDate'),
@@ -55,7 +55,7 @@ export default function VendorPaymentDataGrid({ rows, isLoading, onSelectPayment
   ]
 
   return (
-    <DataGrid
+    <VxDataGrid
       autoHeight
       rows={rows}
       columns={columns}

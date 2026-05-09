@@ -3,8 +3,7 @@ import {
   Chip,
   Typography,
 } from '@mui/material'
-import { DataGrid, GridActionsCellItem, type GridColDef } from '@mui/x-data-grid'
-import { DeleteOutlineRoundedIcon, EditRoundedIcon } from '@vexorion/ui'
+import { DeleteOutlineRoundedIcon, EditRoundedIcon, VxDataGrid, VxGridActionsCellItem, type VxGridColDef } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import type { CustomerGridRow } from '../../../types/ui'
 
@@ -17,7 +16,7 @@ type CustomerDataGridProps = {
 
 export default function CustomerDataGrid({ rows, isLoading, onEdit, onDelete }: CustomerDataGridProps) {
   const { t } = useTranslation()
-  const columns: GridColDef<CustomerGridRow>[] = [
+  const columns: VxGridColDef<CustomerGridRow>[] = [
     {
       field: 'name',
       headerName: t('components.customers.grid.columns.customer'),
@@ -60,14 +59,14 @@ export default function CustomerDataGrid({ rows, isLoading, onEdit, onDelete }: 
       headerName: t('components.customers.grid.columns.actions'),
       minWidth: 110,
       getActions: ({ row }) => [
-        <GridActionsCellItem
+        <VxGridActionsCellItem
           key={`edit-${row.id}`}
           icon={<EditRoundedIcon />}
           label={t('common.edit')}
           onClick={() => onEdit(row.id)}
           showInMenu={false}
         />,
-        <GridActionsCellItem
+        <VxGridActionsCellItem
           key={`delete-${row.id}`}
           icon={<DeleteOutlineRoundedIcon />}
           label={t('dialogs.delete')}
@@ -79,7 +78,7 @@ export default function CustomerDataGrid({ rows, isLoading, onEdit, onDelete }: 
   ]
 
   return (
-    <DataGrid
+    <VxDataGrid
       autoHeight
       rows={rows}
       columns={columns}

@@ -1,4 +1,4 @@
-import { AddRoundedIcon, LockResetRoundedIcon, ManageAccountsRoundedIcon, PersonOffRoundedIcon } from '@vexorion/ui'
+import { AddRoundedIcon, LockResetRoundedIcon, ManageAccountsRoundedIcon, PersonOffRoundedIcon, VxDataGrid, type VxGridColDef } from '@vexorion/ui'
 import {
   Alert,
   Box,
@@ -14,7 +14,6 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { DataGrid, type GridColDef } from '@mui/x-data-grid'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { assignUserRoles, createUser, getRoles, getTenants, getUsersForAdmin, resetUserPassword, setUserStatus } from '../lib/api'
 import type { CreateUserRequest, UserListItemResponse } from '../types/api/users'
@@ -161,7 +160,7 @@ export default function UsersPage() {
     }
   }
 
-  const columns = useMemo<GridColDef<UserListItemResponse>[]>(
+  const columns = useMemo<VxGridColDef<UserListItemResponse>[]>(
     () => [
       {
         field: 'userName',
@@ -279,7 +278,7 @@ export default function UsersPage() {
       {error ? <Alert severity="error">{error}</Alert> : null}
 
       <Paper className="panel-card products-grid-panel" elevation={0}>
-        <DataGrid
+        <VxDataGrid
           rows={users}
           columns={columns}
           loading={isLoading}

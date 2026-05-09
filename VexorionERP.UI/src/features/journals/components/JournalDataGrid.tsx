@@ -1,6 +1,5 @@
-import { VisibilityRoundedIcon } from '@vexorion/ui'
+import { VisibilityRoundedIcon, VxDataGrid, VxGridActionsCellItem, type VxGridColDef } from '@vexorion/ui'
 import { Chip } from '@mui/material'
-import { DataGrid, GridActionsCellItem, type GridColDef } from '@mui/x-data-grid'
 import { useTranslation } from 'react-i18next'
 import type { JournalGridRow } from '../../../types/ui'
 
@@ -19,7 +18,7 @@ type JournalDataGridProps = {
 
 export default function JournalDataGrid({ rows, isLoading, onOpen }: JournalDataGridProps) {
   useTranslation()
-  const columns: GridColDef<JournalGridRow>[] = [
+  const columns: VxGridColDef<JournalGridRow>[] = [
     { field: 'journalNumber', headerName: 'Journal', minWidth: 160, flex: 0.7 },
     { field: 'postingDate', headerName: 'Posting date', minWidth: 130, flex: 0.6 },
     { field: 'sourceDocumentType', headerName: 'Source type', minWidth: 160, flex: 0.7 },
@@ -40,13 +39,13 @@ export default function JournalDataGrid({ rows, isLoading, onOpen }: JournalData
       headerName: 'Actions',
       minWidth: 90,
       getActions: ({ row }) => [
-        <GridActionsCellItem key={`open-${row.id}`} icon={<VisibilityRoundedIcon />} label="View" onClick={() => onOpen(row.id)} showInMenu={false} />,
+        <VxGridActionsCellItem key={`open-${row.id}`} icon={<VisibilityRoundedIcon />} label="View" onClick={() => onOpen(row.id)} showInMenu={false} />,
       ],
     },
   ]
 
   return (
-    <DataGrid
+    <VxDataGrid
       autoHeight
       rows={rows}
       columns={columns}

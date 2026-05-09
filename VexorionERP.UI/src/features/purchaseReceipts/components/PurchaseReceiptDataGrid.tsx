@@ -1,6 +1,5 @@
-import { DeleteOutlineRoundedIcon, PublishRoundedIcon } from '@vexorion/ui'
+import { DeleteOutlineRoundedIcon, PublishRoundedIcon, VxDataGrid, VxGridActionsCellItem, type VxGridColDef } from '@vexorion/ui'
 import { Chip } from '@mui/material'
-import { DataGrid, GridActionsCellItem, type GridColDef } from '@mui/x-data-grid'
 import { useTranslation } from 'react-i18next'
 import type { PurchaseReceiptGridRow } from '../../../types/ui'
 
@@ -25,7 +24,7 @@ type PurchaseReceiptDataGridProps = {
 
 export default function PurchaseReceiptDataGrid({ rows, isLoading, onPost, onDelete }: PurchaseReceiptDataGridProps) {
   useTranslation()
-  const columns: GridColDef<PurchaseReceiptGridRow>[] = [
+  const columns: VxGridColDef<PurchaseReceiptGridRow>[] = [
     { field: 'receiptNumber', headerName: 'Receipt #', minWidth: 160, flex: 1 },
     { field: 'receiptDate', headerName: 'Date', minWidth: 130, flex: 0.7 },
     { field: 'warehouseName', headerName: 'Warehouse', minWidth: 160, flex: 1 },
@@ -45,7 +44,7 @@ export default function PurchaseReceiptDataGrid({ rows, isLoading, onPost, onDel
       headerName: '',
       minWidth: 100,
       getActions: ({ row }) => [
-        <GridActionsCellItem
+        <VxGridActionsCellItem
           key={`post-${row.id}`}
           icon={<PublishRoundedIcon />}
           label="Post"
@@ -53,7 +52,7 @@ export default function PurchaseReceiptDataGrid({ rows, isLoading, onPost, onDel
           onClick={() => onPost(row)}
           showInMenu={false}
         />,
-        <GridActionsCellItem
+        <VxGridActionsCellItem
           key={`delete-${row.id}`}
           icon={<DeleteOutlineRoundedIcon />}
           label="Delete"
@@ -66,7 +65,7 @@ export default function PurchaseReceiptDataGrid({ rows, isLoading, onPost, onDel
   ]
 
   return (
-    <DataGrid
+    <VxDataGrid
       rows={rows}
       columns={columns}
       loading={isLoading}
