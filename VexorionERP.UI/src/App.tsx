@@ -32,6 +32,9 @@ const PurchaseOrdersPage = lazy(() => import('./pages/PurchaseOrdersPage'))
 const PurchaseReceiptsPage = lazy(() => import('./pages/PurchaseReceiptsPage'))
 const SalesShipmentsPage = lazy(() => import('./pages/SalesShipmentsPage'))
 const ProductsPage = lazy(() => import('./pages/ProductsPage'))
+const ProjectCategoriesPage = lazy(() => import('./pages/ProjectCategoriesPage'))
+const ProjectDetailsPage = lazy(() => import('./pages/ProjectDetailsPage'))
+const ProjectsPage = lazy(() => import('./pages/ProjectsPage'))
 const ReportsPage = lazy(() => import('./pages/ReportsPage'))
 const SalesInvoicesPage = lazy(() => import('./pages/SalesInvoicesPage'))
 const SalesOrdersPage = lazy(() => import('./pages/SalesOrdersPage'))
@@ -74,6 +77,9 @@ function App() {
                 <Route path="/journals" element={<JournalsPage />} />
                 <Route path="/reports" element={<ReportsPage />} />
                 <Route path="/products" element={<ProductsPage />} />
+                <Route path="/project-categories" element={<ProjectCategoriesPage />} />
+                <Route path="/projects" element={<ProjectsPage />} />
+                <Route path="/projects/:projectId" element={<ProjectDetailsPage />} />
                 <Route path="/inventory-adjustments" element={<InventoryAdjustmentsPage />} />
                 <Route path="/purchase-invoices" element={<PurchaseInvoicesPage />} />
                 <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />

@@ -68,6 +68,7 @@ public static class IdentityServiceCollectionExtensions
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IAuditLogger, AuditLogger>();
         services.AddScoped<IAuditLogQueryService, AuditLogQueryService>();
+        services.AddScoped<IProjectTimelineQueryService, ProjectTimelineQueryService>();
         services.AddScoped<IAuthApplicationService, AuthApplicationService>();
         services.AddScoped<IInventoryMovementPostingService, InventoryMovementPostingService>();
         services.AddScoped<IProductPurchasePriceHistoryQueryService, ProductPurchasePriceHistoryQueryService>();

@@ -27,4 +27,6 @@ export const configurableMenuItems: ConfigurableMenuItem[] = [
   { path: '/journals', label: 'Journals', section: 'Finance' },
   { path: '/reports', label: 'Reports', section: 'Finance' },
   { path: '/config', label: 'Config center', section: 'Configuration' },
+  { path: '/project-categories', label: 'Project categories', section: 'Configuration' },
+  { path: '/projects', label: 'Projects', section: 'Configuration' },
 ]

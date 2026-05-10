@@ -63,6 +63,10 @@
   color: #8c5ad6;
 }
 
+.dashboard-nav-item.nav-accent-projects .MuiListItemIcon-root {
+  color: #c48a2f;
+}
+
 .dashboard-nav-item.nav-accent-configuration .MuiListItemIcon-root {
   color: #6c758c;
 }
@@ -410,6 +414,10 @@
 
 [data-theme-mode='dark'] .dashboard-nav-item.nav-accent-finance .MuiListItemIcon-root {
   color: #c8a4ff;
+}
+
+[data-theme-mode='dark'] .dashboard-nav-item.nav-accent-projects .MuiListItemIcon-root {
+  color: #ffbf66;
 }
 
 [data-theme-mode='dark'] .dashboard-nav-item.nav-accent-configuration .MuiListItemIcon-root {

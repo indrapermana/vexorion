@@ -32,6 +32,12 @@ public static class AppPermissions
         public const string Manage = "products.manage";
     }
 
+    public static class Projects
+    {
+        public const string View = "projects.view";
+        public const string Manage = "projects.manage";
+    }
+
     public static class Organization
     {
         public const string View = "organization.view";
@@ -151,6 +157,8 @@ public static class AppPermissions
         Suppliers.Manage,
         Products.View,
         Products.Manage,
+        Projects.View,
+        Projects.Manage,
         Organization.View,
         Organization.Manage,
         Sales.View,
