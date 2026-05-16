@@ -45,6 +45,155 @@ dotnet tool install --global dotnet-ef
 
 ---
 
+## Local Setup Guide (for new/junior developers)
+
+This section walks you through getting the full stack running on a fresh machine from scratch.
+
+### Step 1 — Install prerequisites
+
+1. **[.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)** — confirm with `dotnet --version` (expect `8.x.xxx`)
+2. **[Node.js 20 LTS](https://nodejs.org/)** — confirm with `node -v` (expect `v20.x.x`)
+3. **PostgreSQL 14+** — must be running on port 5432
+   - **macOS (recommended):** [Postgres.app](https://postgresapp.com/) — drag-and-drop install, no configuration needed. After installing, open the app and click **Start**. Add the CLI tools to your PATH as shown in the app's instructions:
+     ```bash
+     # Add to ~/.zshrc (or ~/.bash_profile)
+     export PATH="/Applications/Postgres.app/Contents/Versions/latest/bin:$PATH"
+     ```
+     Then reload: `source ~/.zshrc`
+   - **Other platforms / alternative:** [Official PostgreSQL installer](https://www.postgresql.org/download/)
+   - **Recommended GUI tool:** [TablePlus](https://tableplus.com/) (macOS-native) or [pgAdmin](https://www.pgadmin.org/)
+4. **EF Core CLI tool** (once, globally):
+   ```bash
+   dotnet tool install --global dotnet-ef
+   ```
+
+### Step 2 — Clone and restore
+
+```bash
+git clone <repository-url>
+cd VexorionERP
+
+# Restore .NET dependencies
+dotnet restore
+
+# Install all frontend dependencies (all three apps + shared UI package in one command)
+npm install
+```
+
+### Step 3 — Configure the database connection
+
+Open `VexorionERP/appsettings.Development.json` and update the connection string to match your local PostgreSQL setup:
+
+```json
+"ConnectionStrings": {
+  "DefaultConnection": "Host=127.0.0.1;Port=5432;Database=vexorionerp;Username=postgres;Password=<your-password>;Include Error Detail=True;"
+}
+```
+
+> **Postgres.app users (macOS):** The default superuser is your macOS username (not `postgres`) and has no password. Your connection string will look like:
+> ```json
+> "DefaultConnection": "Host=127.0.0.1;Port=5432;Database=vexorionerp;Username=<your-macos-username>;Password=;Include Error Detail=True;"
+> ```
+> You can confirm your username with `whoami` in the terminal.
+
+> Leave all other values (`Jwt`, `Bootstrap`, etc.) as-is for local development.
+
+### Step 4 — Create the database and run migrations
+
+Create the database in PostgreSQL (you can do this via pgAdmin or psql):
+
+```sql
+CREATE DATABASE vexorionerp;
+```
+
+The API applies pending migrations automatically on startup, so no manual migration step is needed. If you prefer to apply migrations manually before running the API:
+
+```bash
+dotnet ef database update \
+  --project VexorionERP.Database/VexorionERP.Database.csproj \
+  --startup-project VexorionERP/VexorionERP.csproj
+```
+
+### Step 5 — Enable dev seed data
+
+In `VexorionERP/appsettings.Development.json`, set `Bootstrap.Enabled` to `true`:
+
+```json
+"Bootstrap": {
+  "Enabled": true,
+  ...
+}
+```
+
+Start the API once (Step 6 below), let it seed, then set `Enabled` back to `false` to prevent re-seeding on subsequent restarts.
+
+**Default seed credentials:**
+
+| Field | Value |
+|---|---|
+| Tenant code | `demo` |
+| Username | `admin` |
+| Email | `admin@demo.local` |
+| Password | `DemoAdmin123!` |
+
+### Step 6 — Trust the HTTPS development certificate (first time only)
+
+```bash
+dotnet dev-certs https --trust
+```
+
+Accept the security dialog that appears. You only need to do this once per machine.
+
+### Step 7 — Run the backend
+
+Open a terminal and run:
+
+```bash
+dotnet watch --project VexorionERP/VexorionERP.csproj --no-hot-reload
+```
+
+Wait until you see output like `Now listening on: https://localhost:7171`. Verify it is working by opening `https://localhost:7171/swagger` in your browser (you should see the Swagger UI).
+
+### Step 8 — Run the frontend(s)
+
+Each frontend runs on its own port. Open a new terminal for each one you need:
+
+```bash
+# Main ERP UI — http://localhost:5173
+cd VexorionERP.UI && npm run dev
+
+# Admin panel — http://localhost:5174  (open in a separate terminal)
+cd VexorionERP.AdminUI && npm run dev
+
+# POS terminal — http://localhost:5175  (open in a separate terminal)
+cd VexorionERP.POS && npm run dev
+```
+
+You do **not** need to run all three at once — start only the app(s) relevant to what you are working on.
+
+> The frontends proxy all `/api/*` requests to `http://localhost:5000` automatically via Vite's dev proxy, so you do not need to configure CORS or change any URLs.
+
+### Step 9 — Log in
+
+Navigate to `http://localhost:5173` (main ERP UI) or `http://localhost:5174` (admin panel) and log in with:
+
+- **Tenant code:** `demo`
+- **Email:** `admin@demo.local`
+- **Password:** `DemoAdmin123!`
+
+### Common problems
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| `dotnet watch` fails with `Failed to connect to database` | PostgreSQL is not running or credentials are wrong | Start PostgreSQL and verify the connection string in `appsettings.Development.json` |
+| `npm install` fails with peer dependency errors | Node version is too old | Upgrade to Node 20 LTS |
+| Browser shows certificate warning on `localhost:7171` | Dev cert not trusted | Run `dotnet dev-certs https --trust` |
+| Frontend shows "Network Error" or blank page | Backend is not running | Start the backend first (Step 7) |
+| Login returns 401 even with correct credentials | Seed data not applied | Confirm `Bootstrap.Enabled` was `true` on the first run |
+| Port already in use | Another process is using the port | Stop the conflicting process, or change the port in `launchSettings.json` / `vite.config.ts` |
+
+---
+
 ## Frontend Monorepo (Turborepo + Shared UI Package)
 
 The three frontend apps are now managed as a JavaScript workspace monorepo at the repository root using **npm workspaces** and **Turborepo**.
