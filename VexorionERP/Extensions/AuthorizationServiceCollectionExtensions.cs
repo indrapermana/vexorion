@@ -23,6 +23,13 @@ public static class AuthorizationServiceCollectionExtensions
                 policy.RequireAssertion(context =>
                     context.User.HasClaim(AppClaimTypes.Permission, AppPermissions.Documents.View)
                     || context.User.HasClaim(AppClaimTypes.Permission, AppPermissions.Documents.Download));
+                        options.AddPolicy(AppPermissions.ProjectDocuments.ViewOrDownloadPolicy, policy =>
+                        {
+                            policy.RequireAuthenticatedUser();
+                            policy.RequireAssertion(context =>
+                                context.User.HasClaim(AppClaimTypes.Permission, AppPermissions.ProjectDocuments.View)
+                                || context.User.HasClaim(AppClaimTypes.Permission, AppPermissions.ProjectDocuments.Download));
+                        });
             });
         });
 

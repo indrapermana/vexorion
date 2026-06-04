@@ -6,6 +6,7 @@ using Serilog;
 using Serilog.Sinks.Grafana.Loki;
 using VexorionERP;
 using VexorionERP.Filters;
+using VexorionERP.Middleware;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
@@ -180,6 +181,12 @@ app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Item 40 — Authorization boundary audit middleware captures 403 Forbid responses
+app.UseAuthorizationBoundaryAudit();
+
+// Item 41 — Tenant module access control enforces project/document/employee toggles
+app.UseTenantModuleAccessControl();
 
 app.MapControllers().RequireRateLimiting(TenantRateLimitPolicy);
 

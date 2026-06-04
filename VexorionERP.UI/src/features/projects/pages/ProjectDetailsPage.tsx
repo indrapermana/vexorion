@@ -41,6 +41,8 @@ import type {
   ProjectTimelineItemResponse,
   TenantRelationshipType,
 } from '../../../types/api'
+import AssignmentsPanel from '../components/AssignmentsPanel'
+import DocumentsPanel from '../components/DocumentsPanel'
 
 type ProjectDetailTab = 'overview' | 'parties' | 'assignments' | 'documents' | 'history'
 
@@ -607,11 +609,11 @@ export default function ProjectDetailsPage() {
       ) : null}
 
       {activeTab === 'assignments' ? (
-        <VxAlert severity="info">{t('pages.projectDetails.tabPlaceholders.assignments')}</VxAlert>
+        <AssignmentsPanel projectId={projectId} />
       ) : null}
 
       {activeTab === 'documents' ? (
-        <VxAlert severity="info">{t('pages.projectDetails.tabPlaceholders.documents')}</VxAlert>
+        <DocumentsPanel projectId={projectId} />
       ) : null}
 
       {activeTab === 'history' ? (

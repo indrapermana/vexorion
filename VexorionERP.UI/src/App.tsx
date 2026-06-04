@@ -5,7 +5,8 @@ import { useTranslation } from 'react-i18next'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './app/AuthContext'
 import { CurrencyProvider } from './app/CurrencyContext'
-import { ProtectedRoute, PublicOnlyRoute } from './components/RouteGuards'
+import { TenantModuleProvider } from './app/TenantModuleContext'
+import { ModuleRouteGuard, ProtectedRoute, PublicOnlyRoute } from './components/RouteGuards'
 
 const AppLayout = lazy(() => import('./components/AppLayout'))
 const AccountsPage = lazy(() => import('./pages/AccountsPage'))
@@ -21,6 +22,7 @@ const ConfigUsersPage = lazy(() => import('./pages/ConfigUsersPage'))
 const PublicAuthLayout = lazy(() => import('./components/PublicAuthLayout'))
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
 const CustomersPage = lazy(() => import('./pages/CustomersPage'))
+const EmployeesPage = lazy(() => import('./pages/EmployeesPage'))
 const CustomerPaymentsPage = lazy(() => import('./pages/CustomerPaymentsPage'))
 const FiscalPeriodsPage = lazy(() => import('./pages/FiscalPeriodsPage'))
 const JournalsPage = lazy(() => import('./pages/JournalsPage'))
@@ -41,6 +43,8 @@ const SalesOrdersPage = lazy(() => import('./pages/SalesOrdersPage'))
 const StockCountsPage = lazy(() => import('./pages/StockCountsPage'))
 const StockTransfersPage = lazy(() => import('./pages/StockTransfersPage'))
 const SuppliersPage = lazy(() => import('./pages/SuppliersPage'))
+const ConsultantsPage = lazy(() => import('./pages/ConsultantsPage'))
+const TenantRelationshipsPage = lazy(() => import('./pages/TenantRelationshipsPage'))
 const TenantsPage = lazy(() => import('./pages/TenantsPage'))
 const VendorPaymentsPage = lazy(() => import('./pages/VendorPaymentsPage'))
 const WarehousesPage = lazy(() => import('./pages/WarehousesPage'))
@@ -55,13 +59,15 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <CurrencyProvider>
+        <TenantModuleProvider>
+          <CurrencyProvider>
         <Suspense fallback={<RouteFallback />}>
           <Routes>
             <Route element={<AppLayout />}>
               <Route element={<ProtectedRoute />}>
                 <Route path="/" element={<DashboardPage />} />
                 <Route path="/customers" element={<CustomersPage />} />
+                <Route path="/employees" element={<EmployeesPage />} />
                 <Route path="/customer-payments" element={<CustomerPaymentsPage />} />
                 <Route path="/accounts" element={<AccountsPage />} />
                 <Route path="/audit-logs" element={<AuditLogsPage />} />
@@ -77,9 +83,16 @@ function App() {
                 <Route path="/journals" element={<JournalsPage />} />
                 <Route path="/reports" element={<ReportsPage />} />
                 <Route path="/products" element={<ProductsPage />} />
-                <Route path="/project-categories" element={<ProjectCategoriesPage />} />
-                <Route path="/projects" element={<ProjectsPage />} />
-                <Route path="/projects/:projectId" element={<ProjectDetailsPage />} />
+                <Route element={<ModuleRouteGuard module="project" />}>
+                  <Route path="/project-categories" element={<ProjectCategoriesPage />} />
+                  <Route path="/projects" element={<ProjectsPage />} />
+                  <Route path="/projects/:projectId" element={<ProjectDetailsPage />} />
+                  <Route path="/tenant-relationships" element={<TenantRelationshipsPage />} />
+                </Route>
+                <Route element={<ModuleRouteGuard module="employee" />}>
+                  <Route path="/employees" element={<EmployeesPage />} />
+                  <Route path="/consultants" element={<ConsultantsPage />} />
+                </Route>
                 <Route path="/inventory-adjustments" element={<InventoryAdjustmentsPage />} />
                 <Route path="/purchase-invoices" element={<PurchaseInvoicesPage />} />
                 <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
@@ -109,7 +122,8 @@ function App() {
             </Route>
           </Routes>
         </Suspense>
-        </CurrencyProvider>
+          </CurrencyProvider>
+        </TenantModuleProvider>
       </AuthProvider>
     </BrowserRouter>
   )

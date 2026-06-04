@@ -1,0 +1,547 @@
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  AddRoundedIcon,
+  Groups2RoundedIcon,
+  VxAlert,
+  VxBox,
+  VxButton,
+  VxChip,
+  VxCircularProgress,
+  VxDialog,
+  VxDialogActions,
+  VxDialogContent,
+  VxDialogTitle,
+  VxMenuItem,
+  VxPaper,
+  VxStack,
+  VxSwitch,
+  VxTable,
+  VxTableBody,
+  VxTableCell,
+  VxTableContainer,
+  VxTableHead,
+  VxTableRow,
+  VxTextField,
+  VxTypography,
+} from '@vexorion/ui'
+import { useTranslation } from 'react-i18next'
+import { useAuth } from '../../../app/AuthContext'
+import {
+  activateTenantRelationship,
+  ApiError,
+  createTenantRelationship,
+  deleteTenantRelationship,
+  getActiveTenantRelationships,
+  getTenantRelationships,
+  updateTenantRelationship,
+} from '../../../lib/api'
+import type {
+  ActivateTenantRelationshipRequest,
+  CreateTenantRelationshipRequest,
+  TenantRelationshipListItemResponse,
+  TenantRelationshipStatusValue,
+  TenantRelationshipTypeValue,
+  UpdateTenantRelationshipRequest,
+} from '../../../types/api'
+
+type RelationshipFormState = {
+  relatedTenantId: string
+  relationshipType: TenantRelationshipTypeValue
+  status: TenantRelationshipStatusValue
+  effectiveFrom: string
+  effectiveTo: string
+  contractReference: string
+  scopeJson: string
+}
+
+type ActivationFormState = {
+  effectiveFrom: string
+  effectiveTo: string
+  scopeJson: string
+}
+
+const defaultFormState: RelationshipFormState = {
+  relatedTenantId: '',
+  relationshipType: 1,
+  status: 1,
+  effectiveFrom: '',
+  effectiveTo: '',
+  contractReference: '',
+  scopeJson: '',
+}
+
+const defaultActivationState: ActivationFormState = {
+  effectiveFrom: '',
+  effectiveTo: '',
+  scopeJson: '',
+}
+
+const relationshipTypes: TenantRelationshipTypeValue[] = [1, 2, 3, 4, 5, 6, 7]
+const relationshipStatuses: TenantRelationshipStatusValue[] = [1, 2, 3, 4, 5]
+
+function extractApiError(error: unknown, fallback: string) {
+  if (error instanceof ApiError) {
+    if (error.validation) {
+      const firstMessage = Object.values(error.validation)
+        .find((messages) => Array.isArray(messages) && messages.length > 0)?.[0]
+      if (firstMessage) {
+        return firstMessage
+      }
+    }
+
+    return error.message
+  }
+
+  return fallback
+}
+
+function normalizeNullable(value: string) {
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
+
+function parseScopeJson(value: string, invalidMessage: string) {
+  const trimmed = value.trim()
+  if (!trimmed) {
+    return { value: null as string | null, error: null as string | null }
+  }
+
+  try {
+    JSON.parse(trimmed)
+    return { value: trimmed, error: null as string | null }
+  } catch {
+    return { value: null as string | null, error: invalidMessage }
+  }
+}
+
+export default function TenantRelationshipsPage() {
+  const { t } = useTranslation()
+  const { isAuthenticated, user } = useAuth()
+
+  const canView = user?.permissions.includes('tenants.view') ?? false
+  const canManage = user?.permissions.includes('tenants.manage') ?? false
+
+  const [rows, setRows] = useState<TenantRelationshipListItemResponse[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [showActiveOnly, setShowActiveOnly] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [feedback, setFeedback] = useState<string | null>(null)
+
+  const [editorOpen, setEditorOpen] = useState(false)
+  const [editingItem, setEditingItem] = useState<TenantRelationshipListItemResponse | null>(null)
+  const [formState, setFormState] = useState<RelationshipFormState>(defaultFormState)
+
+  const [activationOpen, setActivationOpen] = useState(false)
+  const [activationItem, setActivationItem] = useState<TenantRelationshipListItemResponse | null>(null)
+  const [activationState, setActivationState] = useState<ActivationFormState>(defaultActivationState)
+
+  const statusLabelMap = useMemo(() => ({
+    1: t('pages.tenantRelationships.status.pending'),
+    2: t('pages.tenantRelationships.status.active'),
+    3: t('pages.tenantRelationships.status.suspended'),
+    4: t('pages.tenantRelationships.status.ended'),
+    5: t('pages.tenantRelationships.status.rejected'),
+  }), [t])
+
+  const relationshipTypeLabelMap = useMemo(() => ({
+    1: t('pages.tenantRelationships.relationshipType.primeContractor'),
+    2: t('pages.tenantRelationships.relationshipType.subcontractor'),
+    3: t('pages.tenantRelationships.relationshipType.legalSponsor'),
+    4: t('pages.tenantRelationships.relationshipType.deliveryPartner'),
+    5: t('pages.tenantRelationships.relationshipType.customer'),
+    6: t('pages.tenantRelationships.relationshipType.vendor'),
+    7: t('pages.tenantRelationships.relationshipType.consortiumMember'),
+  }), [t])
+
+  const loadData = useCallback(async () => {
+    if (!isAuthenticated || !canView) {
+      setRows([])
+      return
+    }
+
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const result = showActiveOnly
+        ? await getActiveTenantRelationships()
+        : await getTenantRelationships()
+      setRows(result)
+    } catch (loadError) {
+      setError(extractApiError(loadError, t('pages.tenantRelationships.errors.load')))
+    } finally {
+      setIsLoading(false)
+    }
+  }, [canView, isAuthenticated, showActiveOnly, t])
+
+  useEffect(() => {
+    void loadData()
+  }, [loadData])
+
+  const openCreateDialog = () => {
+    setEditingItem(null)
+    setFormState(defaultFormState)
+    setEditorOpen(true)
+  }
+
+  const openEditDialog = (item: TenantRelationshipListItemResponse) => {
+    setEditingItem(item)
+    setFormState({
+      relatedTenantId: item.relatedTenantId,
+      relationshipType: item.relationshipType,
+      status: item.status,
+      effectiveFrom: item.effectiveFrom ?? '',
+      effectiveTo: item.effectiveTo ?? '',
+      contractReference: item.contractReference ?? '',
+      scopeJson: item.scopeJson ?? '',
+    })
+    setEditorOpen(true)
+  }
+
+  const closeEditor = () => {
+    setEditorOpen(false)
+    setEditingItem(null)
+    setFormState(defaultFormState)
+  }
+
+  const openActivateDialog = (item: TenantRelationshipListItemResponse) => {
+    setActivationItem(item)
+    setActivationState({
+      effectiveFrom: item.effectiveFrom ?? '',
+      effectiveTo: item.effectiveTo ?? '',
+      scopeJson: item.scopeJson ?? '',
+    })
+    setActivationOpen(true)
+  }
+
+  const closeActivateDialog = () => {
+    setActivationOpen(false)
+    setActivationItem(null)
+    setActivationState(defaultActivationState)
+  }
+
+  const saveRelationship = async () => {
+    if (!formState.relatedTenantId.trim()) {
+      return
+    }
+
+    const scope = parseScopeJson(formState.scopeJson, t('pages.tenantRelationships.errors.scopeJsonInvalid'))
+    if (scope.error) {
+      setError(scope.error)
+      return
+    }
+
+    setIsSaving(true)
+    setError(null)
+    setFeedback(null)
+
+    try {
+      if (editingItem) {
+        const request: UpdateTenantRelationshipRequest = {
+          relatedTenantId: formState.relatedTenantId.trim(),
+          relationshipType: formState.relationshipType,
+          status: formState.status,
+          effectiveFrom: normalizeNullable(formState.effectiveFrom),
+          effectiveTo: normalizeNullable(formState.effectiveTo),
+          contractReference: normalizeNullable(formState.contractReference),
+          scopeJson: scope.value,
+        }
+        await updateTenantRelationship(editingItem.id, request)
+        setFeedback(t('pages.tenantRelationships.feedback.updated'))
+      } else {
+        const request: CreateTenantRelationshipRequest = {
+          relatedTenantId: formState.relatedTenantId.trim(),
+          relationshipType: formState.relationshipType,
+          effectiveFrom: normalizeNullable(formState.effectiveFrom),
+          effectiveTo: normalizeNullable(formState.effectiveTo),
+          contractReference: normalizeNullable(formState.contractReference),
+          scopeJson: scope.value,
+        }
+        await createTenantRelationship(request)
+        setFeedback(t('pages.tenantRelationships.feedback.created'))
+      }
+
+      closeEditor()
+      await loadData()
+    } catch (saveError) {
+      setError(extractApiError(saveError, t('pages.tenantRelationships.errors.save')))
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const activateRelationship = async () => {
+    if (!activationItem) {
+      return
+    }
+
+    const scope = parseScopeJson(activationState.scopeJson, t('pages.tenantRelationships.errors.scopeJsonInvalid'))
+    if (scope.error) {
+      setError(scope.error)
+      return
+    }
+
+    setIsSaving(true)
+    setError(null)
+    setFeedback(null)
+
+    try {
+      const request: ActivateTenantRelationshipRequest = {
+        effectiveFrom: normalizeNullable(activationState.effectiveFrom),
+        effectiveTo: normalizeNullable(activationState.effectiveTo),
+        scopeJson: scope.value,
+      }
+      await activateTenantRelationship(activationItem.id, request)
+      setFeedback(t('pages.tenantRelationships.feedback.activated'))
+      closeActivateDialog()
+      await loadData()
+    } catch (activateError) {
+      setError(extractApiError(activateError, t('pages.tenantRelationships.errors.activate')))
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const removeRelationship = async (relationshipId: string) => {
+    setIsSaving(true)
+    setError(null)
+    setFeedback(null)
+
+    try {
+      await deleteTenantRelationship(relationshipId)
+      setFeedback(t('pages.tenantRelationships.feedback.deleted'))
+      await loadData()
+    } catch (deleteError) {
+      setError(extractApiError(deleteError, t('pages.tenantRelationships.errors.delete')))
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  if (!isAuthenticated) {
+    return <VxAlert severity="info">{t('pages.tenantRelationships.signInRequired')}</VxAlert>
+  }
+
+  if (!canView) {
+    return <VxAlert severity="info">{t('pages.tenantRelationships.noAccess')}</VxAlert>
+  }
+
+  return (
+    <VxStack spacing={3}>
+      <VxPaper elevation={0} className="panel-card">
+        <VxStack direction={{ xs: 'column', lg: 'row' }} spacing={2.5} sx={{ justifyContent: 'space-between' }}>
+          <VxBox>
+            <VxTypography variant="h4" sx={{ mb: 1 }}>{t('nav.routeTitles.tenantRelationships')}</VxTypography>
+            <VxTypography color="text.secondary">{t('pages.tenantRelationships.description')}</VxTypography>
+          </VxBox>
+          <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
+            <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+              <VxTypography variant="body2">{t('pages.tenantRelationships.activeOnly')}</VxTypography>
+              <VxSwitch checked={showActiveOnly} onChange={(event) => setShowActiveOnly(event.target.checked)} />
+            </VxStack>
+            {canManage ? (
+              <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog}>
+                {t('pages.tenantRelationships.newButton')}
+              </VxButton>
+            ) : null}
+            <VxPaper elevation={0} className="products-metric-card">
+              <Groups2RoundedIcon fontSize="small" />
+              <VxBox>
+                <VxTypography variant="body2" color="text.secondary">{t('pages.tenantRelationships.metrics.rows')}</VxTypography>
+                <VxTypography variant="h6">{rows.length}</VxTypography>
+              </VxBox>
+            </VxPaper>
+          </VxStack>
+        </VxStack>
+      </VxPaper>
+
+      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
+      {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+
+      <VxPaper elevation={0} className="panel-card">
+        {isLoading ? (
+          <VxBox sx={{ display: 'grid', placeItems: 'center', py: 4 }}><VxCircularProgress size={24} /></VxBox>
+        ) : (
+          <VxTableContainer>
+            <VxTable size="small">
+              <VxTableHead>
+                <VxTableRow>
+                  <VxTableCell>{t('pages.tenantRelationships.columns.relatedTenantId')}</VxTableCell>
+                  <VxTableCell>{t('pages.tenantRelationships.columns.relationshipType')}</VxTableCell>
+                  <VxTableCell>{t('pages.tenantRelationships.columns.status')}</VxTableCell>
+                  <VxTableCell>{t('pages.tenantRelationships.columns.effective')}</VxTableCell>
+                  <VxTableCell>{t('pages.tenantRelationships.columns.contractReference')}</VxTableCell>
+                  <VxTableCell>{t('pages.tenantRelationships.columns.updatedAt')}</VxTableCell>
+                  <VxTableCell align="right">{t('common.actions')}</VxTableCell>
+                </VxTableRow>
+              </VxTableHead>
+              <VxTableBody>
+                {rows.map((row) => (
+                  <VxTableRow key={row.id}>
+                    <VxTableCell sx={{ fontFamily: 'monospace', fontSize: '0.78rem' }}>{row.relatedTenantId}</VxTableCell>
+                    <VxTableCell>{relationshipTypeLabelMap[row.relationshipType]}</VxTableCell>
+                    <VxTableCell>
+                      <VxChip size="small" variant="outlined" label={statusLabelMap[row.status]} />
+                    </VxTableCell>
+                    <VxTableCell>{`${row.effectiveFrom ?? t('common.labels.open')} - ${row.effectiveTo ?? t('common.labels.open')}`}</VxTableCell>
+                    <VxTableCell>{row.contractReference || t('common.labels.none')}</VxTableCell>
+                    <VxTableCell>{new Date(row.updatedAtUtc).toLocaleString()}</VxTableCell>
+                    <VxTableCell align="right">
+                      {canManage ? (
+                        <VxStack direction="row" spacing={0.5} sx={{ justifyContent: 'flex-end' }}>
+                          <VxButton size="small" variant="text" onClick={() => openEditDialog(row)}>{t('common.edit')}</VxButton>
+                          {row.status !== 2 ? (
+                            <VxButton size="small" variant="text" onClick={() => openActivateDialog(row)}>{t('pages.tenantRelationships.activateButton')}</VxButton>
+                          ) : null}
+                          <VxButton size="small" color="error" variant="text" onClick={() => void removeRelationship(row.id)} disabled={isSaving}>{t('common.delete')}</VxButton>
+                        </VxStack>
+                      ) : null}
+                    </VxTableCell>
+                  </VxTableRow>
+                ))}
+                {rows.length === 0 ? (
+                  <VxTableRow>
+                    <VxTableCell colSpan={7}>
+                      <VxTypography color="text.secondary" variant="body2">{t('pages.tenantRelationships.noRows')}</VxTypography>
+                    </VxTableCell>
+                  </VxTableRow>
+                ) : null}
+              </VxTableBody>
+            </VxTable>
+          </VxTableContainer>
+        )}
+      </VxPaper>
+
+      <VxDialog open={editorOpen} onClose={isSaving ? undefined : closeEditor} maxWidth="md" fullWidth>
+        <VxDialogTitle>{editingItem ? t('pages.tenantRelationships.dialogs.edit') : t('pages.tenantRelationships.dialogs.create')}</VxDialogTitle>
+        <VxDialogContent dividers>
+          <VxStack spacing={2} sx={{ mt: 1 }}>
+            <VxTextField
+              size="small"
+              label={t('pages.tenantRelationships.fields.relatedTenantId')}
+              value={formState.relatedTenantId}
+              onChange={(event) => setFormState((previous) => ({ ...previous, relatedTenantId: event.target.value }))}
+              fullWidth
+            />
+            <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+              <VxTextField
+                select
+                size="small"
+                label={t('pages.tenantRelationships.fields.relationshipType')}
+                value={formState.relationshipType}
+                onChange={(event) => setFormState((previous) => ({ ...previous, relationshipType: Number(event.target.value) as TenantRelationshipTypeValue }))}
+                fullWidth
+              >
+                {relationshipTypes.map((value) => (
+                  <VxMenuItem key={value} value={value}>{relationshipTypeLabelMap[value]}</VxMenuItem>
+                ))}
+              </VxTextField>
+              {editingItem ? (
+                <VxTextField
+                  select
+                  size="small"
+                  label={t('pages.tenantRelationships.fields.status')}
+                  value={formState.status}
+                  onChange={(event) => setFormState((previous) => ({ ...previous, status: Number(event.target.value) as TenantRelationshipStatusValue }))}
+                  fullWidth
+                >
+                  {relationshipStatuses.map((value) => (
+                    <VxMenuItem key={value} value={value}>{statusLabelMap[value]}</VxMenuItem>
+                  ))}
+                </VxTextField>
+              ) : null}
+            </VxStack>
+            <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+              <VxTextField
+                size="small"
+                type="date"
+                label={t('pages.tenantRelationships.fields.effectiveFrom')}
+                value={formState.effectiveFrom}
+                onChange={(event) => setFormState((previous) => ({ ...previous, effectiveFrom: event.target.value }))}
+                fullWidth
+              />
+              <VxTextField
+                size="small"
+                type="date"
+                label={t('pages.tenantRelationships.fields.effectiveTo')}
+                value={formState.effectiveTo}
+                onChange={(event) => setFormState((previous) => ({ ...previous, effectiveTo: event.target.value }))}
+                fullWidth
+              />
+            </VxStack>
+            <VxTextField
+              size="small"
+              label={t('pages.tenantRelationships.fields.contractReference')}
+              value={formState.contractReference}
+              onChange={(event) => setFormState((previous) => ({ ...previous, contractReference: event.target.value }))}
+              fullWidth
+            />
+            <VxTextField
+              size="small"
+              label={t('pages.tenantRelationships.fields.scopeJson')}
+              value={formState.scopeJson}
+              onChange={(event) => setFormState((previous) => ({ ...previous, scopeJson: event.target.value }))}
+              placeholder={t('pages.tenantRelationships.fields.scopeJsonPlaceholder')}
+              fullWidth
+              multiline
+              minRows={4}
+            />
+          </VxStack>
+        </VxDialogContent>
+        <VxDialogActions>
+          <VxButton onClick={closeEditor}>{t('common.cancel')}</VxButton>
+          <VxButton
+            variant="contained"
+            disabled={isSaving || !formState.relatedTenantId.trim()}
+            onClick={() => void saveRelationship()}
+          >
+            {editingItem ? t('common.save') : t('common.create')}
+          </VxButton>
+        </VxDialogActions>
+      </VxDialog>
+
+      <VxDialog open={activationOpen} onClose={isSaving ? undefined : closeActivateDialog} maxWidth="md" fullWidth>
+        <VxDialogTitle>{t('pages.tenantRelationships.dialogs.activate')}</VxDialogTitle>
+        <VxDialogContent dividers>
+          <VxStack spacing={2} sx={{ mt: 1 }}>
+            <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+              <VxTextField
+                size="small"
+                type="date"
+                label={t('pages.tenantRelationships.fields.effectiveFrom')}
+                value={activationState.effectiveFrom}
+                onChange={(event) => setActivationState((previous) => ({ ...previous, effectiveFrom: event.target.value }))}
+                fullWidth
+              />
+              <VxTextField
+                size="small"
+                type="date"
+                label={t('pages.tenantRelationships.fields.effectiveTo')}
+                value={activationState.effectiveTo}
+                onChange={(event) => setActivationState((previous) => ({ ...previous, effectiveTo: event.target.value }))}
+                fullWidth
+              />
+            </VxStack>
+            <VxTextField
+              size="small"
+              label={t('pages.tenantRelationships.fields.scopeJson')}
+              value={activationState.scopeJson}
+              onChange={(event) => setActivationState((previous) => ({ ...previous, scopeJson: event.target.value }))}
+              placeholder={t('pages.tenantRelationships.fields.scopeJsonPlaceholder')}
+              fullWidth
+              multiline
+              minRows={4}
+            />
+          </VxStack>
+        </VxDialogContent>
+        <VxDialogActions>
+          <VxButton onClick={closeActivateDialog}>{t('common.cancel')}</VxButton>
+          <VxButton variant="contained" disabled={isSaving} onClick={() => void activateRelationship()}>
+            {t('pages.tenantRelationships.activateButton')}
+          </VxButton>
+        </VxDialogActions>
+      </VxDialog>
+    </VxStack>
+  )
+}

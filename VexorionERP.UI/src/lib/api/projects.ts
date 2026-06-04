@@ -1,20 +1,46 @@
 import type {
+  ChangeProjectDocumentStatusRequest,
+  ConsultantDetailsResponse,
+  ConsultantListItemResponse,
+  CreateConsultantRequest,
+  CreateDocumentFolderRequest,
+  CreateEmployeeRequest,
+  CreateProjectAssignmentRequest,
   CreateProjectCategoryRequest,
   CreateProjectPartyRequest,
   CreateProjectRequest,
+  DocumentFolderDetailsResponse,
+  DocumentFolderListItemResponse,
+  EmployeeDetailsResponse,
+  EmployeeListItemResponse,
+  ManagedDocumentStatus,
+  ProjectDocumentDetailsResponse,
+  ProjectDocumentDownloadResponse,
+  ProjectDocumentListItemResponse,
+  ProjectDocumentUploadResponse,
+  ProjectDocumentVersionListItemResponse,
   ProjectCategoryDetailsResponse,
   ProjectCategoryListItemResponse,
+  ProjectAssignmentDetailsResponse,
+  ProjectAssignmentHistoryItemResponse,
+  ProjectAssignmentListItemResponse,
+  ProjectAssignableConsultantListItemResponse,
   ProjectDetailsResponse,
   ProjectListFilterRequest,
   ProjectListItemResponse,
   ProjectPartyDetailsResponse,
   ProjectPartyListItemResponse,
   ProjectTimelineItemResponse,
+  UpdateDocumentFolderRequest,
+  UpdateConsultantRequest,
+  UpdateEmployeeRequest,
+  UpdateProjectAssignmentRequest,
   UpdateProjectCategoryRequest,
+  UpdateProjectDocumentRequest,
   UpdateProjectPartyRequest,
   UpdateProjectRequest,
 } from '../../types/api'
-import { requestJson } from './core'
+import { apiClient, requestJson } from './core'
 
 export function getProjectCategories() {
   return requestJson<ProjectCategoryListItemResponse[]>('/project-categories')
@@ -88,4 +114,165 @@ export function updateProjectParty(projectId: string, projectPartyId: string, re
 
 export function deleteProjectParty(projectId: string, projectPartyId: string) {
   return requestJson<void>(`/projects/${projectId}/parties/${projectPartyId}`, 'DELETE')
+}
+
+export function getProjectAssignments(projectId: string) {
+  return requestJson<ProjectAssignmentListItemResponse[]>(`/projects/${projectId}/assignments`)
+}
+
+export function getProjectAssignment(projectId: string, assignmentId: string) {
+  return requestJson<ProjectAssignmentDetailsResponse>(`/projects/${projectId}/assignments/${assignmentId}`)
+}
+
+export function getProjectAssignmentHistory(projectId: string) {
+  return requestJson<ProjectAssignmentHistoryItemResponse[]>(`/projects/${projectId}/assignments/history`)
+}
+
+export function getProjectAssignableEmployees(projectId: string) {
+  return requestJson<EmployeeListItemResponse[]>(`/projects/${projectId}/assignments/available-employees`)
+}
+
+export function getProjectAssignableConsultants(projectId: string) {
+  return requestJson<ProjectAssignableConsultantListItemResponse[]>(`/projects/${projectId}/assignments/available-consultants`)
+}
+
+export function createProjectAssignment(projectId: string, request: CreateProjectAssignmentRequest) {
+  return requestJson<ProjectAssignmentDetailsResponse>(`/projects/${projectId}/assignments`, 'POST', request)
+}
+
+export function updateProjectAssignment(projectId: string, assignmentId: string, request: UpdateProjectAssignmentRequest) {
+  return requestJson<ProjectAssignmentDetailsResponse>(`/projects/${projectId}/assignments/${assignmentId}`, 'PUT', request)
+}
+
+export function deleteProjectAssignment(projectId: string, assignmentId: string) {
+  return requestJson<void>(`/projects/${projectId}/assignments/${assignmentId}`, 'DELETE')
+}
+
+export function getEmployees() {
+  return requestJson<EmployeeListItemResponse[]>('/employees')
+}
+
+export function getEmployee(employeeId: string) {
+  return requestJson<EmployeeDetailsResponse>(`/employees/${employeeId}`)
+}
+
+export function createEmployee(request: CreateEmployeeRequest) {
+  return requestJson<EmployeeDetailsResponse>('/employees', 'POST', request)
+}
+
+export function updateEmployee(employeeId: string, request: UpdateEmployeeRequest) {
+  return requestJson<EmployeeDetailsResponse>(`/employees/${employeeId}`, 'PUT', request)
+}
+
+export function deleteEmployee(employeeId: string) {
+  return requestJson<void>(`/employees/${employeeId}`, 'DELETE')
+}
+
+export function getConsultants() {
+  return requestJson<ConsultantListItemResponse[]>('/consultants')
+}
+
+export function getConsultant(consultantId: string) {
+  return requestJson<ConsultantDetailsResponse>(`/consultants/${consultantId}`)
+}
+
+export function createConsultant(request: CreateConsultantRequest) {
+  return requestJson<ConsultantDetailsResponse>('/consultants', 'POST', request)
+}
+
+export function updateConsultant(consultantId: string, request: UpdateConsultantRequest) {
+  return requestJson<ConsultantDetailsResponse>(`/consultants/${consultantId}`, 'PUT', request)
+}
+
+export function deleteConsultant(consultantId: string) {
+  return requestJson<void>(`/consultants/${consultantId}`, 'DELETE')
+}
+
+export function getProjectDocumentFolders(projectId: string, parentFolderId?: string) {
+  const query = parentFolderId ? `?parentFolderId=${encodeURIComponent(parentFolderId)}` : ''
+  return requestJson<DocumentFolderListItemResponse[]>(`/projects/${projectId}/folders${query}`)
+}
+
+export function getProjectDocumentFolder(projectId: string, folderId: string) {
+  return requestJson<DocumentFolderDetailsResponse>(`/projects/${projectId}/folders/${folderId}`)
+}
+
+export function createProjectDocumentFolder(projectId: string, request: Omit<CreateDocumentFolderRequest, 'projectId'>) {
+  return requestJson<DocumentFolderDetailsResponse>(`/projects/${projectId}/folders`, 'POST', {
+    ...request,
+    projectId,
+  })
+}
+
+export function updateProjectDocumentFolder(projectId: string, folderId: string, request: UpdateDocumentFolderRequest) {
+  return requestJson<DocumentFolderDetailsResponse>(`/projects/${projectId}/folders/${folderId}`, 'PUT', request)
+}
+
+export function deleteProjectDocumentFolder(projectId: string, folderId: string) {
+  return requestJson<void>(`/projects/${projectId}/folders/${folderId}`, 'DELETE')
+}
+
+export function getProjectDocuments(projectId: string, filter?: {
+  documentFolderId?: string
+  status?: ManagedDocumentStatus
+  searchTerm?: string
+}) {
+  const params = new URLSearchParams()
+  if (filter?.documentFolderId) params.set('documentFolderId', filter.documentFolderId)
+  if (typeof filter?.status === 'number') params.set('status', String(filter.status))
+  if (filter?.searchTerm && filter.searchTerm.trim().length > 0) params.set('searchTerm', filter.searchTerm.trim())
+
+  const query = params.toString()
+  return requestJson<ProjectDocumentListItemResponse[]>(query ? `/projects/${projectId}/documents?${query}` : `/projects/${projectId}/documents`)
+}
+
+export function getProjectDocument(projectId: string, documentId: string) {
+  return requestJson<ProjectDocumentDetailsResponse>(`/projects/${projectId}/documents/${documentId}`)
+}
+
+export async function uploadProjectDocument(projectId: string, payload: {
+  title: string
+  documentFolderId?: string
+  tags?: string
+  notes?: string
+  file: File
+}) {
+  const formData = new FormData()
+  formData.append('title', payload.title)
+  formData.append('file', payload.file)
+  if (payload.documentFolderId) formData.append('documentFolderId', payload.documentFolderId)
+  if (payload.tags) formData.append('tags', payload.tags)
+  if (payload.notes) formData.append('notes', payload.notes)
+
+  const response = await apiClient.post<ProjectDocumentUploadResponse>(`/projects/${projectId}/documents/upload`, formData)
+  return response.data
+}
+
+export function updateProjectDocument(projectId: string, documentId: string, request: UpdateProjectDocumentRequest) {
+  return requestJson<ProjectDocumentDetailsResponse>(`/projects/${projectId}/documents/${documentId}`, 'PUT', request)
+}
+
+export function deleteProjectDocument(projectId: string, documentId: string) {
+  return requestJson<void>(`/projects/${projectId}/documents/${documentId}`, 'DELETE')
+}
+
+export function changeProjectDocumentStatus(projectId: string, documentId: string, request: ChangeProjectDocumentStatusRequest) {
+  return requestJson<ProjectDocumentDetailsResponse>(`/projects/${projectId}/documents/${documentId}/status`, 'POST', request)
+}
+
+export function getProjectDocumentVersions(projectId: string, documentId: string) {
+  return requestJson<ProjectDocumentVersionListItemResponse[]>(`/projects/${projectId}/documents/${documentId}/versions`)
+}
+
+export async function addProjectDocumentVersion(projectId: string, documentId: string, payload: { notes?: string; file: File }) {
+  const formData = new FormData()
+  formData.append('file', payload.file)
+  if (payload.notes) formData.append('notes', payload.notes)
+
+  const response = await apiClient.post<ProjectDocumentVersionListItemResponse>(`/projects/${projectId}/documents/${documentId}/versions`, formData)
+  return response.data
+}
+
+export function getProjectDocumentDownload(projectId: string, documentId: string) {
+  return requestJson<ProjectDocumentDownloadResponse>(`/projects/${projectId}/documents/${documentId}/download`)
 }

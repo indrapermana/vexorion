@@ -19,7 +19,12 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+
+    /* Workspace package aliases — keeps IDE TS server in sync with bundler resolution */
+    "paths": {
+      "@vexorion/ui": ["../../packages/ui/src/index.ts"]
+    }
   },
   "include": ["src"]
 }

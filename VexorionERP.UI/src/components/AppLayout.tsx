@@ -6,6 +6,7 @@ import {
   CalendarMonthRoundedIcon,
   DarkModeRoundedIcon,
   DashboardRoundedIcon,
+  Groups2RoundedIcon,
   InsightsRoundedIcon,
   Inventory2RoundedIcon,
   InventoryRoundedIcon,
@@ -49,6 +50,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../app/AuthContext";
+import { useTenantModules } from "../app/TenantModuleContext";
 import { useThemeMode } from "../app/ThemeModeContext";
 import {
   type TranslationLanguage,
@@ -222,6 +224,21 @@ const navigationSections = [
         labelKey: "nav.links.projects",
         icon: <BadgeRoundedIcon />,
       },
+      {
+        to: "/employees",
+        labelKey: "nav.links.employees",
+        icon: <Groups2RoundedIcon />,
+      },
+      {
+        to: "/consultants",
+        labelKey: "nav.links.consultants",
+        icon: <BadgeRoundedIcon />,
+      },
+      {
+        to: "/tenant-relationships",
+        labelKey: "nav.links.tenantRelationships",
+        icon: <SwapHorizRoundedIcon />,
+      },
     ],
   },
   {
@@ -255,6 +272,9 @@ const routeTitleKeys: Record<string, string> = {
   "/products": "nav.routeTitles.products",
   "/project-categories": "nav.routeTitles.projectCategories",
   "/projects": "nav.routeTitles.projects",
+  "/employees": "nav.routeTitles.employees",
+  "/consultants": "nav.routeTitles.consultants",
+  "/tenant-relationships": "nav.routeTitles.tenantRelationships",
   "/inventory-adjustments": "nav.routeTitles.inventoryAdjustments",
   "/purchase-invoices": "nav.routeTitles.purchaseInvoices",
   "/purchase-orders": "nav.routeTitles.purchaseOrders",
@@ -284,6 +304,7 @@ function getRouteTitleKey(pathname: string) {
 export default function AppLayout() {
   const { t, i18n } = useTranslation();
   const { user, isAuthenticated, logout } = useAuth();
+  const { projectManagementEnabled, employeeManagementEnabled } = useTenantModules();
   const { mode: themeMode, setMode: setThemeMode } = useThemeMode();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -295,6 +316,18 @@ export default function AppLayout() {
   );
 
   const currentLanguage = normalizeTranslationLanguage(i18n.language);
+
+  const isLinkVisible = (path: string) => {
+    if (["/project-categories", "/projects", "/tenant-relationships"].includes(path)) {
+      return projectManagementEnabled;
+    }
+
+    if (["/employees", "/consultants"].includes(path)) {
+      return employeeManagementEnabled;
+    }
+
+    return true;
+  };
 
   const handleLanguageChange = (nextLanguage: TranslationLanguage) => {
     void i18n.changeLanguage(nextLanguage);
@@ -368,11 +401,11 @@ export default function AppLayout() {
         .map((section) => ({
           ...section,
           links: section.links.filter(
-            (link) => !hiddenMenuLinks.includes(link.to),
+            (link) => !hiddenMenuLinks.includes(link.to) && isLinkVisible(link.to),
           ),
         }))
         .filter((section) => section.links.length > 0),
-    [hiddenMenuLinks],
+    [employeeManagementEnabled, hiddenMenuLinks, projectManagementEnabled],
   );
 
   const handleLogout = async () => {

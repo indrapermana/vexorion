@@ -131,10 +131,36 @@ public static class AppPermissions
         public const string ViewOrDownloadPolicy = "documents.view-or-download";
     }
 
+    public static class ProjectDocuments
+    {
+        public const string View = "project-documents.view";
+        public const string Upload = "project-documents.upload";
+        public const string Download = "project-documents.download";
+        public const string Manage = "project-documents.manage";
+        public const string ViewOrDownloadPolicy = "project-documents.view-or-download";
+    }
+
     public static class Tenants
     {
         public const string View = "tenants.view";
         public const string Manage = "tenants.manage";
+    }
+
+    public static class TenantPlans
+    {
+        public const string View = "tenant-plans.view";
+        public const string Manage = "tenant-plans.manage";
+    }
+
+    public static class TenantModules
+    {
+        public const string View = "tenant-modules.view";
+        public const string Manage = "tenant-modules.manage";
+    }
+
+    public static class StorageUsage
+    {
+        public const string View = "storage-usage.view";
     }
 
     public static class Pos
@@ -191,8 +217,17 @@ public static class AppPermissions
         Documents.View,
         Documents.Download,
         Documents.Regenerate,
+        ProjectDocuments.View,
+        ProjectDocuments.Upload,
+        ProjectDocuments.Download,
+        ProjectDocuments.Manage,
         Tenants.View,
         Tenants.Manage,
+        TenantPlans.View,
+        TenantPlans.Manage,
+        TenantModules.View,
+        TenantModules.Manage,
+        StorageUsage.View,
         Pos.Checkout,
         Pos.Refund,
         Pos.Reprint,

@@ -40,7 +40,13 @@ public static class RolePermissionMatrix
                 AppPermissions.Pos.Checkout,
                 AppPermissions.Pos.Refund,
                 AppPermissions.Pos.Reprint,
-                AppPermissions.Pos.ShiftClose
+                AppPermissions.Pos.ShiftClose,
+                AppPermissions.Projects.View,
+                AppPermissions.Projects.Manage,
+                AppPermissions.ProjectDocuments.View,
+                AppPermissions.ProjectDocuments.Upload,
+                AppPermissions.ProjectDocuments.Download,
+                AppPermissions.ProjectDocuments.Manage
             ],
             [AppRoles.Staff] =
             [
@@ -59,7 +65,10 @@ public static class RolePermissionMatrix
                 AppPermissions.Payments.View,
                 AppPermissions.Accounting.View,
                 AppPermissions.Reports.View,
-                AppPermissions.Billing.View
+                AppPermissions.Billing.View,
+                AppPermissions.Projects.View,
+                AppPermissions.ProjectDocuments.View,
+                AppPermissions.ProjectDocuments.Download
             ],
             [AppRoles.PosUser] =
             [

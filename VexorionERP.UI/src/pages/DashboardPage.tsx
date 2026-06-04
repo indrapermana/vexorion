@@ -1,9 +1,10 @@
 import { VxStack } from '@vexorion/ui'
 import { Suspense, lazy, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useAuth } from '../app/AuthContext'
 import { useCurrency } from '../app/CurrencyContext'
 import type { CustomerListItemResponse } from '../types/api'
-import { useApAgingQuery, useArAgingQuery, useCustomersQuery, useFinanceSnapshotQuery, useSalesOrdersQuery } from './dashboard/queries'
+import { useApAgingQuery, useArAgingQuery, useCustomersQuery, useFinanceSnapshotQuery, useSalesOrdersQuery, useTenantStorageSummaryQuery, useTenantStorageTopConsumersQuery } from './dashboard/queries'
 import type { AgingPoint, BalancePoint, CashFlowPoint, CashRowView, QuickStat, RecentOrderView, TopCustomerView } from './dashboard/types'
 import DashboardSectionLoader from './dashboard/components/DashboardSectionLoader'
 
@@ -16,11 +17,13 @@ const DashboardAgingSection = lazy(() => import('./dashboard/components/Dashboar
 const DashboardTopCustomersSection = lazy(() => import('./dashboard/components/DashboardTopCustomersSection'))
 const DashboardRecentOrdersSection = lazy(() => import('./dashboard/components/DashboardRecentOrdersSection'))
 const DashboardCashFlowTable = lazy(() => import('./dashboard/components/DashboardCashFlowTable'))
+const DashboardStorageSection = lazy(() => import('./dashboard/components/DashboardStorageSection'))
 
 const periodOptions = [7, 30, 90, 180]
 
 export default function DashboardPage() {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const { formatMoney } = useCurrency()
   const [asOfDate, setAsOfDate] = useState(new Date().toISOString().slice(0, 10))
   const [periodDays, setPeriodDays] = useState(30)
@@ -30,12 +33,16 @@ export default function DashboardPage() {
   const apAgingQuery = useApAgingQuery(asOfDate)
   const salesOrdersQuery = useSalesOrdersQuery()
   const customersQuery = useCustomersQuery()
+  const storageSummaryQuery = useTenantStorageSummaryQuery(user?.tenantId)
+  const storageTopConsumersQuery = useTenantStorageTopConsumersQuery(user?.tenantId, 5)
 
   const snapshot = financeQuery.data ?? null
   const arAging = arAgingQuery.data ?? null
   const apAging = apAgingQuery.data ?? null
   const salesOrders = useMemo(() => salesOrdersQuery.data ?? [], [salesOrdersQuery.data])
   const customers = useMemo(() => customersQuery.data ?? [], [customersQuery.data])
+  const storageSummary = storageSummaryQuery.data ?? null
+  const storageTopConsumers = storageTopConsumersQuery.data ?? null
 
   const errorMessage = useMemo(() => {
     if (financeQuery.error instanceof Error) return financeQuery.error.message
@@ -43,8 +50,10 @@ export default function DashboardPage() {
     if (apAgingQuery.error instanceof Error) return apAgingQuery.error.message
     if (salesOrdersQuery.error instanceof Error) return salesOrdersQuery.error.message
     if (customersQuery.error instanceof Error) return customersQuery.error.message
+    if (storageSummaryQuery.error instanceof Error) return storageSummaryQuery.error.message
+    if (storageTopConsumersQuery.error instanceof Error) return storageTopConsumersQuery.error.message
     return null
-  }, [financeQuery.error, arAgingQuery.error, apAgingQuery.error, salesOrdersQuery.error, customersQuery.error])
+  }, [financeQuery.error, arAgingQuery.error, apAgingQuery.error, salesOrdersQuery.error, customersQuery.error, storageSummaryQuery.error, storageTopConsumersQuery.error])
 
   const cashRows = useMemo<CashRowView[]>(
     () => [
@@ -289,6 +298,14 @@ export default function DashboardPage() {
 
       <Suspense fallback={<DashboardSectionLoader minHeight={240} />}>
         {financeQuery.isPending ? <DashboardSectionLoader minHeight={240} /> : <DashboardCashFlowTable t={t} periodDays={periodDays} cashRows={cashRows} />}
+      </Suspense>
+
+      <Suspense fallback={<DashboardSectionLoader minHeight={240} />}>
+        {storageSummaryQuery.isPending || storageTopConsumersQuery.isPending ? (
+          <DashboardSectionLoader minHeight={240} />
+        ) : (
+          <DashboardStorageSection t={t} summary={storageSummary} topConsumers={storageTopConsumers} />
+        )}
       </Suspense>
     </VxStack>
   )

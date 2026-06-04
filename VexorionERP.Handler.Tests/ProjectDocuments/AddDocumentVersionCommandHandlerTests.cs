@@ -1,0 +1,223 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using VexorionERP.Database;
+using VexorionERP.Models;
+using VexorionERP.Services;
+using Xunit;
+
+namespace VexorionERP.Handler.Tests;
+
+public class AddDocumentVersionCommandHandlerTests
+{
+    [Fact]
+    public async Task Handle_WhenValid_AddsNextVersionAndKeepsPreviousVersion()
+    {
+        var tenantId = Guid.NewGuid();
+        var (db, documentId, originalVersionId) = CreateDbWithDocument(tenantId);
+        var accounting = new FakeStorageAccountingService();
+        var services = BuildServices(tenantId, db, accounting, new FakeDocumentStorageService());
+
+        var handler = new AddDocumentVersionCommandHandler(services);
+        var file = CreateFormFile("updated.pdf", "application/pdf", new byte[] { 1, 2, 3, 4, 5 });
+
+        var result = await handler.Handle(new AddDocumentVersionCommand(documentId, "v2", file), CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.NotNull(result.Value);
+        Assert.Equal(2, result.Value!.VersionNumber);
+
+        var persisted = await db.ProjectDocuments.SingleAsync(x => x.Id == documentId);
+        Assert.Equal(2, persisted.CurrentVersionNumber);
+        Assert.Equal("updated.pdf", persisted.FileName);
+
+        var versions = await db.DocumentVersions
+            .Where(x => x.ProjectDocumentId == documentId)
+            .OrderBy(x => x.VersionNumber)
+            .ToListAsync();
+
+        Assert.Equal(2, versions.Count);
+        Assert.Equal(1, versions[0].VersionNumber);
+        Assert.Equal(originalVersionId, versions[0].Id);
+        Assert.Equal("initial.pdf", versions[0].FileName);
+        Assert.Equal(2, versions[1].VersionNumber);
+        Assert.Equal("updated.pdf", versions[1].FileName);
+
+        Assert.Equal(1, accounting.CheckQuotaCalls);
+        Assert.Equal(1, accounting.RecordLedgerCalls);
+    }
+
+    [Fact]
+    public async Task Handle_WhenQuotaFails_ReturnsErrorAndDoesNotCreateVersion()
+    {
+        var tenantId = Guid.NewGuid();
+        var (db, documentId, _) = CreateDbWithDocument(tenantId);
+        var accounting = new FakeStorageAccountingService
+        {
+            QuotaResult = ServiceResult<bool>.Failure(StatusCodes.Status507InsufficientStorage, "Quota exceeded")
+        };
+        var services = BuildServices(tenantId, db, accounting, new FakeDocumentStorageService());
+
+        var handler = new AddDocumentVersionCommandHandler(services);
+        var file = CreateFormFile("blocked.pdf", "application/pdf", new byte[] { 9, 9, 9 });
+
+        var result = await handler.Handle(new AddDocumentVersionCommand(documentId, null, file), CancellationToken.None);
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(StatusCodes.Status507InsufficientStorage, result.StatusCode);
+
+        var persisted = await db.ProjectDocuments.SingleAsync(x => x.Id == documentId);
+        Assert.Equal(1, persisted.CurrentVersionNumber);
+        Assert.Equal("initial.pdf", persisted.FileName);
+        Assert.Single(db.DocumentVersions.Where(x => x.ProjectDocumentId == documentId));
+        Assert.Equal(1, accounting.CheckQuotaCalls);
+        Assert.Equal(0, accounting.RecordLedgerCalls);
+    }
+
+    private static ServiceProvider BuildServices(
+        Guid tenantId,
+        AppDbContext db,
+        FakeStorageAccountingService accounting,
+        FakeDocumentStorageService storage)
+    {
+        var userId = Guid.NewGuid();
+        var accessor = new HttpContextAccessor
+        {
+            HttpContext = new DefaultHttpContext
+            {
+                User = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.NameIdentifier, userId.ToString()) }, "test"))
+            }
+        };
+
+        var services = new ServiceCollection();
+        services.AddSingleton(db);
+        services.AddSingleton<IDocumentStorageService>(storage);
+        services.AddSingleton<IStorageAccountingService>(accounting);
+        services.AddSingleton<ICurrentTenantProvider>(new FixedTenantProvider(tenantId));
+        services.AddSingleton<IHttpContextAccessor>(accessor);
+
+        return services.BuildServiceProvider();
+    }
+
+    private static (AppDbContext db, Guid documentId, Guid originalVersionId) CreateDbWithDocument(Guid tenantId)
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+        var db = new AppDbContext(options);
+
+        var projectId = Guid.NewGuid();
+        var documentId = Guid.NewGuid();
+        var versionId = Guid.NewGuid();
+
+        db.Projects.Add(new Project
+        {
+            Id = projectId,
+            TenantId = tenantId,
+            ProjectCategoryId = Guid.NewGuid(),
+            ProjectNumber = "PRJ-100",
+            Name = "Project",
+            StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
+            Status = ProjectLifecycleStatus.Draft
+        });
+
+        db.ProjectDocuments.Add(new ProjectDocument
+        {
+            Id = documentId,
+            TenantId = tenantId,
+            ProjectId = projectId,
+            DocumentNumber = "DOC-001",
+            Title = "Initial",
+            FileName = "initial.pdf",
+            ContentType = "application/pdf",
+            StoragePath = "blob/initial",
+            FileSizeBytes = 10,
+            CurrentVersionNumber = 1,
+            Status = ManagedDocumentStatus.Draft,
+            IsActive = true
+        });
+
+        db.DocumentVersions.Add(new DocumentVersion
+        {
+            Id = versionId,
+            TenantId = tenantId,
+            ProjectDocumentId = documentId,
+            VersionNumber = 1,
+            FileName = "initial.pdf",
+            ContentType = "application/pdf",
+            StoragePath = "blob/initial",
+            FileSizeBytes = 10,
+            IsActive = true
+        });
+
+        db.SaveChanges();
+        return (db, documentId, versionId);
+    }
+
+    private static IFormFile CreateFormFile(string fileName, string contentType, byte[] content)
+    {
+        var stream = new MemoryStream(content);
+        return new FormFile(stream, 0, content.LongLength, "file", fileName)
+        {
+            Headers = new HeaderDictionary(),
+            ContentType = contentType
+        };
+    }
+
+    private sealed class FakeDocumentStorageService : IDocumentStorageService
+    {
+        public Task<ServiceResult<DocumentStorageUploadResult>> UploadAsync(
+            Guid tenantId,
+            string sourceType,
+            string fileName,
+            Stream content,
+            string contentType,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult(ServiceResult<DocumentStorageUploadResult>.Success(
+                new DocumentStorageUploadResult($"blob/{fileName}", $"https://blob/{fileName}", content.Length, "sha256")));
+
+        public Task<ServiceResult<string>> GetDownloadUrlAsync(string blobPath, CancellationToken cancellationToken = default)
+            => Task.FromResult(ServiceResult<string>.Failure(StatusCodes.Status501NotImplemented, "Not needed"));
+
+        public Task<ServiceResult<byte[]>> DownloadAsync(string blobPath, CancellationToken cancellationToken = default)
+            => Task.FromResult(ServiceResult<byte[]>.Failure(StatusCodes.Status501NotImplemented, "Not needed"));
+    }
+
+    private sealed class FakeStorageAccountingService : IStorageAccountingService
+    {
+        public int CheckQuotaCalls { get; private set; }
+        public int RecordLedgerCalls { get; private set; }
+        public ServiceResult<bool> QuotaResult { get; set; } = ServiceResult<bool>.Success(true);
+
+        public Task<ServiceResult<bool>> CheckQuotaAsync(
+            Guid tenantId,
+            long incomingFileSizeBytes,
+            AppDbContext dbContext,
+            CancellationToken cancellationToken = default)
+        {
+            CheckQuotaCalls++;
+            return Task.FromResult(QuotaResult);
+        }
+
+        public Task RecordLedgerEntryAsync(
+            Guid tenantId,
+            long deltaBytes,
+            string operationType,
+            Guid? projectId,
+            Guid? projectDocumentId,
+            Guid? performedByUserId,
+            string? reference,
+            AppDbContext dbContext,
+            CancellationToken cancellationToken = default)
+        {
+            RecordLedgerCalls++;
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FixedTenantProvider(Guid? tenantId) : ICurrentTenantProvider
+    {
+        public Guid? TenantId { get; } = tenantId;
+    }
+}
