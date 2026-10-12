@@ -5,6 +5,8 @@
 
 A full-stack SME ERP platform built with **ASP.NET Core 8**, **Entity Framework Core**, **PostgreSQL**, and three **React + Vite + MUI v6** frontends.
 
+For verified implementation status, known mismatches, priorities, and upcoming work, use the single [consolidated development plan](DEVELOPMENT_PLAN.md). Historical milestone and roadmap checklists have been retired.
+
 ---
 
 ## Repository structure
