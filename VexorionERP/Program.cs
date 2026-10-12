@@ -195,10 +195,10 @@ app.UseOutputCache();
 app.UseRateLimiter();
 
 app.UseAuthentication();
-app.UseAuthorization();
 
-// Item 40 — Authorization boundary audit middleware captures 403 Forbid responses
+// Item 40 — Wrap authorization so policy denials that short-circuit the pipeline are audited.
 app.UseAuthorizationBoundaryAudit();
+app.UseAuthorization();
 
 // Item 41 — Tenant module access control enforces project/document/employee toggles
 app.UseTenantModuleAccessControl();

@@ -75,6 +75,25 @@ public class AddDocumentVersionCommandHandlerTests
         Assert.Equal(0, accounting.RecordLedgerCalls);
     }
 
+    [Fact]
+    public void BuildServices_RegistersEveryHandlerDependency()
+    {
+        var tenantId = Guid.NewGuid();
+        var (db, _, _) = CreateDbWithDocument(tenantId);
+        using var services = BuildServices(
+            tenantId,
+            db,
+            new FakeStorageAccountingService(),
+            new FakeDocumentStorageService());
+
+        Assert.NotNull(services.GetRequiredService<AppDbContext>());
+        Assert.NotNull(services.GetRequiredService<IDocumentStorageService>());
+        Assert.NotNull(services.GetRequiredService<IStorageAccountingService>());
+        Assert.NotNull(services.GetRequiredService<ICurrentTenantProvider>());
+        Assert.NotNull(services.GetRequiredService<IHttpContextAccessor>());
+        Assert.NotNull(services.GetRequiredService<IAuditLogger>());
+    }
+
     private static ServiceProvider BuildServices(
         Guid tenantId,
         AppDbContext db,
@@ -96,6 +115,7 @@ public class AddDocumentVersionCommandHandlerTests
         services.AddSingleton<IStorageAccountingService>(accounting);
         services.AddSingleton<ICurrentTenantProvider>(new FixedTenantProvider(tenantId));
         services.AddSingleton<IHttpContextAccessor>(accessor);
+        services.AddSingleton<IAuditLogger>(new FakeAuditLogger());
 
         return services.BuildServiceProvider();
     }
@@ -219,5 +239,20 @@ public class AddDocumentVersionCommandHandlerTests
     private sealed class FixedTenantProvider(Guid? tenantId) : ICurrentTenantProvider
     {
         public Guid? TenantId { get; } = tenantId;
+    }
+
+    private sealed class FakeAuditLogger : IAuditLogger
+    {
+        public Task LogAsync(
+            string eventType,
+            Guid? tenantId,
+            Guid? actorUserId,
+            Guid? targetUserId,
+            string? entityName,
+            string? entityId,
+            string? description,
+            object? metadata = null,
+            CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
     }
 }
