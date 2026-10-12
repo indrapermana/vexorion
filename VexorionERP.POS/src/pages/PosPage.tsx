@@ -292,7 +292,7 @@ export default function PosPage() {
       setQuickCustomer({ name: '', phoneNumber: '', email: '' })
     } catch (requestError) {
       console.error(requestError)
-      setError(t('page.quickCustomerError'))
+      setError(requestError instanceof ApiError ? requestError.message : t('page.quickCustomerError'))
     }
   }
 
@@ -501,7 +501,7 @@ export default function PosPage() {
       console.error(requestError)
       const durationMs = Math.round(performance.now() - startTime)
 
-      if (requestError instanceof ApiError && requestError.status === 400 && requestError.message.includes('Insufficient')) {
+      if (requestError instanceof ApiError && requestError.code === 'inventory.insufficient_stock') {
         posLogger.warn('checkout.failure', {
           reason: 'stock_conflict_concurrent',
           durationMs,
@@ -509,12 +509,15 @@ export default function PosPage() {
           errorMessage: requestError.message,
         })
         // Concurrent stock failure from shipment post — show conflict with current known stock
-        await inventoryBalancesQuery.refetch()
+        const refreshedBalances = await inventoryBalancesQuery.refetch()
+        const refreshedStockByProduct = Object.fromEntries(
+          (refreshedBalances.data ?? []).map((balance) => [balance.productId, balance.quantityOnHand]),
+        )
         setStockConflict(
           cart
             .map((line) => ({
               productId: line.productId,
-              available: stockByProduct[line.productId] ?? 0,
+              available: refreshedStockByProduct[line.productId] ?? 0,
               requested: line.quantity,
             }))
             .filter((item) => item.requested > item.available),
@@ -526,7 +529,7 @@ export default function PosPage() {
           errorStatus: requestError instanceof ApiError ? requestError.status : undefined,
           errorMessage: requestError instanceof Error ? requestError.message : String(requestError),
         })
-        setError(t('page.processingError'))
+        setError(requestError instanceof ApiError ? requestError.message : t('page.processingError'))
       }
     } finally {
       setIsProcessing(false)

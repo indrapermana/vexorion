@@ -59,8 +59,8 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
     try {
       const docs = await listGeneratedDocuments(sourceType, sourceEntityId)
       setDocuments(docs)
-    } catch {
-      setError('Failed to load document history.')
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to load document history.')
     } finally {
       setIsLoading(false)
     }
@@ -90,8 +90,8 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
       await generateDocument({ sourceType, sourceEntityId, format, forceRegenerate: false })
       setFeedback(`${formatLabel(format)} document generated.`)
       await loadDocuments()
-    } catch {
-      setError('Failed to generate document.')
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to generate document.')
     } finally {
       setIsGenerating(false)
     }
@@ -109,8 +109,8 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
-    } catch {
-      setError('Failed to get download link.')
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to get download link.')
     } finally {
       setActionLoadingId(null)
     }
@@ -124,8 +124,8 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
       await regenerateDocument(doc.generatedDocumentId)
       setFeedback('Document regenerated.')
       await loadDocuments()
-    } catch {
-      setError('Failed to regenerate document.')
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to regenerate document.')
     } finally {
       setActionLoadingId(null)
     }
@@ -142,8 +142,8 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
         objectUrl = await fetchDocumentInlineBlob(doc.generatedDocumentId)
       }
       setViewer({ kind: 'ready', objectUrl, fileName: doc.fileName, fullscreen: false })
-    } catch {
-      setViewer({ kind: 'error', message: 'Failed to load document preview.' })
+    } catch (error) {
+      setViewer({ kind: 'error', message: error instanceof Error ? error.message : 'Failed to load document preview.' })
     }
   }
 

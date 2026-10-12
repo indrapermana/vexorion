@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Mvc;
 using VexorionERP.Contracts;
 using VexorionERP.Models;
 using VexorionERP.Web.Tests;
@@ -65,7 +66,7 @@ public class ImportsControllerIntegrationTests : IClassFixture<TestWebApplicatio
     }
 
     [Fact]
-    public async Task Imports_Validate_FileExceedsMaxSize_ReturnsBadRequest()
+    public async Task Imports_Validate_FileExceedsMaxSize_ReturnsPayloadTooLargeProblem()
     {
         var client = _factory.CreateClient();
         client.SetBearerToken(Guid.NewGuid(), AppPermissions.Imports.Validate);
@@ -79,9 +80,12 @@ public class ImportsControllerIntegrationTests : IClassFixture<TestWebApplicatio
 
         var response = await client.PostAsync("/api/imports/validate", form);
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        var body = await response.Content.ReadAsStringAsync();
-        Assert.Contains("maximum allowed size", body, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(HttpStatusCode.RequestEntityTooLarge, response.StatusCode);
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        Assert.NotNull(problem);
+        Assert.Contains("maximum allowed size", problem.Detail, StringComparison.OrdinalIgnoreCase);
+        Assert.True(problem.Extensions.TryGetValue("code", out var code));
+        Assert.Equal("import.file_too_large", code?.ToString());
     }
 
     [Fact]

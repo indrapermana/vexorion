@@ -1,6 +1,7 @@
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.OutputCaching;
+using Microsoft.AspNetCore.Mvc;
 using QuestPDF.Infrastructure;
 using Serilog;
 using Serilog.Sinks.Grafana.Loki;
@@ -61,6 +62,11 @@ builder.Services.AddApplicationAuthorization();
 builder.Services.Configure<ImportsOptions>(builder.Configuration.GetSection("Imports"));
 builder.Services.AddMediator(options => options.ServiceLifetime = Microsoft.Extensions.DependencyInjection.ServiceLifetime.Scoped);
 builder.Services.AddControllers(opts => opts.Filters.Add<LoggingActionFilter>());
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+        new BadRequestObjectResult(ApiProblemDetailsFactory.CreateValidation(context.HttpContext, context.ModelState));
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddMemoryCache(options =>
@@ -141,10 +147,19 @@ app.UseExceptionHandler(errorApp => errorApp.Run(async httpContext =>
     {
         Log.Error(ex, "Unhandled exception for {Method} {Path}", httpContext.Request.Method, httpContext.Request.Path);
     }
+    var problem = ApiProblemDetailsFactory.Create(httpContext, StatusCodes.Status500InternalServerError);
     httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
-    httpContext.Response.ContentType = "application/json";
-    await httpContext.Response.WriteAsync("{\"message\":\"An unexpected error occurred.\"}");
+    await httpContext.Response.WriteAsJsonAsync(problem);
 }));
+
+// Ensure framework-generated 401/403/404/429 responses use the same API error contract.
+app.UseStatusCodePages(async statusCodeContext =>
+{
+    var httpContext = statusCodeContext.HttpContext;
+    var statusCode = httpContext.Response.StatusCode;
+    var problem = ApiProblemDetailsFactory.Create(httpContext, statusCode);
+    await httpContext.Response.WriteAsJsonAsync(problem);
+});
 
 await app.InitializeApplicationAsync();
 

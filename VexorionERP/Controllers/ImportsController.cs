@@ -37,7 +37,7 @@ public class ImportsController(
     {
         var maxBytes = (long)importsOptions.Value.MaxFileSizeMb * 1024L * 1024L;
         if (file.Length > maxBytes)
-            return BadRequest($"File exceeds the maximum allowed size of {importsOptions.Value.MaxFileSizeMb} MB.");
+            return ApiFailure(StatusCodes.Status413PayloadTooLarge, $"File exceeds the maximum allowed size of {importsOptions.Value.MaxFileSizeMb} MB.", "import.file_too_large");
 
         using var ms = new MemoryStream();
         await file.CopyToAsync(ms, HttpContext.RequestAborted);

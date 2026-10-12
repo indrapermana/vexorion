@@ -38,19 +38,19 @@ public class FiscalPeriodsController(
     public async Task<ActionResult<FiscalPeriodDetailsResponse>> Create([FromBody] CreateFiscalPeriodRequest request, CancellationToken cancellationToken)
     {
         if (!currentTenantProvider.TenantId.HasValue)
-            return BadRequest(new { message = "Tenant context is required." });
+            return ApiFailure(StatusCodes.Status400BadRequest, "Tenant context is required.", "tenant.context_required");
 
         if (string.IsNullOrWhiteSpace(request.PeriodCode))
-            return BadRequest(new { message = "Period code is required." });
+            return ApiFailure(StatusCodes.Status400BadRequest, "Period code is required.", "fiscal_period.code_required");
 
         if (request.EndDate < request.StartDate)
-            return BadRequest(new { message = "End date must be greater than or equal to start date." });
+            return ApiFailure(StatusCodes.Status400BadRequest, "End date must be greater than or equal to start date.", "fiscal_period.date_range_invalid");
 
         var tenantId = currentTenantProvider.TenantId.Value;
         var normalizedCode = request.PeriodCode.Trim().ToUpperInvariant();
 
         if (await dbContext.FiscalPeriods.AnyAsync(x => x.TenantId == tenantId && x.PeriodCode.ToUpper() == normalizedCode, cancellationToken))
-            return Conflict(new { message = "A fiscal period with the same code already exists." });
+            return ApiFailure(StatusCodes.Status409Conflict, "A fiscal period with the same code already exists.", "fiscal_period.code_conflict");
 
         var period = new FiscalPeriod
         {
@@ -73,12 +73,12 @@ public class FiscalPeriodsController(
     public async Task<ActionResult<FiscalPeriodDetailsResponse>> Close(Guid fiscalPeriodId, CancellationToken cancellationToken)
     {
         if (!currentTenantProvider.TenantId.HasValue)
-            return BadRequest(new { message = "Tenant context is required." });
+            return ApiFailure(StatusCodes.Status400BadRequest, "Tenant context is required.", "tenant.context_required");
 
         var tenantId = currentTenantProvider.TenantId.Value;
         var period = await dbContext.FiscalPeriods.FirstOrDefaultAsync(x => x.TenantId == tenantId && x.Id == fiscalPeriodId, cancellationToken);
         if (period is null)
-            return NotFound();
+            return ApiFailure(StatusCodes.Status404NotFound, "Fiscal period not found.", "fiscal_period.not_found");
 
         period.IsClosed = true;
         period.ClosedAtUtc = period.ClosedAtUtc ?? DateTime.UtcNow;
@@ -94,12 +94,12 @@ public class FiscalPeriodsController(
     public async Task<ActionResult<FiscalPeriodDetailsResponse>> Reopen(Guid fiscalPeriodId, CancellationToken cancellationToken)
     {
         if (!currentTenantProvider.TenantId.HasValue)
-            return BadRequest(new { message = "Tenant context is required." });
+            return ApiFailure(StatusCodes.Status400BadRequest, "Tenant context is required.", "tenant.context_required");
 
         var tenantId = currentTenantProvider.TenantId.Value;
         var period = await dbContext.FiscalPeriods.FirstOrDefaultAsync(x => x.TenantId == tenantId && x.Id == fiscalPeriodId, cancellationToken);
         if (period is null)
-            return NotFound();
+            return ApiFailure(StatusCodes.Status404NotFound, "Fiscal period not found.", "fiscal_period.not_found");
 
         period.IsClosed = false;
         period.ClosedAtUtc = null;

@@ -127,8 +127,8 @@ export default function ReturnRefundDialog({
       } finally {
         setIsLoadingLines(false)
       }
-    } catch {
-      setSearchError(t('return.error'))
+    } catch (error) {
+      setSearchError(error instanceof Error ? error.message : t('return.error'))
     } finally {
       setIsSearching(false)
     }
@@ -227,12 +227,13 @@ export default function ReturnRefundDialog({
 
       setSuccessCreditNoteId(creditNote.id)
       setStep('success')
-    } catch {
-      setProcessError(t('return.error'))
+    } catch (error) {
+      setProcessError(error instanceof Error ? error.message : t('return.error'))
       posLogger.error('refund.failed', {
         actorId: cashierId,
         actorName: cashierName,
         originalInvoiceId: foundInvoice.id,
+        errorMessage: error instanceof Error ? error.message : String(error),
       })
     } finally {
       setIsProcessing(false)

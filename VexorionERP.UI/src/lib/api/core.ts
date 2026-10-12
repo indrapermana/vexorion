@@ -1,6 +1,6 @@
 import axios, { AxiosError } from 'axios'
+import { normalizeApiError, type ApiFieldErrors } from '@vexorion/ui'
 import { getApiAccessToken, handleRefresh, handleUnauthorized } from '../apiAuth'
-import type { ValidationProblem } from '../../types/api'
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api'
 
@@ -60,12 +60,16 @@ apiClient.interceptors.response.use(
 
 export class ApiError extends Error {
   status: number
-  validation?: ValidationProblem
+  code: string
+  traceId?: string
+  validation?: ApiFieldErrors
 
-  constructor(status: number, message: string, validation?: ValidationProblem) {
+  constructor(status: number, message: string, code = 'request.failed', validation?: ApiFieldErrors, traceId?: string) {
     super(message)
     this.status = status
+    this.code = code
     this.validation = validation
+    this.traceId = traceId
   }
 }
 
@@ -80,18 +84,9 @@ export async function requestJson<T>(path: string, method: 'GET' | 'POST' | 'PUT
     return response.data
   } catch (error) {
     if (error instanceof AxiosError) {
-      const status = error.response?.status ?? 500
-      const payload = error.response?.data
-      const message =
-        typeof payload === 'string'
-          ? payload
-          : payload?.message ?? error.message ?? 'The request could not be completed.'
-      const validation =
-        payload && typeof payload === 'object' && !Array.isArray(payload)
-          ? (payload as ValidationProblem)
-          : undefined
-
-      throw new ApiError(status, message, validation)
+      const status = error.response?.status ?? 0
+      const normalized = normalizeApiError(error.response?.data, status, error.message)
+      throw new ApiError(status, normalized.message, normalized.code, normalized.validation, normalized.traceId)
     }
 
     throw error

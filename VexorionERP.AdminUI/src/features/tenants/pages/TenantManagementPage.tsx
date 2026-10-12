@@ -57,7 +57,7 @@ export default function TenantManagementPage() {
         }, {}),
       )
     } catch (err) {
-      setError('Failed to load tenants')
+      setError(err instanceof Error ? err.message : 'Failed to load tenants')
       console.error('Error loading tenants:', err)
     } finally {
       setIsLoading(false)
@@ -88,7 +88,7 @@ export default function TenantManagementPage() {
       await deleteTenant(tenant.id)
       setTenants((prev) => prev.filter((item) => item.id !== tenant.id))
     } catch (err) {
-      setError('Failed to remove tenant.')
+      setError(err instanceof Error ? err.message : 'Failed to remove tenant.')
       console.error(err)
     }
   }

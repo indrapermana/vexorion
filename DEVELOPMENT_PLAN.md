@@ -1,6 +1,6 @@
 # VexorionERP Consolidated Review and Development Plan
 
-Last reviewed: 12 October 2026  
+Last reviewed: 13 October 2026
 Review basis: repository documentation, backend/domain/database/service/handler/controller code, the three frontend applications, automated tests, build configuration, and local validation described below.
 
 This is the single source of truth for implementation status and upcoming development work. A checked item means the capability is present in the current repository; it does not by itself mean production readiness. Release readiness requires the quality gates in this document to pass.
@@ -105,6 +105,8 @@ Priority meanings: **P0** blocks trustworthy release behavior; **P1** is require
 
 ### P0-1 — Error responses and user messages are inconsistent
 
+**Status: implemented and validated on 13 October 2026.** The remaining P0 work starts at P0-2.
+
 **Observed implementation**
 
 - `ServiceResultControllerBase` returns validation problems for validation errors, `{ message }` for some 400/409 errors, and empty bodies for 401/403/404.
@@ -121,16 +123,16 @@ The same business failure can appear as a precise message, `Request failed with 
 
 **Required implementation**
 
-- [ ] Adopt one API error envelope based on `ProblemDetails` / `ValidationProblemDetails` for every non-2xx response.
-- [ ] Include stable fields: HTTP status, user-safe `title`/`detail`, machine-readable `code`, field `errors`, and `traceId`; never expose stack traces or secrets.
-- [ ] Map domain outcomes consistently: validation 400, authentication 401, authorization 403, missing resource 404, state/concurrency/duplicate conflict 409, throttling 429, quota 507 where retained, and unexpected fault 500.
-- [ ] Return meaningful, safe bodies for 401/403/404 instead of empty responses.
-- [ ] Move the duplicated frontend parser to shared code and parse string, `message`, `detail`, `title`, validation errors, network/offline, timeout, 429, and 5xx cases.
-- [ ] Give `ApiError` structured `code`, `traceId`, and normalized field errors; preserve the original technical cause for telemetry.
-- [ ] Replace message-text matching in POS with machine-readable error codes such as `inventory.insufficient_stock` and `inventory.concurrent_change`.
-- [ ] Audit every catch block: show server business detail when safe, attach field errors to inputs, and use generic copy only for genuinely unknown failures.
-- [ ] Add an actionable recovery hint when applicable (refresh stock, change quantity, request permission, retry, or contact support with trace ID).
-- [ ] Add contract tests for every error shape and UI tests proving the causal message reaches the user.
+- [x] Adopt one API error envelope based on `ProblemDetails` / `ValidationProblemDetails` for every non-2xx response.
+- [x] Include stable fields: HTTP status, user-safe `title`/`detail`, machine-readable `code`, field `errors`, and `traceId`; never expose stack traces or secrets.
+- [x] Map domain outcomes consistently: validation 400, authentication 401, authorization 403, missing resource 404, state/concurrency/duplicate conflict 409, throttling 429, quota 507 where retained, and unexpected fault 500.
+- [x] Return meaningful, safe bodies for 401/403/404 instead of empty responses.
+- [x] Move the duplicated frontend parser to shared code and parse string, `message`, `detail`, `title`, validation errors, network/offline, timeout, 429, and 5xx cases.
+- [x] Give `ApiError` structured `code`, `traceId`, and normalized field errors; preserve the original technical cause for telemetry.
+- [x] Replace message-text matching in POS with the machine-readable `inventory.insufficient_stock` code.
+- [x] Audit error-message catch paths: show server business detail when safe, retain field errors for inputs, and use generic copy only for genuinely unknown failures.
+- [x] Add actionable recovery hints for connectivity, authentication, authorization, conflicts, throttling, disabled modules, and unexpected errors; inventory conflicts include available and required quantities.
+- [x] Add backend contract tests for supported status shapes and frontend parser tests proving causal detail, field errors, codes, and trace references survive normalization.
 
 **Acceptance examples**
 

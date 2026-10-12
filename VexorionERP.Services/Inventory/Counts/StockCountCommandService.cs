@@ -99,7 +99,10 @@ public class StockCountCommandService(
 
         var movementResult = await inventoryMovementPostingService.ApplyStockCountStatusChangeAsync(stockCount, previousStatus, updateRequest.Status, cancellationToken);
         if (!movementResult.Succeeded)
-            return ServiceResult<IEntityResponse<StockCount>>.Failure(movementResult.StatusCode ?? StatusCodes.Status400BadRequest, movementResult.ErrorMessage ?? "Unable to post stock count movements.");
+            return ServiceResult<IEntityResponse<StockCount>>.Failure(
+                movementResult.StatusCode ?? StatusCodes.Status400BadRequest,
+                movementResult.ErrorMessage ?? "Unable to post stock count movements.",
+                movementResult.ErrorCode);
 
         await context.SaveChangesAsync(cancellationToken);
         return ServiceResult<IEntityResponse<StockCount>>.Success(stockCount.Adapt<StockCountDetailsResponse>());

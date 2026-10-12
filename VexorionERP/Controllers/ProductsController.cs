@@ -97,7 +97,7 @@ public class ProductsController(IMediator mediator) : ServiceResultControllerBas
     {
         if (file is null)
         {
-            return BadRequest("Image file is required.");
+            return ApiFailure(StatusCodes.Status400BadRequest, "Image file is required.", "product.image_required");
         }
 
         await using var stream = file.OpenReadStream();

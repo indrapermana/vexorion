@@ -70,7 +70,7 @@ public class TenantsController(IMediator mediator) : ServiceResultControllerBase
         {
             if (rangeDays.Value != 7 && rangeDays.Value != 30)
             {
-                return BadRequest("rangeDays only supports 7 or 30.");
+                return ApiFailure(StatusCodes.Status400BadRequest, "rangeDays only supports 7 or 30.", "tenant.range_days_invalid");
             }
 
             var now = DateTime.UtcNow;

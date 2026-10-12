@@ -178,7 +178,10 @@ public class SalesShipmentCommandService(
         var movementResult = await inventoryMovementPostingService.ApplySalesShipmentAsync(shipment, order.OrderNumber, cancellationToken);
         if (!movementResult.Succeeded)
         {
-            return ServiceResult<SalesShipmentDetailsResponse>.Failure(movementResult.StatusCode ?? 500, movementResult.ErrorMessage!);
+            return ServiceResult<SalesShipmentDetailsResponse>.Failure(
+                movementResult.StatusCode ?? 500,
+                movementResult.ErrorMessage!,
+                movementResult.ErrorCode);
         }
 
         // Update shipped quantities on order lines

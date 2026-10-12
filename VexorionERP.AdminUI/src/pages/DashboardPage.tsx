@@ -32,7 +32,7 @@ export default function DashboardPage() {
       setUsers(userData)
       setTelemetryByTenant(new Map(telemetry.tenants.map((item) => [item.tenantId, item])))
     } catch (err) {
-      setError('Unable to load dashboard metrics right now.')
+      setError(err instanceof Error ? err.message : 'Unable to load dashboard metrics right now.')
       console.error(err)
     }
   }, [rangeDays])

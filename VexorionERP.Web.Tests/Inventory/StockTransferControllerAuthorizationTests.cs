@@ -18,6 +18,22 @@ public class StockTransferControllerAuthorizationTests : IClassFixture<TestWebAp
     }
 
     [Fact]
+    public async Task StockTransfers_GetAll_WithoutAuthentication_ReturnsActionableProblemDetails()
+    {
+        var response = await _factory.CreateClient().GetAsync("/api/stock-transfers");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        Assert.NotNull(problem);
+        Assert.Equal("Authentication required", problem.Title);
+        Assert.Equal("Sign in is required to continue.", problem.Detail);
+        Assert.True(problem.Extensions.TryGetValue("code", out var code));
+        Assert.Equal("auth.authentication_required", code?.ToString());
+        Assert.True(problem.Extensions.TryGetValue("traceId", out var traceId));
+        Assert.False(string.IsNullOrWhiteSpace(traceId?.ToString()));
+    }
+
+    [Fact]
     public async Task StockTransfers_GetAll_WithoutInventoryViewPermission_ReturnsForbidden()
     {
         var client = _factory.CreateClient();
@@ -60,5 +76,7 @@ public class StockTransferControllerAuthorizationTests : IClassFixture<TestWebAp
         Assert.NotNull(problem);
         Assert.Contains(nameof(CreateStockTransferLineRequest.Quantity), problem.Errors.Keys);
         Assert.Contains(nameof(CreateStockTransferLineRequest.UnitCost), problem.Errors.Keys);
+        Assert.True(problem.Extensions.TryGetValue("code", out var code));
+        Assert.Equal("validation.failed", code?.ToString());
     }
 }

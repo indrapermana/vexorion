@@ -247,8 +247,9 @@ public class InventoryMovementPostingServiceTests
         var result = await service.ApplyStockTransferStatusChangeAsync(transfer, DocumentStatus.Confirmed, DocumentStatus.Completed);
 
         Assert.False(result.Succeeded);
-        Assert.Equal(400, result.StatusCode);
-        Assert.Equal("Insufficient on-hand stock to complete the stock transfer.", result.ErrorMessage);
+        Assert.Equal(409, result.StatusCode);
+        Assert.Equal("inventory.insufficient_stock", result.ErrorCode);
+        Assert.Equal("Insufficient on-hand stock for stock transfer. Available: 1; required: 3.", result.ErrorMessage);
     }
 
     [Fact]
@@ -365,8 +366,9 @@ public class InventoryMovementPostingServiceTests
         var result = await service.ApplyStockCountStatusChangeAsync(stockCount, DocumentStatus.Completed, DocumentStatus.Cancelled);
 
         Assert.False(result.Succeeded);
-        Assert.Equal(400, result.StatusCode);
-        Assert.Equal("Insufficient on-hand stock to complete the stock transfer.", result.ErrorMessage);
+        Assert.Equal(409, result.StatusCode);
+        Assert.Equal("inventory.insufficient_stock", result.ErrorCode);
+        Assert.Equal("Insufficient on-hand stock for stock count reversal. Available: 1; required: 4.", result.ErrorMessage);
     }
 
     [Fact]
@@ -535,8 +537,9 @@ public class InventoryMovementPostingServiceTests
         var result = await service.ApplySalesShipmentAsync(shipment, "SO-REF-1");
 
         Assert.False(result.Succeeded);
-        Assert.Equal(400, result.StatusCode);
-        Assert.Equal("Insufficient on-hand stock to complete the stock transfer.", result.ErrorMessage);
+        Assert.Equal(409, result.StatusCode);
+        Assert.Equal("inventory.insufficient_stock", result.ErrorCode);
+        Assert.Equal("Insufficient on-hand stock for sales shipment. Available: 2; required: 3.", result.ErrorMessage);
     }
 
     private static void SeedBalance(AppDbContext dbContext, Guid tenantId, Guid warehouseId, Guid productId, decimal onHand, decimal reserved)

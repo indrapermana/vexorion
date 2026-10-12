@@ -5,6 +5,9 @@ namespace VexorionERP;
 
 public abstract class ServiceResultControllerBase : ControllerBase
 {
+    protected ObjectResult ApiFailure(int statusCode, string detail, string? code = null) =>
+        new(ApiProblemDetailsFactory.Create(HttpContext, statusCode, detail, code)) { StatusCode = statusCode };
+
     protected ActionResult ToActionResult(ServiceResult<bool> result)
     {
         if (result.Succeeded)
@@ -14,18 +17,10 @@ public abstract class ServiceResultControllerBase : ControllerBase
 
         if (result.Validation is not null)
         {
-            return BadRequest(result.Validation);
+            return ValidationError(result.Validation);
         }
 
-        return result.StatusCode switch
-        {
-            400 => BadRequest(new { message = result.ErrorMessage }),
-            401 => Unauthorized(),
-            403 => Forbid(),
-            404 => NotFound(),
-            409 => Conflict(new { message = result.ErrorMessage }),
-            _ => BadRequest(new { message = result.ErrorMessage })
-        };
+        return Failure(result.StatusCode, result.ErrorMessage, result.ErrorCode);
     }
 
     protected ActionResult<T> ToActionResult<T>(ServiceResult<T> result)
@@ -37,17 +32,26 @@ public abstract class ServiceResultControllerBase : ControllerBase
 
         if (result.Validation is not null)
         {
-            return BadRequest(result.Validation);
+            return ValidationError(result.Validation);
         }
 
-        return result.StatusCode switch
+        return Failure(result.StatusCode, result.ErrorMessage, result.ErrorCode);
+    }
+
+    private ObjectResult Failure(int? statusCode, string? detail, string? code)
+    {
+        var resolvedStatus = statusCode is >= 400 and <= 599
+            ? statusCode.Value
+            : StatusCodes.Status400BadRequest;
+        var problem = ApiProblemDetailsFactory.Create(HttpContext, resolvedStatus, detail, code);
+        return new ObjectResult(problem) { StatusCode = resolvedStatus };
+    }
+
+    private ObjectResult ValidationError(ValidationProblemDetails validation)
+    {
+        return new ObjectResult(ApiProblemDetailsFactory.EnrichValidation(HttpContext, validation))
         {
-            400 => BadRequest(new { message = result.ErrorMessage }),
-            401 => Unauthorized(),
-            403 => Forbid(),
-            404 => NotFound(),
-            409 => Conflict(new { message = result.ErrorMessage }),
-            _ => BadRequest(new { message = result.ErrorMessage })
+            StatusCode = StatusCodes.Status400BadRequest
         };
     }
 }

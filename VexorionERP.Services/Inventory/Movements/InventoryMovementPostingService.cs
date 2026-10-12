@@ -224,7 +224,7 @@ public class InventoryMovementPostingService(AppDbContext dbContext) : IInventor
         {
             foreach (var line in transfer.Lines.Where(x => x.IsActive))
             {
-                var validation = await ValidateWarehouseOnHandStockAsync(transfer.TenantId, transfer.SourceWarehouseId, line.ProductId, line.Quantity, cancellationToken);
+                var validation = await ValidateWarehouseOnHandStockAsync(transfer.TenantId, transfer.SourceWarehouseId, line.ProductId, line.Quantity, "stock transfer", cancellationToken);
                 if (!validation.Succeeded)
                 {
                     return validation;
@@ -284,7 +284,7 @@ public class InventoryMovementPostingService(AppDbContext dbContext) : IInventor
         {
             foreach (var line in transfer.Lines.Where(x => x.IsActive))
             {
-                var validation = await ValidateWarehouseOnHandStockAsync(transfer.TenantId, transfer.DestinationWarehouseId, line.ProductId, line.Quantity, cancellationToken);
+                var validation = await ValidateWarehouseOnHandStockAsync(transfer.TenantId, transfer.DestinationWarehouseId, line.ProductId, line.Quantity, "stock transfer reversal", cancellationToken);
                 if (!validation.Succeeded)
                 {
                     return validation;
@@ -357,7 +357,7 @@ public class InventoryMovementPostingService(AppDbContext dbContext) : IInventor
 
                 if (varianceQuantity < 0)
                 {
-                    var validation = await ValidateWarehouseOnHandStockAsync(stockCount.TenantId, stockCount.WarehouseId, line.ProductId, Math.Abs(varianceQuantity), cancellationToken);
+                    var validation = await ValidateWarehouseOnHandStockAsync(stockCount.TenantId, stockCount.WarehouseId, line.ProductId, Math.Abs(varianceQuantity), "stock count", cancellationToken);
                     if (!validation.Succeeded)
                     {
                         return validation;
@@ -402,7 +402,7 @@ public class InventoryMovementPostingService(AppDbContext dbContext) : IInventor
 
                 if (reversedVariance < 0)
                 {
-                    var validation = await ValidateWarehouseOnHandStockAsync(stockCount.TenantId, stockCount.WarehouseId, line.ProductId, Math.Abs(reversedVariance), cancellationToken);
+                    var validation = await ValidateWarehouseOnHandStockAsync(stockCount.TenantId, stockCount.WarehouseId, line.ProductId, Math.Abs(reversedVariance), "stock count reversal", cancellationToken);
                     if (!validation.Succeeded)
                     {
                         return validation;
@@ -482,7 +482,7 @@ public class InventoryMovementPostingService(AppDbContext dbContext) : IInventor
         return ServiceResult<bool>.Success(true);
     }
 
-    private async Task<ServiceResult<bool>> ValidateWarehouseOnHandStockAsync(Guid tenantId, Guid warehouseId, Guid productId, decimal requiredQuantity, CancellationToken cancellationToken)
+    private async Task<ServiceResult<bool>> ValidateWarehouseOnHandStockAsync(Guid tenantId, Guid warehouseId, Guid productId, decimal requiredQuantity, string operation, CancellationToken cancellationToken)
     {
         var balance = await dbContext.InventoryBalances
             .FirstOrDefaultAsync(x => x.TenantId == tenantId && x.ProductId == productId && x.WarehouseId == warehouseId, cancellationToken);
@@ -490,7 +490,10 @@ public class InventoryMovementPostingService(AppDbContext dbContext) : IInventor
         var onHandQuantity = balance?.QuantityOnHand ?? 0m;
         if (onHandQuantity < requiredQuantity)
         {
-            return ServiceResult<bool>.Failure(StatusCodes.Status400BadRequest, "Insufficient on-hand stock to complete the stock transfer.");
+            return ServiceResult<bool>.Failure(
+                StatusCodes.Status409Conflict,
+                $"Insufficient on-hand stock for {operation}. Available: {onHandQuantity}; required: {requiredQuantity}.",
+                "inventory.insufficient_stock");
         }
 
         return ServiceResult<bool>.Success(true);
@@ -655,7 +658,7 @@ public class InventoryMovementPostingService(AppDbContext dbContext) : IInventor
         foreach (var line in shipment.Lines.Where(x => x.IsActive))
         {
             var stockValidation = await ValidateWarehouseOnHandStockAsync(
-                shipment.TenantId, shipment.WarehouseId, line.ProductId, line.ShippedQuantity, cancellationToken);
+                shipment.TenantId, shipment.WarehouseId, line.ProductId, line.ShippedQuantity, "sales shipment", cancellationToken);
 
             if (!stockValidation.Succeeded)
             {

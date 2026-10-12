@@ -12,7 +12,7 @@ namespace VexorionERP;
 [ApiController]
 [Route("api/pos")]
 [Authorize]
-public class PosController(AppDbContext dbContext, ICurrentTenantProvider currentTenantProvider) : ControllerBase
+public class PosController(AppDbContext dbContext, ICurrentTenantProvider currentTenantProvider) : ServiceResultControllerBase
 {
     /// <summary>
     /// Returns the POS capability flags for the currently authenticated user based on their permission claims.
@@ -48,7 +48,7 @@ public class PosController(AppDbContext dbContext, ICurrentTenantProvider curren
         var tenantId = currentTenantProvider.TenantId;
         if (!tenantId.HasValue)
         {
-            return BadRequest("Tenant context is required.");
+            return ApiFailure(StatusCodes.Status400BadRequest, "Tenant context is required.", "tenant.context_required");
         }
 
         var response = new PosStockValidationResponse { IsValid = true };
@@ -88,7 +88,7 @@ public class PosController(AppDbContext dbContext, ICurrentTenantProvider curren
     {
         var tenantId = currentTenantProvider.TenantId;
         if (!tenantId.HasValue)
-            return BadRequest("Tenant context is required.");
+            return ApiFailure(StatusCodes.Status400BadRequest, "Tenant context is required.", "tenant.context_required");
 
         var cashierId = GetCurrentUserId();
         if (!cashierId.HasValue)
@@ -100,7 +100,7 @@ public class PosController(AppDbContext dbContext, ICurrentTenantProvider curren
             .FirstOrDefaultAsync(x => x.CashierId == cashierId.Value && x.Status == ShiftStatus.Open, cancellationToken);
 
         if (existingOpen is not null)
-            return Conflict("Cashier already has an open shift.");
+            return ApiFailure(StatusCodes.Status409Conflict, "Cashier already has an open shift.", "pos.shift_already_open");
 
         var cashierUser = await dbContext.Users.FindAsync([cashierId.Value], cancellationToken);
         var cashierName = cashierUser is null
@@ -139,7 +139,7 @@ public class PosController(AppDbContext dbContext, ICurrentTenantProvider curren
     {
         var tenantId = currentTenantProvider.TenantId;
         if (!tenantId.HasValue)
-            return BadRequest("Tenant context is required.");
+            return ApiFailure(StatusCodes.Status400BadRequest, "Tenant context is required.", "tenant.context_required");
 
         var cashierId = GetCurrentUserId();
         if (!cashierId.HasValue)
@@ -150,13 +150,13 @@ public class PosController(AppDbContext dbContext, ICurrentTenantProvider curren
             .FirstOrDefaultAsync(x => x.Id == shiftId, cancellationToken);
 
         if (shift is null)
-            return NotFound("Shift not found.");
+            return ApiFailure(StatusCodes.Status404NotFound, "Shift not found.", "pos.shift_not_found");
 
         if (shift.CashierId != cashierId.Value)
             return Forbid();
 
         if (shift.Status == ShiftStatus.Closed)
-            return Conflict("Shift is already closed.");
+            return ApiFailure(StatusCodes.Status409Conflict, "Shift is already closed.", "pos.shift_already_closed");
 
         shift.Status = ShiftStatus.Closed;
         shift.ClosedAtUtc = DateTime.UtcNow;
@@ -177,7 +177,7 @@ public class PosController(AppDbContext dbContext, ICurrentTenantProvider curren
     {
         var tenantId = currentTenantProvider.TenantId;
         if (!tenantId.HasValue)
-            return BadRequest("Tenant context is required.");
+            return ApiFailure(StatusCodes.Status400BadRequest, "Tenant context is required.", "tenant.context_required");
 
         var cashierId = GetCurrentUserId();
         if (!cashierId.HasValue)
@@ -189,7 +189,7 @@ public class PosController(AppDbContext dbContext, ICurrentTenantProvider curren
             .FirstOrDefaultAsync(x => x.CashierId == cashierId.Value && x.Status == ShiftStatus.Open, cancellationToken);
 
         if (shift is null)
-            return NotFound();
+            return ApiFailure(StatusCodes.Status404NotFound, "No open shift was found for the current cashier.", "pos.open_shift_not_found");
 
         return Ok(shift.Adapt<ShiftSessionResponse>());
     }

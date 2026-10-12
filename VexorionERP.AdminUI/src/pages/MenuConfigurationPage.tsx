@@ -46,7 +46,7 @@ export default function MenuConfigurationPage() {
           setSelectedTenantId(data[0].id)
         }
       } catch (err) {
-        setError('Unable to load tenants for menu configuration.')
+        setError(err instanceof Error ? err.message : 'Unable to load tenants for menu configuration.')
         console.error(err)
       }
     }
@@ -66,7 +66,7 @@ export default function MenuConfigurationPage() {
         const response = await getTenantMenuConfiguration(selectedTenantId)
         setHiddenMenus(response.hiddenMenuLinks as MenuItemKey[])
       } catch (err) {
-        setError('Unable to load menu configuration for this tenant.')
+        setError(err instanceof Error ? err.message : 'Unable to load menu configuration for this tenant.')
         console.error(err)
         setHiddenMenus([])
       }
@@ -100,7 +100,7 @@ export default function MenuConfigurationPage() {
       const updated = await updateTenantMenuConfiguration(selectedTenantId, hiddenMenus)
       setHiddenMenus(updated.hiddenMenuLinks as MenuItemKey[])
     } catch (err) {
-      setError('Unable to save menu configuration.')
+      setError(err instanceof Error ? err.message : 'Unable to save menu configuration.')
       console.error(err)
     } finally {
       setIsSaving(false)

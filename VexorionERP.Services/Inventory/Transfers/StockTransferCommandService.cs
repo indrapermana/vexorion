@@ -208,7 +208,8 @@ public class StockTransferCommandService(
         {
             return ServiceResult<IEntityResponse<StockTransfer>>.Failure(
                 movementResult.StatusCode ?? StatusCodes.Status400BadRequest,
-                movementResult.ErrorMessage ?? "Unable to post stock transfer movements.");
+                movementResult.ErrorMessage ?? "Unable to post stock transfer movements.",
+                movementResult.ErrorCode);
         }
 
         return null;

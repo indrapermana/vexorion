@@ -69,8 +69,12 @@ public sealed class TenantModuleAccessControlMiddleware(
         }
 
         context.Response.StatusCode = StatusCodes.Status403Forbidden;
-        context.Response.ContentType = "application/json";
-        await context.Response.WriteAsync("{\"message\":\"This module is disabled for the current tenant.\"}");
+        var problem = ApiProblemDetailsFactory.Create(
+            context,
+            StatusCodes.Status403Forbidden,
+            "This module is disabled for the current tenant. Contact an administrator to enable it.",
+            "module.disabled");
+        await context.Response.WriteAsJsonAsync(problem, context.RequestAborted);
     }
 
     private static bool TryResolveArea(PathString path, out ModuleArea area)

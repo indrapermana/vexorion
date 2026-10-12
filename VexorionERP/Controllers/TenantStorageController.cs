@@ -29,7 +29,7 @@ public class TenantStorageController(IMediator mediator, AppDbContext dbContext)
     {
         if (daysBack is < 1 or > 365)
         {
-            return BadRequest(new { message = "daysBack must be between 1 and 365." });
+            return ApiFailure(StatusCodes.Status400BadRequest, "daysBack must be between 1 and 365.", "storage.days_back_invalid");
         }
 
         var result = await mediator.Send(new GetStorageUsageTrendQuery(tenantId, daysBack), HttpContext.RequestAborted);
@@ -42,7 +42,7 @@ public class TenantStorageController(IMediator mediator, AppDbContext dbContext)
     {
         if (take is < 1 or > 100)
         {
-            return BadRequest(new { message = "take must be between 1 and 100." });
+            return ApiFailure(StatusCodes.Status400BadRequest, "take must be between 1 and 100.", "storage.take_invalid");
         }
 
         var result = await mediator.Send(new GetStorageTopConsumersQuery(tenantId, take), HttpContext.RequestAborted);
@@ -61,7 +61,7 @@ public class TenantStorageController(IMediator mediator, AppDbContext dbContext)
 
         if (effectiveStartDate > effectiveEndDate)
         {
-            return BadRequest(new { message = "startDate must be less than or equal to endDate." });
+            return ApiFailure(StatusCodes.Status400BadRequest, "startDate must be less than or equal to endDate.", "storage.date_range_invalid");
         }
 
         var startUtc = effectiveStartDate.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);

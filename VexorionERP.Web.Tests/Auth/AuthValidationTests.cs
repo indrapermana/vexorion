@@ -28,6 +28,11 @@ public class AuthValidationTests : IClassFixture<TestWebApplicationFactory>
         Assert.Contains(nameof(LoginRequest.TenantCode), problem.Errors.Keys);
         Assert.Contains(nameof(LoginRequest.UserNameOrEmail), problem.Errors.Keys);
         Assert.Contains(nameof(LoginRequest.Password), problem.Errors.Keys);
+        Assert.Equal("Validation failed", problem.Title);
+        Assert.True(problem.Extensions.TryGetValue("code", out var code));
+        Assert.Equal("validation.failed", code?.ToString());
+        Assert.True(problem.Extensions.TryGetValue("traceId", out var traceId));
+        Assert.False(string.IsNullOrWhiteSpace(traceId?.ToString()));
     }
 
     [Fact]

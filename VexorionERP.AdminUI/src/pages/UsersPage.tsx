@@ -49,7 +49,7 @@ export default function UsersPage() {
       setRoles(roleData)
       setTenants(tenantData)
     } catch (err) {
-      setError('Unable to load users.')
+      setError(err instanceof Error ? err.message : 'Unable to load users.')
       console.error(err)
     } finally {
       setIsLoading(false)
@@ -64,7 +64,7 @@ export default function UsersPage() {
       const userData = await getUsersForAdmin(selectedTenantId || undefined)
       setUsers(userData)
     } catch (err) {
-      setError('Unable to load users.')
+      setError(err instanceof Error ? err.message : 'Unable to load users.')
       console.error(err)
     } finally {
       setIsLoading(false)
@@ -104,7 +104,7 @@ export default function UsersPage() {
       setCreateRoles([])
       setIsCreateOpen(false)
     } catch (err) {
-      setError('Unable to create user.')
+      setError(err instanceof Error ? err.message : 'Unable to create user.')
       console.error(err)
     }
   }
@@ -114,7 +114,7 @@ export default function UsersPage() {
       await setUserStatus(user.id, { isActive })
       setUsers((current) => current.map((x) => (x.id === user.id ? { ...x, isActive } : x)))
     } catch (err) {
-      setError('Unable to update user status.')
+      setError(err instanceof Error ? err.message : 'Unable to update user status.')
       console.error(err)
     }
   }
@@ -128,7 +128,7 @@ export default function UsersPage() {
       setRolesDialogUser(null)
       setRolesSelection([])
     } catch (err) {
-      setError('Unable to update user roles.')
+      setError(err instanceof Error ? err.message : 'Unable to update user roles.')
       console.error(err)
     }
   }
@@ -141,7 +141,7 @@ export default function UsersPage() {
       setResetDialogUser(null)
       setNewPassword('')
     } catch (err) {
-      setError('Unable to reset password.')
+      setError(err instanceof Error ? err.message : 'Unable to reset password.')
       console.error(err)
     }
   }
