@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using System.Security.Claims;
 using VexorionERP.Contracts;
 using VexorionERP.Database;
@@ -12,8 +13,11 @@ namespace VexorionERP.Services;
 public class TenantOnboardingService(
     AppDbContext dbContext,
     UserManager<User> userManager,
-    IAuditLogger auditLogger) : ITenantOnboardingService
+    IAuditLogger auditLogger,
+    IOptions<TenantGovernanceDefaultsOptions> defaultsOptions) : ITenantOnboardingService
 {
+    private readonly TenantGovernanceDefaultsOptions _defaultsOptions = defaultsOptions.Value;
+
     public async Task<ServiceResult<OnboardTenantResponse>> OnboardAsync(OnboardTenantRequest request, ClaimsPrincipal principal, CancellationToken cancellationToken = default)
     {
         var hasExistingTenants = await dbContext.Tenants.AnyAsync(cancellationToken);
@@ -58,6 +62,34 @@ public class TenantOnboardingService(
 
         dbContext.Tenants.Add(tenant);
         dbContext.Companies.Add(company);
+
+        if (_defaultsOptions.CreateDefaultsOnTenantOnboarding)
+        {
+            dbContext.TenantModuleConfigs.Add(new TenantModuleConfig
+            {
+                TenantId = tenant.Id,
+                ProjectManagementEnabled = _defaultsOptions.Modules.ProjectManagementEnabled,
+                DocumentManagementEnabled = _defaultsOptions.Modules.DocumentManagementEnabled,
+                EmployeeManagementEnabled = _defaultsOptions.Modules.EmployeeManagementEnabled,
+                SalesEnabled = _defaultsOptions.Modules.SalesEnabled,
+                PurchasingEnabled = _defaultsOptions.Modules.PurchasingEnabled,
+                InventoryEnabled = _defaultsOptions.Modules.InventoryEnabled
+            });
+
+            dbContext.TenantPlans.Add(new TenantPlan
+            {
+                TenantId = tenant.Id,
+                PlanCode = _defaultsOptions.Plan.PlanCode.Trim().ToUpperInvariant(),
+                PlanName = _defaultsOptions.Plan.PlanName.Trim(),
+                MaxStorageBytes = _defaultsOptions.Plan.MaxStorageBytes,
+                MaxFileSizeBytes = _defaultsOptions.Plan.MaxFileSizeBytes,
+                WarningThresholdPercent = _defaultsOptions.Plan.WarningThresholdPercent,
+                SoftBlockThresholdPercent = _defaultsOptions.Plan.SoftBlockThresholdPercent,
+                HardBlockThresholdPercent = _defaultsOptions.Plan.HardBlockThresholdPercent,
+                EffectiveFromUtc = DateTime.UtcNow,
+                IsDefault = true
+            });
+        }
 
         var createResult = await userManager.CreateAsync(adminUser, request.AdminPassword);
         if (!createResult.Succeeded)

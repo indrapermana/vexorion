@@ -3,16 +3,17 @@ import { VxDataGrid, type VxGridColDef } from '@vexorion/ui'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TenantGridRow } from '../../../types/ui'
-import type { TenantListItemResponse } from '../../../types/api'
+import type { TenantListItemResponse, TenantModuleEffectiveAccessResponse } from '../../../types/api'
 
 interface TenantDataGridProps {
   rows: TenantGridRow[]
   isLoading: boolean
   onEdit: (tenant: TenantListItemResponse) => void
   onRemove: (tenant: TenantListItemResponse) => void
+  effectiveAccessByTenantId?: Record<string, TenantModuleEffectiveAccessResponse>
 }
 
-export function TenantDataGrid({ rows, isLoading, onEdit, onRemove }: TenantDataGridProps) {
+export function TenantDataGrid({ rows, isLoading, onEdit, onRemove, effectiveAccessByTenantId }: TenantDataGridProps) {
   const { t } = useTranslation()
 
   const columns = useMemo<VxGridColDef<TenantGridRow>[]>(
@@ -61,6 +62,40 @@ export function TenantDataGrid({ rows, isLoading, onEdit, onRemove }: TenantData
         ),
       },
       {
+        field: 'moduleAccess',
+        headerName: 'Module Access',
+        flex: 1,
+        minWidth: 220,
+        sortable: false,
+        filterable: false,
+        renderCell: (params) => {
+          const access = effectiveAccessByTenantId?.[params.row.id]
+          if (!access) {
+            return <VxTypography variant="caption" color="text.secondary">Loading...</VxTypography>
+          }
+
+          const chips = [
+            { label: 'P', enabled: access.project.effectiveEnabled },
+            { label: 'D', enabled: access.document.effectiveEnabled },
+            { label: 'E', enabled: access.employee.effectiveEnabled },
+          ]
+
+          return (
+            <VxBox sx={{ display: 'flex', gap: 0.75, alignItems: 'center' }}>
+              {chips.map((chip) => (
+                <VxChip
+                  key={chip.label}
+                  label={chip.label}
+                  size="small"
+                  color={chip.enabled ? 'success' : 'default'}
+                  variant={chip.enabled ? 'filled' : 'outlined'}
+                />
+              ))}
+            </VxBox>
+          )
+        },
+      },
+      {
         field: 'id',
         headerName: t('components.tenants.grid.columns.actions'),
         flex: 0.6,
@@ -101,7 +136,7 @@ export function TenantDataGrid({ rows, isLoading, onEdit, onRemove }: TenantData
         ),
       },
     ],
-    [onEdit, onRemove, t],
+    [effectiveAccessByTenantId, onEdit, onRemove, t],
   )
 
   return (

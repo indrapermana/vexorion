@@ -160,6 +160,24 @@ export type ProjectDocumentDownloadResponse = {
   fileSizeBytes: number
 }
 
+export type ProjectDocumentSearchItemResponse = {
+  id: string
+  projectId: string
+  projectCategoryId: string
+  projectName: string
+  projectNumber: string
+  projectCategoryCode: string
+  documentNumber: string
+  title: string
+  fileName: string
+  contentType: string
+  fileSizeBytes: number
+  currentVersionNumber: number
+  status: ManagedDocumentStatus
+  tags?: string | null
+  createdAtUtc: string
+}
+
 export type ProjectAssignmentListItemResponse = {
   id: string
   projectId: string

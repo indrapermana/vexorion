@@ -35,6 +35,7 @@ const PurchaseReceiptsPage = lazy(() => import('./pages/PurchaseReceiptsPage'))
 const SalesShipmentsPage = lazy(() => import('./pages/SalesShipmentsPage'))
 const ProductsPage = lazy(() => import('./pages/ProductsPage'))
 const ProjectCategoriesPage = lazy(() => import('./pages/ProjectCategoriesPage'))
+const ProjectDocumentsPage = lazy(() => import('./pages/ProjectDocumentsPage'))
 const ProjectDetailsPage = lazy(() => import('./pages/ProjectDetailsPage'))
 const ProjectsPage = lazy(() => import('./pages/ProjectsPage'))
 const ReportsPage = lazy(() => import('./pages/ReportsPage'))
@@ -85,6 +86,7 @@ function App() {
                 <Route path="/products" element={<ProductsPage />} />
                 <Route element={<ModuleRouteGuard module="project" />}>
                   <Route path="/project-categories" element={<ProjectCategoriesPage />} />
+                  <Route path="/project-documents" element={<ProjectDocumentsPage />} />
                   <Route path="/projects" element={<ProjectsPage />} />
                   <Route path="/projects/:projectId" element={<ProjectDetailsPage />} />
                   <Route path="/tenant-relationships" element={<TenantRelationshipsPage />} />

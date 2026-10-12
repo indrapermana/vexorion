@@ -27,8 +27,34 @@ public sealed class GetProjectDocumentVersionsQueryHandler(IServiceProvider serv
                 StatusCodes.Status400BadRequest, "Tenant context is required.");
         }
 
+        var document = await dbContext.ProjectDocuments
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == request.DocumentId, cancellationToken);
+
+        if (document is null)
+        {
+            return ServiceResult<IReadOnlyCollection<ProjectDocumentVersionListItemResponse>>.Failure(
+                StatusCodes.Status404NotFound,
+                "Document not found.");
+        }
+
+        var canView = await ProjectDocumentAccessEvaluator.CanViewAsync(
+            dbContext,
+            document.Id,
+            document.TenantId,
+            tenantId.Value,
+            DateTime.UtcNow,
+            cancellationToken);
+
+        if (!canView)
+        {
+            return ServiceResult<IReadOnlyCollection<ProjectDocumentVersionListItemResponse>>.Failure(
+                StatusCodes.Status404NotFound,
+                "Document not found.");
+        }
+
         var versions = await dbContext.DocumentVersions
-            .GetByTenant(tenantId.Value)
+            .AsNoTracking()
             .Where(x => x.ProjectDocumentId == request.DocumentId)
             .OrderByDescending(x => x.VersionNumber)
             .ToListAsync(cancellationToken);

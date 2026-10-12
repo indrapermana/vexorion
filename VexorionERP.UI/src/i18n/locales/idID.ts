@@ -515,6 +515,7 @@ const idID = {
       reports: 'Laporan',
       configCenter: 'Pusat konfigurasi',
       projectCategories: 'Kategori proyek',
+      projectDocuments: 'Dokumen proyek',
       projects: 'Proyek',
       employees: 'Karyawan',
       consultants: 'Konsultan',
@@ -537,6 +538,7 @@ const idID = {
       reports: 'Laporan',
       products: 'Produk',
       projectCategories: 'Kategori Proyek',
+      projectDocuments: 'Dokumen Proyek',
       projects: 'Proyek',
       employees: 'Karyawan',
       consultants: 'Konsultan',
@@ -748,7 +750,7 @@ const idID = {
       },
       tabPlaceholders: {
         assignments: 'UI penugasan akan terhubung ke endpoint penugasan proyek di Fase 4. Tab ini dicadangkan untuk menyelesaikan tata letak detail Fase 2.',
-        documents: 'Alur kerja dokumen proyek direncanakan untuk Fase 3. Tab ini sudah terhubung sebagai bagian dari shell detail proyek.',
+        documents: 'Kelola alur dokumen proyek, termasuk folder, unggah, versi, status, dan riwayat.',
       },
       assignmentsPanel: {
         noAccess: 'Anda tidak memiliki izin untuk melihat penugasan proyek.',

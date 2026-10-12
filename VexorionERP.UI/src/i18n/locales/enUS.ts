@@ -701,6 +701,7 @@ const enUS = {
       reports: 'Reports',
       configCenter: 'Config center',
       projectCategories: 'Project categories',
+      projectDocuments: 'Project documents',
       projects: 'Projects',
       employees: 'Employees',
       consultants: 'Consultants',
@@ -724,6 +725,7 @@ const enUS = {
       reports: 'Reports',
       products: 'Products',
       projectCategories: 'Project Categories',
+      projectDocuments: 'Project Documents',
       projects: 'Projects',
       employees: 'Employees',
       consultants: 'Consultants',
@@ -1212,7 +1214,7 @@ const enUS = {
       },
       tabPlaceholders: {
         assignments: 'Assignments UI will connect to project assignment endpoints in Phase 4. This tab is reserved to complete the Phase 2 detail layout.',
-        documents: 'Project document workflow is planned for Phase 3. This tab is wired up as part of the project detail shell.',
+        documents: 'Manage project document workflow, including folders, upload, versioning, status, and history.',
       },
       assignmentsPanel: {
         noAccess: 'You do not have permission to view project assignments.',

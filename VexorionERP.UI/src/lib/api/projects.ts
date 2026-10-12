@@ -18,6 +18,8 @@ import type {
   ProjectDocumentDownloadResponse,
   ProjectDocumentListItemResponse,
   ProjectDocumentUploadResponse,
+  ProjectDocumentSearchFilterRequest,
+  ProjectDocumentSearchItemResponse,
   ProjectDocumentVersionListItemResponse,
   ProjectCategoryDetailsResponse,
   ProjectCategoryListItemResponse,
@@ -275,4 +277,19 @@ export async function addProjectDocumentVersion(projectId: string, documentId: s
 
 export function getProjectDocumentDownload(projectId: string, documentId: string) {
   return requestJson<ProjectDocumentDownloadResponse>(`/projects/${projectId}/documents/${documentId}/download`)
+}
+
+export function searchProjectDocuments(filter: ProjectDocumentSearchFilterRequest = {}) {
+  const params = new URLSearchParams()
+
+  if (filter.projectId) params.set('projectId', filter.projectId)
+  if (filter.projectCategoryId) params.set('projectCategoryId', filter.projectCategoryId)
+  if (typeof filter.status === 'number') params.set('status', String(filter.status))
+  if (filter.tag && filter.tag.trim().length > 0) params.set('tag', filter.tag.trim())
+  if (filter.searchTerm && filter.searchTerm.trim().length > 0) params.set('searchTerm', filter.searchTerm.trim())
+  if (filter.fromUtc && filter.fromUtc.trim().length > 0) params.set('fromUtc', filter.fromUtc.trim())
+  if (filter.toUtc && filter.toUtc.trim().length > 0) params.set('toUtc', filter.toUtc.trim())
+
+  const query = params.toString()
+  return requestJson<ProjectDocumentSearchItemResponse[]>(query ? `/project-documents/search?${query}` : '/project-documents/search')
 }

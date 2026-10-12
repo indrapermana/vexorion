@@ -220,6 +220,11 @@ const navigationSections = [
         icon: <RuleRoundedIcon />,
       },
       {
+        to: "/project-documents",
+        labelKey: "nav.links.projectDocuments",
+        icon: <PolicyRoundedIcon />,
+      },
+      {
         to: "/projects",
         labelKey: "nav.links.projects",
         icon: <BadgeRoundedIcon />,
@@ -271,6 +276,7 @@ const routeTitleKeys: Record<string, string> = {
   "/reports": "nav.routeTitles.reports",
   "/products": "nav.routeTitles.products",
   "/project-categories": "nav.routeTitles.projectCategories",
+  "/project-documents": "nav.routeTitles.projectDocuments",
   "/projects": "nav.routeTitles.projects",
   "/employees": "nav.routeTitles.employees",
   "/consultants": "nav.routeTitles.consultants",
@@ -318,7 +324,7 @@ export default function AppLayout() {
   const currentLanguage = normalizeTranslationLanguage(i18n.language);
 
   const isLinkVisible = (path: string) => {
-    if (["/project-categories", "/projects", "/tenant-relationships"].includes(path)) {
+    if (["/project-categories", "/project-documents", "/projects", "/tenant-relationships"].includes(path)) {
       return projectManagementEnabled;
     }
 

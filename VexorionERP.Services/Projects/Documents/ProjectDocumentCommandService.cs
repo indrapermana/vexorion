@@ -94,6 +94,33 @@ public class ProjectDocumentCommandService(
         return result;
     }
 
+    public override async Task<ServiceResult<IEntityResponse<ProjectDocument>>> UpdateAsync(
+        Guid id,
+        IUpdateInput<ProjectDocument> request,
+        AppDbContext dbContext,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await base.UpdateAsync(id, request, dbContext, cancellationToken);
+
+        if (result.Succeeded && result.Value is ProjectDocumentDetailsResponse details)
+        {
+            var tenantId = TryGetTenantId();
+
+            await auditLogger.LogAsync(
+                "project_document.updated",
+                tenantId,
+                GetActorUserId(httpContextAccessor),
+                null,
+                nameof(ProjectDocument),
+                id.ToString(),
+                "Document metadata updated.",
+                new { details.ProjectId, details.DocumentNumber, details.Title, details.Tags },
+                cancellationToken);
+        }
+
+        return result;
+    }
+
     protected override async Task<ProjectDocument> GetUpdatedDbObjectAsync(
         Guid id,
         IUpdateInput<ProjectDocument> input,

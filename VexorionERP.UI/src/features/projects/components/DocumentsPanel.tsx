@@ -345,28 +345,45 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
                           <VxTableCell align="right">
                             <VxStack direction="row" spacing={0.5} sx={{ justifyContent: 'flex-end' }}>
                               {canDownload ? (
-                                <VxButton
-                                  size="small"
-                                  variant="outlined"
-                                  onClick={async (event) => {
-                                    event.stopPropagation()
-                                    try {
-                                      const result = await getProjectDocumentDownload(projectId, document.id)
-                                      const anchor = window.document.createElement('a')
-                                      anchor.href = result.downloadUrl
-                                      anchor.target = '_blank'
-                                      anchor.rel = 'noopener noreferrer'
-                                      anchor.download = result.fileName
-                                      window.document.body.appendChild(anchor)
-                                      anchor.click()
-                                      window.document.body.removeChild(anchor)
-                                    } catch (downloadError) {
-                                      setError(downloadError instanceof ApiError ? downloadError.message : t('pages.projectDetails.documentsPanel.errors.download'))
-                                    }
-                                  }}
-                                >
-                                  {t('pages.projectDetails.documentsPanel.download')}
-                                </VxButton>
+                                <>
+                                  <VxButton
+                                    size="small"
+                                    variant="text"
+                                    onClick={async (event) => {
+                                      event.stopPropagation()
+                                      try {
+                                        const result = await getProjectDocumentDownload(projectId, document.id)
+                                        window.open(result.downloadUrl, '_blank', 'noopener,noreferrer')
+                                      } catch (downloadError) {
+                                        setError(downloadError instanceof ApiError ? downloadError.message : t('pages.projectDetails.documentsPanel.errors.download'))
+                                      }
+                                    }}
+                                  >
+                                    {t('pages.projectDetails.documentsPanel.preview', { defaultValue: 'Preview' })}
+                                  </VxButton>
+                                  <VxButton
+                                    size="small"
+                                    variant="outlined"
+                                    onClick={async (event) => {
+                                      event.stopPropagation()
+                                      try {
+                                        const result = await getProjectDocumentDownload(projectId, document.id)
+                                        const anchor = window.document.createElement('a')
+                                        anchor.href = result.downloadUrl
+                                        anchor.target = '_blank'
+                                        anchor.rel = 'noopener noreferrer'
+                                        anchor.download = result.fileName
+                                        window.document.body.appendChild(anchor)
+                                        anchor.click()
+                                        window.document.body.removeChild(anchor)
+                                      } catch (downloadError) {
+                                        setError(downloadError instanceof ApiError ? downloadError.message : t('pages.projectDetails.documentsPanel.errors.download'))
+                                      }
+                                    }}
+                                  >
+                                    {t('pages.projectDetails.documentsPanel.download')}
+                                  </VxButton>
+                                </>
                               ) : null}
                               {canManage ? (
                                 <>

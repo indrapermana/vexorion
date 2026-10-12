@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
 using VexorionERP.Contracts;
 using VexorionERP.Models;
 using Xunit;
@@ -57,6 +58,9 @@ public class AuthServiceStatelessTests
 /// </summary>
 public class TenantOnboardingServiceTests
 {
+    private static readonly IOptions<TenantGovernanceDefaultsOptions> DefaultGovernanceOptions =
+        Options.Create(new TenantGovernanceDefaultsOptions());
+
     private static OnboardTenantRequest ValidRequest(string code) => new()
     {
         TenantName = "Acme Corp",
@@ -81,7 +85,7 @@ public class TenantOnboardingServiceTests
             dbContext.Tenants.Add(new Tenant { Id = Guid.NewGuid(), Name = "Existing", Code = "EX" });
             await dbContext.SaveChangesAsync();
 
-            var service = new TenantOnboardingService(dbContext, userManager, new NoOpAuditLogger());
+            var service = new TenantOnboardingService(dbContext, userManager, new NoOpAuditLogger(), DefaultGovernanceOptions);
             // Principal without SystemAdmin role
             var principal = new ClaimsPrincipal(new ClaimsIdentity(
                 [new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString())], "Test"));
@@ -104,7 +108,7 @@ public class TenantOnboardingServiceTests
             dbContext.Tenants.Add(new Tenant { Id = Guid.NewGuid(), Name = "Existing", Code = "DUPE" });
             await dbContext.SaveChangesAsync();
 
-            var service = new TenantOnboardingService(dbContext, userManager, new NoOpAuditLogger());
+            var service = new TenantOnboardingService(dbContext, userManager, new NoOpAuditLogger(), DefaultGovernanceOptions);
             // Principal with SystemAdmin so the first guard is bypassed
             var principal = new ClaimsPrincipal(new ClaimsIdentity(
                 [
@@ -128,7 +132,7 @@ public class TenantOnboardingServiceTests
         {
             await IdentityTestHelper.SeedRolesAsync(scope);
 
-            var service = new TenantOnboardingService(dbContext, userManager, new NoOpAuditLogger());
+            var service = new TenantOnboardingService(dbContext, userManager, new NoOpAuditLogger(), DefaultGovernanceOptions);
             // Any principal is fine for first tenant
             var principal = new ClaimsPrincipal(new ClaimsIdentity(
                 [new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString())], "Test"));

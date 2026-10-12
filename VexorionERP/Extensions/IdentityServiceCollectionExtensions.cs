@@ -25,6 +25,8 @@ public static class IdentityServiceCollectionExtensions
 
         services.Configure<BootstrapOptions>(configuration.GetSection(BootstrapOptions.SectionName));
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+        services.Configure<TenantGovernanceDefaultsOptions>(configuration.GetSection(TenantGovernanceDefaultsOptions.SectionName));
+        services.Configure<TenantModuleRolloutOptions>(configuration.GetSection(TenantModuleRolloutOptions.SectionName));
         services.AddHttpContextAccessor();
 
         List<Type> types = typeof(ProductCommandService).Assembly.GetTypes().AsParallel()

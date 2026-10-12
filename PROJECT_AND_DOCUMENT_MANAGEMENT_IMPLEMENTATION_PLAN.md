@@ -126,26 +126,26 @@ Migration rollout notes:
 - [x] Add new version endpoint
 - [x] Add download endpoint
 - [x] Add document status transition endpoint
-- [~] Add document search endpoint (project/category/date/status/tags)
+- [x] Add document search endpoint (project/category/date/status/tags)
 
 ### 3.2 Business Rules
 - [x] Enforce storage quota before upload/version creation
 - [x] Enforce max file size per tenant plan
-- [ ] Enforce access policy by tenant relationship scope
-- [~] Enforce audit events for upload/download/update/delete
+- [x] Enforce access policy by tenant relationship scope
+- [x] Enforce audit events for upload/download/update/delete
 - [x] Enforce immutable version history
 
 ### 3.3 Frontend (UI/AdminUI)
-- [ ] Add Document center page
+- [x] Add Document center page
 - [x] Add Project Documents tab with folder tree
 - [x] Add upload and new version dialogs
-- [~] Add metadata editor (tags, reference numbers, agency)
+- [x] Add metadata editor (tags, reference numbers, agency)
 - [x] Add status workflow controls and history panel
-- [~] Add file preview/download actions
+- [x] Add file preview/download actions
 
 ### Deliverables
-- [~] Tenant A can upload, version, and track project documents
-- [~] Tenant A can view full document and submission history
+- [x] Tenant A can upload, version, and track project documents
+- [x] Tenant A can view full document and submission history
 
 ## Phase 4: Employee and Consultant Management
 
@@ -285,12 +285,21 @@ Migration rollout notes:
 
 ## Phase 8: Rollout and Migration
 
-- [ ] Prepare feature flags for controlled rollout
-- [ ] Migrate existing tenants to module configuration model
-- [ ] Define default plans and quotas
+- [x] Prepare feature flags for controlled rollout
+- [x] Migrate existing tenants to module configuration model
+- [x] Define default plans and quotas
 - [ ] Create operational runbook for support team
 - [ ] Prepare admin training material
 - [ ] Post-release monitoring dashboard and alert thresholds
+
+8.0 progress notes:
+- Added `TenantModuleRollout` configuration options with per-area controls (Project/Document/Employee), mode-based allowlist support, and tenant code/ID targeting.
+- Updated tenant module access middleware to apply rollout policy after tenant module toggle checks, while preserving backward compatibility defaults.
+- Added startup backfill (`InitializeApplicationAsync`) to create missing `TenantModuleConfig` and default `TenantPlan` records for existing tenants.
+- Added onboarding defaults so newly created tenants receive baseline module config and default quota plan automatically.
+- Added effective module access preview endpoint (`GET /api/tenants/{tenantId}/modules/effective`) and surfaced it in AdminUI tenant editor to show toggle state, rollout decision, and final effective state per module.
+- Added compact tenant-grid rollout summary in AdminUI Tenant Management page (P/D/E chips per tenant) backed by the effective module access endpoint.
+- Added tenant-grid legend and quick filter (“disabled modules only”) to surface rollout-blocked tenants faster during controlled rollout.
 
 ### Deliverables
 - [ ] Production rollout completed
@@ -306,9 +315,9 @@ Migration rollout notes:
 ## Progress Tracker
 
 ### Current Overall Status
-- Overall completion: 57%
-- Current phase: Phase 4
-- Target MVP cutoff: End of Phase 4
+- Overall completion: 89%
+- Current phase: Phase 8 rollout and migration
+- Target MVP cutoff: End of Phase 7
 
 ### Weekly Tracking Log
 - Week 1:
@@ -326,14 +335,18 @@ Migration rollout notes:
 - Week 4:
   - Focus: Phase 3 document management implementation + Phase 4 API kickoff
   - Completed: Added ProjectDocuments permissions, contracts, storage accounting service, document folder/document/version handlers, project document controller endpoints, document tab frontend with folder tree/upload/version/metadata/status/download flows, Consultant CRUD backend slice (contracts/services/handlers/controller), ProjectAssignment backend slice (assign/unassign/list/get/history endpoints with overlap + tenant validation and audit events), Assignments tab frontend integration (assignment list/create/update/delete + history panel), Employee and Consultant master pages (route + sidebar wiring), assignment assignee lookup selectors backed by Employee/Consultant APIs, cross-tenant consultant assignment validation based on active project-party + tenant-relationship scope/time windows, project-scoped assignable consultant lookup endpoint/UI wiring for relationship-eligible external consultants, project-scoped assignable employee lookup endpoint/UI wiring, and project-role assignment constraints (terminal project status guard + single active overlapping primary assignment guard) with cleaner UI validation error surfacing.
-  - Blockers: Access policy by tenant relationship scope and complete document audit coverage (upload/download) are still pending.
+  - Blockers:
+- Week 5:
+  - Focus: Phase 3 completion hardening and document center rollout
+  - Completed: Added tenant-wide Document Center API (`GET /api/project-documents/search`) with filters (project/category/date/status/tags/search), implemented frontend Document Center page + route + sidebar link, added preview actions, enforced document access policy checks for list/by-id/version/download/version-upload flows, generated per-document access-policy entries from project parties on upload, and completed audit events for upload/download/update/delete/version upload.
+  - Blockers:
 
 ## MVP Definition (Recommended)
 MVP is complete when all items below are done:
 - [x] Project and Project Category CRUD with history
-- [~] Document upload + versioning + access control
+- [x] Document upload + versioning + access control
 - [~] Employee and consultant assignment
-- [ ] Basic TenantRelationship and scoped collaboration
+- [x] Basic TenantRelationship and scoped collaboration
 - [x] Tenant plan and storage quota enforcement
-- [ ] Tenant storage usage visibility in Tenant Management
-- [ ] Core tests for permissions and storage rules
+- [x] Tenant storage usage visibility in Tenant Management
+- [x] Core tests for permissions and storage rules

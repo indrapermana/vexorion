@@ -1,10 +1,11 @@
-import { VxButton, VxCheckbox, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxFormControlLabel, VxStack, VxTextField } from '@vexorion/ui'
+import { VxAlert, VxButton, VxCheckbox, VxChip, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxFormControlLabel, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { useTranslation } from 'react-i18next'
-import { useState } from 'react'
-import { updateTenant } from '../../../lib/api'
+import { useEffect, useState } from 'react'
+import { getTenantModuleEffectiveAccess, updateTenant } from '../../../lib/api'
+import type { TenantModuleEffectiveAccessItemResponse, TenantModuleEffectiveAccessResponse } from '../../../types/api'
 import type { TenantEditorDialogProps } from '../../../types/ui'
 
 const validationSchema: yup.ObjectSchema<FormData> = yup.object({
@@ -22,6 +23,9 @@ type FormData = {
 export function TenantEditorDialog({ open, tenant, onClose, onSaved }: TenantEditorDialogProps) {
   const { t } = useTranslation()
   const [isSaving, setIsSaving] = useState(false)
+  const [accessPreview, setAccessPreview] = useState<TenantModuleEffectiveAccessResponse | null>(null)
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false)
+  const [previewError, setPreviewError] = useState<string | null>(null)
   const {
     register,
     handleSubmit,
@@ -36,6 +40,52 @@ export function TenantEditorDialog({ open, tenant, onClose, onSaved }: TenantEdi
   })
 
   const isActive = watch('isActive')
+
+  useEffect(() => {
+    if (!open || !tenant) {
+      setAccessPreview(null)
+      setPreviewError(null)
+      return
+    }
+
+    let isDisposed = false
+    const loadPreview = async () => {
+      setIsPreviewLoading(true)
+      setPreviewError(null)
+
+      try {
+        const data = await getTenantModuleEffectiveAccess(tenant.id)
+        if (!isDisposed) {
+          setAccessPreview(data)
+        }
+      } catch (error) {
+        if (!isDisposed) {
+          setPreviewError('Failed to load module access preview.')
+          console.error('Failed to load module access preview:', error)
+        }
+      } finally {
+        if (!isDisposed) {
+          setIsPreviewLoading(false)
+        }
+      }
+    }
+
+    void loadPreview()
+    return () => {
+      isDisposed = true
+    }
+  }, [open, tenant])
+
+  const renderModuleRow = (label: string, item: TenantModuleEffectiveAccessItemResponse) => (
+    <VxStack key={label} direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ alignItems: { md: 'center' }, justifyContent: 'space-between' }}>
+      <VxTypography variant="body2">{label}</VxTypography>
+      <VxStack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
+        <VxChip size="small" label={`Toggle: ${item.toggleEnabled ? 'ON' : 'OFF'}`} color={item.toggleEnabled ? 'success' : 'default'} />
+        <VxChip size="small" label={`Rollout: ${item.allowedByRollout ? 'ALLOW' : 'BLOCK'} (${item.rolloutMode})`} color={item.allowedByRollout ? 'success' : 'warning'} />
+        <VxChip size="small" label={`Effective: ${item.effectiveEnabled ? 'ENABLED' : 'DISABLED'}`} color={item.effectiveEnabled ? 'success' : 'error'} />
+      </VxStack>
+    </VxStack>
+  )
 
   const onSubmit = async (data: FormData) => {
     if (!tenant) return
@@ -84,6 +134,21 @@ export function TenantEditorDialog({ open, tenant, onClose, onSaved }: TenantEdi
             control={<VxCheckbox {...register('isActive')} checked={isActive} />}
             label={t('components.tenants.editor.activeLabel')}
           />
+
+          <VxStack spacing={1.25} sx={{ pt: 1 }}>
+            <VxTypography variant="subtitle2">Effective Module Access Preview</VxTypography>
+            {isPreviewLoading ? <VxTypography variant="body2" color="text.secondary">Loading module access preview...</VxTypography> : null}
+            {previewError ? <VxAlert severity="warning">{previewError}</VxAlert> : null}
+            {accessPreview
+              ? (
+                  <VxStack spacing={1.25}>
+                    {renderModuleRow('Project Management', accessPreview.project)}
+                    {renderModuleRow('Document Management', accessPreview.document)}
+                    {renderModuleRow('Employee Management', accessPreview.employee)}
+                  </VxStack>
+                )
+              : null}
+          </VxStack>
         </VxStack>
       </VxDialogContent>
       <VxDialogActions>

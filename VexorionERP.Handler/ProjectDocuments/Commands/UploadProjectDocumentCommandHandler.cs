@@ -23,6 +23,7 @@ public sealed class UploadProjectDocumentCommandHandler(IServiceProvider service
         var accountingService = serviceProvider.GetRequiredService<IStorageAccountingService>();
         var tenantProvider = serviceProvider.GetRequiredService<ICurrentTenantProvider>();
         var httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
+        var auditLogger = serviceProvider.GetRequiredService<IAuditLogger>();
 
         var tenantId = tenantProvider.TenantId;
         if (!tenantId.HasValue)
@@ -95,6 +96,32 @@ public sealed class UploadProjectDocumentCommandHandler(IServiceProvider service
         };
         dbContext.DocumentVersions.Add(version);
 
+        // Create policy rows for related tenant parties so cross-tenant collaborators can be constrained per document.
+        var relatedParties = await dbContext.ProjectParties
+            .GetByTenant(tenantId.Value)
+            .Where(x => x.ProjectId == request.ProjectId && x.IsActive)
+            .ToListAsync(cancellationToken);
+
+        foreach (var party in relatedParties)
+        {
+            var validFromUtc = party.EffectiveFrom?.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+            var validToUtc = party.EffectiveTo?.ToDateTime(TimeOnly.MaxValue, DateTimeKind.Utc);
+
+            dbContext.DocumentAccessPolicies.Add(new DocumentAccessPolicy
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId.Value,
+                ProjectDocumentId = document.Id,
+                SubjectTenantId = party.RelatedTenantId,
+                CanView = party.CanViewDocuments,
+                CanDownload = party.CanViewDocuments,
+                CanUploadVersion = party.CanUploadDocuments,
+                ValidFromUtc = validFromUtc,
+                ValidToUtc = validToUtc,
+                IsActive = true
+            });
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
 
         // Record in storage ledger (pass the saved dbContext — ledger will SaveChanges again)
@@ -107,6 +134,17 @@ public sealed class UploadProjectDocumentCommandHandler(IServiceProvider service
             actorUserId,
             documentNumber,
             dbContext,
+            cancellationToken);
+
+        await auditLogger.LogAsync(
+            "project_document.uploaded",
+            tenantId,
+            actorUserId,
+            null,
+            nameof(ProjectDocument),
+            document.Id.ToString(),
+            "Project document uploaded.",
+            new { document.ProjectId, document.DocumentNumber, document.Title, document.FileName, document.FileSizeBytes },
             cancellationToken);
 
         var response = new ProjectDocumentUploadResponse

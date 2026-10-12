@@ -34,6 +34,16 @@ export type ProjectListFilterRequest = {
   relatedTenantId?: string
 }
 
+export type ProjectDocumentSearchFilterRequest = {
+  projectId?: string
+  projectCategoryId?: string
+  status?: ManagedDocumentStatus
+  tag?: string
+  searchTerm?: string
+  fromUtc?: string
+  toUtc?: string
+}
+
 export type CreateProjectPartyRequest = {
   relatedTenantId: string
   relationshipType: TenantRelationshipType

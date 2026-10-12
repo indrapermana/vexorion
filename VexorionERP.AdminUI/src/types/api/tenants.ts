@@ -50,3 +50,19 @@ export type TenantTelemetryListItemResponse = {
 export type TenantTelemetryResponse = {
   tenants: TenantTelemetryListItemResponse[]
 }
+
+export type TenantModuleEffectiveAccessItemResponse = {
+  toggleEnabled: boolean
+  rolloutGateEnabled: boolean
+  rolloutMode: string
+  allowedByRollout: boolean
+  effectiveEnabled: boolean
+}
+
+export type TenantModuleEffectiveAccessResponse = {
+  tenantId: string
+  tenantCode: string
+  project: TenantModuleEffectiveAccessItemResponse
+  document: TenantModuleEffectiveAccessItemResponse
+  employee: TenantModuleEffectiveAccessItemResponse
+}

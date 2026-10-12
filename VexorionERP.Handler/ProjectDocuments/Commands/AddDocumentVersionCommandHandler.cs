@@ -22,17 +22,30 @@ public sealed class AddDocumentVersionCommandHandler(IServiceProvider servicePro
         var accountingService = serviceProvider.GetRequiredService<IStorageAccountingService>();
         var tenantProvider = serviceProvider.GetRequiredService<ICurrentTenantProvider>();
         var httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
+        var auditLogger = serviceProvider.GetRequiredService<IAuditLogger>();
 
         var tenantId = tenantProvider.TenantId;
         if (!tenantId.HasValue)
             return ServiceResult<ProjectDocumentVersionListItemResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
 
         var document = await dbContext.ProjectDocuments
-            .GetByTenant(tenantId.Value)
             .FirstOrDefaultAsync(x => x.Id == request.ProjectDocumentId, cancellationToken);
 
         if (document is null)
             return ServiceResult<ProjectDocumentVersionListItemResponse>.Failure(StatusCodes.Status404NotFound, "Document not found.");
+
+        var canUploadVersion = await ProjectDocumentAccessEvaluator.CanUploadVersionAsync(
+            dbContext,
+            document.Id,
+            document.TenantId,
+            tenantId.Value,
+            DateTime.UtcNow,
+            cancellationToken);
+
+        if (!canUploadVersion)
+        {
+            return ServiceResult<ProjectDocumentVersionListItemResponse>.Failure(StatusCodes.Status404NotFound, "Document not found.");
+        }
 
         var quotaCheck = await accountingService.CheckQuotaAsync(tenantId.Value, request.File.Length, dbContext, cancellationToken);
         if (!quotaCheck.Succeeded)
@@ -91,6 +104,17 @@ public sealed class AddDocumentVersionCommandHandler(IServiceProvider servicePro
             actorUserId,
             document.DocumentNumber,
             dbContext,
+            cancellationToken);
+
+        await auditLogger.LogAsync(
+            "project_document.version_uploaded",
+            tenantId,
+            actorUserId,
+            null,
+            nameof(ProjectDocument),
+            document.Id.ToString(),
+            "Project document version uploaded.",
+            new { document.ProjectId, document.DocumentNumber, VersionNumber = version.VersionNumber, version.FileName, version.FileSizeBytes },
             cancellationToken);
 
         var response = new ProjectDocumentVersionListItemResponse

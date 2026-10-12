@@ -67,6 +67,7 @@ public static class ApplicationInitializationExtensions
         }
 
         await SeedBootstrapTenantAsync(scope.ServiceProvider, dbContext);
+        await EnsureTenantGovernanceDefaultsAsync(scope.ServiceProvider, dbContext);
     }
 
     private static async Task SeedBootstrapTenantAsync(IServiceProvider serviceProvider, AppDbContext dbContext)
@@ -142,5 +143,79 @@ public static class ApplicationInitializationExtensions
         await dbContext.SaveChangesAsync();
         await transaction.CommitAsync();
         await auditLogger.LogAsync("bootstrap.seeded", tenant.Id, adminUser.Id, adminUser.Id, nameof(Tenant), tenant.Id.ToString(), "Bootstrap tenant and admin user created.");
+    }
+
+    private static async Task EnsureTenantGovernanceDefaultsAsync(IServiceProvider serviceProvider, AppDbContext dbContext)
+    {
+        var defaultsOptions = serviceProvider.GetRequiredService<IOptions<TenantGovernanceDefaultsOptions>>().Value;
+        if (!defaultsOptions.BackfillExistingTenantsOnStartup)
+        {
+            return;
+        }
+
+        var tenantIds = await dbContext.Tenants
+            .AsNoTracking()
+            .Select(x => x.Id)
+            .ToListAsync();
+
+        if (tenantIds.Count == 0)
+        {
+            return;
+        }
+
+        var existingModuleConfigTenantIds = await dbContext.TenantModuleConfigs
+            .AsNoTracking()
+            .Select(x => x.TenantId)
+            .ToListAsync();
+
+        var missingModuleConfigTenantIds = tenantIds
+            .Except(existingModuleConfigTenantIds)
+            .ToArray();
+
+        foreach (var tenantId in missingModuleConfigTenantIds)
+        {
+            dbContext.TenantModuleConfigs.Add(new TenantModuleConfig
+            {
+                TenantId = tenantId,
+                ProjectManagementEnabled = defaultsOptions.Modules.ProjectManagementEnabled,
+                DocumentManagementEnabled = defaultsOptions.Modules.DocumentManagementEnabled,
+                EmployeeManagementEnabled = defaultsOptions.Modules.EmployeeManagementEnabled,
+                SalesEnabled = defaultsOptions.Modules.SalesEnabled,
+                PurchasingEnabled = defaultsOptions.Modules.PurchasingEnabled,
+                InventoryEnabled = defaultsOptions.Modules.InventoryEnabled
+            });
+        }
+
+        var existingPlanTenantIds = await dbContext.TenantPlans
+            .AsNoTracking()
+            .Select(x => x.TenantId)
+            .Distinct()
+            .ToListAsync();
+
+        var missingPlanTenantIds = tenantIds
+            .Except(existingPlanTenantIds)
+            .ToArray();
+
+        foreach (var tenantId in missingPlanTenantIds)
+        {
+            dbContext.TenantPlans.Add(new TenantPlan
+            {
+                TenantId = tenantId,
+                PlanCode = defaultsOptions.Plan.PlanCode.Trim().ToUpperInvariant(),
+                PlanName = defaultsOptions.Plan.PlanName.Trim(),
+                MaxStorageBytes = defaultsOptions.Plan.MaxStorageBytes,
+                MaxFileSizeBytes = defaultsOptions.Plan.MaxFileSizeBytes,
+                WarningThresholdPercent = defaultsOptions.Plan.WarningThresholdPercent,
+                SoftBlockThresholdPercent = defaultsOptions.Plan.SoftBlockThresholdPercent,
+                HardBlockThresholdPercent = defaultsOptions.Plan.HardBlockThresholdPercent,
+                EffectiveFromUtc = DateTime.UtcNow,
+                IsDefault = true
+            });
+        }
+
+        if (missingModuleConfigTenantIds.Length > 0 || missingPlanTenantIds.Length > 0)
+        {
+            await dbContext.SaveChangesAsync();
+        }
     }
 }

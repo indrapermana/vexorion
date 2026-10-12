@@ -1,9 +1,9 @@
-import { VxAlert, VxBox, VxButton, VxStack, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxChip, VxStack, VxSwitch, VxTypography } from '@vexorion/ui'
 import { lazy, useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { VxCard } from '@vexorion/ui'
-import { deleteTenant, getTenants } from '../../../lib/api'
-import type { TenantListItemResponse } from '../../../types/api'
+import { deleteTenant, getTenantModuleEffectiveAccess, getTenants } from '../../../lib/api'
+import type { TenantListItemResponse, TenantModuleEffectiveAccessResponse } from '../../../types/api'
 import { TenantDataGrid } from '../components/TenantDataGrid'
 import { TenantOnboardingDialog } from '../components/TenantOnboardingDialog'
 
@@ -17,6 +17,17 @@ export default function TenantManagementPage() {
   const [isEditorOpen, setIsEditorOpen] = useState(false)
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false)
   const [selectedTenant, setSelectedTenant] = useState<TenantListItemResponse | null>(null)
+  const [effectiveAccessByTenantId, setEffectiveAccessByTenantId] = useState<Record<string, TenantModuleEffectiveAccessResponse>>({})
+  const [showDisabledModulesOnly, setShowDisabledModulesOnly] = useState(false)
+
+  const hasDisabledModules = useCallback((tenantId: string) => {
+    const access = effectiveAccessByTenantId[tenantId]
+    if (!access) {
+      return false
+    }
+
+    return !access.project.effectiveEnabled || !access.document.effectiveEnabled || !access.employee.effectiveEnabled
+  }, [effectiveAccessByTenantId])
 
   const loadTenants = useCallback(async () => {
     setIsLoading(true)
@@ -24,6 +35,27 @@ export default function TenantManagementPage() {
     try {
       const data = await getTenants()
       setTenants(data)
+
+      const accessEntries = await Promise.all(
+        data.map(async (tenant) => {
+          try {
+            const access = await getTenantModuleEffectiveAccess(tenant.id)
+            return [tenant.id, access] as const
+          } catch (accessError) {
+            console.error(`Error loading module access for tenant ${tenant.id}:`, accessError)
+            return null
+          }
+        }),
+      )
+
+      setEffectiveAccessByTenantId(
+        accessEntries.reduce<Record<string, TenantModuleEffectiveAccessResponse>>((acc, entry) => {
+          if (entry) {
+            acc[entry[0]] = entry[1]
+          }
+          return acc
+        }, {}),
+      )
     } catch (err) {
       setError('Failed to load tenants')
       console.error('Error loading tenants:', err)
@@ -66,6 +98,10 @@ export default function TenantManagementPage() {
   }
 
   const activeTenants = tenants.filter((t) => t.isActive).length
+  const tenantsWithDisabledModules = tenants.filter((tenant) => hasDisabledModules(tenant.id)).length
+  const visibleTenants = showDisabledModulesOnly
+    ? tenants.filter((tenant) => hasDisabledModules(tenant.id))
+    : tenants
 
   return (
     <VxBox sx={{ p: 3 }}>
@@ -91,11 +127,34 @@ export default function TenantManagementPage() {
           <VxCard title={t('pages.tenantManagement.metrics.active')} className="panel-card" style={{ flex: 1 }}>
             <VxTypography variant="h5">{activeTenants}</VxTypography>
           </VxCard>
+          <VxCard title="Modules Disabled" className="panel-card" style={{ flex: 1 }}>
+            <VxTypography variant="h5">{tenantsWithDisabledModules}</VxTypography>
+          </VxCard>
+        </VxStack>
+
+        <VxStack direction={{ xs: 'column', lg: 'row' }} spacing={1.5} sx={{ justifyContent: 'space-between', alignItems: { lg: 'center' } }}>
+          <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+            <VxTypography variant="body2" color="textSecondary">Show tenants with disabled modules only</VxTypography>
+            <VxSwitch checked={showDisabledModulesOnly} onChange={(event) => setShowDisabledModulesOnly(event.target.checked)} />
+          </VxStack>
+
+          <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+            <VxTypography variant="caption" color="textSecondary">Legend</VxTypography>
+            <VxChip size="small" color="success" label="ON" />
+            <VxChip size="small" variant="outlined" label="OFF" />
+            <VxTypography variant="caption" color="textSecondary">P=Project D=Document E=Employee</VxTypography>
+          </VxStack>
         </VxStack>
 
         {error && <VxAlert severity="error">{error}</VxAlert>}
 
-        <TenantDataGrid rows={tenants} isLoading={isLoading} onEdit={handleEdit} onRemove={handleTenantRemove} />
+        <TenantDataGrid
+          rows={visibleTenants}
+          isLoading={isLoading}
+          onEdit={handleEdit}
+          onRemove={handleTenantRemove}
+          effectiveAccessByTenantId={effectiveAccessByTenantId}
+        />
 
         <TenantEditorDialog
           open={isEditorOpen}

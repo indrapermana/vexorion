@@ -21,6 +21,14 @@ public class TenantModuleConfigController(IMediator mediator) : ServiceResultCon
         return ToActionResult(result);
     }
 
+    [HttpGet("effective")]
+    [Authorize(Policy = AppPermissions.TenantModules.View)]
+    public async Task<ActionResult<TenantModuleEffectiveAccessResponse>> GetEffective(Guid tenantId)
+    {
+        var result = await mediator.Send(new GetTenantModuleEffectiveAccessQuery(tenantId), HttpContext.RequestAborted);
+        return ToActionResult(result);
+    }
+
     [HttpPut]
     [Authorize(Policy = AppPermissions.TenantModules.Manage)]
     public async Task<ActionResult<TenantModuleConfigResponse>> Update(Guid tenantId, [FromBody] UpdateTenantModuleConfigRequest request)

@@ -485,6 +485,7 @@ const esES = {
       reports: 'Informes',
       configCenter: 'Centro de configuración',
       projectCategories: 'Categorías de proyecto',
+      projectDocuments: 'Documentos de proyecto',
       projects: 'Proyectos',
       employees: 'Empleados',
       consultants: 'Consultores',
@@ -508,6 +509,7 @@ const esES = {
       reports: 'Informes',
       products: 'Productos',
       projectCategories: 'Categorías de Proyecto',
+      projectDocuments: 'Documentos de Proyecto',
       projects: 'Proyectos',
       employees: 'Empleados',
       consultants: 'Consultores',
@@ -719,7 +721,7 @@ const esES = {
       },
       tabPlaceholders: {
         assignments: 'La interfaz de asignaciones se conectará a los puntos finales de asignación de proyectos en la Fase 4. Esta pestaña está reservada para completar el diseño de detalle de la Fase 2.',
-        documents: 'Los flujos de documentos de proyectos están planeados para la Fase 3. Esta pestaña ya está conectada como parte del shell de detalles del proyecto.',
+        documents: 'Gestiona el flujo documental del proyecto, incluyendo carpetas, carga, versionado, estado e historial.',
       },
       assignmentsPanel: {
         noAccess: 'No tienes permiso para ver las asignaciones del proyecto.',

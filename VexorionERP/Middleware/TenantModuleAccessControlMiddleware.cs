@@ -1,18 +1,24 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using VexorionERP.Database;
 
 namespace VexorionERP.Middleware;
 
-public sealed class TenantModuleAccessControlMiddleware(RequestDelegate next)
+public sealed class TenantModuleAccessControlMiddleware(
+    RequestDelegate next,
+    IOptions<TenantModuleRolloutOptions> rolloutOptions)
 {
     private static readonly (PathString Prefix, ModuleArea Area)[] ProtectedAreas =
     [
         (new PathString("/api/project-categories"), ModuleArea.Project),
         (new PathString("/api/projects"), ModuleArea.Project),
+        (new PathString("/api/project-documents"), ModuleArea.Document),
         (new PathString("/api/tenant-relationships"), ModuleArea.Project),
         (new PathString("/api/employees"), ModuleArea.Employee),
         (new PathString("/api/consultants"), ModuleArea.Employee)
     ];
+
+    private readonly TenantModuleRolloutOptions _rolloutOptions = rolloutOptions.Value;
 
     public async Task InvokeAsync(HttpContext context)
     {
@@ -53,6 +59,11 @@ public sealed class TenantModuleAccessControlMiddleware(RequestDelegate next)
 
         if (enabled)
         {
+            enabled = await IsEnabledByRolloutAsync(area, tenantId.Value, dbContext, context.RequestAborted);
+        }
+
+        if (enabled)
+        {
             await next(context);
             return;
         }
@@ -86,6 +97,62 @@ public sealed class TenantModuleAccessControlMiddleware(RequestDelegate next)
 
         area = default;
         return false;
+    }
+
+    private async Task<bool> IsEnabledByRolloutAsync(
+        ModuleArea area,
+        Guid tenantId,
+        AppDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        if (!_rolloutOptions.Enabled)
+        {
+            return true;
+        }
+
+        var areaOptions = area switch
+        {
+            ModuleArea.Project => _rolloutOptions.Project,
+            ModuleArea.Document => _rolloutOptions.Document,
+            ModuleArea.Employee => _rolloutOptions.Employee,
+            _ => null
+        };
+
+        if (areaOptions is null || !areaOptions.Enabled)
+        {
+            return true;
+        }
+
+        if (areaOptions.AllowedTenantIds.Contains(tenantId))
+        {
+            return true;
+        }
+
+        if (!areaOptions.Mode.Equals("AllowList", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (areaOptions.AllowedTenantCodes.Count == 0)
+        {
+            return false;
+        }
+
+        var normalizedTenantCode = (await dbContext.Tenants
+            .AsNoTracking()
+            .Where(x => x.Id == tenantId)
+            .Select(x => x.Code)
+            .FirstOrDefaultAsync(cancellationToken))
+            ?.Trim()
+            .ToUpperInvariant();
+
+        if (string.IsNullOrWhiteSpace(normalizedTenantCode))
+        {
+            return false;
+        }
+
+        return areaOptions.AllowedTenantCodes
+            .Any(code => string.Equals(code.Trim(), normalizedTenantCode, StringComparison.OrdinalIgnoreCase));
     }
 
     private enum ModuleArea
