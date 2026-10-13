@@ -143,7 +143,7 @@ The same business failure can appear as a precise message, `Request failed with 
 
 ### P0-2 — Backend validation gate is red
 
-**Status: implementation and Debug validation completed on 13 October 2026; Release licensing remains an external prerequisite.**
+**Status: implementation, dependency audit, and local Release validation completed on 13 October 2026; CI secret provisioning remains an external prerequisite.**
 
 - [x] Fix the failing `AuthorizationBoundaryAuditTests`. The audit middleware now wraps authorization, so it observes and persists 403 policy denials that short-circuit before controllers and handlers.
 - [x] Document the audit boundary: authorization policy denials must persist an `authorization.access_denied` event; audit failures are logged but must not replace or prevent the 403 response.
@@ -151,8 +151,8 @@ The same business failure can appear as a precise message, `Request failed with 
 - [x] Add a fixture-composition test covering every dependency resolved by `AddDocumentVersionCommandHandler`.
 - [x] Re-run the full solution. All 827 currently discovered .NET tests pass (498 service + 186 web + 143 handler).
 - [x] Upgrade direct `SixLabors.ImageSharp` from vulnerable `3.1.12` to `4.1.3`; the package no longer appears in `dotnet list package --vulnerable`.
-- [ ] Provision `SIXLABORS_LICENSE_KEY` in developer/CI/release environments. ImageSharp 4 permits Debug builds without it but rejects Release builds when a valid license is absent.
-- [ ] Resolve the newly detected transitive advisories separately: `Microsoft.Extensions.Caching.Memory 8.0.0`, `System.Text.Json 8.0.4`, and test-only `SQLitePCLRaw.lib.e_sqlite3 2.1.6`. These enter through the .NET 8.0.8 EF/design/SQLite dependency graph and were not the direct ImageSharp advisory addressed here.
+- [ ] Provision `SIXLABORS_LICENSE_KEY` in CI/release secrets. The local `sixlabors.lic` is installed, Git-ignored, owner-readable only, and validated by a zero-warning Release build; the backend workflow is wired to consume the repository/environment secret once configured.
+- [x] Resolve the transitive advisories by updating the coordinated Microsoft .NET/EF/ASP.NET package family from `8.0.8` to `8.0.31`. The resolved graph now uses `Microsoft.Extensions.Caching.Memory 8.0.1`, removes the vulnerable `System.Text.Json 8.0.4` dependency, and uses test-only `SQLitePCLRaw.lib.e_sqlite3 2.1.12`. A live NuGet audit reports no vulnerable direct or transitive packages in any solution project.
 
 ### P0-3 — Frontend test gate is red and commands are misleading
 

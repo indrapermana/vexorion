@@ -44,6 +44,9 @@ CoverageReport/
 **/.vite/
 **/.cache/
 
+# Local Six Labors license (never commit private/community license material)
+**/sixlabors.lic
+
 # Monorepo tooling
 node_modules/
 .turbo/
