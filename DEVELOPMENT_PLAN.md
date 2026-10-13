@@ -46,7 +46,7 @@ Percentage-complete labels are intentionally not used. Capability-inventory chec
 | Source state | RECORDED | Commit `bf635b7a1b1fa9b5299c347a783c28b67d4bfae1` on `master`; P0-1 through P0-3 were present in this clean source state. P0-4 documentation edits require a later commit before they can be release evidence. |
 | Environment | RECORDED | macOS 26.7.1, .NET SDK 10.0.301 targeting .NET 8, Node 22.22.0, npm 10.9.4. |
 | `dotnet build VexorionERP.sln -c Release --no-restore` | PASS | Zero warnings and zero errors with the local Six Labors license. |
-| `dotnet test VexorionERP.sln --no-restore --no-build --verbosity minimal -m:1` | PASS | 827/827: Services 498, Web 186, Handlers 143. |
+| `dotnet test VexorionERP.sln --no-restore --disable-build-servers --verbosity minimal -m:1 -p:UseSharedCompilation=false` | PASS | 830/830: Services 498, Web 186, Handlers 146. |
 | `dotnet list VexorionERP.sln package --vulnerable --include-transitive --no-restore` | PASS | NuGet reported no vulnerable direct or transitive packages in all nine projects. |
 | `npm run test:run` | PASS | 183/183: Main UI 82, AdminUI 30, POS 71; no hidden mock errors or React `act(...)` warnings. |
 | `npm run build` | PASS WITH WARNING | All four frontend packages built; Main UI emitted the known chunk-size warning. |
@@ -165,7 +165,7 @@ The same business failure can appear as a precise message, `Request failed with 
 - [x] Document the audit boundary: authorization policy denials must persist an `authorization.access_denied` event; audit failures are logged but must not replace or prevent the 403 response.
 - [x] Fix the failing `AddDocumentVersionCommandHandlerTests` by registering `IAuditLogger` in the fixture.
 - [x] Add a fixture-composition test covering every dependency resolved by `AddDocumentVersionCommandHandler`.
-- [x] Re-run the full solution. All 827 currently discovered .NET tests pass (498 service + 186 web + 143 handler).
+- [x] Re-run the full solution. All 830 currently discovered .NET tests pass (498 service + 186 web + 146 handler).
 - [x] Upgrade direct `SixLabors.ImageSharp` from vulnerable `3.1.12` to `4.1.3`; the package no longer appears in `dotnet list package --vulnerable`.
 - [x] Provision `SIXLABORS_LICENSE_KEY` in CI/release secrets. The local `sixlabors.lic` is installed, Git-ignored, owner-readable only, and validated by a zero-warning Release build; the backend workflow consumes the repository/environment secret successfully.
 - [x] Resolve the transitive advisories by updating the coordinated Microsoft .NET/EF/ASP.NET package family from `8.0.8` to `8.0.31`. The resolved graph now uses `Microsoft.Extensions.Caching.Memory 8.0.1`, removes the vulnerable `System.Text.Json 8.0.4` dependency, and uses test-only `SQLitePCLRaw.lib.e_sqlite3 2.1.12`. A live NuGet audit reports no vulnerable direct or transitive packages in any solution project.
@@ -193,13 +193,21 @@ The same business failure can appear as a precise message, `Request failed with 
 
 ### P1-1 — Project/document module is implemented but incompletely hardened
 
+Implementation evidence (2026-10-13):
+
+- Assignment matrix now rejects an end date earlier than its start date with a localized, user-visible explanation; its focused UI suite passes (4/4).
+- Project document uploads and version uploads persist only `Path.GetFileName(...)`, preventing client-supplied path segments from becoming stored metadata.
+- Blob storage now exposes idempotent deletion, and both upload handlers compensate when their first database persistence step fails. Focused version-handler coverage passes (6/6), including database-failure cleanup, storage-failure non-persistence, immutable prior history, and safe filename behavior.
+- The API already has a 100 MB request-size ceiling and read-only, short-lived blob URLs. This is transport-level evidence only: MIME/signature validation and malware scanning are not implemented yet and remain release-blocking items below.
+- A static index review found existing tenant/project/status, document-version, access-policy, and storage-ledger indexes. A real PostgreSQL dataset and `EXPLAIN (ANALYZE, BUFFERS)` evidence are still required before the query-plan item can be completed.
+
 - [ ] Finish project assignment matrix UX and targeted project form/state tests.
 - [ ] Add E2E: tenant A creates a project and links tenant B.
 - [ ] Add E2E: upload a document, add a version, preview/download it, and verify immutable history.
 - [ ] Add E2E: tenant B is allowed/denied exactly according to relationship scopes and validity dates.
 - [ ] Add E2E: storage warning, soft-block, and hard-block behavior.
 - [ ] Run index/query-plan review for project/document search, histories, storage trend, and top-consumer queries.
-- [ ] Add retry/compensation tests for blob upload succeeding while database persistence fails, and vice versa.
+- [ ] Add retry/compensation tests for blob upload succeeding while database persistence fails, and vice versa. Version-upload coverage is complete; add equivalent initial-upload coverage and define retry/idempotency behavior.
 - [ ] Verify malware/content scanning, MIME/signature validation, safe filenames, download headers, and maximum upload limits. These controls were not established by the current plans.
 - [ ] Verify audit event durability and correlation for both allowed and denied paths.
 

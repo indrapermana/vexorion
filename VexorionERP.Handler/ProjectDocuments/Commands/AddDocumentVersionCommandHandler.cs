@@ -51,11 +51,15 @@ public sealed class AddDocumentVersionCommandHandler(IServiceProvider servicePro
         if (!quotaCheck.Succeeded)
             return ServiceResult<ProjectDocumentVersionListItemResponse>.Failure(quotaCheck.StatusCode ?? StatusCodes.Status507InsufficientStorage, quotaCheck.ErrorMessage!);
 
+        var safeFileName = Path.GetFileName(request.File.FileName);
+        if (string.IsNullOrWhiteSpace(safeFileName))
+            return ServiceResult<ProjectDocumentVersionListItemResponse>.Failure(StatusCodes.Status400BadRequest, "A valid file name is required.");
+
         using var stream = request.File.OpenReadStream();
         var uploadResult = await storageService.UploadAsync(
             tenantId.Value,
             "project-documents",
-            request.File.FileName,
+            safeFileName,
             stream,
             request.File.ContentType ?? "application/octet-stream",
             cancellationToken);
@@ -75,7 +79,7 @@ public sealed class AddDocumentVersionCommandHandler(IServiceProvider servicePro
             TenantId = tenantId.Value,
             ProjectDocumentId = document.Id,
             VersionNumber = nextVersion,
-            FileName = request.File.FileName,
+            FileName = safeFileName,
             ContentType = request.File.ContentType ?? "application/octet-stream",
             StoragePath = blob.BlobPath,
             FileSizeBytes = blob.FileSizeBytes,
@@ -88,12 +92,20 @@ public sealed class AddDocumentVersionCommandHandler(IServiceProvider servicePro
         dbContext.DocumentVersions.Add(version);
 
         document.CurrentVersionNumber = nextVersion;
-        document.FileName = request.File.FileName;
+        document.FileName = safeFileName;
         document.ContentType = request.File.ContentType ?? "application/octet-stream";
         document.StoragePath = blob.BlobPath;
         document.FileSizeBytes = blob.FileSizeBytes;
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch
+        {
+            await storageService.DeleteAsync(blob.BlobPath, CancellationToken.None);
+            throw;
+        }
 
         await accountingService.RecordLedgerEntryAsync(
             tenantId.Value,

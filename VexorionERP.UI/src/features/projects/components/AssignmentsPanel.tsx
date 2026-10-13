@@ -152,6 +152,11 @@ export default function AssignmentsPanel({ projectId }: AssignmentsPanelProps) {
       }))),
     [consultants, employees, formState.assigneeType],
   )
+  const hasInvalidPeriod = Boolean(
+    formState.startDate
+    && formState.endDate
+    && formState.endDate < formState.startDate,
+  )
 
   const resetEditor = () => {
     setEditingItem(null)
@@ -361,6 +366,9 @@ export default function AssignmentsPanel({ projectId }: AssignmentsPanelProps) {
         </VxDialogTitle>
         <VxDialogContent dividers>
           <VxStack spacing={2} sx={{ mt: 1 }}>
+            {hasInvalidPeriod ? (
+              <VxAlert severity="error">{t('pages.projectDetails.assignmentsPanel.errors.invalidPeriod')}</VxAlert>
+            ) : null}
             <VxTextField
               select
               size="small"
@@ -458,7 +466,7 @@ export default function AssignmentsPanel({ projectId }: AssignmentsPanelProps) {
           <VxButton onClick={resetEditor}>{t('common.cancel')}</VxButton>
           <VxButton
             variant="contained"
-            disabled={!formState.assigneeId.trim() || !formState.roleTitle.trim() || !formState.startDate || isSaving}
+            disabled={!formState.assigneeId.trim() || !formState.roleTitle.trim() || !formState.startDate || hasInvalidPeriod || isSaving}
             onClick={() => void saveAssignment()}
           >
             {editingItem ? t('common.save') : t('common.create')}

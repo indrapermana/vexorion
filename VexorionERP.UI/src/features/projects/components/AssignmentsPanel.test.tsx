@@ -216,4 +216,21 @@ describe('AssignmentsPanel assignment and relationship UI logic', () => {
       )
     })
   })
+
+  it('blocks an assignment whose end date is before its start date', async () => {
+    authMocks.mockUseAuth.mockReturnValue({ user: { permissions: ['projects.view', 'projects.manage'] } })
+    const user = userEvent.setup()
+
+    render(<AssignmentsPanel projectId="project-1" />)
+    await waitFor(() => expect(apiMocks.mockGetProjectAssignments).toHaveBeenCalled())
+    await user.click(screen.getByRole('button', { name: 'pages.projectDetails.assignmentsPanel.add' }))
+    await user.selectOptions(screen.getByLabelText('pages.projectDetails.assignmentsPanel.fields.assigneeId'), 'emp-1')
+    await user.type(screen.getByLabelText('pages.projectDetails.assignmentsPanel.fields.roleTitle'), 'Planner')
+    await user.type(screen.getByLabelText('pages.projectDetails.assignmentsPanel.fields.startDate'), '2026-05-13')
+    await user.type(screen.getByLabelText('pages.projectDetails.assignmentsPanel.fields.endDate'), '2026-05-12')
+
+    expect(screen.getByRole('alert')).toHaveTextContent('pages.projectDetails.assignmentsPanel.errors.invalidPeriod')
+    expect(screen.getByRole('button', { name: 'common.create' })).toBeDisabled()
+    expect(apiMocks.mockCreateProjectAssignment).not.toHaveBeenCalled()
+  })
 })

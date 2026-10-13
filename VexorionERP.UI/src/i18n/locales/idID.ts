@@ -798,6 +798,7 @@ const idID = {
           deleted: 'Penugasan dihapus.',
         },
         errors: {
+          invalidPeriod: 'Tanggal selesai tidak boleh lebih awal dari tanggal mulai.',
           load: 'Tidak dapat memuat penugasan.',
           save: 'Tidak dapat menyimpan penugasan.',
           delete: 'Tidak dapat menghapus penugasan.',

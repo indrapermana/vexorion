@@ -769,6 +769,7 @@ const esES = {
           deleted: 'Asignación eliminada.',
         },
         errors: {
+          invalidPeriod: 'La fecha de fin no puede ser anterior a la fecha de inicio.',
           load: 'No se pueden cargar las asignaciones.',
           save: 'No se puede guardar la asignación.',
           delete: 'No se puede eliminar la asignación.',

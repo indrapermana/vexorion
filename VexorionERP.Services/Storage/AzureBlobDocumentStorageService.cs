@@ -169,6 +169,37 @@ public class AzureBlobDocumentStorageService(IConfiguration configuration) : IDo
         }
     }
 
+    public async Task<ServiceResult<bool>> DeleteAsync(string blobPath, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(blobPath))
+        {
+            return ServiceResult<bool>.Failure(StatusCodes.Status400BadRequest, "Blob path is required.");
+        }
+
+        var connectionString = configuration[ConnectionStringKey];
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            return ServiceResult<bool>.Failure(StatusCodes.Status500InternalServerError, $"Missing required configuration: {ConnectionStringKey}");
+        }
+
+        var containerName = configuration[ContainerNameKey];
+        if (string.IsNullOrWhiteSpace(containerName))
+        {
+            containerName = "generated-documents";
+        }
+
+        try
+        {
+            var blobClient = new BlobContainerClient(connectionString, containerName).GetBlobClient(blobPath);
+            var deleted = await blobClient.DeleteIfExistsAsync(DeleteSnapshotsOption.IncludeSnapshots, cancellationToken: cancellationToken);
+            return ServiceResult<bool>.Success(deleted.Value);
+        }
+        catch (Exception ex)
+        {
+            return ServiceResult<bool>.Failure(StatusCodes.Status500InternalServerError, $"Failed to delete document blob: {ex.Message}");
+        }
+    }
+
     private static string ComputeSha256(Stream stream)
     {
         using var sha = SHA256.Create();

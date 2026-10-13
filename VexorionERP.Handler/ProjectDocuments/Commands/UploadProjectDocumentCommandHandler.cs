@@ -35,11 +35,15 @@ public sealed class UploadProjectDocumentCommandHandler(IServiceProvider service
             return ServiceResult<ProjectDocumentUploadResponse>.Failure(quotaCheck.StatusCode ?? StatusCodes.Status507InsufficientStorage, quotaCheck.ErrorMessage!);
 
         // Upload the file to blob storage
+        var safeFileName = Path.GetFileName(request.File.FileName);
+        if (string.IsNullOrWhiteSpace(safeFileName))
+            return ServiceResult<ProjectDocumentUploadResponse>.Failure(StatusCodes.Status400BadRequest, "A valid file name is required.");
+
         using var stream = request.File.OpenReadStream();
         var uploadResult = await storageService.UploadAsync(
             tenantId.Value,
             "project-documents",
-            request.File.FileName,
+            safeFileName,
             stream,
             request.File.ContentType ?? "application/octet-stream",
             cancellationToken);
@@ -65,7 +69,7 @@ public sealed class UploadProjectDocumentCommandHandler(IServiceProvider service
             DocumentFolderId = request.DocumentFolderId,
             DocumentNumber = documentNumber,
             Title = request.Title,
-            FileName = request.File.FileName,
+            FileName = safeFileName,
             ContentType = request.File.ContentType ?? "application/octet-stream",
             StoragePath = blob.BlobPath,
             FileSizeBytes = blob.FileSizeBytes,
@@ -84,7 +88,7 @@ public sealed class UploadProjectDocumentCommandHandler(IServiceProvider service
             TenantId = tenantId.Value,
             ProjectDocumentId = document.Id,
             VersionNumber = 1,
-            FileName = request.File.FileName,
+            FileName = safeFileName,
             ContentType = request.File.ContentType ?? "application/octet-stream",
             StoragePath = blob.BlobPath,
             FileSizeBytes = blob.FileSizeBytes,
@@ -122,7 +126,17 @@ public sealed class UploadProjectDocumentCommandHandler(IServiceProvider service
             });
         }
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch
+        {
+            // Blob storage and the database cannot share a transaction. Compensate so a failed
+            // persistence attempt does not consume quota indefinitely as an orphaned blob.
+            await storageService.DeleteAsync(blob.BlobPath, CancellationToken.None);
+            throw;
+        }
 
         // Record in storage ledger (pass the saved dbContext — ledger will SaveChanges again)
         await accountingService.RecordLedgerEntryAsync(

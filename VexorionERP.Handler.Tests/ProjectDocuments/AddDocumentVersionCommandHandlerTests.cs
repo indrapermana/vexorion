@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using VexorionERP.Database;
 using VexorionERP.Models;
@@ -76,6 +77,67 @@ public class AddDocumentVersionCommandHandlerTests
     }
 
     [Fact]
+    public async Task Handle_WhenDatabasePersistenceFails_DeletesUploadedBlobAndKeepsHistory()
+    {
+        var tenantId = Guid.NewGuid();
+        var interceptor = new FailNextSaveInterceptor();
+        var (db, documentId, _) = CreateDbWithDocument(tenantId, interceptor);
+        var storage = new FakeDocumentStorageService();
+        var services = BuildServices(tenantId, db, new FakeStorageAccountingService(), storage);
+        interceptor.FailNextSave = true;
+
+        var handler = new AddDocumentVersionCommandHandler(services);
+        var file = CreateFormFile("updated.pdf", "application/pdf", new byte[] { 1, 2, 3 });
+
+        await Assert.ThrowsAsync<DbUpdateException>(async () =>
+            await handler.Handle(new AddDocumentVersionCommand(documentId, "v2", file), CancellationToken.None));
+
+        Assert.Equal("blob/updated.pdf", storage.DeletedBlobPath);
+        db.ChangeTracker.Clear();
+        var persisted = await db.ProjectDocuments.SingleAsync(x => x.Id == documentId);
+        Assert.Equal(1, persisted.CurrentVersionNumber);
+        Assert.Single(db.DocumentVersions.Where(x => x.ProjectDocumentId == documentId));
+    }
+
+    [Fact]
+    public async Task Handle_WhenBlobUploadFails_DoesNotPersistAChange()
+    {
+        var tenantId = Guid.NewGuid();
+        var (db, documentId, _) = CreateDbWithDocument(tenantId);
+        var storage = new FakeDocumentStorageService { FailUpload = true };
+        var accounting = new FakeStorageAccountingService();
+        var services = BuildServices(tenantId, db, accounting, storage);
+
+        var result = await new AddDocumentVersionCommandHandler(services).Handle(
+            new AddDocumentVersionCommand(documentId, null, CreateFormFile("failed.pdf", "application/pdf", new byte[] { 1 })),
+            CancellationToken.None);
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(StatusCodes.Status502BadGateway, result.StatusCode);
+        Assert.Null(storage.DeletedBlobPath);
+        Assert.Equal(0, accounting.RecordLedgerCalls);
+        Assert.Equal(1, (await db.ProjectDocuments.SingleAsync(x => x.Id == documentId)).CurrentVersionNumber);
+        Assert.Single(db.DocumentVersions.Where(x => x.ProjectDocumentId == documentId));
+    }
+
+    [Fact]
+    public async Task Handle_NormalizesClientPathBeforeUploadAndPersistence()
+    {
+        var tenantId = Guid.NewGuid();
+        var (db, documentId, _) = CreateDbWithDocument(tenantId);
+        var storage = new FakeDocumentStorageService();
+        var services = BuildServices(tenantId, db, new FakeStorageAccountingService(), storage);
+
+        var result = await new AddDocumentVersionCommandHandler(services).Handle(
+            new AddDocumentVersionCommand(documentId, null, CreateFormFile("../../safe.pdf", "application/pdf", new byte[] { 1 })),
+            CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal("safe.pdf", storage.UploadedFileName);
+        Assert.Equal("safe.pdf", (await db.ProjectDocuments.SingleAsync(x => x.Id == documentId)).FileName);
+    }
+
+    [Fact]
     public void BuildServices_RegistersEveryHandlerDependency()
     {
         var tenantId = Guid.NewGuid();
@@ -120,11 +182,15 @@ public class AddDocumentVersionCommandHandlerTests
         return services.BuildServiceProvider();
     }
 
-    private static (AppDbContext db, Guid documentId, Guid originalVersionId) CreateDbWithDocument(Guid tenantId)
+    private static (AppDbContext db, Guid documentId, Guid originalVersionId) CreateDbWithDocument(
+        Guid tenantId,
+        SaveChangesInterceptor? interceptor = null)
     {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
+        var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString());
+        if (interceptor is not null)
+            optionsBuilder.AddInterceptors(interceptor);
+        var options = optionsBuilder.Options;
         var db = new AppDbContext(options);
 
         var projectId = Guid.NewGuid();
@@ -187,6 +253,10 @@ public class AddDocumentVersionCommandHandlerTests
 
     private sealed class FakeDocumentStorageService : IDocumentStorageService
     {
+        public string? DeletedBlobPath { get; private set; }
+        public string? UploadedFileName { get; private set; }
+        public bool FailUpload { get; init; }
+
         public Task<ServiceResult<DocumentStorageUploadResult>> UploadAsync(
             Guid tenantId,
             string sourceType,
@@ -194,14 +264,44 @@ public class AddDocumentVersionCommandHandlerTests
             Stream content,
             string contentType,
             CancellationToken cancellationToken = default)
-            => Task.FromResult(ServiceResult<DocumentStorageUploadResult>.Success(
-                new DocumentStorageUploadResult($"blob/{fileName}", $"https://blob/{fileName}", content.Length, "sha256")));
+        {
+            UploadedFileName = fileName;
+            return Task.FromResult(FailUpload
+                ? ServiceResult<DocumentStorageUploadResult>.Failure(StatusCodes.Status502BadGateway, "Storage unavailable")
+                : ServiceResult<DocumentStorageUploadResult>.Success(
+                    new DocumentStorageUploadResult($"blob/{fileName}", $"https://blob/{fileName}", content.Length, "sha256")));
+        }
 
         public Task<ServiceResult<string>> GetDownloadUrlAsync(string blobPath, CancellationToken cancellationToken = default)
             => Task.FromResult(ServiceResult<string>.Failure(StatusCodes.Status501NotImplemented, "Not needed"));
 
         public Task<ServiceResult<byte[]>> DownloadAsync(string blobPath, CancellationToken cancellationToken = default)
             => Task.FromResult(ServiceResult<byte[]>.Failure(StatusCodes.Status501NotImplemented, "Not needed"));
+
+        public Task<ServiceResult<bool>> DeleteAsync(string blobPath, CancellationToken cancellationToken = default)
+        {
+            DeletedBlobPath = blobPath;
+            return Task.FromResult(ServiceResult<bool>.Success(true));
+        }
+    }
+
+    private sealed class FailNextSaveInterceptor : SaveChangesInterceptor
+    {
+        public bool FailNextSave { get; set; }
+
+        public override ValueTask<InterceptionResult<int>> SavingChangesAsync(
+            DbContextEventData eventData,
+            InterceptionResult<int> result,
+            CancellationToken cancellationToken = default)
+        {
+            if (FailNextSave)
+            {
+                FailNextSave = false;
+                throw new DbUpdateException("Simulated database persistence failure.");
+            }
+
+            return base.SavingChangesAsync(eventData, result, cancellationToken);
+        }
     }
 
     private sealed class FakeStorageAccountingService : IStorageAccountingService

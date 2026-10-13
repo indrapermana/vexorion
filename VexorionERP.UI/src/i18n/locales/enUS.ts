@@ -1262,6 +1262,7 @@ const enUS = {
           deleted: 'Assignment deleted.',
         },
         errors: {
+          invalidPeriod: 'End date cannot be earlier than start date.',
           load: 'Unable to load assignments.',
           save: 'Unable to save assignment.',
           delete: 'Unable to delete assignment.',
