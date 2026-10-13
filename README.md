@@ -331,7 +331,7 @@ Runs at **`http://localhost:5173`** (default Vite port). Proxies `/api/*` to `ht
 | `npm run build` | Type-check and build for production |
 | `npm run lint` | Run ESLint |
 | `npm run test:run` | Run unit tests once (Vitest) |
-| `npm test` | Run unit tests in watch mode |
+| `npm test` | Run unit tests once (Vitest) |
 | `npm run e2e` | Run Playwright E2E tests |
 | `npm run e2e:headed` | Run E2E tests with browser visible |
 | `npm run e2e:ui` | Open Playwright interactive UI |
@@ -476,30 +476,31 @@ cd VexorionERP.POS && npm install && npm run dev
 
 ## Testing summary
 
+From the repository root, `npm run test:run` runs Main UI, AdminUI, and POS unit tests sequentially and reports every failing workspace before exiting. A successful unit-test or build job is not E2E or release evidence.
+
 | Project | Runner | Command | Tests |
 |---|---|---|---|
 | VexorionERP.Services.Tests | xUnit | `dotnet test` | backend services |
 | VexorionERP.Handler.Tests | xUnit | `dotnet test` | CQRS handlers |
 | VexorionERP.Web.Tests | xUnit | `dotnet test` | integration |
-| VexorionERP.UI | Vitest | `npm run test:run` | frontend unit tests |
+| All frontend applications | Vitest | `npm run test:run` from repository root | Main UI, AdminUI, and POS unit tests |
+| VexorionERP.UI | Vitest | `npm run test:run` in workspace | Main UI unit tests |
 | VexorionERP.UI | Playwright | `npm run e2e` | frontend E2E workflows |
-| VexorionERP.AdminUI | Vitest | `npm test` | admin panel unit tests |
+| VexorionERP.AdminUI | Vitest | `npm run test:run` | admin panel unit tests |
 | VexorionERP.AdminUI | Playwright | `npm run e2e` | admin panel E2E workflows |
-| VexorionERP.POS | Vitest | `npm test` | POS unit tests |
+| VexorionERP.POS | Vitest | `npm run test:run` | POS unit tests |
 | VexorionERP.POS | Playwright | `npm run e2e` | POS E2E workflows |
 
 ## CI workflows
 
-GitHub Actions is split into four path-scoped workflows, and the badges at the top of this README show the latest status for each workflow.
+GitHub Actions uses two path-scoped workflows, and the badges at the top of this README show the latest status for each workflow.
 
 | Workflow | File | Triggered by changes in |
 |---|---|---|
 | Backend | `.github/workflows/backend.yml` | `**.cs`, `**.csproj`, `**.sln`, or the workflow file itself |
-| UI Frontend | `.github/workflows/ui.yml` | `VexorionERP.UI/**` or the workflow file itself |
-| AdminUI Frontend | `.github/workflows/adminui.yml` | `VexorionERP.AdminUI/**` or the workflow file itself |
-| POS Frontend | `.github/workflows/pos.yml` | `VexorionERP.POS/**` or the workflow file itself |
+| Frontend | `.github/workflows/frontend.yml` | Any frontend application, shared package, root frontend configuration, or frontend workflow change |
 
-Each frontend workflow runs build, unit tests, and Playwright E2E tests. The backend workflow runs restore, release build, `.NET` tests, and uploads test/coverage artifacts.
+The frontend workflow builds, type-checks, lints, and unit-tests affected packages and uploads test, coverage, and distribution artifacts. Its three Playwright jobs are currently hard-disabled in workflow conditions; even after they are enabled, missing credentials can skip execution. A skipped E2E job is not a passing E2E or release gate. The backend workflow runs restore, Release build, `.NET` tests, and uploads test/coverage artifacts before deployment eligibility.
 
 ## Migration commands
 

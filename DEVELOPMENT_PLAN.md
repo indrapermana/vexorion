@@ -9,15 +9,15 @@ This is the single source of truth for implementation status and upcoming develo
 
 VexorionERP has broad functional coverage: core ERP workflows, POS, finance, imports, generated documents, project/document management, tenant collaboration, module controls, and storage governance are all represented in code. The frontend production build succeeds and the service test project is healthy.
 
-The project is **not release-ready**. The most important gap is consistency rather than missing screens:
+The project is **not release-ready**. P0-1 through P0-3 corrected the error contract, backend gate, vulnerable dependencies, and frontend gate. Remaining readiness gaps are evidence and operational hardening rather than basic unit-test health:
 
-1. API errors do not use one stable response contract, and many UI call sites discard the server's useful message. Users can therefore receive generic or misleading feedback that does not explain the cause or recovery action.
-2. The full backend test suite is red: 7 tests fail in authorization auditing and project-document version handling.
-3. The combined frontend test command is red and several React tests are timing-sensitive or produce unwrapped-state-update warnings.
-4. Historical plans contradict both one another and the code. Some implemented work remains unchecked, while some “complete” sections have failing validation or missing E2E evidence.
-5. Release hardening remains incomplete: E2E coverage for newer modules, storage reliability, operational runbooks, monitoring, dependency remediation, and an immutable-posted-document audit.
+1. Playwright jobs are defined but hard-disabled in CI, so there is no current E2E release evidence.
+2. Clean-install and upgrade migration rehearsals against PostgreSQL have not been recorded.
+3. Real Azure Blob integration, compensation, private-access expiry, backup/restore, rollback, monitoring, performance, accessibility, and penetration checks remain unvalidated.
+4. Several critical workflows still need the P1/P2 tests and semantic reconciliation listed below.
+5. No single release-candidate commit has passed backend, frontend, E2E, migration, storage, and smoke gates together.
 
-The recommended next milestone is therefore a **consistency and release-hardening milestone**, not another broad feature expansion.
+The next milestone is **workflow and release hardening (R2/R3)**, not another broad feature expansion.
 
 ## 2. Review method and confidence
 
@@ -28,23 +28,39 @@ The recommended next milestone is therefore a **consistency and release-hardenin
 - Main UI, AdminUI, POS routes, API clients, error handling, feature pages, and test suites.
 - CI/workspace scripts and recent repository history.
 
-### Executed on 12 October 2026
+### Evidence states
+
+| State | Meaning |
+|---|---|
+| Implemented | Present in the repository; no validation claim is implied. |
+| Locally validated | Relevant automated checks passed on the recorded local source state. |
+| Integration validated | Required external services or cross-component workflow passed with recorded environment evidence. |
+| Release validated | The same immutable commit passed every applicable release gate and produced traceable artifacts. |
+
+Percentage-complete labels are intentionally not used. Capability-inventory checkboxes below mean **implemented** only unless a stronger state and evidence are explicitly recorded.
+
+### Current validation evidence — 13 October 2026
 
 | Check | Result | Evidence / implication |
 |---|---|---|
-| `npm run build` | PASS | All four frontend workspaces built. Main UI emitted a chunk-size warning for a 690.05 kB minified chunk. |
-| `dotnet test VexorionERP.sln --no-restore --verbosity minimal -m:1` | FAIL | Services: 498/498 pass. Web: 169 pass, 5 fail. Handlers: 140 pass, 2 fail. |
-| `npm run test:run` | PASS but incomplete as a root gate | Only Main UI defines `test:run`; 75/75 Main UI tests passed. AdminUI, POS, and shared UI were not exercised by this command. |
-| `npm test` | FAIL | AdminUI had 2 timeout failures; the combined run also exposed 4 Main UI failures before Turbo stopped sibling tasks. Numerous React `act(...)` warnings indicate test instability. |
+| Source state | RECORDED | Commit `bf635b7a1b1fa9b5299c347a783c28b67d4bfae1` on `master`; P0-1 through P0-3 were present in this clean source state. P0-4 documentation edits require a later commit before they can be release evidence. |
+| Environment | RECORDED | macOS 26.7.1, .NET SDK 10.0.301 targeting .NET 8, Node 22.22.0, npm 10.9.4. |
+| `dotnet build VexorionERP.sln -c Release --no-restore` | PASS | Zero warnings and zero errors with the local Six Labors license. |
+| `dotnet test VexorionERP.sln --no-restore --no-build --verbosity minimal -m:1` | PASS | 827/827: Services 498, Web 186, Handlers 143. |
+| `dotnet list VexorionERP.sln package --vulnerable --include-transitive --no-restore` | PASS | NuGet reported no vulnerable direct or transitive packages in all nine projects. |
+| `npm run test:run` | PASS | 183/183: Main UI 82, AdminUI 30, POS 71; no hidden mock errors or React `act(...)` warnings. |
+| `npm run build` | PASS WITH WARNING | All four frontend packages built; Main UI emitted the known chunk-size warning. |
+| Database migration state | NOT VALIDATED | Migration files and model snapshot exist, but neither a clean database migration nor an upgrade rehearsal was executed or linked. |
+| Durable artifacts | NOT RECORDED | Local terminal validation produced no durable artifact URLs. CI artifact/run links must be recorded against a release-candidate commit. |
 
-### Not validated in this review
+### Still not validated
 
 - Database migration against a clean and upgraded PostgreSQL database.
 - Azure Blob integration against a real container.
 - Playwright E2E flows requiring running services and credentials.
 - Production deployment, rollback, performance, accessibility, or penetration testing.
 
-Any capability requiring those checks is “implemented, validation pending,” not production-complete.
+Any capability requiring those checks remains **implemented** or **locally validated**, not integration- or release-validated.
 
 ## 3. Implemented capability inventory
 
@@ -107,7 +123,7 @@ Priority meanings: **P0** blocks trustworthy release behavior; **P1** is require
 
 **Status: implemented and validated on 13 October 2026.** The remaining P0 work starts at P0-2.
 
-**Observed implementation**
+**Original finding (resolved by P0-1)**
 
 - `ServiceResultControllerBase` returns validation problems for validation errors, `{ message }` for some 400/409 errors, and empty bodies for 401/403/404.
 - Ad-hoc controllers also return plain strings, anonymous `{ message }` objects, or empty responses.
@@ -167,11 +183,13 @@ The same business failure can appear as a precise message, `Request failed with 
 
 ### P0-4 — Completion claims exceed verified readiness
 
-- [ ] Replace percentage-based completion with evidence-based states: implemented, locally validated, integration validated, release validated.
-- [ ] Do not mark a module complete while its required test gate is red or its E2E/storage/migration evidence is absent.
-- [ ] Reconcile README test/CI statements with actual scripts. The README says each frontend workflow runs E2E, but workflow jobs explicitly skip when secrets are absent; skipped E2E must not count as a passing release gate.
-- [ ] Correct the README Main UI test description: its `npm test` script runs once, not in watch mode.
-- [ ] Record the tested commit, environment, database migration state, and artifact links in release evidence.
+**Status: completed and documentation validated on 13 October 2026. The project remains not release-ready because the recorded integration and release gates are pending.**
+
+- [x] Replace percentage-based completion with evidence states: implemented, locally validated, integration validated, and release validated.
+- [x] Define capability checkboxes as implementation evidence only; modules requiring E2E, storage, migration, or operational proof are not described as release-complete.
+- [x] Reconcile README test and CI statements with actual scripts and workflow conditions. Hard-disabled or credential-skipped E2E jobs explicitly do not count as passing release gates.
+- [x] Correct the README Main UI test description: `npm test` runs once; it is not watch mode.
+- [x] Record the tested source state, environment, database migration state, and artifact status in the current validation evidence table. Missing migration and durable-artifact evidence remains explicit rather than inferred.
 
 ### P1-1 — Project/document module is implemented but incompletely hardened
 
