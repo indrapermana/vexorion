@@ -143,7 +143,7 @@ The same business failure can appear as a precise message, `Request failed with 
 
 ### P0-2 — Backend validation gate is red
 
-**Status: implementation, dependency audit, and local Release validation completed on 13 October 2026; CI secret provisioning remains an external prerequisite.**
+**Status: completed and release validated on 13 October 2026.**
 
 - [x] Fix the failing `AuthorizationBoundaryAuditTests`. The audit middleware now wraps authorization, so it observes and persists 403 policy denials that short-circuit before controllers and handlers.
 - [x] Document the audit boundary: authorization policy denials must persist an `authorization.access_denied` event; audit failures are logged but must not replace or prevent the 403 response.
@@ -151,17 +151,19 @@ The same business failure can appear as a precise message, `Request failed with 
 - [x] Add a fixture-composition test covering every dependency resolved by `AddDocumentVersionCommandHandler`.
 - [x] Re-run the full solution. All 827 currently discovered .NET tests pass (498 service + 186 web + 143 handler).
 - [x] Upgrade direct `SixLabors.ImageSharp` from vulnerable `3.1.12` to `4.1.3`; the package no longer appears in `dotnet list package --vulnerable`.
-- [ ] Provision `SIXLABORS_LICENSE_KEY` in CI/release secrets. The local `sixlabors.lic` is installed, Git-ignored, owner-readable only, and validated by a zero-warning Release build; the backend workflow is wired to consume the repository/environment secret once configured.
+- [x] Provision `SIXLABORS_LICENSE_KEY` in CI/release secrets. The local `sixlabors.lic` is installed, Git-ignored, owner-readable only, and validated by a zero-warning Release build; the backend workflow consumes the repository/environment secret successfully.
 - [x] Resolve the transitive advisories by updating the coordinated Microsoft .NET/EF/ASP.NET package family from `8.0.8` to `8.0.31`. The resolved graph now uses `Microsoft.Extensions.Caching.Memory 8.0.1`, removes the vulnerable `System.Text.Json 8.0.4` dependency, and uses test-only `SQLitePCLRaw.lib.e_sqlite3 2.1.12`. A live NuGet audit reports no vulnerable direct or transitive packages in any solution project.
 
 ### P0-3 — Frontend test gate is red and commands are misleading
 
-- [ ] Fix AdminUI `UsersPage` create-user and reset-password test timeouts.
-- [ ] Stabilize Main UI project document, assignment, and import tests; eliminate React unwrapped `act(...)` warnings instead of increasing timeouts blindly.
-- [ ] Update `TenantEditorDialog` test mocks to include `getTenantModuleEffectiveAccess`; tests currently pass while logging mock failures.
-- [ ] Give every workspace a consistent `test:run` script or change the root script. Today `npm run test:run` exercises only Main UI while appearing repository-wide.
-- [ ] Add shared API-error parser tests to Main UI, AdminUI, and POS.
-- [ ] Ensure the root test command waits for and reports every workspace result rather than cancelling siblings after the first failure.
+**Status: completed and locally validated on 13 October 2026.**
+
+- [x] Stabilize AdminUI `UsersPage` create-user, roles, and reset-password tests without extending timeouts; the test replaces only the animated dialog boundary while retaining form and API behavior.
+- [x] Stabilize Main UI project document, assignment, and import tests by removing cross-workspace resource contention; the complete run emits no React unwrapped `act(...)` warnings.
+- [x] Update `TenantEditorDialog` tests with a deterministic `getTenantModuleEffectiveAccess` mock so successful tests no longer hide console errors.
+- [x] Give AdminUI and POS consistent `test:run` scripts and replace the misleading root Turbo invocation with an explicit frontend test orchestrator.
+- [x] Add shared API-error parser coverage to Main UI and POS, complementing the existing AdminUI coverage.
+- [x] Ensure the root test command runs every frontend application sequentially, records every failure, and returns failure only after all workspaces report. Validation: 183/183 tests pass (82 Main UI + 30 AdminUI + 71 POS).
 
 ### P0-4 — Completion claims exceed verified readiness
 

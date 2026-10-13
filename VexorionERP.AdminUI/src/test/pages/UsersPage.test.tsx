@@ -20,6 +20,7 @@ vi.mock('@vexorion/ui', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@vexorion/ui')>()
   return {
     ...actual,
+    VxDialog: ({ open, children }: { open: boolean; children?: React.ReactNode }) => open ? <div role="dialog">{children}</div> : null,
     VxDataGrid: ({ rows, columns }: { rows: UserListItemResponse[]; columns: Array<{ field: string; headerName: string; renderCell?: (params: { row: UserListItemResponse }) => unknown; valueGetter?: (_value: unknown, row: UserListItemResponse) => unknown }> }) => (
       <div>
         {rows.map((row) => (
@@ -98,17 +99,18 @@ describe('UsersPage dialogs', () => {
   })
 
   it('creates a tenant user from the create dialog', async () => {
+    const user = userEvent.setup()
     render(<UsersPage />)
 
     await screen.findByText('alice')
-    await userEvent.click(screen.getByRole('button', { name: /add tenant user/i }))
+    await user.click(screen.getByRole('button', { name: /add tenant user/i }))
 
-    await userEvent.type(screen.getByLabelText('Username'), 'bob')
-    await userEvent.type(screen.getByLabelText('Email'), 'bob@example.com')
-    await userEvent.type(screen.getByLabelText('Password'), 'topsecret123')
-    await userEvent.type(screen.getByLabelText('First name'), 'Bob')
-    await userEvent.type(screen.getByLabelText('Last name'), 'Builder')
-    await userEvent.click(screen.getByRole('button', { name: 'Create User' }))
+    await user.type(screen.getByLabelText('Username'), 'bob')
+    await user.type(screen.getByLabelText('Email'), 'bob@example.com')
+    await user.type(screen.getByLabelText('Password'), 'topsecret123')
+    await user.type(screen.getByLabelText('First name'), 'Bob')
+    await user.type(screen.getByLabelText('Last name'), 'Builder')
+    await user.click(screen.getByRole('button', { name: 'Create User' }))
 
     await waitFor(() => {
       expect(apiMocks.createUser).toHaveBeenCalledWith({
@@ -124,7 +126,7 @@ describe('UsersPage dialogs', () => {
     await waitFor(() => {
       expect(screen.queryByRole('heading', { name: 'Add Tenant User' })).not.toBeInTheDocument()
     })
-  }, 15000)
+  })
 
   it('opens the roles dialog and saves the selected user roles', async () => {
     render(<UsersPage />)

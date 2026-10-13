@@ -1,9 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { TenantListItemResponse } from '../../../types/api'
 
-const updateTenantMock = vi.hoisted(() => vi.fn())
+const apiMocks = vi.hoisted(() => ({
+  getTenantModuleEffectiveAccess: vi.fn(),
+  updateTenant: vi.fn(),
+}))
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -25,7 +28,8 @@ vi.mock('react-i18next', () => ({
 }))
 
 vi.mock('../../../lib/api', () => ({
-  updateTenant: updateTenantMock,
+  getTenantModuleEffectiveAccess: apiMocks.getTenantModuleEffectiveAccess,
+  updateTenant: apiMocks.updateTenant,
 }))
 
 import { TenantEditorDialog } from '../../../features/tenants/components/TenantEditorDialog'
@@ -40,6 +44,17 @@ const TENANT: TenantListItemResponse = {
 }
 
 describe('TenantEditorDialog', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    apiMocks.getTenantModuleEffectiveAccess.mockResolvedValue({
+      tenantId: TENANT.id,
+      tenantCode: TENANT.code,
+      project: { toggleEnabled: true, rolloutGateEnabled: false, rolloutMode: 'all', allowedByRollout: true, effectiveEnabled: true },
+      document: { toggleEnabled: true, rolloutGateEnabled: false, rolloutMode: 'all', allowedByRollout: true, effectiveEnabled: true },
+      employee: { toggleEnabled: true, rolloutGateEnabled: false, rolloutMode: 'all', allowedByRollout: true, effectiveEnabled: true },
+    })
+  })
+
   it('renders the selected tenant values', () => {
     render(<TenantEditorDialog open tenant={TENANT} onClose={vi.fn()} onSaved={vi.fn()} />)
 
@@ -72,7 +87,7 @@ describe('TenantEditorDialog', () => {
     const onClose = vi.fn()
     const onSaved = vi.fn()
     const updatedTenant = { ...TENANT, name: 'Acme Updated', domain: 'updated.test', isActive: false }
-    updateTenantMock.mockResolvedValueOnce(updatedTenant)
+    apiMocks.updateTenant.mockResolvedValueOnce(updatedTenant)
 
     render(<TenantEditorDialog open tenant={TENANT} onClose={onClose} onSaved={onSaved} />)
 
@@ -88,7 +103,7 @@ describe('TenantEditorDialog', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
 
     await waitFor(() => {
-      expect(updateTenantMock).toHaveBeenCalledWith('tenant-1', {
+      expect(apiMocks.updateTenant).toHaveBeenCalledWith('tenant-1', {
         name: 'Acme Updated',
         domain: 'updated.test',
         isActive: false,
