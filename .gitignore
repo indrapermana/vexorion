@@ -36,6 +36,7 @@ VexorionERP.UI/dist/
 VexorionERP.UI/dist-ssr/
 VexorionERP.UI/.env.local
 VexorionERP.UI/.env.*.local
+VexorionERP.LandingPage/dist/
 
 # Local tooling caches
 coverage/

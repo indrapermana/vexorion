@@ -153,6 +153,13 @@ Repeat the Phase 3 smoke tests on the production hostnames. Also verify that una
 
 If Phase 4C is owner-deferred, validate only static delivery, TLS, SPA routing, and response headers. Record login, token refresh, authorization, cross-tenant isolation, upload/download, and other API-backed checks as pending—not passing.
 
+Static cutover evidence recorded on 2026-10-16:
+
+- Cloudflare authoritative DNS, `1.1.1.1`, and `8.8.8.8` resolve `app`, `admin`, and `pos` to their respective `vexorionerp-*.pages.dev` projects.
+- All three production hostnames returned HTTP 200 over TLS from Cloudflare with `nosniff`, frame protection, referrer policy, and permissions policy headers.
+- A local resolver still temporarily returned the former Azure CNAMEs for `app` and `admin`; this is resolver-cache propagation and does not change the authoritative result.
+- API-backed login, token refresh, authorization, tenant-isolation, upload/download, and workflow checks remain pending under the Phase 4C owner deferral.
+
 ## Phase 6 — Landing page and apex domain
 
 The dedicated landing page is implemented in `VexorionERP.LandingPage`. It is part of the npm/Turbo affected graph, has local build/lint/unit-test coverage, and uses this absolute URL for every login action:

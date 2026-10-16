@@ -74,6 +74,7 @@ jobs:
           npm --workspace VexorionERP.POS install --no-save @rolldown/binding-linux-x64-gnu@1.0.0-rc.17
           npm --workspace VexorionERP.AdminUI install --no-save @rolldown/binding-linux-x64-gnu@1.0.0-rc.17
           npm --workspace VexorionERP.UI install --no-save @rolldown/binding-linux-x64-gnu@1.0.0-rc.15
+          npm --workspace VexorionERP.LandingPage install --no-save @rolldown/binding-linux-x64-gnu@1.0.0-rc.17
 
       - name: Validate production API base URL secret
         shell: bash

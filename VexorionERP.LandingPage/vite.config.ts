@@ -3,6 +3,11 @@ import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   plugins: [react()],
+  build: {
+    // Match the existing frontends and avoid platform-specific Lightning CSS
+    // binaries in CI. Hashed assets remain minified by esbuild.
+    cssMinify: 'esbuild',
+  },
   server: {
     port: 5176,
   },
