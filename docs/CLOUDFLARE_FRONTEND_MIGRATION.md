@@ -62,7 +62,7 @@ Until step 7 is completed, the new Cloudflare deployment jobs are safely skipped
 ## Phase 3 — First deployment and temporary-host validation
 
 1. Run the **Frontend** GitHub workflow manually with **deploy_all** enabled.
-2. Confirm all three Cloudflare jobs pass.
+2. The workflow changes each Direct Upload project's production branch from the dashboard default (`main`) to this repository's production branch (`master`). Confirm that configuration step and all three Cloudflare jobs pass.
 3. Test the generated hosts:
    - `https://vexorionerp-app.pages.dev`
    - `https://vexorionerp-admin.pages.dev`
