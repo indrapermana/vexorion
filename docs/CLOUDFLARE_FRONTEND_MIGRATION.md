@@ -1,6 +1,6 @@
 # Cloudflare frontend migration runbook
 
-Status: cutover in progress. Azure Static Web Apps remain the production rollback targets until validation and the Phase 7 stability window are complete.
+Status: Cloudflare static cutover complete; Azure retirement in progress. Azure API-backed validation and Azure Static Web Apps resource deletion remain pending.
 
 ## Target topology
 
@@ -182,16 +182,26 @@ Do not change the apex or `www` records before step 4 passes. This phase remains
 
 ## Phase 7 — Azure retirement
 
-Do not remove Azure Static Web Apps during DNS cutover.
+Owner-directed early retirement began on 2026-10-16. The owner accepted shortening the recommended seven-day rollback window after the Cloudflare static endpoints and canonical-domain redirect were verified. This does not convert pending API-backed validation into passing evidence.
 
-After at least seven days of successful Cloudflare production operation:
+Completed repository action:
 
-1. Confirm recent Cloudflare deployments and all production smoke tests are healthy.
-2. Disable the three Azure deploy jobs in `.github/workflows/frontend.yml`.
-3. Preserve the previous Azure deployment details for rollback.
-4. Remove only the three Azure **Static Web Apps** resources after confirming they do not contain the API, database, Blob Storage, custom certificates needed elsewhere, or shared monitoring resources.
-5. Never remove Azure App Service, PostgreSQL, or Blob Storage as part of this frontend migration.
+- [x] Remove the three Azure Static Web Apps deployment jobs from `.github/workflows/frontend.yml`; future frontend deployments target Cloudflare only.
+- [x] Preserve the former Azure resource hostnames in repository history and the DNS baseline above.
+
+Owner actions still required before marking retirement complete:
+
+1. Let the updated Frontend workflow pass and confirm all four Cloudflare deployment jobs succeed.
+2. In Azure, identify the resources by **resource type** `Static Web App` and confirm their default hostnames are exactly:
+   - Main UI: `proud-plant-059c31a00.7.azurestaticapps.net`
+   - Admin UI: `ambitious-bay-0a07d0f00.7.azurestaticapps.net`
+   - POS UI: `ashy-stone-0c83b9c00.7.azurestaticapps.net`
+3. Before deletion, confirm none of those three resources contains a needed custom domain, deployment token, linked monitoring dependency, or shared resource required outside the frontend.
+4. Delete only those three **Static Web App** resources. Do not delete their resource group unless every other resource in it has been independently inventoried.
+5. Remove the three obsolete GitHub secrets: `AZURE_STATIC_WEB_APPS_API_TOKEN_UI`, `AZURE_STATIC_WEB_APPS_API_TOKEN_ADMIN`, and `AZURE_STATIC_WEB_APPS_API_TOKEN_POS`.
+6. Never remove Azure App Service, PostgreSQL, Blob Storage, `api.vexorionerp.com`, or `asuid.api` as part of this frontend retirement.
+7. Restore the API separately and complete the deferred API-backed smoke tests before marking the overall migration complete.
 
 ## Rollback
 
-Before Azure retirement, rollback is a DNS change back to the existing Azure Static Web Apps custom-domain targets. If a Cloudflare deployment itself is faulty, use Pages deployment rollback or redeploy the last known-good commit. Keep DNS TTLs low during the cutover window, then restore normal TTLs after stability is established.
+After Azure Static Web Apps resource deletion, rollback is limited to Cloudflare Pages deployment rollback or redeploying a last-known-good commit. Recreating Azure hosting would be a new deployment rather than an immediate DNS rollback. Keep the former Azure resource details above in history until migration closeout is complete.
