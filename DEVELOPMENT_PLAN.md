@@ -240,7 +240,7 @@ Implementation evidence (2026-10-13):
 
 ### P1-5 — Release operations and observability
 
-- [ ] Complete the staged Cloudflare Pages migration for Main UI, AdminUI, and POS using `docs/CLOUDFLARE_FRONTEND_MIGRATION.md`. The path-scoped, opt-in deployment jobs and static security/cache headers are implemented; Pages projects, credentials, DNS cutover, production smoke tests, and eventual Azure Static Web Apps retirement require owner actions and evidence.
+- [ ] Complete the staged Cloudflare Pages migration for Main UI, AdminUI, POS, and the public landing page using `docs/CLOUDFLARE_FRONTEND_MIGRATION.md`. Path-scoped deployment jobs, static security/cache headers, and the `VexorionERP.LandingPage` implementation are present. The landing Pages project, deployment opt-in, apex/`www` cutover, production smoke tests, API-backed validation, and eventual Azure Static Web Apps retirement still require owner actions and evidence.
 - [ ] Apply the current migrations to both a clean database and a production-like upgraded snapshot; verify rollback/forward-fix procedure.
 - [ ] Create support runbook, admin training material, incident paths, backup/restore evidence, and release smoke checklist.
 - [ ] Add dashboards/alerts for API 5xx, authorization denials, import failures, document/blob failures, checkout failures, latency, rate limiting, and quota blocks.

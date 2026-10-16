@@ -24,7 +24,8 @@ VexorionERP/
 ├── VexorionERP.Web.Tests/        # Integration and web-layer tests
 ├── VexorionERP.UI/           # Main ERP frontend (finance dashboard, modules)
 ├── VexorionERP.AdminUI/      # Admin panel (tenants, users, roles, config)
-└── VexorionERP.POS/          # Point-of-Sale cashier terminal
+├── VexorionERP.POS/          # Point-of-Sale cashier terminal
+└── VexorionERP.LandingPage/  # Public product landing page
 ```
 
 ---
@@ -198,13 +199,14 @@ Navigate to `http://localhost:5173` (main ERP UI) or `http://localhost:5174` (ad
 
 ## Frontend Monorepo (Turborepo + Shared UI Package)
 
-The three frontend apps are now managed as a JavaScript workspace monorepo at the repository root using **npm workspaces** and **Turborepo**.
+The four frontend apps are managed as a JavaScript workspace monorepo at the repository root using **npm workspaces** and **Turborepo**.
 
 ### Workspace packages
 
 - `VexorionERP.UI`
 - `VexorionERP.AdminUI`
 - `VexorionERP.POS`
+- `VexorionERP.LandingPage`
 - `packages/ui` (`@vexorion/ui` shared UI package)
 
 ### Root commands
@@ -502,7 +504,7 @@ GitHub Actions uses two path-scoped workflows, and the badges at the top of this
 
 The frontend workflow builds, type-checks, lints, and unit-tests affected packages and uploads test, coverage, and distribution artifacts. Its three Playwright jobs are currently hard-disabled in workflow conditions; even after they are enabled, missing credentials can skip execution. A skipped E2E job is not a passing E2E or release gate. The backend workflow runs restore, Release build, `.NET` tests, and uploads test/coverage artifacts before deployment eligibility.
 
-Cloudflare Pages migration for the three frontend applications is staged but opt-in; Azure Static Web Apps remain the rollback targets until production cutover is verified. See [the Cloudflare frontend migration runbook](docs/CLOUDFLARE_FRONTEND_MIGRATION.md).
+Cloudflare Pages migration for the authenticated frontends and public landing page is staged behind explicit deployment gates; Azure Static Web Apps remain rollback targets until production cutover is verified. See [the Cloudflare frontend migration runbook](docs/CLOUDFLARE_FRONTEND_MIGRATION.md).
 
 ## Migration commands
 

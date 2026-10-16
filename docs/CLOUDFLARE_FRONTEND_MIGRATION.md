@@ -1,12 +1,12 @@
 # Cloudflare frontend migration runbook
 
-Status: prepared, not cut over. Azure Static Web Apps remain the production rollback targets.
+Status: cutover in progress. Azure Static Web Apps remain the production rollback targets until validation and the Phase 7 stability window are complete.
 
 ## Target topology
 
 | Hostname | Service | Cloudflare Pages project |
 | --- | --- | --- |
-| `vexorionerp.com` | Public landing page | To be created with the landing-page implementation |
+| `vexorionerp.com` | Public landing page | `vexorionerp-landing` |
 | `www.vexorionerp.com` | Redirect to the apex site | Configure after the landing page exists |
 | `app.vexorionerp.com` | Main UI | `vexorionerp-app` |
 | `admin.vexorionerp.com` | Admin UI | `vexorionerp-admin` |
@@ -22,7 +22,8 @@ An application deploys only when Turbo produces its `dist` directory:
 - Main UI: `VexorionERP.UI/**`
 - Admin UI: `VexorionERP.AdminUI/**`
 - POS UI: `VexorionERP.POS/**`
-- All three: `packages/**`, `package.json`, `package-lock.json`, `turbo.json`, or relevant frontend workflow/action changes
+- Landing page: `VexorionERP.LandingPage/**`
+- All affected consumers: `packages/**`, `package.json`, `package-lock.json`, `turbo.json`, or relevant frontend workflow/action changes
 
 Do not also connect these Direct Upload projects to Cloudflare Git integration. Doing so would create a second, untested build path and consume extra builds.
 
@@ -80,23 +81,63 @@ Do not continue if the production API secret is missing or points to localhost.
 
 ## Phase 4 — DNS authority and API hostname
 
-If `vexorionerp.com` currently uses GoDaddy nameservers:
+### Verified pre-migration baseline (2026-10-16)
 
-1. Inventory every existing DNS record in GoDaddy first, especially MX, SPF, DKIM, DMARC, verification, and application records.
-2. Add `vexorionerp.com` to the same Cloudflare account as WebPortal.
-3. Compare Cloudflare's imported records with the GoDaddy inventory and restore anything missing.
-4. At GoDaddy, replace only the authoritative nameservers with the two nameservers assigned by Cloudflare.
-5. Do not delete the domain registration and do not delete mail records.
-6. Wait until Cloudflare reports the zone as active and verify website and email DNS records.
+- `vexorionerp.com` resolves to GoDaddy Website Builder at `76.223.105.230` and `13.248.243.5` and returns HTTP 200.
+- `www.vexorionerp.com` redirects to the apex site.
+- All three `*.pages.dev` deployments return HTTP 200 with the expected security headers.
+- The existing Azure `app`, `admin`, and `pos` custom domains resolve but return HTTP 404.
+- `api.vexorionerp.com` resolves to Azure App Service but `/health` returns `403 Site Disabled`. Restore/start the Azure App Service before login or API smoke tests; changing DNS will not fix a disabled application.
+- No public apex MX, SPF, or other apex TXT records were returned. Preserve any additional records visible in GoDaddy even if they are not currently public.
 
-For `api.vexorionerp.com`, retain Azure App Service:
+### 4A — Add and verify the Cloudflare zone
 
-1. Add and validate the hostname in Azure App Service.
-2. Enable its managed TLS certificate.
-3. Create the required Cloudflare DNS CNAME to the Azure App Service hostname.
-4. Verify `https://api.vexorionerp.com/health` or the application's deployed health endpoint before using it in frontend builds.
+1. In the same Cloudflare account as WebPortal, select **Add a domain** and enter `vexorionerp.com`.
+2. Select the Free plan and allow Cloudflare to scan the current DNS records.
+3. Before changing nameservers, make Cloudflare's DNS table match this inventory:
 
-The backend already permits the planned `app`, `admin`, and `pos` origins. Confirm the deployed Azure configuration has not overridden that list with stale values.
+   | Type | Name | Target/value | Proxy during migration |
+   | --- | --- | --- | --- |
+   | A | `@` | `76.223.105.230` | DNS only |
+   | A | `@` | `13.248.243.5` | DNS only |
+   | CNAME | `www` | `vexorionerp.com` | DNS only |
+   | CNAME | `app` | `proud-plant-059c31a00.7.azurestaticapps.net` | DNS only |
+   | CNAME | `admin` | `ambitious-bay-0a07d0f00.7.azurestaticapps.net` | DNS only |
+   | CNAME | `pos` | `ashy-stone-0c83b9c00.7.azurestaticapps.net` | DNS only |
+   | CNAME | `api` | `vexorionerp-c9f3gbcegtfybdhe.southeastasia-01.azurewebsites.net` | DNS only |
+   | TXT | `asuid.api` | `F1FC1E71634468087CB306E647B66C03E143868ED227C09FB702C05DCC2D15C6` | Not applicable |
+   | TXT | `_dmarc` | `v=DMARC1; p=quarantine; adkim=r; aspf=r; rua=mailto:dmarc_rua@onsecureserver.net;` | Not applicable |
+
+4. Do not copy the GoDaddy NS or SOA records. Cloudflare supplies authoritative NS and SOA records.
+5. The `_domainconnect` CNAME is GoDaddy automation metadata and is not required once Cloudflare is authoritative. It may be omitted.
+6. If GoDaddy shows any record not listed above, copy it to Cloudflare before continuing—especially MX, SPF, DKIM, CAA, ownership-verification, or third-party service records.
+7. Take a screenshot/export of the completed Cloudflare DNS table.
+
+Keeping every web record **DNS only** for this step makes the nameserver change an authority migration only. Do not point `app`, `admin`, or `pos` to Pages until Phase 5.
+
+### 4B — Change authoritative nameservers at GoDaddy
+
+1. Copy the two nameservers assigned by Cloudflare for `vexorionerp.com`.
+2. In GoDaddy, open the domain's **Nameservers** settings (not the individual DNS record editor).
+3. Choose **Change nameservers / Enter my own nameservers** and enter the two Cloudflare values exactly.
+4. Do not cancel the GoDaddy domain registration and do not delete the old DNS records during the transition.
+5. Wait until Cloudflare reports the zone as **Active**. Nameserver propagation can take time.
+6. Verify the authoritative NS records, the apex website, `www`, `api`, and all recorded TXT/MX records before Phase 5.
+
+### 4C — Restore and verify the Azure API
+
+Owner-deferred on 2026-10-16 because the Azure subscription requires remediation. Phase 5 may proceed for the frontend DNS/TLS cutover, but API-backed behavior must remain **not validated** until this section passes. This exception does not authorize Azure Static Web Apps retirement.
+
+Retain Azure App Service for `api.vexorionerp.com`:
+
+1. In Azure Portal, open the VexorionERP App Service and check **Overview → Status**. Start it if stopped.
+2. If Azure still returns `403 Site Disabled`, check subscription/resource status, App Service Plan status/quota, and deployment health before changing frontend DNS.
+3. Confirm `api.vexorionerp.com` remains configured under the App Service custom domains and that its managed TLS certificate is healthy.
+4. Preserve both the `api` CNAME and `asuid.api` TXT record.
+5. Verify `https://api.vexorionerp.com/health` (or the deployed health endpoint) returns the intended healthy response.
+6. Confirm the deployed backend CORS configuration permits `https://app.vexorionerp.com`, `https://admin.vexorionerp.com`, and `https://pos.vexorionerp.com`.
+
+Do not attach the production frontend domains or update `FRONTEND_PROD_API_BASE_URL` to an unusable API until this check passes.
 
 ## Phase 5 — Attach production frontend domains
 
@@ -110,15 +151,27 @@ Let Pages create the required DNS records. Do not manually point these names to 
 
 Repeat the Phase 3 smoke tests on the production hostnames. Also verify that unauthorized cross-tenant access remains denied.
 
+If Phase 4C is owner-deferred, validate only static delivery, TLS, SPA routing, and response headers. Record login, token refresh, authorization, cross-tenant isolation, upload/download, and other API-backed checks as pending—not passing.
+
 ## Phase 6 — Landing page and apex domain
 
-Implement and deploy the dedicated landing page before attaching `vexorionerp.com`. Its login action must use the absolute URL:
+The dedicated landing page is implemented in `VexorionERP.LandingPage`. It is part of the npm/Turbo affected graph, has local build/lint/unit-test coverage, and uses this absolute URL for every login action:
 
 ```text
 https://app.vexorionerp.com/login
 ```
 
-Attach both the apex domain and `www`, then configure `www` to redirect permanently to the apex hostname. This phase is deliberately separate from migrating the authenticated applications.
+Deployment is independently gated so this implementation cannot target a missing Pages project. Complete these steps only after `app.vexorionerp.com` resolves consistently through Cloudflare:
+
+1. In **Workers & Pages**, create a Direct Upload Pages project named exactly `vexorionerp-landing`. A temporary static placeholder is sufficient.
+2. In GitHub **Settings → Secrets and variables → Actions → Variables**, add `CLOUDFLARE_LANDING_DEPLOY_ENABLED` with value `true`.
+3. Run the **Frontend** workflow manually with **deploy_all** enabled. Confirm **Deploy to Cloudflare Pages (Landing page)** passes and creates a production deployment.
+4. Validate `https://vexorionerp-landing.pages.dev` at desktop and mobile widths. Confirm navigation, all sections, the login links, response headers, and browser console are healthy.
+5. In the landing Pages project, add `vexorionerp.com` as a custom domain and allow Pages to replace the existing apex Website Builder records. Do not delete the GoDaddy account or domain registration.
+6. Add `www.vexorionerp.com` to the landing project, or configure a Cloudflare permanent redirect from `www` to `https://vexorionerp.com` that preserves path and query string. Keep only one canonical public hostname.
+7. Verify apex and `www` TLS, the permanent `www` redirect, the login handoff to `https://app.vexorionerp.com/login`, security headers, and mobile/desktop rendering.
+
+Do not change the apex or `www` records before step 4 passes. This phase remains deliberately separate from migrating the authenticated applications.
 
 ## Phase 7 — Azure retirement
 
