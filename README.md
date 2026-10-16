@@ -502,6 +502,8 @@ GitHub Actions uses two path-scoped workflows, and the badges at the top of this
 
 The frontend workflow builds, type-checks, lints, and unit-tests affected packages and uploads test, coverage, and distribution artifacts. Its three Playwright jobs are currently hard-disabled in workflow conditions; even after they are enabled, missing credentials can skip execution. A skipped E2E job is not a passing E2E or release gate. The backend workflow runs restore, Release build, `.NET` tests, and uploads test/coverage artifacts before deployment eligibility.
 
+Cloudflare Pages migration for the three frontend applications is staged but opt-in; Azure Static Web Apps remain the rollback targets until production cutover is verified. See [the Cloudflare frontend migration runbook](docs/CLOUDFLARE_FRONTEND_MIGRATION.md).
+
 ## Migration commands
 
 Run these from the repository root.

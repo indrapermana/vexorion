@@ -336,7 +336,120 @@ jobs:
           if-no-files-found: ignore
 
   # ─────────────────────────────────────────────
-  # 3. Deploy jobs — only if master push AND app was built
+  # 3. Cloudflare Pages deployments — opt-in while Azure remains the rollback target.
+  # Builds are already scoped by Turbo's affected graph. Shared package or lockfile
+  # changes correctly rebuild all consumers; app-only changes deploy only that app.
+  # ─────────────────────────────────────────────
+  deploy-cloudflare-ui:
+    name: Deploy to Cloudflare Pages (UI)
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: >-
+      vars.CLOUDFLARE_PAGES_DEPLOY_ENABLED == 'true' &&
+      (
+        github.event_name == 'workflow_dispatch' ||
+        (
+          github.event_name == 'push' &&
+          (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+        )
+      ) &&
+      (
+        needs.build-and-test.outputs.ui_built == 'true' ||
+        (github.event_name == 'workflow_dispatch' && inputs.deploy_all == true)
+      )
+    environment: production
+    permissions:
+      contents: read
+      deployments: write
+
+    steps:
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+
+      - name: Deploy UI
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy VexorionERP.UI/dist --project-name=vexorionerp-app --branch=${{ github.ref_name }}
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy-cloudflare-adminui:
+    name: Deploy to Cloudflare Pages (AdminUI)
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: >-
+      vars.CLOUDFLARE_PAGES_DEPLOY_ENABLED == 'true' &&
+      (
+        github.event_name == 'workflow_dispatch' ||
+        (
+          github.event_name == 'push' &&
+          (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+        )
+      ) &&
+      (
+        needs.build-and-test.outputs.adminui_built == 'true' ||
+        (github.event_name == 'workflow_dispatch' && inputs.deploy_all == true)
+      )
+    environment: production
+    permissions:
+      contents: read
+      deployments: write
+
+    steps:
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+
+      - name: Deploy AdminUI
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy VexorionERP.AdminUI/dist --project-name=vexorionerp-admin --branch=${{ github.ref_name }}
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy-cloudflare-pos:
+    name: Deploy to Cloudflare Pages (POS)
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: >-
+      vars.CLOUDFLARE_PAGES_DEPLOY_ENABLED == 'true' &&
+      (
+        github.event_name == 'workflow_dispatch' ||
+        (
+          github.event_name == 'push' &&
+          (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+        )
+      ) &&
+      (
+        needs.build-and-test.outputs.pos_built == 'true' ||
+        (github.event_name == 'workflow_dispatch' && inputs.deploy_all == true)
+      )
+    environment: production
+    permissions:
+      contents: read
+      deployments: write
+
+    steps:
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+
+      - name: Deploy POS
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy VexorionERP.POS/dist --project-name=vexorionerp-pos --branch=${{ github.ref_name }}
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+
+  # ─────────────────────────────────────────────
+  # 4. Existing Azure deployments — keep through Cloudflare cutover validation.
   # ─────────────────────────────────────────────
   deploy-ui:
     name: Deploy to Azure Static Web Apps (UI)
