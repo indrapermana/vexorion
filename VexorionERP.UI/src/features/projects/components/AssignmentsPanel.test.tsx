@@ -2,7 +2,7 @@
 
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import type { ReactNode } from 'react'
+import type { MouseEventHandler, ReactNode } from 'react'
 import AssignmentsPanel from './AssignmentsPanel'
 import type {
   EmployeeListItemResponse,
@@ -50,7 +50,7 @@ vi.mock('@vexorion/ui', () => {
   return {
     VxAlert: ({ children }: { children?: ReactNode }) => <div role="alert">{children}</div>,
     VxBox: passThrough,
-    VxButton: ({ children, onClick, disabled }: { children?: ReactNode, onClick?: (event?: any) => void, disabled?: boolean }) => (
+    VxButton: ({ children, onClick, disabled }: { children?: ReactNode, onClick?: MouseEventHandler<HTMLButtonElement>, disabled?: boolean }) => (
       <button type="button" onClick={onClick} disabled={disabled}>{children}</button>
     ),
     VxChip: ({ label }: { label: string }) => <span>{label}</span>,
