@@ -49,35 +49,48 @@ public class AzureBlobDocumentStorageService(IConfiguration configuration) : IDo
             containerName = "generated-documents";
         }
 
-        await using var memory = new MemoryStream();
-        await content.CopyToAsync(memory, cancellationToken);
-        memory.Position = 0;
-
-        var checksum = ComputeSha256(memory);
-        memory.Position = 0;
-
-        var safeFileName = Path.GetFileName(fileName);
-        var blobPath = $"{tenantId:D}/documents/{sourceType.Trim().ToLowerInvariant()}/{Guid.NewGuid():N}/{safeFileName}";
-
-        var containerClient = new BlobContainerClient(connectionString, containerName);
-        await containerClient.CreateIfNotExistsAsync(PublicAccessType.None, cancellationToken: cancellationToken);
-
-        var blobClient = containerClient.GetBlobClient(blobPath);
-        await blobClient.UploadAsync(memory, new BlobUploadOptions
+        try
         {
-            HttpHeaders = new BlobHttpHeaders
+            await using var memory = new MemoryStream();
+            await content.CopyToAsync(memory, cancellationToken);
+            memory.Position = 0;
+
+            var checksum = ComputeSha256(memory);
+            memory.Position = 0;
+
+            var safeFileName = Path.GetFileName(fileName);
+            var blobPath = $"{tenantId:D}/documents/{sourceType.Trim().ToLowerInvariant()}/{Guid.NewGuid():N}/{safeFileName}";
+
+            var containerClient = new BlobContainerClient(connectionString, containerName);
+            await containerClient.CreateIfNotExistsAsync(PublicAccessType.None, cancellationToken: cancellationToken);
+
+            var blobClient = containerClient.GetBlobClient(blobPath);
+            await blobClient.UploadAsync(memory, new BlobUploadOptions
             {
-                ContentType = string.IsNullOrWhiteSpace(contentType) ? "application/octet-stream" : contentType,
-            },
-        }, cancellationToken);
+                HttpHeaders = new BlobHttpHeaders
+                {
+                    ContentType = string.IsNullOrWhiteSpace(contentType) ? "application/octet-stream" : contentType,
+                },
+            }, cancellationToken);
 
-        var result = new DocumentStorageUploadResult(
-            BlobPath: blobPath,
-            BlobUrl: blobClient.Uri.ToString(),
-            FileSizeBytes: memory.Length,
-            ChecksumSha256: checksum);
+            var result = new DocumentStorageUploadResult(
+                BlobPath: blobPath,
+                BlobUrl: blobClient.Uri.ToString(),
+                FileSizeBytes: memory.Length,
+                ChecksumSha256: checksum);
 
-        return ServiceResult<DocumentStorageUploadResult>.Success(result);
+            return ServiceResult<DocumentStorageUploadResult>.Success(result);
+        }
+        catch (Azure.RequestFailedException exception)
+        {
+            var message = exception.ErrorCode == "AccountIsDisabled"
+                ? "Document storage is unavailable because the configured storage account is disabled. Contact an administrator."
+                : "Document storage is currently unavailable. Contact an administrator and provide the request trace ID.";
+
+            return ServiceResult<DocumentStorageUploadResult>.Failure(
+                StatusCodes.Status503ServiceUnavailable,
+                message);
+        }
     }
 
     public async Task<ServiceResult<string>> GetDownloadUrlAsync(string blobPath, CancellationToken cancellationToken = default)
