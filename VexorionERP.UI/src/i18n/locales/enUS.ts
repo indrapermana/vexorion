@@ -1147,6 +1147,8 @@ const enUS = {
         deleted: 'Project deleted.',
       },
       errors: {
+        invalidPeriod: 'End date cannot be earlier than start date.',
+        loadDetails: 'Unable to load the complete project details for editing.',
         load: 'Unable to load projects.',
         save: 'Unable to save project.',
         delete: 'Unable to delete project.',

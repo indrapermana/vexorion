@@ -683,6 +683,8 @@ const idID = {
         deleted: 'Proyek dihapus.',
       },
       errors: {
+        invalidPeriod: 'Tanggal selesai tidak boleh lebih awal dari tanggal mulai.',
+        loadDetails: 'Tidak dapat memuat detail proyek lengkap untuk diubah.',
         load: 'Tidak dapat memuat proyek.',
         save: 'Tidak dapat menyimpan proyek.',
         delete: 'Tidak dapat menghapus proyek.',

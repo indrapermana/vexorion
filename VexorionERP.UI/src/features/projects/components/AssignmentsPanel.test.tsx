@@ -144,6 +144,7 @@ describe('AssignmentsPanel assignment and relationship UI logic', () => {
     ])
 
     apiMocks.mockCreateProjectAssignment.mockResolvedValue({})
+    apiMocks.mockUpdateProjectAssignment.mockResolvedValue({})
   })
 
   it('shows no-access alert when projects.view permission is missing', () => {
@@ -152,6 +153,20 @@ describe('AssignmentsPanel assignment and relationship UI logic', () => {
     render(<AssignmentsPanel projectId="project-1" />)
 
     expect(screen.getByRole('alert')).toHaveTextContent('pages.projectDetails.assignmentsPanel.noAccess')
+  })
+
+  it('loads assignment data without management-only assignee options for a read-only user', async () => {
+    authMocks.mockUseAuth.mockReturnValue({ user: { permissions: ['projects.view'] } })
+
+    render(<AssignmentsPanel projectId="project-1" />)
+
+    await waitFor(() => {
+      expect(apiMocks.mockGetProjectAssignments).toHaveBeenCalledWith('project-1')
+      expect(apiMocks.mockGetProjectAssignmentHistory).toHaveBeenCalledWith('project-1')
+    })
+    expect(apiMocks.mockGetProjectAssignableEmployees).not.toHaveBeenCalled()
+    expect(apiMocks.mockGetProjectAssignableConsultants).not.toHaveBeenCalled()
+    expect(screen.queryByRole('button', { name: 'pages.projectDetails.assignmentsPanel.add' })).not.toBeInTheDocument()
   })
 
   it('creates employee assignment payload from form state', async () => {
@@ -232,5 +247,47 @@ describe('AssignmentsPanel assignment and relationship UI logic', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('pages.projectDetails.assignmentsPanel.errors.invalidPeriod')
     expect(screen.getByRole('button', { name: 'common.create' })).toBeDisabled()
     expect(apiMocks.mockCreateProjectAssignment).not.toHaveBeenCalled()
+  })
+
+  it('preserves the assignment type and state when editing an existing consultant', async () => {
+    authMocks.mockUseAuth.mockReturnValue({ user: { permissions: ['projects.view', 'projects.manage'] } })
+    apiMocks.mockGetProjectAssignments.mockResolvedValue([{
+      id: 'assignment-1',
+      projectId: 'project-1',
+      employeeId: null,
+      consultantId: 'con-1',
+      assigneeType: 'Consultant',
+      assigneeDisplayName: 'Bob Smith',
+      roleTitle: 'Reviewer',
+      startDate: '2026-05-13',
+      endDate: '2026-06-13',
+      isPrimaryAssignment: true,
+      notes: 'Original note',
+      isActive: false,
+      createdAtUtc: '2026-05-13T00:00:00Z',
+      updatedAtUtc: null,
+    }])
+    const user = userEvent.setup()
+
+    render(<AssignmentsPanel projectId="project-1" />)
+    await user.click(await screen.findByRole('button', { name: 'common.edit' }))
+
+    expect(screen.getByLabelText('pages.projectDetails.assignmentsPanel.fields.assigneeType')).toHaveValue('consultant')
+    expect(screen.getByLabelText('pages.projectDetails.assignmentsPanel.fields.assigneeId')).toHaveValue('con-1')
+    expect(screen.getByLabelText('pages.projectDetails.assignmentsPanel.fields.notes')).toHaveValue('Original note')
+    expect(screen.getByLabelText('pages.projectDetails.assignmentsPanel.fields.isActive')).toHaveValue('false')
+
+    await user.click(screen.getByRole('button', { name: 'common.save' }))
+
+    await waitFor(() => expect(apiMocks.mockUpdateProjectAssignment).toHaveBeenCalledWith(
+      'project-1',
+      'assignment-1',
+      expect.objectContaining({
+        employeeId: null,
+        consultantId: 'con-1',
+        notes: 'Original note',
+        isActive: false,
+      }),
+    ))
   })
 })

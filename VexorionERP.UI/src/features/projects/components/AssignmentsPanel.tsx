@@ -121,18 +121,23 @@ export default function AssignmentsPanel({ projectId }: AssignmentsPanelProps) {
       setAssignments(assignmentResult)
       setHistoryItems(historyResult)
 
-      const [employeeResult, consultantResult] = await Promise.all([
-        getProjectAssignableEmployees(projectId),
-        getProjectAssignableConsultants(projectId),
-      ])
-      setEmployees(employeeResult.filter((item) => item.isActive))
-      setConsultants(consultantResult.filter((item) => item.isActive))
+      if (canManage) {
+        const [employeeResult, consultantResult] = await Promise.all([
+          getProjectAssignableEmployees(projectId),
+          getProjectAssignableConsultants(projectId),
+        ])
+        setEmployees(employeeResult.filter((item) => item.isActive))
+        setConsultants(consultantResult.filter((item) => item.isActive))
+      } else {
+        setEmployees([])
+        setConsultants([])
+      }
     } catch (loadError) {
       setError(getApiErrorMessage(loadError, t('pages.projectDetails.assignmentsPanel.errors.load')))
     } finally {
       setIsLoading(false)
     }
-  }, [canView, projectId, t])
+  }, [canManage, canView, projectId, t])
 
   useEffect(() => {
     void loadData()

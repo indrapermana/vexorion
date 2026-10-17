@@ -27,6 +27,7 @@ import {
   ApiError,
   createProject,
   deleteProject,
+  getProject,
   getProjectCategories,
   getProjects,
   updateProject,
@@ -229,6 +230,7 @@ export default function ProjectsPage() {
   const [editingProject, setEditingProject] = useState<ProjectGridRow | null>(null)
   const [formState, setFormState] = useState<ProjectFormState>(defaultProjectFormState)
   const [isSaving, setIsSaving] = useState(false)
+  const [isLoadingEditor, setIsLoadingEditor] = useState(false)
 
   const [deleteTarget, setDeleteTarget] = useState<ProjectGridRow | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -281,26 +283,44 @@ export default function ProjectsPage() {
     setIsEditorOpen(true)
   }
 
-  const openEditDialog = (project: ProjectGridRow) => {
+  const openEditDialog = async (project: ProjectGridRow) => {
     setFeedback(null)
     setEditingProject(project)
-    setFormState({
-      projectCategoryId: project.projectCategoryId,
-      projectNumber: project.projectNumber,
-      name: project.name,
-      governmentAgency: '',
-      submissionReference: '',
-      startDate: project.startDate,
-      endDate: project.endDate || '',
-      status: project.status,
-      notes: '',
-      isActive: project.isActive,
-    })
+    setError(null)
+    setIsLoadingEditor(true)
     setIsEditorOpen(true)
+
+    try {
+      const details = await getProject(project.id)
+      setFormState({
+        projectCategoryId: details.projectCategoryId,
+        projectNumber: details.projectNumber,
+        name: details.name,
+        governmentAgency: details.governmentAgency ?? '',
+        submissionReference: details.submissionReference ?? '',
+        startDate: details.startDate,
+        endDate: details.endDate ?? '',
+        status: details.status,
+        notes: details.notes ?? '',
+        isActive: details.isActive,
+      })
+    } catch (loadError) {
+      setIsEditorOpen(false)
+      setEditingProject(null)
+      setError(loadError instanceof ApiError ? loadError.message : t('pages.projects.errors.loadDetails'))
+    } finally {
+      setIsLoadingEditor(false)
+    }
   }
 
+  const hasInvalidPeriod = Boolean(
+    formState.startDate
+    && formState.endDate
+    && formState.endDate < formState.startDate,
+  )
+
   const handleSave = async () => {
-    if (!formState.projectCategoryId || !formState.projectNumber.trim() || !formState.name.trim()) {
+    if (!formState.projectCategoryId || !formState.projectNumber.trim() || !formState.name.trim() || hasInvalidPeriod) {
       return
     }
 
@@ -445,6 +465,9 @@ export default function ProjectsPage() {
         <VxDialogTitle>{editingProject ? t('pages.projects.dialogs.edit') : t('pages.projects.dialogs.create')}</VxDialogTitle>
         <VxDialogContent>
           <VxStack spacing={2} sx={{ mt: 1 }}>
+            {hasInvalidPeriod ? (
+              <VxAlert severity="error">{t('pages.projects.errors.invalidPeriod')}</VxAlert>
+            ) : null}
             <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
               <VxTextField
                 select
@@ -552,7 +575,7 @@ export default function ProjectsPage() {
         </VxDialogContent>
         <VxDialogActions>
           <VxButton onClick={() => setIsEditorOpen(false)}>{t('common.cancel')}</VxButton>
-          <VxButton variant="contained" onClick={() => void handleSave()} disabled={isSaving || !formState.projectCategoryId || !formState.projectNumber.trim() || !formState.name.trim()}>
+          <VxButton variant="contained" onClick={() => void handleSave()} disabled={isSaving || isLoadingEditor || hasInvalidPeriod || !formState.projectCategoryId || !formState.projectNumber.trim() || !formState.name.trim()}>
             {editingProject ? t('common.save') : t('common.create')}
           </VxButton>
         </VxDialogActions>

@@ -196,13 +196,15 @@ The same business failure can appear as a precise message, `Request failed with 
 Implementation evidence (2026-10-13):
 
 - Assignment matrix now rejects an end date earlier than its start date with a localized, user-visible explanation; its focused UI suite passes (4/4).
+- Project/assignment form and state hardening completed on 17 October 2026: read-only users no longer call management-only assignee endpoints; consultant edit state is preserved; project edit loads the full detail response before saving so fields absent from the list response are not erased; and project date ranges receive the same localized validation. The focused project suites pass (8/8), the complete Main UI suite passes (87/87), typecheck passes, and lint has no errors (seven pre-existing hook warnings remain outside this scope).
+- Cross-tenant project E2E coverage was added and locally integration-validated on 17 October 2026. The scenario provisions a temporary tenant B, activates an appropriately scoped tenant relationship, creates the project as tenant A through the browser, links tenant B through the browser, verifies the persisted party through the API, and cleans up its fixtures. Authentication setup and the Chromium scenario both pass (2/2) against the local API/database using an active SystemAdmin supplied through the documented `E2E_*` variables.
 - Project document uploads and version uploads persist only `Path.GetFileName(...)`, preventing client-supplied path segments from becoming stored metadata.
 - Blob storage now exposes idempotent deletion, and both upload handlers compensate when their first database persistence step fails. Focused version-handler coverage passes (6/6), including database-failure cleanup, storage-failure non-persistence, immutable prior history, and safe filename behavior.
 - The API already has a 100 MB request-size ceiling and read-only, short-lived blob URLs. This is transport-level evidence only: MIME/signature validation and malware scanning are not implemented yet and remain release-blocking items below.
 - A static index review found existing tenant/project/status, document-version, access-policy, and storage-ledger indexes. A real PostgreSQL dataset and `EXPLAIN (ANALYZE, BUFFERS)` evidence are still required before the query-plan item can be completed.
 
-- [ ] Finish project assignment matrix UX and targeted project form/state tests.
-- [ ] Add E2E: tenant A creates a project and links tenant B.
+- [x] Finish project assignment matrix UX and targeted project form/state tests.
+- [x] Add E2E: tenant A creates a project and links tenant B. Locally integration-validated against the running API/database.
 - [ ] Add E2E: upload a document, add a version, preview/download it, and verify immutable history.
 - [ ] Add E2E: tenant B is allowed/denied exactly according to relationship scopes and validity dates.
 - [ ] Add E2E: storage warning, soft-block, and hard-block behavior.

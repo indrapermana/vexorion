@@ -654,6 +654,8 @@ const esES = {
         deleted: 'Proyecto eliminado.',
       },
       errors: {
+        invalidPeriod: 'La fecha de finalización no puede ser anterior a la fecha de inicio.',
+        loadDetails: 'No se pueden cargar los detalles completos del proyecto para editarlo.',
         load: 'No se pueden cargar los proyectos.',
         save: 'No se puede guardar el proyecto.',
         delete: 'No se puede eliminar el proyecto.',

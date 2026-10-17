@@ -456,6 +456,18 @@ Override credentials with environment variables if needed:
 | `E2E_PASSWORD` | `DemoAdmin123!` |
 | `POS_BASE_URL` | `http://localhost:5175` |
 
+The default `demo` credentials work only when that bootstrap tenant was seeded previously. `Bootstrap.Enabled` is `false` in the committed development configuration, so an existing database may use a different tenant and administrator. For the cross-tenant project scenario, supply an active local **SystemAdmin** account because the test provisions and removes a temporary tenant B:
+
+```bash
+cd VexorionERP.UI
+E2E_TENANT_CODE='<your-tenant-code>' \
+E2E_USERNAME='<your-system-admin-email-or-username>' \
+E2E_PASSWORD='<your-password>' \
+npx playwright test e2e/projects-cross-tenant.spec.ts
+```
+
+Do not commit these credentials or add them to tracked environment files.
+
 ---
 
 ## Running everything locally

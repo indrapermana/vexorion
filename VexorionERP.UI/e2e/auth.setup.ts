@@ -19,11 +19,24 @@ setup('authenticate', async ({ page }) => {
 
   const loginPage = new LoginPageObject(page)
   await loginPage.goto()
+  const loginResponsePromise = page.waitForResponse((response) => (
+    response.request().method() === 'POST'
+    && response.url().endsWith('/api/auth/login')
+  ))
   await loginPage.login(
     AUTH_CREDENTIALS.tenantCode,
     AUTH_CREDENTIALS.username,
     AUTH_CREDENTIALS.password,
   )
+  const loginResponse = await loginResponsePromise
+
+  if (!loginResponse.ok()) {
+    const responseBody = await loginResponse.text()
+    throw new Error(
+      `E2E authentication failed with HTTP ${loginResponse.status()}: ${responseBody}. `
+      + 'Set E2E_TENANT_CODE, E2E_USERNAME, and E2E_PASSWORD to an active local SystemAdmin account.',
+    )
+  }
 
   // Successful login redirects away from /login
   await expect(page).not.toHaveURL(/\/login/, { timeout: 10_000 })
