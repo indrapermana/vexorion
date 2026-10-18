@@ -3,6 +3,9 @@ namespace VexorionERP.Contracts;
 public class StorageUsageTrendResponse
 {
     public Guid TenantId { get; set; }
+    public string Granularity { get; set; } = "day";
+    public DateTime FromUtc { get; set; }
+    public DateTime ToUtc { get; set; }
     public IReadOnlyCollection<StorageUsageTrendPoint> Points { get; set; } = [];
 }
 
