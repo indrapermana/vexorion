@@ -16,47 +16,26 @@ public sealed class GetStorageTopConsumersQueryHandler(IServiceProvider serviceP
     {
         var dbContext = serviceProvider.GetRequiredService<AppDbContext>();
 
-        var documents = await dbContext.ProjectDocuments
-            .AsNoTracking()
-            .Where(d => d.TenantId == request.TenantId)
-            .Select(d => new
+        var topProjects = await (
+            from document in dbContext.ProjectDocuments.AsNoTracking()
+            join project in dbContext.Projects.AsNoTracking() on document.ProjectId equals project.Id
+            where document.TenantId == request.TenantId
+            group document by new { document.ProjectId, project.Name } into documentGroup
+            select new StorageTopProjectConsumerItem
             {
-                d.Id,
-                d.ProjectId,
-                d.Title,
-                d.FileName,
-                d.FileSizeBytes
+                ProjectId = documentGroup.Key.ProjectId,
+                ProjectName = documentGroup.Key.Name,
+                TotalBytes = documentGroup.Sum(item => item.FileSizeBytes),
+                DocumentCount = documentGroup.Count()
             })
+            .OrderByDescending(item => item.TotalBytes)
+            .ThenBy(item => item.ProjectName)
+            .Take(request.Take)
             .ToListAsync(cancellationToken);
 
-        var projectIds = documents
-            .Select(d => d.ProjectId)
-            .Distinct()
-            .ToList();
-
-        var projectNames = projectIds.Count == 0
-            ? new Dictionary<Guid, string>()
-            : await dbContext.Projects
-                .AsNoTracking()
-                .Where(p => p.TenantId == request.TenantId && projectIds.Contains(p.Id))
-                .Select(p => new { p.Id, p.Name })
-                .ToDictionaryAsync(p => p.Id, p => p.Name, cancellationToken);
-
-        var topProjects = documents
-            .GroupBy(d => d.ProjectId)
-            .Select(g => new StorageTopProjectConsumerItem
-            {
-                ProjectId = g.Key,
-                ProjectName = projectNames.TryGetValue(g.Key, out var name) ? name : "Unknown project",
-                TotalBytes = g.Sum(x => x.FileSizeBytes),
-                DocumentCount = g.Count()
-            })
-            .OrderByDescending(x => x.TotalBytes)
-            .ThenBy(x => x.ProjectName)
-            .Take(request.Take)
-            .ToList();
-
-        var topDocuments = documents
+        var topDocuments = await dbContext.ProjectDocuments
+            .AsNoTracking()
+            .Where(d => d.TenantId == request.TenantId)
             .OrderByDescending(d => d.FileSizeBytes)
             .ThenBy(d => d.Title)
             .Take(request.Take)
@@ -68,7 +47,7 @@ public sealed class GetStorageTopConsumersQueryHandler(IServiceProvider serviceP
                 FileName = d.FileName,
                 FileSizeBytes = d.FileSizeBytes
             })
-            .ToList();
+            .ToListAsync(cancellationToken);
 
         return ServiceResult<StorageTopConsumersResponse>.Success(new StorageTopConsumersResponse
         {

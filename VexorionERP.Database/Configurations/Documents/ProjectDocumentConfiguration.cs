@@ -18,6 +18,7 @@ public class ProjectDocumentConfiguration : TenantEntityConfiguration<ProjectDoc
 
         builder.HasIndex(x => new { x.TenantId, x.DocumentNumber }).IsUnique();
         builder.HasIndex(x => new { x.TenantId, x.ProjectId, x.Status });
+        builder.HasIndex(x => new { x.TenantId, x.FileSizeBytes }).IsDescending(false, true);
 
         builder.HasOne(x => x.Project)
             .WithMany(x => x.Documents)

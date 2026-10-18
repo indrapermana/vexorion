@@ -28,10 +28,9 @@ public class StorageAccountingService : IStorageAccountingService
 
         if (incomingFileSizeBytes > plan.MaxFileSizeBytes)
         {
-            var limitMb = plan.MaxFileSizeBytes / (1024 * 1024);
             return ServiceResult<bool>.Failure(
                 StatusCodes.Status413PayloadTooLarge,
-                $"The file exceeds the maximum allowed file size of {limitMb} MB.");
+                $"The file exceeds the maximum allowed file size of {FormatBytes(plan.MaxFileSizeBytes)}.");
         }
 
         var summary = await dbContext.StorageUsageSummaries
@@ -43,10 +42,9 @@ public class StorageAccountingService : IStorageAccountingService
 
         if (projectedUsage > plan.MaxStorageBytes)
         {
-            var limitGb = plan.MaxStorageBytes / (1024L * 1024 * 1024);
             return ServiceResult<bool>.Failure(
                 StatusCodes.Status507InsufficientStorage,
-                $"Uploading this file would exceed your storage quota of {limitGb} GB.");
+                $"Uploading this file would exceed your storage quota of {FormatBytes(plan.MaxStorageBytes)}.");
         }
 
         return ServiceResult<bool>.Success(true);
@@ -104,5 +102,24 @@ public class StorageAccountingService : IStorageAccountingService
         dbContext.StorageUsageLedgers.Add(ledgerEntry);
 
         await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private static string FormatBytes(long bytes)
+    {
+        string[] units = ["bytes", "KB", "MB", "GB", "TB"];
+        var unitIndex = 0;
+        var value = (decimal)bytes;
+
+        while (value >= 1024 && unitIndex < units.Length - 1)
+        {
+            value /= 1024;
+            unitIndex++;
+        }
+
+        var formattedValue = unitIndex == 0
+            ? value.ToString("0")
+            : value.ToString("0.##");
+
+        return $"{formattedValue} {units[unitIndex]}";
     }
 }

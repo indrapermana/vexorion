@@ -73,6 +73,16 @@ export class ApiError extends Error {
   }
 }
 
+export function toApiError(error: unknown): Error {
+  if (error instanceof AxiosError) {
+    const status = error.response?.status ?? 0
+    const normalized = normalizeApiError(error.response?.data, status, error.message)
+    return new ApiError(status, normalized.message, normalized.code, normalized.validation, normalized.traceId)
+  }
+
+  return error instanceof Error ? error : new Error('The request could not be completed.')
+}
+
 export async function requestJson<T>(path: string, method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' = 'GET', body?: unknown): Promise<T> {
   try {
     const response = await apiClient.request<T>({
@@ -83,12 +93,6 @@ export async function requestJson<T>(path: string, method: 'GET' | 'POST' | 'PUT
 
     return response.data
   } catch (error) {
-    if (error instanceof AxiosError) {
-      const status = error.response?.status ?? 0
-      const normalized = normalizeApiError(error.response?.data, status, error.message)
-      throw new ApiError(status, normalized.message, normalized.code, normalized.validation, normalized.traceId)
-    }
-
-    throw error
+    throw toApiError(error)
   }
 }

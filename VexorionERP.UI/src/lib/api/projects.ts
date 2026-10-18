@@ -42,7 +42,7 @@ import type {
   UpdateProjectPartyRequest,
   UpdateProjectRequest,
 } from '../../types/api'
-import { apiClient, requestJson } from './core'
+import { apiClient, requestJson, toApiError } from './core'
 
 export function getProjectCategories() {
   return requestJson<ProjectCategoryListItemResponse[]>('/project-categories')
@@ -246,8 +246,12 @@ export async function uploadProjectDocument(projectId: string, payload: {
   if (payload.tags) formData.append('tags', payload.tags)
   if (payload.notes) formData.append('notes', payload.notes)
 
-  const response = await apiClient.post<ProjectDocumentUploadResponse>(`/projects/${projectId}/documents/upload`, formData)
-  return response.data
+  try {
+    const response = await apiClient.post<ProjectDocumentUploadResponse>(`/projects/${projectId}/documents/upload`, formData)
+    return response.data
+  } catch (error) {
+    throw toApiError(error)
+  }
 }
 
 export function updateProjectDocument(projectId: string, documentId: string, request: UpdateProjectDocumentRequest) {
@@ -271,8 +275,12 @@ export async function addProjectDocumentVersion(projectId: string, documentId: s
   formData.append('file', payload.file)
   if (payload.notes) formData.append('notes', payload.notes)
 
-  const response = await apiClient.post<ProjectDocumentVersionListItemResponse>(`/projects/${projectId}/documents/${documentId}/versions`, formData)
-  return response.data
+  try {
+    const response = await apiClient.post<ProjectDocumentVersionListItemResponse>(`/projects/${projectId}/documents/${documentId}/versions`, formData)
+    return response.data
+  } catch (error) {
+    throw toApiError(error)
+  }
 }
 
 export function getProjectDocumentDownload(projectId: string, documentId: string) {

@@ -18,6 +18,7 @@ public sealed class SearchProjectDocumentsQueryHandler(IServiceProvider serviceP
     {
         var dbContext = serviceProvider.GetRequiredService<AppDbContext>();
         var tenantProvider = serviceProvider.GetRequiredService<ICurrentTenantProvider>();
+        var isPostgres = dbContext.Database.IsNpgsql();
 
         var tenantId = tenantProvider.TenantId;
         if (!tenantId.HasValue)
@@ -84,21 +85,17 @@ public sealed class SearchProjectDocumentsQueryHandler(IServiceProvider serviceP
 
         if (!string.IsNullOrWhiteSpace(filter.Tag))
         {
-            var normalizedTag = filter.Tag.Trim().ToLower();
-            query = query.Where(x => x.Tags != null && x.Tags.ToLower().Contains(normalizedTag));
-        }
-
-        if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
-        {
-            var term = filter.SearchTerm.Trim().ToLower();
-            query = query.Where(x =>
-                x.Title.ToLower().Contains(term)
-                || x.FileName.ToLower().Contains(term)
-                || x.DocumentNumber.ToLower().Contains(term)
-                || x.ProjectName.ToLower().Contains(term)
-                || x.ProjectNumber.ToLower().Contains(term)
-                || x.ProjectCategoryCode.ToLower().Contains(term)
-                || (x.Tags != null && x.Tags.ToLower().Contains(term)));
+            var tag = filter.Tag.Trim();
+            if (isPostgres)
+            {
+                var tagPattern = $"%{EscapeLikePattern(tag)}%";
+                query = query.Where(x => x.Tags != null && EF.Functions.ILike(x.Tags, tagPattern, "\\"));
+            }
+            else
+            {
+                var normalizedTag = tag.ToLower();
+                query = query.Where(x => x.Tags != null && x.Tags.ToLower().Contains(normalizedTag));
+            }
         }
 
         if (filter.FromUtc.HasValue)
@@ -111,13 +108,95 @@ public sealed class SearchProjectDocumentsQueryHandler(IServiceProvider serviceP
             query = query.Where(x => x.CreatedAtUtc <= filter.ToUtc.Value);
         }
 
-        var rows = await query
+        List<ProjectDocumentSearchItemResponse> rows;
+        if (string.IsNullOrWhiteSpace(filter.SearchTerm))
+        {
+            rows = await OrderAndLimit(query).ToListAsync(cancellationToken);
+        }
+        else
+        {
+            rows = await SearchAsync(
+                query,
+                filter.SearchTerm.Trim(),
+                isPostgres,
+                cancellationToken);
+        }
+
+        return ServiceResult<IReadOnlyCollection<ProjectDocumentSearchItemResponse>>.Success(rows);
+    }
+
+    private static async Task<List<ProjectDocumentSearchItemResponse>> SearchAsync(
+        IQueryable<ProjectDocumentSearchItemResponse> query,
+        string term,
+        bool isPostgres,
+        CancellationToken cancellationToken)
+    {
+        IQueryable<ProjectDocumentSearchItemResponse> documentMatches;
+        IQueryable<ProjectDocumentSearchItemResponse> projectMatches;
+        IQueryable<ProjectDocumentSearchItemResponse> categoryMatches;
+
+        if (isPostgres)
+        {
+            var pattern = $"%{EscapeLikePattern(term)}%";
+            documentMatches = query.Where(x =>
+                EF.Functions.ILike(x.Title, pattern, "\\")
+                || EF.Functions.ILike(x.FileName, pattern, "\\")
+                || EF.Functions.ILike(x.DocumentNumber, pattern, "\\")
+                || (x.Tags != null && EF.Functions.ILike(x.Tags, pattern, "\\")));
+            projectMatches = query.Where(x =>
+                EF.Functions.ILike(x.ProjectName, pattern, "\\")
+                || EF.Functions.ILike(x.ProjectNumber, pattern, "\\"));
+            categoryMatches = query.Where(x =>
+                EF.Functions.ILike(x.ProjectCategoryCode, pattern, "\\"));
+        }
+        else
+        {
+            // The test provider does not implement PostgreSQL ILIKE. Keep the same
+            // case-insensitive substring semantics for provider-independent tests.
+            var normalizedTerm = term.ToLower();
+            documentMatches = query.Where(x =>
+                x.Title.ToLower().Contains(normalizedTerm)
+                || x.FileName.ToLower().Contains(normalizedTerm)
+                || x.DocumentNumber.ToLower().Contains(normalizedTerm)
+                || (x.Tags != null && x.Tags.ToLower().Contains(normalizedTerm)));
+            projectMatches = query.Where(x =>
+                x.ProjectName.ToLower().Contains(normalizedTerm)
+                || x.ProjectNumber.ToLower().Contains(normalizedTerm));
+            categoryMatches = query.Where(x =>
+                x.ProjectCategoryCode.ToLower().Contains(normalizedTerm));
+        }
+
+        // A cross-table OR causes PostgreSQL to apply the search after joining and
+        // prevents its trigram indexes from narrowing each source table. The top 500
+        // rows in the union must occur in the top 500 of at least one branch.
+        var matches = new Dictionary<Guid, ProjectDocumentSearchItemResponse>();
+        foreach (var branch in new[] { documentMatches, projectMatches, categoryMatches })
+        {
+            foreach (var row in await OrderAndLimit(branch).ToListAsync(cancellationToken))
+            {
+                matches.TryAdd(row.Id, row);
+            }
+        }
+
+        return matches.Values
             .OrderByDescending(x => x.CreatedAtUtc)
             .ThenBy(x => x.ProjectName)
             .ThenBy(x => x.Title)
             .Take(500)
-            .ToListAsync(cancellationToken);
-
-        return ServiceResult<IReadOnlyCollection<ProjectDocumentSearchItemResponse>>.Success(rows);
+            .ToList();
     }
+
+    private static IQueryable<ProjectDocumentSearchItemResponse> OrderAndLimit(
+        IQueryable<ProjectDocumentSearchItemResponse> query) =>
+        query
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .ThenBy(x => x.ProjectName)
+            .ThenBy(x => x.Title)
+            .Take(500);
+
+    private static string EscapeLikePattern(string value) =>
+        value
+            .Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("%", "\\%", StringComparison.Ordinal)
+            .Replace("_", "\\_", StringComparison.Ordinal);
 }

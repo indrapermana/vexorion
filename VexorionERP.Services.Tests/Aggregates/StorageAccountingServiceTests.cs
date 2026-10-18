@@ -44,6 +44,7 @@ public class StorageAccountingServiceTests
 
         Assert.False(result.Succeeded);
         Assert.Equal(StatusCodes.Status413PayloadTooLarge, result.StatusCode);
+        Assert.Equal("The file exceeds the maximum allowed file size of 100 bytes.", result.ErrorMessage);
     }
 
     [Fact]
@@ -81,6 +82,7 @@ public class StorageAccountingServiceTests
 
         Assert.False(result.Succeeded);
         Assert.Equal(StatusCodes.Status507InsufficientStorage, result.StatusCode);
+        Assert.Equal("Uploading this file would exceed your storage quota of 1000 bytes.", result.ErrorMessage);
     }
 
     [Fact]
