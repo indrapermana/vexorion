@@ -45,7 +45,11 @@ public sealed class GetProjectDocumentDownloadQueryHandler(IServiceProvider serv
             return ServiceResult<ProjectDocumentDownloadResponse>.Failure(StatusCodes.Status404NotFound, "Document not found.");
         }
 
-        var urlResult = await storageService.GetDownloadUrlAsync(document.StoragePath, cancellationToken);
+        var urlResult = await storageService.GetDownloadUrlAsync(
+            document.StoragePath,
+            document.FileName,
+            document.ContentType,
+            cancellationToken);
         if (!urlResult.Succeeded)
             return ServiceResult<ProjectDocumentDownloadResponse>.Failure(
                 urlResult.StatusCode ?? StatusCodes.Status502BadGateway,

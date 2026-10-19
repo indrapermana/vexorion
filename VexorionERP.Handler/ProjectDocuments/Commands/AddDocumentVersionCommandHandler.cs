@@ -20,6 +20,7 @@ public sealed class AddDocumentVersionCommandHandler(IServiceProvider servicePro
         var dbContext = serviceProvider.GetRequiredService<AppDbContext>();
         var storageService = serviceProvider.GetRequiredService<IDocumentStorageService>();
         var accountingService = serviceProvider.GetRequiredService<IStorageAccountingService>();
+        var securityService = serviceProvider.GetRequiredService<IDocumentUploadSecurityService>();
         var tenantProvider = serviceProvider.GetRequiredService<ICurrentTenantProvider>();
         var httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
         var auditLogger = serviceProvider.GetRequiredService<IAuditLogger>();
@@ -51,9 +52,20 @@ public sealed class AddDocumentVersionCommandHandler(IServiceProvider servicePro
         if (!quotaCheck.Succeeded)
             return ServiceResult<ProjectDocumentVersionListItemResponse>.Failure(quotaCheck.StatusCode ?? StatusCodes.Status507InsufficientStorage, quotaCheck.ErrorMessage!);
 
-        var safeFileName = Path.GetFileName(request.File.FileName);
+        var safeFileName = Path.GetFileName(request.File.FileName.Replace('\\', '/'));
         if (string.IsNullOrWhiteSpace(safeFileName))
             return ServiceResult<ProjectDocumentVersionListItemResponse>.Failure(StatusCodes.Status400BadRequest, "A valid file name is required.");
+
+        var securityResult = await securityService.ValidateAsync(request.File, cancellationToken);
+        if (!securityResult.Succeeded)
+        {
+            return ServiceResult<ProjectDocumentVersionListItemResponse>.Failure(
+                securityResult.StatusCode ?? StatusCodes.Status400BadRequest,
+                securityResult.ErrorMessage ?? "The file failed security validation.",
+                securityResult.ErrorCode);
+        }
+
+        var contentType = securityResult.Value!.ContentType;
 
         using var stream = request.File.OpenReadStream();
         var uploadResult = await storageService.UploadAsync(
@@ -61,7 +73,7 @@ public sealed class AddDocumentVersionCommandHandler(IServiceProvider servicePro
             "project-documents",
             safeFileName,
             stream,
-            request.File.ContentType ?? "application/octet-stream",
+            contentType,
             cancellationToken);
 
         if (!uploadResult.Succeeded)
@@ -80,7 +92,7 @@ public sealed class AddDocumentVersionCommandHandler(IServiceProvider servicePro
             ProjectDocumentId = document.Id,
             VersionNumber = nextVersion,
             FileName = safeFileName,
-            ContentType = request.File.ContentType ?? "application/octet-stream",
+            ContentType = contentType,
             StoragePath = blob.BlobPath,
             FileSizeBytes = blob.FileSizeBytes,
             Checksum = blob.ChecksumSha256,
@@ -93,7 +105,7 @@ public sealed class AddDocumentVersionCommandHandler(IServiceProvider servicePro
 
         document.CurrentVersionNumber = nextVersion;
         document.FileName = safeFileName;
-        document.ContentType = request.File.ContentType ?? "application/octet-stream";
+        document.ContentType = contentType;
         document.StoragePath = blob.BlobPath;
         document.FileSizeBytes = blob.FileSizeBytes;
 

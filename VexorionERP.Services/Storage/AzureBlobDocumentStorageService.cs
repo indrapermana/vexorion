@@ -58,7 +58,7 @@ public class AzureBlobDocumentStorageService(IConfiguration configuration) : IDo
             var checksum = ComputeSha256(memory);
             memory.Position = 0;
 
-            var safeFileName = Path.GetFileName(fileName);
+            var safeFileName = Path.GetFileName(fileName.Replace('\\', '/'));
             var blobPath = $"{tenantId:D}/documents/{sourceType.Trim().ToLowerInvariant()}/{Guid.NewGuid():N}/{safeFileName}";
 
             var containerClient = new BlobContainerClient(connectionString, containerName);
@@ -93,7 +93,11 @@ public class AzureBlobDocumentStorageService(IConfiguration configuration) : IDo
         }
     }
 
-    public async Task<ServiceResult<string>> GetDownloadUrlAsync(string blobPath, CancellationToken cancellationToken = default)
+    public async Task<ServiceResult<string>> GetDownloadUrlAsync(
+        string blobPath,
+        string? downloadFileName = null,
+        string? contentType = null,
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(blobPath))
         {
@@ -138,6 +142,12 @@ public class AzureBlobDocumentStorageService(IConfiguration configuration) : IDo
             StartsOn = now.AddMinutes(-1),
             ExpiresOn = now.AddMinutes(lifetimeMinutes),
         };
+        if (!string.IsNullOrWhiteSpace(downloadFileName))
+            sasBuilder.ContentDisposition = CreateAttachmentContentDisposition(downloadFileName);
+
+        if (!string.IsNullOrWhiteSpace(contentType))
+            sasBuilder.ContentType = contentType;
+
         sasBuilder.SetPermissions(BlobSasPermissions.Read);
 
         return ServiceResult<string>.Success(blobClient.GenerateSasUri(sasBuilder).ToString());
@@ -218,6 +228,15 @@ public class AzureBlobDocumentStorageService(IConfiguration configuration) : IDo
         using var sha = SHA256.Create();
         var hash = sha.ComputeHash(stream);
         return Convert.ToHexString(hash);
+    }
+
+    internal static string CreateAttachmentContentDisposition(string fileName)
+    {
+        var safeFileName = Path.GetFileName(fileName.Replace('\\', '/'));
+        var lineBreakIndex = safeFileName.IndexOfAny(['\r', '\n']);
+        if (lineBreakIndex >= 0)
+            safeFileName = safeFileName[..lineBreakIndex];
+        return $"attachment; filename*=UTF-8''{Uri.EscapeDataString(safeFileName)}";
     }
 
     private int ResolveSignedUrlLifetimeMinutes()

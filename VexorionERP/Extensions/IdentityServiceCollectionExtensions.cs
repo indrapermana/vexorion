@@ -27,6 +27,7 @@ public static class IdentityServiceCollectionExtensions
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.Configure<TenantGovernanceDefaultsOptions>(configuration.GetSection(TenantGovernanceDefaultsOptions.SectionName));
         services.Configure<TenantModuleRolloutOptions>(configuration.GetSection(TenantModuleRolloutOptions.SectionName));
+        services.Configure<DocumentSecurityOptions>(configuration.GetSection(DocumentSecurityOptions.SectionName));
         services.AddHttpContextAccessor();
 
         List<Type> types = typeof(ProductCommandService).Assembly.GetTypes().AsParallel()
@@ -86,6 +87,8 @@ public static class IdentityServiceCollectionExtensions
         services.AddScoped<IProductImageStorageService, AzureBlobProductImageStorageService>();
         services.AddScoped<IDocumentStorageService, AzureBlobDocumentStorageService>();
         services.AddScoped<IStorageAccountingService, StorageAccountingService>();
+        services.AddScoped<IDocumentMalwareScanner, ClamAvDocumentMalwareScanner>();
+        services.AddScoped<IDocumentUploadSecurityService, DocumentUploadSecurityService>();
         services.AddScoped<ProjectDocumentCommandService>();
         services.AddScoped<DocumentDataLoader>();
         services.AddScoped<IImportWorkbookService, ImportWorkbookService>();

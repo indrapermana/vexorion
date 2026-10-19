@@ -40,7 +40,11 @@ public class GeneratedDocumentService(
 
             if (existing is not null)
             {
-                var downloadUrlResult = await documentStorageService.GetDownloadUrlAsync(existing.BlobPath, cancellationToken);
+                var downloadUrlResult = await documentStorageService.GetDownloadUrlAsync(
+                    existing.BlobPath,
+                    existing.FileName,
+                    existing.ContentType,
+                    cancellationToken);
                 var existingResponse = ToResponse(existing, downloadUrlResult.Succeeded ? downloadUrlResult.Value : null);
                 return ServiceResult<GeneratedDocumentResponse>.Success(existingResponse);
             }
@@ -104,7 +108,11 @@ public class GeneratedDocumentService(
             return ServiceResult<GetDocumentDownloadLinkResponse>.Failure(StatusCodes.Status404NotFound, "Generated document not found.");
         }
 
-        var downloadUrlResult = await documentStorageService.GetDownloadUrlAsync(entity.BlobPath, cancellationToken);
+        var downloadUrlResult = await documentStorageService.GetDownloadUrlAsync(
+            entity.BlobPath,
+            entity.FileName,
+            entity.ContentType,
+            cancellationToken);
         if (!downloadUrlResult.Succeeded)
         {
             return ServiceResult<GetDocumentDownloadLinkResponse>.Failure(

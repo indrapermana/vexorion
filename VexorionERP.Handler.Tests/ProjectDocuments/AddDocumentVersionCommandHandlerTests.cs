@@ -121,6 +121,36 @@ public class AddDocumentVersionCommandHandlerTests
     }
 
     [Fact]
+    public async Task Handle_WhenSecurityValidationFails_DoesNotUploadOrChangeHistory()
+    {
+        var tenantId = Guid.NewGuid();
+        var (db, documentId, _) = CreateDbWithDocument(tenantId);
+        var storage = new FakeDocumentStorageService();
+        var services = BuildServices(
+            tenantId,
+            db,
+            new FakeStorageAccountingService(),
+            storage,
+            ServiceResult<DocumentUploadSecurityResult>.Failure(
+                StatusCodes.Status400BadRequest,
+                "The file type is unsupported.",
+                "document.file_signature_invalid"));
+
+        var result = await new AddDocumentVersionCommandHandler(services).Handle(
+            new AddDocumentVersionCommand(
+                documentId,
+                null,
+                CreateFormFile("payload.exe", "application/octet-stream", [1, 2, 3])),
+            CancellationToken.None);
+
+        Assert.False(result.Succeeded);
+        Assert.Equal("document.file_signature_invalid", result.ErrorCode);
+        Assert.Null(storage.UploadedFileName);
+        Assert.Equal(1, (await db.ProjectDocuments.SingleAsync()).CurrentVersionNumber);
+        Assert.Single(await db.DocumentVersions.ToListAsync());
+    }
+
+    [Fact]
     public async Task Handle_NormalizesClientPathBeforeUploadAndPersistence()
     {
         var tenantId = Guid.NewGuid();
@@ -150,6 +180,7 @@ public class AddDocumentVersionCommandHandlerTests
 
         Assert.NotNull(services.GetRequiredService<AppDbContext>());
         Assert.NotNull(services.GetRequiredService<IDocumentStorageService>());
+        Assert.NotNull(services.GetRequiredService<IDocumentUploadSecurityService>());
         Assert.NotNull(services.GetRequiredService<IStorageAccountingService>());
         Assert.NotNull(services.GetRequiredService<ICurrentTenantProvider>());
         Assert.NotNull(services.GetRequiredService<IHttpContextAccessor>());
@@ -160,7 +191,8 @@ public class AddDocumentVersionCommandHandlerTests
         Guid tenantId,
         AppDbContext db,
         FakeStorageAccountingService accounting,
-        FakeDocumentStorageService storage)
+        FakeDocumentStorageService storage,
+        ServiceResult<DocumentUploadSecurityResult>? securityResult = null)
     {
         var userId = Guid.NewGuid();
         var accessor = new HttpContextAccessor
@@ -174,6 +206,7 @@ public class AddDocumentVersionCommandHandlerTests
         var services = new ServiceCollection();
         services.AddSingleton(db);
         services.AddSingleton<IDocumentStorageService>(storage);
+        services.AddSingleton<IDocumentUploadSecurityService>(new FakeDocumentUploadSecurityService(securityResult));
         services.AddSingleton<IStorageAccountingService>(accounting);
         services.AddSingleton<ICurrentTenantProvider>(new FixedTenantProvider(tenantId));
         services.AddSingleton<IHttpContextAccessor>(accessor);
@@ -272,7 +305,11 @@ public class AddDocumentVersionCommandHandlerTests
                     new DocumentStorageUploadResult($"blob/{fileName}", $"https://blob/{fileName}", content.Length, "sha256")));
         }
 
-        public Task<ServiceResult<string>> GetDownloadUrlAsync(string blobPath, CancellationToken cancellationToken = default)
+        public Task<ServiceResult<string>> GetDownloadUrlAsync(
+            string blobPath,
+            string? downloadFileName = null,
+            string? contentType = null,
+            CancellationToken cancellationToken = default)
             => Task.FromResult(ServiceResult<string>.Failure(StatusCodes.Status501NotImplemented, "Not needed"));
 
         public Task<ServiceResult<byte[]>> DownloadAsync(string blobPath, CancellationToken cancellationToken = default)
@@ -283,6 +320,16 @@ public class AddDocumentVersionCommandHandlerTests
             DeletedBlobPath = blobPath;
             return Task.FromResult(ServiceResult<bool>.Success(true));
         }
+    }
+
+    private sealed class FakeDocumentUploadSecurityService(
+        ServiceResult<DocumentUploadSecurityResult>? result = null) : IDocumentUploadSecurityService
+    {
+        public Task<ServiceResult<DocumentUploadSecurityResult>> ValidateAsync(
+            IFormFile file,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(result ?? ServiceResult<DocumentUploadSecurityResult>.Success(
+                new DocumentUploadSecurityResult(file.ContentType)));
     }
 
     private sealed class FailNextSaveInterceptor : SaveChangesInterceptor

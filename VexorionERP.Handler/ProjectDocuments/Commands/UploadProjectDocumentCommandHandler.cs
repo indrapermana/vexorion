@@ -21,6 +21,7 @@ public sealed class UploadProjectDocumentCommandHandler(IServiceProvider service
         var dbContext = serviceProvider.GetRequiredService<AppDbContext>();
         var storageService = serviceProvider.GetRequiredService<IDocumentStorageService>();
         var accountingService = serviceProvider.GetRequiredService<IStorageAccountingService>();
+        var securityService = serviceProvider.GetRequiredService<IDocumentUploadSecurityService>();
         var tenantProvider = serviceProvider.GetRequiredService<ICurrentTenantProvider>();
         var httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
         var auditLogger = serviceProvider.GetRequiredService<IAuditLogger>();
@@ -35,9 +36,20 @@ public sealed class UploadProjectDocumentCommandHandler(IServiceProvider service
             return ServiceResult<ProjectDocumentUploadResponse>.Failure(quotaCheck.StatusCode ?? StatusCodes.Status507InsufficientStorage, quotaCheck.ErrorMessage!);
 
         // Upload the file to blob storage
-        var safeFileName = Path.GetFileName(request.File.FileName);
+        var safeFileName = Path.GetFileName(request.File.FileName.Replace('\\', '/'));
         if (string.IsNullOrWhiteSpace(safeFileName))
             return ServiceResult<ProjectDocumentUploadResponse>.Failure(StatusCodes.Status400BadRequest, "A valid file name is required.");
+
+        var securityResult = await securityService.ValidateAsync(request.File, cancellationToken);
+        if (!securityResult.Succeeded)
+        {
+            return ServiceResult<ProjectDocumentUploadResponse>.Failure(
+                securityResult.StatusCode ?? StatusCodes.Status400BadRequest,
+                securityResult.ErrorMessage ?? "The file failed security validation.",
+                securityResult.ErrorCode);
+        }
+
+        var contentType = securityResult.Value!.ContentType;
 
         using var stream = request.File.OpenReadStream();
         var uploadResult = await storageService.UploadAsync(
@@ -45,7 +57,7 @@ public sealed class UploadProjectDocumentCommandHandler(IServiceProvider service
             "project-documents",
             safeFileName,
             stream,
-            request.File.ContentType ?? "application/octet-stream",
+            contentType,
             cancellationToken);
 
         if (!uploadResult.Succeeded)
@@ -70,7 +82,7 @@ public sealed class UploadProjectDocumentCommandHandler(IServiceProvider service
             DocumentNumber = documentNumber,
             Title = request.Title,
             FileName = safeFileName,
-            ContentType = request.File.ContentType ?? "application/octet-stream",
+            ContentType = contentType,
             StoragePath = blob.BlobPath,
             FileSizeBytes = blob.FileSizeBytes,
             CurrentVersionNumber = 1,
@@ -89,7 +101,7 @@ public sealed class UploadProjectDocumentCommandHandler(IServiceProvider service
             ProjectDocumentId = document.Id,
             VersionNumber = 1,
             FileName = safeFileName,
-            ContentType = request.File.ContentType ?? "application/octet-stream",
+            ContentType = contentType,
             StoragePath = blob.BlobPath,
             FileSizeBytes = blob.FileSizeBytes,
             Checksum = blob.ChecksumSha256,
