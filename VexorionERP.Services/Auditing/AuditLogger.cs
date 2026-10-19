@@ -29,6 +29,7 @@ public class AuditLogger(
             EntityId = entityId,
             Description = description,
             MetadataJson = metadata is null ? null : JsonSerializer.Serialize(metadata),
+            CorrelationId = httpContextAccessor.HttpContext?.TraceIdentifier,
             IpAddress = httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString(),
             UserAgent = request?.Headers.UserAgent.ToString()
         });

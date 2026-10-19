@@ -1,6 +1,10 @@
 using System.Net;
+using System.Text.Json;
 using System.Net.Http.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using VexorionERP.Contracts;
+using VexorionERP.Database;
 using VexorionERP.Models;
 using Xunit;
 
@@ -19,19 +23,28 @@ public class ProjectDocumentsAccessAuditTests : IClassFixture<StableTestWebAppli
     public async Task GetDocuments_WithViewPermission_WritesAccessGrantedAudit()
     {
         var tenantId = Guid.NewGuid();
+        var projectId = Guid.NewGuid();
         var client = _factory.CreateClient();
         client.SetBearerToken(tenantId, AppPermissions.ProjectDocuments.View, AppPermissions.Accounting.View);
 
-        var response = await client.GetAsync($"/api/projects/{Guid.NewGuid()}/documents");
+        var response = await client.GetAsync($"/api/projects/{projectId}/documents");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var audit = await dbContext.AuditLogs.SingleAsync(x =>
+            x.TenantId == tenantId
+            && x.EventType == "project.documents.view.documents.access.granted");
+
+        Assert.False(string.IsNullOrWhiteSpace(audit.CorrelationId));
+        Assert.Equal(projectId.ToString(), audit.EntityId);
+
         var auditResponse = await client.GetAsync("/api/audit-logs?page=1&pageSize=200");
         Assert.Equal(HttpStatusCode.OK, auditResponse.StatusCode);
-
         var auditPayload = await auditResponse.Content.ReadFromJsonAsync<AuditLogListResponse>();
-        Assert.NotNull(auditPayload);
-        Assert.Contains(auditPayload.Items, x => x.EventType == "project.documents.view.documents.access.granted");
+        Assert.Contains(auditPayload!.Items, item =>
+            item.Id == audit.Id && item.CorrelationId == audit.CorrelationId);
     }
 
     [Fact]
@@ -46,11 +59,14 @@ public class ProjectDocumentsAccessAuditTests : IClassFixture<StableTestWebAppli
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
 
-        var auditResponse = await client.GetAsync("/api/audit-logs?page=1&pageSize=200");
-        Assert.Equal(HttpStatusCode.OK, auditResponse.StatusCode);
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var audit = await dbContext.AuditLogs.SingleAsync(x =>
+            x.TenantId == tenantId
+            && x.EventType == "project.documents.download.document.access.granted");
 
-        var auditPayload = await auditResponse.Content.ReadFromJsonAsync<AuditLogListResponse>();
-        Assert.NotNull(auditPayload);
-        Assert.Contains(auditPayload.Items, x => x.EventType == "project.documents.download.document.access.granted");
+        Assert.False(string.IsNullOrWhiteSpace(audit.CorrelationId));
+        using var metadata = JsonDocument.Parse(audit.MetadataJson!);
+        Assert.Equal(documentId, metadata.RootElement.GetProperty("ResourceId").GetGuid());
     }
 }

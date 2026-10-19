@@ -65,6 +65,7 @@ public class AuditLogQueryService(
                 EntityId = x.EntityId,
                 Description = x.Description,
                 MetadataJson = x.MetadataJson,
+                CorrelationId = x.CorrelationId,
                 IpAddress = x.IpAddress,
                 UserAgent = x.UserAgent,
             })

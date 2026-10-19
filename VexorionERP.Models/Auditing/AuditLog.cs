@@ -11,6 +11,7 @@ public class AuditLog : TenantEntityBase
     public string? EntityId { get; set; }
     public string? Description { get; set; }
     public string? MetadataJson { get; set; }
+    public string? CorrelationId { get; set; }
     public string? IpAddress { get; set; }
     public string? UserAgent { get; set; }
 

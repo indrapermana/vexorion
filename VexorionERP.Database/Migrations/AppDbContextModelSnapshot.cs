@@ -218,6 +218,10 @@ namespace VexorionERP.Database.Migrations
                     b.Property<Guid?>("ActorUserId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("CorrelationId")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -272,6 +276,8 @@ namespace VexorionERP.Database.Migrations
                     b.HasIndex("TenantId");
 
                     b.HasIndex("TenantId", "ActorUserId");
+
+                    b.HasIndex("TenantId", "CorrelationId");
 
                     b.HasIndex("TenantId", "TargetUserId");
 

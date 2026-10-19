@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 using Xunit;
 using VexorionERP.Models;
 using VexorionERP.Database;
@@ -84,18 +85,20 @@ public class AuthorizationBoundaryAuditTests : IClassFixture<StableTestWebApplic
         var response = await client.GetAsync($"/api/projects/{projectId}/folders");
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        using var problem = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var responseTraceId = problem.RootElement.GetProperty("traceId").GetString();
+        Assert.False(string.IsNullOrWhiteSpace(responseTraceId));
 
         // Verify audit entry was logged for the 403 denial
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var auditEntries = await dbContext.Set<AuditLog>()
+        var auditEntry = await dbContext.Set<AuditLog>()
             .Where(a => a.TenantId == tenantId && a.EventType == "authorization.access_denied")
-            .ToListAsync();
+            .SingleAsync();
 
-        Assert.NotEmpty(auditEntries);
-        var entry = auditEntries.First();
-        Assert.Contains("GET", entry.Description);
-        Assert.Contains("/api/projects", entry.Description);
+        Assert.Equal(responseTraceId, auditEntry.CorrelationId);
+        Assert.Contains("GET", auditEntry.Description);
+        Assert.Contains("/api/projects", auditEntry.Description);
     }
 
     [Fact]
