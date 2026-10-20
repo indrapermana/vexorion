@@ -5,6 +5,10 @@ import {
   VxButton,
   VxChip,
   VxCircularProgress,
+  VxDialog,
+  VxDialogActions,
+  VxDialogContent,
+  VxDialogTitle,
   VxMenuItem,
   VxPaper,
   VxStack,
@@ -25,6 +29,7 @@ import {
   getProjectDocumentDownload,
   getProjects,
   searchProjectDocuments,
+  uploadProjectDocument,
 } from '../../../lib/api'
 import type {
   ManagedDocumentStatus,
@@ -64,6 +69,7 @@ export default function ProjectDocumentsPage() {
 
   const canView = user?.permissions.includes('project-documents.view') ?? false
   const canDownload = user?.permissions.includes('project-documents.download') ?? false
+  const canUpload = user?.permissions.includes('project-documents.upload') ?? false
 
   const [rows, setRows] = useState<ProjectDocumentSearchItemResponse[]>([])
   const [projects, setProjects] = useState<ProjectListItemResponse[]>([])
@@ -79,6 +85,14 @@ export default function ProjectDocumentsPage() {
 
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [feedback, setFeedback] = useState<string | null>(null)
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
+  const [uploadProjectId, setUploadProjectId] = useState('')
+  const [uploadTitle, setUploadTitle] = useState('')
+  const [uploadTags, setUploadTags] = useState('')
+  const [uploadNotes, setUploadNotes] = useState('')
+  const [uploadFile, setUploadFile] = useState<File | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
 
   const projectLabelById = useMemo(
     () => new Map(projects.map((item) => [item.id, `${item.projectNumber} - ${item.name}`])),
@@ -132,6 +146,7 @@ export default function ProjectDocumentsPage() {
   return (
     <VxStack spacing={2}>
       {error ? <VxAlert severity="error" onClose={() => setError(null)}>{error}</VxAlert> : null}
+      {feedback ? <VxAlert severity="success" onClose={() => setFeedback(null)}>{feedback}</VxAlert> : null}
 
       <VxPaper elevation={0} className="panel-card">
         <VxStack spacing={2}>
@@ -142,9 +157,22 @@ export default function ProjectDocumentsPage() {
                 {t('pages.projectDocuments.description', { defaultValue: 'Search across project documents by project, category, date, status, and tags.' })}
               </VxTypography>
             </VxBox>
-            <VxButton variant="outlined" onClick={() => void load()} disabled={isLoading}>
-              {t('common.refresh', { defaultValue: 'Refresh' })}
-            </VxButton>
+            <VxStack direction="row" spacing={1}>
+              {canUpload ? (
+                <VxButton
+                  variant="contained"
+                  onClick={() => {
+                    setUploadProjectId(projectId)
+                    setUploadDialogOpen(true)
+                  }}
+                >
+                  {t('pages.projectDetails.documentsPanel.upload', { defaultValue: 'Upload document' })}
+                </VxButton>
+              ) : null}
+              <VxButton variant="outlined" onClick={() => void load()} disabled={isLoading}>
+                {t('common.refresh', { defaultValue: 'Refresh' })}
+              </VxButton>
+            </VxStack>
           </VxStack>
 
           <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1}>
@@ -307,6 +335,77 @@ export default function ProjectDocumentsPage() {
           )}
         </VxStack>
       </VxPaper>
+
+      <VxDialog open={uploadDialogOpen} onClose={isUploading ? undefined : () => setUploadDialogOpen(false)} maxWidth="sm" fullWidth>
+        <VxDialogTitle>{t('pages.projectDetails.documentsPanel.upload', { defaultValue: 'Upload document' })}</VxDialogTitle>
+        <VxDialogContent dividers>
+          <VxStack spacing={2} sx={{ mt: 1 }}>
+            <VxTextField
+              select
+              required
+              label={t('pages.projectDocuments.filters.project', { defaultValue: 'Project' })}
+              value={uploadProjectId}
+              onChange={(event) => setUploadProjectId(event.target.value)}
+              fullWidth
+            >
+              <VxMenuItem value="">{t('pages.projectDocuments.selectProject', { defaultValue: 'Select a project' })}</VxMenuItem>
+              {projects.map((project) => <VxMenuItem key={project.id} value={project.id}>{project.projectNumber} - {project.name}</VxMenuItem>)}
+            </VxTextField>
+            <VxTextField
+              required
+              label={t('pages.projectDetails.documentsPanel.columns.title', { defaultValue: 'Title' })}
+              value={uploadTitle}
+              onChange={(event) => setUploadTitle(event.target.value)}
+              fullWidth
+            />
+            <VxTextField label={t('pages.projectDetails.documentsPanel.tags', { defaultValue: 'Tags' })} value={uploadTags} onChange={(event) => setUploadTags(event.target.value)} fullWidth />
+            <VxTextField label={t('pages.projectDetails.documentsPanel.notes', { defaultValue: 'Notes' })} value={uploadNotes} onChange={(event) => setUploadNotes(event.target.value)} fullWidth multiline minRows={2} />
+            <input
+              type="file"
+              aria-label={t('pages.projectDetails.documentsPanel.columns.file', { defaultValue: 'File' })}
+              onChange={(event) => setUploadFile(event.currentTarget.files?.[0] ?? null)}
+            />
+          </VxStack>
+        </VxDialogContent>
+        <VxDialogActions>
+          <VxButton onClick={() => setUploadDialogOpen(false)} disabled={isUploading}>{t('common.cancel', { defaultValue: 'Cancel' })}</VxButton>
+          <VxButton
+            variant="contained"
+            disabled={!uploadProjectId || !uploadTitle.trim() || !uploadFile || isUploading}
+            onClick={async () => {
+              if (!uploadProjectId || !uploadTitle.trim() || !uploadFile) return
+              setIsUploading(true)
+              setError(null)
+              setFeedback(null)
+              try {
+                await uploadProjectDocument(uploadProjectId, {
+                  title: uploadTitle.trim(),
+                  tags: uploadTags.trim() || undefined,
+                  notes: uploadNotes.trim() || undefined,
+                  file: uploadFile,
+                })
+                setUploadDialogOpen(false)
+                setUploadTitle('')
+                setUploadTags('')
+                setUploadNotes('')
+                setUploadFile(null)
+                setFeedback(t('pages.projectDetails.documentsPanel.feedback.uploaded', { defaultValue: 'Document uploaded.' }))
+                await load()
+              } catch (uploadError) {
+                setError(uploadError instanceof ApiError
+                  ? uploadError.message
+                  : t('pages.projectDetails.documentsPanel.errors.upload', { defaultValue: 'Unable to upload document.' }))
+              } finally {
+                setIsUploading(false)
+              }
+            }}
+          >
+            {isUploading
+              ? t('common.uploading', { defaultValue: 'Uploading…' })
+              : t('pages.projectDetails.documentsPanel.upload', { defaultValue: 'Upload document' })}
+          </VxButton>
+        </VxDialogActions>
+      </VxDialog>
     </VxStack>
   )
 }

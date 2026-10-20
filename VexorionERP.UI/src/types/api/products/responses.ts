@@ -34,6 +34,12 @@ export type ProductDetailsResponse = {
   isActive: boolean
 }
 
+export type ProductImageUploadResponse = {
+  productId: string
+  imageUrl: string
+  thumbnailUrl?: string | null
+}
+
 export type ProductCategoryListItemResponse = {
   id: string
   name: string

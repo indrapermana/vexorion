@@ -194,12 +194,13 @@ Implemented without removing either Azure adapter:
 - A separate product-image R2 adapter that preserves the existing persisted-public-URL contract. It requires a dedicated HTTPS public custom domain and never persists the private S3 endpoint.
 - Provider-aware production validation for account, bucket, custom-domain, and credential settings.
 - Five mocked adapter tests plus production R2 configuration coverage. The complete backend suite passes 874/874 and NuGet reports no vulnerable packages.
+- Main UI upload controls now cover product images and Document Center project selection. A real R2 upload exposed and drove a regression fix for SDK-owned stream disposal; the focused backend and UI regression suites pass.
 
 Still required before changing `Storage__Provider` in a deployed environment:
 
-- Create distinct private-document and public-product-image Standard buckets.
-- Attach and validate the product-image custom domain.
-- Create and rotate a least-privilege token scoped only to those buckets.
+- [x] Create distinct private-document and public-product-image Standard buckets.
+- [x] Attach and validate the `images.vexorionerp.com` product-image custom domain.
+- [x] Create a least-privilege Object Read & Write token scoped only to those buckets. Rotation procedure remains pending.
 - Run and record credential-gated upload, signed-read, expiry, server-download, public-image delivery, and delete checks against disposable objects.
 
 Reuse the existing application abstractions:

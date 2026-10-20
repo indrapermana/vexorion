@@ -42,6 +42,7 @@ public sealed partial class R2DocumentStorageService(
             await using var memory = new MemoryStream();
             await content.CopyToAsync(memory, cancellationToken);
             var checksum = Convert.ToHexString(SHA256.HashData(memory.ToArray()));
+            var fileSizeBytes = memory.Length;
             memory.Position = 0;
 
             var objectKey = $"{tenantId:D}/documents/{safeSourceType}/{Guid.NewGuid():N}/{safeFileName}";
@@ -64,7 +65,7 @@ public sealed partial class R2DocumentStorageService(
             return ServiceResult<DocumentStorageUploadResult>.Success(new(
                 objectKey,
                 initialDownloadUrl,
-                memory.Length,
+                fileSizeBytes,
                 checksum));
         }
         catch (AmazonS3Exception)

@@ -48,7 +48,7 @@ Percentage-complete labels are intentionally not used. Capability-inventory chec
 | `dotnet build VexorionERP.sln --configuration Release --no-restore --disable-build-servers --verbosity minimal -m:1 -p:UseSharedCompilation=false` | PASS | Zero warnings and zero errors on all nine `net10.0` projects. |
 | `dotnet test VexorionERP.sln --no-restore --verbosity minimal -m:1 -p:UseSharedCompilation=false` | PASS | 874/874: Services 519, Web 201, Handlers 154. Includes five mocked R2 adapter tests and provider-aware production configuration coverage. |
 | `dotnet package list --project VexorionERP.sln --vulnerable --include-transitive --no-restore` | PASS | NuGet reported no vulnerable direct or transitive packages in all nine projects, including AWSSDK.S3 4.0.104.5. |
-| `npm run test:run` | PASS | 183/183: Main UI 82, AdminUI 30, POS 71; no hidden mock errors or React `act(...)` warnings. |
+| `npm run test:run` | PASS | 190/190: Main UI 89, AdminUI 30, POS 71; includes focused product-image and Document Center upload coverage. |
 | `npm run build` | PASS WITH WARNING | All four frontend packages built; Main UI emitted the known chunk-size warning. |
 | EF migration model state | PASS | `dotnet ef migrations has-pending-model-changes` reports no model change since the last migration; existing migrations were preserved. A clean database and upgrade rehearsal are still not validated. |
 | Cloudflare frontend smoke | OWNER CONFIRMED | Login succeeds on Main UI, Admin UI, and POS custom domains. This confirms basic deployed authentication routing, not full workflow or release validation. |
@@ -281,7 +281,7 @@ Implementation evidence (2026-10-13):
 
 - [x] Generated/project documents use a private blob container and SAS-based access.
 - [ ] Add automated proof that document containers cannot be anonymously read and SAS URLs expire with read-only scope.
-- [ ] Review product-image storage separately: it currently creates a blob-public container. Confirm that public product images are intentional; otherwise migrate to private access/CDN or signed delivery.
+- [x] Product images are intentionally public and non-sensitive through a dedicated R2 bucket/custom domain; private documents use a separate bucket and signed delivery. The Main UI product editor now exposes image selection, preview, upload, and actionable API errors.
 - [ ] Rotate and externally manage storage credentials; verify no connection strings or signing secrets are committed.
 - [ ] Threat-model cross-tenant identifiers, file preview, CSV/Excel formula injection, upload content, and signed-link leakage.
 

@@ -11,7 +11,7 @@ public sealed class R2StorageServiceTests
     [Fact]
     public async Task DocumentUpload_UsesTenantScopedSafeKey_AndReturnsChecksum()
     {
-        var client = new FakeR2ObjectClient();
+        var client = new FakeR2ObjectClient { DisposeUploadedStream = true };
         var service = CreateDocumentService(client);
         var tenantId = Guid.NewGuid();
         await using var content = new MemoryStream("hello"u8.ToArray());
@@ -134,6 +134,7 @@ public sealed class R2StorageServiceTests
         public TimeSpan LastLifetime { get; private set; }
         public string? LastContentDisposition { get; private set; }
         public int DeleteCount { get; private set; }
+        public bool DisposeUploadedStream { get; init; }
         public List<(string Bucket, string Key)> Uploads { get; } = [];
 
         public async Task PutAsync(string bucketName, string objectKey, Stream content, string contentType, CancellationToken cancellationToken)
@@ -142,6 +143,8 @@ public sealed class R2StorageServiceTests
             LastContentType = contentType;
             Uploads.Add((bucketName, objectKey));
             await content.CopyToAsync(Stream.Null, cancellationToken);
+            if (DisposeUploadedStream)
+                await content.DisposeAsync();
         }
 
         public Task<bool> ExistsAsync(string bucketName, string objectKey, CancellationToken cancellationToken) =>

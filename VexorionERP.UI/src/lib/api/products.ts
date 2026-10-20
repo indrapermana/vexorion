@@ -7,6 +7,7 @@ import type {
   ProductDetailsResponse,
   ProductIdentifierDetailsResponse,
   ProductIdentifierListItemResponse,
+  ProductImageUploadResponse,
   ProductListItemResponse,
   ProductSupplierLatestPurchasePriceResponse,
   UpdateProductCategoryRequest,
@@ -31,7 +32,7 @@ export async function uploadProductImage(productId: string, file: File) {
   const formData = new FormData()
   formData.append('file', file)
 
-  const response = await apiClient.post<{ productId: string; imageUrl: string }>(`/products/${productId}/image`, formData)
+  const response = await apiClient.post<ProductImageUploadResponse>(`/products/${productId}/image`, formData)
   return response.data
 }
 

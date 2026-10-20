@@ -4,7 +4,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { useTranslation } from 'react-i18next'
-import { ApiError, createProduct, getProduct, updateProduct } from '../../../lib/api'
+import { ApiError, createProduct, getProduct, updateProduct, uploadProductImage } from '../../../lib/api'
 import type { ValidationProblem } from '../../../types/api'
 import type { ProductEditorDialogProps, ProductFormValues } from '../../../types/ui'
 
@@ -49,6 +49,10 @@ export default function ProductEditorDialog({
 	const { t } = useTranslation()
 	const [isLoadingProduct, setIsLoadingProduct] = useState(mode === 'edit' && Boolean(productId))
 	const [submitError, setSubmitError] = useState<string | null>(null)
+	const [imageFile, setImageFile] = useState<File | null>(null)
+	const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
+	const [isUploadingImage, setIsUploadingImage] = useState(false)
+	const [imageFeedback, setImageFeedback] = useState<string | null>(null)
 
 	const title = useMemo(
 		() => (mode === 'create' ? t('components.products.editor.createTitle') : t('components.products.editor.editTitle')),
@@ -92,6 +96,7 @@ export default function ProductEditorDialog({
 					reorderLevel: product.reorderLevel,
 					isActive: product.isActive,
 				})
+				setImagePreviewUrl(product.imageUrl ?? null)
 			})
 			.catch((error: unknown) => {
 				if (!isMounted) {
@@ -114,6 +119,38 @@ export default function ProductEditorDialog({
 			isMounted = false
 		}
 	}, [mode, productId, reset, t])
+
+	useEffect(() => () => {
+		if (imagePreviewUrl?.startsWith('blob:')) URL.revokeObjectURL(imagePreviewUrl)
+	}, [imagePreviewUrl])
+
+	const selectImage = (file: File | null) => {
+		if (imagePreviewUrl?.startsWith('blob:')) URL.revokeObjectURL(imagePreviewUrl)
+		setImageFile(file)
+		setImageFeedback(null)
+		setSubmitError(null)
+		setImagePreviewUrl(file ? URL.createObjectURL(file) : null)
+	}
+
+	const uploadImage = async () => {
+		if (!productId || !imageFile) return
+		setIsUploadingImage(true)
+		setSubmitError(null)
+		setImageFeedback(null)
+		try {
+			const result = await uploadProductImage(productId, imageFile)
+			if (imagePreviewUrl?.startsWith('blob:')) URL.revokeObjectURL(imagePreviewUrl)
+			setImagePreviewUrl(result.thumbnailUrl || result.imageUrl)
+			setImageFile(null)
+			setImageFeedback(t('components.products.editor.imageUploaded', { defaultValue: 'Product image uploaded.' }))
+		} catch (error) {
+			setSubmitError(error instanceof ApiError
+				? error.message
+				: t('components.products.editor.errors.imageUpload', { defaultValue: 'Unable to upload product image.' }))
+		} finally {
+			setIsUploadingImage(false)
+		}
+	}
 
 	const applyServerValidation = (validation?: ValidationProblem) => {
 		if (!validation) {
@@ -160,7 +197,7 @@ export default function ProductEditorDialog({
 	})
 
 	return (
-		<VxDialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="md">
+		<VxDialog open={open} onClose={isSubmitting || isUploadingImage ? undefined : onClose} fullWidth maxWidth="md">
 			<VxDialogTitle>{title}</VxDialogTitle>
 			<VxDialogContent dividers>
 				{isLoadingProduct ? (
@@ -173,6 +210,36 @@ export default function ProductEditorDialog({
 				) : (
 					<VxStack spacing={2.5} sx={{ pt: 1 }}>
 						{submitError ? <VxAlert severity="error">{submitError}</VxAlert> : null}
+						{imageFeedback ? <VxAlert severity="success">{imageFeedback}</VxAlert> : null}
+
+						{mode === 'edit' ? (
+							<VxStack spacing={1.5}>
+								<VxTypography variant="subtitle2">{t('components.products.editor.productImage', { defaultValue: 'Product image' })}</VxTypography>
+								{imagePreviewUrl ? (
+									<VxBox
+										component="img"
+										src={imagePreviewUrl}
+										alt={t('components.products.editor.imagePreview', { defaultValue: 'Product image preview' })}
+										sx={{ width: 160, height: 160, objectFit: 'contain', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}
+									/>
+								) : null}
+								<input
+									type="file"
+									accept="image/*"
+									aria-label={t('components.products.editor.chooseImage', { defaultValue: 'Choose product image' })}
+									onChange={(event) => selectImage(event.currentTarget.files?.[0] ?? null)}
+								/>
+								<VxButton variant="outlined" disabled={!imageFile || isUploadingImage} onClick={() => void uploadImage()}>
+									{isUploadingImage
+										? t('components.products.editor.uploadingImage', { defaultValue: 'Uploading image…' })
+										: t('components.products.editor.uploadImage', { defaultValue: 'Upload image' })}
+								</VxButton>
+							</VxStack>
+						) : (
+							<VxTypography variant="body2" color="text.secondary">
+								{t('components.products.editor.imageAfterCreate', { defaultValue: 'Create the product first, then edit it to upload an image.' })}
+							</VxTypography>
+						)}
 
 						<VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
 							<Controller
@@ -300,8 +367,8 @@ export default function ProductEditorDialog({
 				)}
 			</VxDialogContent>
 			<VxDialogActions sx={{ px: 3, py: 2 }}>
-				<VxButton onClick={onClose} disabled={isSubmitting}>{t('dialogs.cancel')}</VxButton>
-				<VxButton onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoadingProduct}>
+				<VxButton onClick={onClose} disabled={isSubmitting || isUploadingImage}>{t('dialogs.cancel')}</VxButton>
+				<VxButton onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoadingProduct || isUploadingImage}>
 					{isSubmitting
 						? t('components.products.editor.saving')
 						: mode === 'create'
