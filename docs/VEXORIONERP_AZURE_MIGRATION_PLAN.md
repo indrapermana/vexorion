@@ -1,402 +1,456 @@
-# VexorionERP — Azure Exit Migration Plan
+# VexorionERP — Low-Cost Azure Exit and Clean Deployment Plan
 
-**Version:** 1.0 | **Date:** 2026-10-20 | **Status:** Implementation proposal; owner approval required before cutover  
-**Audience:** Product owner, engineering, Codex coding agent  
-**Priority:** Data integrity and recoverability > near-zero infrastructure cost.
+**Version:** 2.0
 
-## 0. Confirmed context and non-goals
+**Date:** 2026-10-20
 
-**Confirmed:** VexorionERP has pilot users with real business data. Three frontend UIs are already hosted on **Cloudflare Pages**. Backend is **ASP.NET Core Web API**; database **PostgreSQL**; documents currently live in **Azure Blob Storage**. All work is HTTP request-driven; there are **no background workers**. Migration scope covers **only API, database, and document storage**. All three Cloudflare Pages sites remain in place.
+**Status:** Reviewed implementation plan; no production deployment authorized
 
-**Do not assume:** exact .NET version, EF/Npgsql version, PostgreSQL version/extensions, auth implementation, current API DNS, blob count/size, RPO/RTO, or current code repository structure. Codex must inspect these first. Never display secrets or production customer records in logs.
+**Priority:** Data integrity, security, and recoverability before minimum infrastructure cost
 
-**Non-goals:** rewrite all frontends; migrate PostgreSQL to a different engine; refactor unrelated business logic; add microservices; silently replace production secrets; shut down Azure before successful verification.
+## 1. Confirmed scope and decisions
 
-## 1. Hosting decision and cost comparison
+VexorionERP will be deployed as a new environment rather than by transferring the current Azure database or Azure Blob contents.
 
-### Recommended option A (pilot): Google Cloud Run + Neon PostgreSQL + Cloudflare R2
+Confirmed decisions:
 
-- **API:** Dockerized existing .NET Web API deployed to Cloud Run, *request-based billing, minimum instances = 0*, initially max instances = 1–2 (tune following DB pool/load testing). A cold start is acceptable if measured and explained to pilot users. Limit concurrent requests to protect DB. Container must listen on injected `PORT` and bind `0.0.0.0`.
-- **Database:** Neon managed PostgreSQL. Use TLS-required connection, explicitly test the **pooled endpoint** for app usage and **direct connection** for EF migrations, if provider advises. Check extensions, PostgreSQL versions, schema, timezone, and collations. Avoid automatic migration on every instance startup.
-- **Documents:** private Cloudflare R2 **Standard** bucket, accessed through AWS S3-compatible .NET SDK. Preserve existing logical document IDs and object paths or maintain explicit mapping. Server-side authorization precedes every download/upload URL issuance.
-- **Frontend:** three existing Cloudflare Pages deployments unchanged apart from API endpoint configuration *only if* necessary. Preserve CORS allowlist and auth flow.
-- **DNS:** For first staging deploy use a standard `*.run.app` HTTPS URL. For production `api.vexorionerp.com`, evaluate a tested routing method **before cutover**: Google Cloud recommends an external Application Load Balancer for Cloud Run custom domains (may have meaningful fixed cost), while direct Cloud Run domain mapping is preview/not recommended for production. Compare Firebase Hosting proxy, a Cloudflare Worker reverse proxy if functionally/security appropriate, or retaining a tested existing ingress. Do not assume a Cloudflare DNS CNAME alone maps a custom hostname to `run.app`.
+- The three frontend applications remain on Cloudflare Pages:
+  - `https://app.vexorionerp.com`
+  - `https://admin.vexorionerp.com`
+  - `https://pos.vexorionerp.com`
+- The backend remains an ASP.NET Core Web API using PostgreSQL.
+- The new database starts empty except for one bootstrap tenant with code `vexorionerp`, its initial company, required roles and permissions, and one superadmin account.
+- No Azure PostgreSQL records or Azure Blob objects are copied as part of this plan.
+- Real customer data may be entered only after the new environment passes the readiness gates in this document.
+- The backend is upgraded from .NET 8 to .NET 10 before provider-specific migration work begins.
+- ClamAV remains disabled until a private scanner is provisioned and integration-tested.
+- Azure resources are not deleted by this plan. Any later retirement requires separate inventory, retention, and owner approval.
 
-### Alternative option B: Oracle Always Free A1 VM + Neon + R2
+Non-goals:
 
-- Host only the API in a `linux/arm64` Docker container behind Caddy/Nginx, monitoring + systemd restart policy.
-- **Advantages:** Can avoid Cloud Run cold starts; no always-on API compute charge within Always Free limits; conventional custom domain/TLS possible without GCP load balancer.
-- **Risks:** capacity not assured; ARM dependencies need validation; OS upgrades/firewall/patching/monitoring become your responsibility; VM availability/idle reclamation and operational overhead; no automatic scaling.
-- **Backup alternative:** one VM also hosting PostgreSQL is technically possible, but **not preferred for real pilot data** due to single failure domain, disk constraints, and manual backups.
+- Rewriting the frontend applications.
+- Replacing PostgreSQL with another database engine.
+- Adding microservices or unrelated product features.
+- Importing historical Azure data.
+- Enabling unvalidated production secrets or placeholder credentials.
+- Promising that production will remain permanently free.
 
-### Costs: scenario-based, not guaranteed bills
-
-| Component | Cloud Run stack | Oracle stack | Planning notes |
-|---|---|---|---|
-| API compute | Potentially $0/month in free allowance | Potentially $0 on Always Free A1 | Cloud Run can bill compute, requests, outbound transfer, logging, builds/registry; OCI over-quota resources bill and free capacity may be unavailable. |
-| PostgreSQL | Neon Free *if under limits* | Neon Free *if under limits* | As of Oct 2026 Neon Free: **1 GB storage/project**; verify current CU-hours, transfer and restore limits in dashboard before choosing. For real data upgrade promptly when close to limits. |
-| Documents | R2 Standard 10 GB-month free, 1M Class A and 10M Class B operations/month | Same | Standard storage above free allowance: $0.015 per GB-month; storage/operation rounding and region/fees apply. No egress fee from R2. |
-| Custom API domain | May cost money; routing choice pending | Usually reverse proxy + certificate | **Do not count custom-domain ingress as $0 without verification.** |
-| Backups | Independent off-provider backups likely $ | Same | Database restore testing and immutable/off-site copies are mandatory. |
-| Three Pages UIs | Unchanged | Unchanged | Existing Cloudflare Pages costs unaffected. |
-
-**Budget targets:** target ~$0 for low-volume experimentation, but reserve a small recurring contingency (e.g. $5–20/month) for backup storage, DNS ingress or database upgrade. This is a proposed budgeting buffer, not a price quote. Configure Google Cloud billing budgets and anomaly alerts; alerts are **not hard spending caps**. Prefer providers/quotas with explicit service limits and inspect billing daily after cutover.
-
-**Choice:** prototype A first. If custom-domain ingress costs or cold-start requirements make A unattractive, pilot B. Do not migrate production until the winning architecture passes the gates below.
-
-## 2. Logical architecture
+## 2. Recommended target architecture
 
 ```mermaid
 flowchart TD
-    U[Users] --> F1[Cloudflare Pages UI #1]
-    U --> F2[Cloudflare Pages UI #2]
-    U --> F3[Cloudflare Pages UI #3]
-    F1 --> G[Existing API hostname / validated ingress]
-    F2 --> G
-    F3 --> G
-    G --> API[Google Cloud Run .NET Web API]
-    API --> DB[(Neon PostgreSQL TLS)]
-    API --> R2[(Cloudflare R2 private bucket)]
-    ADM[CI/CD + restricted admin] --> API
-    BAK[Encrypted off-provider backups] <-->|Restore drills| DB
-    BAK <-->|Manifest and object copies| R2
+    U[Users] --> UI1[Cloudflare Pages Main UI]
+    U --> UI2[Cloudflare Pages Admin UI]
+    U --> UI3[Cloudflare Pages POS UI]
+    UI1 --> API[Google Cloud Run .NET 10 API]
+    UI2 --> API
+    UI3 --> API
+    API --> DB[(Neon PostgreSQL)]
+    API --> DOCS[(Cloudflare R2 private documents)]
+    API --> IMAGES[(Cloudflare R2 product images)]
+    OPS[Restricted deployment and migration job] --> DB
+    BACKUP[Encrypted backup and restore process] --> DB
+    BACKUP --> DOCS
 ```
 
-Keep secrets in a managed secret store; production database and document buckets are *never* directly public. API endpoints still require application authentication/authorization even if Cloud Run ingress is publicly callable.
+### 2.1 Primary provider choice
 
-## 3. Discovery checklist — must complete before writing migrations
+- **API:** Google Cloud Run, request-based billing, `min-instances=0`, initially `max-instances=1`.
+- **Database:** Neon PostgreSQL Free initially, with pooled runtime access and a direct/admin connection for controlled migrations.
+- **Object storage:** Cloudflare R2 Standard.
+- **Frontend:** existing Cloudflare Pages deployments.
+- **Initial API hostname:** the Cloud Run `*.run.app` hostname, unless a separate custom-domain decision is approved.
 
-Codex shall produce `docs/migration/inventory.md` with:
+This stack can cost approximately USD 0 for a low-traffic pilot that remains within every provider allowance. Zero cost is a target, not a service guarantee.
 
-- [ ] Determine .NET version, solution/project paths, current build command, dependency/native-library constraints, Dockerfile presence, health endpoints.
-- [ ] Map current Azure App Service/Container configuration, environment values **by key only**, certificates, auth callback URLs, actual API host, deployment workflow.
-- [ ] Enumerate *all three* Cloudflare Pages frontends, their origins, API base URLs, login and file flows. Avoid modifications not needed for migration.
-- [ ] Inspect EF Core provider (Npgsql), migrations, SQL features, stored procedures, extensions, jobs/triggers, sequences, PostgreSQL version.
-- [ ] Assess PostgreSQL size (database and largest tables), user/roles, indexes, extensions, active writes, expected concurrency; verify Neon fits or budget paid tier.
-- [ ] Inventory Azure storage accounts, containers, number of blobs, total bytes, access tier, filenames/content types, object metadata, checksums, versioning, SAS URL usage, and whether document paths are stored in DB.
-- [ ] Determine max request and upload size, downloads, streaming behavior, virus scanning, retention/delete compliance, PII sensitivity, data residency expectations.
-- [ ] Determine background `IHostedService`, timers, queue consumers, or startup jobs; user states none, but verify code.
-- [ ] Record current SLO, estimated pilot traffic, tolerable downtime, **RPO** and **RTO**, estimated monthly Azure spend.
-- [ ] Record exact encryption/signing/auth strategies and whether key rotation would log all users out.
-- [ ] Choose a *read-only test dataset* or approved scrubbed snapshot, without copying real user data into uncontrolled development systems.
+### 2.2 Cost boundaries
 
-**Stop gate:** No infrastructure decision finalized until actual DB and blob volumes, ingress requirements and data access constraints are known.
+| Component | Initial target | Free-boundary risk |
+|---|---:|---|
+| Cloudflare Pages | USD 0 | Existing account limits still apply. |
+| Cloud Run API | USD 0 | Jakarta regional pricing, requests, CPU, memory, outbound transfer, builds, and supporting services can create charges. |
+| Neon PostgreSQL | USD 0 | Free storage, compute, connection, transfer, restore-window, and branch limits apply; no paid-tier SLA is assumed. |
+| Cloudflare R2 | USD 0 | Standard storage and operation allowances apply; use limits and billing must be monitored. |
+| Artifact Registry | Approximately USD 0 | Retain only required image versions so registry storage remains small. |
+| Secret management | Approximately USD 0 | Keep active secret versions and access operations within the provider allowance. |
+| Backups | Prefer USD 0 initially | Never omit backups merely to keep the bill at zero. Upgrade when reliable backup requirements exceed free limits. |
+| Custom API domain | Deferred | Google-recommended load balancing can add fixed cost; direct Cloud Run domain mapping is not assumed production-ready. |
 
-## 4. Repository plan (adapt to actual structure)
+Reserve an owner-approved contingency budget of USD 5–20/month before onboarding irreplaceable customer data. Budgets and alerts are notifications, not guaranteed hard caps.
+
+### 2.3 Alternatives not selected initially
+
+An Oracle Always Free A1 VM can host the API, but it introduces operating-system patching, firewall, certificate, monitoring, capacity, ARM compatibility, and idle-reclamation concerns. It is retained as a fallback experiment, not the preferred real-data pilot platform.
+
+Self-hosting PostgreSQL on a free VM is not approved for real customer data because it creates a single failure domain and materially increases backup and recovery responsibility.
+
+## 3. Repository facts already confirmed
+
+- Nine backend projects currently target `net8.0`.
+- The local environment has .NET SDK 10 available.
+- The application uses EF Core and `Npgsql.EntityFrameworkCore.PostgreSQL`.
+- PostgreSQL migration `20261018155036_AddProjectDocumentTrigramSearchIndexes` requires the `pg_trgm` extension.
+- The runtime connection key is `ConnectionStrings__DefaultConnection`.
+- The API currently calls `Database.MigrateAsync()` during application startup.
+- Startup also reconciles roles and permissions, optionally creates a bootstrap tenant, and backfills tenant governance defaults.
+- Document storage already uses `IDocumentStorageService`.
+- Product images use the separate `IProductImageStorageService` and currently expect stable image and thumbnail URLs.
+- Document storage persists provider-neutral object paths for project documents and generated documents, while product entities persist image URLs.
+- ClamAV support is implemented but disabled by default.
+- No `IHostedService` or `BackgroundService` implementation was found; startup initialization is nevertheless state-changing and must be separated from normal API startup.
+- There is no backend Dockerfile in the current repository.
+- This document lives at `docs/VEXORIONERP_AZURE_MIGRATION_PLAN.md`; generated migration evidence belongs under `docs/migration/`.
+
+## 4. Mandatory implementation sequence
+
+The phases below must be completed in order. Provider migration work must not be mixed into the .NET 10 upgrade.
+
+### NET10-M01 — Upgrade the backend to .NET 10
+
+Scope:
+
+1. Change all nine backend projects from `net8.0` to `net10.0`.
+2. Upgrade the coordinated Microsoft ASP.NET Core, EF Core, Identity, and test packages to compatible 10.0 patch versions.
+3. Upgrade `Npgsql.EntityFrameworkCore.PostgreSQL` and Npgsql to compatible 10.x versions.
+4. Review Npgsql 10 breaking changes, particularly SQL translation and query-plan changes.
+5. Review source generators and libraries with native/runtime sensitivity, including Mediator, QuestPDF, ClosedXML, Open XML, ImageSharp, and Azure SDK packages.
+6. Pin the intended .NET SDK using `global.json` if the repository does not already do so.
+7. Keep the existing migrations intact; do not regenerate old migrations.
+8. Generate an idempotent migration script or model-difference evidence proving that the framework upgrade did not introduce unintended schema changes.
+
+Acceptance:
+
+- `dotnet restore` succeeds without unsupported-package warnings.
+- Release build succeeds with zero warnings.
+- The complete backend test suite passes.
+- NuGet direct and transitive vulnerability audit is clean.
+- Existing PostgreSQL integration and query-plan-sensitive tests pass.
+- No provider migration, DNS change, or production secret change occurs in this milestone.
+
+Rollback: revert only the .NET/package upgrade commit; no database or infrastructure state should have changed.
+
+### MIG-M00 — Make initialization production-safe
+
+The API must not automatically modify schema or bootstrap data whenever a Cloud Run instance starts.
+
+Implement separate, explicit operations for:
+
+- Applying EF migrations with a privileged direct database connection.
+- Reconciling roles and permission claims.
+- Creating the initial tenant, company, and superadmin.
+- Applying tenant governance defaults.
+
+Normal API startup must:
+
+- Validate configuration.
+- Open no schema-changing transaction.
+- Avoid creating or updating roles, tenants, users, or defaults.
+- Fail clearly when the schema is missing or incompatible.
+
+Bootstrap requirements:
+
+- Tenant code: `vexorionerp`.
+- Bootstrap password comes only from a managed secret and is never logged.
+- Bootstrap operation is idempotent but refuses conflicting existing identities.
+- Bootstrap is disabled immediately after the one-time operation succeeds.
+- Production startup must reject known placeholder JWT, bootstrap, database, and storage credentials.
+
+Acceptance:
+
+- Concurrent API starts do not execute schema or seed writes.
+- A new empty test database can be provisioned deterministically through the explicit migration/bootstrap operation.
+- Re-running the provisioning operation makes no duplicate tenant, user, role, or claim records.
+- Provisioning tests cover partial failure and safe retry.
+
+### MIG-M01 — Adapt storage for Cloudflare R2
+
+Reuse the existing application abstractions:
+
+- `IDocumentStorageService`
+- `IProductImageStorageService`
+
+Do not introduce a competing `IDocumentStorage` abstraction unless a reviewed contract limitation requires it.
+
+#### Private document storage
+
+Implement an R2-backed `IDocumentStorageService` with:
+
+- Tenant-scoped safe object keys.
+- Upload, signed download URL, server-side download, and idempotent delete behavior matching the existing contract.
+- Canonical content type, safe attachment filename, size, and SHA-256 behavior.
+- Short-lived read-only presigned URLs issued only after application authorization.
+- A private Standard bucket with a least-privilege bucket-scoped token.
+- Mocked unit tests plus an optional credential-gated real-bucket integration suite.
+
+#### Product-image storage
+
+Implement an R2-backed `IProductImageStorageService` separately. Before implementation, approve one delivery policy:
+
+1. Public, non-sensitive product images through a dedicated R2 custom domain; or
+2. Private images with an API/signed delivery contract and corresponding frontend/model changes.
+
+Do not place private documents and public product images in the same bucket policy. Do not persist an unusable private S3 endpoint as a product image URL.
+
+#### Provider selection
+
+Use typed configuration and dependency injection, for example:
 
 ```text
-/docs/migration/
-  VEXORIONERP_AZURE_MIGRATION_PLAN.md
-  inventory.md
-  decision-record.md
-  test-matrix.md
-  cutover-runbook.md
-  rollback-runbook.md
-  evidence/                 # sanitized logs and checksums, no secrets
-/src/...                     # existing code kept
-/tests/...                   # existing tests extended
-/infrastructure/
-  cloudrun/                  # configuration templates (no credentials)
-  oracle/                    # alternative, optional
-/scripts/migration/
-  pg_backup.sh               # safeguarded template; no embedded secrets
-  pg_restore_staging.sh
-  blob_inventory.py          # only if existing tools insufficient
-  blob_verify.py
-  smoke_test.sh
+Storage__Provider=R2
+Storage__R2__AccountId=<nonsecret>
+Storage__R2__DocumentBucketName=<nonsecret>
+Storage__R2__ProductImageBucketName=<nonsecret>
+Storage__R2__AccessKeyId=<secret>
+Storage__R2__SecretAccessKey=<secret>
+Storage__R2__SignedUrlLifetimeMinutes=5
 ```
 
-All scripts must support `--dry-run` or read-only checks where applicable, identify environment explicitly, and fail safely. Production write actions require human review/approval.
+No Azure-to-R2 transfer utility is required for the clean deployment.
 
-## 5. .NET API: implementation requirements
+### MIG-M02 — Provision Neon from an empty database
 
-### 5.1 Containerize without rewriting
+1. Create separate staging and production Neon projects or databases.
+2. Record the actual PostgreSQL versions, regions, free-plan limits, pooled connection limits, direct connection limits, and restore window.
+3. Confirm `pg_trgm` is available and can be created by the migration role.
+4. Create a privileged migration role and a least-privilege runtime role where supported.
+5. Apply all existing EF migrations to an empty staging database through the explicit migration operation.
+6. Run schema, index, constraint, and extension verification.
+7. Run the bootstrap operation for the `vexorionerp` tenant using a temporary secret.
+8. Disable bootstrap and rotate or destroy the temporary bootstrap credential.
+9. Exercise a backup and restore into an isolated database.
+10. Repeat the reviewed process for the empty production database only after staging passes.
 
-- Multi-stage Docker build: official .NET SDK build stage and matching ASP.NET runtime stage, pin versions; use non-root runtime user where possible.
-- Restore/build/publish with existing project structure; don't embed secrets or production config in image.
-- Bind to Cloud Run `PORT` with `ASPNETCORE_URLS=http://0.0.0.0:${PORT:-8080}` for the container command or entrypoint; verify shell expansion and use an entrypoint script if necessary.
-- Readiness: `GET /health/live` checks process, `GET /health/ready` checks critical dependencies with timeouts but no sensitive payload. Avoid hitting DB for every liveness probe.
-- Ensure stateless sessions, no reliance on local durable files, no assumed in-memory cache persistence, configured forwarded headers only from trusted ingress.
-- Restrict API CORS to **exact** production/staging UI origins; credentials only if required by actual auth design.
-- Confirm JWT authority/audience, refresh token handling, cookies `Secure`/`SameSite`/domain and OAuth redirect URI against real domain. Never use `AllowAnyOrigin()` with credentials.
-- Add request IDs, structured metrics, meaningful exception handling and timeouts. Redact tokens, PII, connection strings, storage keys, document names from logs.
-- Keep API backward-compatible for the three existing UIs; publish OpenAPI/Swagger in staging or restrict it in production as needed.
+Runtime configuration:
 
-### 5.2 Database connections
-
-- Config via `ConnectionStrings__Default` from secret manager; TLS enabled with proper validation. Never use `Trust Server Certificate=true` merely to bypass failures.
-- Tune Npgsql pooling and max Cloud Run instances: `total potential connections ≈ maxInstances × poolMax + migration/admin connections`; keep below actual Neon limit.
-- Handle DB wakeup/cold first connection with bounded timeout/retry on **transient errors only**; do not automatically repeat non-idempotent POST operations.
-- Use separate migration deploy step and separate privileged DB credential; runtime application user should not be schema owner if practical.
-- Validate long-running HTTP requests and bulk exports within Cloud Run request timeout; for long tasks use a later redesign rather than hidden background work.
-
-### 5.3 Document storage abstraction
-
-```csharp
-public interface IDocumentStorage
-{
-    Task UploadAsync(string key, Stream data, string contentType,
-        CancellationToken cancellationToken = default);
-    Task<Stream> OpenReadAsync(string key,
-        CancellationToken cancellationToken = default);
-    Task DeleteAsync(string key,
-        CancellationToken cancellationToken = default);
-    Task<bool> ExistsAsync(string key,
-        CancellationToken cancellationToken = default);
-}
+```text
+ConnectionStrings__DefaultConnection=<pooled TLS connection secret>
 ```
 
-Implement `AzureBlobDocumentStorage` (existing adapter) and `R2DocumentStorage` (`AWSSDK.S3`). Select provider via `Storage__Provider=Azure|R2`, allowing staged migration and documented read-fallback if genuinely needed. Do not put the provider implementation in controllers. Maintain tenant-scoped authorization at the API, safe object keys, size/type restrictions, anti-path-traversal validation, quota checks and upload scanning policies.
+Migration configuration must use the provider-recommended direct endpoint. Do not use `Trust Server Certificate=true` to suppress certificate failures.
 
-R2 endpoint `https://<ACCOUNT_ID>.r2.cloudflarestorage.com`, region `auto`, private Standard bucket, least-privilege bucket-scoped token. Test SDK path-style configuration and signature behavior. Use short-lived presigned URLs only after authorization; assess existing frontend upload flow before changing contracts. For direct-browser uploads define exact R2 CORS origins/methods/headers and validate object upload completion server-side before committing document metadata. Treat ETag as **not a universal content hash**, especially for multipart uploads.
+Tune pool size against the actual Neon connection limit:
 
-### 5.4 Staged integration configuration
+```text
+potential connections = Cloud Run max instances × Npgsql maximum pool size
+                      + migration/admin reserve
+```
+
+Start conservatively. Do not automatically retry non-idempotent HTTP requests.
+
+### MIG-M03 — Containerize and deploy to Cloud Run staging
+
+Create a reproducible multi-stage Docker build using matching official .NET 10 SDK and ASP.NET runtime images.
+
+Container requirements:
+
+- Run as a non-root user where practical.
+- Listen on `0.0.0.0` using the injected Cloud Run `PORT`.
+- Store no durable state on the local filesystem.
+- Include no secrets in image layers, build arguments, labels, or logs.
+- Handle graceful shutdown.
+- Pin base-image versions/digests according to the repository update policy.
+
+Health endpoints:
+
+- `GET /health/live`: process health only; no database call.
+- `GET /health/ready`: bounded dependency checks without sensitive details.
+
+Initial staging settings:
 
 ```text
 ASPNETCORE_ENVIRONMENT=Staging
-ASPNETCORE_URLS=http://0.0.0.0:8080
-ConnectionStrings__Default=<secret from provider, never commit>
+ConnectionStrings__DefaultConnection=<Neon pooled secret>
 Storage__Provider=R2
-Storage__R2__AccountId=<nonsecret>
-Storage__R2__BucketName=<nonsecret>
-Storage__R2__AccessKey=<secret>
-Storage__R2__SecretKey=<secret>
-AllowedOrigins__0=https://<actual-ui-1>
-AllowedOrigins__1=https://<actual-ui-2>
-AllowedOrigins__2=https://<actual-ui-3>
+Cors__AllowedOrigins__0=https://app.vexorionerp.com
+Cors__AllowedOrigins__1=https://admin.vexorionerp.com
+Cors__AllowedOrigins__2=https://pos.vexorionerp.com
+DocumentSecurity__RequireMalwareScan=false
+DocumentSecurity__ClamAv__Enabled=false
 ```
 
-Use secret references and service identity for sensitive values. Keep separate staging and production credentials/buckets/databases.
+Initial Cloud Run constraints:
 
-## 6. Database migration: PostgreSQL Azure → Neon
+- Request-based billing.
+- `min-instances=0`.
+- `max-instances=1` until connection/load evidence supports increasing it.
+- Begin with 1 vCPU and 512 MiB memory, then measure actual startup and steady-state use.
+- Use the standard `*.run.app` URL for staging and initial cost validation.
+- Browser access may require public Cloud Run invocation, but every application endpoint still enforces application authentication and authorization.
 
-### 6.1 Rehearsal
+### MIG-M04 — CI/CD, secrets, and observability
 
-1. Confirm source/target PostgreSQL versions and extensions; choose appropriate `pg_dump`/`pg_restore` client version (at least compatible with source server); verify Neon supports required features.
-2. Create destination database and least-privilege users. Restrict who can access backups.
-3. Acquire consistent logical snapshot; restore **into staging only** first.
-4. Example template; never paste real credentials in terminal commands or chat:
+- Prefer GitHub Actions OIDC/workload identity federation over a long-lived Google service-account key.
+- Protect production deployments with environment approval.
+- Pin third-party actions.
+- Use a managed secret store; never commit production credentials.
+- Configure budget alerts and inspect actual billing daily during the pilot.
+- Apply Artifact Registry cleanup so obsolete container images do not accumulate.
+- Limit and redact logs; never log tokens, connection strings, document contents, customer identifiers, or bootstrap passwords.
+- Monitor API 5xx, latency, cold starts, database connections, failed uploads, authorization denials, quota limits, and backup failures.
+- Preserve request/audit correlation IDs.
 
-```bash
-# Securely provide SOURCE_DB_URL and TARGET_DB_URL via your secret mechanism.
-# No 'set -x'; protect output directory; prevent accidental production restore.
-umask 077
-pg_dump --dbname="$SOURCE_DB_URL" --format=custom --no-owner --no-acl \
-  --file="backup_vexorion_$(date -u +%Y%m%dT%H%M%SZ).dump"
-# Restore only to an EMPTY, verified staging target; confirm host and DB name.
-pg_restore --dbname="$TARGET_STAGING_DB_URL" --no-owner --no-acl \
-  --exit-on-error --single-transaction backup_file.dump
-```
+### MIG-M05 — Production hostname decision
 
-5. Verify schemas, table row counts, sequences after restore, indexes, unique constraints, foreign keys, extension-dependent operations, and app read/write integration tests.
-6. Test the database under realistic access patterns and expected startup concurrency; measure P50/P95 API response times.
-7. Document exact restore duration, backup size, drift, role/permission issues and time to recover.
+Do not assume a Cloudflare DNS CNAME can directly map `api.vexorionerp.com` to Cloud Run.
 
-**Caution:** These commands are templates, not guaranteed compatible with every managed Postgres permission setup. Examine role ownership, extensions and sequence privileges. For large databases choose an appropriate non-single-transaction restore and restore strategy. `pg_dump` captures a consistent snapshot, but not subsequent writes.
+Evaluate these options with measured cost and upload behavior:
 
-### 6.2 Production cutover strategy: maintenance-window snapshot
+1. Continue using the generated `*.run.app` URL during the early pilot.
+2. Google external Application Load Balancer for the recommended production custom-domain route.
+3. Cloudflare Worker reverse proxy, only after validating security, streaming, timeout, and request-body limits.
+4. Direct-to-R2 signed upload for large documents, if a Worker proxy would otherwise constrain uploads.
 
-Use a short **maintenance window** (simplest for pilot). Notify users and stop all writes across all three UIs, direct API integrations, and admin scripts. A UI maintenance banner alone is not sufficient: enforce read-only/write-block at API/ingress too.
+The current application permits files up to 100 MB. A Cloudflare account with a 100 MB edge request limit cannot reliably proxy a 100 MB multipart upload because multipart headers add overhead. If a Worker/proxied route is chosen, either reduce the application file ceiling with an explicit user-facing limit or implement direct signed uploads.
 
-1. Set and verify write freeze in old production API. Record cutoff timestamp, database transaction/wal position if relevant, and last file upload ID.
-2. Complete any in-flight requests; confirm no ongoing writes/uploads.
-3. Produce fresh encrypted PostgreSQL backup; export from same freeze boundary; record SHA-256 of encrypted archive and store off-provider.
-4. Restore to production Neon database using verified procedure. Verify counts, domain critical aggregates and application queries, sequences, roles, and constraints.
-5. Switch storage records only when the copied R2 objects referenced in PostgreSQL have been verified.
-6. Smoke test new Cloud Run staging/live target using admin test user and test records **while write freeze is still enforced**.
-7. Route API hostname to new service, release write freeze **only after** signoff and functional tests.
-8. Observe pilot usage and prevent old Azure backend from accepting writes; otherwise split-brain occurs.
+The owner must approve the production hostname and any recurring ingress cost before DNS changes.
 
-If a maintenance window is unacceptable, design a separately reviewed CDC/logical replication strategy with explicit source/target consistency testing. Do **not** improvise live dual writes.
+## 5. Security and real-customer-data baseline
 
-## 7. Blob migration: Azure Blob → Cloudflare R2
+No real customer data may be entered until all of the following are true:
 
-### 7.1 First inventory and mapping
+- HTTPS is enforced end to end.
+- Exact frontend CORS origins are configured.
+- JWT issuer, audience, signing secret, access expiry, and refresh flow are tested.
+- Known placeholder secrets cause production startup or deployment validation to fail.
+- Neon and R2 credentials have least privilege and documented rotation procedures.
+- Document buckets are private and anonymous reads fail.
+- Signed document URLs are read-only, short-lived, and tested for expiry.
+- The product-image exposure policy is explicitly approved.
+- Tenant isolation, role permissions, cross-tenant identifiers, and administrative routes pass integration tests.
+- File signature/MIME, filename, absolute size, tenant quota, and download-header tests pass.
+- ClamAV remains visibly disabled and is not represented as active protection.
+- Backup and restore have been executed successfully, not merely documented.
+- Provider regions and handling of personal/business data are approved against applicable customer agreements and privacy requirements.
+- Logs and audit metadata avoid secrets and unnecessary personal data.
 
-- Enumerate all source containers and blobs, storage tier, metadata, ETag, content length, content type, logical document ID, tenant owner, retention policy.
-- Determine whether DB stores Azure absolute URLs or blob paths. Prefer provider-neutral `documentId`, bucket/key mapping and storage service methods. Preserve old keys when safe.
-- For each source object write a manifest: `logicalDocumentId`, `sourceContainer`, `sourceKey`, `targetBucket`, `targetKey`, `lengthBytes`, `sha256` (calculated securely when feasible), `contentType`, `lastModified`, `status`. Store manifest securely, exclude customer details from shared evidence.
-- Decide how to handle soft-deleted/versioned blobs, metadata, legal hold, empty objects, large multipart uploads and duplicates.
+## 6. Backup and recovery baseline
 
-### 7.2 Bulk copy before cutover
+The Free plan restore window is not the complete backup strategy.
 
-- Create private R2 Standard bucket with restricted token and encryption defaults.
-- Use audited `rclone` transfer or a small streaming migration program. Configure retries, bounded parallelism, checksums where supported, resumable execution and logs without personal document names.
-- Transfer all existing objects, preserving keys and content type/metadata where possible; record exceptions separately.
-- Compare **counts, byte sizes and independently computed SHA-256 samples/full set** where feasible; do not assume cross-provider ETags match MD5.
-- Check authorization and signed download flows against R2 in staging; verify office docs, PDFs, images and large files open correctly.
-- Keep Azure immutable/untouched during pre-copy. Do not delete Azure blobs yet.
+Before customer onboarding:
 
-### 7.3 Final delta synchronization
+1. Produce an encrypted PostgreSQL logical backup on an automated schedule appropriate to the approved RPO.
+2. Store it outside Neon with access restricted to recovery operators.
+3. Protect backup credentials independently from runtime credentials.
+4. Retain enough generations to recover from accidental deletion discovered after the provider restore window.
+5. Restore a backup into an isolated database and run integrity checks.
+6. Define how R2 documents and product images are protected against application-level deletion or credential compromise.
+7. Record RPO, RTO, operator, restore steps, and last successful exercise.
 
-During the coordinated **API write freeze**, copy all blobs created/modified after the prior copy, and reconcile deletions and versions. Re-run manifest verification for all DB-referenced objects before enabling new writes. A deleted source object must not be resurrected without review. If the DB and Azure blob state are inconsistent, abort cutover and reconcile manually.
+If the required retention or independent object copy exceeds free allowances, backup reliability takes priority over the zero-cost target.
 
-### 7.4 New writes and rollback boundary
+## 7. Test and release gates
 
-After enabling writes on the new platform, **DNS rollback alone is unsafe**: Neon/R2 will contain new records and uploads absent from Azure. Define a *cutover acceptance window* (e.g. 30–60 minutes) and a rollback operator who can freeze new writes and execute **reverse reconciliation** of database and blobs, or revert to the pre-cutover snapshot with explicitly approved loss of post-cutover writes. For real pilot data, **default to fail-forward** (fix new environment) rather than silently discard new business records. Require owner decision and notify users if RPO cannot be met.
+| Area | Required evidence |
+|---|---|
+| .NET 10 | Release build, complete tests, vulnerability audit, and no unintended migration-model change. |
+| Empty provisioning | All migrations apply to a clean database; exactly one `vexorionerp` tenant and superadmin are created; retry creates no duplicates. |
+| Startup safety | Concurrent API starts perform no schema or seed writes. |
+| PostgreSQL | Required extension, constraints, indexes, sequences, timezone behavior, pooled/direct connection usage, and tenant isolation verified. |
+| Documents | Private upload/download/delete, Unicode filename, MIME/signature, quota, signed URL scope/expiry, failure compensation, and anonymous denial verified. |
+| Product images | Full image and thumbnail generation, approved visibility, stable delivery URL behavior, and deletion lifecycle verified. |
+| Auth | Login, refresh, logout/revocation behavior, roles, admin access, and CORS verified across all three UIs. |
+| Functional | Critical CRUD, inventory, orders, invoices, payments, reports, POS, projects, imports, and generated documents smoke-tested. |
+| Load | At least the expected pilot concurrency; record P50/P95, memory, DB connections, and errors. |
+| Cold start | First request after scale-to-zero is measured and does not cause frontend authentication or timeout failure. |
+| Recovery | Database restore and required object recovery complete within approved RTO. |
+| Cost | Several days of staging/pilot billing observed; no unexplained SKU charges. |
+| Rollback | Previous API revision can be restored without changing or losing customer data. |
 
-## 8. Security baseline and compliance
+Release evidence must come from the same immutable commit/container digest intended for production.
 
-- **Secrets:** Google Secret Manager (or equivalent) for DB credentials, JWT signing keys, OAuth secrets, storage keys. Use least-privilege service account and rotate after migration. Keep original auth signing material if existing sessions should survive.
-- **Network:** HTTPS everywhere, PostgreSQL TLS certificate validation, R2 TLS; don't expose database to unrestricted untrusted access where configurable. Cloud Run public invocation still requires API authentication; apply rate limits and request size limits. If static outbound IP allowlisting is required, Google Cloud NAT/VPC may add fixed cost.
-- **Tenant isolation:** Test per-tenant document IDs and database access, role permissions, administrative routes, and cross-tenant ID enumeration.
-- **Object storage:** Bucket private; never return raw credentials or long-lived public links. Use short-lived signed URLs after access checks; ensure delete and retention policies are correct. Review file MIME spoofing, malware scanning and download content disposition.
-- **Data handling:** Keep real data only in approved regions/providers; confirm privacy notice, customer agreements and cross-border transfer requirements before moving from Azure. Delete staging copies on schedule.
-- **CI/CD:** Use GitHub Actions OIDC/workload identity federation where practical instead of long-lived GCP service account JSON keys; pin actions and protect deployment environments.
-- **Production guards:** Require manual approval for production migrations and cutover; never execute destructive `DROP`, overwrite, bulk delete or live import automatically from a Codex prompt.
-- **Observability:** Error rate, P95, container cold starts, DB connections/latency, failed uploads, storage 403s, backups and billing. Redact sensitive information.
+## 8. Go-live sequence for the new empty environment
 
-## 9. Testing matrix (critical)
+This is a launch, not an Azure data cutover.
 
-| Area | Test cases | Release gate |
-|---|---|---|
-| API | GET/POST/PATCH/DELETE, pagination, validation, status codes | Functional parity across all three Pages UIs |
-| Auth | Login/logout, token refresh, roles, CORS, callbacks, expiring sessions | No privilege regression, no credential leak |
-| Tenant access | Cross-tenant record/document access, guessed IDs | Forbidden across boundaries |
-| PostgreSQL | Row counts, schema, constraints, sequences, transactions, timezone, extension usage | No missing or mismatched required records |
-| Storage | Upload/download/delete, 0-byte, large file, Unicode filename, MIME, signed link expiry | All existing referenced objects accessible |
-| Database ↔ storage | Simultaneous create/update/delete failures, orphan detection | No dangling document pointers in validated data |
-| Load | P50/P95 for login, common CRUD, report, 10 concurrent pilot users (adjust to real load) | Within agreed pilot SLO |
-| Cold start | First request after 15+ min idle | Acceptable latency/no timeout |
-| Recovery | Rehearse restore into isolated environment; integrity checks | Restore within approved RTO |
-| Lifecycle | Bad deployment rollback, secrets rotation, DB maintenance, region outage response | Procedures documented and exercised |
-| Frontends | All three Cloudflare Pages sites with production-like API routing | No changes beyond intended endpoint if needed |
+1. Complete .NET 10 and all migration milestones in staging.
+2. Create the empty production Neon database and R2 buckets.
+3. Apply EF migrations using the privileged migration operation.
+4. Run the one-time bootstrap operation for tenant code `vexorionerp` and the initial superadmin.
+5. Disable bootstrap and rotate/destroy the bootstrap credential.
+6. Deploy the approved Cloud Run container revision with production secrets.
+7. Run read-only and controlled synthetic write smoke tests; remove synthetic data.
+8. Verify all three Cloudflare Pages applications against the new API endpoint.
+9. Verify backup, restore, monitoring, budgets, and incident ownership.
+10. Obtain owner signoff.
+11. Permit real customer onboarding.
+12. Monitor errors, cost, database/storage growth, and backup success daily during the first week.
 
-**Explicit go/no-go gate:** no production cutover until DB restore, blob verification, end-to-end tests, a rollback rehearsal and designated operator signoff pass. Record test evidence and open critical bugs in tickets.
+Rollback during the empty-environment launch means reverting the Cloud Run revision or disabling onboarding. After real customer writes begin, rollback must preserve the same Neon/R2 data and must never point users at an older empty Azure database.
 
-## 10. Deployment and operations
-
-### Cloud Run staging template
-
-```bash
-# Example only: replace placeholders with inspected actual GCP project/region/image.
-gcloud run deploy vexorion-api-staging \
-  --image="REGION-docker.pkg.dev/PROJECT/REPO/vexorion-api:COMMIT_SHA" \
-  --region="REGION" \
-  --platform=managed \
-  --min-instances=0 \
-  --max-instances=2 \
-  --concurrency=20 \
-  --memory=512Mi \
-  --cpu=1 \
-  --port=8080 \
-  --allow-unauthenticated
-```
-
-This template is safe for **publicly reachable staging only when the API has its own correct authentication and is not linked to real production credentials**. Cloud Run IAM `--allow-unauthenticated` is often necessary for browser-driven public endpoints but does not replace app-level auth. Configure secrets separately, set staging CORS precisely, and adjust memory/concurrency after measurements. Check per-region costs and quotas; 512 MiB may be insufficient for some .NET workloads.
-
-**Suggested release flow:** unit/integration test → container build → vulnerability scan → deploy staging revision → staging test → approval → deploy prod revision with 0% or guarded traffic where routing supports → smoke test → controlled traffic shift → monitor. DB migrations happen in reviewed release-specific step, never automatically during each container startup.
-
-### Oracle fallback
-
-- Provision A1 within Always Free allowances and region capacity.
-- Build/publish `linux/arm64`, verify all native dependencies.
-- Configure firewall: allow 443 (and 80 for ACME redirect as needed); SSH only via restricted access, keys, no password login.
-- Use Caddy/Nginx; run container with non-root user and restart policy, unattended OS security updates with controlled maintenance, dedicated application user, disk/CPU alerts.
-- Implement deploy/rollback with image digests and app health checks.
-
-## 11. Cutover runbook and rollback checklist
-
-### Before cutover — required approvals
-
-- [ ] Pilot users notified of maintenance window and expected downtime.
-- [ ] Old and new environments, DNS TTL, API URL and rollback authority documented.
-- [ ] Complete encrypted, verified PostgreSQL backup stored outside source provider.
-- [ ] Azure Blob complete inventory + last successful pre-copy verification.
-- [ ] Independent storage backup and restore test completed.
-- [ ] New API auth/CORS and all 3 UIs tested in staging.
-- [ ] Domain ingress tested with actual hostname, TLS, redirects and cookies.
-- [ ] Billing alarms, provider quotas, monitoring and incident contact established.
-- [ ] Owner signoff for acceptable downtime, RPO/RTO and limited pilot support plan.
-
-### Cutover (operator-controlled, no fully automated production switch)
-
-1. Announce maintenance and **enforce backend write freeze** on old Azure environment.
-2. Drain uploads and pending writes; record freeze timestamp and data high-water marks.
-3. Final encrypted database dump + independent copy; final Azure Blob delta sync.
-4. Restore final dump to target Neon and verify all required objects exist in R2.
-5. Run read-only smoke checks and integrity queries on new API with maintenance flag still on.
-6. Change API routing at verified production ingress; validate cert, DNS, auth and each frontend.
-7. Owner signs off; enable writes **only on new API**; keep old API blocked.
-8. Closely monitor 1 hour and again daily for a week; reconcile new DB rows/files and application errors.
-9. Retain Azure unchanged for agreed rollback/retention period; delete only after formal acceptance.
-
-### Rollback decision tree
-
-```mermaid
-flowchart TD
-  E{Problem after cutover?} -->|No| M[Continue monitoring]
-  E -->|Yes| W[Freeze ALL new writes]
-  W --> D{New platform received customer writes?}
-  D -->|No| R[Repoint API to Azure; verify old DB/blob still consistent]
-  D -->|Yes| C{Can reconcile all Neon changes and R2 objects back to Azure?}
-  C -->|Yes| SYNC[Reconcile, verify, then switch routing]
-  C -->|No| FF[Fail-forward on new platform; fix service or communicate explicit RPO loss decision]
-  R --> CHECK[Validate UIs, auth, documents]
-  SYNC --> CHECK
-```
-
-Rollback never means merely changing DNS if new users have written data. All actions must be timed and logged in change record.
-
-## 12. Codex implementation milestones
+## 9. Milestones and acceptance
 
 | ID | Work | Acceptance |
 |---|---|---|
-| VX-M00 | Audit repository and infra configuration; fill `inventory.md` | No guessing; unknowns flagged; no edits to prod |
-| VX-M01 | Add storage abstraction with Azure adapter retained | Existing Azure behavior/test parity |
-| VX-M02 | Implement R2 adapter, private access, upload/download/delete and unit tests | Staging R2 integration tests pass |
-| VX-M03 | Add container build and health checks; Cloud Run staging | `/health/live` and CRUD work on staging |
-| VX-M04 | Configure staged Neon connections and tested DB restore script | Staging full schema/query tests pass |
-| VX-M05 | Build blob manifest and idempotent copy/verification utility | Counts/size/hash reconciliation reviewed |
-| VX-M06 | Run all three UI E2E workflows against staging API | Auth, CRUD, reports and documents work |
-| VX-M07 | Add operational alerts, backups, runbooks and cost dashboards | Restore drill and incident simulation pass |
-| VX-M08 | Human-reviewed production cutover | Signed checklist; write freeze; zero missing docs |
-| VX-M09 | Post-cutover monitoring and Azure decommission plan | Stable monitoring and approved retention |
+| NET10-M01 | Upgrade all backend projects and coordinated dependencies to .NET 10 | Complete backend gate and migration-model comparison pass |
+| MIG-M00 | Separate runtime startup from migrations/bootstrap; reject placeholder secrets | Clean idempotent provisioning and concurrent-start tests pass |
+| MIG-M01 | Add R2 document and product-image adapters | Mocked tests pass; credential-gated real R2 suite passes before production |
+| MIG-M02 | Provision empty Neon staging/production and backup workflow | Clean migration, extension, bootstrap, pooled/direct, and restore evidence pass |
+| MIG-M03 | Add .NET 10 container and Cloud Run staging | Health, auth, CRUD, storage, and cold-start checks pass |
+| MIG-M04 | Add CI/CD, secrets, monitoring, registry cleanup, and budgets | Protected deployment and operational alerts verified |
+| MIG-M05 | Decide API hostname and upload route | TLS, CORS, auth, file-size, cost, and rollback behavior pass |
+| MIG-M06 | Run full UI/E2E and pilot readiness review | Owner signs real-customer-data checklist |
+| MIG-M07 | Launch and monitor | Stable first-week evidence and backup success recorded |
 
-**Cross-cutting definition of done:** tests green, no secrets committed, no production data in test fixtures, backward-compatible API contracts, documentation updated, evidence attached, revert procedure exists.
+## 10. Operator-owned decisions
 
-## 13. Codex prompts
+The following require explicit owner input or approval:
 
-### Phase 1: audit only (paste first)
+1. Acceptable monthly contingency budget and alert thresholds.
+2. Expected pilot users, request volume, document volume, database growth, and peak concurrency.
+3. Acceptable cold-start latency.
+4. Required database/document RPO and RTO.
+5. Approved Neon and R2 regions and data-residency requirements.
+6. Public versus private product-image delivery.
+7. Initial use of `run.app` versus paid/custom ingress.
+8. Initial superadmin username/email; the password must be provided through a managed secret, never through chat or source control.
+9. Date when real customer onboarding may begin.
 
-> We are migrating VexorionERP (ASP.NET Core Web API; PostgreSQL; Azure Blob Storage) from Azure to a lower-cost platform. Three frontend UIs are already on Cloudflare Pages and must remain unchanged. The app has real pilot data and no background workers. Read `docs/migration/VEXORIONERP_AZURE_MIGRATION_PLAN.md` first. Inspect repository structure, csproj dependencies, EF/Npgsql migrations, storage integration, auth/CORS, config and existing CI. Write `docs/migration/inventory.md` and a concise implementation impact report. Do NOT change code or deploy yet. Do NOT log secret values. List any unavailable infrastructure facts requiring operator input.
+## 11. Implementation prompts
 
-### Phase 2: storage and staging API
+### Phase 1 — .NET 10 only
 
-> Continue from the current git state, inspect git status/diff, and read the migration plan and inventory. Implement **VX-M01 and VX-M02 only** with tests: storage abstraction retaining Azure behavior, an S3-compatible Cloudflare R2 implementation with scoped settings and private bucket, and safe provider selection. Maintain existing API contracts and tenant authorization. Use test/mocked credentials; do not perform production transfers. Run and report relevant tests and outstanding gaps.
+> Read `docs/VEXORIONERP_AZURE_MIGRATION_PLAN.md` and inspect the current git state. Implement `NET10-M01` only. Upgrade all backend projects and coordinated dependencies to .NET 10 without changing infrastructure, storage providers, DNS, secrets, or production state. Preserve existing migrations. Run the complete backend test/build/vulnerability gates and produce migration-model comparison evidence. Update the plan with factual results.
 
-### Phase 3: container and database
+### Phase 2 — safe initialization
 
-> Continue from the current repo state. Implement **VX-M03 and VX-M04 only**: reproducible .NET container build, Cloud Run-compatible port binding and health endpoints, Neon staging connection and read-only inventory/restore scripts, tests for pooled/direct DB behavior. No production credentials or production migration actions. Explain required manual setup and estimate resources.
+> Continue from a green .NET 10 state. Implement `MIG-M00` only. Remove schema migration and seed writes from normal API startup; create explicit idempotent migration/bootstrap operations and production placeholder-secret validation. Add tests for clean provisioning, conflicting identities, partial failure, retry, and concurrent API startup. Do not connect to or modify production providers.
 
-### Phase 4: transfer tooling and rehearsals
+### Phase 3 — R2 storage
 
-> Implement **VX-M05 and VX-M06 only**, after inspecting existing tooling. Create idempotent Azure-to-R2 inventory/copy verification utilities and sanitized reports, plus a complete staging E2E matrix for the three Cloudflare Pages apps. Never delete blobs. Support dry-run; write tests for failure/restart and mismatch behavior. Do not point production DNS to the new service.
+> Implement `MIG-M01` only using the existing `IDocumentStorageService` and `IProductImageStorageService`. Retain Azure adapters until the R2 implementation is integration-validated. Use mocked credentials for normal tests and an optional explicitly credential-gated real-bucket suite. Do not copy or delete Azure blobs.
 
-### Phase 5: operational gate
+### Phase 4 — Neon and Cloud Run staging
 
-> Produce **VX-M07** backups, restore testing steps, security checks, ingress cost comparison, cutover and rollback checklists with operator approval points. Do not perform a production cutover, production write freeze, production secret change, or Azure deletion without explicit instruction.
+> Implement `MIG-M02` and `MIG-M03` in staging only. Provision from an empty database, apply migrations explicitly, create the `vexorionerp` bootstrap tenant through the controlled operation, deploy the .NET 10 container to Cloud Run with `min=0` and `max=1`, and run the defined integration checks. No production DNS or customer onboarding.
 
-## 14. Provider references (verify again immediately before provisioning)
+### Phase 5 — operational and go-live gate
 
+> Implement `MIG-M04` through `MIG-M06`. Produce cost evidence, backup/restore evidence, full E2E results, hostname/upload-route comparison, monitoring, and an owner approval checklist. Do not create production customer data or make an irreversible cutover without explicit owner instruction.
+
+## 12. Provider references
+
+Verify these immediately before provisioning because pricing and limits can change:
+
+- .NET support policy: https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core
+- Npgsql EF Core 10 release notes: https://www.npgsql.org/efcore/release-notes/10.0.html
 - Cloud Run pricing: https://cloud.google.com/run/pricing
-- Cloud Run domain options: https://docs.cloud.google.com/run/docs/mapping-custom-domains
-- Cloud Run deploy: https://docs.cloud.google.com/run/docs/deploying
-- OCI Always Free: https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm
-- Neon current pricing: https://neon.com/pricing
-- Neon October 2026 storage update: https://neon.com/blog/neon-free-plan-1-gb-per-project
+- Cloud Run container configuration: https://docs.cloud.google.com/run/docs/configuring/services/containers
+- Cloud Run custom domains: https://docs.cloud.google.com/run/docs/mapping-custom-domains
+- Artifact Registry pricing: https://cloud.google.com/artifact-registry/pricing
+- Neon pricing: https://neon.com/pricing
+- Neon service levels: https://neon.com/sla
 - R2 pricing: https://developers.cloudflare.com/r2/pricing/
-- R2 .NET SDK: https://developers.cloudflare.com/r2/examples/aws/aws-sdk-net/
+- R2 AWS SDK for .NET: https://developers.cloudflare.com/r2/examples/aws/aws-sdk-net/
 - R2 presigned URLs: https://developers.cloudflare.com/r2/api/s3/presigned-urls/
+- Cloudflare request limits: https://developers.cloudflare.com/workers/platform/limits/
 
-## 15. Open decisions requiring owner approval
+## 13. Final rules
 
-1. Production API hostname and existing routing method; can it be retained without expensive ingress?
-2. Actual PostgreSQL size/extensions and storage volume. Do they fit free allowances?
-3. Budget threshold, acceptable cold-start latency, monitoring, RPO and RTO.
-4. Data residency/privacy contractual constraints for pilot customer records and documents.
-5. Whether direct browser-to-R2 upload is needed at MVP or API-proxied transfers should be retained.
-6. Whether external data integrations, OAuth, email callbacks or signed Azure Blob URLs require migration.
-7. Approval process and timing for downtime and production cutover.
-
-**Final rule for Codex:** design and implement incrementally; preserve the current three frontends; make no live destructive changes or irreversible cutover decisions autonomously.
+- Data integrity and recoverability override the zero-cost target.
+- No real customer data before the readiness checklist passes.
+- No automatic production schema migrations during API startup.
+- No secrets in source, logs, chat, container layers, or migration evidence.
+- No claim of active malware scanning while ClamAV is disabled.
+- No live Azure deletion or production DNS change without explicit owner approval.
+- Every completion claim must distinguish implemented, locally validated, integration validated, and release validated evidence.
