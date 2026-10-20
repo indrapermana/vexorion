@@ -9,15 +9,15 @@ This is the single source of truth for implementation status and upcoming develo
 
 VexorionERP has broad functional coverage: core ERP workflows, POS, finance, imports, generated documents, project/document management, tenant collaboration, module controls, and storage governance are all represented in code. The frontend production build succeeds and the service test project is healthy.
 
-The project is **not release-ready**. P0-1 through P0-3 corrected the error contract, backend gate, vulnerable dependencies, and frontend gate. Remaining readiness gaps are evidence and operational hardening rather than basic unit-test health:
+The project is **not release-ready**. P0-1 through P0-4 established a trustworthy validation baseline, P1-1 substantially hardened project/document workflows, the backend now targets .NET 10, and state-changing database/bootstrap work has been removed from normal API startup. Remaining readiness gaps are provider migration, evidence, and operational hardening:
 
 1. Playwright jobs are defined but hard-disabled in CI, so there is no current E2E release evidence.
-2. Clean-install and upgrade migration rehearsals against PostgreSQL have not been recorded.
-3. Real Azure Blob integration, compensation, private-access expiry, backup/restore, rollback, monitoring, performance, accessibility, and penetration checks remain unvalidated.
+2. Clean-install and upgrade migration rehearsals against the target Neon PostgreSQL environment have not been recorded.
+3. Cloudflare R2 adapters are locally validated, but real-bucket integration, compensation, private-access expiry, backup/restore, rollback, monitoring, performance, accessibility, and penetration checks remain unvalidated.
 4. Several critical workflows still need the P1/P2 tests and semantic reconciliation listed below.
 5. No single release-candidate commit has passed backend, frontend, E2E, migration, storage, and smoke gates together.
 
-The next milestone is **workflow and release hardening (R2/R3)**, not another broad feature expansion.
+The active execution track is the low-cost Azure exit plan. `NET10-M01`, `MIG-M00`, and the code/test portion of `MIG-M01` are locally validated. The next gate is **R2 account setup and credential-gated integration validation**, followed by `MIG-M02` Neon provisioning. Product expansion remains deferred.
 
 ## 2. Review method and confidence
 
@@ -43,21 +43,22 @@ Percentage-complete labels are intentionally not used. Capability-inventory chec
 
 | Check | Result | Evidence / implication |
 |---|---|---|
-| Source state | WORKTREE | The .NET 10 upgrade is locally validated but uncommitted; it is not yet CI or release evidence. |
+| Source state | WORKTREE | The .NET 10 and production-safe initialization work is locally validated but uncommitted; it is not yet CI or release evidence. |
 | Environment | RECORDED | macOS 26.7.1, .NET SDK 10.0.301 targeting .NET 10, Node 22.22.0, npm 10.9.4. |
 | `dotnet build VexorionERP.sln --configuration Release --no-restore --disable-build-servers --verbosity minimal -m:1 -p:UseSharedCompilation=false` | PASS | Zero warnings and zero errors on all nine `net10.0` projects. |
-| `dotnet test VexorionERP.sln --configuration Release --no-build --no-restore --disable-build-servers --verbosity minimal -m:1 -p:UseSharedCompilation=false` | PASS | 868/868: Services 514, Web 200, Handlers 154. |
-| `dotnet list VexorionERP.sln package --vulnerable --include-transitive --no-restore` | PASS | NuGet reported no vulnerable direct or transitive packages in all nine projects. |
+| `dotnet test VexorionERP.sln --no-restore --verbosity minimal -m:1 -p:UseSharedCompilation=false` | PASS | 874/874: Services 519, Web 201, Handlers 154. Includes five mocked R2 adapter tests and provider-aware production configuration coverage. |
+| `dotnet package list --project VexorionERP.sln --vulnerable --include-transitive --no-restore` | PASS | NuGet reported no vulnerable direct or transitive packages in all nine projects, including AWSSDK.S3 4.0.104.5. |
 | `npm run test:run` | PASS | 183/183: Main UI 82, AdminUI 30, POS 71; no hidden mock errors or React `act(...)` warnings. |
 | `npm run build` | PASS WITH WARNING | All four frontend packages built; Main UI emitted the known chunk-size warning. |
 | EF migration model state | PASS | `dotnet ef migrations has-pending-model-changes` reports no model change since the last migration; existing migrations were preserved. A clean database and upgrade rehearsal are still not validated. |
+| Cloudflare frontend smoke | OWNER CONFIRMED | Login succeeds on Main UI, Admin UI, and POS custom domains. This confirms basic deployed authentication routing, not full workflow or release validation. |
 | Durable artifacts | NOT RECORDED | Local terminal validation produced no durable artifact URLs. CI artifact/run links must be recorded against a release-candidate commit. |
 
 ### Still not validated
 
-- Database migration against a clean and upgraded PostgreSQL database.
-- Azure Blob integration against a real container.
-- Playwright E2E flows requiring running services and credentials.
+- Database migration against clean and upgraded Neon PostgreSQL environments.
+- Cloudflare R2 integration against real private-document and public-product-image test buckets, including compensation, custom-domain delivery, and signed-access expiry behavior.
+- CI Playwright execution and the remaining end-to-end workflows requiring live services and credentials.
 - Production deployment, rollback, performance, accessibility, or penetration testing.
 
 Any capability requiring those checks remains **implemented** or **locally validated**, not integration- or release-validated.
@@ -73,6 +74,10 @@ Any capability requiring those checks remains **implemented** or **locally valid
 - [x] Access-token refresh handling in all three frontend API clients.
 - [x] CI definitions for backend, frontend builds/tests, and credential-gated E2E jobs.
 - [x] Current frontend production build succeeds.
+- [x] Normal API startup performs read-only database/schema validation; migrations and bootstrap run only through explicit `migrate`, `bootstrap`, or `provision` operations.
+- [x] Local development configuration is Git-ignored with a tracked sanitized example; production configuration contains no database, JWT, bootstrap, storage, or logging secret values.
+- [x] Azure and Cloudflare R2 storage adapters are provider-selectable. R2 documents use private object keys and signed reads; product images require a separate bucket and HTTPS public custom domain. Azure remains the default pending real R2 validation.
+- [x] Main UI, Admin UI, POS, and the public landing page are deployed through Cloudflare Pages; owner-confirmed login smoke evidence exists for all three authenticated applications.
 
 ### 3.2 Core ERP
 
@@ -254,7 +259,8 @@ Implementation evidence (2026-10-13):
 
 ### P1-5 — Release operations and observability
 
-- [ ] Complete the Cloudflare Pages migration closeout for Main UI, AdminUI, POS, and the public landing page using `docs/CLOUDFLARE_FRONTEND_MIGRATION.md`. Cloudflare deployment jobs, custom domains, apex/`www` cutover, static security/cache headers, and the landing implementation are present; Azure Static Web Apps deployment jobs were retired at owner direction on 2026-10-16. Azure resource deletion, API restoration, API-backed smoke tests, and the full stability evidence remain pending.
+- [x] Complete the Cloudflare Pages cutover for Main UI, AdminUI, POS, and the public landing page using `docs/CLOUDFLARE_FRONTEND_MIGRATION.md`. Deployment jobs, custom domains, apex/`www` routing, static headers, and the landing implementation are present; Azure Static Web Apps deployment jobs were retired. The owner confirmed successful login on all three authenticated applications on 20 October 2026.
+- [ ] Retire remaining Azure API/database/storage resources only after the replacement Cloud Run, Neon, and R2 environment passes cutover, rollback, and retention checks. Azure subscription remediation remains owner-managed and must not block code-first staging work.
 - [ ] Apply the current migrations to both a clean database and a production-like upgraded snapshot; verify rollback/forward-fix procedure.
 - [ ] Create support runbook, admin training material, incident paths, backup/restore evidence, and release smoke checklist.
 - [ ] Add dashboards/alerts for API 5xx, authorization denials, import failures, document/blob failures, checkout failures, latency, rate limiting, and quota blocks.

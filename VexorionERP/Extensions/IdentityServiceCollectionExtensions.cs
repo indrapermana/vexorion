@@ -1,3 +1,5 @@
+using Amazon.Runtime;
+using Amazon.S3;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -28,6 +30,7 @@ public static class IdentityServiceCollectionExtensions
         services.Configure<TenantGovernanceDefaultsOptions>(configuration.GetSection(TenantGovernanceDefaultsOptions.SectionName));
         services.Configure<TenantModuleRolloutOptions>(configuration.GetSection(TenantModuleRolloutOptions.SectionName));
         services.Configure<DocumentSecurityOptions>(configuration.GetSection(DocumentSecurityOptions.SectionName));
+        services.Configure<StorageOptions>(configuration.GetSection(StorageOptions.SectionName));
         services.AddHttpContextAccessor();
 
         List<Type> types = typeof(ProductCommandService).Assembly.GetTypes().AsParallel()
@@ -84,8 +87,7 @@ public static class IdentityServiceCollectionExtensions
         services.AddScoped<IPurchaseReceiptPostingService, PurchaseReceiptCommandService>();
         services.AddScoped<IRoleManagementService, RoleManagementService>();
         services.AddScoped<ISalesShipmentPostingService, SalesShipmentCommandService>();
-        services.AddScoped<IProductImageStorageService, AzureBlobProductImageStorageService>();
-        services.AddScoped<IDocumentStorageService, AzureBlobDocumentStorageService>();
+        AddStorageServices(services, configuration);
         services.AddScoped<IStorageAccountingService, StorageAccountingService>();
         services.AddScoped<IDocumentMalwareScanner, ClamAvDocumentMalwareScanner>();
         services.AddScoped<IDocumentUploadSecurityService, DocumentUploadSecurityService>();
@@ -150,5 +152,37 @@ public static class IdentityServiceCollectionExtensions
             .AddDefaultTokenProviders();
 
         return services;
+    }
+
+    private static void AddStorageServices(IServiceCollection services, IConfiguration configuration)
+    {
+        var provider = configuration[$"{StorageOptions.SectionName}:Provider"];
+        if (string.IsNullOrWhiteSpace(provider) ||
+            provider.Equals(StorageProviders.AzureBlob, StringComparison.OrdinalIgnoreCase))
+        {
+            services.AddScoped<IProductImageStorageService, AzureBlobProductImageStorageService>();
+            services.AddScoped<IDocumentStorageService, AzureBlobDocumentStorageService>();
+            return;
+        }
+
+        if (!provider.Equals(StorageProviders.R2, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                $"Unsupported storage provider '{provider}'. Use '{StorageProviders.AzureBlob}' or '{StorageProviders.R2}'.");
+        }
+
+        var r2 = configuration.GetSection($"{StorageOptions.SectionName}:R2").Get<R2StorageOptions>() ?? new();
+        var endpoint = $"https://{r2.AccountId}.r2.cloudflarestorage.com";
+        services.AddSingleton<IAmazonS3>(_ => new AmazonS3Client(
+            new BasicAWSCredentials(r2.AccessKeyId, r2.SecretAccessKey),
+            new AmazonS3Config
+            {
+                ServiceURL = endpoint,
+                ForcePathStyle = true,
+                AuthenticationRegion = "auto",
+            }));
+        services.AddSingleton<IR2ObjectClient, R2ObjectClient>();
+        services.AddScoped<IProductImageStorageService, R2ProductImageStorageService>();
+        services.AddScoped<IDocumentStorageService, R2DocumentStorageService>();
     }
 }

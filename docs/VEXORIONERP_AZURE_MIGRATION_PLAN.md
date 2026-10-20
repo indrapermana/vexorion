@@ -185,6 +185,23 @@ Implementation result (2026-10-20): **locally validated; PostgreSQL/Neon rehears
 
 ### MIG-M01 — Adapt storage for Cloudflare R2
 
+**Status (20 October 2026): code and mocked-test gate locally validated; real R2 integration pending.**
+
+Implemented without removing either Azure adapter:
+
+- Typed `Storage`/`Storage:R2` configuration and explicit `AzureBlob` or `R2` dependency-injection selection. Azure remains the default.
+- A private-document R2 adapter with tenant-scoped sanitized object keys, canonical content types, SHA-256/size metadata, server-side downloads, idempotent deletion, and short-lived read-only presigned URLs.
+- A separate product-image R2 adapter that preserves the existing persisted-public-URL contract. It requires a dedicated HTTPS public custom domain and never persists the private S3 endpoint.
+- Provider-aware production validation for account, bucket, custom-domain, and credential settings.
+- Five mocked adapter tests plus production R2 configuration coverage. The complete backend suite passes 874/874 and NuGet reports no vulnerable packages.
+
+Still required before changing `Storage__Provider` in a deployed environment:
+
+- Create distinct private-document and public-product-image Standard buckets.
+- Attach and validate the product-image custom domain.
+- Create and rotate a least-privilege token scoped only to those buckets.
+- Run and record credential-gated upload, signed-read, expiry, server-download, public-image delivery, and delete checks against disposable objects.
+
 Reuse the existing application abstractions:
 
 - `IDocumentStorageService`
@@ -221,6 +238,7 @@ Storage__Provider=R2
 Storage__R2__AccountId=<nonsecret>
 Storage__R2__DocumentBucketName=<nonsecret>
 Storage__R2__ProductImageBucketName=<nonsecret>
+Storage__R2__ProductImagePublicBaseUrl=https://<product-image-domain>
 Storage__R2__AccessKeyId=<secret>
 Storage__R2__SecretAccessKey=<secret>
 Storage__R2__SignedUrlLifetimeMinutes=5
@@ -405,7 +423,7 @@ Rollback during the empty-environment launch means reverting the Cloud Run revis
 |---|---|---|
 | NET10-M01 | Upgrade all backend projects and coordinated dependencies to .NET 10 | Complete backend gate and migration-model comparison pass |
 | MIG-M00 | Separate runtime startup from migrations/bootstrap; reject placeholder secrets | Clean idempotent provisioning and concurrent-start tests pass |
-| MIG-M01 | Add R2 document and product-image adapters | Mocked tests pass; credential-gated real R2 suite passes before production |
+| MIG-M01 | Add R2 document and product-image adapters | Code/mocked tests pass locally (874/874 total); credential-gated real R2 suite still must pass before production |
 | MIG-M02 | Provision empty Neon staging/production and backup workflow | Clean migration, extension, bootstrap, pooled/direct, and restore evidence pass |
 | MIG-M03 | Add .NET 10 container and Cloud Run staging | Health, auth, CRUD, storage, and cold-start checks pass |
 | MIG-M04 | Add CI/CD, secrets, monitoring, registry cleanup, and budgets | Protected deployment and operational alerts verified |

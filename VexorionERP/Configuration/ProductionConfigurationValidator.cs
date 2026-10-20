@@ -59,6 +59,24 @@ public static class ProductionConfigurationValidator
             RequireSecret("Bootstrap:AdminPassword", bootstrapPassword);
         }
 
+        var storageProvider = configuration["Storage:Provider"] ?? "AzureBlob";
+        if (storageProvider.Equals("R2", StringComparison.OrdinalIgnoreCase))
+        {
+            RequireValue("Storage:R2:AccountId", configuration["Storage:R2:AccountId"]);
+            RequireValue("Storage:R2:DocumentBucketName", configuration["Storage:R2:DocumentBucketName"]);
+            RequireValue("Storage:R2:ProductImageBucketName", configuration["Storage:R2:ProductImageBucketName"]);
+            RequireHttpsUrl("Storage:R2:ProductImagePublicBaseUrl", configuration["Storage:R2:ProductImagePublicBaseUrl"]);
+            RequireSecret("Storage:R2:AccessKeyId", configuration["Storage:R2:AccessKeyId"]);
+            RequireSecret("Storage:R2:SecretAccessKey", configuration["Storage:R2:SecretAccessKey"]);
+            return;
+        }
+
+        if (!storageProvider.Equals("AzureBlob", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                $"Storage:Provider '{storageProvider}' is unsupported. Use AzureBlob or R2.");
+        }
+
         var storageConnection = configuration["AzureBlob:ConnectionString"];
         RequireSecret("AzureBlob:ConnectionString", storageConnection);
         if (storageConnection!.Contains("UseDevelopmentStorage=true", StringComparison.OrdinalIgnoreCase))
@@ -66,6 +84,23 @@ public static class ProductionConfigurationValidator
             throw new InvalidOperationException(
                 "AzureBlob:ConnectionString cannot use development storage in Production.");
         }
+    }
+
+    private static void RequireValue(string key, string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value) ||
+            PlaceholderFragments.Any(fragment => value.Contains(fragment, StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new InvalidOperationException(
+                $"{key} is missing or contains a known placeholder value. Supply it through managed configuration.");
+        }
+    }
+
+    private static void RequireHttpsUrl(string key, string? value)
+    {
+        RequireValue(key, value);
+        if (!Uri.TryCreate(value, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps)
+            throw new InvalidOperationException($"{key} must be an absolute HTTPS URL.");
     }
 
     private static void RequireSecret(string key, string? value)

@@ -3,7 +3,7 @@
 [![Backend](https://github.com/indrapermana/vexorion/actions/workflows/backend.yml/badge.svg)](https://github.com/indrapermana/vexorion/actions/workflows/backend.yml)
 [![Frontend](https://github.com/indrapermana/vexorion/actions/workflows/frontend.yml/badge.svg)](https://github.com/indrapermana/vexorion/actions/workflows/frontend.yml)
 
-A full-stack SME ERP platform built with **ASP.NET Core 8**, **Entity Framework Core**, **PostgreSQL**, and three **React + Vite + MUI v6** frontends.
+A full-stack SME ERP platform built with **ASP.NET Core 10**, **Entity Framework Core 10**, **PostgreSQL**, and three **React + Vite + MUI v6** frontends.
 
 For verified implementation status, known mismatches, priorities, and upcoming work, use the single [consolidated development plan](DEVELOPMENT_PLAN.md). Historical milestone and roadmap checklists have been retired.
 
@@ -15,7 +15,7 @@ For verified implementation status, known mismatches, priorities, and upcoming w
 VexorionERP/
 ├── VexorionERP/              # ASP.NET Core Web API (entry point)
 ├── VexorionERP.Models/       # Domain models and enumerations
-├── VexorionERP.Database/     # EF Core DbContext, migrations, and seeding
+├── VexorionERP.Database/     # EF Core DbContext and migrations
 ├── VexorionERP.Services/     # Application services and CQRS handlers (Mediator)
 ├── VexorionERP.Handler/      # Additional CQRS command/query handlers
 ├── VexorionERP.Contracts/    # Request and response DTO contracts
@@ -34,7 +34,7 @@ VexorionERP/
 
 | Tool | Version |
 |---|---|
-| .NET SDK | 8.x |
+| .NET SDK | 10.x |
 | Node.js | 20+ |
 | npm | 10+ |
 | PostgreSQL | 14+ (running on port 5432) |
@@ -47,6 +47,21 @@ dotnet tool install --global dotnet-ef
 ```
 
 ---
+
+## Current deployment status
+
+The public landing page and authenticated frontends are deployed through Cloudflare Pages:
+
+| Application | URL | Current evidence |
+|---|---|---|
+| Landing page | `https://vexorionerp.com` | Cloudflare Pages migration completed |
+| Main UI | `https://app.vexorionerp.com` | Login manually confirmed by the owner on 20 October 2026 |
+| Admin UI | `https://admin.vexorionerp.com` | Login manually confirmed by the owner on 20 October 2026 |
+| POS | `https://pos.vexorionerp.com` | Login manually confirmed by the owner on 20 October 2026 |
+
+This is deployment smoke evidence, not full release validation. The API, database, and object-storage migration is tracked in [the Azure exit plan](docs/VEXORIONERP_AZURE_MIGRATION_PLAN.md). Azure resources must not be retired until the replacement backend passes its migration and rollback gates.
+
+The backend supports provider-selectable Azure Blob Storage and Cloudflare R2 adapters. Azure remains the default until R2 integration validation is complete. R2 uses separate buckets: private documents are served through short-lived signed URLs, while non-sensitive product images use a dedicated public HTTPS custom domain. Configure secrets only through managed environment variables; the tracked development example contains placeholders.
 
 ## Local Setup Guide (for new/junior developers)
 
@@ -126,7 +141,7 @@ dotnet run --project VexorionERP/VexorionERP.csproj -- \
 
 Alternatively, `--vexorion-operation=provision` applies migrations and performs bootstrap in one explicit command. Ordinary API startup cannot trigger bootstrap.
 
-**Default seed credentials:**
+**Configured bootstrap identity:**
 
 | Field | Value |
 |---|---|
@@ -243,7 +258,7 @@ This keeps the shared package and all app manifests in sync and validates downst
 
 ## 1. Backend — `VexorionERP` (ASP.NET Core Web API)
 
-The Web API serves all three frontends. It applies pending EF Core migrations automatically on startup.
+The Web API serves all three frontends. Normal startup validates database connectivity and schema state but never applies migrations or bootstrap data automatically.
 
 ### Setup
 
@@ -268,14 +283,14 @@ dotnet watch --project VexorionERP/VexorionERP.csproj --no-hot-reload
 
 Copy `appsettings.Development.example.json` to the ignored `appsettings.Development.json`, then set local database credentials and `Bootstrap:AdminPassword` there. Normal startup is read-only with respect to schema and bootstrap data; use the explicit provisioning commands in the setup guide.
 
-**Dev seed credentials:**
+**Configured bootstrap identity:**
 
 | Field | Value |
 |---|---|
 | Tenant code | `vexorionerp` |
 | Admin username | `admin` |
 | Admin email | `admin@demo.local` |
-| Admin password | `DemoAdmin123!` |
+| Admin password | Your local `Bootstrap:AdminPassword` value |
 
 > Re-seeding does not overwrite existing tenant data. To reset, drop and recreate the database.
 
@@ -443,16 +458,16 @@ cd VexorionERP.POS && npm run dev
 cd VexorionERP.POS && npm run e2e
 ```
 
-Override credentials with environment variables if needed:
+The current E2E fixtures still contain legacy local fallbacks. Override them for every newly provisioned or shared environment:
 
-| Env var | Default |
+| Environment variable | Legacy local fallback |
 |---|---|
 | `E2E_TENANT_CODE` | `demo` |
 | `E2E_USERNAME` | `admin@demo.local` |
 | `E2E_PASSWORD` | `DemoAdmin123!` |
 | `POS_BASE_URL` | `http://localhost:5175` |
 
-The example E2E defaults may refer to an older local `demo` database. For a newly provisioned environment, override them with the `vexorionerp` bootstrap tenant and its managed password. For the cross-tenant project scenario, supply an active local **SystemAdmin** account because the test provisions and removes a temporary tenant B:
+These fallbacks refer to the older local `demo` database and must never be treated as deployment credentials. For a newly provisioned environment, use the `vexorionerp` bootstrap tenant and its managed password. For the cross-tenant project scenario, supply an active local **SystemAdmin** account because the test provisions and removes a temporary tenant B:
 
 ```bash
 cd VexorionERP.UI
@@ -530,10 +545,11 @@ Remove the most recent migration:
 dotnet ef migrations remove --project VexorionERP.Database/VexorionERP.Database.csproj --startup-project VexorionERP/VexorionERP.csproj
 ```
 
-Update the database manually:
+Apply migrations through the explicit application operation:
 
 ```bash
-dotnet ef database update --project VexorionERP.Database/VexorionERP.Database.csproj --startup-project VexorionERP/VexorionERP.csproj
+dotnet run --project VexorionERP/VexorionERP.csproj -- \
+  --vexorion-operation=migrate
 ```
 
 List migrations:

@@ -153,6 +153,30 @@ public sealed class ApplicationProvisioningTests
             ApplicationOperation.Provision);
     }
 
+    [Fact]
+    public void ProductionConfiguration_AcceptsManagedR2Values()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["ConnectionStrings:DefaultConnection"] = "Host=db;Database=vexorion;Username=app;Password=StrongDatabasePassword!;Ssl Mode=Require",
+                ["Jwt:SecretKey"] = "A-secure-test-JWT-key-with-more-than-32-characters",
+                ["Storage:Provider"] = "R2",
+                ["Storage:R2:AccountId"] = "1234567890abcdef",
+                ["Storage:R2:DocumentBucketName"] = "vexorion-documents",
+                ["Storage:R2:ProductImageBucketName"] = "vexorion-product-images",
+                ["Storage:R2:ProductImagePublicBaseUrl"] = "https://images.vexorionerp.com",
+                ["Storage:R2:AccessKeyId"] = "managed-access-key",
+                ["Storage:R2:SecretAccessKey"] = "managed-secret-key"
+            })
+            .Build();
+
+        ProductionConfigurationValidator.Validate(
+            configuration,
+            ProductionEnvironment(),
+            ApplicationOperation.Run);
+    }
+
     private static async Task RunBootstrapAsync(ProvisioningTestWebApplicationFactory factory)
     {
         await using var scope = factory.Services.CreateAsyncScope();
