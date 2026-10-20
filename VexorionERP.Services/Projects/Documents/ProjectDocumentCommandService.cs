@@ -11,7 +11,8 @@ namespace VexorionERP.Services;
 public class ProjectDocumentCommandService(
     ICurrentTenantProvider currentTenantProvider,
     IAuditLogger auditLogger,
-    IHttpContextAccessor httpContextAccessor)
+    IHttpContextAccessor httpContextAccessor,
+    IDocumentStorageService documentStorageService)
     : BaseCommandService<ProjectDocument>(currentTenantProvider)
 {
     // Status transitions that are permitted
@@ -74,11 +75,37 @@ public class ProjectDocumentCommandService(
 
     public override async Task<ServiceResult<bool>> DeleteAsync(Guid id, AppDbContext dbContext, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(dbContext);
+        var tenantId = TryGetTenantId();
+        if (tenantId.HasValue)
+        {
+            var currentPath = await dbContext.ProjectDocuments.GetByTenant(tenantId.Value)
+                .Where(x => x.Id == id)
+                .Select(x => x.StoragePath)
+                .FirstOrDefaultAsync(cancellationToken);
+            var paths = await dbContext.DocumentVersions.GetByTenant(tenantId.Value)
+                .Where(x => x.ProjectDocumentId == id)
+                .Select(x => x.StoragePath)
+                .ToListAsync(cancellationToken);
+            if (!string.IsNullOrWhiteSpace(currentPath))
+                paths.Add(currentPath);
+
+            foreach (var path in paths.Distinct(StringComparer.Ordinal))
+            {
+                var deletion = await documentStorageService.DeleteAsync(path, cancellationToken);
+                if (!deletion.Succeeded)
+                {
+                    return ServiceResult<bool>.Failure(
+                        StatusCodes.Status502BadGateway,
+                        "The document could not be deleted because its stored file could not be removed. Please try again.");
+                }
+            }
+        }
+
         var result = await base.DeleteAsync(id, dbContext, cancellationToken);
 
         if (result.Succeeded)
         {
-            var tenantId = TryGetTenantId();
             await auditLogger.LogAsync(
                 "project_document.deleted",
                 tenantId,

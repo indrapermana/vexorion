@@ -8,12 +8,10 @@ using VexorionERP.Services;
 
 namespace VexorionERP.Services;
 
-public class ProductCommandService : BaseCommandService<Product>
+public class ProductCommandService(
+    ICurrentTenantProvider currentTenantProvider,
+    IProductImageStorageService productImageStorageService) : BaseCommandService<Product>(currentTenantProvider)
 {
-    public ProductCommandService(ICurrentTenantProvider currentTenantProvider) : base(currentTenantProvider)
-    {
-    }
-
     protected override bool ValidateAddInput(ICreateInput<Product> input, out IDictionary<string, string[]>? errors, out string? errorMessage)
     {
         return base.ValidateAddInput(input, out errors, out errorMessage);
@@ -125,6 +123,38 @@ public class ProductCommandService : BaseCommandService<Product>
         var product = await context.Products.GetByTenant(tenantId.Value)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         return product ?? default!;
+    }
+
+    public override async Task<ServiceResult<bool>> DeleteAsync(
+        Guid id,
+        AppDbContext dbContext,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(dbContext);
+        var tenantId = TryGetTenantId();
+        if (!tenantId.HasValue)
+            return await base.DeleteAsync(id, dbContext, cancellationToken);
+
+        var media = await dbContext.Products.GetByTenant(tenantId.Value)
+            .Where(x => x.Id == id)
+            .Select(x => new { x.ImageUrl, x.ThumbnailUrl })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (media is null)
+            return ServiceResult<bool>.Failure(StatusCodes.Status404NotFound, "Product not found.");
+
+        try
+        {
+            await productImageStorageService.DeleteAsync(media.ImageUrl, media.ThumbnailUrl, cancellationToken);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            return ServiceResult<bool>.Failure(
+                StatusCodes.Status502BadGateway,
+                "The product could not be deleted because its stored images could not be removed. Please try again.");
+        }
+
+        return await base.DeleteAsync(id, dbContext, cancellationToken);
     }
 
     protected override string GetNotFoundMessage() => "Product not found.";

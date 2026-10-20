@@ -13,11 +13,11 @@ The project is **not release-ready**. P0-1 through P0-4 established a trustworth
 
 1. Playwright jobs are defined but hard-disabled in CI, so there is no current E2E release evidence.
 2. Clean-install and upgrade migration rehearsals against the target Neon PostgreSQL environment have not been recorded.
-3. Cloudflare R2 adapters are locally validated, but real-bucket integration, compensation, private-access expiry, backup/restore, rollback, monitoring, performance, accessibility, and penetration checks remain unvalidated.
+3. Cloudflare R2 upload, delivery, deletion, and signed-URL expiry are integration-validated against the configured real buckets. Backup/restore, rollback, monitoring, performance, accessibility, and penetration checks remain unvalidated.
 4. Several critical workflows still need the P1/P2 tests and semantic reconciliation listed below.
 5. No single release-candidate commit has passed backend, frontend, E2E, migration, storage, and smoke gates together.
 
-The active execution track is the low-cost Azure exit plan. `NET10-M01`, `MIG-M00`, and the code/test portion of `MIG-M01` are locally validated. The next gate is **R2 account setup and credential-gated integration validation**, followed by `MIG-M02` Neon provisioning. Product expansion remains deferred.
+The active execution track is the low-cost Azure exit plan. `NET10-M01` and `MIG-M00` are locally validated, and `MIG-M01` is integration-validated. The next gate is **`MIG-M02` Neon provisioning from an empty database**. Product expansion remains deferred.
 
 ## 2. Review method and confidence
 
@@ -46,18 +46,19 @@ Percentage-complete labels are intentionally not used. Capability-inventory chec
 | Source state | WORKTREE | The .NET 10 and production-safe initialization work is locally validated but uncommitted; it is not yet CI or release evidence. |
 | Environment | RECORDED | macOS 26.7.1, .NET SDK 10.0.301 targeting .NET 10, Node 22.22.0, npm 10.9.4. |
 | `dotnet build VexorionERP.sln --configuration Release --no-restore --disable-build-servers --verbosity minimal -m:1 -p:UseSharedCompilation=false` | PASS | Zero warnings and zero errors on all nine `net10.0` projects. |
-| `dotnet test VexorionERP.sln --no-restore --verbosity minimal -m:1 -p:UseSharedCompilation=false` | PASS | 874/874: Services 519, Web 201, Handlers 154. Includes five mocked R2 adapter tests and provider-aware production configuration coverage. |
+| `dotnet test VexorionERP.sln --no-restore --verbosity minimal -m:1 -p:UseSharedCompilation=false` | PASS | 881/881: Services 526, Web 201, Handlers 154. Includes R2 adapter and storage-backed deletion regression coverage. |
 | `dotnet package list --project VexorionERP.sln --vulnerable --include-transitive --no-restore` | PASS | NuGet reported no vulnerable direct or transitive packages in all nine projects, including AWSSDK.S3 4.0.104.5. |
 | `npm run test:run` | PASS | 190/190: Main UI 89, AdminUI 30, POS 71; includes focused product-image and Document Center upload coverage. |
 | `npm run build` | PASS WITH WARNING | All four frontend packages built; Main UI emitted the known chunk-size warning. |
 | EF migration model state | PASS | `dotnet ef migrations has-pending-model-changes` reports no model change since the last migration; existing migrations were preserved. A clean database and upgrade rehearsal are still not validated. |
 | Cloudflare frontend smoke | OWNER CONFIRMED | Login succeeds on Main UI, Admin UI, and POS custom domains. This confirms basic deployed authentication routing, not full workflow or release validation. |
+| Cloudflare R2 integration | OWNER CONFIRMED | Product-image delivery, private-document upload/preview/download, product/document/project deletion cleanup, and signed-URL expiry work against the configured real buckets. |
 | Durable artifacts | NOT RECORDED | Local terminal validation produced no durable artifact URLs. CI artifact/run links must be recorded against a release-candidate commit. |
 
 ### Still not validated
 
 - Database migration against clean and upgraded Neon PostgreSQL environments.
-- Cloudflare R2 integration against real private-document and public-product-image test buckets, including compensation, custom-domain delivery, and signed-access expiry behavior.
+- Cloudflare R2 upload/delivery/deletion/expiry behavior is integration-validated. Operational object-protection, credential-rotation rehearsal, and disaster-recovery evidence remain pending.
 - CI Playwright execution and the remaining end-to-end workflows requiring live services and credentials.
 - Production deployment, rollback, performance, accessibility, or penetration testing.
 

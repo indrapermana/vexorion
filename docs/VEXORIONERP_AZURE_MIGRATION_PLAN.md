@@ -185,7 +185,7 @@ Implementation result (2026-10-20): **locally validated; PostgreSQL/Neon rehears
 
 ### MIG-M01 — Adapt storage for Cloudflare R2
 
-**Status (20 October 2026): code and mocked-test gate locally validated; real R2 integration pending.**
+**Status (20 October 2026): completed and integration-validated against the configured real R2 buckets.**
 
 Implemented without removing either Azure adapter:
 
@@ -193,15 +193,21 @@ Implemented without removing either Azure adapter:
 - A private-document R2 adapter with tenant-scoped sanitized object keys, canonical content types, SHA-256/size metadata, server-side downloads, idempotent deletion, and short-lived read-only presigned URLs.
 - A separate product-image R2 adapter that preserves the existing persisted-public-URL contract. It requires a dedicated HTTPS public custom domain and never persists the private S3 endpoint.
 - Provider-aware production validation for account, bucket, custom-domain, and credential settings.
-- Five mocked adapter tests plus production R2 configuration coverage. The complete backend suite passes 874/874 and NuGet reports no vulnerable packages.
+- R2 adapter, storage-backed deletion, and production configuration coverage. The complete backend suite passes 881/881 and NuGet reports no vulnerable packages.
 - Main UI upload controls now cover product images and Document Center project selection. A real R2 upload exposed and drove a regression fix for SDK-owned stream disposal; the focused backend and UI regression suites pass.
+- Product deletion removes its full-size and thumbnail objects. Document deletion removes every distinct version object, and project deletion removes objects for all cascading documents. Storage cleanup failure preserves the database record and returns an actionable retry response.
 
-Still required before changing `Storage__Provider` in a deployed environment:
+Integration evidence:
 
 - [x] Create distinct private-document and public-product-image Standard buckets.
 - [x] Attach and validate the `images.vexorionerp.com` product-image custom domain.
 - [x] Create a least-privilege Object Read & Write token scoped only to those buckets. Rotation procedure remains pending.
-- Run and record credential-gated upload, signed-read, expiry, server-download, public-image delivery, and delete checks against disposable objects.
+- [x] Owner-confirm product-image upload and public custom-domain delivery.
+- [x] Owner-confirm private-document upload, preview, and download.
+- [x] Owner-confirm product, project-document, and project cascade deletion against disposable R2 objects.
+- [x] Owner-confirm signed-read expiry.
+
+Operational follow-up for `MIG-M04`: document and rehearse token rotation, monitoring, and object-protection/recovery procedures.
 
 Reuse the existing application abstractions:
 
@@ -424,7 +430,7 @@ Rollback during the empty-environment launch means reverting the Cloud Run revis
 |---|---|---|
 | NET10-M01 | Upgrade all backend projects and coordinated dependencies to .NET 10 | Complete backend gate and migration-model comparison pass |
 | MIG-M00 | Separate runtime startup from migrations/bootstrap; reject placeholder secrets | Clean idempotent provisioning and concurrent-start tests pass |
-| MIG-M01 | Add R2 document and product-image adapters | Code/mocked tests pass locally (874/874 total); credential-gated real R2 suite still must pass before production |
+| MIG-M01 | Add R2 document and product-image adapters | Complete: 881/881 backend tests pass; real upload, delivery, deletion, and signed-expiry behavior owner-confirmed |
 | MIG-M02 | Provision empty Neon staging/production and backup workflow | Clean migration, extension, bootstrap, pooled/direct, and restore evidence pass |
 | MIG-M03 | Add .NET 10 container and Cloud Run staging | Health, auth, CRUD, storage, and cold-start checks pass |
 | MIG-M04 | Add CI/CD, secrets, monitoring, registry cleanup, and budgets | Protected deployment and operational alerts verified |

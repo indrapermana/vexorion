@@ -23,7 +23,7 @@ public class ProductCrudTests
         var tid = tenantId ?? Guid.NewGuid();
         var db = TestDbContextFactory.Create(tid, dbName ?? Guid.NewGuid().ToString());
         var provider = new FixedTenantProvider(tid);
-        var cmd = new ProductCommandService(provider);
+        var cmd = new ProductCommandService(provider, new NoOpProductImageStorageService());
         var qry = new ProductQueryService(provider);
         return (db, cmd, qry);
     }
@@ -32,7 +32,7 @@ public class ProductCrudTests
     {
         var db = TestDbContextFactory.Create(Guid.NewGuid(), dbName ?? Guid.NewGuid().ToString());
         var provider = new FixedTenantProvider(null);
-        var cmd = new ProductCommandService(provider);
+        var cmd = new ProductCommandService(provider, new NoOpProductImageStorageService());
         var qry = new ProductQueryService(provider);
         return (db, cmd, qry);
     }
@@ -55,6 +55,30 @@ public class ProductCrudTests
         SalesPrice = 12m,
         IsActive = true,
     };
+
+    private sealed class NoOpProductImageStorageService : IProductImageStorageService
+    {
+        public Task<ProductImageUploadResult> UploadAsync(Guid tenantId, Guid productId, Stream content, string contentType, string originalFileName, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task DeleteAsync(string? imageUrl, string? thumbnailUrl, CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+    }
+
+    private sealed class RecordingProductImageStorageService : IProductImageStorageService
+    {
+        public bool FailDelete { get; init; }
+        public (string? ImageUrl, string? ThumbnailUrl)? Deleted { get; private set; }
+
+        public Task<ProductImageUploadResult> UploadAsync(Guid tenantId, Guid productId, Stream content, string contentType, string originalFileName, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task DeleteAsync(string? imageUrl, string? thumbnailUrl, CancellationToken cancellationToken = default)
+        {
+            Deleted = (imageUrl, thumbnailUrl);
+            return FailDelete ? Task.FromException(new IOException("storage unavailable")) : Task.CompletedTask;
+        }
+    }
 
     // ── Create ─────────────────────────────────────────────────────────────
 
@@ -248,6 +272,52 @@ public class ProductCrudTests
         var result = await cmd.DeleteAsync(productId, db);
         Assert.True(result.Succeeded);
         Assert.Equal(0, db.Products.Count());
+    }
+
+    [Fact]
+    public async Task Delete_WithImages_RemovesStoredImagesBeforeProduct()
+    {
+        var tenantId = Guid.NewGuid();
+        var db = TestDbContextFactory.Create(tenantId, Guid.NewGuid().ToString());
+        var storage = new RecordingProductImageStorageService();
+        var cmd = new ProductCommandService(new FixedTenantProvider(tenantId), storage);
+        var productId = Guid.NewGuid();
+        db.Products.Add(new Product
+        {
+            Id = productId,
+            TenantId = tenantId,
+            Sku = "SKU-IMAGE",
+            Name = "Image product",
+            UnitOfMeasure = "EA",
+            ImageUrl = "https://images.example/full.png",
+            ThumbnailUrl = "https://images.example/thumb.jpg"
+        });
+        await db.SaveChangesAsync();
+
+        var result = await cmd.DeleteAsync(productId, db);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(("https://images.example/full.png", "https://images.example/thumb.jpg"), storage.Deleted);
+        Assert.Empty(db.Products);
+    }
+
+    [Fact]
+    public async Task Delete_WhenImageCleanupFails_KeepsProductAndReturnsActionableError()
+    {
+        var tenantId = Guid.NewGuid();
+        var db = TestDbContextFactory.Create(tenantId, Guid.NewGuid().ToString());
+        var storage = new RecordingProductImageStorageService { FailDelete = true };
+        var cmd = new ProductCommandService(new FixedTenantProvider(tenantId), storage);
+        var productId = Guid.NewGuid();
+        db.Products.Add(new Product { Id = productId, TenantId = tenantId, Sku = "SKU-FAIL", Name = "Keep", UnitOfMeasure = "EA", ImageUrl = "https://images.example/full.png" });
+        await db.SaveChangesAsync();
+
+        var result = await cmd.DeleteAsync(productId, db);
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(StatusCodes.Status502BadGateway, result.StatusCode);
+        Assert.Contains("stored images", result.ErrorMessage);
+        Assert.Single(db.Products);
     }
 
     [Fact]

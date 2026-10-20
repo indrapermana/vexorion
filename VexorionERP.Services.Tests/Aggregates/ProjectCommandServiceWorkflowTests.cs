@@ -17,9 +17,25 @@ public class ProjectCommandServiceWorkflowTests
         var svc = new ProjectCommandService(
             new FixedTenantProvider(tenantId),
             new NoOpAuditLogger(),
-            new HttpContextAccessor());
+            new HttpContextAccessor(),
+            new NoOpDocumentStorageService());
 
         return (db, svc, tenantId);
+    }
+
+    private sealed class NoOpDocumentStorageService : IDocumentStorageService
+    {
+        public Task<ServiceResult<DocumentStorageUploadResult>> UploadAsync(Guid tenantId, string sourceType, string fileName, Stream content, string contentType, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<ServiceResult<string>> GetDownloadUrlAsync(string blobPath, string? downloadFileName = null, string? contentType = null, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<ServiceResult<byte[]>> DownloadAsync(string blobPath, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<ServiceResult<bool>> DeleteAsync(string blobPath, CancellationToken cancellationToken = default) =>
+            Task.FromResult(ServiceResult<bool>.Success(true));
     }
 
     [Fact]

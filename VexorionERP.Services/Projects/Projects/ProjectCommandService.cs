@@ -11,7 +11,8 @@ namespace VexorionERP.Services;
 public class ProjectCommandService(
     ICurrentTenantProvider currentTenantProvider,
     IAuditLogger auditLogger,
-    IHttpContextAccessor httpContextAccessor)
+    IHttpContextAccessor httpContextAccessor,
+    IDocumentStorageService documentStorageService)
     : BaseCommandService<Project>(currentTenantProvider)
 {
     public override async Task<ServiceResult<IEntityResponse<Project>>> CreateAsync(
@@ -78,6 +79,7 @@ public class ProjectCommandService(
 
     public override async Task<ServiceResult<bool>> DeleteAsync(Guid id, AppDbContext dbContext, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(dbContext);
         var tenantId = TryGetTenantId();
         string? projectNumber = null;
         if (tenantId.HasValue)
@@ -87,6 +89,30 @@ public class ProjectCommandService(
                 .Where(x => x.Id == id)
                 .Select(x => x.ProjectNumber)
                 .FirstOrDefaultAsync(cancellationToken);
+
+            var documentIds = await dbContext.ProjectDocuments.GetByTenant(tenantId.Value)
+                .Where(x => x.ProjectId == id)
+                .Select(x => x.Id)
+                .ToListAsync(cancellationToken);
+            var paths = await dbContext.ProjectDocuments.GetByTenant(tenantId.Value)
+                .Where(x => x.ProjectId == id)
+                .Select(x => x.StoragePath)
+                .ToListAsync(cancellationToken);
+            paths.AddRange(await dbContext.DocumentVersions.GetByTenant(tenantId.Value)
+                .Where(x => documentIds.Contains(x.ProjectDocumentId))
+                .Select(x => x.StoragePath)
+                .ToListAsync(cancellationToken));
+
+            foreach (var path in paths.Distinct(StringComparer.Ordinal))
+            {
+                var deletion = await documentStorageService.DeleteAsync(path, cancellationToken);
+                if (!deletion.Succeeded)
+                {
+                    return ServiceResult<bool>.Failure(
+                        StatusCodes.Status502BadGateway,
+                        "The project could not be deleted because one or more stored documents could not be removed. Please try again.");
+                }
+            }
         }
 
         var result = await base.DeleteAsync(id, dbContext, cancellationToken);

@@ -108,6 +108,34 @@ public sealed class R2StorageServiceTests
         Assert.Contains("absolute HTTPS URL", exception.Message);
     }
 
+    [Fact]
+    public async Task ProductImageDelete_RemovesFullAndThumbnailObjectsFromConfiguredBucket()
+    {
+        var client = new FakeR2ObjectClient();
+        var service = new R2ProductImageStorageService(client, Options.Create(CreateOptions()));
+
+        await service.DeleteAsync(
+            "https://images.example.com/tenant/products/product/full%20image.png",
+            "https://images.example.com/tenant/products/product/thumb_image.jpg");
+
+        Assert.Equal(
+            [("product-images", "tenant/products/product/full image.png"), ("product-images", "tenant/products/product/thumb_image.jpg")],
+            client.Deletions);
+    }
+
+    [Fact]
+    public async Task ProductImageDelete_RejectsUrlOutsideConfiguredDomain()
+    {
+        var client = new FakeR2ObjectClient();
+        var service = new R2ProductImageStorageService(client, Options.Create(CreateOptions()));
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.DeleteAsync("https://untrusted.example/object.png", null));
+
+        Assert.Contains("configured public storage domain", exception.Message);
+        Assert.Empty(client.Deletions);
+    }
+
     private static R2DocumentStorageService CreateDocumentService(FakeR2ObjectClient client) =>
         new(client, Options.Create(CreateOptions()));
 
@@ -136,6 +164,7 @@ public sealed class R2StorageServiceTests
         public int DeleteCount { get; private set; }
         public bool DisposeUploadedStream { get; init; }
         public List<(string Bucket, string Key)> Uploads { get; } = [];
+        public List<(string Bucket, string Key)> Deletions { get; } = [];
 
         public async Task PutAsync(string bucketName, string objectKey, Stream content, string contentType, CancellationToken cancellationToken)
         {
@@ -164,6 +193,7 @@ public sealed class R2StorageServiceTests
         public Task DeleteAsync(string bucketName, string objectKey, CancellationToken cancellationToken)
         {
             DeleteCount++;
+            Deletions.Add((bucketName, objectKey));
             return Task.CompletedTask;
         }
     }

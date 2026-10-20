@@ -11,4 +11,9 @@ public interface IProductImageStorageService
         string contentType,
         string originalFileName,
         CancellationToken cancellationToken = default);
+
+    Task DeleteAsync(
+        string? imageUrl,
+        string? thumbnailUrl,
+        CancellationToken cancellationToken = default);
 }
