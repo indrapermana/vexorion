@@ -54,7 +54,7 @@ This section walks you through getting the full stack running on a fresh machine
 
 ### Step 1 — Install prerequisites
 
-1. **[.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)** — confirm with `dotnet --version` (expect `8.x.xxx`)
+1. **[.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)** — confirm with `dotnet --version` (expect `10.x.xxx`)
 2. **[Node.js 20 LTS](https://nodejs.org/)** — confirm with `node -v` (expect `v20.x.x`)
 3. **PostgreSQL 14+** — must be running on port 5432
    - **macOS (recommended):** [Postgres.app](https://postgresapp.com/) — drag-and-drop install, no configuration needed. After installing, open the app and click **Start**. Add the CLI tools to your PATH as shown in the app's instructions:

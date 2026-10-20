@@ -18,7 +18,7 @@ on:
 
 jobs:
   build-and-test:
-    name: Build & Test (.NET 8)
+    name: Build & Test (.NET 10)
     runs-on: ubuntu-latest
 
     services:
@@ -45,10 +45,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup .NET 8
+      - name: Setup .NET 10
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          global-json-file: global.json
 
       - name: Restore dependencies
         run: dotnet restore
@@ -97,10 +97,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup .NET 8
+      - name: Setup .NET 10
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          global-json-file: global.json
 
       - name: Publish
         run: dotnet publish VexorionERP/VexorionERP.csproj --configuration Release --output ./publish

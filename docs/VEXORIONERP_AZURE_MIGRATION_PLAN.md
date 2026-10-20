@@ -129,6 +129,17 @@ Acceptance:
 
 Rollback: revert only the .NET/package upgrade commit; no database or infrastructure state should have changed.
 
+Implementation result (2026-10-20): **locally validated; pending commit/CI evidence**.
+
+- All nine backend projects target `net10.0`; `global.json` pins SDK `10.0.301` with latest-patch roll-forward.
+- Coordinated ASP.NET Core, EF Core, and Identity packages use `10.0.13`; Npgsql EF Core uses `10.0.3`; Microsoft.NET.Test.Sdk uses `18.11.0`.
+- The EF Core 10 test-host provider replacement is explicit, preventing PostgreSQL and InMemory providers from being registered together.
+- Restore and Release build pass; the build reports zero warnings and zero errors.
+- The complete backend suite passes 859/859: Services 514, Web 191, Handlers 154.
+- The live NuGet audit reports no vulnerable direct or transitive packages in any of the nine projects.
+- `dotnet ef migrations has-pending-model-changes` reports no model changes since the last migration; existing migrations were not regenerated.
+- No cloud provider, DNS, production data, or secret was changed. PostgreSQL deployment rehearsal remains part of `MIG-M02`, not evidence for this milestone.
+
 ### MIG-M00 — Make initialization production-safe
 
 The API must not automatically modify schema or bootstrap data whenever a Cloud Run instance starts.

@@ -1,6 +1,6 @@
 # VexorionERP Consolidated Review and Development Plan
 
-Last reviewed: 18 October 2026
+Last reviewed: 20 October 2026
 Review basis: repository documentation, backend/domain/database/service/handler/controller code, the three frontend applications, automated tests, build configuration, and local validation described below.
 
 This is the single source of truth for implementation status and upcoming development work. A checked item means the capability is present in the current repository; it does not by itself mean production readiness. Release readiness requires the quality gates in this document to pass.
@@ -39,18 +39,18 @@ The next milestone is **workflow and release hardening (R2/R3)**, not another br
 
 Percentage-complete labels are intentionally not used. Capability-inventory checkboxes below mean **implemented** only unless a stronger state and evidence are explicitly recorded.
 
-### Current validation evidence — 13 October 2026
+### Current validation evidence — 20 October 2026
 
 | Check | Result | Evidence / implication |
 |---|---|---|
-| Source state | RECORDED | Commit `bf635b7a1b1fa9b5299c347a783c28b67d4bfae1` on `master`; P0-1 through P0-3 were present in this clean source state. P0-4 documentation edits require a later commit before they can be release evidence. |
-| Environment | RECORDED | macOS 26.7.1, .NET SDK 10.0.301 targeting .NET 8, Node 22.22.0, npm 10.9.4. |
-| `dotnet build VexorionERP.sln -c Release --no-restore` | PASS | Zero warnings and zero errors with the local Six Labors license. |
-| `dotnet test VexorionERP.sln --no-restore --disable-build-servers --verbosity minimal -m:1 -p:UseSharedCompilation=false` | PASS | 830/830: Services 498, Web 186, Handlers 146. |
+| Source state | WORKTREE | The .NET 10 upgrade is locally validated but uncommitted; it is not yet CI or release evidence. |
+| Environment | RECORDED | macOS 26.7.1, .NET SDK 10.0.301 targeting .NET 10, Node 22.22.0, npm 10.9.4. |
+| `dotnet build VexorionERP.sln --configuration Release --no-restore --disable-build-servers --verbosity minimal -m:1 -p:UseSharedCompilation=false` | PASS | Zero warnings and zero errors on all nine `net10.0` projects. |
+| `dotnet test VexorionERP.sln --configuration Release --no-build --no-restore --disable-build-servers --verbosity minimal -m:1 -p:UseSharedCompilation=false` | PASS | 859/859: Services 514, Web 191, Handlers 154. |
 | `dotnet list VexorionERP.sln package --vulnerable --include-transitive --no-restore` | PASS | NuGet reported no vulnerable direct or transitive packages in all nine projects. |
 | `npm run test:run` | PASS | 183/183: Main UI 82, AdminUI 30, POS 71; no hidden mock errors or React `act(...)` warnings. |
 | `npm run build` | PASS WITH WARNING | All four frontend packages built; Main UI emitted the known chunk-size warning. |
-| Database migration state | NOT VALIDATED | Migration files and model snapshot exist, but neither a clean database migration nor an upgrade rehearsal was executed or linked. |
+| EF migration model state | PASS | `dotnet ef migrations has-pending-model-changes` reports no model change since the last migration; existing migrations were preserved. A clean database and upgrade rehearsal are still not validated. |
 | Durable artifacts | NOT RECORDED | Local terminal validation produced no durable artifact URLs. CI artifact/run links must be recorded against a release-candidate commit. |
 
 ### Still not validated
@@ -66,7 +66,7 @@ Any capability requiring those checks remains **implemented** or **locally valid
 
 ### 3.1 Platform and architecture
 
-- [x] ASP.NET Core 8 API with EF Core/PostgreSQL.
+- [x] ASP.NET Core 10 API with EF Core 10/PostgreSQL.
 - [x] Tenant-aware domain model, query filtering, claims/policy authorization, audit infrastructure, rate limiting, HTTPS/HSTS, and CSP headers.
 - [x] CQRS/Mediator handlers alongside application services.
 - [x] React/Vite Main UI, AdminUI, and POS workspaces plus shared `@vexorion/ui` package.
