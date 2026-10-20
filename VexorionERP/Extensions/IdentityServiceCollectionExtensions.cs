@@ -99,6 +99,8 @@ public static class IdentityServiceCollectionExtensions
         services.AddScoped<ITenantOnboardingService, TenantOnboardingService>();
         services.AddScoped<IUserManagementService, UserManagementService>();
         services.AddScoped<SalesInvoiceCommandService>();
+        services.AddScoped<IApplicationProvisioner, ApplicationProvisioner>();
+        services.AddScoped<IApplicationRuntimeValidator, ApplicationRuntimeValidator>();
 
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
         {

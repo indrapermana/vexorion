@@ -4,7 +4,6 @@ public class TenantGovernanceDefaultsOptions
 {
     public const string SectionName = "TenantGovernanceDefaults";
 
-    public bool BackfillExistingTenantsOnStartup { get; set; } = true;
     public bool CreateDefaultsOnTenantOnboarding { get; set; } = true;
     public TenantModuleDefaultOptions Modules { get; set; } = new();
     public TenantPlanDefaultOptions Plan { get; set; } = new();

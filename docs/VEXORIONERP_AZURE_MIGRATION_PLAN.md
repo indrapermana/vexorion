@@ -86,13 +86,12 @@ Self-hosting PostgreSQL on a free VM is not approved for real customer data beca
 
 ## 3. Repository facts already confirmed
 
-- Nine backend projects currently target `net8.0`.
-- The local environment has .NET SDK 10 available.
+- Nine backend projects target `net10.0` and the SDK is pinned by `global.json`.
 - The application uses EF Core and `Npgsql.EntityFrameworkCore.PostgreSQL`.
 - PostgreSQL migration `20261018155036_AddProjectDocumentTrigramSearchIndexes` requires the `pg_trgm` extension.
 - The runtime connection key is `ConnectionStrings__DefaultConnection`.
-- The API currently calls `Database.MigrateAsync()` during application startup.
-- Startup also reconciles roles and permissions, optionally creates a bootstrap tenant, and backfills tenant governance defaults.
+- Normal API startup validates database connectivity and pending migrations without applying schema or seed writes.
+- Explicit `migrate`, `bootstrap`, and `provision` operations handle schema migration, role/claim reconciliation, the initial tenant identity, and governance defaults.
 - Document storage already uses `IDocumentStorageService`.
 - Product images use the separate `IProductImageStorageService` and currently expect stable image and thumbnail URLs.
 - Document storage persists provider-neutral object paths for project documents and generated documents, while product entities persist image URLs.
@@ -172,6 +171,17 @@ Acceptance:
 - A new empty test database can be provisioned deterministically through the explicit migration/bootstrap operation.
 - Re-running the provisioning operation makes no duplicate tenant, user, role, or claim records.
 - Provisioning tests cover partial failure and safe retry.
+
+Implementation result (2026-10-20): **locally validated; PostgreSQL/Neon rehearsal pending `MIG-M02`**.
+
+- Normal startup performs read-only connectivity and pending-migration validation and fails with an actionable message when the schema is unavailable or stale.
+- Schema migration, identity/bootstrap reconciliation, and governance defaults run only through `--vexorion-operation=migrate`, `bootstrap`, or `provision`.
+- Production operations require a separate privileged `ConnectionStrings:MigrationConnection`; normal runtime continues to use `DefaultConnection`.
+- Bootstrap is invocation-scoped rather than controlled by a persistent enable flag, requires tenant code `vexorionerp`, and takes its password only from untracked configuration.
+- Bootstrap is idempotent, repairs supported partial state, and rejects tenant/company/admin identity conflicts.
+- Production validation rejects missing, placeholder, non-TLS database, JWT, bootstrap, and storage credentials.
+- Tracked development storage/logging credentials were removed. Previously exposed credentials must be rotated by their service owner if they remain active.
+- Nine focused provisioning/configuration tests and the complete backend suite pass. No cloud account or production database was accessed.
 
 ### MIG-M01 — Adapt storage for Cloudflare R2
 

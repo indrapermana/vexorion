@@ -85,21 +85,20 @@ npm install
 
 ### Step 3 — Configure the database connection
 
-Open `VexorionERP/appsettings.Development.json` and update the connection string to match your local PostgreSQL setup:
+Create your ignored local configuration from the tracked example, then edit it with your local PostgreSQL credentials:
 
-```json
-"ConnectionStrings": {
-  "DefaultConnection": "Host=127.0.0.1;Port=5432;Database=vexorionerp;Username=postgres;Password=<your-password>;Include Error Detail=True;"
-}
+```bash
+cp VexorionERP/appsettings.Development.example.json \
+  VexorionERP/appsettings.Development.json
 ```
 
+`appsettings.Development.json` is Git-ignored. Keep both `DefaultConnection` and `MigrationConnection`; for local development they may use the same PostgreSQL connection.
+
 > **Postgres.app users (macOS):** The default superuser is your macOS username (not `postgres`) and has no password. Your connection string will look like:
-> ```json
-> "DefaultConnection": "Host=127.0.0.1;Port=5432;Database=vexorionerp;Username=<your-macos-username>;Password=;Include Error Detail=True;"
-> ```
+> Use `Username=<your-macos-username>;Password=` in both connection strings.
 > You can confirm your username with `whoami` in the terminal.
 
-> Leave all other values (`Jwt`, `Bootstrap`, etc.) as-is for local development.
+> The runtime connection can later be pooled while `MigrationConnection` must remain a privileged direct connection.
 
 ### Step 4 — Create the database and run migrations
 
@@ -109,35 +108,32 @@ Create the database in PostgreSQL (you can do this via pgAdmin or psql):
 CREATE DATABASE vexorionerp;
 ```
 
-The API applies pending migrations automatically on startup, so no manual migration step is needed. If you prefer to apply migrations manually before running the API:
+Normal API startup never applies migrations. Apply them through the explicit operation:
 
 ```bash
-dotnet ef database update \
-  --project VexorionERP.Database/VexorionERP.Database.csproj \
-  --startup-project VexorionERP/VexorionERP.csproj
+dotnet run --project VexorionERP/VexorionERP.csproj -- \
+  --vexorion-operation=migrate
 ```
 
-### Step 5 — Enable dev seed data
+### Step 5 — Provision the initial tenant
 
-In `VexorionERP/appsettings.Development.json`, set `Bootstrap.Enabled` to `true`:
+Set a strong `Bootstrap:AdminPassword` value in your ignored `appsettings.Development.json`, then run the one-time idempotent provisioning operation:
 
-```json
-"Bootstrap": {
-  "Enabled": true,
-  ...
-}
+```bash
+dotnet run --project VexorionERP/VexorionERP.csproj -- \
+  --vexorion-operation=bootstrap
 ```
 
-Start the API once (Step 6 below), let it seed, then set `Enabled` back to `false` to prevent re-seeding on subsequent restarts.
+Alternatively, `--vexorion-operation=provision` applies migrations and performs bootstrap in one explicit command. Ordinary API startup cannot trigger bootstrap.
 
 **Default seed credentials:**
 
 | Field | Value |
 |---|---|
-| Tenant code | `demo` |
+| Tenant code | `vexorionerp` |
 | Username | `admin` |
 | Email | `admin@demo.local` |
-| Password | `DemoAdmin123!` |
+| Password | The value stored in `Bootstrap:AdminPassword` |
 
 ### Step 6 — Trust the HTTPS development certificate (first time only)
 
@@ -180,9 +176,9 @@ You do **not** need to run all three at once — start only the app(s) relevant 
 
 Navigate to `http://localhost:5173` (main ERP UI) or `http://localhost:5174` (admin panel) and log in with:
 
-- **Tenant code:** `demo`
+- **Tenant code:** `vexorionerp`
 - **Email:** `admin@demo.local`
-- **Password:** `DemoAdmin123!`
+- **Password:** your local `Bootstrap:AdminPassword` value
 
 ### Common problems
 
@@ -192,7 +188,7 @@ Navigate to `http://localhost:5173` (main ERP UI) or `http://localhost:5174` (ad
 | `npm install` fails with peer dependency errors | Node version is too old | Upgrade to Node 20 LTS |
 | Browser shows certificate warning on `localhost:7171` | Dev cert not trusted | Run `dotnet dev-certs https --trust` |
 | Frontend shows "Network Error" or blank page | Backend is not running | Start the backend first (Step 7) |
-| Login returns 401 even with correct credentials | Seed data not applied | Confirm `Bootstrap.Enabled` was `true` on the first run |
+| Login returns 401 even with correct credentials | Bootstrap was not run or credentials differ | Run the explicit bootstrap operation and use its configured tenant/admin values |
 | Port already in use | Another process is using the port | Stop the conflicting process, or change the port in `launchSettings.json` / `vite.config.ts` |
 
 ---
@@ -270,13 +266,13 @@ dotnet watch --project VexorionERP/VexorionERP.csproj --no-hot-reload
 
 ### Database
 
-The development connection string is in `VexorionERP/appsettings.Development.json`. Bootstrap seeding is enabled in development and runs once on first startup.
+Copy `appsettings.Development.example.json` to the ignored `appsettings.Development.json`, then set local database credentials and `Bootstrap:AdminPassword` there. Normal startup is read-only with respect to schema and bootstrap data; use the explicit provisioning commands in the setup guide.
 
 **Dev seed credentials:**
 
 | Field | Value |
 |---|---|
-| Tenant code | `demo` |
+| Tenant code | `vexorionerp` |
 | Admin username | `admin` |
 | Admin email | `admin@demo.local` |
 | Admin password | `DemoAdmin123!` |
@@ -456,7 +452,7 @@ Override credentials with environment variables if needed:
 | `E2E_PASSWORD` | `DemoAdmin123!` |
 | `POS_BASE_URL` | `http://localhost:5175` |
 
-The default `demo` credentials work only when that bootstrap tenant was seeded previously. `Bootstrap.Enabled` is `false` in the committed development configuration, so an existing database may use a different tenant and administrator. For the cross-tenant project scenario, supply an active local **SystemAdmin** account because the test provisions and removes a temporary tenant B:
+The example E2E defaults may refer to an older local `demo` database. For a newly provisioned environment, override them with the `vexorionerp` bootstrap tenant and its managed password. For the cross-tenant project scenario, supply an active local **SystemAdmin** account because the test provisions and removes a temporary tenant B:
 
 ```bash
 cd VexorionERP.UI

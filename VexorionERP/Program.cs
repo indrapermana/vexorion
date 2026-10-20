@@ -20,6 +20,19 @@ try
 QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
+var applicationOperation = args.GetApplicationOperation();
+
+if (builder.Environment.IsEnvironment("Testing"))
+{
+    builder.Configuration["ConnectionStrings:DefaultConnection"] ??=
+        "Host=localhost;Database=ignored;Username=ignored;Password=ignored";
+    builder.Configuration["Jwt:Issuer"] ??= "vexorion-tests";
+    builder.Configuration["Jwt:Audience"] ??= "vexorion-tests";
+    builder.Configuration["Jwt:SecretKey"] ??= Convert.ToHexString(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
+}
+
+builder.Configuration.UsePrivilegedConnectionForOperation(builder.Environment, applicationOperation);
+ProductionConfigurationValidator.Validate(builder.Configuration, builder.Environment, applicationOperation);
 
 builder.Host.UseSerilog((ctx, services, cfg) =>
 {
@@ -38,11 +51,18 @@ builder.Host.UseSerilog((ctx, services, cfg) =>
     var lokiKey = ctx.Configuration["GrafanaLoki:ApiKey"];
     if (!string.IsNullOrWhiteSpace(lokiKey))
     {
+        var lokiUser = ctx.Configuration["GrafanaLoki:User"];
+        if (string.IsNullOrWhiteSpace(lokiUser))
+        {
+            throw new InvalidOperationException(
+                "GrafanaLoki:User is required when GrafanaLoki:ApiKey is configured.");
+        }
+
         cfg.WriteTo.GrafanaLoki(
             uri: ctx.Configuration["GrafanaLoki:Url"] ?? "https://logs-prod-020.grafana.net",
             credentials: new LokiCredentials
             {
-                Login = ctx.Configuration["GrafanaLoki:User"] ?? "1579336",
+                Login = lokiUser,
                 Password = lokiKey
             },
             labels:
@@ -134,6 +154,14 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
+if (applicationOperation != ApplicationOperation.Run)
+{
+    await app.RunApplicationOperationAsync(applicationOperation);
+    return;
+}
+
+await app.ValidateApplicationRuntimeAsync();
+
 app.UseSerilogRequestLogging(opts =>
 {
     opts.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
@@ -160,8 +188,6 @@ app.UseStatusCodePages(async statusCodeContext =>
     var problem = ApiProblemDetailsFactory.Create(httpContext, statusCode);
     await httpContext.Response.WriteAsJsonAsync(problem);
 });
-
-await app.InitializeApplicationAsync();
 
 if (app.Environment.IsDevelopment())
 {

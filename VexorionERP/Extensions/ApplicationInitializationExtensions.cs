@@ -1,221 +1,116 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-using System.Security.Claims;
-using VexorionERP;
 using VexorionERP.Database;
-using VexorionERP.Models;
-using VexorionERP.Services;
 
 namespace VexorionERP;
 
+public enum ApplicationOperation
+{
+    Run,
+    Migrate,
+    Bootstrap,
+    Provision
+}
+
 public static class ApplicationInitializationExtensions
 {
-    public static async Task InitializeApplicationAsync(this WebApplication app)
+    private const string OperationPrefix = "--vexorion-operation=";
+
+    public static ApplicationOperation GetApplicationOperation(this string[] args)
+    {
+        var values = args
+            .Where(argument => argument.StartsWith(OperationPrefix, StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+
+        if (values.Length == 0)
+        {
+            return ApplicationOperation.Run;
+        }
+
+        if (values.Length > 1)
+        {
+            throw new InvalidOperationException("Specify --vexorion-operation only once.");
+        }
+
+        return values[0][OperationPrefix.Length..].Trim().ToLowerInvariant() switch
+        {
+            "migrate" => ApplicationOperation.Migrate,
+            "bootstrap" => ApplicationOperation.Bootstrap,
+            "provision" => ApplicationOperation.Provision,
+            var value => throw new InvalidOperationException(
+                $"Unsupported VexorionERP operation '{value}'. Use migrate, bootstrap, or provision.")
+        };
+    }
+
+    public static void UsePrivilegedConnectionForOperation(
+        this ConfigurationManager configuration,
+        IHostEnvironment environment,
+        ApplicationOperation operation)
+    {
+        if (operation == ApplicationOperation.Run)
+        {
+            return;
+        }
+
+        var privilegedConnection = configuration.GetConnectionString("MigrationConnection");
+        if (string.IsNullOrWhiteSpace(privilegedConnection))
+        {
+            if (environment.IsProduction())
+            {
+                throw new InvalidOperationException(
+                    "ConnectionStrings:MigrationConnection is required for production provisioning operations.");
+            }
+
+            return;
+        }
+
+        configuration["ConnectionStrings:DefaultConnection"] = privilegedConnection;
+    }
+
+    public static async Task ValidateApplicationRuntimeAsync(this WebApplication app)
     {
         await using var scope = app.Services.CreateAsyncScope();
+        var validator = scope.ServiceProvider.GetRequiredService<IApplicationRuntimeValidator>();
+        await validator.ValidateAsync();
+    }
 
+    public static async Task RunApplicationOperationAsync(
+        this WebApplication app,
+        ApplicationOperation operation)
+    {
+        if (operation == ApplicationOperation.Run)
+        {
+            throw new InvalidOperationException("Run is not a provisioning operation.");
+        }
+
+        await using var scope = app.Services.CreateAsyncScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        if (dbContext.Database.IsRelational())
-        {
-            await dbContext.Database.MigrateAsync();
-        }
-        else
-        {
-            await dbContext.Database.EnsureCreatedAsync();
-        }
 
-        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
-
-        foreach (var roleName in AppRoles.All)
+        if (operation is ApplicationOperation.Migrate or ApplicationOperation.Provision)
         {
-            var role = await roleManager.FindByNameAsync(roleName);
-            if (role is null)
+            if (dbContext.Database.IsRelational())
             {
-                role = new IdentityRole<Guid>
-                {
-                    Id = Guid.NewGuid(),
-                    Name = roleName,
-                    NormalizedName = roleName.ToUpperInvariant()
-                };
-
-                var createResult = await roleManager.CreateAsync(role);
-                if (!createResult.Succeeded)
-                {
-                    throw new InvalidOperationException($"Failed to create role '{roleName}': {string.Join(", ", createResult.Errors.Select(error => error.Description))}");
-                }
+                await dbContext.Database.MigrateAsync();
             }
-
-            var existingClaims = await roleManager.GetClaimsAsync(role);
-            var assignedPermissions = RolePermissionMatrix.All.TryGetValue(roleName, out var permissions)
-                ? permissions
-                : [];
-
-            foreach (var permission in assignedPermissions)
+            else
             {
-                if (existingClaims.Any(claim => claim.Type == AppClaimTypes.Permission && claim.Value == permission))
-                {
-                    continue;
-                }
-
-                var claimResult = await roleManager.AddClaimAsync(role, new Claim(AppClaimTypes.Permission, permission));
-                if (!claimResult.Succeeded)
-                {
-                    throw new InvalidOperationException($"Failed to add permission '{permission}' to role '{roleName}': {string.Join(", ", claimResult.Errors.Select(error => error.Description))}");
-                }
+                await dbContext.Database.EnsureCreatedAsync();
             }
         }
 
-        await SeedBootstrapTenantAsync(scope.ServiceProvider, dbContext);
-        await EnsureTenantGovernanceDefaultsAsync(scope.ServiceProvider, dbContext);
-    }
-
-    private static async Task SeedBootstrapTenantAsync(IServiceProvider serviceProvider, AppDbContext dbContext)
-    {
-        var bootstrapOptions = serviceProvider.GetRequiredService<IOptions<BootstrapOptions>>().Value;
-        if (!bootstrapOptions.Enabled)
+        if (operation is ApplicationOperation.Bootstrap or ApplicationOperation.Provision)
         {
-            return;
-        }
-
-        var normalizedTenantCode = bootstrapOptions.Tenant.Code.Trim().ToUpperInvariant();
-        var existingTenant = await dbContext.Tenants.FirstOrDefaultAsync(x => x.Code.ToUpper() == normalizedTenantCode);
-        if (existingTenant is not null)
-        {
-            return;
-        }
-
-        var userManager = serviceProvider.GetRequiredService<UserManager<User>>();
-        var auditLogger = serviceProvider.GetRequiredService<IAuditLogger>();
-        var bootstrapPassword = bootstrapOptions.AdminUser.Password;
-        if (string.IsNullOrWhiteSpace(bootstrapPassword))
-        {
-            bootstrapPassword = Environment.GetEnvironmentVariable("VEXORIONERP_BOOTSTRAP_ADMIN_PASSWORD");
-        }
-
-        if (string.IsNullOrWhiteSpace(bootstrapPassword))
-        {
-            throw new InvalidOperationException("Bootstrap seeding is enabled, but no admin password was provided. Set Bootstrap:AdminUser:Password or the VEXORIONERP_BOOTSTRAP_ADMIN_PASSWORD environment variable.");
-        }
-
-        await using var transaction = await dbContext.Database.BeginTransactionAsync();
-
-        var tenant = new Tenant
-        {
-            Name = bootstrapOptions.Tenant.Name.Trim(),
-            Code = bootstrapOptions.Tenant.Code.Trim(),
-            Domain = string.IsNullOrWhiteSpace(bootstrapOptions.Tenant.Domain) ? null : bootstrapOptions.Tenant.Domain.Trim()
-        };
-
-        var company = new Company
-        {
-            TenantId = tenant.Id,
-            Name = bootstrapOptions.Company.Name.Trim(),
-            Code = bootstrapOptions.Company.Code.Trim()
-        };
-
-        var adminUser = new User
-        {
-            TenantId = tenant.Id,
-            UserName = bootstrapOptions.AdminUser.UserName.Trim(),
-            Email = bootstrapOptions.AdminUser.Email.Trim(),
-            FirstName = bootstrapOptions.AdminUser.FirstName.Trim(),
-            LastName = bootstrapOptions.AdminUser.LastName.Trim(),
-            EmailConfirmed = true,
-            IsActive = true
-        };
-
-        dbContext.Tenants.Add(tenant);
-        dbContext.Companies.Add(company);
-
-        var createResult = await userManager.CreateAsync(adminUser, bootstrapPassword);
-        if (!createResult.Succeeded)
-        {
-            throw new InvalidOperationException($"Failed to create bootstrap admin user: {string.Join(", ", createResult.Errors.Select(error => error.Description))}");
-        }
-
-        var roleResult = await userManager.AddToRolesAsync(adminUser, [AppRoles.SystemAdmin, AppRoles.TenantAdmin]);
-        if (!roleResult.Succeeded)
-        {
-            throw new InvalidOperationException($"Failed to assign bootstrap roles: {string.Join(", ", roleResult.Errors.Select(error => error.Description))}");
-        }
-
-        await dbContext.SaveChangesAsync();
-        await transaction.CommitAsync();
-        await auditLogger.LogAsync("bootstrap.seeded", tenant.Id, adminUser.Id, adminUser.Id, nameof(Tenant), tenant.Id.ToString(), "Bootstrap tenant and admin user created.");
-    }
-
-    private static async Task EnsureTenantGovernanceDefaultsAsync(IServiceProvider serviceProvider, AppDbContext dbContext)
-    {
-        var defaultsOptions = serviceProvider.GetRequiredService<IOptions<TenantGovernanceDefaultsOptions>>().Value;
-        if (!defaultsOptions.BackfillExistingTenantsOnStartup)
-        {
-            return;
-        }
-
-        var tenantIds = await dbContext.Tenants
-            .AsNoTracking()
-            .Select(x => x.Id)
-            .ToListAsync();
-
-        if (tenantIds.Count == 0)
-        {
-            return;
-        }
-
-        var existingModuleConfigTenantIds = await dbContext.TenantModuleConfigs
-            .AsNoTracking()
-            .Select(x => x.TenantId)
-            .ToListAsync();
-
-        var missingModuleConfigTenantIds = tenantIds
-            .Except(existingModuleConfigTenantIds)
-            .ToArray();
-
-        foreach (var tenantId in missingModuleConfigTenantIds)
-        {
-            dbContext.TenantModuleConfigs.Add(new TenantModuleConfig
+            if (dbContext.Database.IsRelational())
             {
-                TenantId = tenantId,
-                ProjectManagementEnabled = defaultsOptions.Modules.ProjectManagementEnabled,
-                DocumentManagementEnabled = defaultsOptions.Modules.DocumentManagementEnabled,
-                EmployeeManagementEnabled = defaultsOptions.Modules.EmployeeManagementEnabled,
-                SalesEnabled = defaultsOptions.Modules.SalesEnabled,
-                PurchasingEnabled = defaultsOptions.Modules.PurchasingEnabled,
-                InventoryEnabled = defaultsOptions.Modules.InventoryEnabled
-            });
-        }
+                var pendingMigrations = (await dbContext.Database.GetPendingMigrationsAsync()).ToArray();
+                if (pendingMigrations.Length > 0)
+                {
+                    throw new InvalidOperationException(
+                        "Bootstrap requires a current schema. Run --vexorion-operation=migrate first.");
+                }
+            }
 
-        var existingPlanTenantIds = await dbContext.TenantPlans
-            .AsNoTracking()
-            .Select(x => x.TenantId)
-            .Distinct()
-            .ToListAsync();
-
-        var missingPlanTenantIds = tenantIds
-            .Except(existingPlanTenantIds)
-            .ToArray();
-
-        foreach (var tenantId in missingPlanTenantIds)
-        {
-            dbContext.TenantPlans.Add(new TenantPlan
-            {
-                TenantId = tenantId,
-                PlanCode = defaultsOptions.Plan.PlanCode.Trim().ToUpperInvariant(),
-                PlanName = defaultsOptions.Plan.PlanName.Trim(),
-                MaxStorageBytes = defaultsOptions.Plan.MaxStorageBytes,
-                MaxFileSizeBytes = defaultsOptions.Plan.MaxFileSizeBytes,
-                WarningThresholdPercent = defaultsOptions.Plan.WarningThresholdPercent,
-                SoftBlockThresholdPercent = defaultsOptions.Plan.SoftBlockThresholdPercent,
-                HardBlockThresholdPercent = defaultsOptions.Plan.HardBlockThresholdPercent,
-                EffectiveFromUtc = DateTime.UtcNow,
-                IsDefault = true
-            });
-        }
-
-        if (missingModuleConfigTenantIds.Length > 0 || missingPlanTenantIds.Length > 0)
-        {
-            await dbContext.SaveChangesAsync();
+            var provisioner = scope.ServiceProvider.GetRequiredService<IApplicationProvisioner>();
+            await provisioner.BootstrapAsync();
         }
     }
 }

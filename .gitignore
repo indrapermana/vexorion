@@ -48,6 +48,9 @@ CoverageReport/
 # Local Six Labors license (never commit private/community license material)
 **/sixlabors.lic
 
+# Local backend development configuration (copy from the tracked example)
+VexorionERP/appsettings.Development.json
+
 # Monorepo tooling
 node_modules/
 .turbo/

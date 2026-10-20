@@ -45,7 +45,7 @@ public abstract class TestWebApplicationFactoryBase : WebApplicationFactory<Prog
                 ["Jwt:Issuer"] = "vexorion-tests",
                 ["Jwt:Audience"] = "vexorion-tests",
                 ["Jwt:SecretKey"] = "0123456789abcdef0123456789abcdef",
-                ["Bootstrap:Enabled"] = "false"
+                ["Bootstrap:AdminPassword"] = null
             });
         });
     }

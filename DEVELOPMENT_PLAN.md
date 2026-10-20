@@ -46,7 +46,7 @@ Percentage-complete labels are intentionally not used. Capability-inventory chec
 | Source state | WORKTREE | The .NET 10 upgrade is locally validated but uncommitted; it is not yet CI or release evidence. |
 | Environment | RECORDED | macOS 26.7.1, .NET SDK 10.0.301 targeting .NET 10, Node 22.22.0, npm 10.9.4. |
 | `dotnet build VexorionERP.sln --configuration Release --no-restore --disable-build-servers --verbosity minimal -m:1 -p:UseSharedCompilation=false` | PASS | Zero warnings and zero errors on all nine `net10.0` projects. |
-| `dotnet test VexorionERP.sln --configuration Release --no-build --no-restore --disable-build-servers --verbosity minimal -m:1 -p:UseSharedCompilation=false` | PASS | 859/859: Services 514, Web 191, Handlers 154. |
+| `dotnet test VexorionERP.sln --configuration Release --no-build --no-restore --disable-build-servers --verbosity minimal -m:1 -p:UseSharedCompilation=false` | PASS | 868/868: Services 514, Web 200, Handlers 154. |
 | `dotnet list VexorionERP.sln package --vulnerable --include-transitive --no-restore` | PASS | NuGet reported no vulnerable direct or transitive packages in all nine projects. |
 | `npm run test:run` | PASS | 183/183: Main UI 82, AdminUI 30, POS 71; no hidden mock errors or React `act(...)` warnings. |
 | `npm run build` | PASS WITH WARNING | All four frontend packages built; Main UI emitted the known chunk-size warning. |
