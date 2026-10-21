@@ -25,7 +25,7 @@ Confirmed decisions:
 - The backend is upgraded from .NET 8 to .NET 10 before provider-specific migration work begins.
 - ClamAV remains disabled until a private scanner is provisioned and integration-tested.
 - Azure resources are not deleted by this plan. Any later retirement requires separate inventory, retention, and owner approval.
-- The early pilot uses one persistent production environment. The previously validated Neon rehearsal database and GCP staging project are temporary evidence environments and will be deleted only after the production CI, application, storage, frontend, rollback, and retention checks pass.
+- The early pilot uses one persistent production environment. After production CI, application, storage, frontend, rollback, and dependency checks passed, the GitHub staging environment and Neon staging project were deleted and the GCP staging project entered its provider deletion window.
 
 Non-goals:
 
@@ -300,7 +300,7 @@ Functional acceptance for `MIG-M02` is complete. Administrative closeout still r
 
 - Record the actual staging and production PostgreSQL versions, regions, current account plan limits, connection limits, and restore windows in the operator record.
 - Confirm the two temporary restore-rehearsal branches were removed after retaining the evidence.
-- After production cutover acceptance, delete the separate Neon staging project. Future high-risk migration rehearsals should use short-lived isolated branches or a temporary environment rather than a permanently running staging stack.
+- The separate Neon staging project was deleted after production cutover acceptance. Future high-risk migration rehearsals should use short-lived isolated branches or a temporary environment rather than a permanently running staging stack.
 
 ### MIG-M03 — Containerize and deploy to Cloud Run
 
@@ -398,13 +398,18 @@ Cloud Run production evidence (owner-confirmed, 2026-10-21):
 - The service runs with 1 vCPU, 512 MiB, request CPU throttling, zero minimum instances, and one maximum instance under the dedicated `vexorionerp-api-production` runtime identity.
 - The runtime identity has resource-level accessor bindings only on the production Neon connection, JWT key, R2 access-key ID, R2 secret key, and Grafana Loki API-key secrets. Non-secret R2 and Loki identifiers are managed as Cloud Run environment variables.
 - Cloud Logging remains active through console output and Grafana Loki is enabled as a second sink with a log-write credential. The credential exposed during local diagnostic review was rotated before production configuration.
-- Liveness, Neon-backed readiness, anonymous HTTP 401 behavior, authenticated admin login, current-user access, permissions, and Loki ingestion were owner-confirmed. Controlled production CRUD/R2 cleanup, frontend routing, production CI, rollback, and cold-start timing remain pending.
-- The early-pilot decision is to retain only this production environment after cutover. The GCP project ID and service names are production-specific; the former GCP staging project must not be deleted until the remaining acceptance checks pass.
+- Liveness, Neon-backed readiness, anonymous HTTP 401 behavior, authenticated admin login, current-user access, permissions, and Loki ingestion were owner-confirmed.
+- The production GitHub workflow passed its complete build/test, OIDC exchange, image push, immutable-digest deployment, and live/ready verification. No long-lived Google key or runtime secret was supplied to GitHub.
+- A reversible production smoke test created a temporary category and project, uploaded a text document to R2, verified a byte-identical signed download, deleted the document, confirmed the prior signed URL and API record returned HTTP 404, and removed the project/category. Audit history remains by design.
+- Traffic was rolled back from CI revision `vexorionerp-api-production-00002-tjs` to the previous healthy revision `vexorionerp-api-production-00001-c49`; live, ready, anonymous 401, and authenticated login passed. Traffic was restored to `00002-tjs` and both health checks passed.
+- Exact CORS preflight behavior passed for Main UI, Admin UI, and POS. All three Cloudflare applications were rebuilt against the production Cloud Run `/api` URL and owner-confirmed login succeeded.
+- Independent backup/object recovery, cold-start timing, full frontend workflows, enabled CI E2E gates, and release-candidate evidence remain pending.
+- The early-pilot decision is to retain only this production environment. The GitHub and Neon staging environments are deleted; the former GCP staging project is `DELETE_REQUESTED` and its billing link is disabled. Production health and login continued to pass after retirement.
 
 ### MIG-M04 — CI/CD, secrets, and observability
 
 - [x] Use GitHub Actions OIDC/workload identity federation instead of a long-lived Google service-account key.
-- [ ] Configure the GitHub `production` environment and apply the strongest branch/approval protection supported by the repository plan before the first production workflow run.
+- [x] Configure the GitHub `production` environment with the production deployment variables, build-only license secret, and master-branch restriction before the first production workflow run.
 - [x] Pin every external action used by the backend workflow to an immutable commit SHA.
 - [x] Use Secret Manager for the production runtime connection, JWT signing key, R2 credentials, and Loki API key; no runtime secret is supplied by the deployment workflow.
 - Configure budget alerts and inspect actual billing daily during the pilot.
@@ -420,7 +425,7 @@ CI/CD implementation evidence (2026-10-21):
 - Dedicated deployer `vexorionerp-github-production` can update Cloud Run in the production project, push only to the production Artifact Registry repository, and act as the production runtime identity. It cannot read runtime secrets and has no user-managed service-account key.
 - The backend workflow runs the full build/test gate before building and pushing a commit-SHA-tagged image, resolves its registry digest, deploys the digest, and verifies both health endpoints.
 - The Six Labors license is supplied to Docker only as a BuildKit secret. Google-generated `gha-creds-*.json` files are excluded from Git and the Docker build context.
-- The workflow now targets a GitHub `production` environment. Its seven deployment variables and `SIXLABORS_LICENSE_FILE` secret still require owner setup before the first production run. Runtime secrets remain in Google Secret Manager and are injected directly by Cloud Run; they are intentionally not duplicated in GitHub.
+- The GitHub `production` environment has seven deployment variables, the `SIXLABORS_LICENSE_FILE` build secret, and the master-branch restriction. The first production workflow deployment passed. Runtime secrets remain in Google Secret Manager and are injected directly by Cloud Run; they are intentionally not duplicated in GitHub.
 
 ### MIG-M05 — Production hostname decision
 
@@ -518,7 +523,7 @@ Rollback during the empty-environment launch means reverting the Cloud Run revis
 | NET10-M01 | Upgrade all backend projects and coordinated dependencies to .NET 10 | Complete backend gate and migration-model comparison pass |
 | MIG-M00 | Separate runtime startup from migrations/bootstrap; reject placeholder secrets | Clean idempotent provisioning and concurrent-start tests pass |
 | MIG-M01 | Add R2 document and product-image adapters | Complete: 881/881 backend tests pass; real upload, delivery, deletion, and signed-expiry behavior owner-confirmed |
-| MIG-M02 | Provision empty Neon rehearsal/production and backup workflow | Functional acceptance complete: clean migration, extension, idempotent bootstrap, least-privilege pooled/direct access, production login, credential rotation, and isolated restore evidence passed; provider metadata and temporary-environment retirement remain |
+| MIG-M02 | Provision empty Neon rehearsal/production and backup workflow | Functional acceptance and temporary-environment retirement complete: clean migration, extension, idempotent bootstrap, least-privilege pooled/direct access, production login, credential rotation, isolated restore evidence, and staging removal passed; provider metadata remains administrative evidence |
 | MIG-M03 | Add .NET 10 container and Cloud Run production | Manual production health, dependency, authentication, and logging checks pass; controlled CRUD/storage, rollback, frontend, CI, and cold-start evidence remain |
 | MIG-M04 | Add CI/CD, secrets, monitoring, registry cleanup, and budgets | Protected deployment and operational alerts verified |
 | MIG-M05 | Decide API hostname and upload route | TLS, CORS, auth, file-size, cost, and rollback behavior pass |

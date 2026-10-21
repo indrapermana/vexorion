@@ -12,12 +12,12 @@ VexorionERP has broad functional coverage: core ERP workflows, POS, finance, imp
 The project is **not release-ready**. P0-1 through P0-4 established a trustworthy validation baseline, P1-1 substantially hardened project/document workflows, the backend now targets .NET 10, and state-changing database/bootstrap work has been removed from normal API startup. Remaining readiness gaps are provider migration, evidence, and operational hardening:
 
 1. Playwright jobs are defined but hard-disabled in CI, so there is no current E2E release evidence.
-2. Clean installation, least-privilege runtime access, idempotent bootstrap, authentication, credential rotation, and point-in-time restore were integration-validated using separate Neon rehearsal and production databases. The owner has chosen one persistent production environment for the early pilot; the rehearsal database and GCP staging project are scheduled for retirement only after production cutover validation. A production-like upgrade rehearsal has not been recorded.
+2. Clean installation, least-privilege runtime access, idempotent bootstrap, authentication, credential rotation, and point-in-time restore were integration-validated using separate Neon rehearsal and production databases. The owner selected one persistent production environment for the early pilot; the GitHub environment and Neon project used for staging are deleted, and the GCP staging project is in its provider deletion window. A production-like upgrade rehearsal has not been recorded.
 3. Cloudflare R2 upload, delivery, deletion, and signed-URL expiry are integration-validated against the configured real buckets. Backup/restore, rollback, monitoring, performance, accessibility, and penetration checks remain unvalidated.
 4. Several critical workflows still need the P1/P2 tests and semantic reconciliation listed below.
 5. No single release-candidate commit has passed backend, frontend, E2E, migration, storage, and smoke gates together.
 
-The active execution track is the low-cost Azure exit plan. `NET10-M01` and `MIG-M00` are locally validated, `MIG-M01` is integration-validated, and functional acceptance for `MIG-M02` is complete. A clean **Cloud Run production** project is now manually deployed against the production Neon database with least-privilege runtime identity, five resource-scoped Secret Manager bindings, R2, Cloud Logging plus Grafana Loki, healthy liveness/readiness checks, anonymous-auth rejection, and authenticated admin access owner-confirmed. The prior staging CI deployment passed and production OIDC/IAM is provisioned; the workflow switch, production CI run, controlled CRUD/R2 smoke test, frontend cutover, rollback evidence, and staging retirement remain pending. Product expansion remains deferred.
+The active execution track is the low-cost Azure exit plan. `NET10-M01` and `MIG-M00` are locally validated, `MIG-M01` is integration-validated, and functional acceptance for `MIG-M02` is complete. The clean **Cloud Run production** environment now has least-privilege runtime identity, five resource-scoped Secret Manager bindings, R2, Cloud Logging plus Grafana Loki, GitHub OIDC deployment, healthy liveness/readiness checks, authentication, reversible database/R2 mutation evidence, Cloud Run revision rollback evidence, exact CORS behavior, and owner-confirmed login through all three Cloudflare applications. The persistent staging stack has been retired. Independent backup/object recovery, cold-start timing, enabled E2E gates, and release-candidate evidence remain pending. Product expansion remains deferred.
 
 ## 2. Review method and confidence
 
@@ -43,7 +43,7 @@ Percentage-complete labels are intentionally not used. Capability-inventory chec
 
 | Check | Result | Evidence / implication |
 |---|---|---|
-| Source state | WORKTREE AFTER CI PASS | The prior committed backend workflow passed its complete gate and staging deployment. The current production workflow/document reconciliation remains uncommitted and requires a production CI run. |
+| Source state | PRODUCTION CI PASS; DOCUMENTATION WORKTREE | The committed production workflow passed its build/test, OIDC, immutable-image deployment, and live/ready gates. This evidence reconciliation is the only current worktree change. |
 | Environment | RECORDED | macOS 26.7.1, .NET SDK 10.0.301 targeting .NET 10, Node 22.22.0, npm 10.9.4. |
 | `dotnet build VexorionERP.sln --configuration Release --no-restore --disable-build-servers --verbosity minimal -m:1 -p:UseSharedCompilation=false` | PASS | Zero warnings and zero errors on all nine `net10.0` projects. |
 | `dotnet test VexorionERP.sln --no-restore --verbosity minimal -m:1 -p:UseSharedCompilation=false` | PASS | 881/881: Services 526, Web 201, Handlers 154. Includes R2 adapter and storage-backed deletion regression coverage. |
@@ -51,10 +51,10 @@ Percentage-complete labels are intentionally not used. Capability-inventory chec
 | `npm run test:run` | PASS | 190/190: Main UI 89, AdminUI 30, POS 71; includes focused product-image and Document Center upload coverage. |
 | `npm run build` | PASS WITH WARNING | All four frontend packages built; Main UI emitted the known chunk-size warning. |
 | EF migration model state | PASS | `dotnet ef migrations has-pending-model-changes` reports no model change since the last migration; existing migrations were preserved. All five migrations were applied independently to empty Neon staging and production databases. A production-like upgrade rehearsal remains unvalidated. |
-| Cloudflare frontend smoke | OWNER CONFIRMED | Login succeeds on Main UI, Admin UI, and POS custom domains. This confirms basic deployed authentication routing, not full workflow or release validation. |
+| Cloudflare frontend to production API | OWNER CONFIRMED | Exact production CORS checks passed and login succeeds on Main UI, Admin UI, and POS after all three were rebuilt against the production Cloud Run `/api` URL. This confirms deployed authentication routing, not full workflow or release validation. |
 | Cloudflare R2 integration | OWNER CONFIRMED | Product-image delivery, private-document upload/preview/download, product/document/project deletion cleanup, and signed-URL expiry work against the configured real buckets. |
 | Neon staging integration | OWNER CONFIRMED | Direct migration and least-privilege pooled runtime roles work; `pg_trgm` and all five migrations are present; bootstrap is idempotent; normal API startup and UI login succeed; and isolated point-in-time recovery restored a deleted marker with application records intact. |
-| Neon production and Cloud Run | OWNER CONFIRMED | The production database has `pg_trgm` and all five migrations; application roles have no `neon_superuser` membership; bootstrap is idempotent with the `MAIN` company; and the password was rotated. The clean GCP production service passes live/ready, anonymous 401, authenticated admin, and Loki checks. Production CI, frontend, controlled mutation/storage, rollback, and release-candidate evidence remain pending. |
+| Neon production and Cloud Run | OWNER CONFIRMED | The database has `pg_trgm` and all five migrations; least-privilege roles, idempotent bootstrap, and password rotation passed. Production CI/OIDC, live/ready, anonymous 401, authenticated admin, Loki, reversible category/project/document writes, byte-identical R2 download, object/API deletion, and rollback to the prior healthy revision and forward to the CI revision passed. Release-candidate and recovery evidence remain pending. |
 | Durable artifacts | NOT RECORDED | Local terminal validation produced no durable artifact URLs. CI artifact/run links must be recorded against a release-candidate commit. |
 
 ### Still not validated
@@ -62,7 +62,7 @@ Percentage-complete labels are intentionally not used. Capability-inventory chec
 - A production-like upgrade migration rehearsal against Neon PostgreSQL; current provider metadata and temporary-branch cleanup also require operator recording.
 - Cloudflare R2 upload/delivery/deletion/expiry behavior is integration-validated. Operational object-protection, credential-rotation rehearsal, and disaster-recovery evidence remain pending.
 - CI Playwright execution and the remaining end-to-end workflows requiring live services and credentials.
-- Production CI deployment, frontend cutover, rollback, performance, accessibility, or penetration testing.
+- Independent production backup/restore, cold-start timing, performance, accessibility, or penetration testing.
 
 Any capability requiring those checks remains **implemented** or **locally validated**, not integration- or release-validated.
 
