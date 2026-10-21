@@ -1,4 +1,5 @@
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.Mvc;
@@ -22,6 +23,17 @@ QuestPDF.Settings.License = LicenseType.Community;
 var builder = WebApplication.CreateBuilder(args);
 var applicationOperation = args.GetApplicationOperation();
 
+var injectedPort = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrWhiteSpace(injectedPort))
+{
+    if (!int.TryParse(injectedPort, out var port) || port is < 1 or > 65535)
+    {
+        throw new InvalidOperationException("PORT must be a valid TCP port number.");
+    }
+
+    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+}
+
 if (builder.Environment.IsEnvironment("Testing"))
 {
     builder.Configuration["ConnectionStrings:DefaultConnection"] ??=
@@ -41,12 +53,16 @@ builder.Host.UseSerilog((ctx, services, cfg) =>
        .Enrich.FromLogContext()
        .Enrich.WithProperty("app", "vexorionerp")
        .Enrich.WithProperty("env", ctx.HostingEnvironment.EnvironmentName)
-       .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {SourceContext} {Message:lj}{NewLine}{Exception}")
-       .WriteTo.File(
+       .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {SourceContext} {Message:lj}{NewLine}{Exception}");
+
+    if (ctx.Configuration.GetValue("Logging:File:Enabled", ctx.HostingEnvironment.IsDevelopment()))
+    {
+        cfg.WriteTo.File(
            path: "logs/vexorionerp-.log",
            rollingInterval: RollingInterval.Day,
            retainedFileCountLimit: 14,
            outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext} {Message:lj}{NewLine}{Exception}");
+    }
 
     var lokiKey = ctx.Configuration["GrafanaLoki:ApiKey"];
     if (!string.IsNullOrWhiteSpace(lokiKey))
@@ -89,6 +105,15 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddHealthChecks()
+    .AddCheck(
+        "self",
+        () => Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy(),
+        tags: ["live"])
+    .AddCheck<DatabaseReadinessHealthCheck>(
+        "database",
+        tags: ["ready"],
+        timeout: TimeSpan.FromSeconds(5));
 builder.Services.AddMemoryCache(options =>
 {
     options.SizeLimit = builder.Configuration.GetValue<long?>("Caching:MemoryCacheEntryLimit") ?? 1024;
@@ -195,8 +220,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Item 38 — HTTPS enforcement + HSTS
-app.UseHttpsRedirection();
+// Cloud Run terminates TLS and forwards HTTP to the container. It already redirects
+// public HTTP requests, so deployment configuration disables the application redirect.
+if (app.Configuration.GetValue("Security:UseHttpsRedirection", true))
+{
+    app.UseHttpsRedirection();
+}
 if (!app.Environment.IsDevelopment())
 {
     app.UseHsts();
@@ -229,6 +258,14 @@ app.UseAuthorization();
 // Item 41 — Tenant module access control enforces project/document/employee toggles
 app.UseTenantModuleAccessControl();
 
+app.MapHealthChecks("/health/live", new HealthCheckOptions
+{
+    Predicate = registration => registration.Tags.Contains("live")
+});
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = registration => registration.Tags.Contains("ready")
+});
 app.MapControllers().RequireRateLimiting(TenantRateLimitPolicy);
 
 app.Run();

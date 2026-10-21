@@ -17,7 +17,7 @@ The project is **not release-ready**. P0-1 through P0-4 established a trustworth
 4. Several critical workflows still need the P1/P2 tests and semantic reconciliation listed below.
 5. No single release-candidate commit has passed backend, frontend, E2E, migration, storage, and smoke gates together.
 
-The active execution track is the low-cost Azure exit plan. `NET10-M01` and `MIG-M00` are locally validated, `MIG-M01` is integration-validated, and functional acceptance for `MIG-M02` is complete against separate Neon staging and production databases. The next implementation gate is **`MIG-M03` Cloud Run staging**, after the Neon provider metadata and temporary-branch closeout are recorded. Product expansion remains deferred.
+The active execution track is the low-cost Azure exit plan. `NET10-M01` and `MIG-M00` are locally validated, `MIG-M01` is integration-validated, and functional acceptance for `MIG-M02` is complete against separate Neon staging and production databases. The `MIG-M03` container and health endpoints are locally validated; the next gate is deploying that image to **Cloud Run staging** and running its integration checks. Neon provider metadata and temporary-branch cleanup remain administrative closeout items. Product expansion remains deferred.
 
 ## 2. Review method and confidence
 

@@ -97,7 +97,7 @@ Self-hosting PostgreSQL on a free VM is not approved for real customer data beca
 - Document storage persists provider-neutral object paths for project documents and generated documents, while product entities persist image URLs.
 - ClamAV support is implemented but disabled by default.
 - No `IHostedService` or `BackgroundService` implementation was found; startup initialization is nevertheless state-changing and must be separated from normal API startup.
-- There is no backend Dockerfile in the current repository.
+- A multi-stage backend Dockerfile is present and locally validated; Cloud Run staging deployment remains pending.
 - This document lives at `docs/VEXORIONERP_AZURE_MIGRATION_PLAN.md`; generated migration evidence belongs under `docs/migration/`.
 
 ## 4. Mandatory implementation sequence
@@ -304,6 +304,17 @@ Functional acceptance for `MIG-M02` is complete. Administrative closeout still r
 
 Create a reproducible multi-stage Docker build using matching official .NET 10 SDK and ASP.NET runtime images.
 
+The Six Labors community license is required only while compiling ImageSharp. Supply
+the ignored local license through a BuildKit secret so it is not copied into an image
+layer or retained in the final image:
+
+```bash
+docker build \
+  --secret id=sixlabors_license,src=VexorionERP.Services/sixlabors.lic \
+  --tag vexorionerp-api:mig-m03-local \
+  .
+```
+
 Container requirements:
 
 - Run as a non-root user where practical.
@@ -324,12 +335,18 @@ Initial staging settings:
 ASPNETCORE_ENVIRONMENT=Staging
 ConnectionStrings__DefaultConnection=<Neon pooled secret>
 Storage__Provider=R2
+Security__UseHttpsRedirection=false
+Logging__File__Enabled=false
 Cors__AllowedOrigins__0=https://app.vexorionerp.com
 Cors__AllowedOrigins__1=https://admin.vexorionerp.com
 Cors__AllowedOrigins__2=https://pos.vexorionerp.com
 DocumentSecurity__RequireMalwareScan=false
 DocumentSecurity__ClamAv__Enabled=false
 ```
+
+`Security__UseHttpsRedirection=false` is Cloud Run-specific: Cloud Run redirects
+public HTTP traffic, terminates TLS, and forwards plain HTTP to the container. The
+API continues to enforce HTTPS by default in direct-hosting environments.
 
 Initial Cloud Run constraints:
 
@@ -339,6 +356,21 @@ Initial Cloud Run constraints:
 - Begin with 1 vCPU and 512 MiB memory, then measure actual startup and steady-state use.
 - Use the standard `*.run.app` URL for staging and initial cost validation.
 - Browser access may require public Cloud Run invocation, but every application endpoint still enforces application authentication and authorization.
+
+Local implementation evidence (2026-10-21):
+
+- The Linux `amd64` image builds successfully from pinned .NET 10 SDK/runtime tags.
+- The final image runs as the non-root `app` user and starts through `dotnet VexorionERP.dll`.
+- The Six Labors license, Development settings, source tree, and test projects are absent from the final runtime image.
+- Both anonymous health endpoints pass focused tests; the complete backend suite passes 883/883 tests.
+- A local container started with the staging configuration, bound to port 8080, passed `/health/live`, and passed the Neon-backed `/health/ready` migration check. Anonymous access to `/api/auth/me` returned HTTP 401.
+- Local login returned access and refresh tokens, and the authenticated `/api/auth/me` endpoint returned HTTP 200 against Neon staging. The staging database currently has no projects, so no synthetic project-document/R2 mutation was performed.
+- Cloud Run staging deployment plus CRUD, R2, and cold-start checks remain pending.
+
+Npgsql 10 may emit a harmless missing-GSSAPI-library message in minimal Linux
+containers before falling back to TLS. The Neon connection does not use Kerberos;
+set `GSS Encryption Mode=Disable` in its runtime connection string to prevent that
+probe while retaining `SSL Mode=VerifyFull`.
 
 ### MIG-M04 — CI/CD, secrets, and observability
 
