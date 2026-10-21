@@ -36,3 +36,4 @@ VexorionERP/appsettings.Development.json
 .env
 .env.*
 !.env.example
+gha-creds-*.json

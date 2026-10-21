@@ -47,6 +47,7 @@ CoverageReport/
 
 # Local Six Labors license (never commit private/community license material)
 **/sixlabors.lic
+gha-creds-*.json
 
 # Local backend development configuration (copy from the tracked example)
 VexorionERP/appsettings.Development.json

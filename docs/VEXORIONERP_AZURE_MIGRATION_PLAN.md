@@ -372,17 +372,41 @@ containers before falling back to TLS. The Neon connection does not use Kerberos
 set `GSS Encryption Mode=Disable` in its runtime connection string to prevent that
 probe while retaining `SSL Mode=VerifyFull`.
 
+Cloud Run staging evidence (2026-10-21):
+
+- Google Cloud project `vexorionerp-staging` is active with billing enabled.
+- Cloud Run, Artifact Registry, and Secret Manager APIs are enabled in the dedicated project.
+- Artifact Registry repository `vexorionerp-api` and Cloud Run service `vexorionerp-api-staging` are located in Jakarta (`asia-southeast2`).
+- The deployed image is pinned to digest `sha256:eb5380a82d5ebdf4f5dfb128db2ddebf99e04040016f4458b4eb4016f5b1ba9d`.
+- Revision `vexorionerp-api-staging-00002-p66` serves 100 percent of traffic with 1 vCPU, 512 MiB memory, zero minimum instances, and one maximum instance.
+- The service uses the dedicated `vexorionerp-api-staging` runtime identity. It has accessor permission only on the four required staging secrets.
+- Domain-restricted sharing blocks an `allUsers` IAM grant. The service instead uses Google's recommended service-level disabled Invoker IAM check; application authentication and authorization remain enforced.
+- Explicit Cloud Run startup and liveness probes use `/health/live`; readiness uses `/health/ready`.
+- Public liveness and Neon-backed readiness returned HTTP 200. Anonymous `/api/auth/me` returned HTTP 401; login and authenticated `/api/auth/me` returned HTTP 200.
+- CORS preflight returned HTTP 204 with the exact matching origin for the main UI, Admin UI, and POS UI domains.
+- A reversible API smoke test created a temporary project category and project, uploaded and downloaded a text document through R2, verified byte-identical content, deleted the document, confirmed both its API record and the object behind the prior signed URL returned HTTP 404, and removed the temporary project/category. Persisted audit history remains by design.
+- Owner-confirmed frontend validation passed with a local UI build configured for the Cloud Run staging URL: login and product creation both succeeded. No production Cloudflare frontend configuration or DNS was changed.
+- True scale-to-zero cold-start timing remains pending.
+
 ### MIG-M04 — CI/CD, secrets, and observability
 
-- Prefer GitHub Actions OIDC/workload identity federation over a long-lived Google service-account key.
-- Protect production deployments with environment approval.
-- Pin third-party actions.
-- Use a managed secret store; never commit production credentials.
+- [x] Use GitHub Actions OIDC/workload identity federation instead of a long-lived Google service-account key.
+- [ ] Protect production deployments with environment approval when the production workflow is introduced; the current workflow deploys staging only.
+- [x] Pin every external action used by the backend workflow to an immutable commit SHA.
+- [x] Use Secret Manager for the staging runtime connection, JWT signing key, and R2 credentials; no runtime secret is supplied by the deployment workflow.
 - Configure budget alerts and inspect actual billing daily during the pilot.
 - Apply Artifact Registry cleanup so obsolete container images do not accumulate.
 - Limit and redact logs; never log tokens, connection strings, document contents, customer identifiers, or bootstrap passwords.
 - Monitor API 5xx, latency, cold starts, database connections, failed uploads, authorization denials, quota limits, and backup failures.
 - Preserve request/audit correlation IDs.
+
+CI/CD implementation evidence (2026-10-21):
+
+- Workload identity pool `github-actions` and provider `vexorionerp-master` accept only OIDC assertions for repository `indrapermana/vexorion` on `refs/heads/master`.
+- Dedicated deployer `vexorionerp-github-staging` can update Cloud Run in the staging project, push only to the staging Artifact Registry repository, and act as the existing staging runtime identity. It cannot read runtime secrets.
+- The backend workflow runs the full build/test gate before building and pushing a commit-SHA-tagged image, resolves its registry digest, deploys the digest, and verifies both health endpoints.
+- The Six Labors license is supplied to Docker only as a BuildKit secret. Google-generated `gha-creds-*.json` files are excluded from Git and the Docker build context.
+- The GitHub `staging` environment variables and its `SIXLABORS_LICENSE_FILE` secret still require owner setup. Runtime application secrets remain in Google Secret Manager and are injected directly by Cloud Run; they are intentionally not duplicated in GitHub. The first OIDC workflow deployment has not run, so CI/CD is implemented but not yet integration-validated.
 
 ### MIG-M05 — Production hostname decision
 
