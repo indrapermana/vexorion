@@ -61,7 +61,7 @@ The public landing page and authenticated frontends are deployed through Cloudfl
 
 This is deployment smoke evidence, not full release validation. The API, database, and object-storage migration is tracked in [the Azure exit plan](docs/VEXORIONERP_AZURE_MIGRATION_PLAN.md). Azure resources must not be retired until the replacement backend passes its migration and rollback gates.
 
-The backend supports provider-selectable Azure Blob Storage and Cloudflare R2 adapters. Azure remains the default until R2 integration validation is complete. R2 uses separate buckets: private documents are served through short-lived signed URLs, while non-sensitive product images use a dedicated public HTTPS custom domain. Configure secrets only through managed environment variables; the tracked development example contains placeholders.
+The backend supports provider-selectable Azure Blob Storage and Cloudflare R2 adapters. Production uses R2 with separate buckets: private documents are served through short-lived signed URLs, while non-sensitive product images use a dedicated public HTTPS custom domain. Configure secrets only through managed environment variables; the tracked development example contains placeholders.
 
 ## Local Setup Guide (for new/junior developers)
 
@@ -527,7 +527,16 @@ GitHub Actions uses two path-scoped workflows, and the badges at the top of this
 
 The frontend workflow builds, type-checks, lints, and unit-tests affected packages and uploads test, coverage, and distribution artifacts. Its three Playwright jobs are currently hard-disabled in workflow conditions; even after they are enabled, missing credentials can skip execution. A skipped E2E job is not a passing E2E or release gate. The backend workflow runs restore, Release build, `.NET` tests, and uploads test/coverage artifacts before deployment eligibility.
 
-The authenticated frontends and public landing page deploy to Cloudflare Pages through explicit deployment gates. Azure Static Web Apps deployment jobs have been retired; Azure API, PostgreSQL, and Blob Storage remain outside this frontend migration. See [the Cloudflare frontend migration runbook](docs/CLOUDFLARE_FRONTEND_MIGRATION.md).
+The authenticated frontends and public landing page deploy to Cloudflare Pages through explicit deployment gates. The production API runs on Google Cloud Run, PostgreSQL runs on Neon, and object storage uses Cloudflare R2.
+
+### Infrastructure setup guides
+
+- [Architecture and workflow diagrams](docs/VEXORIONERP_ARCHITECTURE_DIAGRAMS.md)
+- [Neon PostgreSQL production setup](docs/NEON_PRODUCTION_SETUP.md)
+- [Google Cloud Run production setup](docs/GOOGLE_CLOUD_RUN_PRODUCTION_SETUP.md)
+- [Cloudflare R2 production setup](docs/CLOUDFLARE_R2_SETUP.md)
+- [Cloudflare Pages setup for the three authenticated UIs](docs/CLOUDFLARE_PAGES_UI_SETUP.md)
+- [Historical Cloudflare frontend migration runbook](docs/CLOUDFLARE_FRONTEND_MIGRATION.md)
 
 ## Migration commands
 
