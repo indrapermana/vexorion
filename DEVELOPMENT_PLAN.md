@@ -17,7 +17,7 @@ The project is **not release-ready**. P0-1 through P0-4 established a trustworth
 4. Several critical workflows still need the P1/P2 tests and semantic reconciliation listed below.
 5. No single release-candidate commit has passed backend, frontend, E2E, migration, storage, and smoke gates together.
 
-The active execution track is the low-cost Azure exit plan. `NET10-M01` and `MIG-M00` are locally validated, `MIG-M01` is integration-validated, and functional acceptance for `MIG-M02` is complete. The clean **Cloud Run production** environment now has least-privilege runtime identity, five resource-scoped Secret Manager bindings, R2, Cloud Logging plus Grafana Loki, GitHub OIDC deployment, healthy liveness/readiness checks, authentication, reversible database/R2 mutation evidence, Cloud Run revision rollback evidence, exact CORS behavior, and owner-confirmed login through all three Cloudflare applications. The persistent staging stack has been retired. Independent backup/object recovery, cold-start timing, enabled E2E gates, and release-candidate evidence remain pending. Product expansion remains deferred.
+The active execution track is now **feature completion and UI/UX hardening**. The low-cost production architecture is operational, while `MIG-M06` backup/disaster-recovery work is deliberately parked until the unfinished product workflows and usability backlog below are resolved. No review finding is authorization to change production behavior: each unchecked item must be implemented, tested, and accepted separately.
 
 ## 2. Review method and confidence
 
@@ -296,45 +296,305 @@ Implementation evidence (2026-10-13):
 - [ ] Digital-signature workflow integration.
 - [ ] Tenant-to-tenant project templates.
 
-## 5. Recommended delivery sequence
+## 5. UI/UX and feature-completion review by module — 21 October 2026
 
-### Milestone R1 — Trustworthy failures and green baseline
+This is the implementation queue produced by the whole-frontend review. It consolidates the open P1/P2 findings above with page-, component-, action-, and feature-level findings. Every registered route and its referenced page, grid, dialog, and action in Main UI, AdminUI, and POS was source-reviewed. Authenticated read-only rendering was then inspected for 35 Main routes, four Admin routes, and two POS routes at 1440×900 and 390×844 using the ignored local-development bootstrap account. No create, edit, delete, upload, posting, payment, configuration, or other data mutation was performed.
 
-Scope: P0-1 through P0-4.
+The target is a clean, simple, data-dense business interface: one obvious primary action, compact but readable tables, predictable filters and status actions, strong keyboard/focus behavior, and actionable empty/error/permission states. Findings are plans only; implementation must be completed one tracked item at a time.
+
+### 5.1 Shared shell, design system, permissions, and accessibility
+
+**Findings**
+
+- Main UI registers `/employees` twice. The first route is outside `ModuleRouteGuard`, making the later guarded route ineffective.
+- Module guards cover only project and employee modules. Most Main UI routes and mutation controls do not interpret user permissions, so authorization failure often appears only after an action is attempted.
+- Main UI and AdminUI duplicate shell layout/CSS, while AdminUI navigation, route titles, anonymous text, and logout controls remain hard-coded English despite its language selector.
+- Feature families differ in heading hierarchy, metrics, filters, table containers, action placement, confirmations, loading/empty/error states, and feedback placement.
+- Wide tables use minimum widths without one defined narrow-screen pattern. Destructive actions vary between application dialogs, native `window.confirm`, and immediate deletion.
+- Runtime evidence confirms document-level horizontal overflow on Main Products at 1440 px; at 390 px it affects Audit Logs, Config Users, Config Roles, Tax/Discount, Import Data, and Reports. Narrow topbar controls also overlap page titles instead of collapsing into a usable mobile header.
+- Hard-coded English remains throughout transactional, inventory, journal, report, receipt/shipment, status, success, and error surfaces.
+- Several pages exceed 500–800 lines and combine data access, mutation orchestration, validation, tables, dialogs, and layout.
+- Main uses a local Vite API proxy, while Admin points directly at `https://localhost:7171/api` and POS defines a proxy but bypasses it through its development API URL. Automated local browsers could not reach Admin/POS until certificate/CORS protections were disabled, making local behavior inconsistent and fragile.
+
+**Plan**
+
+- [ ] `UX-FND-01` Remove the duplicate unguarded `/employees` route; add tests proving disabled project/employee modules cannot render or fetch protected pages.
+- [ ] `UX-FND-02` Define a permission-to-route/action matrix for every module. Hide inaccessible navigation, suppress unauthorized fetches, and hide or disable mutation controls with a reason; retain backend authorization as the security boundary.
+- [ ] `UX-FND-03` Create shared primitives for page header, primary action, metrics, filter toolbar, feedback, table/card body, loading, empty, and error/retry states; migrate module by module.
+- [ ] `UX-FND-04` Standardize tables: density, pagination, sorting, search/filter reset, responsive overflow, row/action behavior, and persisted preferences where appropriate.
+- [ ] `UX-FND-05` Standardize destructive/irreversible actions with named targets, consequences, safe focus, processing lock, and completion feedback. Remove native confirms and immediate destructive line actions.
+- [ ] `UX-FND-06` Complete English, Indonesian, and Spanish localization for every visible string; add locale-key parity and no-hard-coded-operational-copy tests.
+- [ ] `UX-FND-07` Add acceptance at 360, 768, 1024, and 1440 px, long translated labels, light/dark mode, and 200% browser zoom.
+- [ ] `UX-FND-08` Add WCAG-oriented acceptance for headings/landmarks, focus, icon names, keyboard dialogs/grids, focus restoration, live feedback, non-color status cues, and contrast.
+- [ ] `UX-FND-09` Protect unsaved multi-field/multi-line edits and preserve list filters/context when returning from details.
+- [ ] `UX-FND-10` Replace scattered console logging with approved telemetry and user-safe feedback, retaining support trace IDs.
+- [x] `UX-FND-11` Complete authenticated read-only rendering at 1440×900 and 390×844 for all currently reachable Main/Admin/POS routes. Evidence found no navigation, console, or page errors, and identified the overflow/layout defects recorded in this section. Interactive dialogs and mutation states remain part of each implementation item's acceptance.
+- [ ] `UX-FND-12` Standardize local API routing for all three frontends through certificate-tolerant Vite proxies (or one documented equivalent), so ordinary local browsers and automated review do not require disabling CORS/web security.
+
+### 5.2 Authentication and public entry
+
+**Findings**
+
+- Main UI and AdminUI ship demo tenant, email, and password values in component state. AdminUI tells users to use a seeded demo tenant.
+- Main UI describes ASP.NET Core, JWT refresh, a “control plane,” and a CRUD workspace rather than the product's business value.
+- AdminUI mixes production administration with development guidance and untranslated content.
+- POS login is a small context-free card in a largely empty viewport and does not explain the cashier/store application or support path.
+- Password visibility, Caps Lock feedback, and an explicit recovery path are absent. The recovery model still needs a product/security decision.
+
+**Plan**
+
+- [ ] `UX-AUTH-01` Remove embedded demo credentials/development guidance from shipped pages; keep examples only in local setup/seed documentation.
+- [ ] `UX-AUTH-02` Rewrite Main login around connected sales, purchasing, inventory, finance, projects, and team operations, avoiding framework terminology.
+- [ ] `UX-AUTH-03` Rewrite and localize Admin login around tenant onboarding, platform users, module/menu governance, and restricted administrator access.
+- [ ] `UX-AUTH-04` Redesign POS login as a branded, responsive, touch-friendly cashier entry screen with concise store/shift context.
+- [ ] `UX-AUTH-05` Add password visibility, Caps Lock feedback, autocomplete attributes, enter-key/focus verification, and consistent invalid-session feedback.
+- [ ] `UX-AUTH-06` Decide administrator-only reset versus secure self-service forgot/change-password flows; implement only the approved audited/rate-limited model.
+
+### 5.3 Dashboard and navigation
+
+**Findings**
+
+- Dashboard breadth is strong, but KPIs, charts, aging, cash flow, orders, customers, health, storage, and quick statistics compete without role/task prioritization.
+- Hero copy includes product-development language (“not a placeholder homepage”).
+- Hidden menu preference, disabled module, and missing permission are not clearly distinguished.
+- Several Main pages include developer-facing descriptions such as live API paths and implementation details instead of explaining the user's task.
+
+**Plan**
+
+- [ ] `UX-DASH-01` Establish a hierarchy: critical KPI row, exceptions/attention, trend analysis, and recent activity; keep filters beside affected data.
+- [ ] `UX-DASH-02` Replace development copy and add plain-language definitions for KPI dates, windows, signs, and currency.
+- [ ] `UX-DASH-03` Give each section loading/error/retry and last-updated context so one failed query is unambiguous.
+- [ ] `UX-DASH-04` Distinguish preference, module entitlement, and permission states, including administrator effective-access preview.
+
+### 5.4 Master data and configuration
+
+Scope: Customers, Suppliers, Products, Categories/Identifiers, Warehouses, Accounts, Employees, Consultants, Company, Users, Roles, Menu, Tax/Discount, and numbering configuration.
+
+**Findings**
+
+- Similar list/editor modules use different headings, metrics, grids/tables, delete patterns, validation feedback, and localization coverage.
+- Product image, identifiers, stock, and price history are split between expandable rows and dialogs, making the main view/edit path unpredictable.
+- Accounts use native delete confirmation. Role/configuration screens expose technical concepts with limited downstream-impact guidance.
+- Employee, consultant, project assignment, and relationship surfaces need a clearer record/engagement boundary.
+
+**Plan**
+
+- [ ] `UX-MASTER-01` Apply the shared list/editor pattern across master data with consistent search, active filters, counts, empty states, and named deletion.
+- [ ] `UX-MASTER-02` Give Product a coherent detail/edit experience for core data, image, identifiers, stock by warehouse, and price history.
+- [ ] `UX-MASTER-03` Replace native/immediate deletion with the shared destructive-action pattern.
+- [ ] `UX-MASTER-04` Show dependency/impact before delete/deactivate and explicitly distinguish deactivation from permanent deletion.
+- [ ] `UX-MASTER-05` Explain role, menu, tax/discount, numbering, and module consequences in business language and preview effective access.
+- [ ] `UX-MASTER-06` Reconcile employee, consultant, assignment, and tenant-relationship vocabulary and avoid duplicate entry where references are safe.
+
+### 5.5 Sales, procurement, billing, and payments
+
+Scope: Sales Orders/Shipments/Invoices/Customer Payments and Purchase Orders/Receipts/Invoices/Vendor Payments.
+
+**Findings**
+
+- Order/invoice pages share a useful workspace idea but duplicate grids, editors, line panels, status maps, hard-coded copy, and mutations.
+- Numeric statuses are mapped client-side; allowed next actions and disabled-action reasons are not consistently presented.
+- Receipt/shipment line entry uses dense dialog tables without explicit narrow-screen/keyboard acceptance.
+- Payment allocation lacks one consistent balance/allocation/unapplied/over-allocation summary.
+- P1-3 semantic questions remain open: immutable posted records, cancel/reverse vocabulary, partial fulfillment under concurrency, credit notes/refunds, allocations, and approvals.
+
+**Plan**
+
+- [ ] `UX-TRADE-01` Create a shared document-workspace contract for filters, status, metrics, rows, lines, totals, and confirmations while preserving business rules.
+- [ ] `UX-TRADE-02` Show lifecycle and permitted next actions on every document, including reasons and confirmation for post/approve/cancel/reverse.
+- [ ] `UX-TRADE-03` Add a detail-first review view for header, parties, dates, terms, lines, totals, fulfillment/allocation, generated documents, audit, and state actions.
+- [ ] `UX-TRADE-04` Optimize receipt/shipment entry for keyboard/tablet, showing ordered, previously processed, remaining, entered, and resulting quantities.
+- [ ] `UX-TRADE-05` Standardize payment allocation summaries and pre-submit validation.
+- [ ] `FEAT-TRADE-01` Complete P1-3 semantics and encode agreed transitions/accounting/inventory effects in backend rules, API codes, UI, and tests.
+- [ ] `FEAT-TRADE-02` Decide and implement approval rules by document type/amount with approver visibility and history.
+
+### 5.6 Inventory operations
+
+Scope: Adjustments, Counts, Transfers, Receipts, Shipments, balances, and movements.
+
+**Findings**
+
+- Adjustment, count, and transfer pages are 580–770 line components with nested header, line, status, and delete dialogs plus hard-coded strings.
+- Line deletion can be immediate while document delete/post/reverse is confirmed; risk handling is inconsistent.
+- Lifecycle terminology alternates between complete/cancel and post/reverse.
+- Balance/movement behavior exists, but there is no focused movement/audit workspace and the valuation/reorder reports remain pending.
+
+**Plan**
+
+- [ ] `UX-INV-01` Split operations into list, detail, line editor, and state-action components with a consistent document workspace.
+- [ ] `UX-INV-02` Make expected versus entered/resulting quantities, variance, warehouses, and posting effects explicit before confirmation.
+- [ ] `UX-INV-03` Standardize line/document confirmations, prevent immutable-state edits, and explain why.
+- [ ] `FEAT-INV-01` Finalize lifecycle vocabulary and reversal behavior across API, UI, tests, and `TEST_PLAN.md`.
+- [ ] `FEAT-INV-02` Implement P1-4 valuation, movement audit, and reorder reports with reconciliation tests.
+
+### 5.7 Finance, fiscal periods, journals, reports, and audit
+
+**Findings**
+
+- Journal posting/reversal asks users to paste invoice or journal GUIDs—an unsafe implementation-oriented routine workflow.
+- Finance pages mix localized shells with hard-coded English columns, actions, statuses, filters, and feedback.
+- Audit browsing is a basic table/filter scaffold without readable event detail, before/after presentation, trace navigation, or export/support flow.
+- Report reconciliation/export coverage and inventory report breadth remain incomplete.
+
+**Plan**
+
+- [ ] `UX-FIN-01` Replace raw-ID journal actions with searchable contextual document selection; prefer posting from the source document where safer.
+- [ ] `UX-FIN-02` Provide a fiscal-period calendar/status view and warn about locks before users complete unpostable forms.
+- [ ] `UX-FIN-03` Standardize currency/date/sign formatting, totals, comparisons, drill-down, export progress, and no-data explanations.
+- [ ] `UX-FIN-04` Add an audit detail drawer with actor, tenant, action, entity, time, trace ID, safe before/after, copyable support context, pagination, and export.
+- [ ] `FEAT-FIN-01` Decide manual-journal support: implement balanced draft/create/post/reverse or remove that expectation from QA/UI.
+- [ ] `FEAT-FIN-02` Complete report reconciliation, tenant/date-boundary, non-empty, and CSV formula-injection tests.
+
+### 5.8 Projects, documents, assignments, and tenant relationships
+
+**Findings**
+
+- Functionality is broad, but Project Details (831 lines) and Documents Panel (726 lines) contain too many concepts/actions in one surface.
+- Global Document Center versus project-specific Documents responsibility/navigation is insufficiently explained.
+- Relationship/party forms expose raw tenant IDs and JSON scope text, which is error-prone for administrators.
+- Malware scanning remains intentionally disabled pending private scanner integration and live evidence.
+
+**Plan**
+
+- [ ] `UX-PROJ-01` Restructure Project Details into Overview, Parties, Assignments, Documents, and History tabs with counts, permissions, and deep links.
+- [ ] `UX-PROJ-02` Clarify global Document Center versus project Documents and preserve navigation/filter context.
+- [ ] `UX-PROJ-03` Replace tenant-ID entry with an authorized picker and JSON scope editing with named controls plus effective-access summary.
+- [ ] `UX-PROJ-04` Add document breadcrumbs/clear selection and prioritize Preview, Download, Upload Version, Metadata, and Delete by frequency/risk.
+- [ ] `FEAT-PROJ-01` Complete live ClamAV integration only with private `clamd`, monitoring, and clean/EICAR/unavailable fail-closed evidence.
+- [ ] `FEAT-PROJ-02` Finish document retention/lifecycle and unknown-upload-outcome reconciliation guidance.
+
+### 5.9 Import and generated documents
+
+**Findings**
+
+- Import functionality exists, but the correction loop and idempotent/concurrent submission behavior lack E2E evidence.
+- Generated-document history/preview/download/regenerate exists, but authorization, isolation, retention, real-storage behavior, and recovery remain incomplete.
+
+**Plan**
+
+- [ ] `UX-IMP-01` Present import as choose type → template → file → validate → correct → confirm → submit → monitor; prevent accidental duplicate submission.
+- [ ] `UX-IMP-02` Make errors searchable/actionable with sheet, row, column, field, cause, and retry path.
+- [ ] `UX-DOC-01` Standardize generated-document panels with version, format, state, creator/time, preview, download, regenerate, and failure recovery.
+- [ ] `FEAT-IMP-01` Complete all P1-2 endpoint, tenant-isolation, idempotency, E2E, storage, retention, rollback, and runbook work.
+
+### 5.10 Admin UI
+
+**Findings**
+
+- Dashboard, Tenants, Users, and Menu Configuration cover core administration but use hard-coded English shell/navigation copy.
+- Tenant management fetches effective module access separately per tenant, creating N+1 requests and partial-row failure risk.
+- UsersPage combines create, role assignment, and password reset in one 355-line page with six dialog instances.
+- Menu Configuration does not clearly distinguish preference, module entitlement, and permission.
+- The authenticated user chip renders `undefined · TenantAdmin`, showing a mismatch between the Admin UI's display-name expectation and the current-user contract.
+- Admin dashboard showed zero tenants and users while its Tenant/User screens showed existing records. The dashboard data contract, filters, permissions, and loading semantics therefore need reconciliation before its metrics are trusted.
+- At 390 px, topbar controls overlap the page title; the Users header becomes a narrow text column beside its filters/button, and action/status columns are outside the initial visible grid area.
+
+**Plan**
+
+- [ ] `UX-ADMIN-01` Fully localize the shell/pages and align list, metrics, filters, loading, empty, feedback, and actions with Main UI.
+- [ ] `UX-ADMIN-02` Replace per-tenant access requests with a summary/batch contract or lazy detail; expose partial failure/retry.
+- [ ] `UX-ADMIN-03` Split creation, roles, account state, and password reset into a clear user detail/action model with audit/security context.
+- [ ] `UX-ADMIN-04` Explain lifecycle/module/menu changes and preview the result, distinguishing platform policy, entitlement, role permission, and preference.
+- [ ] `FEAT-ADMIN-01` Review user deactivate/reactivate, session revocation, credential rotation, tenant suspend/reactivate, and audit history; implement approved semantics only.
+
+### 5.11 POS UI and transaction integrity
+
+**Findings**
+
+- Desktop uses `3fr 1fr` for catalog/cart, but the cart contains six columns plus payment controls. Its narrow column is structurally incompatible with its content.
+- Catalog/scanner/customer/delivery/shift/return/history/language/theme/admin actions compete without a strong cashier-task hierarchy.
+- Quantity edit is hidden behind clicking plain text. Discount accepts formatted free numeric text, increasing cashier error risk.
+- Checkout is client-orchestrated across multiple API operations; a mid-flow failure can leave partial business records and unsafe retry ambiguity.
+- Return/refund similarly coordinates multiple effects without atomic/idempotent reconciliation evidence.
+- Useful shortcuts, conflict handling, shifts, receipts/history, and telemetry exist, but the design does not prioritize fast scan-add-pay or touch targets.
+- Runtime evidence confirms document widths of 653 px for POS and 563 px for POS Admin in a 390 px viewport. Header actions overlap/clip, and the POS Admin table extends beyond its card without an obvious responsive affordance.
+
+**Plan**
+
+- [ ] `UX-POS-01` Redesign around select/scan → review cart/customer → payment, with a usable minimum cart width and deliberate single-column tablet/mobile mode.
+- [ ] `UX-POS-02` Replace the six-column cart with compact line items exposing increment/decrement/direct quantity, discount, stock warning, remove, and total.
+- [ ] `UX-POS-03` Keep scanner/search and high-frequency product selection persistent; group shift/history/returns/settings as clearly labelled secondary actions.
+- [ ] `UX-POS-04` Make payment a focused step with tender presets, method, amount due, change, validation, progress, retry/recovery, explicit success, and duplicate prevention.
+- [ ] `UX-POS-05` Improve shift, history, receipt, return/refund, conflict, and customer dialogs for touch, keyboard, long content, and consequences.
+- [ ] `UX-POS-06` Add cashier-oriented empty/offline/session-expiry/recovery states that never imply an unknown transaction is safe to retry.
+- [ ] `UX-POS-07` Validate keyboard/scanner operation, touch targets, focus, labels, 1024×768 use, and receipt printing on supported hardware/browsers.
+- [ ] `FEAT-POS-01` Replace client checkout orchestration with one atomic, idempotent server command covering shift, permission, stock, pricing, discount, order, invoice, shipment, payment, and receipt.
+- [ ] `FEAT-POS-02` Replace multi-call return/refund with an atomic idempotent workflow and reconcile inventory, credit note, refund/payment, source transaction, and audit.
+- [ ] `FEAT-POS-03` Decide whether pilot needs hold/resume, void reason, manager override, cash movement, end-of-day reconciliation, offline mode, or hardware integration before implementing them.
+
+### 5.12 Review coverage and completion evidence
+
+| Application | Reviewed surface | Review evidence | Remaining runtime evidence |
+|---|---|---|---|
+| Main UI | Login, dashboard, 35 distinct protected routes, feature pages, grids, panels, dialogs, API actions, shell, responsive CSS | Source review plus authenticated 1440×900 and 390×844 rendering; no navigation/console/page errors; seven overflow routes identified across the two viewports | Interactive dialog/action states, dark mode, 768/1024 widths, zoom, and populated edge cases |
+| AdminUI | Login, dashboard, tenants, users, menu configuration, dialogs, shell | Source review plus authenticated 1440×900 and 390×844 rendering; no navigation/console/page errors | Interactive action states, dark mode, 768/1024 widths, metric-contract reconciliation, and populated edge cases |
+| POS | Login, sale workspace, product catalog, cart/payment, shifts, receipts/history, returns/refunds, conflicts, admin | Source review plus authenticated 1440×900 and 390×844 rendering; no navigation/console/page errors; both narrow routes overflow | Read-only dialog inspection, 1024×768 hardware-oriented pass, populated cart, scanner/keyboard, dark mode, receipt, and mutation recovery states |
+
+- [ ] `E2E-FND-01` Provision one isolated automation tenant for every Playwright run and make it the default tenant for every E2E project and test:
+  - Use environment-provided SystemAdmin/control-plane credentials only in global setup; never embed them in source, reports, traces, screenshots, or browser storage distributed to individual tests.
+  - Generate a collision-safe tenant identity such as `e2e-<run-id>-<worker-suffix>`, then provision its company, administrator/test users, roles/permissions, tenant plan, module configuration, menu defaults, and the minimum deterministic reference data required by the suite.
+  - Authenticate Main UI, AdminUI, and POS against the provisioned tenant and generate app-specific Playwright storage states. Tests must not fall back to `demo`, `vexorionerp`, or any manually maintained tenant.
+  - Share the run tenant where safe, but namespace mutable fixtures per worker/test so parallel execution cannot collide. Tests that modify tenant-wide configuration must run serially or receive a dedicated child tenant.
+  - Pass tenant/user IDs and codes through typed fixtures rather than hard-coded values. Each test must create only the business records it owns and clean them in reverse dependency order.
+  - Add global teardown that removes test records, users, storage objects, and the automation tenant even after test failure. Preserve sanitized diagnostics before cleanup and provide an explicitly controlled retain-on-failure option for local debugging.
+  - Add hard safety checks: refuse destructive E2E setup/teardown unless the API environment is explicitly marked non-production, reject protected tenant codes, require the generated E2E prefix, and verify the authenticated tenant ID before every cleanup call.
+  - Record provisioning, authentication, test, cleanup, and orphan-detection results as CI artifacts without secret/token values. A run fails if setup, any test, cleanup, or the final orphan check fails.
+  - Cover setup/teardown idempotency, partial provisioning failure, retry behavior, parallel workers, interrupted runs, expired sessions, and orphan cleanup with focused automated tests.
+- [ ] Each implementation item receives focused behavior tests and before/after screenshots.
+- [ ] Each mutation is tested for permission denial, validation, conflict, duplicate submission, unknown outcome, and recovery messaging.
+- [x] Each currently reachable route received an authenticated read-only render at desktop and narrow widths before implementation.
+- [ ] Each implementation item receives a full interactive acceptance pass afterward, including its dialog, populated, validation, permission, and recovery states.
+- [ ] All frontends pass lint, typecheck, tests, build, accessibility scan, browser-console check, and critical Playwright flows on one commit.
+- [ ] No item is marked complete from source presence alone; use section 2 evidence states.
+
+## 6. Recommended delivery sequence
+
+### Milestone UX-1 — Shared foundations, authentication, and isolated E2E
+
+Scope: `UX-FND-*`, `UX-AUTH-*`, and `E2E-FND-01`.
 
 Exit criteria:
 
-- One documented and tested error contract is used by every API and frontend.
-- Users see the actual safe business cause plus recovery guidance.
-- All backend and frontend unit/integration tests pass without hidden console errors or React state warnings.
-- Dependency vulnerability gate passes or has a time-bound, approved exception.
-- Root commands accurately exercise all intended workspaces.
+- Routes, permissions, page structure, feedback, destructive actions, localization, responsiveness, and accessibility have one tested contract.
+- All three login experiences are production-safe, accurate, localized, responsive, and accessible.
+- The authenticated baseline visual walkthrough is recorded.
+- Every E2E run provisions and safely removes its own automation tenant; all application test projects use that tenant and cannot target protected environments or tenant codes.
 
-### Milestone R2 — Workflow and security hardening
+### Milestone UX-2 — POS safety and usability
 
-Scope: P1-1 through P1-3 and P2-2.
-
-Exit criteria:
-
-- Project/document/import/generation E2E critical paths pass.
-- Tenant isolation, permission denial auditing, storage compensation, private access, upload security, and expiry behavior have automated evidence.
-- ERP state transitions and accounting/inventory side effects match the agreed domain semantics.
-
-### Milestone R3 — Reporting and operational readiness
-
-Scope: P1-4, P1-5, and essential P2 work.
+Scope: `UX-POS-*`, `FEAT-POS-01`, and `FEAT-POS-02`; decide `FEAT-POS-03` separately.
 
 Exit criteria:
 
-- Remaining inventory reports are implemented and reconciled.
-- Clean/upgrade migration rehearsal, backup/restore, monitoring, support documentation, and full manual smoke pass are complete.
-- A single release candidate commit passes every required gate.
+- Cashier scan/add/pay and return flows are usable at target desktop/tablet sizes and by keyboard/scanner.
+- Checkout and refund are atomic, idempotent, audited, and recover safely from conflicts and unknown outcomes.
+- Shift, history, receipt, and recovery flows pass interactive acceptance.
 
-### Milestone R4 — Optional expansion
+### Milestone UX-3 — Core ERP workspaces
 
-Scope: P3 only after R1–R3 are complete.
+Scope: dashboard, master/configuration, trade, inventory, and finance items in sections 5.3–5.7.
 
-## 6. Definition of done for every future item
+Exit criteria:
+
+- Core lists/details/forms share the foundation patterns and remain data-dense and responsive.
+- Lifecycle, accounting, inventory, approval, allocation, and journal semantics are agreed and tested.
+- Required inventory reports and audit/support workflows are complete.
+
+### Milestone UX-4 — Projects, documents, imports, and platform administration
+
+Scope: sections 5.8–5.10 and their mapped P1 items.
+
+Exit criteria:
+
+- Complex project/document/admin pages are decomposed into task-oriented workflows.
+- Raw identifiers/JSON configuration are replaced with safe business controls.
+- Import/generated-document correction, idempotency, storage, retention, and operator paths pass E2E acceptance.
+
+### Milestone R5 — Operations and optional expansion
+
+Scope: remaining P1-5/P2 security/performance work, parked `MIG-M06`, and then P3 only after UX-1 through UX-4 are complete.
+
+## 7. Definition of done for every future item
 
 An item is done only when all applicable conditions are satisfied:
 
@@ -347,7 +607,7 @@ An item is done only when all applicable conditions are satisfied:
 - [ ] Documentation and runbooks are updated in this file or the README/QA plan as appropriate.
 - [ ] Repository-wide build and test gates pass on the same commit.
 
-## 7. Documentation ownership
+## 8. Documentation ownership
 
 - `README.md`: setup, architecture, commands, and concise feature overview.
 - `DEVELOPMENT_PLAN.md` (this file): implementation status, findings, priorities, roadmap, and release gates.
