@@ -43,7 +43,7 @@ Percentage-complete labels are intentionally not used. Capability-inventory chec
 
 | Check | Result | Evidence / implication |
 |---|---|---|
-| Source state | PRODUCTION CI PASS; DOCUMENTATION WORKTREE | The committed production workflow passed its build/test, OIDC, immutable-image deployment, and live/ready gates. This evidence reconciliation is the only current worktree change. |
+| Source state | PRODUCTION CI PASS; UX-FND-01 WORKTREE | The committed production workflow passed its build/test, OIDC, immutable-image deployment, and live/ready gates. The current worktree removes the unguarded employee route and adds module-route regression coverage; it is locally validated but not yet committed or CI-validated. |
 | Environment | RECORDED | macOS 26.7.1, .NET SDK 10.0.301 targeting .NET 10, Node 22.22.0, npm 10.9.4. |
 | `dotnet build VexorionERP.sln --configuration Release --no-restore --disable-build-servers --verbosity minimal -m:1 -p:UseSharedCompilation=false` | PASS | Zero warnings and zero errors on all nine `net10.0` projects. |
 | `dotnet test VexorionERP.sln --no-restore --verbosity minimal -m:1 -p:UseSharedCompilation=false` | PASS | 881/881: Services 526, Web 201, Handlers 154. Includes R2 adapter and storage-backed deletion regression coverage. |
@@ -318,7 +318,7 @@ The target is a clean, simple, data-dense business interface: one obvious primar
 
 **Plan**
 
-- [ ] `UX-FND-01` Remove the duplicate unguarded `/employees` route; add tests proving disabled project/employee modules cannot render or fetch protected pages.
+- [x] `UX-FND-01` Removed the duplicate unguarded `/employees` route. Module-route tests prove loading, disabled employee/project routes do not render or initiate page loading, and enabled routes do both. Locally validated with 94/94 Main UI tests, lint (zero errors; seven pre-existing hook warnings), typecheck, and production build on 21 October 2026; CI validation remains pending.
 - [ ] `UX-FND-02` Define a permission-to-route/action matrix for every module. Hide inaccessible navigation, suppress unauthorized fetches, and hide or disable mutation controls with a reason; retain backend authorization as the security boundary.
 - [ ] `UX-FND-03` Create shared primitives for page header, primary action, metrics, filter toolbar, feedback, table/card body, loading, empty, and error/retry states; migrate module by module.
 - [ ] `UX-FND-04` Standardize tables: density, pagination, sorting, search/filter reset, responsive overflow, row/action behavior, and persisted preferences where appropriate.

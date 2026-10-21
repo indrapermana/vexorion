@@ -1,8 +1,9 @@
 /// <reference types="vitest/globals" />
 
-import { render, screen } from '@testing-library/react'
+import { useEffect } from 'react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { ProtectedRoute, PublicOnlyRoute } from '../components/RouteGuards'
+import { ModuleRouteGuard, ProtectedRoute, PublicOnlyRoute } from '../components/RouteGuards'
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -13,11 +14,24 @@ vi.mock('../app/AuthContext', () => ({
   useAuth: () => mockUseAuth(),
 }))
 
+const mockUseTenantModules = vi.fn()
+vi.mock('../app/TenantModuleContext', () => ({
+  useTenantModules: () => mockUseTenantModules(),
+}))
+
 function Protected() {
   return <div>Protected Content</div>
 }
 function Public() {
   return <div>Public Content</div>
+}
+
+function ModulePage({ load }: { load: () => void }) {
+  useEffect(() => {
+    load()
+  }, [load])
+
+  return <div>Module Content</div>
 }
 
 describe('ProtectedRoute', () => {
@@ -111,5 +125,75 @@ describe('PublicOnlyRoute', () => {
       </MemoryRouter>,
     )
     expect(screen.getByText('Public Content')).toBeInTheDocument()
+  })
+})
+
+describe('ModuleRouteGuard', () => {
+  const enabledModules = {
+    isLoading: false,
+    projectManagementEnabled: true,
+    employeeManagementEnabled: true,
+    documentManagementEnabled: true,
+  }
+
+  it('shows a loading state while tenant modules are being loaded', () => {
+    mockUseTenantModules.mockReturnValue({ ...enabledModules, isLoading: true })
+
+    render(
+      <MemoryRouter initialEntries={['/employees']}>
+        <Routes>
+          <Route element={<ModuleRouteGuard module="employee" />}>
+            <Route path="/employees" element={<div>Employees</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Loading workspace...')
+    expect(screen.queryByText('Employees')).not.toBeInTheDocument()
+  })
+
+  it.each([
+    ['employee', '/employees', 'employeeManagementEnabled'],
+    ['project', '/projects', 'projectManagementEnabled'],
+  ] as const)('does not render or load a disabled %s module route', (module, path, enabledKey) => {
+    const load = vi.fn()
+    mockUseTenantModules.mockReturnValue({ ...enabledModules, [enabledKey]: false })
+
+    render(
+      <MemoryRouter initialEntries={[path]}>
+        <Routes>
+          <Route path="/" element={<div>Dashboard</div>} />
+          <Route element={<ModuleRouteGuard module={module} />}>
+            <Route path={path} element={<ModulePage load={load} />} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('Dashboard')).toBeInTheDocument()
+    expect(screen.queryByText('Module Content')).not.toBeInTheDocument()
+    expect(load).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['employee', '/employees'],
+    ['project', '/projects'],
+  ] as const)('renders and loads an enabled %s module route', async (module, path) => {
+    const load = vi.fn()
+    mockUseTenantModules.mockReturnValue(enabledModules)
+
+    render(
+      <MemoryRouter initialEntries={[path]}>
+        <Routes>
+          <Route element={<ModuleRouteGuard module={module} />}>
+            <Route path={path} element={<ModulePage load={load} />} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('Module Content')).toBeInTheDocument()
+    await waitFor(() => expect(load).toHaveBeenCalledOnce())
   })
 })

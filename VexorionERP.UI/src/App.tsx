@@ -68,7 +68,6 @@ function App() {
               <Route element={<ProtectedRoute />}>
                 <Route path="/" element={<DashboardPage />} />
                 <Route path="/customers" element={<CustomersPage />} />
-                <Route path="/employees" element={<EmployeesPage />} />
                 <Route path="/customer-payments" element={<CustomerPaymentsPage />} />
                 <Route path="/accounts" element={<AccountsPage />} />
                 <Route path="/audit-logs" element={<AuditLogsPage />} />
