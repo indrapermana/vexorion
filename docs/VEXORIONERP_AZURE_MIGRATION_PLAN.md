@@ -2,7 +2,7 @@
 
 **Version:** 2.0
 
-**Date:** 2026-10-20
+**Date:** 2026-10-21
 
 **Status:** Reviewed implementation plan; no production deployment authorized
 
@@ -283,6 +283,23 @@ potential connections = Cloud Run max instances × Npgsql maximum pool size
 
 Start conservatively. Do not automatically retry non-idempotent HTTP requests.
 
+Integration evidence (owner-confirmed, 2026-10-21):
+
+- An empty Neon staging database was migrated through the explicit migration operation. All five existing EF migrations are present and `pg_trgm` is available.
+- Separate direct migration and pooled runtime roles are configured. The runtime role can perform application DML but cannot create objects in the `public` schema.
+- The bootstrap operation created one `vexorionerp` tenant, one `DEMO` company from the untracked Development override, and one `admin` user. A repeated bootstrap retained one of each record.
+- Normal API startup succeeded with the pooled runtime connection, and the owner authenticated through the UI against the Neon-backed API.
+- An isolated branch reproduced the staging schema and records. A point-in-time recovery into a second isolated branch restored a deliberately deleted marker while retaining all five migrations and the bootstrap records.
+- A separate empty production project/database was provisioned without copying staging data. Its migration and runtime roles have no `neon_superuser` membership; the runtime role has application DML permissions but no database/schema creation permission.
+- All five migrations and `pg_trgm` were verified in production before bootstrap, with zero tenant, company, and user rows.
+- Production bootstrap created one `vexorionerp` tenant, one `MAIN` company, one `admin` user, five application roles, the two required admin role assignments, and one set of governance defaults. A second bootstrap created no duplicates.
+- Normal API startup and login succeeded with the pooled production runtime role. The invocation-scoped migration/bootstrap variables were removed and the bootstrap password was rotated through the authenticated application endpoint; login with the replacement credential succeeded.
+
+Functional acceptance for `MIG-M02` is complete. Administrative closeout still requires:
+
+- Record the actual staging and production PostgreSQL versions, regions, current account plan limits, connection limits, and restore windows in the operator record.
+- Confirm the two temporary restore-rehearsal branches were removed after retaining the evidence.
+
 ### MIG-M03 — Containerize and deploy to Cloud Run staging
 
 Create a reproducible multi-stage Docker build using matching official .NET 10 SDK and ASP.NET runtime images.
@@ -431,7 +448,7 @@ Rollback during the empty-environment launch means reverting the Cloud Run revis
 | NET10-M01 | Upgrade all backend projects and coordinated dependencies to .NET 10 | Complete backend gate and migration-model comparison pass |
 | MIG-M00 | Separate runtime startup from migrations/bootstrap; reject placeholder secrets | Clean idempotent provisioning and concurrent-start tests pass |
 | MIG-M01 | Add R2 document and product-image adapters | Complete: 881/881 backend tests pass; real upload, delivery, deletion, and signed-expiry behavior owner-confirmed |
-| MIG-M02 | Provision empty Neon staging/production and backup workflow | Clean migration, extension, bootstrap, pooled/direct, and restore evidence pass |
+| MIG-M02 | Provision empty Neon staging/production and backup workflow | Functional acceptance complete: clean migration, extension, idempotent bootstrap, least-privilege pooled/direct access, production login, credential rotation, and isolated restore evidence passed; provider metadata/temporary-branch closeout remains |
 | MIG-M03 | Add .NET 10 container and Cloud Run staging | Health, auth, CRUD, storage, and cold-start checks pass |
 | MIG-M04 | Add CI/CD, secrets, monitoring, registry cleanup, and budgets | Protected deployment and operational alerts verified |
 | MIG-M05 | Decide API hostname and upload route | TLS, CORS, auth, file-size, cost, and rollback behavior pass |

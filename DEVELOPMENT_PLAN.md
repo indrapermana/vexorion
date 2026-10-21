@@ -1,6 +1,6 @@
 # VexorionERP Consolidated Review and Development Plan
 
-Last reviewed: 20 October 2026
+Last reviewed: 21 October 2026
 Review basis: repository documentation, backend/domain/database/service/handler/controller code, the three frontend applications, automated tests, build configuration, and local validation described below.
 
 This is the single source of truth for implementation status and upcoming development work. A checked item means the capability is present in the current repository; it does not by itself mean production readiness. Release readiness requires the quality gates in this document to pass.
@@ -12,12 +12,12 @@ VexorionERP has broad functional coverage: core ERP workflows, POS, finance, imp
 The project is **not release-ready**. P0-1 through P0-4 established a trustworthy validation baseline, P1-1 substantially hardened project/document workflows, the backend now targets .NET 10, and state-changing database/bootstrap work has been removed from normal API startup. Remaining readiness gaps are provider migration, evidence, and operational hardening:
 
 1. Playwright jobs are defined but hard-disabled in CI, so there is no current E2E release evidence.
-2. Clean-install and upgrade migration rehearsals against the target Neon PostgreSQL environment have not been recorded.
+2. Clean installation, least-privilege runtime access, idempotent bootstrap, authentication, credential rotation, and point-in-time restore are integration-validated against separate Neon staging and production databases. A production-like upgrade rehearsal has not been recorded.
 3. Cloudflare R2 upload, delivery, deletion, and signed-URL expiry are integration-validated against the configured real buckets. Backup/restore, rollback, monitoring, performance, accessibility, and penetration checks remain unvalidated.
 4. Several critical workflows still need the P1/P2 tests and semantic reconciliation listed below.
 5. No single release-candidate commit has passed backend, frontend, E2E, migration, storage, and smoke gates together.
 
-The active execution track is the low-cost Azure exit plan. `NET10-M01` and `MIG-M00` are locally validated, and `MIG-M01` is integration-validated. The next gate is **`MIG-M02` Neon provisioning from an empty database**. Product expansion remains deferred.
+The active execution track is the low-cost Azure exit plan. `NET10-M01` and `MIG-M00` are locally validated, `MIG-M01` is integration-validated, and functional acceptance for `MIG-M02` is complete against separate Neon staging and production databases. The next implementation gate is **`MIG-M03` Cloud Run staging**, after the Neon provider metadata and temporary-branch closeout are recorded. Product expansion remains deferred.
 
 ## 2. Review method and confidence
 
@@ -39,7 +39,7 @@ The active execution track is the low-cost Azure exit plan. `NET10-M01` and `MIG
 
 Percentage-complete labels are intentionally not used. Capability-inventory checkboxes below mean **implemented** only unless a stronger state and evidence are explicitly recorded.
 
-### Current validation evidence — 20 October 2026
+### Current validation evidence — 21 October 2026
 
 | Check | Result | Evidence / implication |
 |---|---|---|
@@ -50,14 +50,16 @@ Percentage-complete labels are intentionally not used. Capability-inventory chec
 | `dotnet package list --project VexorionERP.sln --vulnerable --include-transitive --no-restore` | PASS | NuGet reported no vulnerable direct or transitive packages in all nine projects, including AWSSDK.S3 4.0.104.5. |
 | `npm run test:run` | PASS | 190/190: Main UI 89, AdminUI 30, POS 71; includes focused product-image and Document Center upload coverage. |
 | `npm run build` | PASS WITH WARNING | All four frontend packages built; Main UI emitted the known chunk-size warning. |
-| EF migration model state | PASS | `dotnet ef migrations has-pending-model-changes` reports no model change since the last migration; existing migrations were preserved. A clean database and upgrade rehearsal are still not validated. |
+| EF migration model state | PASS | `dotnet ef migrations has-pending-model-changes` reports no model change since the last migration; existing migrations were preserved. All five migrations were applied independently to empty Neon staging and production databases. A production-like upgrade rehearsal remains unvalidated. |
 | Cloudflare frontend smoke | OWNER CONFIRMED | Login succeeds on Main UI, Admin UI, and POS custom domains. This confirms basic deployed authentication routing, not full workflow or release validation. |
 | Cloudflare R2 integration | OWNER CONFIRMED | Product-image delivery, private-document upload/preview/download, product/document/project deletion cleanup, and signed-URL expiry work against the configured real buckets. |
+| Neon staging integration | OWNER CONFIRMED | Direct migration and least-privilege pooled runtime roles work; `pg_trgm` and all five migrations are present; bootstrap is idempotent; normal API startup and UI login succeed; and isolated point-in-time recovery restored a deleted marker with application records intact. |
+| Neon production provisioning | OWNER CONFIRMED | A separate empty production database has `pg_trgm` and all five migrations; application roles have no `neon_superuser` membership; bootstrap is idempotent with the `MAIN` company; pooled runtime startup and login succeed; and the bootstrap password was rotated through the authenticated API. No production API deployment or customer data is present. |
 | Durable artifacts | NOT RECORDED | Local terminal validation produced no durable artifact URLs. CI artifact/run links must be recorded against a release-candidate commit. |
 
 ### Still not validated
 
-- Database migration against clean and upgraded Neon PostgreSQL environments.
+- A production-like upgrade migration rehearsal against Neon PostgreSQL; current provider metadata and temporary-branch cleanup also require operator recording.
 - Cloudflare R2 upload/delivery/deletion/expiry behavior is integration-validated. Operational object-protection, credential-rotation rehearsal, and disaster-recovery evidence remain pending.
 - CI Playwright execution and the remaining end-to-end workflows requiring live services and credentials.
 - Production deployment, rollback, performance, accessibility, or penetration testing.
