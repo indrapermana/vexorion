@@ -1,10 +1,9 @@
 /**
  * customers.spec.ts — TC-M-012 to TC-M-015 (Customer CRUD)
  */
-import { test, expect } from './fixtures'
-import { GenericCrudPage } from './fixtures'
+import { test, expect, GenericCrudPage, uid } from './fixtures'
 
-const UNIQUE = () => `E2E-${Date.now()}`
+const UNIQUE = () => uid('E2E')
 
 test.describe('Customers', () => {
   test('TC-M-012: customers list page loads', async ({ page }) => {

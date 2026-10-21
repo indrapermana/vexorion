@@ -7,6 +7,7 @@ import type { CustomerListItemResponse } from '../types/api'
 import { useApAgingQuery, useArAgingQuery, useCustomersQuery, useFinanceSnapshotQuery, useSalesOrdersQuery, useTenantStorageSummaryQuery, useTenantStorageTopConsumersQuery } from './dashboard/queries'
 import type { AgingPoint, BalancePoint, CashFlowPoint, CashRowView, QuickStat, RecentOrderView, TopCustomerView } from './dashboard/types'
 import DashboardSectionLoader from './dashboard/components/DashboardSectionLoader'
+import { Permissions } from '../app/authorization'
 
 const DashboardHeaderFilters = lazy(() => import('./dashboard/components/DashboardHeaderFilters'))
 const DashboardKpiCards = lazy(() => import('./dashboard/components/DashboardKpiCards'))
@@ -31,10 +32,13 @@ export default function DashboardPage() {
   const financeQuery = useFinanceSnapshotQuery(asOfDate, periodDays)
   const arAgingQuery = useArAgingQuery(asOfDate)
   const apAgingQuery = useApAgingQuery(asOfDate)
-  const salesOrdersQuery = useSalesOrdersQuery()
-  const customersQuery = useCustomersQuery()
-  const storageSummaryQuery = useTenantStorageSummaryQuery(user?.tenantId)
-  const storageTopConsumersQuery = useTenantStorageTopConsumersQuery(user?.tenantId, 5)
+  const canViewSales = user?.permissions.includes(Permissions.sales.view) ?? false
+  const canViewCustomers = user?.permissions.includes(Permissions.customers.view) ?? false
+  const canViewStorage = user?.permissions.includes(Permissions.storageUsage.view) ?? false
+  const salesOrdersQuery = useSalesOrdersQuery(canViewSales)
+  const customersQuery = useCustomersQuery(canViewCustomers)
+  const storageSummaryQuery = useTenantStorageSummaryQuery(user?.tenantId, canViewStorage)
+  const storageTopConsumersQuery = useTenantStorageTopConsumersQuery(user?.tenantId, 5, canViewStorage)
 
   const snapshot = financeQuery.data ?? null
   const arAging = arAgingQuery.data ?? null

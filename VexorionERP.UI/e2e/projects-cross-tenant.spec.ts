@@ -5,7 +5,7 @@
  * temporary tenant B and the required active relationship through the API,
  * then exercises project creation and party linking through the browser UI.
  */
-import { expect, test, uid } from './fixtures'
+import { AUTH_CREDENTIALS, expect, test, uid } from './fixtures'
 import { authenticatedApi, expectSuccessfulFixture, type CreatedEntity } from './api-helpers'
 
 type OnboardTenantResponse = {
@@ -14,8 +14,8 @@ type OnboardTenantResponse = {
 
 test('P1-1: tenant A creates a project and links tenant B', async ({ page }) => {
   test.setTimeout(60_000)
-  const suffix = Date.now().toString()
-  const tenantCode = `e2eb${suffix}`.slice(0, 40)
+  const suffix = uid('cross')
+  const tenantCode = `${AUTH_CREDENTIALS.tenantCode}-b-${suffix.slice(-12)}`.slice(0, 50)
   const categoryCode = uid('E2ECT').slice(0, 50)
   const projectNumber = uid('E2E-PRJ').slice(0, 50)
   const projectName = `Cross-tenant project ${suffix}`

@@ -68,6 +68,7 @@ const esES = {
   routeGuards: {
     checkingSession: 'Comprobando tu sesión...',
     loadingWorkspace: 'Cargando espacio de trabajo...',
+    permissionDenied: 'No tienes permiso para abrir este espacio de trabajo.',
   },
   publicAuth: {
     workspaceAccess: 'Acceso al espacio de trabajo',

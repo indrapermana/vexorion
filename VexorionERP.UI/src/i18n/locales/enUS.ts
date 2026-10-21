@@ -68,6 +68,7 @@ const enUS = {
   routeGuards: {
     checkingSession: 'Checking your session...',
     loadingWorkspace: 'Loading workspace...',
+    permissionDenied: 'You do not have permission to open this workspace.',
   },
   publicAuth: {
     workspaceAccess: 'Workspace access',

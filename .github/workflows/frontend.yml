@@ -182,9 +182,13 @@ jobs:
       needs.build-and-test.outputs.ui_built == 'true'
     env:
       CI: true
-      E2E_TENANT_CODE: ${{ secrets.E2E_TENANT_CODE }}
-      E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
-      E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+      E2E_API_BASE_URL: ${{ secrets.E2E_API_BASE_URL }}
+      E2E_API_ENVIRONMENT: ${{ vars.E2E_API_ENVIRONMENT }}
+      E2E_ALLOW_TENANT_PROVISIONING: ${{ vars.E2E_ALLOW_TENANT_PROVISIONING }}
+      E2E_ALLOW_REMOTE_NON_PRODUCTION: ${{ vars.E2E_ALLOW_REMOTE_NON_PRODUCTION }}
+      E2E_CONTROL_TENANT_CODE: ${{ secrets.E2E_CONTROL_TENANT_CODE }}
+      E2E_CONTROL_USERNAME: ${{ secrets.E2E_CONTROL_USERNAME }}
+      E2E_CONTROL_PASSWORD: ${{ secrets.E2E_CONTROL_PASSWORD }}
       VITE_API_BASE_URL: ${{ secrets.E2E_API_BASE_URL }}
 
     steps:
@@ -197,8 +201,10 @@ jobs:
         run: |
           missing=0
           [[ -z "${{ secrets.E2E_API_BASE_URL }}" ]] && missing=1
-          [[ -z "${{ secrets.E2E_USERNAME }}" ]] && missing=1
-          [[ -z "${{ secrets.E2E_PASSWORD }}" ]] && missing=1
+          [[ -z "${{ secrets.E2E_CONTROL_TENANT_CODE }}" ]] && missing=1
+          [[ -z "${{ secrets.E2E_CONTROL_USERNAME }}" ]] && missing=1
+          [[ -z "${{ secrets.E2E_CONTROL_PASSWORD }}" ]] && missing=1
+          [[ "${{ vars.E2E_ALLOW_TENANT_PROVISIONING }}" != "true" ]] && missing=1
 
           if [[ "$missing" -eq 1 ]]; then
             echo "ready=false" >> "$GITHUB_OUTPUT"
@@ -240,9 +246,13 @@ jobs:
       needs.build-and-test.outputs.adminui_built == 'true'
     env:
       CI: true
-      E2E_TENANT_CODE: ${{ secrets.E2E_TENANT_CODE }}
-      E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
-      E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+      E2E_API_BASE_URL: ${{ secrets.E2E_API_BASE_URL }}
+      E2E_API_ENVIRONMENT: ${{ vars.E2E_API_ENVIRONMENT }}
+      E2E_ALLOW_TENANT_PROVISIONING: ${{ vars.E2E_ALLOW_TENANT_PROVISIONING }}
+      E2E_ALLOW_REMOTE_NON_PRODUCTION: ${{ vars.E2E_ALLOW_REMOTE_NON_PRODUCTION }}
+      E2E_CONTROL_TENANT_CODE: ${{ secrets.E2E_CONTROL_TENANT_CODE }}
+      E2E_CONTROL_USERNAME: ${{ secrets.E2E_CONTROL_USERNAME }}
+      E2E_CONTROL_PASSWORD: ${{ secrets.E2E_CONTROL_PASSWORD }}
       VITE_API_BASE_URL: ${{ secrets.E2E_API_BASE_URL }}
 
     steps:
@@ -255,8 +265,10 @@ jobs:
         run: |
           missing=0
           [[ -z "${{ secrets.E2E_API_BASE_URL }}" ]] && missing=1
-          [[ -z "${{ secrets.E2E_USERNAME }}" ]] && missing=1
-          [[ -z "${{ secrets.E2E_PASSWORD }}" ]] && missing=1
+          [[ -z "${{ secrets.E2E_CONTROL_TENANT_CODE }}" ]] && missing=1
+          [[ -z "${{ secrets.E2E_CONTROL_USERNAME }}" ]] && missing=1
+          [[ -z "${{ secrets.E2E_CONTROL_PASSWORD }}" ]] && missing=1
+          [[ "${{ vars.E2E_ALLOW_TENANT_PROVISIONING }}" != "true" ]] && missing=1
 
           if [[ "$missing" -eq 1 ]]; then
             echo "ready=false" >> "$GITHUB_OUTPUT"
@@ -298,9 +310,13 @@ jobs:
       needs.build-and-test.outputs.pos_built == 'true'
     env:
       CI: true
-      E2E_TENANT_CODE: ${{ secrets.E2E_TENANT_CODE }}
-      E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
-      E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+      E2E_API_BASE_URL: ${{ secrets.E2E_API_BASE_URL }}
+      E2E_API_ENVIRONMENT: ${{ vars.E2E_API_ENVIRONMENT }}
+      E2E_ALLOW_TENANT_PROVISIONING: ${{ vars.E2E_ALLOW_TENANT_PROVISIONING }}
+      E2E_ALLOW_REMOTE_NON_PRODUCTION: ${{ vars.E2E_ALLOW_REMOTE_NON_PRODUCTION }}
+      E2E_CONTROL_TENANT_CODE: ${{ secrets.E2E_CONTROL_TENANT_CODE }}
+      E2E_CONTROL_USERNAME: ${{ secrets.E2E_CONTROL_USERNAME }}
+      E2E_CONTROL_PASSWORD: ${{ secrets.E2E_CONTROL_PASSWORD }}
       VITE_API_BASE_URL: ${{ secrets.E2E_API_BASE_URL }}
 
     steps:
@@ -313,8 +329,10 @@ jobs:
         run: |
           missing=0
           [[ -z "${{ secrets.E2E_API_BASE_URL }}" ]] && missing=1
-          [[ -z "${{ secrets.E2E_USERNAME }}" ]] && missing=1
-          [[ -z "${{ secrets.E2E_PASSWORD }}" ]] && missing=1
+          [[ -z "${{ secrets.E2E_CONTROL_TENANT_CODE }}" ]] && missing=1
+          [[ -z "${{ secrets.E2E_CONTROL_USERNAME }}" ]] && missing=1
+          [[ -z "${{ secrets.E2E_CONTROL_PASSWORD }}" ]] && missing=1
+          [[ "${{ vars.E2E_ALLOW_TENANT_PROVISIONING }}" != "true" ]] && missing=1
 
           if [[ "$missing" -eq 1 ]]; then
             echo "ready=false" >> "$GITHUB_OUTPUT"

@@ -1,10 +1,9 @@
 /**
  * products.spec.ts — TC-M-016 to TC-M-019 (Product CRUD)
  */
-import { test, expect } from './fixtures'
-import { GenericCrudPage } from './fixtures'
+import { test, expect, GenericCrudPage, uid } from './fixtures'
 
-const UNIQUE = () => `E2E-PROD-${Date.now()}`
+const UNIQUE = () => uid('E2E-PROD')
 
 test.describe('Products', () => {
   test('TC-M-016: products list page loads', async ({ page }) => {
@@ -40,7 +39,7 @@ test.describe('Products', () => {
     await expect(dialog).toBeVisible()
 
     const name = UNIQUE()
-    const sku = `SKU-${Date.now()}`
+    const sku = uid('SKU')
 
     // Fill name — first textbox
     await dialog.getByRole('textbox').nth(0).fill(name)

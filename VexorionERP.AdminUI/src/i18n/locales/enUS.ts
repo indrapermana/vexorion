@@ -8,6 +8,7 @@ const enUS = {
   routeGuards: {
     checkingSession: 'Checking session...',
     loadingWorkspace: 'Loading workspace...',
+    permissionDenied: 'You do not have permission to open this workspace.',
   },
   login: {
     title: 'Admin Sign In',

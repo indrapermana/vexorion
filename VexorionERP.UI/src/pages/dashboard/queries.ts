@@ -25,36 +25,38 @@ export function useApAgingQuery(asOfDate: string) {
   })
 }
 
-export function useSalesOrdersQuery() {
+export function useSalesOrdersQuery(enabled = true) {
   return useQuery({
     queryKey: ['dashboard', 'salesOrders'],
     queryFn: getSalesOrders,
     staleTime: 15_000,
+    enabled,
   })
 }
 
-export function useCustomersQuery() {
+export function useCustomersQuery(enabled = true) {
   return useQuery({
     queryKey: ['dashboard', 'customers'],
     queryFn: getCustomers,
     staleTime: 60_000,
+    enabled,
   })
 }
 
-export function useTenantStorageSummaryQuery(tenantId?: string) {
+export function useTenantStorageSummaryQuery(tenantId?: string, enabled = true) {
   return useQuery({
     queryKey: ['dashboard', 'storageSummary', tenantId],
     queryFn: () => getTenantStorageSummary(tenantId!),
     staleTime: 30_000,
-    enabled: Boolean(tenantId),
+    enabled: Boolean(tenantId) && enabled,
   })
 }
 
-export function useTenantStorageTopConsumersQuery(tenantId?: string, take = 5) {
+export function useTenantStorageTopConsumersQuery(tenantId?: string, take = 5, enabled = true) {
   return useQuery({
     queryKey: ['dashboard', 'storageTopConsumers', tenantId, take],
     queryFn: () => getTenantStorageTopConsumers(tenantId!, take),
     staleTime: 30_000,
-    enabled: Boolean(tenantId),
+    enabled: Boolean(tenantId) && enabled,
   })
 }

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../app/AuthContext'
 import { useTenantModules } from '../app/TenantModuleContext'
+import { hasRequiredPermissions, type PermissionRequirement } from '../app/authorization'
 
 export function ProtectedRoute() {
   const { t } = useTranslation()
@@ -55,6 +56,29 @@ export function ModuleRouteGuard({ module }: ModuleRouteGuardProps) {
 
   if (!enabled) {
     return <Navigate to="/" replace />
+  }
+
+  return <Outlet />
+}
+
+export function PermissionRoute({ requirement }: { requirement: PermissionRequirement }) {
+  const { t } = useTranslation()
+  const { isAuthenticated, isLoading, user } = useAuth()
+
+  if (isLoading) {
+    return <VxAlert severity="info">{t('routeGuards.checkingSession')}</VxAlert>
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />
+  }
+
+  if (!hasRequiredPermissions(user?.permissions, requirement)) {
+    return (
+      <VxAlert severity="warning">
+        {t('routeGuards.permissionDenied', { defaultValue: 'You do not have permission to open this workspace.' })}
+      </VxAlert>
+    )
   }
 
   return <Outlet />

@@ -5,6 +5,8 @@ import { assignUserRoles, createUser, getRoles, getTenants, getUsersForAdmin, re
 import type { CreateUserRequest, UserListItemResponse } from '../types/api/users'
 import type { RolePermissionsResponse } from '../types/api/roles'
 import type { TenantListItemResponse } from '../types/api'
+import { useAuth } from '../app/AuthContext'
+import { AdminPermissions, hasAdminPermissions } from '../app/authorization'
 
 type CreateUserFormState = {
   userName: string
@@ -23,6 +25,10 @@ const initialCreateForm: CreateUserFormState = {
 }
 
 export default function UsersPage() {
+  const { user } = useAuth()
+  const canManage = hasAdminPermissions(user?.permissions, { allOf: [AdminPermissions.users.manage] })
+  const canViewRoles = hasAdminPermissions(user?.permissions, { allOf: [AdminPermissions.roles.view] })
+  const canViewTenants = hasAdminPermissions(user?.permissions, { allOf: [AdminPermissions.tenants.view] })
   const [users, setUsers] = useState<UserListItemResponse[]>([])
   const [roles, setRoles] = useState<RolePermissionsResponse[]>([])
   const [tenants, setTenants] = useState<TenantListItemResponse[]>([])
@@ -45,7 +51,10 @@ export default function UsersPage() {
     setError(null)
 
     try {
-      const [roleData, tenantData] = await Promise.all([getRoles(), getTenants()])
+      const [roleData, tenantData] = await Promise.all([
+        canViewRoles ? getRoles() : Promise.resolve([]),
+        canViewTenants ? getTenants() : Promise.resolve([]),
+      ])
       setRoles(roleData)
       setTenants(tenantData)
     } catch (err) {
@@ -54,7 +63,7 @@ export default function UsersPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [canViewRoles, canViewTenants])
 
   const loadUsers = useCallback(async () => {
     setIsLoading(true)
@@ -153,12 +162,12 @@ export default function UsersPage() {
         headerName: 'User',
         flex: 1,
         minWidth: 180,
-        renderCell: (params) => (
+        renderCell: (params) => canManage ? (
           <VxBox>
             <VxTypography variant="body2" sx={{ fontWeight: 600 }}>{params.row.userName}</VxTypography>
             <VxTypography variant="caption" color="text.secondary">{params.row.email}</VxTypography>
           </VxBox>
-        ),
+        ) : <VxTypography variant="caption" color="text.secondary">View only</VxTypography>,
       },
       {
         field: 'tenantId',
@@ -194,17 +203,19 @@ export default function UsersPage() {
         filterable: false,
         renderCell: (params) => (
           <VxStack direction="row" spacing={1}>
-            <VxButton
-              size="small"
-              variant="outlined"
-              startIcon={<ManageAccountsRoundedIcon />}
-              onClick={() => {
-                setRolesDialogUser(params.row)
-                setRolesSelection(params.row.roles)
-              }}
-            >
-              Update Roles
-            </VxButton>
+            {canViewRoles ? (
+              <VxButton
+                size="small"
+                variant="outlined"
+                startIcon={<ManageAccountsRoundedIcon />}
+                onClick={() => {
+                  setRolesDialogUser(params.row)
+                  setRolesSelection(params.row.roles)
+                }}
+              >
+                Update Roles
+              </VxButton>
+            ) : null}
             <VxButton
               size="small"
               variant="outlined"
@@ -229,7 +240,7 @@ export default function UsersPage() {
         ),
       },
     ],
-    [tenantNameMap],
+    [canManage, canViewRoles, tenantNameMap],
   )
 
   return (
@@ -241,7 +252,7 @@ export default function UsersPage() {
             <VxTypography color="text.secondary">Manage tenant users, roles, password reset, and activation status.</VxTypography>
           </VxBox>
           <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} sx={{ alignItems: { xs: 'stretch', sm: 'center' } }}>
-            <VxTextField
+            {canViewTenants ? <VxTextField
               select
               size="small"
               label="Tenant filter"
@@ -253,15 +264,17 @@ export default function UsersPage() {
               {tenants.map((tenant) => (
                 <VxMenuItem key={tenant.id} value={tenant.id}>{tenant.name} ({tenant.code})</VxMenuItem>
               ))}
-            </VxTextField>
-            <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setIsCreateOpen(true)}>
+            </VxTextField> : null}
+            {canManage && canViewRoles ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setIsCreateOpen(true)}>
               Add Tenant User
-            </VxButton>
+            </VxButton> : null}
           </VxStack>
         </VxStack>
       </VxPaper>
 
       {error ? <VxAlert severity="error">{error}</VxAlert> : null}
+      {!canManage ? <VxAlert severity="info">You have view-only access. User creation, role assignment, password reset, and status changes require the users.manage permission.</VxAlert> : null}
+      {canManage && !canViewRoles ? <VxAlert severity="info">Role data is unavailable without roles.view, so user creation and role assignment are hidden.</VxAlert> : null}
 
       <VxPaper className="panel-card products-grid-panel" elevation={0}>
         <VxDataGrid
@@ -274,7 +287,7 @@ export default function UsersPage() {
         />
       </VxPaper>
 
-      <VxDialog open={isCreateOpen} onClose={() => setIsCreateOpen(false)} maxWidth="sm" fullWidth>
+      <VxDialog open={canManage && canViewRoles && isCreateOpen} onClose={() => setIsCreateOpen(false)} maxWidth="sm" fullWidth>
         <VxDialogTitle>Add Tenant User</VxDialogTitle>
         <VxDialogContent>
           <VxStack spacing={2} sx={{ mt: 1 }}>
@@ -306,7 +319,7 @@ export default function UsersPage() {
         </VxDialogActions>
       </VxDialog>
 
-      <VxDialog open={Boolean(rolesDialogUser)} onClose={() => setRolesDialogUser(null)} maxWidth="sm" fullWidth>
+      <VxDialog open={canManage && canViewRoles && Boolean(rolesDialogUser)} onClose={() => setRolesDialogUser(null)} maxWidth="sm" fullWidth>
         <VxDialogTitle>Update Roles</VxDialogTitle>
         <VxDialogContent>
           <VxTextField
@@ -333,7 +346,7 @@ export default function UsersPage() {
         </VxDialogActions>
       </VxDialog>
 
-      <VxDialog open={Boolean(resetDialogUser)} onClose={() => setResetDialogUser(null)} maxWidth="sm" fullWidth>
+      <VxDialog open={canManage && Boolean(resetDialogUser)} onClose={() => setResetDialogUser(null)} maxWidth="sm" fullWidth>
         <VxDialogTitle>Reset Password</VxDialogTitle>
         <VxDialogContent>
           <VxTextField

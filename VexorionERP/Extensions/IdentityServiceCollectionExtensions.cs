@@ -98,6 +98,7 @@ public static class IdentityServiceCollectionExtensions
         services.AddScoped<IImportJobService, ImportJobService>();
         services.AddScoped<IDocumentRendererService, DocumentRendererService>();
         services.AddScoped<IGeneratedDocumentService, GeneratedDocumentService>();
+        services.AddScoped<ITenantStorageCleanupService, TenantStorageCleanupService>();
         services.AddScoped<ITenantOnboardingService, TenantOnboardingService>();
         services.AddScoped<IUserManagementService, UserManagementService>();
         services.AddScoped<SalesInvoiceCommandService>();

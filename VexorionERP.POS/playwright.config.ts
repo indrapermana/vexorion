@@ -17,11 +17,13 @@ const isCI = !!process.env.CI
  */
 export default defineConfig({
   testDir: './e2e',
+  globalSetup: '../scripts/e2e/global-setup.mjs',
   fullyParallel: false,
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,
   workers: 1,
   reporter: [
+    ['../scripts/e2e/lifecycle-reporter.mjs'],
     ['html', { open: 'never' }],
     ['list'],
     ...(isCI ? [['junit', { outputFile: 'test-results/playwright-pos.xml' }] as const] : []),

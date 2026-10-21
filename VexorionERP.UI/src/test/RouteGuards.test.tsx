@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { ModuleRouteGuard, ProtectedRoute, PublicOnlyRoute } from '../components/RouteGuards'
+import { ModuleRouteGuard, PermissionRoute, ProtectedRoute, PublicOnlyRoute } from '../components/RouteGuards'
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -188,6 +188,53 @@ describe('ModuleRouteGuard', () => {
         <Routes>
           <Route element={<ModuleRouteGuard module={module} />}>
             <Route path={path} element={<ModulePage load={load} />} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('Module Content')).toBeInTheDocument()
+    await waitFor(() => expect(load).toHaveBeenCalledOnce())
+  })
+})
+
+describe('PermissionRoute', () => {
+  it('does not mount a denied route or start its data load', () => {
+    const load = vi.fn()
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      isLoading: false,
+      user: { permissions: ['customers.view'] },
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/products']}>
+        <Routes>
+          <Route element={<PermissionRoute requirement={{ allOf: ['products.view'] }} />}>
+            <Route path="/products" element={<ModulePage load={load} />} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByRole('alert')).toHaveTextContent('routeGuards.permissionDenied')
+    expect(screen.queryByText('Module Content')).not.toBeInTheDocument()
+    expect(load).not.toHaveBeenCalled()
+  })
+
+  it('mounts a route when any required alternative is granted', async () => {
+    const load = vi.fn()
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      isLoading: false,
+      user: { permissions: ['imports.history.view'] },
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/config/import-data']}>
+        <Routes>
+          <Route element={<PermissionRoute requirement={{ anyOf: ['imports.validate', 'imports.history.view'] }} />}>
+            <Route path="/config/import-data" element={<ModulePage load={load} />} />
           </Route>
         </Routes>
       </MemoryRouter>,

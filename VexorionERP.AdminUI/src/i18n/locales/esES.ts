@@ -8,6 +8,7 @@ const esES = {
   routeGuards: {
     checkingSession: 'Verificando sesión...',
     loadingWorkspace: 'Cargando espacio...',
+    permissionDenied: 'No tienes permiso para abrir este espacio de trabajo.',
   },
   login: {
     title: 'Inicio de sesión de administrador',

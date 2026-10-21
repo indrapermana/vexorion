@@ -1,10 +1,10 @@
 /**
  * tenants.spec.ts — TC-A-005 to TC-A-012 (Tenant Management CRUD)
  */
-import { test, expect } from './fixtures'
+import { AUTH_CREDENTIALS, test, expect, uid } from './fixtures'
 
-const UNIQUE_NAME = () => `E2E Tenant ${Date.now()}`
-const UNIQUE_CODE = () => `e2e${Date.now()}`
+const UNIQUE_NAME = () => uid('E2E Tenant')
+const UNIQUE_CODE = () => `${AUTH_CREDENTIALS.tenantCode}-child-${uid('t').slice(-12)}`.slice(0, 50)
 
 test.describe('Tenant List', () => {
   test('TC-A-005: tenant list page loads', async ({ page, tenantsPage }) => {

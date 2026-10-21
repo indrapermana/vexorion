@@ -67,6 +67,7 @@ const idID = {
   routeGuards: {
     checkingSession: 'Memeriksa sesi Anda...',
     loadingWorkspace: 'Memuat workspace...',
+    permissionDenied: 'Anda tidak memiliki izin untuk membuka workspace ini.',
   },
   publicAuth: {
     workspaceAccess: 'Akses workspace',

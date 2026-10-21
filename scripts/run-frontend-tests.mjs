@@ -9,6 +9,18 @@ const workspaces = [
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm'
 const failures = []
 
+console.log('\n=== Testing isolated E2E tenant lifecycle ===')
+const lifecycleResult = spawnSync(
+  process.execPath,
+  ['--test', 'scripts/e2e/tenant-lifecycle.test.mjs'],
+  { stdio: 'inherit' },
+)
+
+if (lifecycleResult.status !== 0) {
+  console.error('\nE2E tenant lifecycle tests failed.')
+  process.exit(lifecycleResult.status ?? 1)
+}
+
 console.log('\n=== Validating frontend development API routing ===')
 const configResult = spawnSync(
   process.execPath,

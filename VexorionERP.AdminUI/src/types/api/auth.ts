@@ -17,6 +17,7 @@ export type CurrentUserResponse = {
   lastName: string
   displayName: string
   roles: string[]
+  permissions: string[]
 }
 
 export type ValidationProblem = {

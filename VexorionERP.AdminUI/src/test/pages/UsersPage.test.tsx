@@ -16,6 +16,14 @@ const apiMocks = vi.hoisted(() => ({
   setUserStatus: vi.fn(),
 }))
 
+vi.mock('../../app/AuthContext', () => ({
+  useAuth: () => ({
+    user: {
+      permissions: ['users.view', 'users.manage', 'roles.view', 'tenants.view'],
+    },
+  }),
+}))
+
 vi.mock('@vexorion/ui', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@vexorion/ui')>()
   return {

@@ -6,11 +6,15 @@ import { deleteTenant, getTenantModuleEffectiveAccess, getTenants } from '../../
 import type { TenantListItemResponse, TenantModuleEffectiveAccessResponse } from '../../../types/api'
 import { TenantDataGrid } from '../components/TenantDataGrid'
 import { TenantOnboardingDialog } from '../components/TenantOnboardingDialog'
+import { useAuth } from '../../../app/AuthContext'
+import { AdminPermissions, hasAdminPermissions } from '../../../app/authorization'
 
 const TenantEditorDialog = lazy(() => import('../components/TenantEditorDialog').then((m) => ({ default: m.TenantEditorDialog })))
 
 export default function TenantManagementPage() {
   const { t } = useTranslation()
+  const { user } = useAuth()
+  const canManage = hasAdminPermissions(user?.permissions, { allOf: [AdminPermissions.tenants.manage] })
   const [tenants, setTenants] = useState<TenantListItemResponse[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -115,9 +119,11 @@ export default function TenantManagementPage() {
               {t('pages.tenantManagement.description')}
             </VxTypography>
           </VxBox>
-          <VxButton variant="contained" onClick={() => setIsOnboardingOpen(true)}>
-            New Tenant
-          </VxButton>
+          {canManage ? (
+            <VxButton variant="contained" onClick={() => setIsOnboardingOpen(true)}>
+              New Tenant
+            </VxButton>
+          ) : null}
         </VxBox>
 
         <VxStack direction="row" spacing={2}>
@@ -147,6 +153,7 @@ export default function TenantManagementPage() {
         </VxStack>
 
         {error && <VxAlert severity="error">{error}</VxAlert>}
+        {!canManage ? <VxAlert severity="info">You have view-only access. Tenant creation, editing, and removal require the tenants.manage permission.</VxAlert> : null}
 
         <TenantDataGrid
           rows={visibleTenants}
@@ -154,20 +161,25 @@ export default function TenantManagementPage() {
           onEdit={handleEdit}
           onRemove={handleTenantRemove}
           effectiveAccessByTenantId={effectiveAccessByTenantId}
+          canManage={canManage}
         />
 
-        <TenantEditorDialog
-          open={isEditorOpen}
-          tenant={selectedTenant}
-          onClose={handleEditorClose}
-          onSaved={handleTenantSaved}
-        />
+        {canManage ? (
+          <>
+            <TenantEditorDialog
+              open={isEditorOpen}
+              tenant={selectedTenant}
+              onClose={handleEditorClose}
+              onSaved={handleTenantSaved}
+            />
 
-        <TenantOnboardingDialog
-          open={isOnboardingOpen}
-          onClose={() => setIsOnboardingOpen(false)}
-          onCreated={handleTenantCreated}
-        />
+            <TenantOnboardingDialog
+              open={isOnboardingOpen}
+              onClose={() => setIsOnboardingOpen(false)}
+              onCreated={handleTenantCreated}
+            />
+          </>
+        ) : null}
       </VxStack>
     </VxBox>
   )

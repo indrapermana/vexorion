@@ -1,7 +1,8 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import './App.css'
 import { AuthProvider } from './app/AuthContext'
-import { PermissionRoute, ProtectedRoute, PublicOnlyRoute } from './components/RouteGuards'
+import { PermissionRoute, PermissionsRoute, PublicOnlyRoute } from './components/RouteGuards'
+import { PosPermissions, posWorkspacePermissions } from './app/authorization'
 import { SessionTimeoutWarning } from './components/SessionTimeoutWarning'
 import LoginPage from './pages/LoginPage'
 import PosAdminPage from './pages/PosAdminPage'
@@ -13,11 +14,11 @@ export default function App() {
       <AuthProvider>
         <SessionTimeoutWarning />
         <Routes>
-          <Route element={<ProtectedRoute />}>
+          <Route element={<PermissionsRoute permissions={posWorkspacePermissions} />}>
             <Route path="/" element={<PosPage />} />
           </Route>
 
-          <Route element={<PermissionRoute permission="roles.manage" />}>
+          <Route element={<PermissionRoute permission={PosPermissions.roles.manage} />}>
             <Route path="/admin" element={<PosAdminPage />} />
           </Route>
 

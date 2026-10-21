@@ -5,7 +5,7 @@
  * project UI that broader permissions and out-of-window dates are rejected,
  * while the exact permitted scope and validity period can be persisted.
  */
-import { expect, test, uid } from './fixtures'
+import { AUTH_CREDENTIALS, expect, test, uid } from './fixtures'
 import { authenticatedApi, expectSuccessfulFixture, type CreatedEntity } from './api-helpers'
 
 type OnboardTenantResponse = {
@@ -22,8 +22,8 @@ function utcDateFromToday(days: number): string {
 test('P1-1: relationship scope and validity dates allow and deny project-party access exactly', async ({ page }) => {
   test.setTimeout(75_000)
 
-  const suffix = Date.now().toString()
-  const tenantCode = `e2escope${suffix}`.slice(0, 40)
+  const suffix = uid('scope')
+  const tenantCode = `${AUTH_CREDENTIALS.tenantCode}-scope-${suffix.slice(-10)}`.slice(0, 50)
   const categoryCode = uid('E2ESCOPE').slice(0, 50)
   const projectNumber = uid('E2E-SCOPE-PRJ').slice(0, 50)
   const projectName = `Relationship authorization project ${suffix}`

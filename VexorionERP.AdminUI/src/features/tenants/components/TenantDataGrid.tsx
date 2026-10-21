@@ -11,9 +11,10 @@ interface TenantDataGridProps {
   onEdit: (tenant: TenantListItemResponse) => void
   onRemove: (tenant: TenantListItemResponse) => void
   effectiveAccessByTenantId?: Record<string, TenantModuleEffectiveAccessResponse>
+  canManage?: boolean
 }
 
-export function TenantDataGrid({ rows, isLoading, onEdit, onRemove, effectiveAccessByTenantId }: TenantDataGridProps) {
+export function TenantDataGrid({ rows, isLoading, onEdit, onRemove, effectiveAccessByTenantId, canManage = true }: TenantDataGridProps) {
   const { t } = useTranslation()
 
   const columns = useMemo<VxGridColDef<TenantGridRow>[]>(
@@ -23,7 +24,7 @@ export function TenantDataGrid({ rows, isLoading, onEdit, onRemove, effectiveAcc
         headerName: t('components.tenants.grid.columns.tenant'),
         flex: 1,
         minWidth: 200,
-        renderCell: (params) => (
+        renderCell: (params) => canManage ? (
           <VxBox>
             <VxTypography variant="body2" sx={{ fontWeight: 600 }}>
               {params.row.name}
@@ -32,7 +33,7 @@ export function TenantDataGrid({ rows, isLoading, onEdit, onRemove, effectiveAcc
               {t('components.tenants.grid.codePrefix')} {params.row.code}
             </VxTypography>
           </VxBox>
-        ),
+        ) : <VxTypography variant="caption" color="text.secondary">View only</VxTypography>,
       },
       {
         field: 'domain',
@@ -136,7 +137,7 @@ export function TenantDataGrid({ rows, isLoading, onEdit, onRemove, effectiveAcc
         ),
       },
     ],
-    [effectiveAccessByTenantId, onEdit, onRemove, t],
+    [canManage, effectiveAccessByTenantId, onEdit, onRemove, t],
   )
 
   return (

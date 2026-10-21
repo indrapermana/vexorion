@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../app/AuthContext'
 import { useThemeMode } from '../app/ThemeModeContext'
+import { canAccessAdminRoute } from '../app/authorization'
 
 const drawerWidth = 280
 const collapsedDrawerWidth = 92
@@ -65,6 +66,12 @@ export default function AppLayout() {
   const pageTitle = routeTitles[location.pathname] ?? 'System Admin'
   const currentLanguage = i18n.language
   const desktopDrawerWidth = isSidebarCollapsed ? collapsedDrawerWidth : drawerWidth
+  const visibleNavigationSections = navigationSections
+    .map((section) => ({
+      ...section,
+      links: section.links.filter((link) => canAccessAdminRoute(user?.permissions, link.to)),
+    }))
+    .filter((section) => section.links.length > 0)
 
   const sidebar = (collapsed: boolean) => (
     <VxBox className={collapsed ? 'dashboard-sidebar-shell dashboard-sidebar-shell-collapsed' : 'dashboard-sidebar-shell'}>
@@ -86,7 +93,7 @@ export default function AppLayout() {
       <VxBox sx={{ px: collapsed ? 1 : 1.5, py: 1.5 }}>
         {!collapsed ? <VxTypography className="sidebar-caption">Navigation</VxTypography> : null}
         <VxStack spacing={1.5}>
-          {navigationSections.map((section) => (
+          {visibleNavigationSections.map((section) => (
             <VxBox key={section.title}>
               {!collapsed ? (
                 <VxTypography variant="overline" sx={{ px: 1.5, color: 'text.secondary', letterSpacing: '0.12em' }}>

@@ -46,10 +46,11 @@ import {
   VxTooltip,
   VxTypography,
 } from "@vexorion/ui";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../app/AuthContext";
+import { canAccessMainRoute } from "../app/authorization";
 import { useTenantModules } from "../app/TenantModuleContext";
 import { useThemeMode } from "../app/ThemeModeContext";
 import {
@@ -323,7 +324,11 @@ export default function AppLayout() {
 
   const currentLanguage = normalizeTranslationLanguage(i18n.language);
 
-  const isLinkVisible = (path: string) => {
+  const isLinkVisible = useCallback((path: string) => {
+    if (!canAccessMainRoute(user?.permissions, path)) {
+      return false;
+    }
+
     if (["/project-categories", "/project-documents", "/projects", "/tenant-relationships"].includes(path)) {
       return projectManagementEnabled;
     }
@@ -333,7 +338,7 @@ export default function AppLayout() {
     }
 
     return true;
-  };
+  }, [employeeManagementEnabled, projectManagementEnabled, user?.permissions]);
 
   const handleLanguageChange = (nextLanguage: TranslationLanguage) => {
     void i18n.changeLanguage(nextLanguage);
@@ -411,7 +416,7 @@ export default function AppLayout() {
           ),
         }))
         .filter((section) => section.links.length > 0),
-    [employeeManagementEnabled, hiddenMenuLinks, projectManagementEnabled],
+    [hiddenMenuLinks, isLinkVisible],
   );
 
   const handleLogout = async () => {

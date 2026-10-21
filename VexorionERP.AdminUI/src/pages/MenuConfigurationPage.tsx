@@ -2,6 +2,8 @@ import { VxAlert, VxBox, VxButton, VxChip, VxMenuItem, VxPaper, VxStack, VxSwitc
 import { useEffect, useMemo, useState } from 'react'
 import { getTenantMenuConfiguration, getTenants, updateTenantMenuConfiguration } from '../lib/api'
 import type { TenantListItemResponse } from '../types/api'
+import { useAuth } from '../app/AuthContext'
+import { AdminPermissions, hasAdminPermissions } from '../app/authorization'
 
 const tenantMenuItems = [
   { key: '/', label: 'Dashboard' },
@@ -31,6 +33,8 @@ const tenantMenuItems = [
 type MenuItemKey = (typeof tenantMenuItems)[number]['key']
 
 export default function MenuConfigurationPage() {
+  const { user } = useAuth()
+  const canManage = hasAdminPermissions(user?.permissions, { allOf: [AdminPermissions.tenants.manage] })
   const [tenants, setTenants] = useState<TenantListItemResponse[]>([])
   const [selectedTenantId, setSelectedTenantId] = useState('')
   const [hiddenMenus, setHiddenMenus] = useState<MenuItemKey[]>([])
@@ -119,6 +123,7 @@ export default function MenuConfigurationPage() {
       </VxPaper>
 
       {error ? <VxAlert severity="error">{error}</VxAlert> : null}
+      {!canManage ? <VxAlert severity="info">You have view-only access. Saving menu changes requires the tenants.manage permission.</VxAlert> : null}
 
       <VxPaper className="panel-card" elevation={0}>
         <VxStack spacing={2}>
@@ -157,14 +162,14 @@ export default function MenuConfigurationPage() {
                     <VxTypography variant="body2" sx={{ fontWeight: 600 }}>{menuItem.label}</VxTypography>
                     <VxTypography variant="caption" color="text.secondary">menu key: {menuItem.key}</VxTypography>
                   </VxBox>
-                  <VxSwitch checked={isEnabled} onChange={(_, checked) => toggleMenu(menuItem.key, checked)} />
+                  <VxSwitch checked={isEnabled} disabled={!canManage} onChange={(_, checked) => toggleMenu(menuItem.key, checked)} />
                 </VxStack>
               )
             })}
           </VxStack>
 
           <VxStack direction="row" sx={{ justifyContent: 'flex-end' }}>
-            <VxButton variant="contained" onClick={() => void handleSave()} disabled={isSaving || !selectedTenantId}>
+            <VxButton variant="contained" onClick={() => void handleSave()} disabled={!canManage || isSaving || !selectedTenantId}>
               {isSaving ? 'Saving...' : 'Save Configuration'}
             </VxButton>
           </VxStack>

@@ -5,7 +5,8 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './app/AuthContext'
 import { ThemeModeProvider } from './app/ThemeModeContext'
 import { createAppTheme } from './theme'
-import { ProtectedRoute, PublicOnlyRoute } from './components/RouteGuards'
+import { PermissionRoute, ProtectedRoute, PublicOnlyRoute } from './components/RouteGuards'
+import { AdminPermissions } from './app/authorization'
 import type { ThemeMode } from './theme'
 
 const THEME_MODE_STORAGE_KEY = 'vexorion.admin.themeMode'
@@ -54,10 +55,16 @@ export default function App() {
               <Routes>
                 <Route element={<AppLayout />}>
                   <Route element={<ProtectedRoute />}>
-                    <Route path="/" element={<DashboardPage />} />
-                    <Route path="/tenants" element={<TenantManagementPage />} />
-                    <Route path="/users" element={<UsersPage />} />
-                    <Route path="/menu-configuration" element={<MenuConfigurationPage />} />
+                    <Route element={<PermissionRoute requirement={{ allOf: [AdminPermissions.tenants.view, AdminPermissions.users.view] }} />}>
+                      <Route path="/" element={<DashboardPage />} />
+                    </Route>
+                    <Route element={<PermissionRoute requirement={{ allOf: [AdminPermissions.tenants.view] }} />}>
+                      <Route path="/tenants" element={<TenantManagementPage />} />
+                      <Route path="/menu-configuration" element={<MenuConfigurationPage />} />
+                    </Route>
+                    <Route element={<PermissionRoute requirement={{ allOf: [AdminPermissions.users.view] }} />}>
+                      <Route path="/users" element={<UsersPage />} />
+                    </Route>
                   </Route>
                 </Route>
 

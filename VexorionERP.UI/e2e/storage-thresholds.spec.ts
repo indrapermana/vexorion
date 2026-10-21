@@ -5,7 +5,7 @@
  * state is deterministic. The hard quota path remains a real API request and
  * must reject before the disabled development Blob Storage account is called.
  */
-import { expect, test, uid, LoginPageObject } from './fixtures'
+import { AUTH_CREDENTIALS, expect, test, uid, LoginPageObject } from './fixtures'
 import { authenticatedApi, expectSuccessfulFixture, type CreatedEntity } from './api-helpers'
 
 type OnboardTenantResponse = {
@@ -15,8 +15,8 @@ type OnboardTenantResponse = {
 test('P1-1: show storage thresholds and reject uploads beyond the hard quota', async ({ page, browser }) => {
   test.setTimeout(90_000)
 
-  const suffix = Date.now().toString()
-  const tenantCode = `e2estorage${suffix}`.slice(0, 40)
+  const suffix = uid('storage')
+  const tenantCode = `${AUTH_CREDENTIALS.tenantCode}-storage-${suffix.slice(-8)}`.slice(0, 50)
   const tenantPassword = 'E2eStorage123!'
   const tenantUsername = `admin-${suffix}`
   const categoryCode = uid('E2ESTOR').slice(0, 50)

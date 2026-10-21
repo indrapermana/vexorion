@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 const authState = vi.hoisted(() => ({
   isAuthenticated: false,
   isLoading: false,
+  permissions: [] as string[],
 }))
 
 vi.mock('react-i18next', () => ({
@@ -23,7 +24,7 @@ vi.mock('react-i18next', () => ({
 vi.mock('../../app/AuthContext', () => ({
   useAuth: () => ({
     session: authState.isAuthenticated ? { accessToken: 'token' } : null,
-    user: null,
+    user: authState.isAuthenticated ? { permissions: authState.permissions } : null,
     isLoading: authState.isLoading,
     isAuthenticated: authState.isAuthenticated,
     error: null,
@@ -35,7 +36,7 @@ vi.mock('../../app/AuthContext', () => ({
   }),
 }))
 
-import { ProtectedRoute, PublicOnlyRoute } from '../../components/RouteGuards'
+import { PermissionRoute, ProtectedRoute, PublicOnlyRoute } from '../../components/RouteGuards'
 
 function renderProtectedRoute(initialPath = '/protected') {
   return render(
@@ -116,5 +117,42 @@ describe('RouteGuards', () => {
     renderPublicOnlyRoute()
 
     expect(screen.getByText('Public content')).toBeInTheDocument()
+  })
+
+  it('does not mount an unauthorized admin route', () => {
+    authState.isLoading = false
+    authState.isAuthenticated = true
+    authState.permissions = ['users.view']
+
+    render(
+      <MemoryRouter initialEntries={['/tenants']}>
+        <Routes>
+          <Route element={<PermissionRoute requirement={{ allOf: ['tenants.view'] }} />}>
+            <Route path="/tenants" element={<div>Tenant content</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByRole('alert')).toHaveTextContent('routeGuards.permissionDenied')
+    expect(screen.queryByText('Tenant content')).not.toBeInTheDocument()
+  })
+
+  it('mounts an authorized admin route', () => {
+    authState.isLoading = false
+    authState.isAuthenticated = true
+    authState.permissions = ['tenants.view']
+
+    render(
+      <MemoryRouter initialEntries={['/tenants']}>
+        <Routes>
+          <Route element={<PermissionRoute requirement={{ allOf: ['tenants.view'] }} />}>
+            <Route path="/tenants" element={<div>Tenant content</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('Tenant content')).toBeInTheDocument()
   })
 })

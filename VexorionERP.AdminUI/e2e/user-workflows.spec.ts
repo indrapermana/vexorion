@@ -9,9 +9,7 @@
  *
  * Covers TEST_PLAN: A.2.1–A.2.8
  */
-import { test, expect } from './fixtures'
-
-const uid = (p: string) => `${p}-${Date.now()}`
+import { test, expect, uid } from './fixtures'
 
 // ---------------------------------------------------------------------------
 // Helper: navigate to users page

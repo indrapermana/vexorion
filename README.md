@@ -447,37 +447,27 @@ Runs at **`http://localhost:5175`**. Proxies `/api/*` to `https://localhost:7171
 
 ### Running E2E tests
 
-The E2E tests require the backend and POS dev server to be running. Before the first run, the Playwright setup project authenticates via the UI and saves the session to `e2e/.auth/user.json`.
+Each Playwright command provisions a uniquely prefixed automation tenant through an existing SystemAdmin account, authenticates the application against that tenant, and deletes all tenants bearing that run prefix during global teardown. The control-plane credentials are used only by global setup and teardown; tests receive only the generated tenant credentials through ignored files under `e2e/.auth/`. Sanitized provision, authentication, test, cleanup, and orphan-check outcomes are written to an ignored `test-results/e2e-tenant-lifecycle.json` file for CI artifact collection.
+
+Tenant lifecycle operations are intentionally refused unless the target is explicitly marked Development, Test, or E2E. They also reject production hostnames and remote hosts without a second explicit opt-in. Do not enable the CI E2E jobs against the current production-only environment; create a disposable non-production API/database first.
 
 ```bash
 # In one terminal — start the backend
 dotnet watch --project VexorionERP/VexorionERP.csproj --no-hot-reload
 
-# In another terminal — start the POS dev server
-cd VexorionERP.POS && npm run dev
-
-# In a third terminal — run E2E tests
-cd VexorionERP.POS && npm run e2e
+# In another terminal — run one application's E2E suite.
+# Use the active local SystemAdmin values from ignored appsettings.Development.json.
+cd VexorionERP.POS
+E2E_API_BASE_URL='https://localhost:7171/api' \
+E2E_API_ENVIRONMENT='Development' \
+E2E_ALLOW_TENANT_PROVISIONING='true' \
+E2E_CONTROL_TENANT_CODE='<system-admin-tenant>' \
+E2E_CONTROL_USERNAME='<system-admin-username-or-email>' \
+E2E_CONTROL_PASSWORD='<system-admin-password>' \
+npm run e2e
 ```
 
-The current E2E fixtures still contain legacy local fallbacks. Override them for every newly provisioned or shared environment:
-
-| Environment variable | Legacy local fallback |
-|---|---|
-| `E2E_TENANT_CODE` | `demo` |
-| `E2E_USERNAME` | `admin@demo.local` |
-| `E2E_PASSWORD` | `DemoAdmin123!` |
-| `POS_BASE_URL` | `http://localhost:5175` |
-
-These fallbacks refer to the older local `demo` database and must never be treated as deployment credentials. For a newly provisioned environment, use the `vexorionerp` bootstrap tenant and its managed password. For the cross-tenant project scenario, supply an active local **SystemAdmin** account because the test provisions and removes a temporary tenant B:
-
-```bash
-cd VexorionERP.UI
-E2E_TENANT_CODE='<your-tenant-code>' \
-E2E_USERNAME='<your-system-admin-email-or-username>' \
-E2E_PASSWORD='<your-password>' \
-npx playwright test e2e/projects-cross-tenant.spec.ts
-```
+Set `E2E_RETAIN_TENANT_ON_FAILURE=true` only during local debugging when you want a failed run's generated tenant retained for inspection. Successful runs still clean up, and CI always ignores retention. The next run detects the retained run metadata and removes that tenant before provisioning another one.
 
 Do not commit these credentials or add them to tracked environment files.
 

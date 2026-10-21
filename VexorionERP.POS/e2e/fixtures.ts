@@ -1,4 +1,6 @@
 import { test as base, expect, type Page } from '@playwright/test'
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 
 // ---------------------------------------------------------------------------
 // Auth fixture
@@ -8,10 +10,20 @@ import { test as base, expect, type Page } from '@playwright/test'
  * Credentials used by the auth setup (auth.setup.ts).
  * Override via environment variables to avoid hardcoding credentials.
  */
+function readRunCredentials() {
+  return JSON.parse(readFileSync(fileURLToPath(new URL('./.auth/run.json', import.meta.url)), 'utf8')) as {
+    runId: string
+    tenantCode: string
+    username: string
+    password: string
+  }
+}
+
 export const AUTH_CREDENTIALS = {
-  tenantCode: process.env.E2E_TENANT_CODE ?? 'demo',
-  username: process.env.E2E_USERNAME ?? 'admin@demo.local',
-  password: process.env.E2E_PASSWORD ?? 'DemoAdmin123!',
+  get runId() { return readRunCredentials().runId },
+  get tenantCode() { return readRunCredentials().tenantCode },
+  get username() { return readRunCredentials().username },
+  get password() { return readRunCredentials().password },
 }
 
 // ---------------------------------------------------------------------------

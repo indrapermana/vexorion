@@ -59,17 +59,9 @@ test.describe('Authentication', () => {
     )
     await expect(page).toHaveURL('/', { timeout: 10_000 })
 
-    // Find and click logout
-    const logoutBtn = page.getByRole('button', { name: /logout|sign out/i })
-    const avatarBtn = page.getByRole('button', { name: /account|avatar|user/i }).last()
-
-    if (await logoutBtn.isVisible()) {
-      await logoutBtn.click()
-    } else {
-      // Avatar menu pattern — click avatar then logout menu item
-      await avatarBtn.click()
-      await page.getByRole('menuitem', { name: /logout|sign out/i }).click()
-    }
+    // The desktop shell exposes logout directly in the navigation footer.
+    // Let Playwright auto-wait for that stable accessible control.
+    await page.getByRole('button', { name: /^logout$/i }).click()
 
     await expect(page).toHaveURL(/\/login/, { timeout: 5_000 })
   })

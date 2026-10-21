@@ -22,6 +22,13 @@ public sealed class DeleteTenantCommandHandler(IServiceProvider serviceProvider)
             return ServiceResult<bool>.Failure(StatusCodes.Status404NotFound, "Tenant not found.");
         }
 
+        var storageCleanupService = serviceProvider.GetRequiredService<ITenantStorageCleanupService>();
+        var storageCleanup = await storageCleanupService.DeleteTenantObjectsAsync(request.TenantId, cancellationToken);
+        if (!storageCleanup.Succeeded)
+        {
+            return storageCleanup;
+        }
+
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
         var tenantScopedEntityTypes = dbContext.Model.GetEntityTypes()

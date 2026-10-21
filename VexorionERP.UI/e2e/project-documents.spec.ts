@@ -27,7 +27,7 @@ type ProjectDocumentDownload = {
 test('P1-1: upload, version, preview, download, and preserve document history', async ({ page }) => {
   test.setTimeout(90_000)
 
-  const suffix = Date.now().toString()
+  const suffix = uid('doc')
   const categoryCode = uid('E2EDOC').slice(0, 50)
   const projectNumber = uid('E2E-DOC-PRJ').slice(0, 50)
   const projectName = `Document lifecycle project ${suffix}`

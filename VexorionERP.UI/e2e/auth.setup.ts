@@ -34,7 +34,7 @@ setup('authenticate', async ({ page }) => {
     const responseBody = await loginResponse.text()
     throw new Error(
       `E2E authentication failed with HTTP ${loginResponse.status()}: ${responseBody}. `
-      + 'Set E2E_TENANT_CODE, E2E_USERNAME, and E2E_PASSWORD to an active local SystemAdmin account.',
+      + 'Verify the generated automation tenant metadata and onboarding result.',
     )
   }
 

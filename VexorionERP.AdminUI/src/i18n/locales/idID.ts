@@ -8,6 +8,7 @@ const idID = {
   routeGuards: {
     checkingSession: 'Memeriksa sesi...',
     loadingWorkspace: 'Memuat ruang kerja...',
+    permissionDenied: 'Anda tidak memiliki izin untuk membuka ruang kerja ini.',
   },
   login: {
     title: 'Masuk Admin',

@@ -40,6 +40,7 @@ import type {
 } from '../types/api'
 import { ApiError } from '../lib/api/core'
 import { generateDocumentNumber } from '../lib/posDocuments'
+import { PosPermissions } from '../app/authorization'
 
 type CheckoutResult = {
   orderId: string
@@ -55,10 +56,10 @@ export default function PosPage() {
   const { user } = useAuth()
   const pushHistory = useTransactionHistory((state) => state.push)
   const { currentShift, openShift, closeShift, fetchCurrentShift } = useShift()
-  const canManageRoles = user?.permissions.includes('roles.manage') ?? false
-  const canCheckout = user?.permissions.includes('pos.checkout') ?? false
-  const canCloseShift = user?.permissions.includes('pos.shift.close') ?? false
-  const canRefund = user?.permissions.includes('pos.refund') ?? false
+  const canManageRoles = user?.permissions.includes(PosPermissions.roles.manage) ?? false
+  const canCheckout = user?.permissions.includes(PosPermissions.checkout) ?? false
+  const canCloseShift = user?.permissions.includes(PosPermissions.shiftClose) ?? false
+  const canRefund = user?.permissions.includes(PosPermissions.refund) ?? false
 
   const isShiftOpen = currentShift !== null
   const cashierName =

@@ -1,8 +1,7 @@
 /**
  * config.spec.ts — TC-M-048 to TC-M-058 (Configuration sub-pages)
  */
-import { test, expect } from './fixtures'
-import { GenericCrudPage } from './fixtures'
+import { test, expect, GenericCrudPage, uid } from './fixtures'
 
 test.describe('Config — Company', () => {
   test('TC-M-048: company settings page loads', async ({ page }) => {
@@ -81,7 +80,7 @@ test.describe('Config — Product Categories', () => {
     const dialog = page.getByRole('dialog')
     await expect(dialog).toBeVisible({ timeout: 5_000 })
 
-    const name = `E2E-CAT-${Date.now()}`
+    const name = uid('E2E-CAT')
     await dialog.getByRole('textbox').first().fill(name)
     await crud.saveDialog()
     await expect(dialog).not.toBeVisible({ timeout: 8_000 })

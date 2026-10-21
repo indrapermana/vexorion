@@ -2,6 +2,8 @@ import { OpenInNewRoundedIcon } from '@vexorion/ui'
 import { VxBox, VxIconButton, VxPaper, VxStack, VxTooltip, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
+import { useAuth } from '../../../app/AuthContext'
+import { canAccessMainRoute } from '../../../app/authorization'
 
 const configCards = [
   {
@@ -50,6 +52,8 @@ const configCards = [
 
 export default function ConfigPage() {
   const { t } = useTranslation()
+  const { user } = useAuth()
+  const accessibleCards = configCards.filter((card) => canAccessMainRoute(user?.permissions, card.to))
 
   return (
     <VxStack spacing={3}>
@@ -70,7 +74,7 @@ export default function ConfigPage() {
           },
         }}
       >
-        {configCards.map((item) => (
+        {accessibleCards.map((item) => (
           <VxPaper
             key={item.to}
             elevation={0}
