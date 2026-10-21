@@ -9,6 +9,18 @@ const workspaces = [
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm'
 const failures = []
 
+console.log('\n=== Validating frontend development API routing ===')
+const configResult = spawnSync(
+  process.execPath,
+  ['scripts/validate-frontend-dev-config.mjs'],
+  { stdio: 'inherit' },
+)
+
+if (configResult.status !== 0) {
+  console.error('\nFrontend development API routing validation failed.')
+  process.exit(configResult.status ?? 1)
+}
+
 for (const workspace of workspaces) {
   console.log(`\n=== Running frontend tests: ${workspace} ===`)
   const result = spawnSync(

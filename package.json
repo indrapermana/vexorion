@@ -16,6 +16,7 @@
     "lint": "turbo run lint",
     "test": "node scripts/run-frontend-tests.mjs",
     "test:run": "node scripts/run-frontend-tests.mjs",
+    "frontend:config:check": "node scripts/validate-frontend-dev-config.mjs",
     "preview": "turbo run preview",
     "ui:version": "node scripts/bump-ui-version.mjs",
     "ui:version:patch": "node scripts/bump-ui-version.mjs patch",

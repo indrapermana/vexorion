@@ -185,7 +185,7 @@ cd VexorionERP.POS && npm run dev
 
 You do **not** need to run all three at once — start only the app(s) relevant to what you are working on.
 
-> The frontends proxy all `/api/*` requests to `http://localhost:5000` automatically via Vite's dev proxy, so you do not need to configure CORS or change any URLs.
+> All three frontends call the relative `/api` path and proxy it to `https://localhost:7171` through Vite during local development. The proxy accepts the trusted ASP.NET development certificate, so browser requests stay same-origin and require no local CORS changes. Copy each application's `.env.example` only when you need to override these defaults.
 
 ### Step 9 — Log in
 
@@ -329,11 +329,11 @@ npm install
 npm run dev
 ```
 
-Runs at **`http://localhost:5173`** (default Vite port). Proxies `/api/*` to `http://localhost:5000`.
+Runs at **`http://localhost:5173`** (default Vite port). Proxies `/api/*` to `https://localhost:7171`.
 
 | Env var | Default | Purpose |
 |---|---|---|
-| `VITE_API_PROXY_TARGET` | `http://localhost:5000` | Backend target for Vite proxy |
+| `VITE_API_PROXY_TARGET` | `https://localhost:7171` | Backend target for the local Vite proxy |
 | `VITE_API_BASE_URL` | `/api` | API base URL used in the browser |
 
 ### Commands
@@ -374,11 +374,12 @@ npm install
 npm run dev
 ```
 
-Runs at **`http://localhost:5174`**. Proxies `/api/*` to `http://localhost:5000`.
+Runs at **`http://localhost:5174`**. Proxies `/api/*` to `https://localhost:7171`.
 
 | Env var | Default | Purpose |
 |---|---|---|
-| `VITE_API_PROXY_TARGET` | `http://localhost:5000` | Backend target for Vite proxy |
+| `VITE_API_PROXY_TARGET` | `https://localhost:7171` | Backend target for the local Vite proxy |
+| `VITE_API_BASE_URL` | `/api` | API base URL used in the browser |
 
 ### Commands
 
@@ -422,11 +423,12 @@ npm install
 npm run dev
 ```
 
-Runs at **`http://localhost:5175`**. Proxies `/api/*` to `http://localhost:5000`.
+Runs at **`http://localhost:5175`**. Proxies `/api/*` to `https://localhost:7171`.
 
 | Env var | Default | Purpose |
 |---|---|---|
-| `VITE_API_PROXY_TARGET` | `http://localhost:5000` | Backend target for Vite proxy |
+| `VITE_API_PROXY_TARGET` | `https://localhost:7171` | Backend target for the local Vite proxy |
+| `VITE_API_BASE_URL` | `/api` | API base URL used in the browser |
 
 ### Commands
 

@@ -43,12 +43,12 @@ Percentage-complete labels are intentionally not used. Capability-inventory chec
 
 | Check | Result | Evidence / implication |
 |---|---|---|
-| Source state | PRODUCTION CI PASS; UX-FND-01 WORKTREE | The committed production workflow passed its build/test, OIDC, immutable-image deployment, and live/ready gates. The current worktree removes the unguarded employee route and adds module-route regression coverage; it is locally validated but not yet committed or CI-validated. |
+| Source state | PRODUCTION CI PASS; UX-FND-01/12 WORKTREE | The committed production workflow passed its build/test, OIDC, immutable-image deployment, and live/ready gates. The current worktree hardens module routing and standardizes local frontend API proxies; it is locally validated but not yet committed or CI-validated. |
 | Environment | RECORDED | macOS 26.7.1, .NET SDK 10.0.301 targeting .NET 10, Node 22.22.0, npm 10.9.4. |
 | `dotnet build VexorionERP.sln --configuration Release --no-restore --disable-build-servers --verbosity minimal -m:1 -p:UseSharedCompilation=false` | PASS | Zero warnings and zero errors on all nine `net10.0` projects. |
 | `dotnet test VexorionERP.sln --no-restore --verbosity minimal -m:1 -p:UseSharedCompilation=false` | PASS | 881/881: Services 526, Web 201, Handlers 154. Includes R2 adapter and storage-backed deletion regression coverage. |
 | `dotnet package list --project VexorionERP.sln --vulnerable --include-transitive --no-restore` | PASS | NuGet reported no vulnerable direct or transitive packages in all nine projects, including AWSSDK.S3 4.0.104.5. |
-| `npm run test:run` | PASS | 190/190: Main UI 89, AdminUI 30, POS 71; includes focused product-image and Document Center upload coverage. |
+| `npm run test:run` | PASS | 195/195: Main UI 94, AdminUI 30, POS 71. The command also validates the local API routing contract for all three applications before running unit tests. |
 | `npm run build` | PASS WITH WARNING | All four frontend packages built; Main UI emitted the known chunk-size warning. |
 | EF migration model state | PASS | `dotnet ef migrations has-pending-model-changes` reports no model change since the last migration; existing migrations were preserved. All five migrations were applied independently to empty Neon staging and production databases. A production-like upgrade rehearsal remains unvalidated. |
 | Cloudflare frontend to production API | OWNER CONFIRMED | Exact production CORS checks passed and login succeeds on Main UI, Admin UI, and POS after all three were rebuilt against the production Cloud Run `/api` URL. This confirms deployed authentication routing, not full workflow or release validation. |
@@ -329,7 +329,7 @@ The target is a clean, simple, data-dense business interface: one obvious primar
 - [ ] `UX-FND-09` Protect unsaved multi-field/multi-line edits and preserve list filters/context when returning from details.
 - [ ] `UX-FND-10` Replace scattered console logging with approved telemetry and user-safe feedback, retaining support trace IDs.
 - [x] `UX-FND-11` Complete authenticated read-only rendering at 1440×900 and 390×844 for all currently reachable Main/Admin/POS routes. Evidence found no navigation, console, or page errors, and identified the overflow/layout defects recorded in this section. Interactive dialogs and mutation states remain part of each implementation item's acceptance.
-- [ ] `UX-FND-12` Standardize local API routing for all three frontends through certificate-tolerant Vite proxies (or one documented equivalent), so ordinary local browsers and automated review do not require disabling CORS/web security.
+- [x] `UX-FND-12` Standardized Main UI, AdminUI, and POS local routing on browser-relative `/api` requests proxied to `https://localhost:7171` with development-certificate tolerance. Added consistent tracked environment examples, corrected local development values, updated the README, and made a resolved-Vite-config contract check part of the root frontend test command. Locally validated with the proxy contract check, 195/195 frontend tests, all frontend builds, and lint (zero errors; existing hook warnings remain) on 21 October 2026. A live proxy smoke was not repeated because the backend was not listening and a fresh backend build did not complete during the validation window; CI validation also remains pending.
 
 ### 5.2 Authentication and public entry
 
