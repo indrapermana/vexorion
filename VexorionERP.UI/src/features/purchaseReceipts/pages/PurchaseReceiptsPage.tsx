@@ -8,6 +8,8 @@ import { ApiError, deletePurchaseReceipt, getPurchaseOrders, getPurchaseReceipts
 import { useWarehousesLookup } from '../../../hooks/useLookups'
 import type { PurchaseOrderListItemResponse, PurchaseReceiptListItemResponse } from '../../../types/api'
 import type { PurchaseReceiptGridRow } from '../../../types/ui'
+import { Permissions } from '../../../app/authorization'
+import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 
 const PurchaseReceiptDataGrid = lazy(() => import('../components/PurchaseReceiptDataGrid'))
 const CreatePurchaseReceiptDialog = lazy(() => import('../components/CreatePurchaseReceiptDialog'))
@@ -29,11 +31,13 @@ type SourceState = { sourcePurchaseOrderId?: string | null; purchaseOrderNumber?
 
 export default function PurchaseReceiptsPage() {
   const { t } = useTranslation()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
+  const canManage = user?.permissions.includes(Permissions.purchasing.manage) ?? false
+  const canViewInventory = user?.permissions.includes(Permissions.inventory.view) ?? false
   const location = useLocation()
   const sourceState = (location.state as SourceState | null) ?? null
 
-  const { items: warehouses } = useWarehousesLookup(isAuthenticated)
+  const { items: warehouses } = useWarehousesLookup(isAuthenticated && canViewInventory)
 
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrderListItemResponse[]>([])
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrderListItemResponse | null>(null)
@@ -122,14 +126,14 @@ export default function PurchaseReceiptsPage() {
           <LocalShippingRoundedIcon color="primary" />
           <VxTypography variant="h6">{t('nav.routeTitles.purchaseReceipts')}</VxTypography>
         </VxStack>
-        <VxButton
+        {canManage ? <VxButton
           variant="contained"
           size="small"
           disabled={!selectedOrder}
           onClick={() => setIsCreateOpen(true)}
         >
           {t('pages.purchaseReceipts.newButton')}
-        </VxButton>
+        </VxButton> : null}
       </VxStack>
 
       <VxAutocomplete
@@ -154,6 +158,7 @@ export default function PurchaseReceiptsPage() {
 
       {error && <VxAlert severity="error" onClose={() => setError(null)}>{error}</VxAlert>}
       {feedback && <VxAlert severity="success" onClose={() => setFeedback(null)}>{feedback}</VxAlert>}
+      {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.purchasing.manage} /> : null}
 
       {selectedOrder && (
         <Suspense fallback={<LoadingFallback />}>
@@ -162,11 +167,12 @@ export default function PurchaseReceiptsPage() {
             isLoading={isLoading}
             onPost={handlePost}
             onDelete={handleDelete}
+            canManage={canManage}
           />
         </Suspense>
       )}
 
-      {isCreateOpen && selectedOrder && (
+      {canManage && isCreateOpen && selectedOrder && (
         <Suspense fallback={<LoadingFallback />}>
           <CreatePurchaseReceiptDialog
             open={isCreateOpen}

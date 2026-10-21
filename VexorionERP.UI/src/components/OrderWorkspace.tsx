@@ -14,6 +14,7 @@ type OrderWorkspaceProps = {
   createLabel: string
   onCreate: () => void
   disableCreate?: boolean
+  showCreate?: boolean
   metrics: MetricCard[]
   alerts?: Array<{ severity: 'warning' | 'error' | 'success' | 'info', message: string }>
   grid: ReactNode
@@ -29,6 +30,7 @@ export default function OrderWorkspace({
   createLabel,
   onCreate,
   disableCreate,
+  showCreate = true,
   metrics,
   alerts = [],
   grid,
@@ -47,7 +49,7 @@ export default function OrderWorkspace({
             <VxTypography color="text.secondary">{description}</VxTypography>
           </VxBox>
           <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
-            <VxButton variant="contained" onClick={onCreate} disabled={disableCreate}>{createLabel}</VxButton>
+            {showCreate ? <VxButton variant="contained" onClick={onCreate} disabled={disableCreate}>{createLabel}</VxButton> : null}
             {metrics.map((metric) => (
               <VxPaper key={metric.label} elevation={0} className="products-metric-card">
                 {metric.icon}

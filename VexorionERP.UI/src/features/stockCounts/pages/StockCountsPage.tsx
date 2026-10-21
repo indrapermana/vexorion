@@ -3,6 +3,7 @@ import { AddRoundedIcon, AutoGraphRoundedIcon, CheckCircleRoundedIcon, DeleteOut
 import { VxAlert, VxBox, VxButton, VxChip, VxCircularProgress, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxMenuItem, VxPaper, VxStack, VxTable, VxTableBody, VxTableCell, VxTableContainer, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
+import { Permissions } from '../../../app/authorization'
 import LookupSelectField from '../../../components/LookupSelectField'
 import OrderWorkspace from '../../../components/OrderWorkspace'
 import { useInventoryBalancesLookup, useProductsLookup, useWarehousesLookup } from '../../../hooks/useLookups'
@@ -90,9 +91,11 @@ function buildLineForm(line: StockCountLineDetailsResponse | null): CountLineFor
 
 export default function StockCountsPage() {
   const { t } = useTranslation()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
+  const canManage = user?.permissions.includes(Permissions.inventory.manage) ?? false
+  const canViewProducts = user?.permissions.includes(Permissions.products.view) ?? false
   const { items: warehouses, error: warehousesError, reload: reloadWarehouses } = useWarehousesLookup(isAuthenticated)
-  const { items: products, error: productsError } = useProductsLookup(Boolean(isAuthenticated))
+  const { items: products, error: productsError } = useProductsLookup(Boolean(isAuthenticated && canViewProducts))
   const { items: balances, error: balancesError } = useInventoryBalancesLookup(Boolean(isAuthenticated))
   const [rows, setRows] = useState<StockCountListItemResponse[]>([])
   const [selectedCount, setSelectedCount] = useState<StockCountDetailsResponse | null>(null)
@@ -175,6 +178,7 @@ export default function StockCountsPage() {
   }
 
   const openCreateDialog = () => {
+    if (!canManage) return
     setFeedback(null)
     setEditorMode('create')
     resetEditor()
@@ -182,6 +186,7 @@ export default function StockCountsPage() {
   }
 
   const openEditDialog = async (row: CountGridRow) => {
+    if (!canManage) return
     setFeedback(null)
     setEditorMode('edit')
     setEditorOpen(true)
@@ -257,6 +262,7 @@ export default function StockCountsPage() {
   }
 
   const openDeleteDialog = (row: CountGridRow) => {
+    if (!canManage) return
     setFeedback(null)
     setDeleteTarget(row)
   }
@@ -293,7 +299,7 @@ export default function StockCountsPage() {
   }
 
   const openCreateLineDialog = () => {
-    if (!selectedCount || selectedCount.status !== 1) {
+    if (!canManage || !selectedCount || selectedCount.status !== 1) {
       return
     }
 
@@ -305,6 +311,7 @@ export default function StockCountsPage() {
   }
 
   const openEditLineDialog = (line: StockCountLineDetailsResponse) => {
+    if (!canManage) return
     if (!selectedCount || selectedCount.status !== 1) {
       return
     }
@@ -435,6 +442,7 @@ export default function StockCountsPage() {
   }
 
   const alerts: Array<{ severity: 'warning' | 'error' | 'success' | 'info', message: string }> = []
+  if (!canManage) alerts.push({ severity: 'info', message: t('authorization.readOnly', { requiredPermission: Permissions.inventory.manage }) })
   if (error) alerts.push({ severity: 'error', message: error })
   if (feedback) alerts.push({ severity: 'success', message: feedback })
   if (warehousesError) alerts.push({ severity: 'warning', message: warehousesError })
@@ -462,6 +470,7 @@ export default function StockCountsPage() {
       description={t('pages.stockCounts.description')}
       createLabel={t('pages.stockCounts.newButton')}
       onCreate={openCreateDialog}
+      showCreate={canManage}
       metrics={metrics}
       alerts={alerts}
       grid={(
@@ -511,14 +520,14 @@ export default function StockCountsPage() {
                       <VxChip size="small" label={getDocumentStatusLabel(row.status)} color={row.status === 4 ? 'success' : row.status === 5 ? 'default' : 'primary'} />
                     </VxTableCell>
                     <VxTableCell align="right">
-                      <VxStack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
+                      {canManage ? <VxStack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
                         <VxButton size="small" startIcon={<EditRoundedIcon />} onClick={(event) => { event.stopPropagation(); void openEditDialog(row) }}>
                           Edit
                         </VxButton>
                         <VxButton size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={(event) => { event.stopPropagation(); openDeleteDialog(row) }}>
                           Delete
                         </VxButton>
-                      </VxStack>
+                      </VxStack> : null}
                     </VxTableCell>
                   </VxTableRow>
                 ))
@@ -538,7 +547,7 @@ export default function StockCountsPage() {
                   : 'Select a stock count to manage lines.'}
               </VxTypography>
             </VxBox>
-            <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+            {canManage ? <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
               <VxButton variant="contained" color="success" onClick={() => setPostDialogOpen(true)} disabled={!canPost || statusActionLoading}>
                 Post
               </VxButton>
@@ -553,7 +562,7 @@ export default function StockCountsPage() {
               >
                 Add line
               </VxButton>
-            </VxStack>
+            </VxStack> : null}
           </VxStack>
 
           {!selectedCount ? (
@@ -585,14 +594,14 @@ export default function StockCountsPage() {
                           {variance.toFixed(2)}
                         </VxTableCell>
                         <VxTableCell align="right">
-                          <VxStack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
+                          {canManage ? <VxStack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
                             <VxButton size="small" startIcon={<EditRoundedIcon />} disabled={selectedCount.status !== 1} onClick={() => openEditLineDialog(line)}>
                               Edit
                             </VxButton>
                             <VxButton size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} disabled={selectedCount.status !== 1} onClick={() => void deleteLine(line)}>
                               Delete
                             </VxButton>
-                          </VxStack>
+                          </VxStack> : null}
                         </VxTableCell>
                       </VxTableRow>
                     )
@@ -605,7 +614,7 @@ export default function StockCountsPage() {
       )}
       editor={(
         <>
-          <VxDialog open={editorOpen} onClose={closeEditorDialog} fullWidth maxWidth="sm">
+          <VxDialog open={canManage && editorOpen} onClose={closeEditorDialog} fullWidth maxWidth="sm">
             <VxDialogTitle>{editorMode === 'create' ? 'Create stock count' : 'Edit stock count'}</VxDialogTitle>
             <VxDialogContent>
               <VxStack spacing={2} sx={{ mt: 1 }}>
@@ -668,7 +677,7 @@ export default function StockCountsPage() {
             </VxDialogActions>
           </VxDialog>
 
-          <VxDialog open={lineOpen} onClose={closeLineDialog} fullWidth maxWidth="sm">
+          <VxDialog open={canManage && lineOpen} onClose={closeLineDialog} fullWidth maxWidth="sm">
             <VxDialogTitle>{lineMode === 'create' ? 'Add stock count line' : 'Edit stock count line'}</VxDialogTitle>
             <VxDialogContent>
               <VxStack spacing={2} sx={{ mt: 1 }}>
@@ -721,7 +730,7 @@ export default function StockCountsPage() {
             </VxDialogActions>
           </VxDialog>
 
-          <VxDialog open={postDialogOpen} onClose={() => setPostDialogOpen(false)} fullWidth maxWidth="xs">
+          <VxDialog open={canManage && postDialogOpen} onClose={() => setPostDialogOpen(false)} fullWidth maxWidth="xs">
             <VxDialogTitle>Post stock count</VxDialogTitle>
             <VxDialogContent>
               <VxTypography>
@@ -736,7 +745,7 @@ export default function StockCountsPage() {
             </VxDialogActions>
           </VxDialog>
 
-          <VxDialog open={reverseDialogOpen} onClose={() => setReverseDialogOpen(false)} fullWidth maxWidth="xs">
+          <VxDialog open={canManage && reverseDialogOpen} onClose={() => setReverseDialogOpen(false)} fullWidth maxWidth="xs">
             <VxDialogTitle>Reverse stock count</VxDialogTitle>
             <VxDialogContent>
               <VxTypography>
@@ -753,7 +762,7 @@ export default function StockCountsPage() {
         </>
       )}
       deleteDialog={(
-        <VxDialog open={Boolean(deleteTarget)} onClose={closeDeleteDialog} fullWidth maxWidth="xs">
+        <VxDialog open={canManage && Boolean(deleteTarget)} onClose={closeDeleteDialog} fullWidth maxWidth="xs">
           <VxDialogTitle>Delete stock count</VxDialogTitle>
           <VxDialogContent>
             <VxTypography>

@@ -20,9 +20,10 @@ type SalesShipmentDataGridProps = {
   isLoading: boolean
   onPost: (row: SalesShipmentGridRow) => void
   onDelete: (row: SalesShipmentGridRow) => void
+  canManage?: boolean
 }
 
-export default function SalesShipmentDataGrid({ rows, isLoading, onPost, onDelete }: SalesShipmentDataGridProps) {
+export default function SalesShipmentDataGrid({ rows, isLoading, onPost, onDelete, canManage = true }: SalesShipmentDataGridProps) {
   useTranslation()
   const columns: VxGridColDef<SalesShipmentGridRow>[] = [
     { field: 'shipmentNumber', headerName: 'Shipment #', minWidth: 160, flex: 1 },
@@ -43,7 +44,7 @@ export default function SalesShipmentDataGrid({ rows, isLoading, onPost, onDelet
       type: 'actions',
       headerName: '',
       minWidth: 100,
-      getActions: ({ row }) => [
+      getActions: ({ row }) => canManage ? [
         <VxGridActionsCellItem
           key={`post-${row.id}`}
           icon={<PublishRoundedIcon />}
@@ -60,7 +61,7 @@ export default function SalesShipmentDataGrid({ rows, isLoading, onPost, onDelet
           onClick={() => onDelete(row)}
           showInMenu={false}
         />,
-      ],
+      ] : [],
     },
   ]
 

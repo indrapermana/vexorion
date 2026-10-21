@@ -3,6 +3,7 @@ import { AddRoundedIcon, AutoGraphRoundedIcon, CheckCircleRoundedIcon, DeleteOut
 import { VxAlert, VxBox, VxButton, VxChip, VxCircularProgress, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxMenuItem, VxPaper, VxStack, VxTable, VxTableBody, VxTableCell, VxTableContainer, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
+import { Permissions } from '../../../app/authorization'
 import { useCurrency } from '../../../app/CurrencyContext'
 import LookupSelectField from '../../../components/LookupSelectField'
 import OrderWorkspace from '../../../components/OrderWorkspace'
@@ -96,9 +97,11 @@ function buildLineForm(line: StockTransferLineDetailsResponse | null): TransferL
 export default function StockTransfersPage() {
   const { t } = useTranslation()
   const { formatMoney } = useCurrency()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
+  const canManage = user?.permissions.includes(Permissions.inventory.manage) ?? false
+  const canViewProducts = user?.permissions.includes(Permissions.products.view) ?? false
   const { items: warehouses, error: warehousesError, reload: reloadWarehouses } = useWarehousesLookup(isAuthenticated)
-  const { items: products, error: productsError } = useProductsLookup(Boolean(isAuthenticated))
+  const { items: products, error: productsError } = useProductsLookup(Boolean(isAuthenticated && canViewProducts))
   const { items: balances, error: balancesError } = useInventoryBalancesLookup(Boolean(isAuthenticated))
   const [rows, setRows] = useState<StockTransferListItemResponse[]>([])
   const [selectedTransfer, setSelectedTransfer] = useState<StockTransferDetailsResponse | null>(null)
@@ -179,6 +182,7 @@ export default function StockTransfersPage() {
   }
 
   const openCreateDialog = () => {
+    if (!canManage) return
     setFeedback(null)
     setEditorMode('create')
     resetEditor()
@@ -186,6 +190,7 @@ export default function StockTransfersPage() {
   }
 
   const openEditDialog = async (row: TransferGridRow) => {
+    if (!canManage) return
     setFeedback(null)
     setEditorMode('edit')
     setEditorOpen(true)
@@ -271,6 +276,7 @@ export default function StockTransfersPage() {
   }
 
   const openCreateLine = () => {
+    if (!canManage) return
     setLineMode('create')
     setSelectedLine(null)
     setLineForm(defaultLineForm)
@@ -280,6 +286,7 @@ export default function StockTransfersPage() {
   }
 
   const openEditLine = (line: StockTransferLineDetailsResponse) => {
+    if (!canManage) return
     setLineMode('edit')
     setSelectedLine(line)
     setLineForm(buildLineForm(line))
@@ -386,6 +393,7 @@ export default function StockTransfersPage() {
       description={t('pages.stockTransfers.description')}
       createLabel={t('pages.stockTransfers.newButton')}
       onCreate={openCreateDialog}
+      showCreate={canManage}
       disableCreate={warehouses.length < 2}
       metrics={[
         { icon: <WarehouseRoundedIcon fontSize="small" />, label: t('pages.stockTransfers.metrics.headers'), value: rows.length },
@@ -393,6 +401,7 @@ export default function StockTransfersPage() {
         { icon: <AutoGraphRoundedIcon fontSize="small" />, label: t('pages.stockTransfers.metrics.active'), value: rows.filter((row) => row.isActive).length },
       ]}
       alerts={[
+        ...(!canManage ? [{ severity: 'info' as const, message: t('authorization.readOnly', { requiredPermission: Permissions.inventory.manage }) }] : []),
         ...(warehouses.length < 2 ? [{ severity: 'warning' as const, message: t('pages.stockTransfers.createWarehousesFirst') }] : []),
         ...(warehousesError ? [{ severity: 'warning' as const, message: warehousesError }] : []),
         ...(productsError ? [{ severity: 'warning' as const, message: productsError }] : []),
@@ -432,8 +441,8 @@ export default function StockTransfersPage() {
                   <VxTableCell>{getDocumentStatusLabel(row.status)}</VxTableCell>
                   <VxTableCell align="right">
                     <VxButton size="small" startIcon={<FormatListBulletedRoundedIcon />} onClick={() => void loadDetails(row.id)}>Lines</VxButton>
-                    <VxButton size="small" startIcon={<EditRoundedIcon />} onClick={() => void openEditDialog(row)}>Edit</VxButton>
-                    <VxButton size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => setDeleteTarget(row)}>Delete</VxButton>
+                    {canManage ? <><VxButton size="small" startIcon={<EditRoundedIcon />} onClick={() => void openEditDialog(row)}>Edit</VxButton>
+                    <VxButton size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => setDeleteTarget(row)}>Delete</VxButton></> : null}
                   </VxTableCell>
                 </VxTableRow>
               ))}
@@ -462,7 +471,7 @@ export default function StockTransfersPage() {
                   <VxTypography variant="h6">Transfer lines for {selectedTransfer.transferNumber}</VxTypography>
                   <VxTypography color="text.secondary">Each line reduces source stock and increases destination stock on completion.</VxTypography>
                 </VxBox>
-                <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateLine} disabled={selectedTransfer.status !== 1 || products.length === 0}>Add line</VxButton>
+                {canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateLine} disabled={selectedTransfer.status !== 1 || products.length === 0}>Add line</VxButton> : null}
               </VxStack>
               <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 2 }}>
                 <VxChip icon={<WarehouseRoundedIcon />} label={`Source: ${warehouseNameById.get(selectedTransfer.sourceWarehouseId) ?? selectedTransfer.sourceWarehouseId}`} variant="outlined" color="primary" />
@@ -493,8 +502,8 @@ export default function StockTransfersPage() {
                           <VxTableCell align="right">${line.unitCost.toFixed(2)}</VxTableCell>
                           <VxTableCell align="right">${(line.quantity * line.unitCost).toFixed(2)}</VxTableCell>
                           <VxTableCell align="right">
-                            <VxButton size="small" startIcon={<EditRoundedIcon />} onClick={() => openEditLine(line)} disabled={selectedTransfer.status !== 1}>Edit</VxButton>
-                            <VxButton size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => void deleteLine(line.id)} disabled={selectedTransfer.status !== 1}>Delete</VxButton>
+                            {canManage ? <><VxButton size="small" startIcon={<EditRoundedIcon />} onClick={() => openEditLine(line)} disabled={selectedTransfer.status !== 1}>Edit</VxButton>
+                            <VxButton size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => void deleteLine(line.id)} disabled={selectedTransfer.status !== 1}>Delete</VxButton></> : null}
                           </VxTableCell>
                         </VxTableRow>
                       )
@@ -514,7 +523,7 @@ export default function StockTransfersPage() {
         </VxPaper>
       }
       editor={
-        <VxDialog open={editorOpen} onClose={editorLoading ? undefined : () => setEditorOpen(false)} fullWidth maxWidth="md">
+        <VxDialog open={canManage && editorOpen} onClose={editorLoading ? undefined : () => setEditorOpen(false)} fullWidth maxWidth="md">
           <VxDialogTitle>{editorMode === 'create' ? 'Create stock transfer' : 'Edit stock transfer'}</VxDialogTitle>
           <VxDialogContent dividers>
             {editorLoading ? (
@@ -548,7 +557,7 @@ export default function StockTransfersPage() {
       }
       deleteDialog={
         <>
-          <VxDialog open={Boolean(deleteTarget)} onClose={isDeleting ? undefined : () => setDeleteTarget(null)} fullWidth maxWidth="xs">
+          <VxDialog open={canManage && Boolean(deleteTarget)} onClose={isDeleting ? undefined : () => setDeleteTarget(null)} fullWidth maxWidth="xs">
             <VxDialogTitle>Delete stock transfer</VxDialogTitle>
             <VxDialogContent>
               <VxTypography color="text.secondary">{deleteTarget ? `Delete ${deleteTarget.transferNumber}? This action cannot be undone.` : 'Delete this stock transfer?'}</VxTypography>
@@ -558,7 +567,7 @@ export default function StockTransfersPage() {
               <VxButton color="error" variant="contained" onClick={() => void handleDelete()} disabled={isDeleting}>{isDeleting ? 'Deleting...' : 'Delete'}</VxButton>
             </VxDialogActions>
           </VxDialog>
-          <VxDialog open={lineOpen} onClose={lineSaving ? undefined : () => setLineOpen(false)} fullWidth maxWidth="sm">
+          <VxDialog open={canManage && lineOpen} onClose={lineSaving ? undefined : () => setLineOpen(false)} fullWidth maxWidth="sm">
             <VxDialogTitle>{lineMode === 'create' ? 'Add transfer line' : 'Edit transfer line'}</VxDialogTitle>
             <VxDialogContent dividers>
               <VxStack spacing={2.5} sx={{ pt: 1 }}>

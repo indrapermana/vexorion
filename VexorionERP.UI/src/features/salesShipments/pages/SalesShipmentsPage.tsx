@@ -8,6 +8,8 @@ import { ApiError, deleteSalesShipment, getSalesOrders, getSalesShipmentsForOrde
 import { useWarehousesLookup } from '../../../hooks/useLookups'
 import type { SalesOrderListItemResponse, SalesShipmentListItemResponse } from '../../../types/api'
 import type { SalesShipmentGridRow } from '../../../types/ui'
+import { Permissions } from '../../../app/authorization'
+import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 
 const SalesShipmentDataGrid = lazy(() => import('../components/SalesShipmentDataGrid'))
 const CreateSalesShipmentDialog = lazy(() => import('../components/CreateSalesShipmentDialog'))
@@ -29,11 +31,13 @@ type SourceState = { sourceSalesOrderId?: string | null; salesOrderNumber?: stri
 
 export default function SalesShipmentsPage() {
   const { t } = useTranslation()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
+  const canManage = user?.permissions.includes(Permissions.sales.manage) ?? false
+  const canViewInventory = user?.permissions.includes(Permissions.inventory.view) ?? false
   const location = useLocation()
   const sourceState = (location.state as SourceState | null) ?? null
 
-  const { items: warehouses } = useWarehousesLookup(isAuthenticated)
+  const { items: warehouses } = useWarehousesLookup(isAuthenticated && canViewInventory)
 
   const [salesOrders, setSalesOrders] = useState<SalesOrderListItemResponse[]>([])
   const [selectedOrder, setSelectedOrder] = useState<SalesOrderListItemResponse | null>(null)
@@ -120,14 +124,14 @@ export default function SalesShipmentsPage() {
           <LocalShippingRoundedIcon color="primary" />
           <VxTypography variant="h6">{t('nav.routeTitles.salesShipments')}</VxTypography>
         </VxStack>
-        <VxButton
+        {canManage ? <VxButton
           variant="contained"
           size="small"
           disabled={!selectedOrder}
           onClick={() => setIsCreateOpen(true)}
         >
           {t('pages.salesShipments.newButton')}
-        </VxButton>
+        </VxButton> : null}
       </VxStack>
 
       <VxAutocomplete
@@ -152,6 +156,7 @@ export default function SalesShipmentsPage() {
 
       {error && <VxAlert severity="error" onClose={() => setError(null)}>{error}</VxAlert>}
       {feedback && <VxAlert severity="success" onClose={() => setFeedback(null)}>{feedback}</VxAlert>}
+      {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.sales.manage} /> : null}
 
       {selectedOrder && (
         <Suspense fallback={<LoadingFallback />}>
@@ -160,11 +165,12 @@ export default function SalesShipmentsPage() {
             isLoading={isLoading}
             onPost={handlePost}
             onDelete={handleDelete}
+            canManage={canManage}
           />
         </Suspense>
       )}
 
-      {isCreateOpen && selectedOrder && (
+      {canManage && isCreateOpen && selectedOrder && (
         <Suspense fallback={<LoadingFallback />}>
           <CreateSalesShipmentDialog
             open={isCreateOpen}

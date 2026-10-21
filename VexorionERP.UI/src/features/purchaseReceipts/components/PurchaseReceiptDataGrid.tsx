@@ -20,9 +20,10 @@ type PurchaseReceiptDataGridProps = {
   isLoading: boolean
   onPost: (row: PurchaseReceiptGridRow) => void
   onDelete: (row: PurchaseReceiptGridRow) => void
+  canManage?: boolean
 }
 
-export default function PurchaseReceiptDataGrid({ rows, isLoading, onPost, onDelete }: PurchaseReceiptDataGridProps) {
+export default function PurchaseReceiptDataGrid({ rows, isLoading, onPost, onDelete, canManage = true }: PurchaseReceiptDataGridProps) {
   useTranslation()
   const columns: VxGridColDef<PurchaseReceiptGridRow>[] = [
     { field: 'receiptNumber', headerName: 'Receipt #', minWidth: 160, flex: 1 },
@@ -43,7 +44,7 @@ export default function PurchaseReceiptDataGrid({ rows, isLoading, onPost, onDel
       type: 'actions',
       headerName: '',
       minWidth: 100,
-      getActions: ({ row }) => [
+      getActions: ({ row }) => canManage ? [
         <VxGridActionsCellItem
           key={`post-${row.id}`}
           icon={<PublishRoundedIcon />}
@@ -60,7 +61,7 @@ export default function PurchaseReceiptDataGrid({ rows, isLoading, onPost, onDel
           onClick={() => onDelete(row)}
           showInMenu={false}
         />,
-      ],
+      ] : [],
     },
   ]
 

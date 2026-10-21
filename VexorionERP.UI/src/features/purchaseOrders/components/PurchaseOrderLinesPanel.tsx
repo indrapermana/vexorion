@@ -14,13 +14,16 @@ type PurchaseOrderLinesPanelProps = {
   isLoading: boolean
   error: string | null
   onRefresh: () => Promise<void>
+  canManage?: boolean
+  canViewProducts?: boolean
+  canViewInventory?: boolean
 }
 
-export default function PurchaseOrderLinesPanel({ order, lines, isLoading, error, onRefresh }: PurchaseOrderLinesPanelProps) {
+export default function PurchaseOrderLinesPanel({ order, lines, isLoading, error, onRefresh, canManage = true, canViewProducts = true, canViewInventory = true }: PurchaseOrderLinesPanelProps) {
   useTranslation()
-  const { items: products, error: productsError } = useProductsLookup(Boolean(order))
-  const { items: warehouses, error: warehousesError } = useWarehousesLookup(Boolean(order))
-  const { items: balances, error: balancesError } = useInventoryBalancesLookup(Boolean(order))
+  const { items: products, error: productsError } = useProductsLookup(Boolean(order) && canViewProducts)
+  const { items: warehouses, error: warehousesError } = useWarehousesLookup(Boolean(order) && canViewInventory)
+  const { items: balances, error: balancesError } = useInventoryBalancesLookup(Boolean(order) && canViewInventory)
   const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create')
   const [selectedLine, setSelectedLine] = useState<PurchaseOrderLineListItemResponse | null>(null)
   const [isEditorOpen, setIsEditorOpen] = useState(false)
@@ -104,7 +107,7 @@ export default function PurchaseOrderLinesPanel({ order, lines, isLoading, error
           <VxTypography variant="h6">Order lines for {order.orderNumber}</VxTypography>
           <VxTypography color="text.secondary">Attach products to this purchasing header and track inbound value.</VxTypography>
         </VxBox>
-        <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate} disabled={!products.length}>Add line</VxButton>
+        {canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate} disabled={!products.length}>Add line</VxButton> : null}
       </VxStack>
       <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 2, alignItems: { md: 'center' } }}>
         <VxChip icon={<WarehouseRoundedIcon />} label={warehouseName ? `Receiving warehouse: ${warehouseName}` : `Receiving warehouse: ${order.warehouseId}`} color="primary" variant="outlined" />
@@ -139,8 +142,8 @@ export default function PurchaseOrderLinesPanel({ order, lines, isLoading, error
                   <VxTableCell align="right">${line.unitCost.toFixed(2)}</VxTableCell>
                   <VxTableCell align="right">${line.lineTotal.toFixed(2)}</VxTableCell>
                   <VxTableCell align="right">
-                    <VxButton size="small" startIcon={<EditRoundedIcon />} onClick={() => openEdit(line)}>Edit</VxButton>
-                    <VxButton size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => void handleDelete(line.id)}>Delete</VxButton>
+                    {canManage ? <><VxButton size="small" startIcon={<EditRoundedIcon />} onClick={() => openEdit(line)}>Edit</VxButton>
+                    <VxButton size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => void handleDelete(line.id)}>Delete</VxButton></> : null}
                   </VxTableCell>
                 </VxTableRow>
               )
@@ -153,7 +156,7 @@ export default function PurchaseOrderLinesPanel({ order, lines, isLoading, error
           </VxTableBody>
         </VxTable>
       </VxTableContainer>
-      <PurchaseOrderLineEditorDialog open={isEditorOpen} mode={dialogMode} line={selectedLine} products={products} onClose={() => setIsEditorOpen(false)} onSaved={handleSave} />
+      <PurchaseOrderLineEditorDialog open={canManage && isEditorOpen} mode={dialogMode} line={selectedLine} products={products} onClose={() => setIsEditorOpen(false)} onSaved={handleSave} />
     </VxPaper>
   )
 }

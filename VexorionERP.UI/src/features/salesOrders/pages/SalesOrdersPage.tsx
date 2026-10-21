@@ -11,6 +11,7 @@ import { ApiError, deleteSalesOrder, getSalesOrderLines, getSalesOrders } from '
 import { useCustomersLookup, useWarehousesLookup } from '../../../hooks/useLookups'
 import type { SalesOrderDetailsResponse, SalesOrderLineListItemResponse, SalesOrderListItemResponse } from '../../../types/api'
 import type { SalesOrderDialogMode, SalesOrderGridRow } from '../../../types/ui'
+import { Permissions } from '../../../app/authorization'
 
 const SalesOrderEditorDialog = lazy(() => import('../components/SalesOrderEditorDialog'))
 const SalesOrderDataGrid = lazy(() => import('../components/SalesOrderDataGrid'))
@@ -33,10 +34,14 @@ function SalesOrderSurfaceFallback() {
 export default function SalesOrdersPage() {
   const { t } = useTranslation()
   const { formatMoney } = useCurrency()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
+  const canManage = user?.permissions.includes(Permissions.sales.manage) ?? false
+  const canViewCustomers = user?.permissions.includes(Permissions.customers.view) ?? false
+  const canViewProducts = user?.permissions.includes(Permissions.products.view) ?? false
+  const canViewInventory = user?.permissions.includes(Permissions.inventory.view) ?? false
   const navigate = useNavigate()
-  const { items: customers, error: customersError, reload: reloadCustomers } = useCustomersLookup(isAuthenticated)
-  const { items: warehouses, error: warehousesError, reload: reloadWarehouses } = useWarehousesLookup(isAuthenticated)
+  const { items: customers, error: customersError, reload: reloadCustomers } = useCustomersLookup(isAuthenticated && canViewCustomers)
+  const { items: warehouses, error: warehousesError, reload: reloadWarehouses } = useWarehousesLookup(isAuthenticated && canViewInventory)
   const [salesOrders, setSalesOrders] = useState<SalesOrderListItemResponse[]>([])
   const [lines, setLines] = useState<SalesOrderLineListItemResponse[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -198,6 +203,7 @@ export default function SalesOrdersPage() {
       description={t('pages.salesOrders.description')}
       createLabel={t('pages.salesOrders.newButton')}
       onCreate={openCreateDialog}
+      showCreate={canManage}
       disableCreate={customers.length === 0 || warehouses.length === 0}
       metrics={[
         { icon: <ReceiptLongRoundedIcon fontSize="small" />, label: t('pages.salesOrders.metrics.openHeaders'), value: salesOrders.length },
@@ -211,12 +217,13 @@ export default function SalesOrdersPage() {
         ...(warehousesError ? [{ severity: 'warning' as const, message: warehousesError }] : []),
         ...(error ? [{ severity: 'error' as const, message: error }] : []),
         ...(feedback ? [{ severity: 'success' as const, message: feedback }] : []),
+        ...(!canManage ? [{ severity: 'info' as const, message: t('authorization.readOnly', { requiredPermission: Permissions.sales.manage }) }] : []),
       ]}
-      grid={<Suspense fallback={<SalesOrderSurfaceFallback />}><SalesOrderDataGrid rows={rows} isLoading={isLoading} onEdit={openEditDialog} onDelete={setDeleteTarget} onManageLines={(row) => void handleManageLines(row)} onCreateInvoice={handleCreateInvoice} onViewShipments={handleViewShipments} /></Suspense>}
-      linesPanel={<Suspense fallback={<SalesOrderSurfaceFallback />}><SalesOrderLinesPanel order={activeLinesOrder} lines={lines} isLoading={linesLoading} error={linesError} onRefresh={() => activeLinesOrder ? loadLines(activeLinesOrder.id) : Promise.resolve()} /></Suspense>}
+      grid={<Suspense fallback={<SalesOrderSurfaceFallback />}><SalesOrderDataGrid rows={rows} isLoading={isLoading} onEdit={openEditDialog} onDelete={setDeleteTarget} onManageLines={(row) => void handleManageLines(row)} onCreateInvoice={handleCreateInvoice} onViewShipments={handleViewShipments} canManage={canManage} /></Suspense>}
+      linesPanel={<Suspense fallback={<SalesOrderSurfaceFallback />}><SalesOrderLinesPanel order={activeLinesOrder} lines={lines} isLoading={linesLoading} error={linesError} onRefresh={() => activeLinesOrder ? loadLines(activeLinesOrder.id) : Promise.resolve()} canManage={canManage} canViewProducts={canViewProducts} canViewInventory={canViewInventory} /></Suspense>}
       documentsPanel={<DocumentsPanel sourceType="SalesOrder" sourceEntityId={activeLinesOrder?.id ?? null} />}
-      editor={isEditorOpen ? <Suspense fallback={<SalesOrderSurfaceFallback />}><SalesOrderEditorDialog key={`${dialogMode}:${selectedSalesOrderId ?? 'new'}`} open={isEditorOpen} mode={dialogMode} salesOrderId={selectedSalesOrderId} customers={customers} warehouses={warehouses} onClose={handleEditorClose} onSaved={(salesOrder, mode) => void handleSaved(salesOrder, mode)} /></Suspense> : null}
-      deleteDialog={deleteTarget ? <Suspense fallback={null}><SalesOrderDeleteDialog target={deleteTarget} isDeleting={isDeleting} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} /></Suspense> : null}
+      editor={canManage && isEditorOpen ? <Suspense fallback={<SalesOrderSurfaceFallback />}><SalesOrderEditorDialog key={`${dialogMode}:${selectedSalesOrderId ?? 'new'}`} open={isEditorOpen} mode={dialogMode} salesOrderId={selectedSalesOrderId} customers={customers} warehouses={warehouses} onClose={handleEditorClose} onSaved={(salesOrder, mode) => void handleSaved(salesOrder, mode)} /></Suspense> : null}
+      deleteDialog={canManage && deleteTarget ? <Suspense fallback={null}><SalesOrderDeleteDialog target={deleteTarget} isDeleting={isDeleting} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} /></Suspense> : null}
     />
   )
 }

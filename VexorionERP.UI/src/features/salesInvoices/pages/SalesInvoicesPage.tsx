@@ -11,6 +11,7 @@ import { ApiError, deleteSalesInvoice, getSalesInvoiceLines, getSalesInvoices } 
 import { useCustomersLookup } from '../../../hooks/useLookups'
 import type { SalesInvoiceDetailsResponse, SalesInvoiceLineListItemResponse, SalesInvoiceListItemResponse } from '../../../types/api'
 import type { SalesInvoiceDialogMode, SalesInvoiceFormValues, SalesInvoiceGridRow } from '../../../types/ui'
+import { Permissions } from '../../../app/authorization'
 
 const SalesInvoiceEditorDialog = lazy(() => import('../components/SalesInvoiceEditorDialog'))
 const SalesInvoiceDataGrid = lazy(() => import('../components/SalesInvoiceDataGrid'))
@@ -35,8 +36,11 @@ type SourceState = Partial<SalesInvoiceFormValues> & { sourceSalesOrderId?: stri
 export default function SalesInvoicesPage() {
   const { t } = useTranslation()
   const { formatMoney } = useCurrency()
-  const { isAuthenticated } = useAuth()
-  const { items: customers, error: customersError, reload: reloadCustomers } = useCustomersLookup(isAuthenticated)
+  const { isAuthenticated, user } = useAuth()
+  const canManage = user?.permissions.includes(Permissions.sales.manage) ?? false
+  const canViewCustomers = user?.permissions.includes(Permissions.customers.view) ?? false
+  const canViewProducts = user?.permissions.includes(Permissions.products.view) ?? false
+  const { items: customers, error: customersError, reload: reloadCustomers } = useCustomersLookup(isAuthenticated && canViewCustomers)
   const navigate = useNavigate()
   const location = useLocation()
   const sourceState = (location.state as SourceState | null) ?? null
@@ -84,12 +88,17 @@ export default function SalesInvoicesPage() {
       return
     }
 
+    if (!canManage) {
+      void navigate(location.pathname, { replace: true, state: null })
+      return
+    }
+
     setDialogMode('create')
     setSelectedSalesInvoiceId(null)
     setEditorDefaults(sourceState)
     setIsEditorOpen(true)
     void navigate(location.pathname, { replace: true, state: null })
-  }, [location.pathname, navigate, sourceState])
+  }, [canManage, location.pathname, navigate, sourceState])
 
   const loadLines = useCallback(async (invoiceId: string) => {
     setLinesLoading(true)
@@ -187,6 +196,7 @@ export default function SalesInvoicesPage() {
       description={t('pages.salesInvoices.description')}
       createLabel={t('pages.salesInvoices.newButton')}
       onCreate={openCreateDialog}
+      showCreate={canManage}
       disableCreate={customers.length === 0}
       metrics={[
         { icon: <DescriptionRoundedIcon fontSize="small" />, label: t('pages.salesInvoices.metrics.invoices'), value: salesInvoices.length },
@@ -198,13 +208,14 @@ export default function SalesInvoicesPage() {
         ...(customersError ? [{ severity: 'warning' as const, message: customersError }] : []),
         ...(error ? [{ severity: 'error' as const, message: error }] : []),
         ...(feedback ? [{ severity: 'success' as const, message: feedback }] : []),
+        ...(!canManage ? [{ severity: 'info' as const, message: t('authorization.readOnly', { requiredPermission: Permissions.sales.manage }) }] : []),
         { severity: 'info' as const, message: outstandingOnly ? t('pages.salesInvoices.showingOutstandingOnly') : t('pages.salesInvoices.showingAll') },
       ]}
-      grid={<Suspense fallback={<SalesInvoiceSurfaceFallback />}><VxStack spacing={1.5}><VxFormControlLabel control={<VxSwitch checked={outstandingOnly} onChange={(_, checked) => setOutstandingOnly(checked)} />} label={t('pages.salesInvoices.outstandingOnly')} /><SalesInvoiceDataGrid rows={rows} isLoading={isLoading} onEdit={openEditDialog} onDelete={setDeleteTarget} onManageLines={(row) => void handleManageLines(row)} onRecordPayment={handleRecordPayment} /></VxStack></Suspense>}
-      linesPanel={<Suspense fallback={<SalesInvoiceSurfaceFallback />}><SalesInvoiceLinesPanel invoice={activeLinesInvoice} lines={lines} isLoading={linesLoading} error={linesError} onRefresh={() => activeLinesInvoice ? loadLines(activeLinesInvoice.id) : Promise.resolve()} /></Suspense>}
+      grid={<Suspense fallback={<SalesInvoiceSurfaceFallback />}><VxStack spacing={1.5}><VxFormControlLabel control={<VxSwitch checked={outstandingOnly} onChange={(_, checked) => setOutstandingOnly(checked)} />} label={t('pages.salesInvoices.outstandingOnly')} /><SalesInvoiceDataGrid rows={rows} isLoading={isLoading} onEdit={openEditDialog} onDelete={setDeleteTarget} onManageLines={(row) => void handleManageLines(row)} onRecordPayment={handleRecordPayment} canManage={canManage} /></VxStack></Suspense>}
+      linesPanel={<Suspense fallback={<SalesInvoiceSurfaceFallback />}><SalesInvoiceLinesPanel invoice={activeLinesInvoice} lines={lines} isLoading={linesLoading} error={linesError} onRefresh={() => activeLinesInvoice ? loadLines(activeLinesInvoice.id) : Promise.resolve()} canManage={canManage} canViewProducts={canViewProducts} /></Suspense>}
       documentsPanel={<DocumentsPanel sourceType="SalesInvoice" sourceEntityId={activeLinesInvoice?.id ?? null} />}
-      editor={isEditorOpen ? <Suspense fallback={<SalesInvoiceSurfaceFallback />}><SalesInvoiceEditorDialog key={`${dialogMode}:${selectedSalesInvoiceId ?? 'new'}:${editorDefaults?.sourceSalesOrderId ?? 'manual'}`} open={isEditorOpen} mode={dialogMode} salesInvoiceId={selectedSalesInvoiceId} customers={customers} initialValues={editorDefaults} onClose={handleEditorClose} onSaved={(salesInvoice, mode) => void handleSaved(salesInvoice, mode)} /></Suspense> : null}
-      deleteDialog={deleteTarget ? <Suspense fallback={null}><SalesInvoiceDeleteDialog target={deleteTarget} isDeleting={isDeleting} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} /></Suspense> : null}
+      editor={canManage && isEditorOpen ? <Suspense fallback={<SalesInvoiceSurfaceFallback />}><SalesInvoiceEditorDialog key={`${dialogMode}:${selectedSalesInvoiceId ?? 'new'}:${editorDefaults?.sourceSalesOrderId ?? 'manual'}`} open={isEditorOpen} mode={dialogMode} salesInvoiceId={selectedSalesInvoiceId} customers={customers} initialValues={editorDefaults} onClose={handleEditorClose} onSaved={(salesInvoice, mode) => void handleSaved(salesInvoice, mode)} /></Suspense> : null}
+      deleteDialog={canManage && deleteTarget ? <Suspense fallback={null}><SalesInvoiceDeleteDialog target={deleteTarget} isDeleting={isDeleting} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} /></Suspense> : null}
     />
   )
 }

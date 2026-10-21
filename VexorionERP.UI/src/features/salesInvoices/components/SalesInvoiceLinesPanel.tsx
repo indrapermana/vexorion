@@ -15,12 +15,14 @@ type SalesInvoiceLinesPanelProps = {
   isLoading: boolean
   error: string | null
   onRefresh: () => Promise<void>
+  canManage?: boolean
+  canViewProducts?: boolean
 }
 
-export default function SalesInvoiceLinesPanel({ invoice, lines, isLoading, error, onRefresh }: SalesInvoiceLinesPanelProps) {
+export default function SalesInvoiceLinesPanel({ invoice, lines, isLoading, error, onRefresh, canManage = true, canViewProducts = true }: SalesInvoiceLinesPanelProps) {
   useTranslation()
   const { formatMoney } = useCurrency()
-  const { items: products, error: productsError } = useProductsLookup(Boolean(invoice))
+  const { items: products, error: productsError } = useProductsLookup(Boolean(invoice) && canViewProducts)
   const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create')
   const [selectedLine, setSelectedLine] = useState<SalesInvoiceLineListItemResponse | null>(null)
   const [isEditorOpen, setIsEditorOpen] = useState(false)
@@ -97,7 +99,7 @@ export default function SalesInvoiceLinesPanel({ invoice, lines, isLoading, erro
           <VxTypography variant="h6">Invoice lines for {invoice.invoiceNumber}</VxTypography>
           <VxTypography color="text.secondary">Manage billable lines and taxes on this invoice header.</VxTypography>
         </VxBox>
-        <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate} disabled={!products.length}>Add line</VxButton>
+        {canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate} disabled={!products.length}>Add line</VxButton> : null}
       </VxStack>
       {error ? <VxAlert severity="error" sx={{ mb: 2 }}>{error}</VxAlert> : null}
       {productsError ? <VxAlert severity="warning" sx={{ mb: 2 }}>{productsError}</VxAlert> : null}
@@ -128,8 +130,8 @@ export default function SalesInvoiceLinesPanel({ invoice, lines, isLoading, erro
                   <VxTableCell align="right">{formatMoney(line.taxAmount)}</VxTableCell>
                   <VxTableCell align="right">{formatMoney(line.lineTotal)}</VxTableCell>
                   <VxTableCell align="right">
-                    <VxButton size="small" startIcon={<EditRoundedIcon />} onClick={() => openEdit(line)}>Edit</VxButton>
-                    <VxButton size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => void handleDelete(line.id)}>Delete</VxButton>
+                    {canManage ? <><VxButton size="small" startIcon={<EditRoundedIcon />} onClick={() => openEdit(line)}>Edit</VxButton>
+                    <VxButton size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => void handleDelete(line.id)}>Delete</VxButton></> : null}
                   </VxTableCell>
                 </VxTableRow>
               )
@@ -138,7 +140,7 @@ export default function SalesInvoiceLinesPanel({ invoice, lines, isLoading, erro
           </VxTableBody>
         </VxTable>
       </VxTableContainer>
-      <SalesInvoiceLineEditorDialog open={isEditorOpen} mode={dialogMode} line={selectedLine} products={products} onClose={() => setIsEditorOpen(false)} onSaved={handleSave} />
+      <SalesInvoiceLineEditorDialog open={canManage && isEditorOpen} mode={dialogMode} line={selectedLine} products={products} onClose={() => setIsEditorOpen(false)} onSaved={handleSave} />
     </VxPaper>
   )
 }

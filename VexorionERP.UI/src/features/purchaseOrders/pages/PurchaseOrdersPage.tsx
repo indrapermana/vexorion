@@ -11,6 +11,7 @@ import { ApiError, deletePurchaseOrder, getPurchaseOrderLines, getPurchaseOrders
 import { useSuppliersLookup, useWarehousesLookup } from '../../../hooks/useLookups'
 import type { PurchaseOrderDetailsResponse, PurchaseOrderLineListItemResponse, PurchaseOrderListItemResponse } from '../../../types/api'
 import type { PurchaseOrderDialogMode, PurchaseOrderGridRow } from '../../../types/ui'
+import { Permissions } from '../../../app/authorization'
 
 const PurchaseOrderEditorDialog = lazy(() => import('../components/PurchaseOrderEditorDialog'))
 const PurchaseOrderDataGrid = lazy(() => import('../components/PurchaseOrderDataGrid'))
@@ -33,10 +34,14 @@ function PurchaseOrderSurfaceFallback() {
 export default function PurchaseOrdersPage() {
   const { t } = useTranslation()
   const { formatMoney } = useCurrency()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
+  const canManage = user?.permissions.includes(Permissions.purchasing.manage) ?? false
+  const canViewSuppliers = user?.permissions.includes(Permissions.suppliers.view) ?? false
+  const canViewProducts = user?.permissions.includes(Permissions.products.view) ?? false
+  const canViewInventory = user?.permissions.includes(Permissions.inventory.view) ?? false
   const navigate = useNavigate()
-  const { items: suppliers, error: suppliersError, reload: reloadSuppliers } = useSuppliersLookup(isAuthenticated)
-  const { items: warehouses, error: warehousesError, reload: reloadWarehouses } = useWarehousesLookup(isAuthenticated)
+  const { items: suppliers, error: suppliersError, reload: reloadSuppliers } = useSuppliersLookup(isAuthenticated && canViewSuppliers)
+  const { items: warehouses, error: warehousesError, reload: reloadWarehouses } = useWarehousesLookup(isAuthenticated && canViewInventory)
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrderListItemResponse[]>([])
   const [lines, setLines] = useState<PurchaseOrderLineListItemResponse[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -185,6 +190,7 @@ export default function PurchaseOrdersPage() {
       description={t('pages.purchaseOrders.description')}
       createLabel={t('pages.purchaseOrders.newButton')}
       onCreate={openCreateDialog}
+      showCreate={canManage}
       disableCreate={suppliers.length === 0 || warehouses.length === 0}
       metrics={[
         { icon: <ReceiptLongRoundedIcon fontSize="small" />, label: t('pages.purchaseOrders.metrics.openHeaders'), value: purchaseOrders.length },
@@ -198,12 +204,13 @@ export default function PurchaseOrdersPage() {
         ...(warehousesError ? [{ severity: 'warning' as const, message: warehousesError }] : []),
         ...(error ? [{ severity: 'error' as const, message: error }] : []),
         ...(feedback ? [{ severity: 'success' as const, message: feedback }] : []),
+        ...(!canManage ? [{ severity: 'info' as const, message: t('authorization.readOnly', { requiredPermission: Permissions.purchasing.manage }) }] : []),
       ]}
-      grid={<Suspense fallback={<PurchaseOrderSurfaceFallback />}><PurchaseOrderDataGrid rows={rows} isLoading={isLoading} onEdit={openEditDialog} onDelete={setDeleteTarget} onManageLines={(row) => void handleManageLines(row)} onCreateInvoice={handleCreateInvoice} onViewReceipts={handleViewReceipts} /></Suspense>}
-      linesPanel={<Suspense fallback={<PurchaseOrderSurfaceFallback />}><PurchaseOrderLinesPanel order={activeLinesOrder} lines={lines} isLoading={linesLoading} error={linesError} onRefresh={() => activeLinesOrder ? loadLines(activeLinesOrder.id) : Promise.resolve()} /></Suspense>}
+      grid={<Suspense fallback={<PurchaseOrderSurfaceFallback />}><PurchaseOrderDataGrid rows={rows} isLoading={isLoading} onEdit={openEditDialog} onDelete={setDeleteTarget} onManageLines={(row) => void handleManageLines(row)} onCreateInvoice={handleCreateInvoice} onViewReceipts={handleViewReceipts} canManage={canManage} /></Suspense>}
+      linesPanel={<Suspense fallback={<PurchaseOrderSurfaceFallback />}><PurchaseOrderLinesPanel order={activeLinesOrder} lines={lines} isLoading={linesLoading} error={linesError} onRefresh={() => activeLinesOrder ? loadLines(activeLinesOrder.id) : Promise.resolve()} canManage={canManage} canViewProducts={canViewProducts} canViewInventory={canViewInventory} /></Suspense>}
       documentsPanel={<DocumentsPanel sourceType="PurchaseOrder" sourceEntityId={activeLinesOrder?.id ?? null} />}
-      editor={isEditorOpen ? <Suspense fallback={<PurchaseOrderSurfaceFallback />}><PurchaseOrderEditorDialog key={`${dialogMode}:${selectedPurchaseOrderId ?? 'new'}`} open={isEditorOpen} mode={dialogMode} purchaseOrderId={selectedPurchaseOrderId} suppliers={suppliers} warehouses={warehouses} onClose={handleEditorClose} onSaved={(purchaseOrder, mode) => void handleSaved(purchaseOrder, mode)} /></Suspense> : null}
-      deleteDialog={deleteTarget ? <Suspense fallback={null}><PurchaseOrderDeleteDialog target={deleteTarget} isDeleting={isDeleting} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} /></Suspense> : null}
+      editor={canManage && isEditorOpen ? <Suspense fallback={<PurchaseOrderSurfaceFallback />}><PurchaseOrderEditorDialog key={`${dialogMode}:${selectedPurchaseOrderId ?? 'new'}`} open={isEditorOpen} mode={dialogMode} purchaseOrderId={selectedPurchaseOrderId} suppliers={suppliers} warehouses={warehouses} onClose={handleEditorClose} onSaved={(purchaseOrder, mode) => void handleSaved(purchaseOrder, mode)} /></Suspense> : null}
+      deleteDialog={canManage && deleteTarget ? <Suspense fallback={null}><PurchaseOrderDeleteDialog target={deleteTarget} isDeleting={isDeleting} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} /></Suspense> : null}
     />
   )
 }

@@ -9,6 +9,8 @@ import { ApiError, getPurchaseInvoices, getVendorPayments } from '../../../lib/a
 import DocumentsPanel from '../../../components/DocumentsPanel'
 import type { PurchaseInvoiceListItemResponse, VendorPaymentDetailsResponse, VendorPaymentListItemResponse } from '../../../types/api'
 import type { VendorPaymentFormValues, VendorPaymentGridRow } from '../../../types/ui'
+import { Permissions } from '../../../app/authorization'
+import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 
 const VendorPaymentDataGrid = lazy(() => import('../components/VendorPaymentDataGrid'))
 const VendorPaymentEditorDialog = lazy(() => import('../components/VendorPaymentEditorDialog'))
@@ -32,8 +34,10 @@ type SourceState = Partial<VendorPaymentFormValues> & {
 
 export default function VendorPaymentsPage() {
   const { t } = useTranslation()
-  const { isAuthenticated } = useAuth()
-  const { items: suppliers, error: suppliersError, reload: reloadSuppliers } = useSuppliersLookup(isAuthenticated)
+  const { isAuthenticated, user } = useAuth()
+  const canManage = user?.permissions.includes(Permissions.purchasing.manage) ?? false
+  const canViewSuppliers = user?.permissions.includes(Permissions.suppliers.view) ?? false
+  const { items: suppliers, error: suppliersError, reload: reloadSuppliers } = useSuppliersLookup(isAuthenticated && canViewSuppliers)
   const location = useLocation()
   const navigate = useNavigate()
   const sourceState = (location.state as SourceState | null) ?? null
@@ -81,10 +85,15 @@ export default function VendorPaymentsPage() {
       return
     }
 
+    if (!canManage) {
+      void navigate(location.pathname, { replace: true, state: null })
+      return
+    }
+
     setEditorDefaults(sourceState)
     setIsEditorOpen(true)
     void navigate(location.pathname, { replace: true, state: null })
-  }, [location.pathname, navigate, sourceState])
+  }, [canManage, location.pathname, navigate, sourceState])
 
   const supplierNameById = useMemo(
     () => new Map(suppliers.map((supplier) => [supplier.id, supplier.name])),
@@ -135,9 +144,9 @@ export default function VendorPaymentsPage() {
             <VxTypography color="text.secondary">{t('pages.vendorPayments.description')}</VxTypography>
           </VxBox>
           <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
-            <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog} disabled={!outstandingInvoices.length}>
+            {canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog} disabled={!outstandingInvoices.length}>
               {t('pages.vendorPayments.recordPayment')}
-            </VxButton>
+            </VxButton> : null}
             <VxPaper elevation={0} className="products-metric-card">
               <PaidRoundedIcon fontSize="small" />
               <VxBox>
@@ -167,6 +176,7 @@ export default function VendorPaymentsPage() {
       {error ? <VxAlert severity="error">{error}</VxAlert> : null}
       {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
       {!outstandingInvoices.length ? <VxAlert severity="info">{t('pages.vendorPayments.noOutstandingInvoices')}</VxAlert> : null}
+      {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.purchasing.manage} /> : null}
 
       <VxPaper elevation={0} className="panel-card products-grid-panel">
         <Suspense fallback={<VendorPaymentSurfaceFallback />}>
@@ -176,7 +186,7 @@ export default function VendorPaymentsPage() {
 
       <DocumentsPanel sourceType="VendorPaymentReceipt" sourceEntityId={selectedPaymentId} />
 
-      {isEditorOpen ? (
+      {canManage && isEditorOpen ? (
         <Suspense fallback={<VendorPaymentSurfaceFallback />}>
           <VendorPaymentEditorDialog
             open={isEditorOpen}

@@ -10,6 +10,8 @@ import { ApiError, getCustomerPayments, getSalesInvoices } from '../../../lib/ap
 import DocumentsPanel from '../../../components/DocumentsPanel'
 import type { CustomerPaymentDetailsResponse, CustomerPaymentListItemResponse, SalesInvoiceListItemResponse } from '../../../types/api'
 import type { CustomerPaymentFormValues, CustomerPaymentGridRow } from '../../../types/ui'
+import { Permissions } from '../../../app/authorization'
+import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 
 const CustomerPaymentDataGrid = lazy(() => import('../components/CustomerPaymentDataGrid'))
 const CustomerPaymentEditorDialog = lazy(() => import('../components/CustomerPaymentEditorDialog'))
@@ -34,8 +36,10 @@ type SourceState = Partial<CustomerPaymentFormValues> & {
 export default function CustomerPaymentsPage() {
   const { t } = useTranslation()
   const { formatMoney } = useCurrency()
-  const { isAuthenticated } = useAuth()
-  const { items: customers, error: customersError, reload: reloadCustomers } = useCustomersLookup(isAuthenticated)
+  const { isAuthenticated, user } = useAuth()
+  const canManage = user?.permissions.includes(Permissions.sales.manage) ?? false
+  const canViewCustomers = user?.permissions.includes(Permissions.customers.view) ?? false
+  const { items: customers, error: customersError, reload: reloadCustomers } = useCustomersLookup(isAuthenticated && canViewCustomers)
   const location = useLocation()
   const navigate = useNavigate()
   const sourceState = (location.state as SourceState | null) ?? null
@@ -83,10 +87,15 @@ export default function CustomerPaymentsPage() {
       return
     }
 
+    if (!canManage) {
+      void navigate(location.pathname, { replace: true, state: null })
+      return
+    }
+
     setEditorDefaults(sourceState)
     setIsEditorOpen(true)
     void navigate(location.pathname, { replace: true, state: null })
-  }, [location.pathname, navigate, sourceState])
+  }, [canManage, location.pathname, navigate, sourceState])
 
   const customerNameById = useMemo(
     () => new Map(customers.map((customer) => [customer.id, customer.name])),
@@ -137,9 +146,9 @@ export default function CustomerPaymentsPage() {
             <VxTypography color="text.secondary">{t('pages.customerPayments.description')}</VxTypography>
           </VxBox>
           <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
-            <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog} disabled={!outstandingInvoices.length}>
+            {canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog} disabled={!outstandingInvoices.length}>
               {t('pages.customerPayments.recordPayment')}
-            </VxButton>
+            </VxButton> : null}
             <VxPaper elevation={0} className="products-metric-card">
               <PaidRoundedIcon fontSize="small" />
               <VxBox>
@@ -169,6 +178,7 @@ export default function CustomerPaymentsPage() {
       {error ? <VxAlert severity="error">{error}</VxAlert> : null}
       {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
       {!outstandingInvoices.length ? <VxAlert severity="info">{t('pages.customerPayments.noOutstandingInvoices')}</VxAlert> : null}
+      {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.sales.manage} /> : null}
 
       <VxPaper elevation={0} className="panel-card products-grid-panel">
         <Suspense fallback={<CustomerPaymentSurfaceFallback />}>
@@ -178,7 +188,7 @@ export default function CustomerPaymentsPage() {
 
       <DocumentsPanel sourceType="CustomerPaymentReceipt" sourceEntityId={selectedPaymentId} />
 
-      {isEditorOpen ? (
+      {canManage && isEditorOpen ? (
         <Suspense fallback={<CustomerPaymentSurfaceFallback />}>
           <CustomerPaymentEditorDialog
             open={isEditorOpen}

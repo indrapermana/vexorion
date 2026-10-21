@@ -12,6 +12,7 @@ type SalesOrderDataGridProps = {
   onManageLines: (row: SalesOrderGridRow) => void
   onCreateInvoice: (row: SalesOrderGridRow) => void
   onViewShipments: (row: SalesOrderGridRow) => void
+  canManage?: boolean
 }
 
 function getStatusColor(status: number) {
@@ -27,7 +28,7 @@ function getStatusColor(status: number) {
   return 'default' as const
 }
 
-export default function SalesOrderDataGrid({ rows, isLoading, onEdit, onDelete, onManageLines, onCreateInvoice, onViewShipments }: SalesOrderDataGridProps) {
+export default function SalesOrderDataGrid({ rows, isLoading, onEdit, onDelete, onManageLines, onCreateInvoice, onViewShipments, canManage = true }: SalesOrderDataGridProps) {
   useTranslation()
   const { formatMoney } = useCurrency()
   const columns: VxGridColDef<SalesOrderGridRow>[] = [
@@ -72,9 +73,11 @@ export default function SalesOrderDataGrid({ rows, isLoading, onEdit, onDelete, 
       getActions: ({ row }) => [
         <VxGridActionsCellItem key={`lines-${row.id}`} icon={<FormatListBulletedRoundedIcon />} label="Lines" onClick={() => onManageLines(row)} showInMenu={false} />,
         <VxGridActionsCellItem key={`shipments-${row.id}`} icon={<LocalShippingRoundedIcon />} label="View shipments" onClick={() => onViewShipments(row)} showInMenu={false} />,
-        <VxGridActionsCellItem key={`invoice-${row.id}`} icon={<PostAddRoundedIcon />} label="Create invoice" onClick={() => onCreateInvoice(row)} showInMenu={false} />,
-        <VxGridActionsCellItem key={`edit-${row.id}`} icon={<EditRoundedIcon />} label="Edit" onClick={() => onEdit(row.id)} showInMenu={false} />,
-        <VxGridActionsCellItem key={`delete-${row.id}`} icon={<DeleteOutlineRoundedIcon />} label="Delete" onClick={() => onDelete(row)} showInMenu={false} />,
+        ...(canManage ? [
+          <VxGridActionsCellItem key={`invoice-${row.id}`} icon={<PostAddRoundedIcon />} label="Create invoice" onClick={() => onCreateInvoice(row)} showInMenu={false} />,
+          <VxGridActionsCellItem key={`edit-${row.id}`} icon={<EditRoundedIcon />} label="Edit" onClick={() => onEdit(row.id)} showInMenu={false} />,
+          <VxGridActionsCellItem key={`delete-${row.id}`} icon={<DeleteOutlineRoundedIcon />} label="Delete" onClick={() => onDelete(row)} showInMenu={false} />,
+        ] : []),
       ],
     },
   ]
