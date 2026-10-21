@@ -101,12 +101,12 @@ jobs:
           name: backend-coverage
           path: TestResults/**/coverage.cobertura.xml
 
-  deploy-staging:
-    name: Deploy to Cloud Run (staging)
+  deploy-production:
+    name: Deploy to Cloud Run (production)
     runs-on: ubuntu-latest
     needs: build-and-test
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
-    environment: staging
+    environment: production
 
     permissions:
       contents: read
@@ -140,13 +140,13 @@ jobs:
             GCP_DEPLOY_SERVICE_ACCOUNT
           do
             if [[ -z "${!variable_name}" ]]; then
-              echo "Missing GitHub staging environment variable: $variable_name"
+              echo "Missing GitHub production environment variable: $variable_name"
               missing=1
             fi
           done
 
           if [[ -z "$SIXLABORS_LICENSE_FILE_CONTENT" ]]; then
-            echo "Missing GitHub staging environment secret: SIXLABORS_LICENSE_FILE"
+            echo "Missing GitHub production environment secret: SIXLABORS_LICENSE_FILE"
             missing=1
           fi
 

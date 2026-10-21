@@ -4,7 +4,7 @@
 
 **Date:** 2026-10-21
 
-**Status:** Reviewed implementation plan; no production deployment authorized
+**Status:** Production infrastructure provisioned and manually smoke-tested; automated cutover and customer onboarding not yet authorized
 
 **Priority:** Data integrity, security, and recoverability before minimum infrastructure cost
 
@@ -25,6 +25,7 @@ Confirmed decisions:
 - The backend is upgraded from .NET 8 to .NET 10 before provider-specific migration work begins.
 - ClamAV remains disabled until a private scanner is provisioned and integration-tested.
 - Azure resources are not deleted by this plan. Any later retirement requires separate inventory, retention, and owner approval.
+- The early pilot uses one persistent production environment. The previously validated Neon rehearsal database and GCP staging project are temporary evidence environments and will be deleted only after the production CI, application, storage, frontend, rollback, and retention checks pass.
 
 Non-goals:
 
@@ -97,7 +98,7 @@ Self-hosting PostgreSQL on a free VM is not approved for real customer data beca
 - Document storage persists provider-neutral object paths for project documents and generated documents, while product entities persist image URLs.
 - ClamAV support is implemented but disabled by default.
 - No `IHostedService` or `BackgroundService` implementation was found; startup initialization is nevertheless state-changing and must be separated from normal API startup.
-- A multi-stage backend Dockerfile is present and locally validated; Cloud Run staging deployment remains pending.
+- A multi-stage backend Dockerfile is present and validated locally, in the former staging environment, and through a manual production deployment.
 - This document lives at `docs/VEXORIONERP_AZURE_MIGRATION_PLAN.md`; generated migration evidence belongs under `docs/migration/`.
 
 ## 4. Mandatory implementation sequence
@@ -299,8 +300,9 @@ Functional acceptance for `MIG-M02` is complete. Administrative closeout still r
 
 - Record the actual staging and production PostgreSQL versions, regions, current account plan limits, connection limits, and restore windows in the operator record.
 - Confirm the two temporary restore-rehearsal branches were removed after retaining the evidence.
+- After production cutover acceptance, delete the separate Neon staging project. Future high-risk migration rehearsals should use short-lived isolated branches or a temporary environment rather than a permanently running staging stack.
 
-### MIG-M03 — Containerize and deploy to Cloud Run staging
+### MIG-M03 — Containerize and deploy to Cloud Run
 
 Create a reproducible multi-stage Docker build using matching official .NET 10 SDK and ASP.NET runtime images.
 
@@ -388,25 +390,37 @@ Cloud Run staging evidence (2026-10-21):
 - Owner-confirmed frontend validation passed with a local UI build configured for the Cloud Run staging URL: login and product creation both succeeded. No production Cloudflare frontend configuration or DNS was changed.
 - True scale-to-zero cold-start timing remains pending.
 
+Cloud Run production evidence (owner-confirmed, 2026-10-21):
+
+- A dedicated GCP project `vexorionerp-production` was created in Jakarta and linked to billing. Only the required Cloud Run, Artifact Registry, Secret Manager, IAM/OIDC, logging, and monitoring APIs were enabled.
+- The private `vexorionerp-api` Docker repository has a cleanup policy in dry-run mode that deletes versions older than 30 days while retaining at least the 10 most recent images. The policy must be observed before destructive cleanup is activated.
+- A commit-SHA-tagged Linux AMD64 image was built with the Six Labors license supplied only as a BuildKit secret, pushed to the production repository, resolved to an immutable digest, and manually deployed as `vexorionerp-api-production`.
+- The service runs with 1 vCPU, 512 MiB, request CPU throttling, zero minimum instances, and one maximum instance under the dedicated `vexorionerp-api-production` runtime identity.
+- The runtime identity has resource-level accessor bindings only on the production Neon connection, JWT key, R2 access-key ID, R2 secret key, and Grafana Loki API-key secrets. Non-secret R2 and Loki identifiers are managed as Cloud Run environment variables.
+- Cloud Logging remains active through console output and Grafana Loki is enabled as a second sink with a log-write credential. The credential exposed during local diagnostic review was rotated before production configuration.
+- Liveness, Neon-backed readiness, anonymous HTTP 401 behavior, authenticated admin login, current-user access, permissions, and Loki ingestion were owner-confirmed. Controlled production CRUD/R2 cleanup, frontend routing, production CI, rollback, and cold-start timing remain pending.
+- The early-pilot decision is to retain only this production environment after cutover. The GCP project ID and service names are production-specific; the former GCP staging project must not be deleted until the remaining acceptance checks pass.
+
 ### MIG-M04 — CI/CD, secrets, and observability
 
 - [x] Use GitHub Actions OIDC/workload identity federation instead of a long-lived Google service-account key.
-- [ ] Protect production deployments with environment approval when the production workflow is introduced; the current workflow deploys staging only.
+- [ ] Configure the GitHub `production` environment and apply the strongest branch/approval protection supported by the repository plan before the first production workflow run.
 - [x] Pin every external action used by the backend workflow to an immutable commit SHA.
-- [x] Use Secret Manager for the staging runtime connection, JWT signing key, and R2 credentials; no runtime secret is supplied by the deployment workflow.
+- [x] Use Secret Manager for the production runtime connection, JWT signing key, R2 credentials, and Loki API key; no runtime secret is supplied by the deployment workflow.
 - Configure budget alerts and inspect actual billing daily during the pilot.
-- Apply Artifact Registry cleanup so obsolete container images do not accumulate.
+- Observe the Artifact Registry cleanup dry run, then explicitly activate it so obsolete container images do not accumulate while the most recent 10 remain available.
 - Limit and redact logs; never log tokens, connection strings, document contents, customer identifiers, or bootstrap passwords.
 - Monitor API 5xx, latency, cold starts, database connections, failed uploads, authorization denials, quota limits, and backup failures.
 - Preserve request/audit correlation IDs.
 
 CI/CD implementation evidence (2026-10-21):
 
-- Workload identity pool `github-actions` and provider `vexorionerp-master` accept only OIDC assertions for repository `indrapermana/vexorion` on `refs/heads/master`.
-- Dedicated deployer `vexorionerp-github-staging` can update Cloud Run in the staging project, push only to the staging Artifact Registry repository, and act as the existing staging runtime identity. It cannot read runtime secrets.
+- The former staging workflow completed successfully and its post-deployment live/ready checks returned `Healthy`; this is historical rehearsal evidence, not production CI evidence.
+- The production workload identity pool `github-actions` and provider `vexorionerp-master` restrict OIDC assertions to repository `indrapermana/vexorion`, `refs/heads/master`, and `.github/workflows/backend.yml`.
+- Dedicated deployer `vexorionerp-github-production` can update Cloud Run in the production project, push only to the production Artifact Registry repository, and act as the production runtime identity. It cannot read runtime secrets and has no user-managed service-account key.
 - The backend workflow runs the full build/test gate before building and pushing a commit-SHA-tagged image, resolves its registry digest, deploys the digest, and verifies both health endpoints.
 - The Six Labors license is supplied to Docker only as a BuildKit secret. Google-generated `gha-creds-*.json` files are excluded from Git and the Docker build context.
-- The GitHub `staging` environment variables and its `SIXLABORS_LICENSE_FILE` secret still require owner setup. Runtime application secrets remain in Google Secret Manager and are injected directly by Cloud Run; they are intentionally not duplicated in GitHub. The first OIDC workflow deployment has not run, so CI/CD is implemented but not yet integration-validated.
+- The workflow now targets a GitHub `production` environment. Its seven deployment variables and `SIXLABORS_LICENSE_FILE` secret still require owner setup before the first production run. Runtime secrets remain in Google Secret Manager and are injected directly by Cloud Run; they are intentionally not duplicated in GitHub.
 
 ### MIG-M05 — Production hostname decision
 
@@ -504,8 +518,8 @@ Rollback during the empty-environment launch means reverting the Cloud Run revis
 | NET10-M01 | Upgrade all backend projects and coordinated dependencies to .NET 10 | Complete backend gate and migration-model comparison pass |
 | MIG-M00 | Separate runtime startup from migrations/bootstrap; reject placeholder secrets | Clean idempotent provisioning and concurrent-start tests pass |
 | MIG-M01 | Add R2 document and product-image adapters | Complete: 881/881 backend tests pass; real upload, delivery, deletion, and signed-expiry behavior owner-confirmed |
-| MIG-M02 | Provision empty Neon staging/production and backup workflow | Functional acceptance complete: clean migration, extension, idempotent bootstrap, least-privilege pooled/direct access, production login, credential rotation, and isolated restore evidence passed; provider metadata/temporary-branch closeout remains |
-| MIG-M03 | Add .NET 10 container and Cloud Run staging | Health, auth, CRUD, storage, and cold-start checks pass |
+| MIG-M02 | Provision empty Neon rehearsal/production and backup workflow | Functional acceptance complete: clean migration, extension, idempotent bootstrap, least-privilege pooled/direct access, production login, credential rotation, and isolated restore evidence passed; provider metadata and temporary-environment retirement remain |
+| MIG-M03 | Add .NET 10 container and Cloud Run production | Manual production health, dependency, authentication, and logging checks pass; controlled CRUD/storage, rollback, frontend, CI, and cold-start evidence remain |
 | MIG-M04 | Add CI/CD, secrets, monitoring, registry cleanup, and budgets | Protected deployment and operational alerts verified |
 | MIG-M05 | Decide API hostname and upload route | TLS, CORS, auth, file-size, cost, and rollback behavior pass |
 | MIG-M06 | Run full UI/E2E and pilot readiness review | Owner signs real-customer-data checklist |
@@ -539,9 +553,9 @@ The following require explicit owner input or approval:
 
 > Implement `MIG-M01` only using the existing `IDocumentStorageService` and `IProductImageStorageService`. Retain Azure adapters until the R2 implementation is integration-validated. Use mocked credentials for normal tests and an optional explicitly credential-gated real-bucket suite. Do not copy or delete Azure blobs.
 
-### Phase 4 — Neon and Cloud Run staging
+### Phase 4 — Neon and Cloud Run rehearsal (historical)
 
-> Implement `MIG-M02` and `MIG-M03` in staging only. Provision from an empty database, apply migrations explicitly, create the `vexorionerp` bootstrap tenant through the controlled operation, deploy the .NET 10 container to Cloud Run with `min=0` and `max=1`, and run the defined integration checks. No production DNS or customer onboarding.
+> This historical phase supplied the rehearsal evidence used before the clean production build. The early-pilot architecture now retains one production environment; delete the rehearsal resources only after production acceptance and rollback checks complete. No customer onboarding is authorized by rehearsal evidence alone.
 
 ### Phase 5 — operational and go-live gate
 
