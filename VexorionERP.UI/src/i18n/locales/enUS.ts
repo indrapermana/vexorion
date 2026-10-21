@@ -18,6 +18,7 @@ const enUS = {
     publicWorkspaceAccess: 'Workspace access',
   },
   common: {
+    viewOnly: 'View only',
     yes: 'Yes',
     no: 'No',
     edit: 'Edit',
@@ -69,6 +70,9 @@ const enUS = {
     checkingSession: 'Checking your session...',
     loadingWorkspace: 'Loading workspace...',
     permissionDenied: 'You do not have permission to open this workspace.',
+  },
+  authorization: {
+    readOnly: 'You have view-only access. Changes require the {{requiredPermission}} permission.',
   },
   publicAuth: {
     workspaceAccess: 'Workspace access',

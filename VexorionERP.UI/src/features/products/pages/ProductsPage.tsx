@@ -13,6 +13,8 @@ import type {
 } from '../../../types/api'
 import type { ProductDialogMode } from '../../../types/ui'
 import type { ProductGridRow } from '../../../types/ui'
+import { Permissions } from '../../../app/authorization'
+import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 
 const ProductEditorDialog = lazy(() => import('../components/ProductEditorDialog'))
 const ProductDataGrid = lazy(() => import('../components/ProductDataGrid'))
@@ -113,7 +115,8 @@ function buildProductRows(
 export default function ProductsPage() {
   const { t } = useTranslation()
   const { formatMoney } = useCurrency()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
+  const canManage = user?.permissions.includes(Permissions.products.manage) ?? false
   const [products, setProducts] = useState<ProductGridRow[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -239,9 +242,9 @@ export default function ProductsPage() {
             </VxTypography>
           </VxBox>
           <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
-            <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog}>
+            {canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog}>
               {t('pages.products.newButton')}
-            </VxButton>
+            </VxButton> : null}
             <VxFormControlLabel
               control={<VxSwitch checked={showOnlyLowStock} onChange={(_, checked) => setShowOnlyLowStock(checked)} color="warning" />}
               label={t('pages.products.onlyLowStock')}
@@ -297,6 +300,7 @@ export default function ProductsPage() {
 
       {error ? <VxAlert severity="error">{error}</VxAlert> : null}
       {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+      {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.products.manage} /> : null}
 
       <VxPaper elevation={0} className="panel-card products-grid-panel">
         <Suspense fallback={<ProductSurfaceFallback />}>
@@ -307,11 +311,12 @@ export default function ProductsPage() {
             onToggleExpanded={toggleExpandedProduct}
             onEdit={openEditDialog}
             onDelete={setDeleteTarget}
+            canManage={canManage}
           />
         </Suspense>
       </VxPaper>
 
-      {isEditorOpen ? (
+      {canManage && isEditorOpen ? (
         <Suspense fallback={<ProductSurfaceFallback />}>
           <ProductEditorDialog
             key={`${dialogMode}:${selectedProductId ?? 'new'}`}
@@ -324,7 +329,7 @@ export default function ProductsPage() {
         </Suspense>
       ) : null}
 
-      {deleteTarget ? (
+      {canManage && deleteTarget ? (
         <Suspense fallback={null}>
           <ProductDeleteDialog
             target={deleteTarget}

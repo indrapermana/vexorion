@@ -9,9 +9,10 @@ type WarehouseDataGridProps = {
   highlightedWarehouseId?: string | null
   onEdit: (warehouseId: string) => void
   onDelete: (row: WarehouseGridRow) => void
+  canManage?: boolean
 }
 
-export default function WarehouseDataGrid({ rows, isLoading, highlightedWarehouseId, onEdit, onDelete }: WarehouseDataGridProps) {
+export default function WarehouseDataGrid({ rows, isLoading, highlightedWarehouseId, onEdit, onDelete, canManage = true }: WarehouseDataGridProps) {
   const { t } = useTranslation()
   const columns: VxGridColDef<WarehouseGridRow>[] = [
     {
@@ -39,10 +40,10 @@ export default function WarehouseDataGrid({ rows, isLoading, highlightedWarehous
       type: 'actions',
       headerName: t('components.warehouses.grid.columns.actions'),
       minWidth: 110,
-      getActions: ({ row }) => [
+      getActions: ({ row }) => canManage ? [
         <VxGridActionsCellItem key={`edit-${row.id}`} icon={<EditRoundedIcon />} label={t('common.edit')} onClick={() => onEdit(row.id)} showInMenu={false} />,
         <VxGridActionsCellItem key={`delete-${row.id}`} icon={<DeleteOutlineRoundedIcon />} label={t('dialogs.delete')} onClick={() => onDelete(row)} showInMenu={false} />,
-      ],
+      ] : [],
     },
   ]
 

@@ -8,9 +8,10 @@ type CustomerDataGridProps = {
   isLoading: boolean
   onEdit: (customerId: string) => void
   onDelete: (row: CustomerGridRow) => void
+  canManage?: boolean
 }
 
-export default function CustomerDataGrid({ rows, isLoading, onEdit, onDelete }: CustomerDataGridProps) {
+export default function CustomerDataGrid({ rows, isLoading, onEdit, onDelete, canManage = true }: CustomerDataGridProps) {
   const { t } = useTranslation()
   const columns: VxGridColDef<CustomerGridRow>[] = [
     {
@@ -54,7 +55,7 @@ export default function CustomerDataGrid({ rows, isLoading, onEdit, onDelete }: 
       type: 'actions',
       headerName: t('components.customers.grid.columns.actions'),
       minWidth: 110,
-      getActions: ({ row }) => [
+      getActions: ({ row }) => canManage ? [
         <VxGridActionsCellItem
           key={`edit-${row.id}`}
           icon={<EditRoundedIcon />}
@@ -69,7 +70,7 @@ export default function CustomerDataGrid({ rows, isLoading, onEdit, onDelete }: 
           onClick={() => onDelete(row)}
           showInMenu={false}
         />,
-      ],
+      ] : [],
     },
   ]
 

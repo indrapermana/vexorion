@@ -6,6 +6,8 @@ import { useAuth } from '../../../app/AuthContext'
 import { ApiError, deleteCustomer, getCustomers } from '../../../lib/api'
 import type { CustomerDetailsResponse, CustomerListItemResponse } from '../../../types/api'
 import type { CustomerDialogMode } from '../../../types/ui'
+import { Permissions } from '../../../app/authorization'
+import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 
 const CustomerEditorDialog = lazy(() => import('../components/CustomerEditorDialog'))
 const CustomerDataGrid = lazy(() => import('../components/CustomerDataGrid'))
@@ -26,7 +28,8 @@ function CustomerSurfaceFallback() {
 
 export default function CustomersPage() {
   const { t } = useTranslation()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
+  const canManage = user?.permissions.includes(Permissions.customers.manage) ?? false
   const [customers, setCustomers] = useState<CustomerListItemResponse[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -131,9 +134,9 @@ export default function CustomersPage() {
             </VxTypography>
           </VxBox>
           <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
-            <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog}>
+            {canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog}>
               {t('pages.customers.newButton')}
-            </VxButton>
+            </VxButton> : null}
             <VxPaper elevation={0} className="products-metric-card">
               <Groups2RoundedIcon fontSize="small" />
               <VxBox>
@@ -161,6 +164,7 @@ export default function CustomersPage() {
 
       {error ? <VxAlert severity="error">{error}</VxAlert> : null}
       {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+      {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.customers.manage} /> : null}
 
       <VxPaper elevation={0} className="panel-card products-grid-panel">
         <Suspense fallback={<CustomerSurfaceFallback />}>
@@ -169,11 +173,12 @@ export default function CustomersPage() {
             isLoading={isLoading}
             onEdit={openEditDialog}
             onDelete={setDeleteTarget}
+            canManage={canManage}
           />
         </Suspense>
       </VxPaper>
 
-      {isEditorOpen ? (
+      {canManage && isEditorOpen ? (
         <Suspense fallback={<CustomerSurfaceFallback />}>
           <CustomerEditorDialog
             key={`${dialogMode}:${selectedCustomerId ?? 'new'}`}
@@ -186,7 +191,7 @@ export default function CustomersPage() {
         </Suspense>
       ) : null}
 
-      {deleteTarget ? (
+      {canManage && deleteTarget ? (
         <Suspense fallback={null}>
           <CustomerDeleteDialog
             target={deleteTarget}

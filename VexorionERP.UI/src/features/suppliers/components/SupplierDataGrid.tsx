@@ -8,9 +8,10 @@ type SupplierDataGridProps = {
   isLoading: boolean
   onEdit: (supplierId: string) => void
   onDelete: (row: SupplierGridRow) => void
+  canManage?: boolean
 }
 
-export default function SupplierDataGrid({ rows, isLoading, onEdit, onDelete }: SupplierDataGridProps) {
+export default function SupplierDataGrid({ rows, isLoading, onEdit, onDelete, canManage = true }: SupplierDataGridProps) {
   const { t } = useTranslation()
   const columns: VxGridColDef<SupplierGridRow>[] = [
     {
@@ -47,10 +48,10 @@ export default function SupplierDataGrid({ rows, isLoading, onEdit, onDelete }: 
       type: 'actions',
       headerName: t('components.suppliers.grid.columns.actions'),
       minWidth: 110,
-      getActions: ({ row }) => [
+      getActions: ({ row }) => canManage ? [
         <VxGridActionsCellItem key={`edit-${row.id}`} icon={<EditRoundedIcon />} label={t('common.edit')} onClick={() => onEdit(row.id)} showInMenu={false} />,
         <VxGridActionsCellItem key={`delete-${row.id}`} icon={<DeleteOutlineRoundedIcon />} label={t('dialogs.delete')} onClick={() => onDelete(row)} showInMenu={false} />,
-      ],
+      ] : [],
     },
   ]
 

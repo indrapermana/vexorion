@@ -15,6 +15,7 @@ type ProductDataGridProps = {
   onToggleExpanded: (productId: string) => void
   onEdit: (productId: string) => void
   onDelete: (row: ProductGridRow) => void
+  canManage?: boolean
 }
 
 type ProductSortField = 'name' | 'quantityAvailable' | 'stockHealth'
@@ -42,7 +43,7 @@ function compareRows(left: ProductGridRow, right: ProductGridRow, sortField: Pro
   return left.name.localeCompare(right.name)
 }
 
-export default function ProductDataGrid({ rows, isLoading, expandedProductIds, onToggleExpanded, onEdit, onDelete }: ProductDataGridProps) {
+export default function ProductDataGrid({ rows, isLoading, expandedProductIds, onToggleExpanded, onEdit, onDelete, canManage = true }: ProductDataGridProps) {
   const { t } = useTranslation()
   const { formatMoney } = useCurrency()
   const [sortField, setSortField] = useState<ProductSortField>('name')
@@ -182,7 +183,7 @@ export default function ProductDataGrid({ rows, isLoading, expandedProductIds, o
                     />
                   </VxTableCell>
                   <VxTableCell align="right">
-                    <VxStack direction="row" spacing={0.5} sx={{ justifyContent: 'flex-end' }}>
+                    {canManage ? <VxStack direction="row" spacing={0.5} sx={{ justifyContent: 'flex-end' }}>
                       <VxTooltip title={t('common.edit')}>
                         <VxIconButton size="small" onClick={() => onEdit(row.id)}>
                           <EditRoundedIcon fontSize="small" />
@@ -193,13 +194,13 @@ export default function ProductDataGrid({ rows, isLoading, expandedProductIds, o
                           <DeleteOutlineRoundedIcon fontSize="small" />
                         </VxIconButton>
                       </VxTooltip>
-                    </VxStack>
+                    </VxStack> : <VxTypography variant="caption" color="text.secondary">{t('common.viewOnly')}</VxTypography>}
                   </VxTableCell>
                 </VxTableRow>
                 <VxTableRow>
                   <VxTableCell colSpan={11} sx={{ py: 0, borderBottom: '1px solid rgba(108, 92, 231, 0.06)' }}>
                     <VxCollapse in={isExpanded} timeout="auto" unmountOnExit>
-                      <ProductExpandedPanel row={row} />
+                      <ProductExpandedPanel row={row} canManage={canManage} />
                     </VxCollapse>
                   </VxTableCell>
                 </VxTableRow>

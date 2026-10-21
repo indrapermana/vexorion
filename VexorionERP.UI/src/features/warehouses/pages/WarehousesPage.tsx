@@ -7,6 +7,8 @@ import { useAuth } from '../../../app/AuthContext'
 import { ApiError, deleteWarehouse, getWarehouses } from '../../../lib/api'
 import type { WarehouseDetailsResponse, WarehouseListItemResponse } from '../../../types/api'
 import type { WarehouseDialogMode } from '../../../types/ui'
+import { Permissions } from '../../../app/authorization'
+import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 
 const WarehouseEditorDialog = lazy(() => import('../components/WarehouseEditorDialog'))
 const WarehouseDataGrid = lazy(() => import('../components/WarehouseDataGrid'))
@@ -27,7 +29,8 @@ function WarehouseSurfaceFallback() {
 
 export default function WarehousesPage() {
   const { t } = useTranslation()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
+  const canManage = user?.permissions.includes(Permissions.inventory.manage) ?? false
   const [searchParams] = useSearchParams()
   const [warehouses, setWarehouses] = useState<WarehouseListItemResponse[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -146,7 +149,7 @@ export default function WarehousesPage() {
             <VxTypography color="text.secondary">{t('pages.warehouses.description')}</VxTypography>
           </VxBox>
           <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
-            <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog}>{t('pages.warehouses.newButton')}</VxButton>
+            {canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog}>{t('pages.warehouses.newButton')}</VxButton> : null}
             <VxPaper elevation={0} className="products-metric-card"><WarehouseRoundedIcon fontSize="small" /><VxBox><VxTypography variant="body2" color="text.secondary">{t('pages.warehouses.metrics.rows')}</VxTypography><VxTypography variant="h6">{warehouses.length}</VxTypography></VxBox></VxPaper>
             <VxPaper elevation={0} className="products-metric-card"><CheckCircleRoundedIcon fontSize="small" /><VxBox><VxTypography variant="body2" color="text.secondary">{t('pages.warehouses.metrics.activeLocations')}</VxTypography><VxTypography variant="h6">{warehouses.filter((warehouse) => warehouse.isActive).length}</VxTypography></VxBox></VxPaper>
             <VxPaper elevation={0} className="products-metric-card"><PlaceRoundedIcon fontSize="small" /><VxBox><VxTypography variant="body2" color="text.secondary">{t('pages.warehouses.metrics.codesReady')}</VxTypography><VxTypography variant="h6">{warehouses.filter((warehouse) => warehouse.code.length > 0).length}</VxTypography></VxBox></VxPaper>
@@ -157,20 +160,21 @@ export default function WarehousesPage() {
       {error ? <VxAlert severity="error">{error}</VxAlert> : null}
       {highlightedWarehouseId ? <VxAlert severity="info">{t('pages.warehouses.focusedMovedTop')}</VxAlert> : null}
       {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+      {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.inventory.manage} /> : null}
 
       <VxPaper elevation={0} className="panel-card products-grid-panel">
         <Suspense fallback={<WarehouseSurfaceFallback />}>
-          <WarehouseDataGrid rows={visibleWarehouses} isLoading={isLoading} highlightedWarehouseId={highlightedWarehouseId} onEdit={openEditDialog} onDelete={setDeleteTarget} />
+          <WarehouseDataGrid rows={visibleWarehouses} isLoading={isLoading} highlightedWarehouseId={highlightedWarehouseId} onEdit={openEditDialog} onDelete={setDeleteTarget} canManage={canManage} />
         </Suspense>
       </VxPaper>
 
-      {isEditorOpen ? (
+      {canManage && isEditorOpen ? (
         <Suspense fallback={<WarehouseSurfaceFallback />}>
           <WarehouseEditorDialog key={`${dialogMode}:${selectedWarehouseId ?? 'new'}`} open={isEditorOpen} mode={dialogMode} warehouseId={selectedWarehouseId} onClose={handleEditorClose} onSaved={(warehouse, mode) => void handleSaved(warehouse, mode)} />
         </Suspense>
       ) : null}
 
-      {deleteTarget ? (
+      {canManage && deleteTarget ? (
         <Suspense fallback={null}>
           <WarehouseDeleteDialog target={deleteTarget} isDeleting={isDeleting} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} />
         </Suspense>

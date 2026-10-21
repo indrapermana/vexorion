@@ -15,9 +15,10 @@ const CODE_TYPE_OPTIONS = ['EAN13', 'UPC-A', 'UPC-E', 'CODE128', 'QR', 'ITF14', 
 
 type ProductIdentifiersPanelProps = {
   productId: string
+  canManage?: boolean
 }
 
-export default function ProductIdentifiersPanel({ productId }: ProductIdentifiersPanelProps) {
+export default function ProductIdentifiersPanel({ productId, canManage = true }: ProductIdentifiersPanelProps) {
   const { t } = useTranslation()
   const [identifiers, setIdentifiers] = useState<ProductIdentifierListItemResponse[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -127,9 +128,9 @@ export default function ProductIdentifiersPanel({ productId }: ProductIdentifier
       <VxStack spacing={1.5}>
         <VxStack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
           <VxTypography sx={{ fontWeight: 700 }}>{t('components.products.identifiers.title')}</VxTypography>
-          <VxButton size="small" startIcon={<AddRoundedIcon />} onClick={openCreate}>
+          {canManage ? <VxButton size="small" startIcon={<AddRoundedIcon />} onClick={openCreate}>
             {t('components.products.identifiers.addButton')}
-          </VxButton>
+          </VxButton> : <VxTypography variant="caption" color="text.secondary">{t('common.viewOnly')}</VxTypography>}
         </VxStack>
 
         {error ? <VxAlert severity="error" onClose={() => setError(null)}>{error}</VxAlert> : null}
@@ -176,7 +177,7 @@ export default function ProductIdentifiersPanel({ productId }: ProductIdentifier
                     />
                   </VxTableCell>
                   <VxTableCell align="right">
-                    <VxStack direction="row" spacing={0.5} sx={{ justifyContent: 'flex-end' }}>
+                    {canManage ? <VxStack direction="row" spacing={0.5} sx={{ justifyContent: 'flex-end' }}>
                       <VxTooltip title={t('common.edit')}>
                         <VxIconButton size="small" onClick={() => openEdit(item)}>
                           <EditRoundedIcon fontSize="small" />
@@ -187,7 +188,7 @@ export default function ProductIdentifiersPanel({ productId }: ProductIdentifier
                           <DeleteOutlineRoundedIcon fontSize="small" />
                         </VxIconButton>
                       </VxTooltip>
-                    </VxStack>
+                    </VxStack> : <VxTypography variant="caption" color="text.secondary">{t('common.viewOnly')}</VxTypography>}
                   </VxTableCell>
                 </VxTableRow>
               ))}
@@ -197,7 +198,7 @@ export default function ProductIdentifiersPanel({ productId }: ProductIdentifier
       </VxStack>
 
       {/* Create dialog */}
-      <VxDialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="xs" fullWidth>
+      <VxDialog open={canManage && createOpen} onClose={() => setCreateOpen(false)} maxWidth="xs" fullWidth>
         <VxDialogTitle>{t('components.products.identifiers.createDialog.title')}</VxDialogTitle>
         <VxDialogContent>
           <VxStack spacing={2} sx={{ pt: 1 }}>
@@ -240,7 +241,7 @@ export default function ProductIdentifiersPanel({ productId }: ProductIdentifier
       </VxDialog>
 
       {/* Edit dialog */}
-      <VxDialog open={editTarget !== null} onClose={() => setEditTarget(null)} maxWidth="xs" fullWidth>
+      <VxDialog open={canManage && editTarget !== null} onClose={() => setEditTarget(null)} maxWidth="xs" fullWidth>
         <VxDialogTitle>{t('components.products.identifiers.editDialog.title')}</VxDialogTitle>
         <VxDialogContent>
           <VxStack spacing={2} sx={{ pt: 1 }}>
@@ -287,7 +288,7 @@ export default function ProductIdentifiersPanel({ productId }: ProductIdentifier
       </VxDialog>
 
       {/* Delete dialog */}
-      <VxDialog open={deleteTarget !== null} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
+      <VxDialog open={canManage && deleteTarget !== null} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
         <VxDialogTitle>{t('components.products.identifiers.deleteDialog.title')}</VxDialogTitle>
         <VxDialogContent>
           <VxDialogContentText>

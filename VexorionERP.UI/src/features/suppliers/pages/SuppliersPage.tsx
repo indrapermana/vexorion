@@ -6,6 +6,8 @@ import { useAuth } from '../../../app/AuthContext'
 import { ApiError, deleteSupplier, getSuppliers } from '../../../lib/api'
 import type { SupplierDetailsResponse, SupplierListItemResponse } from '../../../types/api'
 import type { SupplierDialogMode } from '../../../types/ui'
+import { Permissions } from '../../../app/authorization'
+import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 
 const SupplierEditorDialog = lazy(() => import('../components/SupplierEditorDialog'))
 const SupplierDataGrid = lazy(() => import('../components/SupplierDataGrid'))
@@ -26,7 +28,8 @@ function SupplierSurfaceFallback() {
 
 export default function SuppliersPage() {
   const { t } = useTranslation()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
+  const canManage = user?.permissions.includes(Permissions.suppliers.manage) ?? false
   const [suppliers, setSuppliers] = useState<SupplierListItemResponse[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -126,7 +129,7 @@ export default function SuppliersPage() {
             <VxTypography color="text.secondary">{t('pages.suppliers.description')}</VxTypography>
           </VxBox>
           <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
-            <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog}>{t('pages.suppliers.newButton')}</VxButton>
+            {canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog}>{t('pages.suppliers.newButton')}</VxButton> : null}
             <VxPaper elevation={0} className="products-metric-card"><Groups2RoundedIcon fontSize="small" /><VxBox><VxTypography variant="body2" color="text.secondary">{t('pages.suppliers.metrics.rows')}</VxTypography><VxTypography variant="h6">{suppliers.length}</VxTypography></VxBox></VxPaper>
             <VxPaper elevation={0} className="products-metric-card"><MailOutlineRoundedIcon fontSize="small" /><VxBox><VxTypography variant="body2" color="text.secondary">{t('pages.common.withEmail')}</VxTypography><VxTypography variant="h6">{suppliers.filter((supplier) => Boolean(supplier.email)).length}</VxTypography></VxBox></VxPaper>
             <VxPaper elevation={0} className="products-metric-card"><LocalAtmRoundedIcon fontSize="small" /><VxBox><VxTypography variant="body2" color="text.secondary">{t('pages.suppliers.metrics.active')}</VxTypography><VxTypography variant="h6">{suppliers.filter((supplier) => supplier.isActive).length}</VxTypography></VxBox></VxPaper>
@@ -136,20 +139,21 @@ export default function SuppliersPage() {
 
       {error ? <VxAlert severity="error">{error}</VxAlert> : null}
       {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+      {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.suppliers.manage} /> : null}
 
       <VxPaper elevation={0} className="panel-card products-grid-panel">
         <Suspense fallback={<SupplierSurfaceFallback />}>
-          <SupplierDataGrid rows={suppliers} isLoading={isLoading} onEdit={openEditDialog} onDelete={setDeleteTarget} />
+          <SupplierDataGrid rows={suppliers} isLoading={isLoading} onEdit={openEditDialog} onDelete={setDeleteTarget} canManage={canManage} />
         </Suspense>
       </VxPaper>
 
-      {isEditorOpen ? (
+      {canManage && isEditorOpen ? (
         <Suspense fallback={<SupplierSurfaceFallback />}>
           <SupplierEditorDialog key={`${dialogMode}:${selectedSupplierId ?? 'new'}`} open={isEditorOpen} mode={dialogMode} supplierId={selectedSupplierId} onClose={handleEditorClose} onSaved={(supplier, mode) => void handleSaved(supplier, mode)} />
         </Suspense>
       ) : null}
 
-      {deleteTarget ? (
+      {canManage && deleteTarget ? (
         <Suspense fallback={null}>
           <SupplierDeleteDialog target={deleteTarget} isDeleting={isDeleting} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} />
         </Suspense>

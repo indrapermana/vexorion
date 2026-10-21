@@ -7,9 +7,10 @@ import ProductStockPanel from './ProductStockPanel'
 
 type ProductExpandedPanelProps = {
   row: ProductGridRow
+  canManage?: boolean
 }
 
-export default function ProductExpandedPanel({ row }: ProductExpandedPanelProps) {
+export default function ProductExpandedPanel({ row, canManage = true }: ProductExpandedPanelProps) {
   const { t } = useTranslation()
   const [tab, setTab] = useState(0)
 
@@ -24,7 +25,7 @@ export default function ProductExpandedPanel({ row }: ProductExpandedPanelProps)
         <VxTab label={t('components.products.grid.tabs.identifiers')} />
       </VxTabs>
       {tab === 0 && <ProductStockPanel row={row} />}
-      {tab === 1 && <ProductIdentifiersPanel productId={row.id} />}
+      {tab === 1 && <ProductIdentifiersPanel productId={row.id} canManage={canManage} />}
     </VxBox>
   )
 }

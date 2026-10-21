@@ -18,6 +18,7 @@ const idID = {
     publicWorkspaceAccess: 'Akses workspace',
   },
   common: {
+    viewOnly: 'Hanya lihat',
     yes: 'Ya',
     no: 'Tidak',
     edit: 'Ubah',
@@ -68,6 +69,9 @@ const idID = {
     checkingSession: 'Memeriksa sesi Anda...',
     loadingWorkspace: 'Memuat workspace...',
     permissionDenied: 'Anda tidak memiliki izin untuk membuka workspace ini.',
+  },
+  authorization: {
+    readOnly: 'Anda memiliki akses hanya-lihat. Perubahan memerlukan izin {{requiredPermission}}.',
   },
   publicAuth: {
     workspaceAccess: 'Akses workspace',

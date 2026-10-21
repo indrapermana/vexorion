@@ -18,6 +18,7 @@ const esES = {
     publicWorkspaceAccess: 'Acceso al espacio de trabajo',
   },
   common: {
+    viewOnly: 'Solo lectura',
     yes: 'Sí',
     no: 'No',
     edit: 'Editar',
@@ -69,6 +70,9 @@ const esES = {
     checkingSession: 'Comprobando tu sesión...',
     loadingWorkspace: 'Cargando espacio de trabajo...',
     permissionDenied: 'No tienes permiso para abrir este espacio de trabajo.',
+  },
+  authorization: {
+    readOnly: 'Tienes acceso de solo lectura. Los cambios requieren el permiso {{requiredPermission}}.',
   },
   publicAuth: {
     workspaceAccess: 'Acceso al espacio de trabajo',
