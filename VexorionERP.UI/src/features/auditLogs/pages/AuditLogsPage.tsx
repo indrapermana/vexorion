@@ -70,7 +70,7 @@ export default function AuditLogsPage() {
             disabled={!eventType && !entityName && pageSize === 50}
             onClick={() => { setEventType(''); setEntityName(''); setPageSize(50); setPage(1) }}
           >
-            {t('common.resetFilters', { defaultValue: 'Reset filters' })}
+            {t('common.resetFilters')}
           </VxButton>
         </VxStack>
         )}
@@ -85,10 +85,10 @@ export default function AuditLogsPage() {
         <VxTable size="small">
           <VxTableHead>
             <VxTableRow>
-              <VxTableCell>Created UTC</VxTableCell>
-              <VxTableCell>Event</VxTableCell>
-              <VxTableCell>Entity</VxTableCell>
-              <VxTableCell>Description</VxTableCell>
+              <VxTableCell>{t('pages.auditLogs.columns.createdUtc')}</VxTableCell>
+              <VxTableCell>{t('pages.auditLogs.columns.event')}</VxTableCell>
+              <VxTableCell>{t('pages.auditLogs.columns.entity')}</VxTableCell>
+              <VxTableCell>{t('pages.auditLogs.columns.description')}</VxTableCell>
             </VxTableRow>
           </VxTableHead>
           <VxTableBody>

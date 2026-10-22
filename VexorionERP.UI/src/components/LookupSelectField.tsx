@@ -15,6 +15,7 @@ type LookupSelectFieldProps = {
   helperText?: string
   disabled?: boolean
   emptyText?: string
+  requiredText?: string
 }
 
 export default function LookupSelectField({
@@ -25,9 +26,10 @@ export default function LookupSelectField({
   error,
   helperText,
   disabled,
-  emptyText = 'No options available',
+  emptyText,
+  requiredText,
 }: LookupSelectFieldProps) {
-  useTranslation()
+  const { t } = useTranslation()
   return (
     <VxTextField
       fullWidth
@@ -36,7 +38,7 @@ export default function LookupSelectField({
       value={value}
       onChange={(event) => onChange(event.target.value)}
       error={error}
-      helperText={helperText ?? (options.length ? 'Required' : emptyText)}
+      helperText={helperText ?? (options.length ? requiredText ?? t('common.required') : emptyText ?? t('common.noOptionsAvailable'))}
       disabled={disabled}
     >
       {options.map((option) => (

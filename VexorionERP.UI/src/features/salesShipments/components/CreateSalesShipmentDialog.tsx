@@ -17,7 +17,7 @@ type LineEntry = {
 }
 
 export default function CreateSalesShipmentDialog({ open, salesOrderId, warehouses, onClose, onSaved }: SalesShipmentEditorDialogProps) {
-  useTranslation()
+  const { t } = useTranslation()
   const { formatMoney } = useCurrency()
   const { items: products } = useProductsLookup(open)
   const [orderLines, setOrderLines] = useState<LineEntry[]>([])
@@ -105,7 +105,7 @@ export default function CreateSalesShipmentDialog({ open, salesOrderId, warehous
       onSaved(result)
     } catch (err) {
       if (err instanceof ApiError) setSubmitError(err.message)
-      else setSubmitError('Failed to create shipment.')
+      else setSubmitError(t('pages.salesShipments.editor.error'))
     } finally {
       setIsSubmitting(false)
     }
@@ -113,14 +113,14 @@ export default function CreateSalesShipmentDialog({ open, salesOrderId, warehous
 
   return (
     <VxDialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <VxDialogTitle>Create Sales Shipment</VxDialogTitle>
+      <VxDialogTitle>{t('pages.salesShipments.editor.title')}</VxDialogTitle>
       <VxDialogContent dividers>
         <VxStack spacing={2}>
           {submitError && <VxAlert severity="error">{submitError}</VxAlert>}
 
           <VxStack direction="row" spacing={2}>
             <VxTextField
-              label="Shipment number"
+              label={t('pages.salesShipments.editor.number')}
               value={shipmentNumber}
               onChange={e => setShipmentNumber(e.target.value)}
               required
@@ -128,7 +128,7 @@ export default function CreateSalesShipmentDialog({ open, salesOrderId, warehous
               size="small"
             />
             <VxTextField
-              label="Shipment date"
+              label={t('pages.salesShipments.editor.date')}
               type="date"
               value={shipmentDate}
               onChange={e => setShipmentDate(e.target.value)}
@@ -140,14 +140,16 @@ export default function CreateSalesShipmentDialog({ open, salesOrderId, warehous
           </VxStack>
 
           <LookupSelectField
-            label="Warehouse"
+            label={t('pages.salesShipments.editor.warehouse')}
             value={warehouseId}
             onChange={setWarehouseId}
             options={warehouses.map(w => ({ value: w.id, label: w.name }))}
+            emptyText={t('pages.salesShipments.editor.noWarehouses')}
+            requiredText={t('common.required')}
           />
 
           <VxTextField
-            label="Notes"
+            label={t('pages.salesShipments.editor.notes')}
             value={notes}
             onChange={e => setNotes(e.target.value)}
             multiline
@@ -158,7 +160,7 @@ export default function CreateSalesShipmentDialog({ open, salesOrderId, warehous
 
           <VxDivider />
 
-          <VxTypography variant="subtitle2">Lines</VxTypography>
+          <VxTypography variant="subtitle2">{t('pages.salesShipments.editor.lines')}</VxTypography>
 
           {isLoadingLines ? (
             <VxBox sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
@@ -168,10 +170,10 @@ export default function CreateSalesShipmentDialog({ open, salesOrderId, warehous
             <VxTable size="small">
               <VxTableHead>
                 <VxTableRow>
-                  <VxTableCell>Product</VxTableCell>
-                  <VxTableCell align="right">Ordered</VxTableCell>
-                  <VxTableCell align="right">Unit Price</VxTableCell>
-                  <VxTableCell align="right" sx={{ minWidth: 130 }}>Ship Qty</VxTableCell>
+                  <VxTableCell>{t('pages.salesShipments.editor.product')}</VxTableCell>
+                  <VxTableCell align="right">{t('pages.salesShipments.editor.ordered')}</VxTableCell>
+                  <VxTableCell align="right">{t('pages.salesShipments.editor.unitPrice')}</VxTableCell>
+                  <VxTableCell align="right" sx={{ minWidth: 130 }}>{t('pages.salesShipments.editor.shipQuantity')}</VxTableCell>
                 </VxTableRow>
               </VxTableHead>
               <VxTableBody>
@@ -198,9 +200,9 @@ export default function CreateSalesShipmentDialog({ open, salesOrderId, warehous
         </VxStack>
       </VxDialogContent>
       <VxDialogActions>
-        <VxButton onClick={onClose} disabled={isSubmitting}>Cancel</VxButton>
+        <VxButton onClick={onClose} disabled={isSubmitting}>{t('pages.salesShipments.editor.cancel')}</VxButton>
         <VxButton variant="contained" onClick={handleSubmit} disabled={isSubmitting || isLoadingLines}>
-          {isSubmitting ? <VxCircularProgress size={18} /> : 'Create Shipment'}
+          {isSubmitting ? <VxCircularProgress size={18} /> : t('pages.salesShipments.editor.create')}
         </VxButton>
       </VxDialogActions>
     </VxDialog>

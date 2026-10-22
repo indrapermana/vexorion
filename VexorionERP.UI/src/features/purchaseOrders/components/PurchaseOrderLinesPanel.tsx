@@ -146,7 +146,7 @@ export default function PurchaseOrderLinesPanel({ order, lines, isLoading, error
                     <VxConfirmActionButton
                       title={t('pages.purchaseOrders.lines.deleteTitle')}
                       targetName={product ? `${product.name} (${product.sku})` : line.productId}
-                      consequence={`This removes the line from purchase order ${order.orderNumber} and recalculates its totals.`}
+                      consequence={t('pages.purchaseOrders.lines.deleteConsequence', { number: order.orderNumber })}
                       confirmLabel={t('orderWorkflow.line.delete')}
                       pendingLabel={t('dialogs.deleting')}
                       onConfirm={() => handleDelete(line.id)}

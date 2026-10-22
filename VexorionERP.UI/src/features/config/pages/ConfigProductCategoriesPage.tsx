@@ -232,7 +232,7 @@ export default function ConfigProductCategoriesPage() {
         </VxDialogActions>
       </VxDialog>
 
-      <VxConfirmActionDialog open={canManage && Boolean(deleteTarget)} title={t('config.productCategories.deleteDialog.title')} targetName={deleteTarget?.name ?? ''} consequence={t('config.productCategories.deleteDialog.message', { name: deleteTarget?.name })} confirmLabel={t('common.delete')} pendingLabel="Deleting..." pending={deleteLoading} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} />
+      <VxConfirmActionDialog open={canManage && Boolean(deleteTarget)} title={t('config.productCategories.deleteDialog.title')} targetName={deleteTarget?.name ?? ''} consequence={t('config.productCategories.deleteDialog.message', { name: deleteTarget?.name })} confirmLabel={t('common.delete')} pendingLabel={t('dialogs.deleting')} pending={deleteLoading} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} />
     </VxStack>
   )
 }

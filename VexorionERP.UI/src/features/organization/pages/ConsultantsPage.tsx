@@ -219,9 +219,9 @@ export default function ConsultantsPage() {
                         <VxConfirmActionButton
                           title={t('common.delete')}
                           targetName={`${row.fullName} (${row.consultantNumber})`}
-                          consequence="This permanently removes the consultant record and may affect project assignments."
+                          consequence={t('pages.deleteConfirmations.consultant.consequence')}
                           confirmLabel={t('common.delete')}
-                          pendingLabel="Deleting..."
+                          pendingLabel={t('dialogs.deleting')}
                           onConfirm={() => remove(row.id)}
                           buttonProps={{ size: 'small', color: 'error', variant: 'text', disabled: isSaving }}
                         >{t('common.delete')}</VxConfirmActionButton>

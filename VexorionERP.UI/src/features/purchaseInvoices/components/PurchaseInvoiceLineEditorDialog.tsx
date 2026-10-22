@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { VxAlert, VxButton, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useCurrency } from '../../../app/CurrencyContext'
@@ -18,18 +18,25 @@ const defaultValues: PurchaseInvoiceLineFormValues = {
   isActive: true,
 }
 
-const validationSchema: yup.ObjectSchema<PurchaseInvoiceLineFormValues> = yup.object({
-  productId: yup.string().required('Product is required.'),
-  quantity: yup.number().moreThan(0, 'Quantity must be greater than zero.').required('Quantity is required.'),
-  unitCost: yup.number().min(0, 'Unit cost cannot be negative.').required('Unit cost is required.'),
-  discountAmount: yup.number().min(0, 'Discount cannot be negative.').required('Discount is required.'),
-  taxAmount: yup.number().min(0, 'Tax cannot be negative.').required('Tax is required.'),
-  isActive: yup.boolean().required(),
-})
-
 export default function PurchaseInvoiceLineEditorDialog({ open, mode, line, products, onClose, onSaved }: PurchaseInvoiceLineEditorDialogProps) {
-  useTranslation()
+  const { t } = useTranslation()
   const { formatMoney } = useCurrency()
+  const validationSchema: yup.ObjectSchema<PurchaseInvoiceLineFormValues> = useMemo(() => yup.object({
+    productId: yup.string().required(t('common.validation.required', { field: t('purchaseInvoices.lineEditor.product') })),
+    quantity: yup.number()
+      .moreThan(0, t('common.validation.greaterThanZero', { field: t('purchaseInvoices.lineEditor.quantity') }))
+      .required(t('common.validation.required', { field: t('purchaseInvoices.lineEditor.quantity') })),
+    unitCost: yup.number()
+      .min(0, t('common.validation.cannotBeNegative', { field: t('purchaseInvoices.lineEditor.unitCost') }))
+      .required(t('common.validation.required', { field: t('purchaseInvoices.lineEditor.unitCost') })),
+    discountAmount: yup.number()
+      .min(0, t('common.validation.cannotBeNegative', { field: t('purchaseInvoices.lineEditor.discount') }))
+      .required(t('common.validation.required', { field: t('purchaseInvoices.lineEditor.discount') })),
+    taxAmount: yup.number()
+      .min(0, t('common.validation.cannotBeNegative', { field: t('purchaseInvoices.lineEditor.tax') }))
+      .required(t('common.validation.required', { field: t('purchaseInvoices.lineEditor.tax') })),
+    isActive: yup.boolean().required(),
+  }), [t])
   const { control, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<PurchaseInvoiceLineFormValues>({ defaultValues, resolver: yupResolver(validationSchema) })
   const [autofillHint, setAutofillHint] = useState<string | null>(null)
   const selectedProductId = watch('productId')
@@ -53,44 +60,44 @@ export default function PurchaseInvoiceLineEditorDialog({ open, mode, line, prod
         }
 
         setValue('unitCost', product.standardCost)
-        setAutofillHint(`Unit cost auto-filled from product standard cost: ${formatMoney(product.standardCost)}`)
+        setAutofillHint(t('purchaseInvoices.lineEditor.autoFilledCost', { amount: formatMoney(product.standardCost) }))
       })
       .catch((error) => {
         if (!isMounted) {
           return
         }
 
-        setAutofillHint(error instanceof ApiError ? error.message : 'Unable to auto-fill product costing.')
+        setAutofillHint(error instanceof ApiError ? error.message : t('purchaseInvoices.lineEditor.autoFillError'))
       })
 
     return () => {
       isMounted = false
     }
-  }, [line?.productId, selectedProductId, setValue])
+  }, [formatMoney, line?.productId, selectedProductId, setValue, t])
 
   const productOptions = products.map((product) => ({ value: product.id, label: `${product.name} (${product.sku})` }))
 
   return (
     <VxDialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="sm">
-      <VxDialogTitle>{mode === 'create' ? 'Add invoice line' : 'Edit invoice line'}</VxDialogTitle>
+      <VxDialogTitle>{t(mode === 'create' ? 'purchaseInvoices.lineEditor.createTitle' : 'purchaseInvoices.lineEditor.editTitle')}</VxDialogTitle>
       <VxDialogContent dividers>
-        {!products.length ? <VxAlert severity="warning">Create products before adding invoice lines.</VxAlert> : null}
+        {!products.length ? <VxAlert severity="warning">{t('purchaseInvoices.lineEditor.createProductsFirst')}</VxAlert> : null}
         <VxStack spacing={2.5} sx={{ pt: 1 }}>
-          <Controller name="productId" control={control} render={({ field }) => <LookupSelectField label="Product" value={field.value} onChange={field.onChange} options={productOptions} error={Boolean(errors.productId)} helperText={errors.productId?.message} disabled={!products.length} emptyText="No products available" />} />
+          <Controller name="productId" control={control} render={({ field }) => <LookupSelectField label={t('purchaseInvoices.lineEditor.product')} value={field.value} onChange={field.onChange} options={productOptions} error={Boolean(errors.productId)} helperText={errors.productId?.message} disabled={!products.length} emptyText={t('purchaseInvoices.lineEditor.noProducts')} requiredText={t('common.required')} />} />
           {autofillHint ? <VxTypography variant="body2" color="text.secondary">{autofillHint}</VxTypography> : null}
           <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-            <Controller name="quantity" control={control} render={({ field }) => <VxTextField {...field} fullWidth label="Quantity" type="number" slotProps={{ htmlInput: { min: 0.01, step: '0.01' } }} error={Boolean(errors.quantity)} helperText={errors.quantity?.message} onChange={(event) => field.onChange(Number(event.target.value))} />} />
-            <Controller name="unitCost" control={control} render={({ field }) => <VxTextField {...field} fullWidth label="Unit cost" type="number" slotProps={{ htmlInput: { min: 0, step: '0.01' } }} error={Boolean(errors.unitCost)} helperText={errors.unitCost?.message} onChange={(event) => field.onChange(Number(event.target.value))} />} />
+            <Controller name="quantity" control={control} render={({ field }) => <VxTextField {...field} fullWidth label={t('purchaseInvoices.lineEditor.quantity')} type="number" slotProps={{ htmlInput: { min: 0.01, step: '0.01' } }} error={Boolean(errors.quantity)} helperText={errors.quantity?.message} onChange={(event) => field.onChange(Number(event.target.value))} />} />
+            <Controller name="unitCost" control={control} render={({ field }) => <VxTextField {...field} fullWidth label={t('purchaseInvoices.lineEditor.unitCost')} type="number" slotProps={{ htmlInput: { min: 0, step: '0.01' } }} error={Boolean(errors.unitCost)} helperText={errors.unitCost?.message} onChange={(event) => field.onChange(Number(event.target.value))} />} />
           </VxStack>
           <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-            <Controller name="discountAmount" control={control} render={({ field }) => <VxTextField {...field} fullWidth label="Discount" type="number" slotProps={{ htmlInput: { min: 0, step: '0.01' } }} error={Boolean(errors.discountAmount)} helperText={errors.discountAmount?.message} onChange={(event) => field.onChange(Number(event.target.value))} />} />
-            <Controller name="taxAmount" control={control} render={({ field }) => <VxTextField {...field} fullWidth label="Tax" type="number" slotProps={{ htmlInput: { min: 0, step: '0.01' } }} error={Boolean(errors.taxAmount)} helperText={errors.taxAmount?.message} onChange={(event) => field.onChange(Number(event.target.value))} />} />
+            <Controller name="discountAmount" control={control} render={({ field }) => <VxTextField {...field} fullWidth label={t('purchaseInvoices.lineEditor.discount')} type="number" slotProps={{ htmlInput: { min: 0, step: '0.01' } }} error={Boolean(errors.discountAmount)} helperText={errors.discountAmount?.message} onChange={(event) => field.onChange(Number(event.target.value))} />} />
+            <Controller name="taxAmount" control={control} render={({ field }) => <VxTextField {...field} fullWidth label={t('purchaseInvoices.lineEditor.tax')} type="number" slotProps={{ htmlInput: { min: 0, step: '0.01' } }} error={Boolean(errors.taxAmount)} helperText={errors.taxAmount?.message} onChange={(event) => field.onChange(Number(event.target.value))} />} />
           </VxStack>
         </VxStack>
       </VxDialogContent>
       <VxDialogActions sx={{ px: 3, py: 2 }}>
-        <VxButton onClick={onClose} disabled={isSubmitting}>Cancel</VxButton>
-        <VxButton onClick={() => void handleSubmit(async (values) => { await onSaved(mode, values) })()} variant="contained" disabled={isSubmitting || !products.length}>{isSubmitting ? 'Saving...' : mode === 'create' ? 'Add line' : 'Save line'}</VxButton>
+        <VxButton onClick={onClose} disabled={isSubmitting}>{t('common.cancel')}</VxButton>
+        <VxButton onClick={() => void handleSubmit(async (values) => { await onSaved(mode, values) })()} variant="contained" disabled={isSubmitting || !products.length}>{isSubmitting ? t('common.saving') : mode === 'create' ? t('purchaseInvoices.lineEditor.addButton') : t('purchaseInvoices.lineEditor.saveButton')}</VxButton>
       </VxDialogActions>
     </VxDialog>
   )

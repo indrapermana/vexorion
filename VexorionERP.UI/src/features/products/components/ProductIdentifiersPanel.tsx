@@ -293,7 +293,7 @@ export default function ProductIdentifiersPanel({ productId, canManage = true }:
         targetName={deleteTarget ? `${deleteTarget.codeType}: ${deleteTarget.codeValue}` : ''}
         consequence={t('components.products.identifiers.deleteDialog.message', { codeType: deleteTarget?.codeType, codeValue: deleteTarget?.codeValue })}
         confirmLabel={t('common.delete')}
-        pendingLabel="Deleting..."
+        pendingLabel={t('dialogs.deleting')}
         pending={isDeleting}
         onClose={() => setDeleteTarget(null)}
         onConfirm={() => void handleDelete()}

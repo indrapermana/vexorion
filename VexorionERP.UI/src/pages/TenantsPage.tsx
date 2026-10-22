@@ -45,7 +45,7 @@ export default function TenantsPage() {
         setError(error.message)
         setValidation(error.validation ?? null)
       } else {
-        setError('Tenant onboarding failed.')
+        setError(t('pages.auth.tenants.error'))
       }
     } finally {
       setIsSubmitting(false)
@@ -70,34 +70,34 @@ export default function TenantsPage() {
 
       <VxGrid container spacing={2}>
         <VxGrid size={{ xs: 12, md: 6 }}>
-          <VxTextField fullWidth label="Tenant name" value={form.tenantName} onChange={(event) => setField('tenantName', event.target.value)} error={Boolean(validation?.TenantName)} helperText={validation?.TenantName?.[0]} />
+          <VxTextField fullWidth label={t('pages.auth.tenants.fields.tenantName')} value={form.tenantName} onChange={(event) => setField('tenantName', event.target.value)} error={Boolean(validation?.TenantName)} helperText={validation?.TenantName?.[0]} />
         </VxGrid>
         <VxGrid size={{ xs: 12, md: 6 }}>
-          <VxTextField fullWidth label="Tenant code" value={form.tenantCode} onChange={(event) => setField('tenantCode', event.target.value)} error={Boolean(validation?.TenantCode)} helperText={validation?.TenantCode?.[0] ?? 'Lowercase slug used during sign-in.'} />
+          <VxTextField fullWidth label={t('pages.auth.tenants.fields.tenantCode')} value={form.tenantCode} onChange={(event) => setField('tenantCode', event.target.value)} error={Boolean(validation?.TenantCode)} helperText={validation?.TenantCode?.[0] ?? t('pages.auth.tenants.tenantCodeHelp')} />
         </VxGrid>
         <VxGrid size={{ xs: 12, md: 6 }}>
-          <VxTextField fullWidth label="Domain" value={form.domain ?? ''} onChange={(event) => setField('domain', event.target.value)} error={Boolean(validation?.Domain)} helperText={validation?.Domain?.[0]} />
+          <VxTextField fullWidth label={t('pages.auth.tenants.fields.domain')} value={form.domain ?? ''} onChange={(event) => setField('domain', event.target.value)} error={Boolean(validation?.Domain)} helperText={validation?.Domain?.[0]} />
         </VxGrid>
         <VxGrid size={{ xs: 12, md: 6 }}>
-          <VxTextField fullWidth label="Company name" value={form.companyName} onChange={(event) => setField('companyName', event.target.value)} error={Boolean(validation?.CompanyName)} helperText={validation?.CompanyName?.[0]} />
+          <VxTextField fullWidth label={t('pages.auth.tenants.fields.companyName')} value={form.companyName} onChange={(event) => setField('companyName', event.target.value)} error={Boolean(validation?.CompanyName)} helperText={validation?.CompanyName?.[0]} />
         </VxGrid>
         <VxGrid size={{ xs: 12, md: 6 }}>
-          <VxTextField fullWidth label="Company code" value={form.companyCode} onChange={(event) => setField('companyCode', event.target.value)} error={Boolean(validation?.CompanyCode)} helperText={validation?.CompanyCode?.[0]} />
+          <VxTextField fullWidth label={t('pages.auth.tenants.fields.companyCode')} value={form.companyCode} onChange={(event) => setField('companyCode', event.target.value)} error={Boolean(validation?.CompanyCode)} helperText={validation?.CompanyCode?.[0]} />
         </VxGrid>
         <VxGrid size={{ xs: 12, md: 6 }}>
-          <VxTextField fullWidth label="Admin user name" value={form.adminUserName} onChange={(event) => setField('adminUserName', event.target.value)} error={Boolean(validation?.AdminUserName)} helperText={validation?.AdminUserName?.[0]} />
+          <VxTextField fullWidth label={t('pages.auth.tenants.fields.adminUserName')} value={form.adminUserName} onChange={(event) => setField('adminUserName', event.target.value)} error={Boolean(validation?.AdminUserName)} helperText={validation?.AdminUserName?.[0]} />
         </VxGrid>
         <VxGrid size={{ xs: 12, md: 6 }}>
-          <VxTextField fullWidth label="Admin email" value={form.adminEmail} onChange={(event) => setField('adminEmail', event.target.value)} error={Boolean(validation?.AdminEmail)} helperText={validation?.AdminEmail?.[0]} />
+          <VxTextField fullWidth label={t('pages.auth.tenants.fields.adminEmail')} value={form.adminEmail} onChange={(event) => setField('adminEmail', event.target.value)} error={Boolean(validation?.AdminEmail)} helperText={validation?.AdminEmail?.[0]} />
         </VxGrid>
         <VxGrid size={{ xs: 12, md: 6 }}>
-          <VxTextField fullWidth type="password" label="Admin password" value={form.adminPassword} onChange={(event) => setField('adminPassword', event.target.value)} error={Boolean(validation?.AdminPassword)} helperText={validation?.AdminPassword?.[0]} />
+          <VxTextField fullWidth type="password" label={t('pages.auth.tenants.fields.adminPassword')} value={form.adminPassword} onChange={(event) => setField('adminPassword', event.target.value)} error={Boolean(validation?.AdminPassword)} helperText={validation?.AdminPassword?.[0]} />
         </VxGrid>
         <VxGrid size={{ xs: 12, md: 6 }}>
-          <VxTextField fullWidth label="First name" value={form.firstName} onChange={(event) => setField('firstName', event.target.value)} error={Boolean(validation?.FirstName)} helperText={validation?.FirstName?.[0]} />
+          <VxTextField fullWidth label={t('pages.auth.tenants.fields.firstName')} value={form.firstName} onChange={(event) => setField('firstName', event.target.value)} error={Boolean(validation?.FirstName)} helperText={validation?.FirstName?.[0]} />
         </VxGrid>
         <VxGrid size={{ xs: 12, md: 6 }}>
-          <VxTextField fullWidth label="Last name" value={form.lastName} onChange={(event) => setField('lastName', event.target.value)} error={Boolean(validation?.LastName)} helperText={validation?.LastName?.[0]} />
+          <VxTextField fullWidth label={t('pages.auth.tenants.fields.lastName')} value={form.lastName} onChange={(event) => setField('lastName', event.target.value)} error={Boolean(validation?.LastName)} helperText={validation?.LastName?.[0]} />
         </VxGrid>
       </VxGrid>
 

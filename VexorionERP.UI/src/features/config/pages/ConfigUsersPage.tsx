@@ -307,12 +307,12 @@ export default function ConfigUsersPage() {
 
       <VxConfirmActionDialog
         open={Boolean(deactivateTarget)}
-        title="Deactivate user"
+        title={t('config.users.deactivateDialog.title')}
         targetName={deactivateTarget ? `${deactivateTarget.userName} (${deactivateTarget.email})` : ''}
-        consequence="The user will immediately lose access but can be activated again later."
-        confirmLabel="Deactivate user"
+        consequence={t('config.users.deactivateDialog.consequence')}
+        confirmLabel={t('config.users.deactivateDialog.confirm')}
         confirmColor="warning"
-        pendingLabel="Deactivating..."
+        pendingLabel={t('config.users.deactivateDialog.pending')}
         pending={isSaving}
         onClose={() => setDeactivateTarget(null)}
         onConfirm={() => {

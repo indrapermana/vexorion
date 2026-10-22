@@ -12,5 +12,5 @@ type SupplierDeleteDialogProps = {
 export default function SupplierDeleteDialog({ target, isDeleting, onClose, onConfirm }: SupplierDeleteDialogProps) {
   const { t } = useTranslation()
 
-  return <VxConfirmActionDialog open={Boolean(target)} title="Delete supplier" targetName={target?.name ?? ''} consequence="This permanently removes the supplier. Existing purchasing transactions may prevent deletion." confirmLabel={t('dialogs.delete')} pendingLabel={t('dialogs.deleting')} pending={isDeleting} onClose={onClose} onConfirm={onConfirm} />
+  return <VxConfirmActionDialog open={Boolean(target)} title={t('pages.deleteConfirmations.supplier.title')} targetName={target?.name ?? ''} consequence={t('pages.deleteConfirmations.supplier.consequence')} confirmLabel={t('dialogs.delete')} pendingLabel={t('dialogs.deleting')} pending={isDeleting} onClose={onClose} onConfirm={onConfirm} />
 }

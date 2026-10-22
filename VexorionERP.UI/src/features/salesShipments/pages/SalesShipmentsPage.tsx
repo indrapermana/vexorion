@@ -159,13 +159,11 @@ export default function SalesShipmentsPage() {
 
       <VxConfirmActionDialog
         open={Boolean(pendingAction)}
-        title={pendingAction?.type === 'post' ? 'Post shipment' : 'Delete shipment'}
+        title={t(pendingAction?.type === 'post' ? 'pages.salesShipments.actions.postTitle' : 'pages.salesShipments.actions.deleteTitle')}
         targetName={pendingAction?.row.shipmentNumber ?? ''}
-        consequence={pendingAction?.type === 'post'
-          ? 'Posting updates inventory and makes the shipment operationally final. Corrections require a separate reversal workflow.'
-          : 'This permanently removes the draft shipment. This action cannot be undone.'}
-        confirmLabel={pendingAction?.type === 'post' ? 'Post shipment' : 'Delete shipment'}
-        pendingLabel={pendingAction?.type === 'post' ? 'Posting...' : 'Deleting...'}
+        consequence={t(pendingAction?.type === 'post' ? 'pages.salesShipments.actions.postConsequence' : 'pages.salesShipments.actions.deleteConsequence')}
+        confirmLabel={t(pendingAction?.type === 'post' ? 'pages.salesShipments.actions.postConfirm' : 'pages.salesShipments.actions.deleteConfirm')}
+        pendingLabel={t(pendingAction?.type === 'post' ? 'pages.salesShipments.actions.posting' : 'pages.salesShipments.actions.deleting')}
         pending={isActionPending}
         error={actionError}
         onClose={() => setPendingAction(null)}

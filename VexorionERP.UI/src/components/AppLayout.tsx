@@ -707,7 +707,7 @@ export default function AppLayout() {
                 color="secondary"
                 label={
                   user
-                    ? `${user.firstName ?? user.userName} · ${user.roles[0] ?? "User"}`
+                    ? `${user.firstName ?? user.userName} · ${user.roles[0] ?? t("app.userRoleFallback")}`
                     : t("app.signedIn")
                 }
               />
@@ -730,7 +730,7 @@ export default function AppLayout() {
               sx={{ display: { xs: "none", lg: "inline-flex" } }}
               onClick={toggleSidebarCollapsed}
               aria-label={
-                isSidebarCollapsed ? "Expand navigation" : "Collapse navigation"
+                isSidebarCollapsed ? t("app.expandNavigation") : t("app.collapseNavigation")
               }
             >
               <MenuRoundedIcon />

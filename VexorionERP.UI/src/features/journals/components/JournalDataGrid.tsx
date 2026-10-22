@@ -3,13 +3,6 @@ import { VxChip } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import type { JournalGridRow } from '../../../types/ui'
 
-function getJournalStatusLabel(status: number) {
-  if (status === 1) return 'Draft'
-  if (status === 2) return 'Posted'
-  if (status === 3) return 'Reversed'
-  return `Status ${status}`
-}
-
 type JournalDataGridProps = {
   rows: JournalGridRow[]
   isLoading: boolean
@@ -17,29 +10,39 @@ type JournalDataGridProps = {
 }
 
 export default function JournalDataGrid({ rows, isLoading, onOpen }: JournalDataGridProps) {
-  useTranslation()
+  const { t } = useTranslation()
   const columns: VxGridColDef<JournalGridRow>[] = [
-    { field: 'journalNumber', headerName: 'Journal', minWidth: 160, flex: 0.7 },
-    { field: 'postingDate', headerName: 'Posting date', minWidth: 130, flex: 0.6 },
-    { field: 'sourceDocumentType', headerName: 'Source type', minWidth: 160, flex: 0.7 },
-    { field: 'totalDebit', headerName: 'Debit', minWidth: 120, flex: 0.5, type: 'number', valueFormatter: (value) => Number(value).toFixed(2) },
-    { field: 'totalCredit', headerName: 'Credit', minWidth: 120, flex: 0.5, type: 'number', valueFormatter: (value) => Number(value).toFixed(2) },
+    { field: 'journalNumber', headerName: t('pages.journals.grid.journal'), minWidth: 160, flex: 0.7 },
+    { field: 'postingDate', headerName: t('pages.journals.grid.postingDate'), minWidth: 130, flex: 0.6 },
+    { field: 'sourceDocumentType', headerName: t('pages.journals.grid.sourceType'), minWidth: 160, flex: 0.7 },
+    { field: 'totalDebit', headerName: t('pages.journals.grid.debit'), minWidth: 120, flex: 0.5, type: 'number', valueFormatter: (value) => Number(value).toFixed(2) },
+    { field: 'totalCredit', headerName: t('pages.journals.grid.credit'), minWidth: 120, flex: 0.5, type: 'number', valueFormatter: (value) => Number(value).toFixed(2) },
     {
       field: 'status',
-      headerName: 'Status',
+      headerName: t('pages.journals.grid.status'),
       minWidth: 120,
       flex: 0.5,
       renderCell: ({ row }) => (
-        <VxChip size="small" color={row.status === 2 ? 'success' : row.status === 3 ? 'default' : 'primary'} label={getJournalStatusLabel(row.status)} />
+        <VxChip
+          size="small"
+          color={row.status === 2 ? 'success' : row.status === 3 ? 'default' : 'primary'}
+          label={row.status === 1
+            ? t('pages.journals.grid.draft')
+            : row.status === 2
+              ? t('pages.journals.grid.posted')
+              : row.status === 3
+                ? t('pages.journals.grid.reversed')
+                : t('pages.journals.grid.unknownStatus', { status: row.status })}
+        />
       ),
     },
     {
       field: 'actions',
       type: 'actions',
-      headerName: 'Actions',
+      headerName: t('pages.journals.grid.actions'),
       minWidth: 90,
       getActions: ({ row }) => [
-        <VxGridActionsCellItem key={`open-${row.id}`} icon={<VisibilityRoundedIcon />} label="View" onClick={() => onOpen(row.id)} showInMenu={false} />,
+        <VxGridActionsCellItem key={`open-${row.id}`} icon={<VisibilityRoundedIcon />} label={t('pages.journals.grid.view')} onClick={() => onOpen(row.id)} showInMenu={false} />,
       ],
     },
   ]

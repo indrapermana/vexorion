@@ -8,9 +8,13 @@ import LookupSelectField from './LookupSelectField'
 import { createAppTheme } from '../theme'
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-  }),
+  useTranslation: () => {
+    const translations: Record<string, string> = {
+      'common.required': 'Required',
+      'common.noOptionsAvailable': 'No options available',
+    }
+    return { t: (key: string) => translations[key] ?? key }
+  },
 }))
 
 function LookupSelectFieldHarness(props: {

@@ -153,7 +153,7 @@ export default function SalesOrderLinesPanel({ order, lines, isLoading, error, o
                     <VxConfirmActionButton
                       title={t('pages.salesOrders.lines.deleteTitle')}
                       targetName={product ? `${product.name} (${product.sku})` : line.productId}
-                      consequence={`This removes the line from sales order ${order.orderNumber} and recalculates its totals.`}
+                      consequence={t('pages.salesOrders.lines.deleteConsequence', { number: order.orderNumber })}
                       confirmLabel={t('orderWorkflow.line.delete')}
                       pendingLabel={t('dialogs.deleting')}
                       onConfirm={() => handleDelete(line.id)}

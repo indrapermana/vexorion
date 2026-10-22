@@ -77,7 +77,7 @@ export function PermissionRoute({ requirement }: { requirement: PermissionRequir
   if (!hasRequiredPermissions(user?.permissions, requirement)) {
     return (
       <VxAlert severity="warning">
-        {t('routeGuards.permissionDenied', { defaultValue: 'You do not have permission to open this workspace.' })}
+        {t('routeGuards.permissionDenied')}
       </VxAlert>
     )
   }

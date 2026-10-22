@@ -214,30 +214,30 @@ export default function ProductEditorDialog({
 
 						{mode === 'edit' ? (
 							<VxStack spacing={1.5}>
-								<VxTypography variant="subtitle2">{t('components.products.editor.productImage', { defaultValue: 'Product image' })}</VxTypography>
+								<VxTypography variant="subtitle2">{t('components.products.editor.productImage')}</VxTypography>
 								{imagePreviewUrl ? (
 									<VxBox
 										component="img"
 										src={imagePreviewUrl}
-										alt={t('components.products.editor.imagePreview', { defaultValue: 'Product image preview' })}
+										alt={t('components.products.editor.imagePreview')}
 										sx={{ width: 160, height: 160, objectFit: 'contain', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}
 									/>
 								) : null}
 								<input
 									type="file"
 									accept="image/*"
-									aria-label={t('components.products.editor.chooseImage', { defaultValue: 'Choose product image' })}
+									aria-label={t('components.products.editor.chooseImage')}
 									onChange={(event) => selectImage(event.currentTarget.files?.[0] ?? null)}
 								/>
 								<VxButton variant="outlined" disabled={!imageFile || isUploadingImage} onClick={() => void uploadImage()}>
 									{isUploadingImage
-										? t('components.products.editor.uploadingImage', { defaultValue: 'Uploading image…' })
-										: t('components.products.editor.uploadImage', { defaultValue: 'Upload image' })}
+										? t('components.products.editor.uploadingImage')
+										: t('components.products.editor.uploadImage')}
 								</VxButton>
 							</VxStack>
 						) : (
 							<VxTypography variant="body2" color="text.secondary">
-								{t('components.products.editor.imageAfterCreate', { defaultValue: 'Create the product first, then edit it to upload an image.' })}
+								{t('components.products.editor.imageAfterCreate')}
 							</VxTypography>
 						)}
 

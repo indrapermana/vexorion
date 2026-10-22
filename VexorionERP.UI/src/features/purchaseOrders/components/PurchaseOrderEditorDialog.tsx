@@ -23,18 +23,6 @@ const defaultValues: PurchaseOrderFormValues = {
   isActive: true,
 }
 
-const validationSchema: yup.ObjectSchema<PurchaseOrderFormValues> = yup.object({
-  orderNumber: yup.string().trim().required('Order number is required.').max(50, 'Order number must be at most 50 characters.'),
-  supplierId: yup.string().trim().required('Supplier is required.'),
-  warehouseId: yup.string().trim().required('Warehouse is required.'),
-  orderDate: yup.string().required('Order date is required.'),
-  expectedReceiptDate: yup.string().required('Expected receipt date is required.'),
-  status: yup.number().oneOf(documentStatusOptions.map((option) => option.value)).required('Status is required.'),
-  currencyCode: yup.string().trim().required('Currency code is required.').length(3, 'Currency code must be exactly 3 characters.'),
-  notes: yup.string().max(1000, 'Notes must be at most 1000 characters.').defined(),
-  isActive: yup.boolean().required(),
-})
-
 function normalizeServerFieldName(fieldName: string): keyof PurchaseOrderFormValues | null {
   const normalized = fieldName.charAt(0).toLowerCase() + fieldName.slice(1)
   if (normalized in defaultValues) return normalized as keyof PurchaseOrderFormValues
@@ -47,11 +35,26 @@ function optionalText(value: string) {
 }
 
 export default function PurchaseOrderEditorDialog({ open, mode, purchaseOrderId, suppliers, warehouses, onClose, onSaved }: PurchaseOrderEditorDialogProps) {
-  useTranslation()
+  const { t } = useTranslation()
   const [isLoadingPurchaseOrder, setIsLoadingPurchaseOrder] = useState(mode === 'edit' && Boolean(purchaseOrderId))
   const [submitError, setSubmitError] = useState<string | null>(null)
 
-  const title = useMemo(() => (mode === 'create' ? 'Create purchase order' : 'Edit purchase order'), [mode])
+  const title = useMemo(() => t(mode === 'create' ? 'purchaseOrders.editor.createTitle' : 'purchaseOrders.editor.editTitle'), [mode, t])
+  const validationSchema: yup.ObjectSchema<PurchaseOrderFormValues> = useMemo(() => yup.object({
+    orderNumber: yup.string().trim()
+      .required(t('common.validation.required', { field: t('purchaseOrders.editor.fields.orderNumber') }))
+      .max(50, t('common.validation.maxLength', { field: t('purchaseOrders.editor.fields.orderNumber'), count: 50 })),
+    supplierId: yup.string().trim().required(t('common.validation.required', { field: t('purchaseOrders.editor.fields.supplier') })),
+    warehouseId: yup.string().trim().required(t('common.validation.required', { field: t('purchaseOrders.editor.fields.warehouse') })),
+    orderDate: yup.string().required(t('common.validation.required', { field: t('purchaseOrders.editor.fields.orderDate') })),
+    expectedReceiptDate: yup.string().required(t('common.validation.required', { field: t('purchaseOrders.editor.fields.expectedReceiptDate') })),
+    status: yup.number().oneOf(documentStatusOptions.map((option) => option.value)).required(t('common.validation.required', { field: t('purchaseOrders.editor.fields.status') })),
+    currencyCode: yup.string().trim()
+      .required(t('common.validation.required', { field: t('purchaseOrders.editor.fields.currencyCode') }))
+      .length(3, t('common.validation.exactLength', { field: t('purchaseOrders.editor.fields.currencyCode'), count: 3 })),
+    notes: yup.string().max(1000, t('common.validation.notesMaxLength', { count: 1000 })).defined(),
+    isActive: yup.boolean().required(),
+  }), [t])
   const { control, handleSubmit, reset, setError, formState: { errors, isSubmitting } } = useForm<PurchaseOrderFormValues>({ defaultValues, resolver: yupResolver(validationSchema) })
 
   useEffect(() => {
@@ -80,7 +83,7 @@ export default function PurchaseOrderEditorDialog({ open, mode, purchaseOrderId,
       .catch((error: unknown) => {
         if (!isMounted) return
         if (error instanceof ApiError) setSubmitError(error.message)
-        else setSubmitError('Unable to load purchase order details.')
+        else setSubmitError(t('purchaseOrders.editor.loadError'))
       })
       .finally(() => {
         if (isMounted) setIsLoadingPurchaseOrder(false)
@@ -89,7 +92,7 @@ export default function PurchaseOrderEditorDialog({ open, mode, purchaseOrderId,
     return () => {
       isMounted = false
     }
-  }, [mode, purchaseOrderId, reset])
+  }, [mode, purchaseOrderId, reset, t])
 
   const supplierOptions = suppliers.map((supplier) => ({ value: supplier.id, label: `${supplier.name} (${supplier.supplierNumber})` }))
   const warehouseOptions = warehouses.map((warehouse) => ({ value: warehouse.id, label: `${warehouse.name} (${warehouse.code})` }))
@@ -126,7 +129,7 @@ export default function PurchaseOrderEditorDialog({ open, mode, purchaseOrderId,
         setSubmitError(error.message)
         applyServerValidation(error.validation)
       } else {
-        setSubmitError('Unable to save purchase order right now.')
+        setSubmitError(t('purchaseOrders.editor.saveError'))
       }
     }
   })
@@ -136,39 +139,39 @@ export default function PurchaseOrderEditorDialog({ open, mode, purchaseOrderId,
       <VxDialogTitle>{title}</VxDialogTitle>
       <VxDialogContent dividers>
         {isLoadingPurchaseOrder ? (
-          <VxBox sx={{ display: 'grid', placeItems: 'center', minHeight: 220 }}><VxStack spacing={1.5} sx={{ alignItems: 'center' }}><VxCircularProgress size={28} /><VxTypography color="text.secondary">Loading purchase order details...</VxTypography></VxStack></VxBox>
+          <VxBox sx={{ display: 'grid', placeItems: 'center', minHeight: 220 }}><VxStack spacing={1.5} sx={{ alignItems: 'center' }}><VxCircularProgress size={28} />          <VxTypography color="text.secondary">{t('purchaseOrders.editor.loading')}</VxTypography></VxStack></VxBox>
         ) : (
           <VxStack spacing={2.5} sx={{ pt: 1 }}>
             {submitError ? <VxAlert severity="error">{submitError}</VxAlert> : null}
-            {!suppliers.length ? <VxAlert severity="warning">Create at least one supplier before creating a purchase order.</VxAlert> : null}
-            {!warehouses.length ? <VxAlert severity="warning">Create at least one warehouse before creating a purchase order.</VxAlert> : null}
+            {!suppliers.length ? <VxAlert severity="warning">{t('purchaseOrders.createSupplierFirst')}</VxAlert> : null}
+            {!warehouses.length ? <VxAlert severity="warning">{t('purchaseOrders.createWarehouseFirst')}</VxAlert> : null}
             <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-              <Controller name="orderNumber" control={control} render={({ field }) => <VxTextField {...field} fullWidth label="Order number" error={Boolean(errors.orderNumber)} helperText={errors.orderNumber?.message} />} />
-              <Controller name="currencyCode" control={control} render={({ field }) => <VxTextField {...field} fullWidth label="Currency code" error={Boolean(errors.currencyCode)} helperText={errors.currencyCode?.message} slotProps={{ htmlInput: { maxLength: 3 } }} />} />
+              <Controller name="orderNumber" control={control} render={({ field }) => <VxTextField {...field} fullWidth label={t('purchaseOrders.editor.fields.orderNumber')} error={Boolean(errors.orderNumber)} helperText={errors.orderNumber?.message} />} />
+              <Controller name="currencyCode" control={control} render={({ field }) => <VxTextField {...field} fullWidth label={t('purchaseOrders.editor.fields.currencyCode')} error={Boolean(errors.currencyCode)} helperText={errors.currencyCode?.message} slotProps={{ htmlInput: { maxLength: 3 } }} />} />
             </VxStack>
-            <Controller name="supplierId" control={control} render={({ field }) => <LookupSelectField label="Supplier" value={field.value} onChange={field.onChange} options={supplierOptions} error={Boolean(errors.supplierId)} helperText={errors.supplierId?.message} disabled={!suppliers.length} emptyText="No suppliers available" />} />
-            <Controller name="warehouseId" control={control} render={({ field }) => <LookupSelectField label="Warehouse" value={field.value} onChange={field.onChange} options={warehouseOptions} error={Boolean(errors.warehouseId)} helperText={errors.warehouseId?.message} disabled={!warehouses.length} emptyText="No warehouses available" />} />
+            <Controller name="supplierId" control={control} render={({ field }) => <LookupSelectField label={t('purchaseOrders.editor.fields.supplier')} value={field.value} onChange={field.onChange} options={supplierOptions} error={Boolean(errors.supplierId)} helperText={errors.supplierId?.message} disabled={!suppliers.length} emptyText={t('purchaseOrders.createSupplierFirst')} requiredText={t('common.required')} />} />
+            <Controller name="warehouseId" control={control} render={({ field }) => <LookupSelectField label={t('purchaseOrders.editor.fields.warehouse')} value={field.value} onChange={field.onChange} options={warehouseOptions} error={Boolean(errors.warehouseId)} helperText={errors.warehouseId?.message} disabled={!warehouses.length} emptyText={t('purchaseOrders.createWarehouseFirst')} requiredText={t('common.required')} />} />
             <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-              <Controller name="orderDate" control={control} render={({ field }) => <VxTextField {...field} fullWidth type="date" label="Order date" slotProps={{ inputLabel: { shrink: true } }} error={Boolean(errors.orderDate)} helperText={errors.orderDate?.message} />} />
-              <Controller name="expectedReceiptDate" control={control} render={({ field }) => <VxTextField {...field} fullWidth type="date" label="Expected receipt" slotProps={{ inputLabel: { shrink: true } }} error={Boolean(errors.expectedReceiptDate)} helperText={errors.expectedReceiptDate?.message} />} />
+              <Controller name="orderDate" control={control} render={({ field }) => <VxTextField {...field} fullWidth type="date" label={t('purchaseOrders.editor.fields.orderDate')} slotProps={{ inputLabel: { shrink: true } }} error={Boolean(errors.orderDate)} helperText={errors.orderDate?.message} />} />
+              <Controller name="expectedReceiptDate" control={control} render={({ field }) => <VxTextField {...field} fullWidth type="date" label={t('purchaseOrders.editor.fields.expectedReceiptDate')} slotProps={{ inputLabel: { shrink: true } }} error={Boolean(errors.expectedReceiptDate)} helperText={errors.expectedReceiptDate?.message} />} />
             </VxStack>
             <Controller
               name="status"
               control={control}
               render={({ field }) => (
-                <VxTextField {...field} fullWidth select label="Status" error={Boolean(errors.status)} helperText={errors.status?.message} onChange={(event) => field.onChange(Number(event.target.value))}>
-                  {documentStatusOptions.map((option) => <VxMenuItem key={option.value} value={option.value}>{option.label}</VxMenuItem>)}
+                <VxTextField {...field} fullWidth select label={t('purchaseOrders.editor.fields.status')} error={Boolean(errors.status)} helperText={errors.status?.message} onChange={(event) => field.onChange(Number(event.target.value))}>
+                  {documentStatusOptions.map((option) => <VxMenuItem key={option.value} value={option.value}>{t(`common.documentStatuses.${option.value}`)}</VxMenuItem>)}
                 </VxTextField>
               )}
             />
-            <Controller name="notes" control={control} render={({ field }) => <VxTextField {...field} fullWidth multiline minRows={3} label="Notes" error={Boolean(errors.notes)} helperText={errors.notes?.message ?? 'Optional'} />} />
-            {mode === 'edit' ? <Controller name="isActive" control={control} render={({ field }) => <VxFormControlLabel control={<VxSwitch checked={field.value} onChange={(_, checked) => field.onChange(checked)} />} label={field.value ? 'Order is active' : 'Order is inactive'} />} /> : null}
+            <Controller name="notes" control={control} render={({ field }) => <VxTextField {...field} fullWidth multiline minRows={3} label={t('purchaseOrders.editor.fields.notes')} error={Boolean(errors.notes)} helperText={errors.notes?.message ?? t('common.optional')} />} />
+            {mode === 'edit' ? <Controller name="isActive" control={control} render={({ field }) => <VxFormControlLabel control={<VxSwitch checked={field.value} onChange={(_, checked) => field.onChange(checked)} />} label={field.value ? t('purchaseOrders.editor.fields.active') : t('purchaseOrders.editor.fields.inactive')} />} /> : null}
           </VxStack>
         )}
       </VxDialogContent>
       <VxDialogActions sx={{ px: 3, py: 2 }}>
-        <VxButton onClick={onClose} disabled={isSubmitting}>Cancel</VxButton>
-        <VxButton onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoadingPurchaseOrder || suppliers.length === 0 || warehouses.length === 0}>{isSubmitting ? 'Saving...' : mode === 'create' ? 'Create purchase order' : 'Save changes'}</VxButton>
+        <VxButton onClick={onClose} disabled={isSubmitting}>{t('common.cancel')}</VxButton>
+        <VxButton onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoadingPurchaseOrder || suppliers.length === 0 || warehouses.length === 0}>{isSubmitting ? t('common.saving') : mode === 'create' ? t('purchaseOrders.editor.createButton') : t('common.saveChanges')}</VxButton>
       </VxDialogActions>
     </VxDialog>
   )

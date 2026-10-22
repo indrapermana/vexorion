@@ -66,18 +66,6 @@ const defaultLineForm: AdjustmentLineFormState = {
   reason: '',
 }
 
-const documentStatusOptions = [
-  { value: 1, label: 'Draft' },
-  { value: 2, label: 'Confirmed' },
-  { value: 3, label: 'Partially processed' },
-  { value: 4, label: 'Completed' },
-  { value: 5, label: 'Cancelled' },
-]
-
-function getDocumentStatusLabel(status: number) {
-  return documentStatusOptions.find((option) => option.value === status)?.label ?? `Status ${status}`
-}
-
 function optionalText(value: string) {
   const trimmed = value.trim()
   return trimmed ? trimmed : null
@@ -98,6 +86,9 @@ function buildLineForm(line: InventoryAdjustmentLineDetailsResponse | null): Adj
 
 export default function InventoryAdjustmentsPage() {
   const { t } = useTranslation()
+  const getDocumentStatusLabel = (status: number) => status >= 1 && status <= 5
+    ? t(`common.documentStatuses.${status}`)
+    : t('pages.inventoryAdjustments.table.unknownStatus', { status })
   const { formatMoney } = useCurrency()
   const { isAuthenticated, user } = useAuth()
   const canManage = user?.permissions.includes(Permissions.inventory.manage) ?? false
@@ -138,11 +129,11 @@ export default function InventoryAdjustmentsPage() {
       const [adjustments] = await Promise.all([getInventoryAdjustments(), reloadWarehouses()])
       setRows(adjustments)
     } catch (loadError) {
-      setError(loadError instanceof ApiError ? loadError.message : 'Unable to load inventory adjustments.')
+      setError(loadError instanceof ApiError ? loadError.message : t('pages.inventoryAdjustments.errors.load'))
     } finally {
       setIsLoading(false)
     }
-  }, [isAuthenticated, reloadWarehouses])
+  }, [isAuthenticated, reloadWarehouses, t])
 
   const loadDetails = useCallback(async (adjustmentId: string) => {
     try {
@@ -150,10 +141,10 @@ export default function InventoryAdjustmentsPage() {
       setSelectedAdjustment(detail)
       return detail
     } catch (loadError) {
-      setError(loadError instanceof ApiError ? loadError.message : 'Unable to load inventory adjustment details.')
+      setError(loadError instanceof ApiError ? loadError.message : t('pages.inventoryAdjustments.errors.loadDetails'))
       return null
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     void loadRows()
@@ -210,7 +201,7 @@ export default function InventoryAdjustmentsPage() {
         notes: detail.notes ?? '',
       })
     } catch (loadError) {
-      setEditorError(loadError instanceof ApiError ? loadError.message : 'Unable to load inventory adjustment details.')
+      setEditorError(loadError instanceof ApiError ? loadError.message : t('pages.inventoryAdjustments.errors.loadDetails'))
     } finally {
       setEditorLoading(false)
     }
@@ -220,7 +211,7 @@ export default function InventoryAdjustmentsPage() {
     setEditorError(null)
 
     if (!editorForm.adjustmentNumber.trim() || !editorForm.warehouseId || !editorForm.adjustmentDate || !editorForm.reason.trim()) {
-      setEditorError('Adjustment number, warehouse, date, and reason are required.')
+      setEditorError(t('pages.inventoryAdjustments.validation.headerRequired'))
       return
     }
 
@@ -240,10 +231,10 @@ export default function InventoryAdjustmentsPage() {
       setEditorOpen(false)
       resetEditor()
       setSelectedAdjustment(saved)
-      setFeedback(editorMode === 'create' ? `Inventory adjustment ${saved.adjustmentNumber} created.` : `Inventory adjustment ${saved.adjustmentNumber} updated.`)
+      setFeedback(t(editorMode === 'create' ? 'pages.inventoryAdjustments.feedback.created' : 'pages.inventoryAdjustments.feedback.updated', { number: saved.adjustmentNumber }))
       await loadRows()
     } catch (saveError) {
-      setEditorError(saveError instanceof ApiError ? saveError.message : 'Unable to save inventory adjustment.')
+      setEditorError(saveError instanceof ApiError ? saveError.message : t('pages.inventoryAdjustments.errors.save'))
     }
   }
 
@@ -262,10 +253,10 @@ export default function InventoryAdjustmentsPage() {
         setSelectedAdjustment(null)
       }
       setDeleteTarget(null)
-      setFeedback(`Inventory adjustment ${deleteTarget.adjustmentNumber} deleted.`)
+      setFeedback(t('pages.inventoryAdjustments.feedback.deleted', { number: deleteTarget.adjustmentNumber }))
       await loadRows()
     } catch (deleteError) {
-      setError(deleteError instanceof ApiError ? deleteError.message : 'Unable to delete inventory adjustment.')
+      setError(deleteError instanceof ApiError ? deleteError.message : t('pages.inventoryAdjustments.errors.delete'))
     } finally {
       setIsDeleting(false)
     }
@@ -300,9 +291,9 @@ export default function InventoryAdjustmentsPage() {
     try {
       const product = await getProduct(productId)
       setLineForm((current) => ({ ...current, unitCost: product.standardCost.toString() }))
-      setLineAutofillHint(`Unit cost auto-filled from product standard cost: ${formatMoney(product.standardCost)}`)
+      setLineAutofillHint(t('pages.inventoryAdjustments.feedback.autoFilledCost', { amount: formatMoney(product.standardCost) }))
     } catch (loadError) {
-      setLineAutofillHint(loadError instanceof ApiError ? loadError.message : 'Unable to auto-fill product costing.')
+      setLineAutofillHint(loadError instanceof ApiError ? loadError.message : t('pages.inventoryAdjustments.errors.autoFill'))
     }
   }
 
@@ -316,7 +307,7 @@ export default function InventoryAdjustmentsPage() {
     const unitCost = Number(lineForm.unitCost)
 
     if (!lineForm.productId || Number.isNaN(quantityDelta) || quantityDelta === 0 || Number.isNaN(unitCost) || unitCost < 0) {
-      setLineError('Product, non-zero quantity delta, and non-negative unit cost are required.')
+      setLineError(t('pages.inventoryAdjustments.validation.lineRequired'))
       return
     }
 
@@ -340,11 +331,11 @@ export default function InventoryAdjustmentsPage() {
       setLineForm(defaultLineForm)
       setSelectedLine(null)
       setLineAutofillHint(null)
-      setFeedback(lineMode === 'create' ? 'Adjustment line created.' : 'Adjustment line updated.')
+      setFeedback(t(lineMode === 'create' ? 'pages.inventoryAdjustments.feedback.lineCreated' : 'pages.inventoryAdjustments.feedback.lineUpdated'))
       await loadDetails(selectedAdjustment.id)
       await loadRows()
     } catch (saveError) {
-      setLineError(saveError instanceof ApiError ? saveError.message : 'Unable to save adjustment line.')
+      setLineError(saveError instanceof ApiError ? saveError.message : t('pages.inventoryAdjustments.errors.saveLine'))
     } finally {
       setLineSaving(false)
     }
@@ -358,11 +349,11 @@ export default function InventoryAdjustmentsPage() {
     setLineError(null)
     try {
       await deleteInventoryAdjustmentLine(selectedAdjustment.id, lineId)
-      setFeedback('Adjustment line deleted.')
+      setFeedback(t('pages.inventoryAdjustments.feedback.lineDeleted'))
       await loadDetails(selectedAdjustment.id)
       await loadRows()
     } catch (deleteError) {
-      setLineError(deleteError instanceof ApiError ? deleteError.message : 'Unable to delete adjustment line.')
+      setLineError(deleteError instanceof ApiError ? deleteError.message : t('pages.inventoryAdjustments.errors.deleteLine'))
     }
   }
 
@@ -409,12 +400,12 @@ export default function InventoryAdjustmentsPage() {
           <VxTable size="small">
             <VxTableHead>
               <VxTableRow>
-                <VxTableCell>Adjustment #</VxTableCell>
-                <VxTableCell>Warehouse</VxTableCell>
-                <VxTableCell>Date</VxTableCell>
-                <VxTableCell>Status</VxTableCell>
-                <VxTableCell>Reason</VxTableCell>
-                <VxTableCell align="right">Actions</VxTableCell>
+                <VxTableCell>{t('pages.inventoryAdjustments.table.number')}</VxTableCell>
+                <VxTableCell>{t('pages.inventoryAdjustments.table.warehouse')}</VxTableCell>
+                <VxTableCell>{t('pages.inventoryAdjustments.table.date')}</VxTableCell>
+                <VxTableCell>{t('pages.inventoryAdjustments.table.status')}</VxTableCell>
+                <VxTableCell>{t('pages.inventoryAdjustments.table.reason')}</VxTableCell>
+                <VxTableCell align="right">{t('pages.inventoryAdjustments.table.actions')}</VxTableCell>
               </VxTableRow>
             </VxTableHead>
             <VxTableBody>
@@ -435,16 +426,16 @@ export default function InventoryAdjustmentsPage() {
                   <VxTableCell>{getDocumentStatusLabel(row.status)}</VxTableCell>
                   <VxTableCell>{row.reason}</VxTableCell>
                   <VxTableCell align="right">
-                    <VxButton size="small" startIcon={<FormatListBulletedRoundedIcon />} onClick={() => void loadDetails(row.id)}>Lines</VxButton>
-                    {canManage ? <><VxButton size="small" startIcon={<EditRoundedIcon />} onClick={() => void openEditDialog(row)}>Edit</VxButton>
-                    <VxButton size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => setDeleteTarget(row)}>Delete</VxButton></> : null}
+                    <VxButton size="small" startIcon={<FormatListBulletedRoundedIcon />} onClick={() => void loadDetails(row.id)}>{t('pages.inventoryAdjustments.table.lines')}</VxButton>
+                    {canManage ? <><VxButton size="small" startIcon={<EditRoundedIcon />} onClick={() => void openEditDialog(row)}>{t('pages.inventoryAdjustments.table.edit')}</VxButton>
+                    <VxButton size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => setDeleteTarget(row)}>{t('pages.inventoryAdjustments.table.delete')}</VxButton></> : null}
                   </VxTableCell>
                 </VxTableRow>
               ))}
               {!isLoading && gridRows.length === 0 ? (
                 <VxTableRow>
                   <VxTableCell colSpan={6}>
-                    <VxTypography color="text.secondary">No inventory adjustments found.</VxTypography>
+                    <VxTypography color="text.secondary">{t('pages.inventoryAdjustments.table.empty')}</VxTypography>
                   </VxTableCell>
                 </VxTableRow>
               ) : null}
@@ -456,35 +447,35 @@ export default function InventoryAdjustmentsPage() {
         <VxPaper elevation={0} className="panel-card">
           {!selectedAdjustment ? (
             <>
-              <VxTypography variant="h6" sx={{ mb: 1 }}>Adjustment lines</VxTypography>
-              <VxTypography color="text.secondary">Pick an inventory adjustment from the grid to manage its lines.</VxTypography>
+              <VxTypography variant="h6" sx={{ mb: 1 }}>{t('pages.inventoryAdjustments.linePanel.title')}</VxTypography>
+              <VxTypography color="text.secondary">{t('pages.inventoryAdjustments.linePanel.selectPrompt')}</VxTypography>
             </>
           ) : (
             <>
               <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ justifyContent: 'space-between', mb: 2 }}>
                 <VxBox>
-                  <VxTypography variant="h6">Adjustment lines for {selectedAdjustment.adjustmentNumber}</VxTypography>
-                  <VxTypography color="text.secondary">Positive deltas increase stock. Negative deltas reduce stock.</VxTypography>
+                  <VxTypography variant="h6">{t('pages.inventoryAdjustments.linePanel.titleFor', { number: selectedAdjustment.adjustmentNumber })}</VxTypography>
+                  <VxTypography color="text.secondary">{t('pages.inventoryAdjustments.linePanel.deltaHelp')}</VxTypography>
                 </VxBox>
-                {canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateLine} disabled={selectedAdjustment.status !== 1 || products.length === 0}>Add line</VxButton> : null}
+                {canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateLine} disabled={selectedAdjustment.status !== 1 || products.length === 0}>{t('pages.inventoryAdjustments.linePanel.add')}</VxButton> : null}
               </VxStack>
               <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 2 }}>
-                <VxChip icon={<Inventory2RoundedIcon />} label={`Status: ${getDocumentStatusLabel(selectedAdjustment.status)}`} variant="outlined" color={selectedAdjustment.status === 4 ? 'success' : 'default'} />
-                <VxChip icon={<AutoGraphRoundedIcon />} label={`Warehouse: ${warehouseNameById.get(selectedAdjustment.warehouseId) ?? selectedAdjustment.warehouseId}`} variant="outlined" color="primary" />
+                <VxChip icon={<Inventory2RoundedIcon />} label={t('pages.inventoryAdjustments.linePanel.status', { status: getDocumentStatusLabel(selectedAdjustment.status) })} variant="outlined" color={selectedAdjustment.status === 4 ? 'success' : 'default'} />
+                <VxChip icon={<AutoGraphRoundedIcon />} label={t('pages.inventoryAdjustments.linePanel.warehouse', { warehouse: warehouseNameById.get(selectedAdjustment.warehouseId) ?? selectedAdjustment.warehouseId })} variant="outlined" color="primary" />
               </VxStack>
-              {selectedAdjustment.status !== 1 ? <VxAlert severity="info" sx={{ mb: 2 }}>Lines are locked once the document leaves Draft status.</VxAlert> : null}
+              {selectedAdjustment.status !== 1 ? <VxAlert severity="info" sx={{ mb: 2 }}>{t('pages.inventoryAdjustments.linePanel.locked')}</VxAlert> : null}
               {lineError ? <VxAlert severity="error" sx={{ mb: 2 }}>{lineError}</VxAlert> : null}
               <VxTableContainer>
                 <VxTable size="small">
                   <VxTableHead>
                     <VxTableRow>
-                      <VxTableCell>Product</VxTableCell>
-                      <VxTableCell align="right">On hand</VxTableCell>
-                      <VxTableCell align="right">Delta</VxTableCell>
-                      <VxTableCell align="right">Unit cost</VxTableCell>
-                      <VxTableCell align="right">Extended</VxTableCell>
-                      <VxTableCell>Reason</VxTableCell>
-                      <VxTableCell align="right">Actions</VxTableCell>
+                      <VxTableCell>{t('pages.inventoryAdjustments.linePanel.product')}</VxTableCell>
+                      <VxTableCell align="right">{t('pages.inventoryAdjustments.linePanel.onHand')}</VxTableCell>
+                      <VxTableCell align="right">{t('pages.inventoryAdjustments.linePanel.delta')}</VxTableCell>
+                      <VxTableCell align="right">{t('pages.inventoryAdjustments.linePanel.unitCost')}</VxTableCell>
+                      <VxTableCell align="right">{t('pages.inventoryAdjustments.linePanel.extended')}</VxTableCell>
+                      <VxTableCell>{t('pages.inventoryAdjustments.table.reason')}</VxTableCell>
+                      <VxTableCell align="right">{t('pages.inventoryAdjustments.table.actions')}</VxTableCell>
                     </VxTableRow>
                   </VxTableHead>
                   <VxTableBody>
@@ -499,16 +490,16 @@ export default function InventoryAdjustmentsPage() {
                           <VxTableCell align="right">${(line.quantityDelta * line.unitCost).toFixed(2)}</VxTableCell>
                           <VxTableCell>{line.reason ?? '-'}</VxTableCell>
                           <VxTableCell align="right">
-                            {canManage ? <><VxButton size="small" startIcon={<EditRoundedIcon />} onClick={() => openEditLine(line)} disabled={selectedAdjustment.status !== 1}>Edit</VxButton>
+                            {canManage ? <><VxButton size="small" startIcon={<EditRoundedIcon />} onClick={() => openEditLine(line)} disabled={selectedAdjustment.status !== 1}>{t('pages.inventoryAdjustments.table.edit')}</VxButton>
                             <VxConfirmActionButton
-                              title="Delete adjustment line"
+                              title={t('pages.inventoryAdjustments.linePanel.deleteTitle')}
                               targetName={product ? `${product.name} (${product.sku})` : line.productId}
-                              consequence={`This removes the line from adjustment ${selectedAdjustment.adjustmentNumber} and recalculates its totals.`}
-                              confirmLabel="Delete line"
-                              pendingLabel="Deleting..."
+                              consequence={t('pages.inventoryAdjustments.linePanel.deleteConsequence', { number: selectedAdjustment.adjustmentNumber })}
+                              confirmLabel={t('pages.inventoryAdjustments.linePanel.deleteConfirm')}
+                              pendingLabel={t('pages.inventoryAdjustments.linePanel.deleting')}
                               onConfirm={() => deleteLine(line.id)}
                               buttonProps={{ size: 'small', color: 'error', startIcon: <DeleteOutlineRoundedIcon />, disabled: selectedAdjustment.status !== 1 }}
-                            >Delete</VxConfirmActionButton></> : null}
+                            >{t('pages.inventoryAdjustments.table.delete')}</VxConfirmActionButton></> : null}
                           </VxTableCell>
                         </VxTableRow>
                       )
@@ -516,7 +507,7 @@ export default function InventoryAdjustmentsPage() {
                     {selectedAdjustment.lines.length === 0 ? (
                       <VxTableRow>
                         <VxTableCell colSpan={7}>
-                          <VxTypography color="text.secondary">No lines yet.</VxTypography>
+                          <VxTypography color="text.secondary">{t('pages.inventoryAdjustments.linePanel.empty')}</VxTypography>
                         </VxTableCell>
                       </VxTableRow>
                     ) : null}
@@ -529,7 +520,7 @@ export default function InventoryAdjustmentsPage() {
       }
       editor={
         <VxDialog open={canManage && editorOpen} onClose={editorLoading ? undefined : () => setEditorOpen(false)} fullWidth maxWidth="md">
-          <VxDialogTitle>{editorMode === 'create' ? 'Create inventory adjustment' : 'Edit inventory adjustment'}</VxDialogTitle>
+          <VxDialogTitle>{t(editorMode === 'create' ? 'pages.inventoryAdjustments.editor.createTitle' : 'pages.inventoryAdjustments.editor.editTitle')}</VxDialogTitle>
           <VxDialogContent dividers>
             {editorLoading ? (
               <VxBox sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
@@ -538,49 +529,49 @@ export default function InventoryAdjustmentsPage() {
             ) : (
               <VxStack spacing={2.5} sx={{ pt: 1 }}>
                 {editorError ? <VxAlert severity="error">{editorError}</VxAlert> : null}
-                {editorMode === 'create' ? <VxAlert severity="info">New inventory adjustments start in Draft status. Add lines before completing them.</VxAlert> : null}
+                {editorMode === 'create' ? <VxAlert severity="info">{t('pages.inventoryAdjustments.editor.draftHint')}</VxAlert> : null}
                 <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-                  <VxTextField label="Adjustment number" value={editorForm.adjustmentNumber} onChange={(event) => setEditorForm((current) => ({ ...current, adjustmentNumber: event.target.value }))} fullWidth />
-                  <VxTextField label="Adjustment date" type="date" value={editorForm.adjustmentDate} onChange={(event) => setEditorForm((current) => ({ ...current, adjustmentDate: event.target.value }))} slotProps={{ inputLabel: { shrink: true } }} fullWidth />
+                  <VxTextField label={t('pages.inventoryAdjustments.editor.adjustmentNumber')} value={editorForm.adjustmentNumber} onChange={(event) => setEditorForm((current) => ({ ...current, adjustmentNumber: event.target.value }))} fullWidth />
+                  <VxTextField label={t('pages.inventoryAdjustments.editor.adjustmentDate')} type="date" value={editorForm.adjustmentDate} onChange={(event) => setEditorForm((current) => ({ ...current, adjustmentDate: event.target.value }))} slotProps={{ inputLabel: { shrink: true } }} fullWidth />
                 </VxStack>
-                <LookupSelectField label="Warehouse" value={editorForm.warehouseId} onChange={(value) => setEditorForm((current) => ({ ...current, warehouseId: value }))} options={warehouses.map((warehouse) => ({ value: warehouse.id, label: `${warehouse.name} (${warehouse.code})` }))} disabled={!warehouses.length} emptyText="No warehouses available" />
-                <VxTextField label="Reason" value={editorForm.reason} onChange={(event) => setEditorForm((current) => ({ ...current, reason: event.target.value }))} fullWidth />
+                <LookupSelectField label={t('pages.inventoryAdjustments.editor.warehouse')} value={editorForm.warehouseId} onChange={(value) => setEditorForm((current) => ({ ...current, warehouseId: value }))} options={warehouses.map((warehouse) => ({ value: warehouse.id, label: `${warehouse.name} (${warehouse.code})` }))} disabled={!warehouses.length} emptyText={t('pages.inventoryAdjustments.editor.noWarehouses')} requiredText={t('common.required')} />
+                <VxTextField label={t('pages.inventoryAdjustments.editor.reason')} value={editorForm.reason} onChange={(event) => setEditorForm((current) => ({ ...current, reason: event.target.value }))} fullWidth />
                 {editorMode === 'edit' ? (
-                  <VxTextField select label="Status" value={editorForm.status} onChange={(event) => setEditorForm((current) => ({ ...current, status: Number(event.target.value) }))} fullWidth>
-                    {documentStatusOptions.map((option) => <VxMenuItem key={option.value} value={option.value}>{option.label}</VxMenuItem>)}
+                  <VxTextField select label={t('pages.inventoryAdjustments.editor.status')} value={editorForm.status} onChange={(event) => setEditorForm((current) => ({ ...current, status: Number(event.target.value) }))} fullWidth>
+                    {[1, 2, 3, 4, 5].map((status) => <VxMenuItem key={status} value={status}>{getDocumentStatusLabel(status)}</VxMenuItem>)}
                   </VxTextField>
                 ) : null}
-                <VxTextField label="Notes" value={editorForm.notes} onChange={(event) => setEditorForm((current) => ({ ...current, notes: event.target.value }))} multiline minRows={3} fullWidth />
+                <VxTextField label={t('pages.inventoryAdjustments.editor.notes')} value={editorForm.notes} onChange={(event) => setEditorForm((current) => ({ ...current, notes: event.target.value }))} multiline minRows={3} fullWidth />
               </VxStack>
             )}
           </VxDialogContent>
           <VxDialogActions sx={{ px: 3, py: 2 }}>
-            <VxButton onClick={() => setEditorOpen(false)} disabled={editorLoading}>Cancel</VxButton>
-            <VxButton variant="contained" onClick={() => void saveEditor()} disabled={editorLoading || warehouses.length === 0}>{editorMode === 'create' ? 'Create adjustment' : 'Save changes'}</VxButton>
+            <VxButton onClick={() => setEditorOpen(false)} disabled={editorLoading}>{t('pages.inventoryAdjustments.editor.cancel')}</VxButton>
+            <VxButton variant="contained" onClick={() => void saveEditor()} disabled={editorLoading || warehouses.length === 0}>{editorMode === 'create' ? t('pages.inventoryAdjustments.editor.create') : t('pages.inventoryAdjustments.editor.save')}</VxButton>
           </VxDialogActions>
         </VxDialog>
       }
       deleteDialog={
         <>
-          <VxConfirmActionDialog open={canManage && Boolean(deleteTarget)} title="Delete inventory adjustment" targetName={deleteTarget?.adjustmentNumber ?? ''} consequence="This permanently removes the draft adjustment and its lines. Completed adjustments cannot be deleted." confirmLabel="Delete adjustment" pendingLabel="Deleting..." pending={isDeleting} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} />
+          <VxConfirmActionDialog open={canManage && Boolean(deleteTarget)} title={t('pages.inventoryAdjustments.editor.deleteTitle')} targetName={deleteTarget?.adjustmentNumber ?? ''} consequence={t('pages.inventoryAdjustments.editor.deleteConsequence')} confirmLabel={t('pages.inventoryAdjustments.editor.deleteConfirm')} pendingLabel={t('pages.inventoryAdjustments.linePanel.deleting')} pending={isDeleting} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} />
           <VxDialog open={canManage && lineOpen} onClose={lineSaving ? undefined : () => setLineOpen(false)} fullWidth maxWidth="sm">
-            <VxDialogTitle>{lineMode === 'create' ? 'Add adjustment line' : 'Edit adjustment line'}</VxDialogTitle>
+            <VxDialogTitle>{t(lineMode === 'create' ? 'pages.inventoryAdjustments.lineEditor.createTitle' : 'pages.inventoryAdjustments.lineEditor.editTitle')}</VxDialogTitle>
             <VxDialogContent dividers>
               <VxStack spacing={2.5} sx={{ pt: 1 }}>
-                {!products.length ? <VxAlert severity="warning">Create products before adding adjustment lines.</VxAlert> : null}
+                {!products.length ? <VxAlert severity="warning">{t('pages.inventoryAdjustments.lineEditor.createProductsFirst')}</VxAlert> : null}
                 {lineError ? <VxAlert severity="error">{lineError}</VxAlert> : null}
-                <LookupSelectField label="Product" value={lineForm.productId} onChange={(value) => void handleLineProductChange(value)} options={products.map((product) => ({ value: product.id, label: `${product.name} (${product.sku})` }))} disabled={!products.length} emptyText="No products available" />
+                <LookupSelectField label={t('pages.inventoryAdjustments.lineEditor.product')} value={lineForm.productId} onChange={(value) => void handleLineProductChange(value)} options={products.map((product) => ({ value: product.id, label: `${product.name} (${product.sku})` }))} disabled={!products.length} emptyText={t('pages.inventoryAdjustments.lineEditor.noProducts')} requiredText={t('common.required')} />
                 {lineAutofillHint ? <VxTypography variant="body2" color="text.secondary">{lineAutofillHint}</VxTypography> : null}
                 <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-                  <VxTextField label="Quantity delta" type="number" value={lineForm.quantityDelta} onChange={(event) => setLineForm((current) => ({ ...current, quantityDelta: event.target.value }))} helperText="Positive increases stock. Negative decreases stock." fullWidth />
-                  <VxTextField label="Unit cost" type="number" value={lineForm.unitCost} onChange={(event) => setLineForm((current) => ({ ...current, unitCost: event.target.value }))} fullWidth />
+                  <VxTextField label={t('pages.inventoryAdjustments.lineEditor.quantityDelta')} type="number" value={lineForm.quantityDelta} onChange={(event) => setLineForm((current) => ({ ...current, quantityDelta: event.target.value }))} helperText={t('pages.inventoryAdjustments.lineEditor.quantityHelp')} fullWidth />
+                  <VxTextField label={t('pages.inventoryAdjustments.lineEditor.unitCost')} type="number" value={lineForm.unitCost} onChange={(event) => setLineForm((current) => ({ ...current, unitCost: event.target.value }))} fullWidth />
                 </VxStack>
-                <VxTextField label="Line reason" value={lineForm.reason} onChange={(event) => setLineForm((current) => ({ ...current, reason: event.target.value }))} fullWidth />
+                <VxTextField label={t('pages.inventoryAdjustments.lineEditor.reason')} value={lineForm.reason} onChange={(event) => setLineForm((current) => ({ ...current, reason: event.target.value }))} fullWidth />
               </VxStack>
             </VxDialogContent>
             <VxDialogActions sx={{ px: 3, py: 2 }}>
-              <VxButton onClick={() => setLineOpen(false)} disabled={lineSaving}>Cancel</VxButton>
-              <VxButton variant="contained" onClick={() => void saveLine()} disabled={lineSaving || !products.length}>{lineSaving ? 'Saving...' : lineMode === 'create' ? 'Add line' : 'Save line'}</VxButton>
+              <VxButton onClick={() => setLineOpen(false)} disabled={lineSaving}>{t('pages.inventoryAdjustments.lineEditor.cancel')}</VxButton>
+              <VxButton variant="contained" onClick={() => void saveLine()} disabled={lineSaving || !products.length}>{lineSaving ? t('pages.inventoryAdjustments.lineEditor.saving') : lineMode === 'create' ? t('pages.inventoryAdjustments.lineEditor.add') : t('pages.inventoryAdjustments.lineEditor.save')}</VxButton>
             </VxDialogActions>
           </VxDialog>
         </>

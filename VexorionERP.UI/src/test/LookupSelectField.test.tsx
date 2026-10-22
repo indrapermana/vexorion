@@ -5,7 +5,13 @@ import userEvent from '@testing-library/user-event'
 import LookupSelectField from '../components/LookupSelectField'
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => {
+    const translations: Record<string, string> = {
+      'common.required': 'Required',
+      'common.noOptionsAvailable': 'No options available',
+    }
+    return { t: (key: string) => translations[key] ?? key }
+  },
 }))
 
 const options = [

@@ -240,7 +240,7 @@ export default function ConfigTaxDiscountPage() {
                     <VxConfirmActionButton
                       title={t('dialogs.delete')}
                       targetName={`${item.code} — ${item.name}`}
-                      consequence="This permanently removes the tax code. Transactions already using it may prevent deletion."
+                      consequence={t('config.taxDiscount.deleteTaxConsequence')}
                       confirmLabel={t('dialogs.delete')}
                       pendingLabel={t('dialogs.deleting')}
                       onConfirm={() => removeTaxCode(item.id)}

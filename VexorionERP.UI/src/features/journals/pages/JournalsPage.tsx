@@ -15,7 +15,6 @@ import {
   reverseJournal,
 } from '../../../lib/api'
 import type { AccountListItemResponse, JournalEntryDetailsResponse, JournalEntryListItemResponse } from '../../../types/api'
-import { getAccountTypeLabel } from '../../../types/ui'
 
 const JournalDataGrid = lazy(() => import('../components/JournalDataGrid'))
 
@@ -69,11 +68,11 @@ export default function JournalsPage() {
       setAccounts(accountRows)
     } catch (loadError) {
       if (loadError instanceof ApiError) setError(loadError.message)
-      else setError('Unable to load journals.')
+      else setError(t('pages.journals.errors.load'))
     } finally {
       setIsLoading(false)
     }
-  }, [canManage, isAuthenticated])
+  }, [canManage, isAuthenticated, t])
 
   useEffect(() => {
     void loadData()
@@ -88,8 +87,8 @@ export default function JournalsPage() {
   const accountOptions = useMemo(
     () => accounts
       .filter((account) => account.isActive)
-      .map((account) => ({ value: account.id, label: `${account.code} - ${account.name} (${getAccountTypeLabel(account.accountType)})` })),
-    [accounts],
+      .map((account) => ({ value: account.id, label: `${account.code} - ${account.name} (${t(`pages.journals.accountTypes.${account.accountType}`)})` })),
+    [accounts, t],
   )
 
   const handleOpenJournal = async (journalId: string) => {
@@ -98,7 +97,7 @@ export default function JournalsPage() {
       setSelectedJournal(await getJournal(journalId))
     } catch (openError) {
       if (openError instanceof ApiError) setError(openError.message)
-      else setError('Unable to open journal details.')
+      else setError(t('pages.journals.errors.open'))
     }
   }
 
@@ -113,13 +112,13 @@ export default function JournalsPage() {
         taxLiabilityAccountId: salesTaxAccountId || null,
         postingDate,
       })
-      setFeedback(`Sales invoice posted to journal ${journal.journalNumber}.`)
+      setFeedback(t('pages.journals.feedback.postedSales', { journalNumber: journal.journalNumber }))
       setSalesInvoiceId('')
       await loadData()
       setSelectedJournal(journal)
     } catch (postError) {
       if (postError instanceof ApiError) setError(postError.message)
-      else setError('Unable to post sales invoice.')
+      else setError(t('pages.journals.errors.postSales'))
     }
   }
 
@@ -134,13 +133,13 @@ export default function JournalsPage() {
         taxReceivableAccountId: purchaseTaxAccountId || null,
         postingDate,
       })
-      setFeedback(`Purchase invoice posted to journal ${journal.journalNumber}.`)
+      setFeedback(t('pages.journals.feedback.postedPurchase', { journalNumber: journal.journalNumber }))
       setPurchaseInvoiceId('')
       await loadData()
       setSelectedJournal(journal)
     } catch (postError) {
       if (postError instanceof ApiError) setError(postError.message)
-      else setError('Unable to post purchase invoice.')
+      else setError(t('pages.journals.errors.postPurchase'))
     }
   }
 
@@ -150,13 +149,13 @@ export default function JournalsPage() {
     setFeedback(null)
     try {
       const journal = await reverseJournal(reverseJournalId, { reversalDate })
-      setFeedback(`Journal reversed with entry ${journal.journalNumber}.`)
+      setFeedback(t('pages.journals.feedback.reversed', { journalNumber: journal.journalNumber }))
       setReverseJournalId('')
       await loadData()
       setSelectedJournal(journal)
     } catch (reverseError) {
       if (reverseError instanceof ApiError) setError(reverseError.message)
-      else setError('Unable to reverse journal.')
+      else setError(t('pages.journals.errors.reverse'))
     }
   }
 
@@ -173,78 +172,78 @@ export default function JournalsPage() {
 
       {canManage ? <VxPaper elevation={0} className="panel-card">
         <VxStack spacing={2.5}>
-          <VxTypography variant="h6">Post sales invoice</VxTypography>
+          <VxTypography variant="h6">{t('pages.journals.actions.postSales')}</VxTypography>
           <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-            <VxTextField fullWidth label="Sales invoice ID" value={salesInvoiceId} onChange={(e) => setSalesInvoiceId(e.target.value)} />
-            <VxTextField fullWidth type="date" label="Posting date" value={postingDate} onChange={(e) => setPostingDate(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
+            <VxTextField fullWidth label={t('pages.journals.fields.salesInvoiceId')} value={salesInvoiceId} onChange={(e) => setSalesInvoiceId(e.target.value)} />
+            <VxTextField fullWidth type="date" label={t('pages.journals.fields.postingDate')} value={postingDate} onChange={(e) => setPostingDate(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
           </VxStack>
           <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-            <VxTextField select fullWidth label="AR account" value={arAccountId} onChange={(e) => setArAccountId(e.target.value)}>
+            <VxTextField select fullWidth label={t('pages.journals.fields.arAccount')} value={arAccountId} onChange={(e) => setArAccountId(e.target.value)}>
               {accountOptions.map((option) => <VxMenuItem key={option.value} value={option.value}>{option.label}</VxMenuItem>)}
             </VxTextField>
-            <VxTextField select fullWidth label="Revenue account" value={revenueAccountId} onChange={(e) => setRevenueAccountId(e.target.value)}>
+            <VxTextField select fullWidth label={t('pages.journals.fields.revenueAccount')} value={revenueAccountId} onChange={(e) => setRevenueAccountId(e.target.value)}>
               {accountOptions.map((option) => <VxMenuItem key={option.value} value={option.value}>{option.label}</VxMenuItem>)}
             </VxTextField>
-            <VxTextField select fullWidth label="Tax liability (optional)" value={salesTaxAccountId} onChange={(e) => setSalesTaxAccountId(e.target.value)}>
-              <VxMenuItem value="">None</VxMenuItem>
+            <VxTextField select fullWidth label={t('pages.journals.fields.salesTaxAccount')} value={salesTaxAccountId} onChange={(e) => setSalesTaxAccountId(e.target.value)}>
+              <VxMenuItem value="">{t('common.no')}</VxMenuItem>
               {accountOptions.map((option) => <VxMenuItem key={option.value} value={option.value}>{option.label}</VxMenuItem>)}
             </VxTextField>
           </VxStack>
           <VxConfirmActionButton
-            title="Post sales invoice"
-            targetName={salesInvoiceId || 'Sales invoice'}
-            consequence={`Posting creates accounting entries dated ${postingDate}. Posted entries must be corrected through a reversal.`}
-            confirmLabel="Post invoice"
-            pendingLabel="Posting..."
+            title={t('pages.journals.actions.postSales')}
+            targetName={salesInvoiceId || t('pages.journals.actions.postSales')}
+            consequence={t('pages.journals.confirmation.posting', { date: postingDate })}
+            confirmLabel={t('pages.journals.actions.confirmPost')}
+            pendingLabel={t('pages.journals.actions.confirmingPost')}
             onConfirm={handlePostSalesInvoice}
             buttonProps={{ variant: 'contained', disabled: !salesInvoiceId || !arAccountId || !revenueAccountId }}
-          >Post sales invoice</VxConfirmActionButton>
+          >{t('pages.journals.actions.postSales')}</VxConfirmActionButton>
 
           <VxDivider />
 
-          <VxTypography variant="h6">Post purchase invoice</VxTypography>
+          <VxTypography variant="h6">{t('pages.journals.actions.postPurchase')}</VxTypography>
           <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-            <VxTextField fullWidth label="Purchase invoice ID" value={purchaseInvoiceId} onChange={(e) => setPurchaseInvoiceId(e.target.value)} />
-            <VxTextField fullWidth type="date" label="Posting date" value={postingDate} onChange={(e) => setPostingDate(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
+            <VxTextField fullWidth label={t('pages.journals.fields.purchaseInvoiceId')} value={purchaseInvoiceId} onChange={(e) => setPurchaseInvoiceId(e.target.value)} />
+            <VxTextField fullWidth type="date" label={t('pages.journals.fields.postingDate')} value={postingDate} onChange={(e) => setPostingDate(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
           </VxStack>
           <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-            <VxTextField select fullWidth label="AP account" value={apAccountId} onChange={(e) => setApAccountId(e.target.value)}>
+            <VxTextField select fullWidth label={t('pages.journals.fields.apAccount')} value={apAccountId} onChange={(e) => setApAccountId(e.target.value)}>
               {accountOptions.map((option) => <VxMenuItem key={option.value} value={option.value}>{option.label}</VxMenuItem>)}
             </VxTextField>
-            <VxTextField select fullWidth label="Expense account" value={expenseAccountId} onChange={(e) => setExpenseAccountId(e.target.value)}>
+            <VxTextField select fullWidth label={t('pages.journals.fields.expenseAccount')} value={expenseAccountId} onChange={(e) => setExpenseAccountId(e.target.value)}>
               {accountOptions.map((option) => <VxMenuItem key={option.value} value={option.value}>{option.label}</VxMenuItem>)}
             </VxTextField>
-            <VxTextField select fullWidth label="Tax receivable (optional)" value={purchaseTaxAccountId} onChange={(e) => setPurchaseTaxAccountId(e.target.value)}>
-              <VxMenuItem value="">None</VxMenuItem>
+            <VxTextField select fullWidth label={t('pages.journals.fields.purchaseTaxAccount')} value={purchaseTaxAccountId} onChange={(e) => setPurchaseTaxAccountId(e.target.value)}>
+              <VxMenuItem value="">{t('common.no')}</VxMenuItem>
               {accountOptions.map((option) => <VxMenuItem key={option.value} value={option.value}>{option.label}</VxMenuItem>)}
             </VxTextField>
           </VxStack>
           <VxConfirmActionButton
-            title="Post purchase invoice"
-            targetName={purchaseInvoiceId || 'Purchase invoice'}
-            consequence={`Posting creates accounting entries dated ${postingDate}. Posted entries must be corrected through a reversal.`}
-            confirmLabel="Post invoice"
-            pendingLabel="Posting..."
+            title={t('pages.journals.actions.postPurchase')}
+            targetName={purchaseInvoiceId || t('pages.journals.actions.postPurchase')}
+            consequence={t('pages.journals.confirmation.posting', { date: postingDate })}
+            confirmLabel={t('pages.journals.actions.confirmPost')}
+            pendingLabel={t('pages.journals.actions.confirmingPost')}
             onConfirm={handlePostPurchaseInvoice}
             buttonProps={{ variant: 'contained', disabled: !purchaseInvoiceId || !apAccountId || !expenseAccountId }}
-          >Post purchase invoice</VxConfirmActionButton>
+          >{t('pages.journals.actions.postPurchase')}</VxConfirmActionButton>
 
           <VxDivider />
 
-          <VxTypography variant="h6">Reverse journal</VxTypography>
+          <VxTypography variant="h6">{t('pages.journals.actions.reverseJournal')}</VxTypography>
           <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-            <VxTextField fullWidth label="Journal entry ID" value={reverseJournalId} onChange={(e) => setReverseJournalId(e.target.value)} />
-            <VxTextField fullWidth type="date" label="Reversal date" value={reversalDate} onChange={(e) => setReversalDate(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
+            <VxTextField fullWidth label={t('pages.journals.fields.journalEntryId')} value={reverseJournalId} onChange={(e) => setReverseJournalId(e.target.value)} />
+            <VxTextField fullWidth type="date" label={t('pages.journals.fields.reversalDate')} value={reversalDate} onChange={(e) => setReversalDate(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
           </VxStack>
           <VxConfirmActionButton
-            title="Reverse journal"
-            targetName={reverseJournalId || 'Journal entry'}
-            consequence={`This creates a reversing entry dated ${reversalDate}. The original journal remains in the audit history.`}
-            confirmLabel="Reverse journal"
-            pendingLabel="Reversing..."
+            title={t('pages.journals.actions.reverseJournal')}
+            targetName={reverseJournalId || t('pages.journals.actions.reverseJournal')}
+            consequence={t('pages.journals.confirmation.reversal', { date: reversalDate })}
+            confirmLabel={t('pages.journals.actions.confirmReverse')}
+            pendingLabel={t('pages.journals.actions.reversing')}
             onConfirm={handleReverseJournal}
             buttonProps={{ variant: 'outlined', color: 'error', disabled: !reverseJournalId }}
-          >Reverse journal</VxConfirmActionButton>
+          >{t('pages.journals.actions.reverseJournal')}</VxConfirmActionButton>
         </VxStack>
       </VxPaper> : null}
 
@@ -256,14 +255,14 @@ export default function JournalsPage() {
 
       {selectedJournal ? (
         <VxPaper elevation={0} className="panel-card">
-          <VxTypography variant="h6" sx={{ mb: 2 }}>Journal {selectedJournal.journalNumber}</VxTypography>
-          <VxTypography color="text.secondary" sx={{ mb: 1 }}>Source: {selectedJournal.sourceDocumentType} / {selectedJournal.sourceDocumentId ?? 'N/A'}</VxTypography>
-          <VxTypography color="text.secondary" sx={{ mb: 2 }}>Debit {selectedJournal.totalDebit.toFixed(2)} / Credit {selectedJournal.totalCredit.toFixed(2)}</VxTypography>
+          <VxTypography variant="h6" sx={{ mb: 2 }}>{t('pages.journals.details.title', { journalNumber: selectedJournal.journalNumber })}</VxTypography>
+          <VxTypography color="text.secondary" sx={{ mb: 1 }}>{t('pages.journals.details.source')}: {selectedJournal.sourceDocumentType} / {selectedJournal.sourceDocumentId ?? t('pages.journals.details.notAvailable')}</VxTypography>
+          <VxTypography color="text.secondary" sx={{ mb: 2 }}>{t('pages.journals.details.debit')} {selectedJournal.totalDebit.toFixed(2)} / {t('pages.journals.details.credit')} {selectedJournal.totalCredit.toFixed(2)}</VxTypography>
           <VxStack spacing={1}>
             {selectedJournal.lines.map((line) => (
               <VxBox key={line.id} sx={{ border: '1px solid rgba(15, 23, 42, 0.08)', borderRadius: 2, px: 2, py: 1.25 }}>
                 <VxTypography sx={{ fontWeight: 700 }}>{line.accountCode} - {line.accountName}</VxTypography>
-                <VxTypography variant="body2" color="text.secondary">Debit {line.debitAmount.toFixed(2)} / Credit {line.creditAmount.toFixed(2)}</VxTypography>
+                <VxTypography variant="body2" color="text.secondary">{t('pages.journals.details.debit')} {line.debitAmount.toFixed(2)} / {t('pages.journals.details.credit')} {line.creditAmount.toFixed(2)}</VxTypography>
               </VxBox>
             ))}
           </VxStack>

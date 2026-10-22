@@ -394,9 +394,9 @@ export default function TenantRelationshipsPage() {
                           <VxConfirmActionButton
                             title={t('common.delete')}
                             targetName={`${row.relatedTenantId} — ${relationshipTypeLabelMap[row.relationshipType]}`}
-                            consequence="This permanently removes the tenant relationship and its effective-date history."
+                            consequence={t('pages.deleteConfirmations.tenantRelationship.consequence')}
                             confirmLabel={t('common.delete')}
-                            pendingLabel="Deleting..."
+                            pendingLabel={t('dialogs.deleting')}
                             onConfirm={() => removeRelationship(row.id)}
                             buttonProps={{ size: 'small', color: 'error', variant: 'text', disabled: isSaving }}
                           >{t('common.delete')}</VxConfirmActionButton>

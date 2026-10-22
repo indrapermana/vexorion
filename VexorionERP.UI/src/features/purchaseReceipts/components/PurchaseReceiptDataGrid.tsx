@@ -3,12 +3,6 @@ import { VxChip } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import type { PurchaseReceiptGridRow } from '../../../types/ui'
 
-function getStatusLabel(status: number) {
-  if (status === 1) return 'Draft'
-  if (status === 4) return 'Posted'
-  return 'Unknown'
-}
-
 function getStatusColor(status: number): 'default' | 'warning' | 'success' {
   if (status === 4) return 'success'
   if (status === 1) return 'warning'
@@ -24,19 +18,19 @@ type PurchaseReceiptDataGridProps = {
 }
 
 export default function PurchaseReceiptDataGrid({ rows, isLoading, onPost, onDelete, canManage = true }: PurchaseReceiptDataGridProps) {
-  useTranslation()
+  const { t } = useTranslation()
   const columns: VxGridColDef<PurchaseReceiptGridRow>[] = [
-    { field: 'receiptNumber', headerName: 'Receipt #', minWidth: 160, flex: 1 },
-    { field: 'receiptDate', headerName: 'Date', minWidth: 130, flex: 0.7 },
-    { field: 'warehouseName', headerName: 'Warehouse', minWidth: 160, flex: 1 },
-    { field: 'lineCount', headerName: 'Lines', minWidth: 80, flex: 0.5, type: 'number' },
+    { field: 'receiptNumber', headerName: t('pages.purchaseReceipts.grid.number'), minWidth: 160, flex: 1 },
+    { field: 'receiptDate', headerName: t('pages.purchaseReceipts.grid.date'), minWidth: 130, flex: 0.7 },
+    { field: 'warehouseName', headerName: t('pages.purchaseReceipts.grid.warehouse'), minWidth: 160, flex: 1 },
+    { field: 'lineCount', headerName: t('pages.purchaseReceipts.grid.lines'), minWidth: 80, flex: 0.5, type: 'number' },
     {
       field: 'status',
-      headerName: 'Status',
+      headerName: t('pages.purchaseReceipts.grid.status'),
       minWidth: 120,
       flex: 0.7,
       renderCell: ({ value }) => (
-        <VxChip size="small" label={getStatusLabel(Number(value))} color={getStatusColor(Number(value))} variant="outlined" />
+        <VxChip size="small" label={Number(value) === 1 ? t('pages.purchaseReceipts.grid.draft') : Number(value) === 4 ? t('pages.purchaseReceipts.grid.posted') : t('pages.purchaseReceipts.grid.unknown')} color={getStatusColor(Number(value))} variant="outlined" />
       ),
     },
     {
@@ -48,7 +42,7 @@ export default function PurchaseReceiptDataGrid({ rows, isLoading, onPost, onDel
         <VxGridActionsCellItem
           key={`post-${row.id}`}
           icon={<PublishRoundedIcon />}
-          label="Post"
+          label={t('pages.purchaseReceipts.grid.post')}
           disabled={row.status !== 1}
           onClick={() => onPost(row)}
           showInMenu={false}
@@ -56,7 +50,7 @@ export default function PurchaseReceiptDataGrid({ rows, isLoading, onPost, onDel
         <VxGridActionsCellItem
           key={`delete-${row.id}`}
           icon={<DeleteOutlineRoundedIcon />}
-          label="Delete"
+          label={t('pages.purchaseReceipts.grid.delete')}
           disabled={row.status !== 1}
           onClick={() => onDelete(row)}
           showInMenu={false}

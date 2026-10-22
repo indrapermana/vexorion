@@ -12,7 +12,17 @@ const apiMocks = vi.hoisted(() => ({
 }))
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (_key: string, options?: { defaultValue?: string }) => options?.defaultValue ?? _key }),
+  useTranslation: () => {
+    const translations: Record<string, string> = {
+      'components.products.editor.chooseImage': 'Choose product image',
+      'components.products.editor.imagePreview': 'Product image preview',
+      'components.products.editor.productImage': 'Product image',
+      'components.products.editor.uploadImage': 'Upload image',
+    }
+    return {
+      t: (key: string, options?: { defaultValue?: string }) => translations[key] ?? options?.defaultValue ?? key,
+    }
+  },
 }))
 
 vi.mock('../../../lib/api', () => ({

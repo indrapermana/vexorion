@@ -809,7 +809,7 @@ export default function ProjectDetailsPage() {
         </VxDialogActions>
       </VxDialog>
 
-      <VxConfirmActionDialog open={canManage && Boolean(deletePartyId)} title={t('pages.projectDetails.parties.dialogs.delete.title')} targetName={parties.find((party) => party.id === deletePartyId)?.relatedTenantId ?? ''} consequence={t('pages.projectDetails.parties.dialogs.delete.message')} confirmLabel={t('common.delete')} pendingLabel="Deleting..." pending={isDeletingParty} onClose={() => setDeletePartyId(null)} onConfirm={() => void handlePartyDelete()} />
+      <VxConfirmActionDialog open={canManage && Boolean(deletePartyId)} title={t('pages.projectDetails.parties.dialogs.delete.title')} targetName={parties.find((party) => party.id === deletePartyId)?.relatedTenantId ?? ''} consequence={t('pages.projectDetails.parties.dialogs.delete.message')} confirmLabel={t('common.delete')} pendingLabel={t('dialogs.deleting')} pending={isDeletingParty} onClose={() => setDeletePartyId(null)} onConfirm={() => void handlePartyDelete()} />
     </VxStack>
   )
 }

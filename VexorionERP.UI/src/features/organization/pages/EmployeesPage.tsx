@@ -247,9 +247,9 @@ export default function EmployeesPage() {
                         <VxConfirmActionButton
                           title={t('common.delete')}
                           targetName={`${row.firstName} ${row.lastName} (${row.employeeNumber})`.trim()}
-                          consequence="This permanently removes the employee record and may affect project assignments."
+                          consequence={t('pages.deleteConfirmations.employee.consequence')}
                           confirmLabel={t('common.delete')}
-                          pendingLabel="Deleting..."
+                          pendingLabel={t('dialogs.deleting')}
                           onConfirm={() => remove(row.id)}
                           buttonProps={{ size: 'small', color: 'error', variant: 'text', disabled: isSaving }}
                         >{t('common.delete')}</VxConfirmActionButton>

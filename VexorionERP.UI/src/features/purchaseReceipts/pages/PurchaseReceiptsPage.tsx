@@ -161,13 +161,11 @@ export default function PurchaseReceiptsPage() {
 
       <VxConfirmActionDialog
         open={Boolean(pendingAction)}
-        title={pendingAction?.type === 'post' ? 'Post receipt' : 'Delete receipt'}
+        title={t(pendingAction?.type === 'post' ? 'pages.purchaseReceipts.actions.postTitle' : 'pages.purchaseReceipts.actions.deleteTitle')}
         targetName={pendingAction?.row.receiptNumber ?? ''}
-        consequence={pendingAction?.type === 'post'
-          ? 'Posting updates received inventory and makes the receipt operationally final. Corrections require a separate reversal workflow.'
-          : 'This permanently removes the draft receipt. This action cannot be undone.'}
-        confirmLabel={pendingAction?.type === 'post' ? 'Post receipt' : 'Delete receipt'}
-        pendingLabel={pendingAction?.type === 'post' ? 'Posting...' : 'Deleting...'}
+        consequence={t(pendingAction?.type === 'post' ? 'pages.purchaseReceipts.actions.postConsequence' : 'pages.purchaseReceipts.actions.deleteConsequence')}
+        confirmLabel={t(pendingAction?.type === 'post' ? 'pages.purchaseReceipts.actions.postConfirm' : 'pages.purchaseReceipts.actions.deleteConfirm')}
+        pendingLabel={t(pendingAction?.type === 'post' ? 'pages.purchaseReceipts.actions.posting' : 'pages.purchaseReceipts.actions.deleting')}
         pending={isActionPending}
         error={actionError}
         onClose={() => setPendingAction(null)}

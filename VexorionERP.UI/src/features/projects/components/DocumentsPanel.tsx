@@ -229,9 +229,9 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
               <VxConfirmActionButton
                 title={t('common.delete')}
                 targetName={folder.name}
-                consequence="This permanently removes the folder. The server will reject deletion when it still contains documents or child folders."
+                consequence={t('pages.deleteConfirmations.folder.consequence')}
                 confirmLabel={t('common.delete')}
-                pendingLabel="Deleting..."
+                pendingLabel={t('dialogs.deleting')}
                 buttonProps={{ size: 'small', color: 'error', variant: 'text', disabled: isSaving }}
                 onConfirm={async () => {
                   setIsSaving(true)
@@ -397,9 +397,9 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
                                   <VxConfirmActionButton
                                     title={t('common.delete')}
                                     targetName={document.title}
-                                    consequence="This permanently removes the document record and its stored file versions. This action cannot be undone."
+                                    consequence={t('pages.deleteConfirmations.projectDocument.consequence')}
                                     confirmLabel={t('common.delete')}
-                                    pendingLabel="Deleting..."
+                                    pendingLabel={t('dialogs.deleting')}
                                     buttonProps={{ size: 'small', color: 'error', variant: 'text', disabled: isSaving }}
                                     onConfirm={async () => {
                                       setIsSaving(true)

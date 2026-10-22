@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { DescriptionRoundedIcon, DownloadRoundedIcon, FullscreenRoundedIcon, PictureAsPdfRoundedIcon, RefreshRoundedIcon, VisibilityRoundedIcon } from '@vexorion/ui'
 import { VxAlert, VxBox, VxButton, VxButtonGroup, VxChip, VxCircularProgress, VxDivider, VxFormControl, VxIconButton, VxInputLabel, VxMenuItem, VxPaper, VxSelect, VxStack, VxTable, VxTableBody, VxTableCell, VxTableContainer, VxTableHead, VxTableRow, VxTooltip, VxTypography } from '@vexorion/ui'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../app/AuthContext'
 import {
   fetchDocumentInlineBlob,
@@ -28,6 +29,7 @@ function formatLabel(format: GeneratedDocumentFormat) {
 }
 
 export default function DocumentsPanel({ sourceType, sourceEntityId }: DocumentsPanelProps) {
+  const { t, i18n } = useTranslation()
   const { user } = useAuth()
   const canView = (user?.permissions.includes('documents.view') ?? false) || (user?.permissions.includes('documents.download') ?? false)
   const canDownload = user?.permissions.includes('documents.download') ?? false
@@ -60,11 +62,11 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
       const docs = await listGeneratedDocuments(sourceType, sourceEntityId)
       setDocuments(docs)
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to load document history.')
+      setError(error instanceof Error ? error.message : t('pages.documentsPanel.errors.load'))
     } finally {
       setIsLoading(false)
     }
-  }, [sourceType, sourceEntityId])
+  }, [sourceType, sourceEntityId, t])
 
   useEffect(() => {
     void loadDocuments()
@@ -88,10 +90,10 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
     setFeedback(null)
     try {
       await generateDocument({ sourceType, sourceEntityId, format, forceRegenerate: false })
-      setFeedback(`${formatLabel(format)} document generated.`)
+      setFeedback(t('pages.documentsPanel.generated', { format: format === 'Docx' ? 'DOCX' : 'PDF' }))
       await loadDocuments()
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to generate document.')
+      setError(error instanceof Error ? error.message : t('pages.documentsPanel.errors.generate'))
     } finally {
       setIsGenerating(false)
     }
@@ -110,7 +112,7 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
       a.click()
       document.body.removeChild(a)
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to get download link.')
+      setError(error instanceof Error ? error.message : t('pages.documentsPanel.errors.download'))
     } finally {
       setActionLoadingId(null)
     }
@@ -122,10 +124,10 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
     setFeedback(null)
     try {
       await regenerateDocument(doc.generatedDocumentId)
-      setFeedback('Document regenerated.')
+      setFeedback(t('pages.documentsPanel.regenerated'))
       await loadDocuments()
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to regenerate document.')
+      setError(error instanceof Error ? error.message : t('pages.documentsPanel.errors.regenerate'))
     } finally {
       setActionLoadingId(null)
     }
@@ -143,15 +145,15 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
       }
       setViewer({ kind: 'ready', objectUrl, fileName: doc.fileName, fullscreen: false })
     } catch (error) {
-      setViewer({ kind: 'error', message: error instanceof Error ? error.message : 'Failed to load document preview.' })
+      setViewer({ kind: 'error', message: error instanceof Error ? error.message : t('pages.documentsPanel.errors.preview') })
     }
   }
 
   if (!sourceEntityId) {
     return (
       <VxPaper elevation={0} className="panel-card">
-        <VxTypography variant="h6" sx={{ mb: 1 }}>Documents</VxTypography>
-        <VxTypography color="text.secondary">VxSelect a record to view its documents.</VxTypography>
+        <VxTypography variant="h6" sx={{ mb: 1 }}>{t('pages.documentsPanel.title')}</VxTypography>
+        <VxTypography color="text.secondary">{t('pages.documentsPanel.selectRecord')}</VxTypography>
       </VxPaper>
     )
   }
@@ -164,15 +166,15 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
         <VxStack direction="row" spacing={1.5} sx={{ alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
           <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
             <DescriptionRoundedIcon fontSize="small" color="action" />
-            <VxTypography variant="h6">Documents</VxTypography>
+            <VxTypography variant="h6">{t('pages.documentsPanel.title')}</VxTypography>
           </VxStack>
           {canGenerate && (
             <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
               <VxFormControl size="small" sx={{ minWidth: 100 }}>
-                <VxInputLabel id="doc-format-label">Format</VxInputLabel>
+                <VxInputLabel id="doc-format-label">{t('pages.documentsPanel.format')}</VxInputLabel>
                 <VxSelect<GeneratedDocumentFormat>
                   labelId="doc-format-label"
-                  label="Format"
+                  label={t('pages.documentsPanel.format')}
                   value={format}
                   onChange={(e) => setFormat(e.target.value as GeneratedDocumentFormat)}
                 >
@@ -187,7 +189,7 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
                 onClick={() => void handleGenerate()}
                 disabled={isGenerating}
               >
-                Export
+                {t('pages.documentsPanel.export')}
               </VxButton>
             </VxStack>
           )}
@@ -201,17 +203,17 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
             <VxCircularProgress size={24} />
           </VxBox>
         ) : readyDocs.length === 0 ? (
-          <VxTypography color="text.secondary" variant="body2">No documents generated yet.</VxTypography>
+          <VxTypography color="text.secondary" variant="body2">{t('pages.documentsPanel.noGenerated')}</VxTypography>
         ) : (
           <VxTableContainer>
             <VxTable size="small">
               <VxTableHead>
                 <VxTableRow>
-                  <VxTableCell>File</VxTableCell>
-                  <VxTableCell>Format</VxTableCell>
-                  <VxTableCell>Version</VxTableCell>
-                  <VxTableCell>Generated</VxTableCell>
-                  <VxTableCell align="right">Actions</VxTableCell>
+                  <VxTableCell>{t('pages.documentsPanel.columns.file')}</VxTableCell>
+                  <VxTableCell>{t('pages.documentsPanel.columns.format')}</VxTableCell>
+                  <VxTableCell>{t('pages.documentsPanel.columns.version')}</VxTableCell>
+                  <VxTableCell>{t('pages.documentsPanel.columns.generated')}</VxTableCell>
+                  <VxTableCell align="right">{t('pages.documentsPanel.columns.actions')}</VxTableCell>
                 </VxTableRow>
               </VxTableHead>
               <VxTableBody>
@@ -230,19 +232,19 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
                       <VxTableCell>v{doc.version}</VxTableCell>
                       <VxTableCell>
                         <VxTypography variant="body2" color="text.secondary">
-                          {new Date(doc.generatedAtUtc).toLocaleString()}
+                          {new Date(doc.generatedAtUtc).toLocaleString(i18n.resolvedLanguage)}
                         </VxTypography>
                       </VxTableCell>
                       <VxTableCell align="right">
                         <VxButtonGroup size="small" variant="outlined">
                           {canView && (
-                            <VxTooltip title={doc.format === 'Docx' ? 'Preview as PDF' : 'View inline'}>
+                            <VxTooltip title={t(doc.format === 'Docx' ? 'pages.documentsPanel.previewAsPdf' : 'pages.documentsPanel.viewInline')}>
                               <span>
                                 <VxIconButton
                                   size="small"
                                   onClick={() => void handleViewInline(doc)}
                                   disabled={isActionLoading}
-                                  aria-label={doc.format === 'Docx' ? 'Preview as PDF' : 'View inline'}
+                                  aria-label={t(doc.format === 'Docx' ? 'pages.documentsPanel.previewAsPdf' : 'pages.documentsPanel.viewInline')}
                                 >
                                   {doc.format === 'Docx' ? <PictureAsPdfRoundedIcon fontSize="small" /> : <VisibilityRoundedIcon fontSize="small" />}
                                 </VxIconButton>
@@ -250,13 +252,13 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
                             </VxTooltip>
                           )}
                           {canDownload && (
-                            <VxTooltip title="Download">
+                            <VxTooltip title={t('pages.documentsPanel.download')}>
                               <span>
                                 <VxIconButton
                                   size="small"
                                   onClick={() => void handleDownload(doc)}
                                   disabled={isActionLoading}
-                                  aria-label="Download"
+                                  aria-label={t('pages.documentsPanel.download')}
                                 >
                                   {isActionLoading ? <VxCircularProgress size={14} /> : <DownloadRoundedIcon fontSize="small" />}
                                 </VxIconButton>
@@ -264,13 +266,13 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
                             </VxTooltip>
                           )}
                           {canRegenerate && (
-                            <VxTooltip title="Regenerate">
+                            <VxTooltip title={t('pages.documentsPanel.regenerate')}>
                               <span>
                                 <VxIconButton
                                   size="small"
                                   onClick={() => void handleRegenerate(doc)}
                                   disabled={isActionLoading}
-                                  aria-label="Regenerate"
+                                  aria-label={t('pages.documentsPanel.regenerate')}
                                 >
                                   {isActionLoading ? <VxCircularProgress size={14} /> : <RefreshRoundedIcon fontSize="small" />}
                                 </VxIconButton>
@@ -293,11 +295,11 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
             <VxStack spacing={1}>
               <VxStack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
                 <VxTypography variant="subtitle2" color="text.secondary">
-                  {viewer.kind === 'ready' ? viewer.fileName : 'Document Preview'}
+                  {viewer.kind === 'ready' ? viewer.fileName : t('pages.documentsPanel.previewTitle')}
                 </VxTypography>
                 <VxStack direction="row" spacing={0.5}>
                   {viewer.kind === 'ready' && (
-                    <VxTooltip title={viewer.fullscreen ? 'Exit full screen' : 'Full screen'}>
+                    <VxTooltip title={t(viewer.fullscreen ? 'pages.documentsPanel.exitFullScreen' : 'pages.documentsPanel.fullScreen')}>
                       <VxIconButton
                         size="small"
                         onClick={() =>
@@ -305,13 +307,13 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
                             prev.kind === 'ready' ? { ...prev, fullscreen: !prev.fullscreen } : prev,
                           )
                         }
-                        aria-label="Toggle full screen"
+                        aria-label={t('pages.documentsPanel.toggleFullScreen')}
                       >
                         <FullscreenRoundedIcon fontSize="small" />
                       </VxIconButton>
                     </VxTooltip>
                   )}
-                  <VxButton size="small" variant="text" onClick={closeViewer}>Close</VxButton>
+                  <VxButton size="small" variant="text" onClick={closeViewer}>{t('pages.documentsPanel.close')}</VxButton>
                 </VxStack>
               </VxStack>
 
@@ -335,7 +337,7 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
                 >
                   <iframe
                     src={viewer.objectUrl}
-                    title="Document Preview"
+                    title={t('pages.documentsPanel.previewTitle')}
                     style={{ flex: 1, border: 'none', width: '100%' }}
                   />
                 </VxBox>

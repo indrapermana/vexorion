@@ -589,7 +589,7 @@ export default function ProjectsPage() {
         </VxDialogActions>
       </VxDialog>
 
-      <VxConfirmActionDialog open={canManage && Boolean(deleteTarget)} title={t('pages.projects.dialogs.delete.title')} targetName={deleteTarget ? `${deleteTarget.projectNumber} — ${deleteTarget.name}` : ''} consequence={t('pages.projects.dialogs.delete.message', { name: deleteTarget?.name ?? '' })} confirmLabel={t('common.delete')} pendingLabel="Deleting..." pending={isDeleting} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} />
+      <VxConfirmActionDialog open={canManage && Boolean(deleteTarget)} title={t('pages.projects.dialogs.delete.title')} targetName={deleteTarget ? `${deleteTarget.projectNumber} — ${deleteTarget.name}` : ''} consequence={t('pages.projects.dialogs.delete.message', { name: deleteTarget?.name ?? '' })} confirmLabel={t('common.delete')} pendingLabel={t('dialogs.deleting')} pending={isDeleting} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} />
     </VxStack>
   )
 }

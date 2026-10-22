@@ -3,12 +3,6 @@ import { VxChip } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import type { SalesShipmentGridRow } from '../../../types/ui'
 
-function getStatusLabel(status: number) {
-  if (status === 1) return 'Draft'
-  if (status === 4) return 'Shipped'
-  return 'Unknown'
-}
-
 function getStatusColor(status: number): 'default' | 'warning' | 'success' {
   if (status === 4) return 'success'
   if (status === 1) return 'warning'
@@ -24,19 +18,19 @@ type SalesShipmentDataGridProps = {
 }
 
 export default function SalesShipmentDataGrid({ rows, isLoading, onPost, onDelete, canManage = true }: SalesShipmentDataGridProps) {
-  useTranslation()
+  const { t } = useTranslation()
   const columns: VxGridColDef<SalesShipmentGridRow>[] = [
-    { field: 'shipmentNumber', headerName: 'Shipment #', minWidth: 160, flex: 1 },
-    { field: 'shipmentDate', headerName: 'Date', minWidth: 130, flex: 0.7 },
-    { field: 'warehouseName', headerName: 'Warehouse', minWidth: 160, flex: 1 },
-    { field: 'lineCount', headerName: 'Lines', minWidth: 80, flex: 0.5, type: 'number' },
+    { field: 'shipmentNumber', headerName: t('pages.salesShipments.grid.number'), minWidth: 160, flex: 1 },
+    { field: 'shipmentDate', headerName: t('pages.salesShipments.grid.date'), minWidth: 130, flex: 0.7 },
+    { field: 'warehouseName', headerName: t('pages.salesShipments.grid.warehouse'), minWidth: 160, flex: 1 },
+    { field: 'lineCount', headerName: t('pages.salesShipments.grid.lines'), minWidth: 80, flex: 0.5, type: 'number' },
     {
       field: 'status',
-      headerName: 'Status',
+      headerName: t('pages.salesShipments.grid.status'),
       minWidth: 120,
       flex: 0.7,
       renderCell: ({ value }) => (
-        <VxChip size="small" label={getStatusLabel(Number(value))} color={getStatusColor(Number(value))} variant="outlined" />
+        <VxChip size="small" label={Number(value) === 1 ? t('pages.salesShipments.grid.draft') : Number(value) === 4 ? t('pages.salesShipments.grid.shipped') : t('pages.salesShipments.grid.unknown')} color={getStatusColor(Number(value))} variant="outlined" />
       ),
     },
     {
@@ -48,7 +42,7 @@ export default function SalesShipmentDataGrid({ rows, isLoading, onPost, onDelet
         <VxGridActionsCellItem
           key={`post-${row.id}`}
           icon={<PublishRoundedIcon />}
-          label="Ship"
+          label={t('pages.salesShipments.grid.ship')}
           disabled={row.status !== 1}
           onClick={() => onPost(row)}
           showInMenu={false}
@@ -56,7 +50,7 @@ export default function SalesShipmentDataGrid({ rows, isLoading, onPost, onDelet
         <VxGridActionsCellItem
           key={`delete-${row.id}`}
           icon={<DeleteOutlineRoundedIcon />}
-          label="Delete"
+          label={t('pages.salesShipments.grid.delete')}
           disabled={row.status !== 1}
           onClick={() => onDelete(row)}
           showInMenu={false}

@@ -132,7 +132,7 @@ export default function PurchaseInvoiceLinesPanel({ invoice, lines, isLoading, e
                     <VxConfirmActionButton
                       title={t('pages.purchaseInvoices.lines.deleteTitle')}
                       targetName={productById.get(line.productId)?.name ?? line.productId}
-                      consequence={`This removes the line from invoice ${invoice.invoiceNumber} and recalculates its totals.`}
+                      consequence={t('pages.purchaseInvoices.lines.deleteConsequence', { number: invoice.invoiceNumber })}
                       confirmLabel={t('orderWorkflow.line.delete')}
                       pendingLabel={t('dialogs.deleting')}
                       onConfirm={() => handleDelete(line.id)}
