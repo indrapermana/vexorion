@@ -1,5 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
-import { VxAlert, VxAutocomplete, VxButton, VxStack, VxTextField } from '@vexorion/ui'
+import { VxAlert, VxAutocomplete, VxButton, VxConfirmActionDialog, VxStack, VxTextField } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
@@ -41,6 +41,9 @@ export default function PurchaseReceiptsPage() {
   const [error, setError] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [pendingAction, setPendingAction] = useState<{ type: 'post' | 'delete'; row: PurchaseReceiptGridRow } | null>(null)
+  const [isActionPending, setIsActionPending] = useState(false)
+  const [actionError, setActionError] = useState<string | null>(null)
 
   // Load all purchase orders for the selector
   useEffect(() => {
@@ -79,25 +82,33 @@ export default function PurchaseReceiptsPage() {
 
   const handlePost = async (row: PurchaseReceiptGridRow) => {
     setFeedback(null)
+    setActionError(null)
+    setIsActionPending(true)
     try {
       await postPurchaseReceipt(row.id)
       setFeedback(`Receipt ${row.receiptNumber} posted successfully.`)
+      setPendingAction(null)
       await loadReceipts()
     } catch (err) {
-      if (err instanceof ApiError) setError(err.message)
-      else setError('Failed to post receipt.')
+      setActionError(err instanceof ApiError ? err.message : 'Failed to post receipt.')
+    } finally {
+      setIsActionPending(false)
     }
   }
 
   const handleDelete = async (row: PurchaseReceiptGridRow) => {
     setFeedback(null)
+    setActionError(null)
+    setIsActionPending(true)
     try {
       await deletePurchaseReceipt(row.id)
       setFeedback(`Receipt ${row.receiptNumber} deleted.`)
+      setPendingAction(null)
       await loadReceipts()
     } catch (err) {
-      if (err instanceof ApiError) setError(err.message)
-      else setError('Failed to delete receipt.')
+      setActionError(err instanceof ApiError ? err.message : 'Failed to delete receipt.')
+    } finally {
+      setIsActionPending(false)
     }
   }
 
@@ -143,10 +154,28 @@ export default function PurchaseReceiptsPage() {
       {selectedOrder && (
         <PageBody>
           <Suspense fallback={<LoadingFallback />}>
-            <PurchaseReceiptDataGrid rows={rows} isLoading={isLoading} onPost={handlePost} onDelete={handleDelete} canManage={canManage} />
+            <PurchaseReceiptDataGrid rows={rows} isLoading={isLoading} onPost={(row) => { setActionError(null); setPendingAction({ type: 'post', row }) }} onDelete={(row) => { setActionError(null); setPendingAction({ type: 'delete', row }) }} canManage={canManage} />
           </Suspense>
         </PageBody>
       )}
+
+      <VxConfirmActionDialog
+        open={Boolean(pendingAction)}
+        title={pendingAction?.type === 'post' ? 'Post receipt' : 'Delete receipt'}
+        targetName={pendingAction?.row.receiptNumber ?? ''}
+        consequence={pendingAction?.type === 'post'
+          ? 'Posting updates received inventory and makes the receipt operationally final. Corrections require a separate reversal workflow.'
+          : 'This permanently removes the draft receipt. This action cannot be undone.'}
+        confirmLabel={pendingAction?.type === 'post' ? 'Post receipt' : 'Delete receipt'}
+        pendingLabel={pendingAction?.type === 'post' ? 'Posting...' : 'Deleting...'}
+        pending={isActionPending}
+        error={actionError}
+        onClose={() => setPendingAction(null)}
+        onConfirm={() => {
+          if (!pendingAction) return
+          void (pendingAction.type === 'post' ? handlePost(pendingAction.row) : handleDelete(pendingAction.row))
+        }}
+      />
 
       {canManage && isCreateOpen && selectedOrder && (
         <Suspense fallback={<LoadingFallback />}>

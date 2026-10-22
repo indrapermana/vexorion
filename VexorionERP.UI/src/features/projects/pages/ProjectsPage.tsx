@@ -6,6 +6,7 @@ import {
   VxAlert,
   VxBox,
   VxButton,
+  VxConfirmActionDialog,
   VxChip,
   VxDataGrid,
   VxDialog,
@@ -588,18 +589,7 @@ export default function ProjectsPage() {
         </VxDialogActions>
       </VxDialog>
 
-      <VxDialog open={canManage && Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
-        <VxDialogTitle>{t('pages.projects.dialogs.delete.title')}</VxDialogTitle>
-        <VxDialogContent>
-          <VxTypography>
-            {t('pages.projects.dialogs.delete.message', { name: deleteTarget?.name ?? '' })}
-          </VxTypography>
-        </VxDialogContent>
-        <VxDialogActions>
-          <VxButton onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</VxButton>
-          <VxButton variant="contained" color="error" onClick={() => void handleDelete()} disabled={isDeleting}>{t('common.delete')}</VxButton>
-        </VxDialogActions>
-      </VxDialog>
+      <VxConfirmActionDialog open={canManage && Boolean(deleteTarget)} title={t('pages.projects.dialogs.delete.title')} targetName={deleteTarget ? `${deleteTarget.projectNumber} — ${deleteTarget.name}` : ''} consequence={t('pages.projects.dialogs.delete.message', { name: deleteTarget?.name ?? '' })} confirmLabel={t('common.delete')} pendingLabel="Deleting..." pending={isDeleting} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} />
     </VxStack>
   )
 }

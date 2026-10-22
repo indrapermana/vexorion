@@ -1,5 +1,5 @@
 import { DeleteSweepRoundedIcon, HistoryRoundedIcon, LocalShippingRoundedIcon, PrintRoundedIcon, ReceiptLongRoundedIcon } from '@vexorion/ui'
-import { VxBox, VxButton, VxChip, VxCollapse, VxDivider, VxIconButton, VxPaper, VxStack, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTooltip, VxTypography } from '@vexorion/ui'
+import { VxBox, VxButton, VxChip, VxCollapse, VxConfirmActionButton, VxDivider, VxIconButton, VxPaper, VxStack, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTooltip, VxTypography } from '@vexorion/ui'
 import { useState } from 'react'
 import { useI18n } from '../app/I18nContext'
 import { useTransactionHistory } from '../app/transactionHistoryStore'
@@ -27,9 +27,14 @@ export function TransactionHistoryPanel() {
         <VxStack direction="row" spacing={1}>
           {transactions.length > 0 ? (
             <VxTooltip title={t('history.clearTooltip')}>
-              <VxButton size="small" startIcon={<DeleteSweepRoundedIcon />} color="inherit" onClick={clear}>
-                {t('history.clear')}
-              </VxButton>
+              <VxConfirmActionButton
+                title={t('history.clear')}
+                targetName={t('history.title')}
+                consequence="This clears the transaction history stored on this device. Server records are not deleted."
+                confirmLabel={t('history.clear')}
+                onConfirm={clear}
+                buttonProps={{ size: 'small', startIcon: <DeleteSweepRoundedIcon />, color: 'inherit' }}
+              >{t('history.clear')}</VxConfirmActionButton>
             </VxTooltip>
           ) : null}
           <VxButton size="small" onClick={() => setOpen((previous) => !previous)}>

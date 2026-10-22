@@ -1,6 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
 import { AddRoundedIcon } from '@vexorion/ui'
-import { VxAlert, VxButton, VxStack } from '@vexorion/ui'
+import { VxAlert, VxButton, VxConfirmActionDialog, VxStack } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
@@ -28,6 +28,8 @@ export default function FiscalPeriodsPage() {
   const [isEditorOpen, setIsEditorOpen] = useState(false)
   const [editorMode, setEditorMode] = useState<'create' | 'edit'>('create')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [closeTarget, setCloseTarget] = useState<FiscalPeriodListItemResponse | null>(null)
+  const [isClosing, setIsClosing] = useState(false)
 
   const loadData = useCallback(async () => {
     if (!isAuthenticated) {
@@ -78,13 +80,17 @@ export default function FiscalPeriodsPage() {
     if (!canManage) return
     setFeedback(null)
     setError(null)
+    setIsClosing(true)
     try {
       const period = await closeFiscalPeriod(row.id)
       setFeedback(`Fiscal period ${period.periodCode} closed.`)
+      setCloseTarget(null)
       await loadData()
     } catch (closeError) {
       if (closeError instanceof ApiError) setError(closeError.message)
       else setError('Unable to close fiscal period.')
+    } finally {
+      setIsClosing(false)
     }
   }
 
@@ -123,7 +129,7 @@ export default function FiscalPeriodsPage() {
             rows={rows}
             isLoading={isLoading}
             onEdit={openEdit}
-            onClosePeriod={(row) => void handleClosePeriod(row)}
+            onClosePeriod={setCloseTarget}
             onReopenPeriod={(row) => void handleReopenPeriod(row)}
             canManage={canManage}
           />
@@ -135,6 +141,19 @@ export default function FiscalPeriodsPage() {
           <FiscalPeriodEditorDialog open={isEditorOpen} mode={editorMode} fiscalPeriodId={selectedId} onClose={() => setIsEditorOpen(false)} onSaved={(period, mode) => void handleSaved(period, mode)} />
         </Suspense>
       ) : null}
+
+      <VxConfirmActionDialog
+        open={canManage && Boolean(closeTarget)}
+        title="Close fiscal period"
+        targetName={closeTarget?.periodCode ?? ''}
+        consequence="Closing prevents new postings in this period until an authorized user reopens it."
+        confirmLabel="Close period"
+        confirmColor="warning"
+        pendingLabel="Closing..."
+        pending={isClosing}
+        onClose={() => setCloseTarget(null)}
+        onConfirm={() => { if (closeTarget) void handleClosePeriod(closeTarget) }}
+      />
     </VxStack>
   )
 }

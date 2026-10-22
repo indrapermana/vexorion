@@ -1,4 +1,4 @@
-import { VxBox, VxChip, VxTypography } from '@vexorion/ui'
+import { VxBox, VxButton, VxChip, VxConfirmActionButton, VxTypography } from '@vexorion/ui'
 import { VxDataGrid, type VxGridColDef } from '@vexorion/ui'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -9,7 +9,7 @@ interface TenantDataGridProps {
   rows: TenantGridRow[]
   isLoading: boolean
   onEdit: (tenant: TenantListItemResponse) => void
-  onRemove: (tenant: TenantListItemResponse) => void
+  onRemove: (tenant: TenantListItemResponse) => Promise<void> | void
   effectiveAccessByTenantId?: Record<string, TenantModuleEffectiveAccessResponse>
   canManage?: boolean
 }
@@ -105,34 +105,20 @@ export function TenantDataGrid({ rows, isLoading, onEdit, onRemove, effectiveAcc
         filterable: false,
         renderCell: (params) => (
           <VxBox sx={{ display: 'flex', gap: 1 }}>
-            <button
-              onClick={() => onEdit(params.row)}
-              style={{
-                padding: '4px 12px',
-                backgroundColor: '#6C5CE7',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '12px',
-              }}
-            >
+            <VxButton size="small" variant="contained" onClick={() => onEdit(params.row)}>
               Edit
-            </button>
-            <button
-              onClick={() => onRemove(params.row)}
-              style={{
-                padding: '4px 12px',
-                backgroundColor: '#F3F0FF',
-                color: '#6C5CE7',
-                border: '1px solid #CFC4FF',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '12px',
-              }}
+            </VxButton>
+            <VxConfirmActionButton
+              title="Remove tenant"
+              targetName={`${params.row.name} (${params.row.code})`}
+              consequence="This permanently removes the tenant and its tenant-owned records. This action cannot be undone."
+              confirmLabel="Remove tenant"
+              pendingLabel="Removing..."
+              onConfirm={() => onRemove(params.row)}
+              buttonProps={{ size: 'small', color: 'error', variant: 'outlined' }}
             >
               Remove
-            </button>
+            </VxConfirmActionButton>
           </VxBox>
         ),
       },

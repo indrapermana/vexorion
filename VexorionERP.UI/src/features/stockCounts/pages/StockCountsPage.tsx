@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AddRoundedIcon, AutoGraphRoundedIcon, CheckCircleRoundedIcon, DeleteOutlineRoundedIcon, EditRoundedIcon, FormatListBulletedRoundedIcon } from '@vexorion/ui'
-import { VxAlert, VxBox, VxButton, VxChip, VxCircularProgress, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxMenuItem, VxPaper, VxStack, VxTable, VxTableBody, VxTableCell, VxTableContainer, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxChip, VxCircularProgress, VxConfirmActionButton, VxConfirmActionDialog, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxMenuItem, VxPaper, VxStack, VxTable, VxTableBody, VxTableCell, VxTableContainer, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
@@ -598,9 +598,15 @@ export default function StockCountsPage() {
                             <VxButton size="small" startIcon={<EditRoundedIcon />} disabled={selectedCount.status !== 1} onClick={() => openEditLineDialog(line)}>
                               Edit
                             </VxButton>
-                            <VxButton size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} disabled={selectedCount.status !== 1} onClick={() => void deleteLine(line)}>
-                              Delete
-                            </VxButton>
+                            <VxConfirmActionButton
+                              title="Delete stock-count line"
+                              targetName={product ? `${product.name} (${product.sku})` : line.productId}
+                              consequence={`This removes the counted quantity from stock count ${selectedCount.countNumber}.`}
+                              confirmLabel="Delete line"
+                              pendingLabel="Deleting..."
+                              onConfirm={() => deleteLine(line)}
+                              buttonProps={{ size: 'small', color: 'error', startIcon: <DeleteOutlineRoundedIcon />, disabled: selectedCount.status !== 1 }}
+                            >Delete</VxConfirmActionButton>
                           </VxStack> : null}
                         </VxTableCell>
                       </VxTableRow>
@@ -730,52 +736,13 @@ export default function StockCountsPage() {
             </VxDialogActions>
           </VxDialog>
 
-          <VxDialog open={canManage && postDialogOpen} onClose={() => setPostDialogOpen(false)} fullWidth maxWidth="xs">
-            <VxDialogTitle>Post stock count</VxDialogTitle>
-            <VxDialogContent>
-              <VxTypography>
-                Confirm posting this stock count to apply variance movements to inventory balances?
-              </VxTypography>
-            </VxDialogContent>
-            <VxDialogActions>
-              <VxButton onClick={() => setPostDialogOpen(false)} disabled={statusActionLoading}>Cancel</VxButton>
-              <VxButton onClick={() => void confirmPost()} disabled={statusActionLoading} color="success" variant="contained">
-                {statusActionLoading ? 'Posting...' : 'Post'}
-              </VxButton>
-            </VxDialogActions>
-          </VxDialog>
+          <VxConfirmActionDialog open={canManage && postDialogOpen} title="Post stock count" targetName={selectedCount?.countNumber ?? ''} consequence="Posting applies all variances to inventory balances. Corrections require reversing the stock count." confirmLabel="Post stock count" confirmColor="success" pendingLabel="Posting..." pending={statusActionLoading} onClose={() => setPostDialogOpen(false)} onConfirm={() => void confirmPost()} />
 
-          <VxDialog open={canManage && reverseDialogOpen} onClose={() => setReverseDialogOpen(false)} fullWidth maxWidth="xs">
-            <VxDialogTitle>Reverse stock count</VxDialogTitle>
-            <VxDialogContent>
-              <VxTypography>
-                Confirm reversing this stock count to post compensating movements?
-              </VxTypography>
-            </VxDialogContent>
-            <VxDialogActions>
-              <VxButton onClick={() => setReverseDialogOpen(false)} disabled={statusActionLoading}>Cancel</VxButton>
-              <VxButton onClick={() => void confirmReverse()} disabled={statusActionLoading} color="warning" variant="contained">
-                {statusActionLoading ? 'Reversing...' : 'Reverse'}
-              </VxButton>
-            </VxDialogActions>
-          </VxDialog>
+          <VxConfirmActionDialog open={canManage && reverseDialogOpen} title="Reverse stock count" targetName={selectedCount?.countNumber ?? ''} consequence="Reversing posts compensating inventory movements. The original stock count remains in the audit history." confirmLabel="Reverse stock count" confirmColor="warning" pendingLabel="Reversing..." pending={statusActionLoading} onClose={() => setReverseDialogOpen(false)} onConfirm={() => void confirmReverse()} />
         </>
       )}
       deleteDialog={(
-        <VxDialog open={canManage && Boolean(deleteTarget)} onClose={closeDeleteDialog} fullWidth maxWidth="xs">
-          <VxDialogTitle>Delete stock count</VxDialogTitle>
-          <VxDialogContent>
-            <VxTypography>
-              Delete {deleteTarget?.countNumber}? This action cannot be undone.
-            </VxTypography>
-          </VxDialogContent>
-          <VxDialogActions>
-            <VxButton onClick={closeDeleteDialog} disabled={isDeleting}>Cancel</VxButton>
-            <VxButton onClick={() => void confirmDelete()} disabled={isDeleting} color="error" variant="contained">
-              {isDeleting ? 'Deleting...' : 'Delete'}
-            </VxButton>
-          </VxDialogActions>
-        </VxDialog>
+        <VxConfirmActionDialog open={canManage && Boolean(deleteTarget)} title="Delete stock count" targetName={deleteTarget?.countNumber ?? ''} consequence="This permanently removes the draft stock count and its lines. Posted counts cannot be deleted." confirmLabel="Delete stock count" pendingLabel="Deleting..." pending={isDeleting} onClose={closeDeleteDialog} onConfirm={() => void confirmDelete()} />
       )}
     />
   )

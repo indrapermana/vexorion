@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { VxAlert, VxButton, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxIconButton, VxStack, VxSwitch, VxTable, VxTableBody, VxTableCell, VxTableContainer, VxTableHead, VxTableRow, VxTextField, VxTooltip, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxButton, VxConfirmActionDialog, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxIconButton, VxStack, VxSwitch, VxTable, VxTableBody, VxTableCell, VxTableContainer, VxTableHead, VxTableRow, VxTextField, VxTooltip, VxTypography } from '@vexorion/ui'
 import { AddIcon, DeleteIcon, EditIcon } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
@@ -232,21 +232,7 @@ export default function ConfigProductCategoriesPage() {
         </VxDialogActions>
       </VxDialog>
 
-      {/* Delete VxDialog */}
-      <VxDialog open={canManage && !!deleteTarget} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
-        <VxDialogTitle>{t('config.productCategories.deleteDialog.title')}</VxDialogTitle>
-        <VxDialogContent>
-          <VxTypography>
-            {t('config.productCategories.deleteDialog.message', { name: deleteTarget?.name })}
-          </VxTypography>
-        </VxDialogContent>
-        <VxDialogActions>
-          <VxButton onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</VxButton>
-          <VxButton variant="contained" color="error" onClick={() => void handleDelete()} disabled={deleteLoading}>
-            {t('common.delete')}
-          </VxButton>
-        </VxDialogActions>
-      </VxDialog>
+      <VxConfirmActionDialog open={canManage && Boolean(deleteTarget)} title={t('config.productCategories.deleteDialog.title')} targetName={deleteTarget?.name ?? ''} consequence={t('config.productCategories.deleteDialog.message', { name: deleteTarget?.name })} confirmLabel={t('common.delete')} pendingLabel="Deleting..." pending={deleteLoading} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} />
     </VxStack>
   )
 }

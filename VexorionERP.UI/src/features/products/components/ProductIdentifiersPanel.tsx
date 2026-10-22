@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { AddRoundedIcon, DeleteOutlineRoundedIcon, EditRoundedIcon } from '@vexorion/ui'
-import { VxAlert, VxBox, VxButton, VxChip, VxCircularProgress, VxDialog, VxDialogActions, VxDialogContent, VxDialogContentText, VxDialogTitle, VxFormControlLabel, VxIconButton, VxMenuItem, VxStack, VxSwitch, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTextField, VxTooltip, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxChip, VxCircularProgress, VxConfirmActionDialog, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxFormControlLabel, VxIconButton, VxMenuItem, VxStack, VxSwitch, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTextField, VxTooltip, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import {
   ApiError,
@@ -287,29 +287,17 @@ export default function ProductIdentifiersPanel({ productId, canManage = true }:
         </VxDialogActions>
       </VxDialog>
 
-      {/* Delete dialog */}
-      <VxDialog open={canManage && deleteTarget !== null} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
-        <VxDialogTitle>{t('components.products.identifiers.deleteDialog.title')}</VxDialogTitle>
-        <VxDialogContent>
-          <VxDialogContentText>
-            {t('components.products.identifiers.deleteDialog.message', {
-              codeType: deleteTarget?.codeType,
-              codeValue: deleteTarget?.codeValue,
-            })}
-          </VxDialogContentText>
-        </VxDialogContent>
-        <VxDialogActions>
-          <VxButton onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</VxButton>
-          <VxButton
-            color="error"
-            variant="contained"
-            onClick={() => void handleDelete()}
-            disabled={isDeleting}
-          >
-            {t('common.delete')}
-          </VxButton>
-        </VxDialogActions>
-      </VxDialog>
+      <VxConfirmActionDialog
+        open={canManage && deleteTarget !== null}
+        title={t('components.products.identifiers.deleteDialog.title')}
+        targetName={deleteTarget ? `${deleteTarget.codeType}: ${deleteTarget.codeValue}` : ''}
+        consequence={t('components.products.identifiers.deleteDialog.message', { codeType: deleteTarget?.codeType, codeValue: deleteTarget?.codeValue })}
+        confirmLabel={t('common.delete')}
+        pendingLabel="Deleting..."
+        pending={isDeleting}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => void handleDelete()}
+      />
     </VxBox>
   )
 }

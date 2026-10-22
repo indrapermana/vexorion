@@ -3,6 +3,7 @@ import { AddRoundedIcon, Groups2RoundedIcon } from '@vexorion/ui'
 import {
   VxAlert,
   VxButton,
+  VxConfirmActionButton,
   VxDialog,
   VxDialogActions,
   VxDialogContent,
@@ -215,7 +216,15 @@ export default function ConsultantsPage() {
                     <VxTableCell align="right">
                       {canManage ? <VxStack direction="row" spacing={0.5} sx={{ justifyContent: 'flex-end' }}>
                         <VxButton size="small" variant="text" onClick={() => openEdit(row)}>{t('common.edit')}</VxButton>
-                        <VxButton size="small" color="error" variant="text" onClick={() => void remove(row.id)} disabled={isSaving}>{t('common.delete')}</VxButton>
+                        <VxConfirmActionButton
+                          title={t('common.delete')}
+                          targetName={`${row.fullName} (${row.consultantNumber})`}
+                          consequence="This permanently removes the consultant record and may affect project assignments."
+                          confirmLabel={t('common.delete')}
+                          pendingLabel="Deleting..."
+                          onConfirm={() => remove(row.id)}
+                          buttonProps={{ size: 'small', color: 'error', variant: 'text', disabled: isSaving }}
+                        >{t('common.delete')}</VxConfirmActionButton>
                       </VxStack> : null}
                     </VxTableCell>
                   </VxTableRow>

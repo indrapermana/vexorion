@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { AddRoundedIcon, DeleteOutlineRoundedIcon, EditRoundedIcon, WarehouseRoundedIcon } from '@vexorion/ui'
-import { VxAlert, VxBox, VxButton, VxChip, VxPaper, VxStack, VxTable, VxTableBody, VxTableCell, VxTableContainer, VxTableHead, VxTableRow, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxChip, VxConfirmActionButton, VxPaper, VxStack, VxTable, VxTableBody, VxTableCell, VxTableContainer, VxTableHead, VxTableRow, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { ApiError, createPurchaseOrderLine, deletePurchaseOrderLine, updatePurchaseOrderLine } from '../../../lib/api'
 import { useInventoryBalancesLookup, useProductsLookup, useWarehousesLookup } from '../../../hooks/useLookups'
@@ -143,7 +143,15 @@ export default function PurchaseOrderLinesPanel({ order, lines, isLoading, error
                   <VxTableCell align="right">${line.lineTotal.toFixed(2)}</VxTableCell>
                   <VxTableCell align="right">
                     {canManage ? <><VxButton size="small" startIcon={<EditRoundedIcon />} onClick={() => openEdit(line)}>Edit</VxButton>
-                    <VxButton size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => void handleDelete(line.id)}>Delete</VxButton></> : null}
+                    <VxConfirmActionButton
+                      title="Delete purchase order line"
+                      targetName={product ? `${product.name} (${product.sku})` : line.productId}
+                      consequence={`This removes the line from purchase order ${order.orderNumber} and recalculates its totals.`}
+                      confirmLabel="Delete line"
+                      pendingLabel="Deleting..."
+                      onConfirm={() => handleDelete(line.id)}
+                      buttonProps={{ size: 'small', color: 'error', startIcon: <DeleteOutlineRoundedIcon /> }}
+                    >Delete</VxConfirmActionButton></> : null}
                   </VxTableCell>
                 </VxTableRow>
               )

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AddRoundedIcon, AutoGraphRoundedIcon, CheckCircleRoundedIcon, DeleteOutlineRoundedIcon, EditRoundedIcon, FormatListBulletedRoundedIcon, Inventory2RoundedIcon } from '@vexorion/ui'
-import { VxAlert, VxBox, VxButton, VxChip, VxCircularProgress, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxMenuItem, VxPaper, VxStack, VxTable, VxTableBody, VxTableCell, VxTableContainer, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxChip, VxCircularProgress, VxConfirmActionButton, VxConfirmActionDialog, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxMenuItem, VxPaper, VxStack, VxTable, VxTableBody, VxTableCell, VxTableContainer, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
@@ -500,7 +500,15 @@ export default function InventoryAdjustmentsPage() {
                           <VxTableCell>{line.reason ?? '-'}</VxTableCell>
                           <VxTableCell align="right">
                             {canManage ? <><VxButton size="small" startIcon={<EditRoundedIcon />} onClick={() => openEditLine(line)} disabled={selectedAdjustment.status !== 1}>Edit</VxButton>
-                            <VxButton size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => void deleteLine(line.id)} disabled={selectedAdjustment.status !== 1}>Delete</VxButton></> : null}
+                            <VxConfirmActionButton
+                              title="Delete adjustment line"
+                              targetName={product ? `${product.name} (${product.sku})` : line.productId}
+                              consequence={`This removes the line from adjustment ${selectedAdjustment.adjustmentNumber} and recalculates its totals.`}
+                              confirmLabel="Delete line"
+                              pendingLabel="Deleting..."
+                              onConfirm={() => deleteLine(line.id)}
+                              buttonProps={{ size: 'small', color: 'error', startIcon: <DeleteOutlineRoundedIcon />, disabled: selectedAdjustment.status !== 1 }}
+                            >Delete</VxConfirmActionButton></> : null}
                           </VxTableCell>
                         </VxTableRow>
                       )
@@ -554,16 +562,7 @@ export default function InventoryAdjustmentsPage() {
       }
       deleteDialog={
         <>
-          <VxDialog open={canManage && Boolean(deleteTarget)} onClose={isDeleting ? undefined : () => setDeleteTarget(null)} fullWidth maxWidth="xs">
-            <VxDialogTitle>Delete inventory adjustment</VxDialogTitle>
-            <VxDialogContent>
-              <VxTypography color="text.secondary">{deleteTarget ? `Delete ${deleteTarget.adjustmentNumber}? This action cannot be undone.` : 'Delete this inventory adjustment?'}</VxTypography>
-            </VxDialogContent>
-            <VxDialogActions sx={{ px: 3, py: 2 }}>
-              <VxButton onClick={() => setDeleteTarget(null)} disabled={isDeleting}>Cancel</VxButton>
-              <VxButton color="error" variant="contained" onClick={() => void handleDelete()} disabled={isDeleting}>{isDeleting ? 'Deleting...' : 'Delete'}</VxButton>
-            </VxDialogActions>
-          </VxDialog>
+          <VxConfirmActionDialog open={canManage && Boolean(deleteTarget)} title="Delete inventory adjustment" targetName={deleteTarget?.adjustmentNumber ?? ''} consequence="This permanently removes the draft adjustment and its lines. Completed adjustments cannot be deleted." confirmLabel="Delete adjustment" pendingLabel="Deleting..." pending={isDeleting} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} />
           <VxDialog open={canManage && lineOpen} onClose={lineSaving ? undefined : () => setLineOpen(false)} fullWidth maxWidth="sm">
             <VxDialogTitle>{lineMode === 'create' ? 'Add adjustment line' : 'Edit adjustment line'}</VxDialogTitle>
             <VxDialogContent dividers>

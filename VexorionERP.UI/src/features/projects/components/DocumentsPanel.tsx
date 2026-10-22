@@ -5,6 +5,7 @@ import {
   VxButton,
   VxChip,
   VxCircularProgress,
+  VxConfirmActionButton,
   VxDialog,
   VxDialogActions,
   VxDialogContent,
@@ -225,11 +226,14 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
               <VxButton size="small" variant="text" onClick={() => setFolderEditor({ mode: 'edit', folderId: folder.id, parentFolderId: folder.parentFolderId ?? null, name: folder.name, description: folder.description ?? '' })}>
                 {t('common.edit')}
               </VxButton>
-              <VxButton
-                size="small"
-                color="error"
-                variant="text"
-                onClick={async () => {
+              <VxConfirmActionButton
+                title={t('common.delete')}
+                targetName={folder.name}
+                consequence="This permanently removes the folder. The server will reject deletion when it still contains documents or child folders."
+                confirmLabel={t('common.delete')}
+                pendingLabel="Deleting..."
+                buttonProps={{ size: 'small', color: 'error', variant: 'text', disabled: isSaving }}
+                onConfirm={async () => {
                   setIsSaving(true)
                   setError(null)
                   setFeedback(null)
@@ -245,7 +249,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
                 }}
               >
                 {t('common.delete')}
-              </VxButton>
+              </VxConfirmActionButton>
             </>
           ) : null}
         </VxStack>
@@ -390,12 +394,14 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
                                   <VxButton size="small" variant="text" onClick={(event) => { event.stopPropagation(); setMetaEditorOpen(true) }}>
                                     {t('common.edit')}
                                   </VxButton>
-                                  <VxButton
-                                    size="small"
-                                    color="error"
-                                    variant="text"
-                                    onClick={async (event) => {
-                                      event.stopPropagation()
+                                  <VxConfirmActionButton
+                                    title={t('common.delete')}
+                                    targetName={document.title}
+                                    consequence="This permanently removes the document record and its stored file versions. This action cannot be undone."
+                                    confirmLabel={t('common.delete')}
+                                    pendingLabel="Deleting..."
+                                    buttonProps={{ size: 'small', color: 'error', variant: 'text', disabled: isSaving }}
+                                    onConfirm={async () => {
                                       setIsSaving(true)
                                       setError(null)
                                       setFeedback(null)
@@ -412,7 +418,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
                                     }}
                                   >
                                     {t('common.delete')}
-                                  </VxButton>
+                                  </VxConfirmActionButton>
                                 </>
                               ) : null}
                             </VxStack>

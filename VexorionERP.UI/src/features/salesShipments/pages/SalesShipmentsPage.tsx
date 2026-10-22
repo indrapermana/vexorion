@@ -1,5 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
-import { VxAlert, VxAutocomplete, VxButton, VxStack, VxTextField } from '@vexorion/ui'
+import { VxAlert, VxAutocomplete, VxButton, VxConfirmActionDialog, VxStack, VxTextField } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
@@ -41,6 +41,9 @@ export default function SalesShipmentsPage() {
   const [error, setError] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [pendingAction, setPendingAction] = useState<{ type: 'post' | 'delete'; row: SalesShipmentGridRow } | null>(null)
+  const [isActionPending, setIsActionPending] = useState(false)
+  const [actionError, setActionError] = useState<string | null>(null)
 
   // Load all sales orders for the selector
   useEffect(() => {
@@ -79,25 +82,33 @@ export default function SalesShipmentsPage() {
 
   const handlePost = async (row: SalesShipmentGridRow) => {
     setFeedback(null)
+    setActionError(null)
+    setIsActionPending(true)
     try {
       await postSalesShipment(row.id)
       setFeedback(`Shipment ${row.shipmentNumber} posted successfully.`)
+      setPendingAction(null)
       await loadShipments()
     } catch (err) {
-      if (err instanceof ApiError) setError(err.message)
-      else setError('Failed to post shipment.')
+      setActionError(err instanceof ApiError ? err.message : 'Failed to post shipment.')
+    } finally {
+      setIsActionPending(false)
     }
   }
 
   const handleDelete = async (row: SalesShipmentGridRow) => {
     setFeedback(null)
+    setActionError(null)
+    setIsActionPending(true)
     try {
       await deleteSalesShipment(row.id)
       setFeedback(`Shipment ${row.shipmentNumber} deleted.`)
+      setPendingAction(null)
       await loadShipments()
     } catch (err) {
-      if (err instanceof ApiError) setError(err.message)
-      else setError('Failed to delete shipment.')
+      setActionError(err instanceof ApiError ? err.message : 'Failed to delete shipment.')
+    } finally {
+      setIsActionPending(false)
     }
   }
 
@@ -141,10 +152,28 @@ export default function SalesShipmentsPage() {
       {selectedOrder && (
         <PageBody>
           <Suspense fallback={<LoadingFallback />}>
-            <SalesShipmentDataGrid rows={rows} isLoading={isLoading} onPost={handlePost} onDelete={handleDelete} canManage={canManage} />
+            <SalesShipmentDataGrid rows={rows} isLoading={isLoading} onPost={(row) => { setActionError(null); setPendingAction({ type: 'post', row }) }} onDelete={(row) => { setActionError(null); setPendingAction({ type: 'delete', row }) }} canManage={canManage} />
           </Suspense>
         </PageBody>
       )}
+
+      <VxConfirmActionDialog
+        open={Boolean(pendingAction)}
+        title={pendingAction?.type === 'post' ? 'Post shipment' : 'Delete shipment'}
+        targetName={pendingAction?.row.shipmentNumber ?? ''}
+        consequence={pendingAction?.type === 'post'
+          ? 'Posting updates inventory and makes the shipment operationally final. Corrections require a separate reversal workflow.'
+          : 'This permanently removes the draft shipment. This action cannot be undone.'}
+        confirmLabel={pendingAction?.type === 'post' ? 'Post shipment' : 'Delete shipment'}
+        pendingLabel={pendingAction?.type === 'post' ? 'Posting...' : 'Deleting...'}
+        pending={isActionPending}
+        error={actionError}
+        onClose={() => setPendingAction(null)}
+        onConfirm={() => {
+          if (!pendingAction) return
+          void (pendingAction.type === 'post' ? handlePost(pendingAction.row) : handleDelete(pendingAction.row))
+        }}
+      />
 
       {canManage && isCreateOpen && selectedOrder && (
         <Suspense fallback={<LoadingFallback />}>

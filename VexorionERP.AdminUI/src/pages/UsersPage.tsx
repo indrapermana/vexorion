@@ -1,5 +1,5 @@
 import { AddRoundedIcon, LockResetRoundedIcon, ManageAccountsRoundedIcon, PersonOffRoundedIcon, VxDataGrid, type VxGridColDef } from '@vexorion/ui'
-import { VxAlert, VxBox, VxButton, VxChip, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxMenuItem, VxPageBody, VxPageFeedback, VxPageHeader, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxChip, VxConfirmActionButton, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxMenuItem, VxPageBody, VxPageFeedback, VxPageHeader, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { assignUserRoles, createUser, getRoles, getTenants, getUsersForAdmin, resetUserPassword, setUserStatus } from '../lib/api'
 import type { CreateUserRequest, UserListItemResponse } from '../types/api/users'
@@ -227,15 +227,22 @@ export default function UsersPage() {
             >
               Reset Password
             </VxButton>
-            <VxButton
-              size="small"
-              color={params.row.isActive ? 'warning' : 'success'}
-              variant="outlined"
-              startIcon={<PersonOffRoundedIcon />}
-              onClick={() => void handleSetUserStatus(params.row, !params.row.isActive)}
-            >
-              {params.row.isActive ? 'Remove' : 'Activate'}
-            </VxButton>
+            {params.row.isActive ? (
+              <VxConfirmActionButton
+                title="Deactivate user"
+                targetName={`${params.row.userName} (${params.row.email})`}
+                consequence="The user will immediately lose access but can be activated again later."
+                confirmLabel="Deactivate user"
+                confirmColor="warning"
+                pendingLabel="Deactivating..."
+                onConfirm={() => handleSetUserStatus(params.row, false)}
+                buttonProps={{ size: 'small', color: 'warning', variant: 'outlined', startIcon: <PersonOffRoundedIcon /> }}
+              >Deactivate</VxConfirmActionButton>
+            ) : (
+              <VxButton size="small" color="success" variant="outlined" onClick={() => void handleSetUserStatus(params.row, true)}>
+                Activate
+              </VxButton>
+            )}
           </VxStack>
         ),
       },

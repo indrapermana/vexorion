@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { AddRoundedIcon, DeleteOutlineRoundedIcon, EditRoundedIcon } from '@vexorion/ui'
-import { VxAlert, VxBox, VxButton, VxPaper, VxStack, VxTable, VxTableBody, VxTableCell, VxTableContainer, VxTableHead, VxTableRow, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxConfirmActionButton, VxPaper, VxStack, VxTable, VxTableBody, VxTableCell, VxTableContainer, VxTableHead, VxTableRow, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useCurrency } from '../../../app/CurrencyContext'
 import { ApiError, createSalesInvoiceLine, deleteSalesInvoiceLine, updateSalesInvoiceLine } from '../../../lib/api'
@@ -131,7 +131,15 @@ export default function SalesInvoiceLinesPanel({ invoice, lines, isLoading, erro
                   <VxTableCell align="right">{formatMoney(line.lineTotal)}</VxTableCell>
                   <VxTableCell align="right">
                     {canManage ? <><VxButton size="small" startIcon={<EditRoundedIcon />} onClick={() => openEdit(line)}>Edit</VxButton>
-                    <VxButton size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => void handleDelete(line.id)}>Delete</VxButton></> : null}
+                    <VxConfirmActionButton
+                      title="Delete sales invoice line"
+                      targetName={productById.get(line.productId)?.name ?? line.productId}
+                      consequence={`This removes the line from invoice ${invoice.invoiceNumber} and recalculates its totals.`}
+                      confirmLabel="Delete line"
+                      pendingLabel="Deleting..."
+                      onConfirm={() => handleDelete(line.id)}
+                      buttonProps={{ size: 'small', color: 'error', startIcon: <DeleteOutlineRoundedIcon /> }}
+                    >Delete</VxConfirmActionButton></> : null}
                   </VxTableCell>
                 </VxTableRow>
               )

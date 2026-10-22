@@ -5,6 +5,7 @@ import {
   VxAlert,
   VxButton,
   VxChip,
+  VxConfirmActionButton,
   VxDialog,
   VxDialogActions,
   VxDialogContent,
@@ -390,7 +391,15 @@ export default function TenantRelationshipsPage() {
                           {row.status !== 2 ? (
                             <VxButton size="small" variant="text" onClick={() => openActivateDialog(row)}>{t('pages.tenantRelationships.activateButton')}</VxButton>
                           ) : null}
-                          <VxButton size="small" color="error" variant="text" onClick={() => void removeRelationship(row.id)} disabled={isSaving}>{t('common.delete')}</VxButton>
+                          <VxConfirmActionButton
+                            title={t('common.delete')}
+                            targetName={`${row.relatedTenantId} — ${relationshipTypeLabelMap[row.relationshipType]}`}
+                            consequence="This permanently removes the tenant relationship and its effective-date history."
+                            confirmLabel={t('common.delete')}
+                            pendingLabel="Deleting..."
+                            onConfirm={() => removeRelationship(row.id)}
+                            buttonProps={{ size: 'small', color: 'error', variant: 'text', disabled: isSaving }}
+                          >{t('common.delete')}</VxConfirmActionButton>
                         </VxStack>
                       ) : null}
                     </VxTableCell>

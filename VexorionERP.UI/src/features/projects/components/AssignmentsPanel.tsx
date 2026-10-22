@@ -3,6 +3,7 @@ import {
   VxAlert,
   VxBox,
   VxButton,
+  VxConfirmActionButton,
   VxChip,
   VxCircularProgress,
   VxDialog,
@@ -308,7 +309,15 @@ export default function AssignmentsPanel({ projectId }: AssignmentsPanelProps) {
                         {canManage ? (
                           <VxStack direction="row" spacing={0.5} sx={{ justifyContent: 'flex-end' }}>
                             <VxButton size="small" variant="text" onClick={() => openEditDialog(item)}>{t('common.edit')}</VxButton>
-                            <VxButton size="small" color="error" variant="text" onClick={() => void removeAssignment(item.id)} disabled={isSaving}>{t('common.delete')}</VxButton>
+                            <VxConfirmActionButton
+                              title={t('common.delete')}
+                              targetName={`${item.assigneeDisplayName || t('common.labels.none')} — ${item.roleTitle}`}
+                              consequence="This removes the assignment from the project. The employee or consultant record is not deleted."
+                              confirmLabel={t('common.delete')}
+                              pendingLabel="Deleting..."
+                              onConfirm={() => removeAssignment(item.id)}
+                              buttonProps={{ size: 'small', color: 'error', variant: 'text', disabled: isSaving }}
+                            >{t('common.delete')}</VxConfirmActionButton>
                           </VxStack>
                         ) : null}
                       </VxTableCell>

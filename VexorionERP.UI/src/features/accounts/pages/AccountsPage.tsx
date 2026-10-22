@@ -1,6 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
 import { AddRoundedIcon } from '@vexorion/ui'
-import { VxAlert, VxButton, VxStack } from '@vexorion/ui'
+import { VxAlert, VxButton, VxConfirmActionDialog, VxStack } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
@@ -28,6 +28,8 @@ export default function AccountsPage() {
   const [isEditorOpen, setIsEditorOpen] = useState(false)
   const [editorMode, setEditorMode] = useState<'create' | 'edit'>('create')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<AccountListItemResponse | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const loadData = useCallback(async () => {
     if (!isAuthenticated) {
@@ -67,21 +69,22 @@ export default function AccountsPage() {
     setIsEditorOpen(true)
   }
 
-  const handleDelete = async (row: AccountListItemResponse) => {
-    if (!canManage) return
-    if (!window.confirm(`Delete account ${row.code}?`)) {
-      return
-    }
+  const handleDelete = async () => {
+    if (!canManage || !deleteTarget) return
 
     setFeedback(null)
     setError(null)
+    setIsDeleting(true)
     try {
-      await deleteAccount(row.id)
-      setFeedback(`Account ${row.code} deleted.`)
+      await deleteAccount(deleteTarget.id)
+      setFeedback(`Account ${deleteTarget.code} deleted.`)
+      setDeleteTarget(null)
       await loadData()
     } catch (deleteError) {
       if (deleteError instanceof ApiError) setError(deleteError.message)
       else setError('Unable to delete account.')
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -109,7 +112,7 @@ export default function AccountsPage() {
 
       <PageBody>
         <Suspense fallback={<AccountSurfaceFallback />}>
-          <AccountDataGrid rows={rows} isLoading={isLoading} onEdit={openEdit} onDelete={handleDelete} canManage={canManage} />
+          <AccountDataGrid rows={rows} isLoading={isLoading} onEdit={openEdit} onDelete={setDeleteTarget} canManage={canManage} />
         </Suspense>
       </PageBody>
 
@@ -118,6 +121,18 @@ export default function AccountsPage() {
           <AccountEditorDialog open={isEditorOpen} mode={editorMode} accountId={selectedId} onClose={() => setIsEditorOpen(false)} onSaved={(account, mode) => void handleSaved(account, mode)} />
         </Suspense>
       ) : null}
+
+      <VxConfirmActionDialog
+        open={canManage && Boolean(deleteTarget)}
+        title="Delete account"
+        targetName={deleteTarget ? `${deleteTarget.code} — ${deleteTarget.name}` : ''}
+        consequence="This permanently removes the account. Accounts referenced by transactions may be rejected by the server."
+        confirmLabel="Delete account"
+        pendingLabel="Deleting..."
+        pending={isDeleting}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => void handleDelete()}
+      />
     </VxStack>
   )
 }

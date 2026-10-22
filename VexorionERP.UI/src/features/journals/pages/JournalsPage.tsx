@@ -1,5 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
-import { VxAlert, VxBox, VxButton, VxDivider, VxMenuItem, VxPaper, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxConfirmActionButton, VxDivider, VxMenuItem, VxPaper, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
@@ -190,7 +190,15 @@ export default function JournalsPage() {
               {accountOptions.map((option) => <VxMenuItem key={option.value} value={option.value}>{option.label}</VxMenuItem>)}
             </VxTextField>
           </VxStack>
-          <VxButton variant="contained" onClick={() => void handlePostSalesInvoice()} disabled={!salesInvoiceId || !arAccountId || !revenueAccountId}>Post sales invoice</VxButton>
+          <VxConfirmActionButton
+            title="Post sales invoice"
+            targetName={salesInvoiceId || 'Sales invoice'}
+            consequence={`Posting creates accounting entries dated ${postingDate}. Posted entries must be corrected through a reversal.`}
+            confirmLabel="Post invoice"
+            pendingLabel="Posting..."
+            onConfirm={handlePostSalesInvoice}
+            buttonProps={{ variant: 'contained', disabled: !salesInvoiceId || !arAccountId || !revenueAccountId }}
+          >Post sales invoice</VxConfirmActionButton>
 
           <VxDivider />
 
@@ -211,7 +219,15 @@ export default function JournalsPage() {
               {accountOptions.map((option) => <VxMenuItem key={option.value} value={option.value}>{option.label}</VxMenuItem>)}
             </VxTextField>
           </VxStack>
-          <VxButton variant="contained" onClick={() => void handlePostPurchaseInvoice()} disabled={!purchaseInvoiceId || !apAccountId || !expenseAccountId}>Post purchase invoice</VxButton>
+          <VxConfirmActionButton
+            title="Post purchase invoice"
+            targetName={purchaseInvoiceId || 'Purchase invoice'}
+            consequence={`Posting creates accounting entries dated ${postingDate}. Posted entries must be corrected through a reversal.`}
+            confirmLabel="Post invoice"
+            pendingLabel="Posting..."
+            onConfirm={handlePostPurchaseInvoice}
+            buttonProps={{ variant: 'contained', disabled: !purchaseInvoiceId || !apAccountId || !expenseAccountId }}
+          >Post purchase invoice</VxConfirmActionButton>
 
           <VxDivider />
 
@@ -220,7 +236,15 @@ export default function JournalsPage() {
             <VxTextField fullWidth label="Journal entry ID" value={reverseJournalId} onChange={(e) => setReverseJournalId(e.target.value)} />
             <VxTextField fullWidth type="date" label="Reversal date" value={reversalDate} onChange={(e) => setReversalDate(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
           </VxStack>
-          <VxButton variant="outlined" onClick={() => void handleReverseJournal()} disabled={!reverseJournalId}>Reverse journal</VxButton>
+          <VxConfirmActionButton
+            title="Reverse journal"
+            targetName={reverseJournalId || 'Journal entry'}
+            consequence={`This creates a reversing entry dated ${reversalDate}. The original journal remains in the audit history.`}
+            confirmLabel="Reverse journal"
+            pendingLabel="Reversing..."
+            onConfirm={handleReverseJournal}
+            buttonProps={{ variant: 'outlined', color: 'error', disabled: !reverseJournalId }}
+          >Reverse journal</VxConfirmActionButton>
         </VxStack>
       </VxPaper> : null}
 

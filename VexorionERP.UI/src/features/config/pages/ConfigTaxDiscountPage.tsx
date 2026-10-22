@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { VxAlert, VxButton, VxFormControlLabel, VxPaper, VxStack, VxSwitch, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxButton, VxConfirmActionButton, VxFormControlLabel, VxPaper, VxStack, VxSwitch, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
@@ -237,9 +237,15 @@ export default function ConfigTaxDiscountPage() {
                 <VxTableCell align="right">
                   {canManageTax ? <VxStack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
                     <VxButton size="small" variant="outlined" onClick={() => startEdit(item)}>{t('common.edit')}</VxButton>
-                    <VxButton size="small" color="error" variant="outlined" onClick={() => void removeTaxCode(item.id)}>
-                      {t('dialogs.delete')}
-                    </VxButton>
+                    <VxConfirmActionButton
+                      title={t('dialogs.delete')}
+                      targetName={`${item.code} — ${item.name}`}
+                      consequence="This permanently removes the tax code. Transactions already using it may prevent deletion."
+                      confirmLabel={t('dialogs.delete')}
+                      pendingLabel={t('dialogs.deleting')}
+                      onConfirm={() => removeTaxCode(item.id)}
+                      buttonProps={{ size: 'small', color: 'error', variant: 'outlined' }}
+                    >{t('dialogs.delete')}</VxConfirmActionButton>
                   </VxStack> : null}
                 </VxTableCell>
               </VxTableRow>

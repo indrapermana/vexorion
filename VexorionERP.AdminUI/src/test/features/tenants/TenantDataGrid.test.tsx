@@ -73,6 +73,7 @@ describe('TenantDataGrid', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Edit' }))
     await userEvent.click(screen.getByRole('button', { name: 'Remove' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Remove tenant' }))
 
     expect(onEdit).toHaveBeenCalledWith(ROW)
     expect(onRemove).toHaveBeenCalledWith(ROW)

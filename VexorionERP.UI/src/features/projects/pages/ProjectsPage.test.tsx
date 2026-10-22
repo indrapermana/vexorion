@@ -39,6 +39,7 @@ vi.mock('@vexorion/ui', () => {
       <button type="button" onClick={onClick} disabled={disabled}>{children}</button>
     ),
     VxChip: ({ label }: { label: string }) => <span>{label}</span>,
+    VxConfirmActionDialog: () => null,
     VxDataGrid: ({ rows, columns }: { rows: Array<{ id: string }>, columns: Array<{ field: string, getActions?: (value: { row: unknown }) => ReactNode[] }> }) => (
       <div>
         {rows.map((row) => (

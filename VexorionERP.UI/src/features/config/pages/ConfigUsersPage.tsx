@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { VxAlert, VxButton, VxChip, VxMenuItem, VxPaper, VxStack, VxSwitch, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxButton, VxChip, VxConfirmActionDialog, VxMenuItem, VxPaper, VxStack, VxSwitch, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
@@ -51,6 +51,7 @@ export default function ConfigUsersPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
+  const [deactivateTarget, setDeactivateTarget] = useState<UserListItemResponse | null>(null)
 
   const roleOptions = useMemo(() => roles.map((item) => item.role), [roles])
 
@@ -286,7 +287,10 @@ export default function ConfigUsersPage() {
                 <VxTableCell>
                   <VxSwitch
                     checked={user.isActive}
-                    onChange={(event) => void updateUserStatus(user, event.target.checked)}
+                    onChange={(event) => {
+                      if (event.target.checked) void updateUserStatus(user, true)
+                      else setDeactivateTarget(user)
+                    }}
                     disabled={isSaving || !canManageUsers}
                   />
                 </VxTableCell>
@@ -300,6 +304,22 @@ export default function ConfigUsersPage() {
           </VxTableBody>
         </VxTable>
       </VxPaper>
+
+      <VxConfirmActionDialog
+        open={Boolean(deactivateTarget)}
+        title="Deactivate user"
+        targetName={deactivateTarget ? `${deactivateTarget.userName} (${deactivateTarget.email})` : ''}
+        consequence="The user will immediately lose access but can be activated again later."
+        confirmLabel="Deactivate user"
+        confirmColor="warning"
+        pendingLabel="Deactivating..."
+        pending={isSaving}
+        onClose={() => setDeactivateTarget(null)}
+        onConfirm={() => {
+          if (!deactivateTarget) return
+          void updateUserStatus(deactivateTarget, false).then(() => setDeactivateTarget(null))
+        }}
+      />
     </VxStack>
   )
 }

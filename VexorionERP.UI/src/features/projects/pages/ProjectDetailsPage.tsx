@@ -4,6 +4,7 @@ import {
   EditRoundedIcon,
   VxAlert,
   VxButton,
+  VxConfirmActionDialog,
   VxChip,
   VxDataGrid,
   VxDialog,
@@ -808,16 +809,7 @@ export default function ProjectDetailsPage() {
         </VxDialogActions>
       </VxDialog>
 
-      <VxDialog open={canManage && Boolean(deletePartyId)} onClose={() => setDeletePartyId(null)} maxWidth="xs" fullWidth>
-        <VxDialogTitle>{t('pages.projectDetails.parties.dialogs.delete.title')}</VxDialogTitle>
-        <VxDialogContent>
-          <VxTypography>{t('pages.projectDetails.parties.dialogs.delete.message')}</VxTypography>
-        </VxDialogContent>
-        <VxDialogActions>
-          <VxButton onClick={() => setDeletePartyId(null)}>{t('common.cancel')}</VxButton>
-          <VxButton variant="contained" color="error" onClick={() => void handlePartyDelete()} disabled={isDeletingParty}>{t('common.delete')}</VxButton>
-        </VxDialogActions>
-      </VxDialog>
+      <VxConfirmActionDialog open={canManage && Boolean(deletePartyId)} title={t('pages.projectDetails.parties.dialogs.delete.title')} targetName={parties.find((party) => party.id === deletePartyId)?.relatedTenantId ?? ''} consequence={t('pages.projectDetails.parties.dialogs.delete.message')} confirmLabel={t('common.delete')} pendingLabel="Deleting..." pending={isDeletingParty} onClose={() => setDeletePartyId(null)} onConfirm={() => void handlePartyDelete()} />
     </VxStack>
   )
 }

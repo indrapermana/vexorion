@@ -53,6 +53,15 @@ vi.mock('@vexorion/ui', () => {
     VxButton: ({ children, onClick, disabled }: { children?: ReactNode, onClick?: MouseEventHandler<HTMLButtonElement>, disabled?: boolean }) => (
       <button type="button" onClick={onClick} disabled={disabled}>{children}</button>
     ),
+    VxConfirmActionButton: ({
+      children,
+      onConfirm,
+    }: {
+      children?: ReactNode
+      onConfirm?: MouseEventHandler<HTMLButtonElement>
+    }) => (
+      <button type="button" onClick={onConfirm}>{children}</button>
+    ),
     VxChip: ({ label }: { label: string }) => <span>{label}</span>,
     VxCircularProgress: () => <div>loading</div>,
     VxDialog: ({ open, children }: { open: boolean, children?: ReactNode }) => (open ? <div>{children}</div> : null),
