@@ -1,5 +1,6 @@
-import { VxAlert, VxBox, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
+import { VxStack, VxTextField } from '@vexorion/ui'
 import type { TFunction } from 'i18next'
+import { PageFeedback, PageHeader } from '../../../components/PagePrimitives'
 
 type DashboardHeaderFiltersProps = {
   t: TFunction
@@ -21,13 +22,11 @@ export default function DashboardHeaderFilters({
   onPeriodChange,
 }: DashboardHeaderFiltersProps) {
   return (
-    <VxBox>
-      <VxTypography variant="h4" sx={{ mb: 1 }}>{t('dashboard.hero.title')}</VxTypography>
-      <VxTypography variant="body1" color="text.secondary" sx={{ mb: 2.5 }}>
-        {t('dashboard.hero.description')}
-      </VxTypography>
-
-      <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+    <VxStack spacing={2}>
+      <PageHeader
+        title={t('dashboard.hero.title')}
+        description={t('dashboard.hero.description')}
+        filters={<VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
         <VxTextField
           type="date"
           label={t('dashboard.filters.asOfDate')}
@@ -48,8 +47,9 @@ export default function DashboardHeaderFilters({
             <option key={option} value={option}>{t('dashboard.filters.daysOption', { days: option })}</option>
           ))}
         </VxTextField>
-        {error ? <VxAlert severity="error" sx={{ flex: 1 }}>{error}</VxAlert> : null}
-      </VxStack>
-    </VxBox>
+        </VxStack>}
+      />
+      <PageFeedback error={error} />
+    </VxStack>
   )
 }

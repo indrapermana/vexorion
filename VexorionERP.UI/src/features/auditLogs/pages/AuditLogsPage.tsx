@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
-import { VxAlert, VxButton, VxMenuItem, VxPaper, VxStack, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxButton, VxMenuItem, VxStack, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { ApiError, getAuditLogs } from '../../../lib/api'
 import type { AuditLogListItemResponse } from '../../../types/api'
+import { PageBody, PageFeedback, PageHeader } from '../../../components/PagePrimitives'
 
 export default function AuditLogsPage() {
   const { t } = useTranslation()
@@ -43,11 +44,10 @@ export default function AuditLogsPage() {
 
   return (
     <VxStack spacing={3}>
-      <VxPaper elevation={0} className="panel-card">
-        <VxTypography variant="h4" sx={{ mb: 1 }}>{t('nav.routeTitles.auditLogs')}</VxTypography>
-        <VxTypography color="text.secondary" sx={{ mb: 2 }}>
-          {t('pages.auditLogs.description')}
-        </VxTypography>
+      <PageHeader
+        title={t('nav.routeTitles.auditLogs')}
+        description={t('pages.auditLogs.description')}
+        filters={(
         <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1}>
           <VxTextField size="small" label={t('pages.auditLogs.eventType')} value={eventType} onChange={(event) => setEventType(event.target.value)} />
           <VxTextField size="small" label={t('pages.auditLogs.entity')} value={entityName} onChange={(event) => setEntityName(event.target.value)} />
@@ -65,11 +65,12 @@ export default function AuditLogsPage() {
           </VxTextField>
           <VxButton variant="outlined" onClick={() => void loadLogs()}>{t('pages.auditLogs.refresh')}</VxButton>
         </VxStack>
-      </VxPaper>
+        )}
+      />
 
-      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
+      <PageFeedback error={error} onRetry={error ? () => void loadLogs() : undefined} />
 
-      <VxPaper elevation={0} className="panel-card">
+      <PageBody>
         <VxTypography color="text.secondary" sx={{ mb: 1 }}>
           {t('pages.auditLogs.showingEntries', { shown: items.length, total: totalCount })}
         </VxTypography>
@@ -93,7 +94,7 @@ export default function AuditLogsPage() {
             ))}
           </VxTableBody>
         </VxTable>
-      </VxPaper>
+      </PageBody>
     </VxStack>
   )
 }

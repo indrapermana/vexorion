@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
 import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
+import { PageBody, PageHeader } from '../../../components/PagePrimitives'
 import {
   downloadImportTemplate,
   getAvailableImportTypes,
@@ -392,16 +393,13 @@ export default function ConfigImportDataPage() {
 
   return (
     <VxStack spacing={3}>
-      <VxPaper elevation={0} className="panel-card">
-        <VxTypography variant="h5" sx={{ mb: 1 }}>{t('config.importData.title')}</VxTypography>
-        <VxTypography color="text.secondary">{t('config.importData.description')}</VxTypography>
-      </VxPaper>
+      <PageHeader title={t('config.importData.title')} description={t('config.importData.description')} />
 
       {!canValidate ? <PermissionReadOnlyAlert requiredPermission={Permissions.imports.validate} /> : null}
       {canValidate && !canSubmit ? <PermissionReadOnlyAlert requiredPermission={Permissions.imports.submit} /> : null}
       {!canViewHistory ? <PermissionReadOnlyAlert requiredPermission={Permissions.imports.history} /> : null}
 
-      <VxPaper elevation={0} className="panel-card" sx={{ p: 0 }}>
+      <PageBody>
         <VxTabs
           value={selectedTab}
           onChange={(_, v: number) => setSelectedTab(v)}
@@ -435,7 +433,7 @@ export default function ConfigImportDataPage() {
             </>
           )}
         </VxBox>
-      </VxPaper>
+      </PageBody>
     </VxStack>
   )
 }

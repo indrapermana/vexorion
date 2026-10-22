@@ -12,7 +12,6 @@ import {
   VxDialogTitle,
   VxGridActionsCellItem,
   type VxGridColDef,
-  VxPaper,
   VxStack,
   VxSwitch,
   VxTextField,
@@ -22,6 +21,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
 import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
+import { PageBody, PageFeedback, PageHeader } from '../../../components/PagePrimitives'
 import {
   ApiError,
   createProjectCategory,
@@ -257,13 +257,10 @@ export default function ProjectCategoriesPage() {
 
   return (
     <VxStack spacing={3}>
-      <VxPaper elevation={0} className="panel-card">
-        <VxStack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <VxTypography variant="h4" sx={{ mb: 1 }}>{t('pages.projectCategories.title')}</VxTypography>
-            <VxTypography color="text.secondary">{t('pages.projectCategories.description')}</VxTypography>
-          </div>
-          {canManage ? <VxButton
+      <PageHeader
+        title={t('pages.projectCategories.title')}
+        description={t('pages.projectCategories.description')}
+        primaryAction={canManage ? <VxButton
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => {
@@ -275,14 +272,12 @@ export default function ProjectCategoriesPage() {
           >
             {t('pages.projectCategories.addButton')}
           </VxButton> : null}
-        </VxStack>
-      </VxPaper>
+      />
 
-      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
-      {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+      <PageFeedback error={error} success={feedback} onRetry={error ? () => void loadCategories() : undefined} />
       {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.projects.manage} /> : null}
 
-      <VxPaper elevation={0} className="panel-card" sx={{ p: 0 }}>
+      <PageBody>
         <CategoryDataGrid
           rows={categories}
           onEdit={(category) => {
@@ -295,7 +290,7 @@ export default function ProjectCategoriesPage() {
           onDelete={(category) => setDeleteTarget(category)}
           canManage={canManage}
         />
-      </VxPaper>
+      </PageBody>
 
       <VxDialog open={canManage && createOpen} onClose={() => setCreateOpen(false)} maxWidth="sm" fullWidth>
         <VxDialogTitle>{t('pages.projectCategories.dialogs.create')}</VxDialogTitle>

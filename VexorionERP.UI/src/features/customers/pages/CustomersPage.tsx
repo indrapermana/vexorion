@@ -1,6 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
 import { AddRoundedIcon, Groups2RoundedIcon, MailOutlineRoundedIcon, MonetizationOnRoundedIcon } from '@vexorion/ui'
-import { VxAlert, VxBox, VxButton, VxCircularProgress, VxPaper, VxStack, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxButton, VxStack } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { ApiError, deleteCustomer, getCustomers } from '../../../lib/api'
@@ -8,6 +8,7 @@ import type { CustomerDetailsResponse, CustomerListItemResponse } from '../../..
 import type { CustomerDialogMode } from '../../../types/ui'
 import { Permissions } from '../../../app/authorization'
 import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
+import { PageBody, PageFeedback, PageHeader, PageLoadingState, PageMetric } from '../../../components/PagePrimitives'
 
 const CustomerEditorDialog = lazy(() => import('../components/CustomerEditorDialog'))
 const CustomerDataGrid = lazy(() => import('../components/CustomerDataGrid'))
@@ -17,12 +18,7 @@ function CustomerSurfaceFallback() {
   const { t } = useTranslation()
 
   return (
-    <VxBox sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
-      <VxStack spacing={1.5} sx={{ alignItems: 'center' }}>
-        <VxCircularProgress size={28} />
-        <VxTypography color="text.secondary">{t('pages.customers.loadingTools')}</VxTypography>
-      </VxStack>
-    </VxBox>
+    <PageLoadingState label={t('pages.customers.loadingTools')} />
   )
 }
 
@@ -125,48 +121,27 @@ export default function CustomersPage() {
 
   return (
     <VxStack spacing={3}>
-      <VxPaper elevation={0} className="panel-card">
-        <VxStack direction={{ xs: 'column', lg: 'row' }} spacing={2.5} sx={{ justifyContent: 'space-between' }}>
-          <VxBox>
-            <VxTypography variant="h4" sx={{ mb: 1 }}>{t('nav.routeTitles.customers')}</VxTypography>
-            <VxTypography color="text.secondary">
-              {t('pages.customers.description')}
-            </VxTypography>
-          </VxBox>
-          <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
-            {canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog}>
-              {t('pages.customers.newButton')}
-            </VxButton> : null}
-            <VxPaper elevation={0} className="products-metric-card">
-              <Groups2RoundedIcon fontSize="small" />
-              <VxBox>
-                <VxTypography variant="body2" color="text.secondary">{t('pages.customers.metrics.rows')}</VxTypography>
-                <VxTypography variant="h6">{customers.length}</VxTypography>
-              </VxBox>
-            </VxPaper>
-            <VxPaper elevation={0} className="products-metric-card">
-              <MailOutlineRoundedIcon fontSize="small" />
-              <VxBox>
-                <VxTypography variant="body2" color="text.secondary">{t('pages.common.withEmail')}</VxTypography>
-                <VxTypography variant="h6">{customers.filter((customer) => Boolean(customer.email)).length}</VxTypography>
-              </VxBox>
-            </VxPaper>
-            <VxPaper elevation={0} className="products-metric-card">
-              <MonetizationOnRoundedIcon fontSize="small" />
-              <VxBox>
-                <VxTypography variant="body2" color="text.secondary">{t('pages.customers.metrics.active')}</VxTypography>
-                <VxTypography variant="h6">{customers.filter((customer) => customer.isActive).length}</VxTypography>
-              </VxBox>
-            </VxPaper>
-          </VxStack>
-        </VxStack>
-      </VxPaper>
+      <PageHeader
+        title={t('nav.routeTitles.customers')}
+        description={t('pages.customers.description')}
+        primaryAction={canManage ? (
+          <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog}>
+            {t('pages.customers.newButton')}
+          </VxButton>
+        ) : null}
+        metrics={(
+          <>
+            <PageMetric icon={<Groups2RoundedIcon fontSize="small" />} label={t('pages.customers.metrics.rows')} value={customers.length} />
+            <PageMetric icon={<MailOutlineRoundedIcon fontSize="small" />} label={t('pages.common.withEmail')} value={customers.filter((customer) => Boolean(customer.email)).length} />
+            <PageMetric icon={<MonetizationOnRoundedIcon fontSize="small" />} label={t('pages.customers.metrics.active')} value={customers.filter((customer) => customer.isActive).length} />
+          </>
+        )}
+      />
 
-      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
-      {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+      <PageFeedback error={error} success={feedback} onRetry={error ? () => void loadCustomers() : undefined} />
       {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.customers.manage} /> : null}
 
-      <VxPaper elevation={0} className="panel-card products-grid-panel">
+      <PageBody>
         <Suspense fallback={<CustomerSurfaceFallback />}>
           <CustomerDataGrid
             rows={customers}
@@ -176,7 +151,7 @@ export default function CustomersPage() {
             canManage={canManage}
           />
         </Suspense>
-      </VxPaper>
+      </PageBody>
 
       {canManage && isEditorOpen ? (
         <Suspense fallback={<CustomerSurfaceFallback />}>

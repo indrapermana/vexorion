@@ -1,16 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   VxAlert,
-  VxBox,
   VxButton,
   VxChip,
-  VxCircularProgress,
   VxDialog,
   VxDialogActions,
   VxDialogContent,
   VxDialogTitle,
   VxMenuItem,
-  VxPaper,
   VxStack,
   VxTable,
   VxTableBody,
@@ -23,6 +20,7 @@ import {
 } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
+import { PageBody, PageFeedback, PageHeader, PageLoadingState } from '../../../components/PagePrimitives'
 import {
   ApiError,
   getProjectCategories,
@@ -145,18 +143,10 @@ export default function ProjectDocumentsPage() {
 
   return (
     <VxStack spacing={2}>
-      {error ? <VxAlert severity="error" onClose={() => setError(null)}>{error}</VxAlert> : null}
-      {feedback ? <VxAlert severity="success" onClose={() => setFeedback(null)}>{feedback}</VxAlert> : null}
-
-      <VxPaper elevation={0} className="panel-card">
-        <VxStack spacing={2}>
-          <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ justifyContent: 'space-between', alignItems: { md: 'center' } }}>
-            <VxBox>
-              <VxTypography variant="h5">{t('pages.projectDocuments.title', { defaultValue: 'Document Center' })}</VxTypography>
-              <VxTypography color="text.secondary" variant="body2">
-                {t('pages.projectDocuments.description', { defaultValue: 'Search across project documents by project, category, date, status, and tags.' })}
-              </VxTypography>
-            </VxBox>
+      <PageHeader
+        title={t('pages.projectDocuments.title', { defaultValue: 'Document Center' })}
+        description={t('pages.projectDocuments.description', { defaultValue: 'Search across project documents by project, category, date, status, and tags.' })}
+        primaryAction={(
             <VxStack direction="row" spacing={1}>
               {canUpload ? (
                 <VxButton
@@ -173,8 +163,9 @@ export default function ProjectDocumentsPage() {
                 {t('common.refresh', { defaultValue: 'Refresh' })}
               </VxButton>
             </VxStack>
-          </VxStack>
-
+        )}
+        filters={(
+          <VxStack spacing={2}>
           <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1}>
             <VxTextField
               select
@@ -247,9 +238,15 @@ export default function ProjectDocumentsPage() {
               sx={{ minWidth: 180 }}
             />
           </VxStack>
+          </VxStack>
+        )}
+      />
 
+      <PageFeedback error={error} success={feedback} onRetry={error ? () => void load() : undefined} />
+
+      <PageBody>
           {isLoading ? (
-            <VxBox sx={{ display: 'grid', placeItems: 'center', py: 6 }}><VxCircularProgress size={28} /></VxBox>
+            <PageLoadingState label={t('common.labels.loading')} />
           ) : (
             <VxTableContainer>
               <VxTable size="small">
@@ -333,8 +330,7 @@ export default function ProjectDocumentsPage() {
               </VxTable>
             </VxTableContainer>
           )}
-        </VxStack>
-      </VxPaper>
+      </PageBody>
 
       <VxDialog open={uploadDialogOpen} onClose={isUploading ? undefined : () => setUploadDialogOpen(false)} maxWidth="sm" fullWidth>
         <VxDialogTitle>{t('pages.projectDetails.documentsPanel.upload', { defaultValue: 'Upload document' })}</VxDialogTitle>

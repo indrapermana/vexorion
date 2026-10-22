@@ -3,7 +3,6 @@ import {
   DeleteOutlineRoundedIcon,
   EditRoundedIcon,
   VxAlert,
-  VxBox,
   VxButton,
   VxChip,
   VxDataGrid,
@@ -24,6 +23,7 @@ import { Link as RouterLink, useParams } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
 import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
+import { PageFeedback, PageHeader, PageLoadingState, PageMetric } from '../../../components/PagePrimitives'
 import {
   ApiError,
   createProjectParty,
@@ -535,21 +535,18 @@ export default function ProjectDetailsPage() {
 
   return (
     <VxStack spacing={3}>
-      <VxPaper elevation={0} className="panel-card">
-        <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ justifyContent: 'space-between' }}>
-          <VxBox>
-            <VxTypography variant="h4" sx={{ mb: 1 }}>{project?.name || t('pages.projectDetails.title')}</VxTypography>
-            <VxTypography color="text.secondary">{t('pages.projectDetails.projectIdLabel')}: {projectId}</VxTypography>
-          </VxBox>
+      <PageHeader
+        title={project?.name || t('pages.projectDetails.title')}
+        description={`${t('pages.projectDetails.projectIdLabel')}: ${projectId}`}
+        primaryAction={(
           <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
             <VxButton variant="outlined" component={RouterLink} to="/projects">{t('pages.projectDetails.backButton')}</VxButton>
             {canManage ? <VxButton variant="contained" onClick={() => setIsProjectEditorOpen(true)} disabled={!projectFormState}>{t('pages.projectDetails.editButton')}</VxButton> : null}
           </VxStack>
-        </VxStack>
-      </VxPaper>
+        )}
+      />
 
-      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
-      {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+      <PageFeedback error={error} success={feedback} onRetry={error ? () => void loadProjectContext() : undefined} />
       {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.projects.manage} /> : null}
 
       <VxPaper elevation={0} className="panel-card">
@@ -564,7 +561,7 @@ export default function ProjectDetailsPage() {
 
       {isLoading ? (
         <VxPaper elevation={0} className="panel-card">
-          <VxTypography color="text.secondary">{t('common.labels.loading')}</VxTypography>
+          <PageLoadingState label={t('common.labels.loading')} />
         </VxPaper>
       ) : null}
 
@@ -573,24 +570,9 @@ export default function ProjectDetailsPage() {
           <VxStack spacing={2}>
             <VxTypography variant="h6">{t('pages.projectDetails.overview.title')}</VxTypography>
             <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-              <VxPaper elevation={0} className="products-metric-card" sx={{ flex: 1 }}>
-                <VxBox>
-                  <VxTypography variant="body2" color="text.secondary">{t('pages.projectDetails.overview.projectNumber')}</VxTypography>
-                  <VxTypography variant="h6">{project.projectNumber}</VxTypography>
-                </VxBox>
-              </VxPaper>
-              <VxPaper elevation={0} className="products-metric-card" sx={{ flex: 1 }}>
-                <VxBox>
-                  <VxTypography variant="body2" color="text.secondary">{t('pages.projectDetails.overview.category')}</VxTypography>
-                  <VxTypography variant="h6">{categoryLabelById.get(project.projectCategoryId) || project.projectCategoryId}</VxTypography>
-                </VxBox>
-              </VxPaper>
-              <VxPaper elevation={0} className="products-metric-card" sx={{ flex: 1 }}>
-                <VxBox>
-                  <VxTypography variant="body2" color="text.secondary">{t('pages.projectDetails.overview.status')}</VxTypography>
-                  <VxTypography variant="h6">{t(getStatusLabelKey(project.status))}</VxTypography>
-                </VxBox>
-              </VxPaper>
+              <PageMetric label={t('pages.projectDetails.overview.projectNumber')} value={project.projectNumber} />
+              <PageMetric label={t('pages.projectDetails.overview.category')} value={categoryLabelById.get(project.projectCategoryId) || project.projectCategoryId} />
+              <PageMetric label={t('pages.projectDetails.overview.status')} value={t(getStatusLabelKey(project.status))} />
             </VxStack>
             <VxTypography color="text.secondary">{t('pages.projectDetails.overview.governmentAgency')}: {project.governmentAgency || t('common.labels.none')}</VxTypography>
             <VxTypography color="text.secondary">{t('pages.projectDetails.overview.submissionReference')}: {project.submissionReference || t('common.labels.none')}</VxTypography>

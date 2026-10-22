@@ -1,4 +1,4 @@
-import { VxAlert, VxBox, VxStack } from '@vexorion/ui'
+import { VxBox, VxPageFeedback, VxStack } from '@vexorion/ui'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTransactionHistory } from '../app/transactionHistoryStore'
@@ -554,17 +554,15 @@ export default function PosPage() {
         onOpenReturn={() => setIsReturnOpen(true)}
       />
 
-      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
-      {checkoutResult ? (
-        <VxAlert severity="success">
-          {t('page.checkoutCompleted', {
+      <VxPageFeedback
+        error={error}
+        success={checkoutResult ? t('page.checkoutCompleted', {
             orderId: checkoutResult.orderId,
             invoiceId: checkoutResult.invoiceId,
             shipment: checkoutResult.shipmentId ? `, Shipment: ${checkoutResult.shipmentId}` : '',
             payment: checkoutResult.paymentId ? `, Payment: ${checkoutResult.paymentId}` : '',
-          })}
-        </VxAlert>
-      ) : null}
+          }) : undefined}
+      />
 
       <VxBox sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', lg: '3fr 1fr' } }}>
         <ProductCatalogPanel

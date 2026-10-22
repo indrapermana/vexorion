@@ -1,4 +1,4 @@
-import { VxAlert, VxBox, VxButton, VxChip, VxStack, VxSwitch, VxTypography } from '@vexorion/ui'
+import { VxBox, VxButton, VxChip, VxPageBody, VxPageFeedback, VxPageHeader, VxStack, VxSwitch, VxTypography } from '@vexorion/ui'
 import { lazy, useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { VxCard } from '@vexorion/ui'
@@ -110,21 +110,15 @@ export default function TenantManagementPage() {
   return (
     <VxBox sx={{ p: 3 }}>
       <VxStack spacing={3}>
-        <VxBox sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <VxBox>
-            <VxTypography variant="h4" sx={{ mb: 1 }}>
-              {t('pages.tenantManagement.loadingTools')}
-            </VxTypography>
-            <VxTypography variant="body2" color="textSecondary">
-              {t('pages.tenantManagement.description')}
-            </VxTypography>
-          </VxBox>
-          {canManage ? (
+        <VxPageHeader
+          title={t('pages.tenantManagement.loadingTools')}
+          description={t('pages.tenantManagement.description')}
+          action={canManage ? (
             <VxButton variant="contained" onClick={() => setIsOnboardingOpen(true)}>
               New Tenant
             </VxButton>
-          ) : null}
-        </VxBox>
+          ) : undefined}
+        />
 
         <VxStack direction="row" spacing={2}>
           <VxCard title={t('pages.tenantManagement.metrics.rows')} className="panel-card" style={{ flex: 1 }}>
@@ -152,17 +146,22 @@ export default function TenantManagementPage() {
           </VxStack>
         </VxStack>
 
-        {error && <VxAlert severity="error">{error}</VxAlert>}
-        {!canManage ? <VxAlert severity="info">You have view-only access. Tenant creation, editing, and removal require the tenants.manage permission.</VxAlert> : null}
-
-        <TenantDataGrid
-          rows={visibleTenants}
-          isLoading={isLoading}
-          onEdit={handleEdit}
-          onRemove={handleTenantRemove}
-          effectiveAccessByTenantId={effectiveAccessByTenantId}
-          canManage={canManage}
+        <VxPageFeedback
+          error={error}
+          info={!canManage ? 'You have view-only access. Tenant creation, editing, and removal require the tenants.manage permission.' : undefined}
+          onRetry={() => void loadTenants()}
         />
+
+        <VxPageBody>
+          <TenantDataGrid
+            rows={visibleTenants}
+            isLoading={isLoading}
+            onEdit={handleEdit}
+            onRemove={handleTenantRemove}
+            effectiveAccessByTenantId={effectiveAccessByTenantId}
+            canManage={canManage}
+          />
+        </VxPageBody>
 
         {canManage ? (
           <>

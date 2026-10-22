@@ -1,5 +1,5 @@
 import type React from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { RolePermissionsResponse } from '../../types/api/roles'
@@ -113,11 +113,11 @@ describe('UsersPage dialogs', () => {
     await screen.findByText('alice')
     await user.click(screen.getByRole('button', { name: /add tenant user/i }))
 
-    await user.type(screen.getByLabelText('Username'), 'bob')
-    await user.type(screen.getByLabelText('Email'), 'bob@example.com')
-    await user.type(screen.getByLabelText('Password'), 'topsecret123')
-    await user.type(screen.getByLabelText('First name'), 'Bob')
-    await user.type(screen.getByLabelText('Last name'), 'Builder')
+    fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'bob' } })
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'bob@example.com' } })
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'topsecret123' } })
+    fireEvent.change(screen.getByLabelText('First name'), { target: { value: 'Bob' } })
+    fireEvent.change(screen.getByLabelText('Last name'), { target: { value: 'Builder' } })
     await user.click(screen.getByRole('button', { name: 'Create User' }))
 
     await waitFor(() => {

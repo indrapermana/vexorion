@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
-import { VxAlert, VxButton, VxFormControlLabel, VxMenuItem, VxPaper, VxStack, VxSwitch, VxTextField, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxButton, VxFormControlLabel, VxMenuItem, VxPaper, VxStack, VxSwitch, VxTextField } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
 import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
+import { PageFeedback, PageHeader } from '../../../components/PagePrimitives'
 import { useCurrency } from '../../../app/CurrencyContext'
 import { ApiError, getCompanies, getCompany, updateCompany } from '../../../lib/api'
 import type { CompanyDetailsResponse, CompanyListItemResponse, UpdateCompanyRequest } from '../../../types/api'
@@ -159,15 +160,9 @@ export default function ConfigCompanyPage() {
 
   return (
     <VxStack spacing={3}>
-      <VxPaper elevation={0} className="panel-card">
-        <VxTypography variant="h4" sx={{ mb: 1 }}>{t('config.company.title')}</VxTypography>
-        <VxTypography color="text.secondary">
-          {t('config.company.description')}
-        </VxTypography>
-      </VxPaper>
+      <PageHeader title={t('config.company.title')} description={t('config.company.description')} />
 
-      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
-      {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+      <PageFeedback error={error} success={feedback} onRetry={error ? () => void loadCompanies() : undefined} />
       {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.organization.manage} /> : null}
 
       <VxPaper elevation={0} className="panel-card">

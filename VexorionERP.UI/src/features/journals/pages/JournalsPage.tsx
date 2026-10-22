@@ -1,9 +1,10 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
-import { VxAlert, VxBox, VxButton, VxCircularProgress, VxDivider, VxMenuItem, VxPaper, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxDivider, VxMenuItem, VxPaper, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
 import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
+import { PageBody, PageFeedback, PageHeader, PageLoadingState } from '../../../components/PagePrimitives'
 import {
   ApiError,
   getAccounts,
@@ -19,11 +20,8 @@ import { getAccountTypeLabel } from '../../../types/ui'
 const JournalDataGrid = lazy(() => import('../components/JournalDataGrid'))
 
 function JournalSurfaceFallback() {
-  return (
-    <VxBox sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
-      <VxCircularProgress size={28} />
-    </VxBox>
-  )
+  const { t } = useTranslation()
+  return <PageLoadingState label={t('common.labels.loading')} />
 }
 
 export default function JournalsPage() {
@@ -168,13 +166,9 @@ export default function JournalsPage() {
 
   return (
     <VxStack spacing={3}>
-      <VxPaper elevation={0} className="panel-card">
-        <VxTypography variant="h4" sx={{ mb: 1 }}>{t('pages.journals.title')}</VxTypography>
-        <VxTypography color="text.secondary">{t('pages.journals.description')}</VxTypography>
-      </VxPaper>
+      <PageHeader title={t('pages.journals.title')} description={t('pages.journals.description')} />
 
-      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
-      {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+      <PageFeedback error={error} success={feedback} onRetry={error ? () => void loadData() : undefined} />
       {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.billing.manage} /> : null}
 
       {canManage ? <VxPaper elevation={0} className="panel-card">
@@ -230,11 +224,11 @@ export default function JournalsPage() {
         </VxStack>
       </VxPaper> : null}
 
-      <VxPaper elevation={0} className="panel-card products-grid-panel">
+      <PageBody>
         <Suspense fallback={<JournalSurfaceFallback />}>
           <JournalDataGrid rows={journals} isLoading={isLoading} onOpen={(journalId) => void handleOpenJournal(journalId)} />
         </Suspense>
-      </VxPaper>
+      </PageBody>
 
       {selectedJournal ? (
         <VxPaper elevation={0} className="panel-card">

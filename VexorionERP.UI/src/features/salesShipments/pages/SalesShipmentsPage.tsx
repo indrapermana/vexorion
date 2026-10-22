@@ -1,6 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
-import { LocalShippingRoundedIcon } from '@vexorion/ui'
-import { VxAlert, VxAutocomplete, VxBox, VxButton, VxCircularProgress, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxAutocomplete, VxButton, VxStack, VxTextField } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
@@ -10,6 +9,7 @@ import type { SalesOrderListItemResponse, SalesShipmentListItemResponse } from '
 import type { SalesShipmentGridRow } from '../../../types/ui'
 import { Permissions } from '../../../app/authorization'
 import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
+import { PageBody, PageFeedback, PageHeader, PageLoadingState } from '../../../components/PagePrimitives'
 
 const SalesShipmentDataGrid = lazy(() => import('../components/SalesShipmentDataGrid'))
 const CreateSalesShipmentDialog = lazy(() => import('../components/CreateSalesShipmentDialog'))
@@ -18,12 +18,7 @@ function LoadingFallback() {
   const { t } = useTranslation()
 
   return (
-    <VxBox sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
-      <VxStack spacing={1.5} sx={{ alignItems: 'center' }}>
-        <VxCircularProgress size={28} />
-        <VxTypography color="text.secondary">{t('pages.salesShipments.loadingTools')}</VxTypography>
-      </VxStack>
-    </VxBox>
+    <PageLoadingState label={t('pages.salesShipments.loadingTools')} />
   )
 }
 
@@ -119,55 +114,36 @@ export default function SalesShipmentsPage() {
 
   return (
     <VxStack spacing={2}>
-      <VxStack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-        <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-          <LocalShippingRoundedIcon color="primary" />
-          <VxTypography variant="h6">{t('nav.routeTitles.salesShipments')}</VxTypography>
-        </VxStack>
-        {canManage ? <VxButton
-          variant="contained"
-          size="small"
-          disabled={!selectedOrder}
-          onClick={() => setIsCreateOpen(true)}
-        >
-          {t('pages.salesShipments.newButton')}
-        </VxButton> : null}
-      </VxStack>
-
-      <VxAutocomplete
-        options={salesOrders}
-        value={selectedOrder}
-        onChange={(_, value) => {
-          setSelectedOrder(value)
-          setFeedback(null)
-          setError(null)
-        }}
-        getOptionLabel={(o) => o.orderNumber}
-        isOptionEqualToValue={(a, b) => a.id === b.id}
-        renderInput={(params) => (
-          <VxTextField {...params} label={t('pages.salesShipments.filterByOrder')} size="small" />
+      <PageHeader
+        title={t('nav.routeTitles.salesShipments')}
+        description={t('pages.salesShipments.navigateFromOrder')}
+        primaryAction={canManage ? <VxButton variant="contained" disabled={!selectedOrder} onClick={() => setIsCreateOpen(true)}>{t('pages.salesShipments.newButton')}</VxButton> : null}
+        filters={(
+          <VxAutocomplete
+            options={salesOrders}
+            value={selectedOrder}
+            onChange={(_, value) => {
+              setSelectedOrder(value)
+              setFeedback(null)
+              setError(null)
+            }}
+            getOptionLabel={(o) => o.orderNumber}
+            isOptionEqualToValue={(a, b) => a.id === b.id}
+            renderInput={(params) => <VxTextField {...params} label={t('pages.salesShipments.filterByOrder')} size="small" />}
+            sx={{ maxWidth: 320 }}
+          />
         )}
-        sx={{ maxWidth: 320 }}
       />
 
-      {!selectedOrder && (
-        <VxAlert severity="info">{t('pages.salesShipments.selectOrderPrompt')}</VxAlert>
-      )}
-
-      {error && <VxAlert severity="error" onClose={() => setError(null)}>{error}</VxAlert>}
-      {feedback && <VxAlert severity="success" onClose={() => setFeedback(null)}>{feedback}</VxAlert>}
+      <PageFeedback error={error} success={feedback} info={!selectedOrder ? t('pages.salesShipments.selectOrderPrompt') : null} onRetry={error && selectedOrder ? () => void loadShipments() : undefined} />
       {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.sales.manage} /> : null}
 
       {selectedOrder && (
-        <Suspense fallback={<LoadingFallback />}>
-          <SalesShipmentDataGrid
-            rows={rows}
-            isLoading={isLoading}
-            onPost={handlePost}
-            onDelete={handleDelete}
-            canManage={canManage}
-          />
-        </Suspense>
+        <PageBody>
+          <Suspense fallback={<LoadingFallback />}>
+            <SalesShipmentDataGrid rows={rows} isLoading={isLoading} onPost={handlePost} onDelete={handleDelete} canManage={canManage} />
+          </Suspense>
+        </PageBody>
       )}
 
       {canManage && isCreateOpen && selectedOrder && (

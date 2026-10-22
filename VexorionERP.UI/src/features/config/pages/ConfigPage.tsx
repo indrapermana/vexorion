@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
 import { canAccessMainRoute } from '../../../app/authorization'
+import { PageHeader } from '../../../components/PagePrimitives'
 
 const configCards = [
   {
@@ -57,12 +58,7 @@ export default function ConfigPage() {
 
   return (
     <VxStack spacing={3}>
-      <VxPaper elevation={0} className="panel-card">
-        <VxTypography variant="h4" sx={{ mb: 1 }}>{t('configCenter.title')}</VxTypography>
-        <VxTypography color="text.secondary">
-          {t('configCenter.subtitle')}
-        </VxTypography>
-      </VxPaper>
+      <PageHeader title={t('configCenter.title')} description={t('configCenter.subtitle')} />
 
       <VxBox
         sx={{

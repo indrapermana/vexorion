@@ -1,6 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
 import { AddRoundedIcon, PaidRoundedIcon, ReceiptLongRoundedIcon, ScheduleRoundedIcon } from '@vexorion/ui'
-import { VxAlert, VxBox, VxButton, VxCircularProgress, VxPaper, VxStack, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxButton, VxStack } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
@@ -12,6 +12,7 @@ import type { CustomerPaymentDetailsResponse, CustomerPaymentListItemResponse, S
 import type { CustomerPaymentFormValues, CustomerPaymentGridRow } from '../../../types/ui'
 import { Permissions } from '../../../app/authorization'
 import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
+import { PageBody, PageFeedback, PageHeader, PageLoadingState, PageMetric } from '../../../components/PagePrimitives'
 
 const CustomerPaymentDataGrid = lazy(() => import('../components/CustomerPaymentDataGrid'))
 const CustomerPaymentEditorDialog = lazy(() => import('../components/CustomerPaymentEditorDialog'))
@@ -20,12 +21,7 @@ function CustomerPaymentSurfaceFallback() {
   const { t } = useTranslation()
 
   return (
-    <VxBox sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
-      <VxStack spacing={1.5} sx={{ alignItems: 'center' }}>
-        <VxCircularProgress size={28} />
-        <VxTypography color="text.secondary">{t('pages.customerPayments.loadingTools')}</VxTypography>
-      </VxStack>
-    </VxBox>
+    <PageLoadingState label={t('pages.customerPayments.loadingTools')} />
   )
 }
 
@@ -139,52 +135,37 @@ export default function CustomerPaymentsPage() {
 
   return (
     <VxStack spacing={3}>
-      <VxPaper elevation={0} className="panel-card">
-        <VxStack direction={{ xs: 'column', lg: 'row' }} spacing={2.5} sx={{ justifyContent: 'space-between' }}>
-          <VxBox>
-            <VxTypography variant="h4" sx={{ mb: 1 }}>{t('nav.routeTitles.customerPayments')}</VxTypography>
-            <VxTypography color="text.secondary">{t('pages.customerPayments.description')}</VxTypography>
-          </VxBox>
-          <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
-            {canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog} disabled={!outstandingInvoices.length}>
-              {t('pages.customerPayments.recordPayment')}
-            </VxButton> : null}
-            <VxPaper elevation={0} className="products-metric-card">
-              <PaidRoundedIcon fontSize="small" />
-              <VxBox>
-                <VxTypography variant="body2" color="text.secondary">{t('pages.customerPayments.metrics.payments')}</VxTypography>
-                <VxTypography variant="h6">{payments.length}</VxTypography>
-              </VxBox>
-            </VxPaper>
-            <VxPaper elevation={0} className="products-metric-card">
-              <ScheduleRoundedIcon fontSize="small" />
-              <VxBox>
-                <VxTypography variant="body2" color="text.secondary">{t('pages.customerPayments.metrics.outstandingInvoices')}</VxTypography>
-                <VxTypography variant="h6">{outstandingInvoices.length}</VxTypography>
-              </VxBox>
-            </VxPaper>
-            <VxPaper elevation={0} className="products-metric-card">
-              <ReceiptLongRoundedIcon fontSize="small" />
-              <VxBox>
-                <VxTypography variant="body2" color="text.secondary">{t('pages.customerPayments.metrics.openBalance')}</VxTypography>
-                <VxTypography variant="h6">{formatMoney(outstandingInvoices.reduce((sum, invoice) => sum + invoice.balanceDue, 0))}</VxTypography>
-              </VxBox>
-            </VxPaper>
-          </VxStack>
-        </VxStack>
-      </VxPaper>
+      <PageHeader
+        title={t('nav.routeTitles.customerPayments')}
+        description={t('pages.customerPayments.description')}
+        primaryAction={canManage ? (
+          <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog} disabled={!outstandingInvoices.length}>
+            {t('pages.customerPayments.recordPayment')}
+          </VxButton>
+        ) : null}
+        metrics={(
+          <>
+            <PageMetric icon={<PaidRoundedIcon fontSize="small" />} label={t('pages.customerPayments.metrics.payments')} value={payments.length} />
+            <PageMetric icon={<ScheduleRoundedIcon fontSize="small" />} label={t('pages.customerPayments.metrics.outstandingInvoices')} value={outstandingInvoices.length} />
+            <PageMetric icon={<ReceiptLongRoundedIcon fontSize="small" />} label={t('pages.customerPayments.metrics.openBalance')} value={formatMoney(outstandingInvoices.reduce((sum, invoice) => sum + invoice.balanceDue, 0))} />
+          </>
+        )}
+      />
 
       {customersError ? <VxAlert severity="warning">{customersError}</VxAlert> : null}
-      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
-      {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
-      {!outstandingInvoices.length ? <VxAlert severity="info">{t('pages.customerPayments.noOutstandingInvoices')}</VxAlert> : null}
+      <PageFeedback
+        error={error}
+        success={feedback}
+        info={!outstandingInvoices.length ? t('pages.customerPayments.noOutstandingInvoices') : null}
+        onRetry={error ? () => void loadData() : undefined}
+      />
       {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.sales.manage} /> : null}
 
-      <VxPaper elevation={0} className="panel-card products-grid-panel">
+      <PageBody>
         <Suspense fallback={<CustomerPaymentSurfaceFallback />}>
           <CustomerPaymentDataGrid rows={rows} isLoading={isLoading} onSelectPayment={setSelectedPaymentId} />
         </Suspense>
-      </VxPaper>
+      </PageBody>
 
       <DocumentsPanel sourceType="CustomerPaymentReceipt" sourceEntityId={selectedPaymentId} />
 

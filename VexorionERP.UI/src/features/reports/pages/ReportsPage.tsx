@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { VxAlert, VxButton, VxFormControlLabel, VxLink, VxMenuItem, VxPaper, VxStack, VxSwitch, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
+import { PageFeedback, PageHeader } from '../../../components/PagePrimitives'
 import {
   ApiError,
   buildAccountDrillDownExportUrl,
@@ -110,9 +111,11 @@ export default function ReportsPage() {
 
   return (
     <VxStack spacing={3}>
-      <VxPaper elevation={0} className="panel-card">
-        <VxTypography variant="h4" sx={{ mb: 1 }}>{t('nav.routeTitles.reports')}</VxTypography>
-        <VxTypography color="text.secondary" sx={{ mb: 2 }}>{t('pages.reports.description')}</VxTypography>
+      <PageHeader
+        title={t('nav.routeTitles.reports')}
+        description={t('pages.reports.description')}
+        filters={(
+          <VxStack spacing={1}>
         <VxTextField
           type="date"
           label={t('pages.reports.asOfDate')}
@@ -125,9 +128,11 @@ export default function ReportsPage() {
           control={<VxSwitch checked={showComparative} onChange={(event) => setShowComparative(event.target.checked)} />}
           label={t('pages.reports.comparativePriorPeriod')}
         />
-      </VxPaper>
+          </VxStack>
+        )}
+      />
 
-      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
+      <PageFeedback error={error} onRetry={error ? () => void loadReports() : undefined} />
 
       <VxPaper elevation={0} className="panel-card">
         <VxTypography variant="h6" sx={{ mb: 1 }}>A/R Aging Summary</VxTypography>

@@ -1,5 +1,5 @@
 import { AddRoundedIcon, LockResetRoundedIcon, ManageAccountsRoundedIcon, PersonOffRoundedIcon, VxDataGrid, type VxGridColDef } from '@vexorion/ui'
-import { VxAlert, VxBox, VxButton, VxChip, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxMenuItem, VxPaper, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxChip, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxMenuItem, VxPageBody, VxPageFeedback, VxPageHeader, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { assignUserRoles, createUser, getRoles, getTenants, getUsersForAdmin, resetUserPassword, setUserStatus } from '../lib/api'
 import type { CreateUserRequest, UserListItemResponse } from '../types/api/users'
@@ -245,12 +245,15 @@ export default function UsersPage() {
 
   return (
     <VxStack spacing={2.5}>
-      <VxPaper className="hero-panel" elevation={0}>
-        <VxStack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-          <VxBox>
-            <VxTypography variant="h5">Users</VxTypography>
-            <VxTypography color="text.secondary">Manage tenant users, roles, password reset, and activation status.</VxTypography>
-          </VxBox>
+      <VxPageHeader
+        title="Users"
+        description="Manage tenant users, roles, password reset, and activation status."
+        action={canManage && canViewRoles ? (
+          <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setIsCreateOpen(true)}>
+            Add Tenant User
+          </VxButton>
+        ) : undefined}
+        filters={canViewTenants ? (
           <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} sx={{ alignItems: { xs: 'stretch', sm: 'center' } }}>
             {canViewTenants ? <VxTextField
               select
@@ -265,18 +268,18 @@ export default function UsersPage() {
                 <VxMenuItem key={tenant.id} value={tenant.id}>{tenant.name} ({tenant.code})</VxMenuItem>
               ))}
             </VxTextField> : null}
-            {canManage && canViewRoles ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setIsCreateOpen(true)}>
-              Add Tenant User
-            </VxButton> : null}
           </VxStack>
-        </VxStack>
-      </VxPaper>
+        ) : undefined}
+      />
 
-      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
-      {!canManage ? <VxAlert severity="info">You have view-only access. User creation, role assignment, password reset, and status changes require the users.manage permission.</VxAlert> : null}
+      <VxPageFeedback
+        error={error}
+        info={!canManage ? 'You have view-only access. User creation, role assignment, password reset, and status changes require the users.manage permission.' : undefined}
+        onRetry={() => void Promise.all([loadMetadata(), loadUsers()])}
+      />
       {canManage && !canViewRoles ? <VxAlert severity="info">Role data is unavailable without roles.view, so user creation and role assignment are hidden.</VxAlert> : null}
 
-      <VxPaper className="panel-card products-grid-panel" elevation={0}>
+      <VxPageBody>
         <VxDataGrid
           rows={users}
           columns={columns}
@@ -285,7 +288,7 @@ export default function UsersPage() {
           pageSizeOptions={[10, 25, 50]}
           sx={{ height: 620 }}
         />
-      </VxPaper>
+      </VxPageBody>
 
       <VxDialog open={canManage && canViewRoles && isCreateOpen} onClose={() => setIsCreateOpen(false)} maxWidth="sm" fullWidth>
         <VxDialogTitle>Add Tenant User</VxDialogTitle>

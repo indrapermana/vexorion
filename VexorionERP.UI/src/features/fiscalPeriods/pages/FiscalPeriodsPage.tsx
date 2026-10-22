@@ -1,10 +1,11 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
 import { AddRoundedIcon } from '@vexorion/ui'
-import { VxAlert, VxBox, VxButton, VxCircularProgress, VxPaper, VxStack, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxButton, VxStack } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
 import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
+import { PageBody, PageFeedback, PageHeader, PageLoadingState } from '../../../components/PagePrimitives'
 import { ApiError, closeFiscalPeriod, getFiscalPeriods, reopenFiscalPeriod } from '../../../lib/api'
 import type { FiscalPeriodDetailsResponse, FiscalPeriodListItemResponse } from '../../../types/api'
 
@@ -12,11 +13,8 @@ const FiscalPeriodDataGrid = lazy(() => import('../components/FiscalPeriodDataGr
 const FiscalPeriodEditorDialog = lazy(() => import('../components/FiscalPeriodEditorDialog'))
 
 function FiscalPeriodSurfaceFallback() {
-  return (
-    <VxBox sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
-      <VxCircularProgress size={28} />
-    </VxBox>
-  )
+  const { t } = useTranslation()
+  return <PageLoadingState label={t('common.labels.loading')} />
 }
 
 export default function FiscalPeriodsPage() {
@@ -110,21 +108,16 @@ export default function FiscalPeriodsPage() {
 
   return (
     <VxStack spacing={3}>
-      <VxPaper elevation={0} className="panel-card">
-        <VxStack direction={{ xs: 'column', lg: 'row' }} spacing={2.5} sx={{ justifyContent: 'space-between' }}>
-          <VxBox>
-            <VxTypography variant="h4" sx={{ mb: 1 }}>{t('nav.routeTitles.fiscalPeriods')}</VxTypography>
-            <VxTypography color="text.secondary">{t('pages.fiscalPeriods.description')}</VxTypography>
-          </VxBox>
-          {canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate}>{t('pages.fiscalPeriods.newButton')}</VxButton> : null}
-        </VxStack>
-      </VxPaper>
+      <PageHeader
+        title={t('nav.routeTitles.fiscalPeriods')}
+        description={t('pages.fiscalPeriods.description')}
+        primaryAction={canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate}>{t('pages.fiscalPeriods.newButton')}</VxButton> : null}
+      />
 
-      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
-      {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+      <PageFeedback error={error} success={feedback} onRetry={error ? () => void loadData() : undefined} />
       {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.billing.manage} /> : null}
 
-      <VxPaper elevation={0} className="panel-card products-grid-panel">
+      <PageBody>
         <Suspense fallback={<FiscalPeriodSurfaceFallback />}>
           <FiscalPeriodDataGrid
             rows={rows}
@@ -135,7 +128,7 @@ export default function FiscalPeriodsPage() {
             canManage={canManage}
           />
         </Suspense>
-      </VxPaper>
+      </PageBody>
 
       {canManage && isEditorOpen ? (
         <Suspense fallback={<FiscalPeriodSurfaceFallback />}>

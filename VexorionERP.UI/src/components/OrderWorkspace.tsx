@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
-import { VxAlert, VxBox, VxButton, VxPaper, VxStack, VxTypography } from '@vexorion/ui'
-import { useTranslation } from 'react-i18next'
+import { VxAlert, VxButton, VxStack } from '@vexorion/ui'
+import { PageBody, PageHeader, PageMetric } from './PagePrimitives'
 
 type MetricCard = {
   icon: ReactNode
@@ -39,35 +39,22 @@ export default function OrderWorkspace({
   editor,
   deleteDialog,
 }: OrderWorkspaceProps) {
-  useTranslation()
   return (
     <VxStack spacing={3}>
-      <VxPaper elevation={0} className="panel-card">
-        <VxStack direction={{ xs: 'column', lg: 'row' }} spacing={2.5} sx={{ justifyContent: 'space-between' }}>
-          <VxBox>
-            <VxTypography variant="h4" sx={{ mb: 1 }}>{title}</VxTypography>
-            <VxTypography color="text.secondary">{description}</VxTypography>
-          </VxBox>
-          <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
-            {showCreate ? <VxButton variant="contained" onClick={onCreate} disabled={disableCreate}>{createLabel}</VxButton> : null}
-            {metrics.map((metric) => (
-              <VxPaper key={metric.label} elevation={0} className="products-metric-card">
-                {metric.icon}
-                <VxBox>
-                  <VxTypography variant="body2" color="text.secondary">{metric.label}</VxTypography>
-                  <VxTypography variant="h6">{metric.value}</VxTypography>
-                </VxBox>
-              </VxPaper>
-            ))}
-          </VxStack>
-        </VxStack>
-      </VxPaper>
+      <PageHeader
+        title={title}
+        description={description}
+        primaryAction={showCreate ? <VxButton variant="contained" onClick={onCreate} disabled={disableCreate}>{createLabel}</VxButton> : null}
+        metrics={metrics.map((metric) => (
+          <PageMetric key={metric.label} icon={metric.icon} label={metric.label} value={metric.value} />
+        ))}
+      />
 
       {alerts.map((alert) => <VxAlert key={`${alert.severity}:${alert.message}`} severity={alert.severity}>{alert.message}</VxAlert>)}
 
-      <VxPaper elevation={0} className="panel-card products-grid-panel">
+      <PageBody>
         {grid}
-      </VxPaper>
+      </PageBody>
 
       {linesPanel}
       {documentsPanel}

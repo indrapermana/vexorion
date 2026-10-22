@@ -15,7 +15,6 @@ import {
   VxGridActionsCellItem,
   type VxGridColDef,
   VxMenuItem,
-  VxPaper,
   VxStack,
   VxTextField,
   VxTypography,
@@ -25,6 +24,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
 import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
+import { PageBody, PageFeedback, PageHeader, PageMetric } from '../../../components/PagePrimitives'
 import {
   ApiError,
   createProject,
@@ -404,27 +404,14 @@ export default function ProjectsPage() {
 
   return (
     <VxStack spacing={3}>
-      <VxPaper elevation={0} className="panel-card">
-        <VxStack direction={{ xs: 'column', lg: 'row' }} spacing={2.5} sx={{ justifyContent: 'space-between' }}>
-          <VxBox>
-            <VxTypography variant="h4" sx={{ mb: 1 }}>{t('pages.projects.title')}</VxTypography>
-            <VxTypography color="text.secondary">{t('pages.projects.description')}</VxTypography>
-          </VxBox>
-          <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
-            {canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog}>
+      <PageHeader
+        title={t('pages.projects.title')}
+        description={t('pages.projects.description')}
+        primaryAction={canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog}>
               {t('pages.projects.addButton')}
             </VxButton> : null}
-            <VxPaper elevation={0} className="products-metric-card">
-              <VxBox>
-                <VxTypography variant="body2" color="text.secondary">{t('pages.projects.countMetric')}</VxTypography>
-                <VxTypography variant="h6">{projects.length}</VxTypography>
-              </VxBox>
-            </VxPaper>
-          </VxStack>
-        </VxStack>
-      </VxPaper>
-
-      <VxPaper elevation={0} className="panel-card">
+        metrics={<PageMetric label={t('pages.projects.countMetric')} value={projects.length} />}
+        filters={(
         <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
           <VxTextField
             select
@@ -453,13 +440,13 @@ export default function ProjectsPage() {
             {t('pages.projects.filters.apply')}
           </VxButton>
         </VxStack>
-      </VxPaper>
+        )}
+      />
 
-      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
-      {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+      <PageFeedback error={error} success={feedback} onRetry={error ? () => void loadProjects() : undefined} />
       {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.projects.manage} /> : null}
 
-      <VxPaper elevation={0} className="panel-card" sx={{ p: 0 }}>
+      <PageBody>
         <ProjectsDataGrid
           rows={projects}
           isLoading={isLoading}
@@ -468,7 +455,7 @@ export default function ProjectsPage() {
           onDelete={(project) => setDeleteTarget(project)}
           canManage={canManage}
         />
-      </VxPaper>
+      </PageBody>
 
       <VxDialog open={canManage && isEditorOpen} onClose={() => setIsEditorOpen(false)} maxWidth="md" fullWidth>
         <VxDialogTitle>{editingProject ? t('pages.projects.dialogs.edit') : t('pages.projects.dialogs.create')}</VxDialogTitle>

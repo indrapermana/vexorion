@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
 import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
+import { PageFeedback, PageHeader } from '../../../components/PagePrimitives'
 import {
   ApiError,
   assignUserRoles,
@@ -177,15 +178,9 @@ export default function ConfigUsersPage() {
 
   return (
     <VxStack spacing={3}>
-      <VxPaper elevation={0} className="panel-card">
-        <VxTypography variant="h4" sx={{ mb: 1 }}>{t('config.users.title')}</VxTypography>
-        <VxTypography color="text.secondary">
-          {t('config.users.description')}
-        </VxTypography>
-      </VxPaper>
+      <PageHeader title={t('config.users.title')} description={t('config.users.description')} />
 
-      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
-      {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+      <PageFeedback error={error} success={feedback} onRetry={error ? () => void loadData() : undefined} />
       {!canManageUsers ? <PermissionReadOnlyAlert requiredPermission={Permissions.users.manage} /> : null}
       {!canManageRoles ? <PermissionReadOnlyAlert requiredPermission={Permissions.roles.manage} /> : null}
       {canManageRoles && !canViewRoles ? <PermissionReadOnlyAlert requiredPermission={Permissions.roles.view} /> : null}

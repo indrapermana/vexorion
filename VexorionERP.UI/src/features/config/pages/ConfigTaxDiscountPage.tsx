@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
 import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
+import { PageFeedback, PageHeader } from '../../../components/PagePrimitives'
 import {
   ApiError,
   createTaxCode,
@@ -186,15 +187,9 @@ export default function ConfigTaxDiscountPage() {
 
   return (
     <VxStack spacing={3}>
-      <VxPaper elevation={0} className="panel-card">
-        <VxTypography variant="h4" sx={{ mb: 1 }}>{t('config.taxDiscount.title')}</VxTypography>
-        <VxTypography color="text.secondary">
-          {t('config.taxDiscount.description')}
-        </VxTypography>
-      </VxPaper>
+      <PageHeader title={t('config.taxDiscount.title')} description={t('config.taxDiscount.description')} />
 
-      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
-      {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+      <PageFeedback error={error} success={feedback} onRetry={error ? () => void loadData() : undefined} />
       {!canManageTax ? <PermissionReadOnlyAlert requiredPermission={Permissions.accounting.manage} /> : null}
       {!canManageDiscount ? <PermissionReadOnlyAlert requiredPermission={Permissions.organization.manage} /> : null}
 

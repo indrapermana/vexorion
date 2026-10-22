@@ -1,6 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
 import { AddRoundedIcon, Groups2RoundedIcon, LocalAtmRoundedIcon, MailOutlineRoundedIcon } from '@vexorion/ui'
-import { VxAlert, VxBox, VxButton, VxCircularProgress, VxPaper, VxStack, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxButton, VxStack } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { ApiError, deleteSupplier, getSuppliers } from '../../../lib/api'
@@ -8,6 +8,7 @@ import type { SupplierDetailsResponse, SupplierListItemResponse } from '../../..
 import type { SupplierDialogMode } from '../../../types/ui'
 import { Permissions } from '../../../app/authorization'
 import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
+import { PageBody, PageFeedback, PageHeader, PageLoadingState, PageMetric } from '../../../components/PagePrimitives'
 
 const SupplierEditorDialog = lazy(() => import('../components/SupplierEditorDialog'))
 const SupplierDataGrid = lazy(() => import('../components/SupplierDataGrid'))
@@ -17,12 +18,7 @@ function SupplierSurfaceFallback() {
   const { t } = useTranslation()
 
   return (
-    <VxBox sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
-      <VxStack spacing={1.5} sx={{ alignItems: 'center' }}>
-        <VxCircularProgress size={28} />
-        <VxTypography color="text.secondary">{t('pages.suppliers.loadingTools')}</VxTypography>
-      </VxStack>
-    </VxBox>
+    <PageLoadingState label={t('pages.suppliers.loadingTools')} />
   )
 }
 
@@ -122,30 +118,27 @@ export default function SuppliersPage() {
 
   return (
     <VxStack spacing={3}>
-      <VxPaper elevation={0} className="panel-card">
-        <VxStack direction={{ xs: 'column', lg: 'row' }} spacing={2.5} sx={{ justifyContent: 'space-between' }}>
-          <VxBox>
-            <VxTypography variant="h4" sx={{ mb: 1 }}>{t('nav.routeTitles.suppliers')}</VxTypography>
-            <VxTypography color="text.secondary">{t('pages.suppliers.description')}</VxTypography>
-          </VxBox>
-          <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
-            {canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog}>{t('pages.suppliers.newButton')}</VxButton> : null}
-            <VxPaper elevation={0} className="products-metric-card"><Groups2RoundedIcon fontSize="small" /><VxBox><VxTypography variant="body2" color="text.secondary">{t('pages.suppliers.metrics.rows')}</VxTypography><VxTypography variant="h6">{suppliers.length}</VxTypography></VxBox></VxPaper>
-            <VxPaper elevation={0} className="products-metric-card"><MailOutlineRoundedIcon fontSize="small" /><VxBox><VxTypography variant="body2" color="text.secondary">{t('pages.common.withEmail')}</VxTypography><VxTypography variant="h6">{suppliers.filter((supplier) => Boolean(supplier.email)).length}</VxTypography></VxBox></VxPaper>
-            <VxPaper elevation={0} className="products-metric-card"><LocalAtmRoundedIcon fontSize="small" /><VxBox><VxTypography variant="body2" color="text.secondary">{t('pages.suppliers.metrics.active')}</VxTypography><VxTypography variant="h6">{suppliers.filter((supplier) => supplier.isActive).length}</VxTypography></VxBox></VxPaper>
-          </VxStack>
-        </VxStack>
-      </VxPaper>
+      <PageHeader
+        title={t('nav.routeTitles.suppliers')}
+        description={t('pages.suppliers.description')}
+        primaryAction={canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog}>{t('pages.suppliers.newButton')}</VxButton> : null}
+        metrics={(
+          <>
+            <PageMetric icon={<Groups2RoundedIcon fontSize="small" />} label={t('pages.suppliers.metrics.rows')} value={suppliers.length} />
+            <PageMetric icon={<MailOutlineRoundedIcon fontSize="small" />} label={t('pages.common.withEmail')} value={suppliers.filter((supplier) => Boolean(supplier.email)).length} />
+            <PageMetric icon={<LocalAtmRoundedIcon fontSize="small" />} label={t('pages.suppliers.metrics.active')} value={suppliers.filter((supplier) => supplier.isActive).length} />
+          </>
+        )}
+      />
 
-      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
-      {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+      <PageFeedback error={error} success={feedback} onRetry={error ? () => void loadSuppliers() : undefined} />
       {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.suppliers.manage} /> : null}
 
-      <VxPaper elevation={0} className="panel-card products-grid-panel">
+      <PageBody>
         <Suspense fallback={<SupplierSurfaceFallback />}>
           <SupplierDataGrid rows={suppliers} isLoading={isLoading} onEdit={openEditDialog} onDelete={setDeleteTarget} canManage={canManage} />
         </Suspense>
-      </VxPaper>
+      </PageBody>
 
       {canManage && isEditorOpen ? (
         <Suspense fallback={<SupplierSurfaceFallback />}>

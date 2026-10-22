@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
-import { VxAlert, VxChip, VxPaper, VxStack, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxChip, VxStack, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
+import { PageBody, PageFeedback, PageHeader } from '../../../components/PagePrimitives'
 import { ApiError, getRolePermissions } from '../../../lib/api'
 import type { RolePermissionsResponse } from '../../../types/api'
 
@@ -40,16 +41,11 @@ export default function ConfigRolesPage() {
 
   return (
     <VxStack spacing={3}>
-      <VxPaper elevation={0} className="panel-card">
-        <VxTypography variant="h4" sx={{ mb: 1 }}>{t('config.roles.title')}</VxTypography>
-        <VxTypography color="text.secondary">
-          {t('config.roles.description')}
-        </VxTypography>
-      </VxPaper>
+      <PageHeader title={t('config.roles.title')} description={t('config.roles.description')} />
 
-      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
+      <PageFeedback error={error} onRetry={error ? () => void loadRoles() : undefined} />
 
-      <VxPaper elevation={0} className="panel-card">
+      <PageBody>
         <VxTable size="small">
           <VxTableHead>
             <VxTableRow>
@@ -72,7 +68,7 @@ export default function ConfigRolesPage() {
             ))}
           </VxTableBody>
         </VxTable>
-      </VxPaper>
+      </PageBody>
     </VxStack>
   )
 }

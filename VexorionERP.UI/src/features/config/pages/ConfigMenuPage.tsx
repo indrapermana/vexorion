@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
 import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
+import { PageFeedback, PageHeader } from '../../../components/PagePrimitives'
 import { ApiError, getTenantPreferences, updateMenuConfiguration } from '../../../lib/api'
 import { getHiddenMenuLinks, saveHiddenMenuLinks } from '../../../lib/menuConfig'
 import { configurableMenuItems } from '../menuItems'
@@ -117,19 +118,16 @@ export default function ConfigMenuPage() {
 
   return (
     <VxStack spacing={3}>
-      <VxPaper elevation={0} className="panel-card">
-        <VxTypography variant="h4" sx={{ mb: 1 }}>{t('config.menu.title')}</VxTypography>
-        <VxTypography color="text.secondary" sx={{ mb: 2 }}>
-          {t('config.menu.description')}
-        </VxTypography>
-        {canManage ? <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+      <PageHeader
+        title={t('config.menu.title')}
+        description={t('config.menu.description')}
+        primaryAction={canManage ? <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
           <VxButton variant="contained" onClick={() => void save()} disabled={isSaving}>{t('config.menu.saveChanges')}</VxButton>
           <VxButton variant="outlined" onClick={() => void reset()} disabled={isSaving}>{t('config.menu.resetDefaults')}</VxButton>
         </VxStack> : null}
-      </VxPaper>
+      />
 
-      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
-      {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+      <PageFeedback error={error} success={feedback} onRetry={error ? () => void loadPreference() : undefined} />
       {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.organization.manage} /> : null}
 
       {Object.entries(groupedItems).map(([section, items]) => (

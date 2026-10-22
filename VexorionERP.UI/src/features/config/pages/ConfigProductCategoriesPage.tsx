@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
-import { VxAlert, VxButton, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxIconButton, VxPaper, VxStack, VxSwitch, VxTable, VxTableBody, VxTableCell, VxTableContainer, VxTableHead, VxTableRow, VxTextField, VxTooltip, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxButton, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxIconButton, VxStack, VxSwitch, VxTable, VxTableBody, VxTableCell, VxTableContainer, VxTableHead, VxTableRow, VxTextField, VxTooltip, VxTypography } from '@vexorion/ui'
 import { AddIcon, DeleteIcon, EditIcon } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
 import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
+import { PageBody, PageFeedback, PageHeader } from '../../../components/PagePrimitives'
 import {
   ApiError,
   createProductCategory,
@@ -116,27 +117,22 @@ export default function ConfigProductCategoriesPage() {
 
   return (
     <VxStack spacing={3}>
-      <VxPaper elevation={0} className="panel-card">
-        <VxStack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <VxTypography variant="h4" sx={{ mb: 1 }}>{t('config.productCategories.title')}</VxTypography>
-            <VxTypography color="text.secondary">{t('config.productCategories.description')}</VxTypography>
-          </div>
-          {canManage ? <VxButton
+      <PageHeader
+        title={t('config.productCategories.title')}
+        description={t('config.productCategories.description')}
+        primaryAction={canManage ? <VxButton
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => { setCreateName(''); setCreateOpen(true) }}
           >
             {t('config.productCategories.addButton')}
           </VxButton> : null}
-        </VxStack>
-      </VxPaper>
+      />
 
-      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
-      {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+      <PageFeedback error={error} success={feedback} onRetry={error ? () => void loadCategories() : undefined} />
       {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.products.manage} /> : null}
 
-      <VxPaper elevation={0} className="panel-card" sx={{ p: 0 }}>
+      <PageBody>
         <VxTableContainer>
           <VxTable size="small">
             <VxTableHead>
@@ -183,7 +179,7 @@ export default function ConfigProductCategoriesPage() {
             </VxTableBody>
           </VxTable>
         </VxTableContainer>
-      </VxPaper>
+      </PageBody>
 
       {/* Create VxDialog */}
       <VxDialog open={canManage && createOpen} onClose={() => setCreateOpen(false)} maxWidth="xs" fullWidth>

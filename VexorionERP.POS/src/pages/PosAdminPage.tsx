@@ -1,5 +1,5 @@
-import { AdminPanelSettingsRoundedIcon, ArrowBackRoundedIcon } from '@vexorion/ui'
-import { VxAlert, VxBox, VxButton, VxChip, VxCircularProgress, VxPaper, VxStack, VxSwitch, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTypography } from '@vexorion/ui'
+import { ArrowBackRoundedIcon } from '@vexorion/ui'
+import { VxButton, VxChip, VxPageBody, VxPageFeedback, VxPageHeader, VxPageLoading, VxStack, VxSwitch, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTypography } from '@vexorion/ui'
 import { useCallback, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -45,34 +45,22 @@ export default function PosAdminPage() {
         setPendingByUserId((prev) => ({ ...prev, [targetUser.id]: false }))
       }
     },
-    [queryClient],
+    [queryClient, t],
   )
 
   return (
     <VxStack spacing={2} sx={{ p: 2 }}>
-      <VxPaper sx={{ p: 2 }}>
-        <VxStack direction="row" spacing={1.5} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-          <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-            <AdminPanelSettingsRoundedIcon color="primary" />
-            <VxBox>
-              <VxTypography variant="h5">{t('admin.title')}</VxTypography>
-              <VxTypography variant="body2" color="text.secondary">{t('admin.subtitle')}</VxTypography>
-            </VxBox>
-          </VxStack>
-          <VxButton component={Link} to="/" startIcon={<ArrowBackRoundedIcon />} variant="outlined">
+      <VxPageHeader title={t('admin.title')} description={t('admin.subtitle')} action={(
+        <VxButton component={Link} to="/" startIcon={<ArrowBackRoundedIcon />} variant="outlined">
             {t('admin.back')}
-          </VxButton>
-        </VxStack>
-      </VxPaper>
+        </VxButton>
+      )} />
 
-      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
-      {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+      <VxPageFeedback error={error} success={feedback} />
 
-      <VxPaper sx={{ p: 2 }}>
+      <VxPageBody>
         {usersQuery.isLoading ? (
-          <VxBox sx={{ display: 'grid', placeItems: 'center', py: 4 }}>
-            <VxCircularProgress size={28} />
-          </VxBox>
+          <VxPageLoading />
         ) : (
           <VxTable size="small">
             <VxTableHead>
@@ -134,7 +122,7 @@ export default function PosAdminPage() {
             </VxTableBody>
           </VxTable>
         )}
-      </VxPaper>
+      </VxPageBody>
     </VxStack>
   )
 }

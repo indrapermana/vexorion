@@ -2,15 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AddRoundedIcon, Groups2RoundedIcon } from '@vexorion/ui'
 import {
   VxAlert,
-  VxBox,
   VxButton,
-  VxCircularProgress,
   VxDialog,
   VxDialogActions,
   VxDialogContent,
   VxDialogTitle,
   VxMenuItem,
-  VxPaper,
   VxStack,
   VxTable,
   VxTableBody,
@@ -25,6 +22,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
 import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
+import { PageBody, PageFeedback, PageHeader, PageLoadingState, PageMetric } from '../../../components/PagePrimitives'
 import {
   ApiError,
   createEmployee,
@@ -206,32 +204,19 @@ export default function EmployeesPage() {
 
   return (
     <VxStack spacing={3}>
-      <VxPaper elevation={0} className="panel-card">
-        <VxStack direction={{ xs: 'column', lg: 'row' }} spacing={2.5} sx={{ justifyContent: 'space-between' }}>
-          <VxBox>
-            <VxTypography variant="h4" sx={{ mb: 1 }}>{t('nav.routeTitles.employees')}</VxTypography>
-            <VxTypography color="text.secondary">{t('pages.employees.description')}</VxTypography>
-          </VxBox>
-          <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
-            {canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate}>{t('pages.employees.newButton')}</VxButton> : null}
-            <VxPaper elevation={0} className="products-metric-card">
-              <Groups2RoundedIcon fontSize="small" />
-              <VxBox>
-                <VxTypography variant="body2" color="text.secondary">{t('pages.employees.metrics.rows')}</VxTypography>
-                <VxTypography variant="h6">{rows.length}</VxTypography>
-              </VxBox>
-            </VxPaper>
-          </VxStack>
-        </VxStack>
-      </VxPaper>
+      <PageHeader
+        title={t('nav.routeTitles.employees')}
+        description={t('pages.employees.description')}
+        primaryAction={canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate}>{t('pages.employees.newButton')}</VxButton> : null}
+        metrics={<PageMetric icon={<Groups2RoundedIcon fontSize="small" />} label={t('pages.employees.metrics.rows')} value={rows.length} />}
+      />
 
-      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
-      {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+      <PageFeedback error={error} success={feedback} onRetry={error ? () => void loadData() : undefined} />
       {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.organization.manage} /> : null}
 
-      <VxPaper elevation={0} className="panel-card">
+      <PageBody>
         {isLoading ? (
-          <VxBox sx={{ display: 'grid', placeItems: 'center', py: 4 }}><VxCircularProgress size={24} /></VxBox>
+          <PageLoadingState label={t('common.labels.loading')} />
         ) : (
           <VxTableContainer>
             <VxTable size="small">
@@ -274,7 +259,7 @@ export default function EmployeesPage() {
             </VxTable>
           </VxTableContainer>
         )}
-      </VxPaper>
+      </PageBody>
 
       <VxDialog open={canManage && editorOpen} onClose={isSaving ? undefined : closeEditor} maxWidth="md" fullWidth>
         <VxDialogTitle>{editingId ? t('pages.employees.dialogs.edit') : t('pages.employees.dialogs.create')}</VxDialogTitle>

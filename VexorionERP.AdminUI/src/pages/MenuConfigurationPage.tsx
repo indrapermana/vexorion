@@ -1,4 +1,4 @@
-import { VxAlert, VxBox, VxButton, VxChip, VxMenuItem, VxPaper, VxStack, VxSwitch, VxTextField, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxChip, VxMenuItem, VxPageFeedback, VxPageHeader, VxPaper, VxStack, VxSwitch, VxTextField, VxTypography } from '@vexorion/ui'
 import { useEffect, useMemo, useState } from 'react'
 import { getTenantMenuConfiguration, getTenants, updateTenantMenuConfiguration } from '../lib/api'
 import type { TenantListItemResponse } from '../types/api'
@@ -113,16 +113,9 @@ export default function MenuConfigurationPage() {
 
   return (
     <VxStack spacing={2.5}>
-      <VxPaper className="hero-panel" elevation={0}>
-        <VxStack spacing={1}>
-          <VxTypography variant="h5">Menu Configuration</VxTypography>
-          <VxTypography color="text.secondary">
-            Enable or disable tenant app menus per tenant. Configuration is persisted in backend tenant preferences.
-          </VxTypography>
-        </VxStack>
-      </VxPaper>
+      <VxPageHeader title="Menu Configuration" description="Enable or disable tenant app menus per tenant. Configuration is persisted in backend tenant preferences." />
 
-      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
+      <VxPageFeedback error={error} />
       {!canManage ? <VxAlert severity="info">You have view-only access. Saving menu changes requires the tenants.manage permission.</VxAlert> : null}
 
       <VxPaper className="panel-card" elevation={0}>

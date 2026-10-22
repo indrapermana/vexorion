@@ -1,4 +1,4 @@
-import { VxAlert, VxBox, VxChip, VxPaper, VxStack, VxTypography } from '@vexorion/ui'
+import { VxBox, VxChip, VxPageFeedback, VxPageHeader, VxPaper, VxStack, VxTypography } from '@vexorion/ui'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ApartmentRoundedIcon, PersonRoundedIcon, StackedBarChartRoundedIcon, TravelExploreRoundedIcon, VxCard } from '@vexorion/ui'
 import { getTenantTelemetry, getTenants, getUsersForAdmin } from '../lib/api'
@@ -77,12 +77,7 @@ export default function DashboardPage() {
 
   return (
     <VxStack spacing={2.5}>
-      <VxPaper className="hero-panel dashboard-banner" elevation={0}>
-        <VxStack spacing={1}>
-          <VxTypography variant="h5">System Admin Dashboard</VxTypography>
-          <VxTypography color="text.secondary">
-            Snapshot across all tenants and users using backend telemetry and tenant analytics.
-          </VxTypography>
+      <VxPageHeader title="System Admin Dashboard" description="Snapshot across all tenants and users using backend telemetry and tenant analytics." filters={(
           <VxStack direction="row" spacing={1}>
             <VxChip
               label="Last 7 days"
@@ -97,10 +92,9 @@ export default function DashboardPage() {
               onClick={() => setRangeDays(30)}
             />
           </VxStack>
-        </VxStack>
-      </VxPaper>
+      )} />
 
-      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
+      <VxPageFeedback error={error} />
 
       <VxBox sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', md: '1fr 1fr', xl: 'repeat(4, 1fr)' } }}>
         <VxBox>
