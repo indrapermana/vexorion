@@ -3,6 +3,8 @@ import { AddRoundedIcon } from '@vexorion/ui'
 import { VxAlert, VxBox, VxButton, VxCircularProgress, VxPaper, VxStack, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
+import { Permissions } from '../../../app/authorization'
+import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 import { ApiError, closeFiscalPeriod, getFiscalPeriods, reopenFiscalPeriod } from '../../../lib/api'
 import type { FiscalPeriodDetailsResponse, FiscalPeriodListItemResponse } from '../../../types/api'
 
@@ -19,7 +21,8 @@ function FiscalPeriodSurfaceFallback() {
 
 export default function FiscalPeriodsPage() {
   const { t } = useTranslation()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
+  const canManage = user?.permissions.includes(Permissions.billing.manage) ?? false
   const [rows, setRows] = useState<FiscalPeriodListItemResponse[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -51,6 +54,7 @@ export default function FiscalPeriodsPage() {
   }, [loadData])
 
   const openCreate = () => {
+    if (!canManage) return
     setFeedback(null)
     setEditorMode('create')
     setSelectedId(null)
@@ -58,6 +62,7 @@ export default function FiscalPeriodsPage() {
   }
 
   const openEdit = (fiscalPeriodId: string) => {
+    if (!canManage) return
     setFeedback(null)
     setEditorMode('edit')
     setSelectedId(fiscalPeriodId)
@@ -72,6 +77,7 @@ export default function FiscalPeriodsPage() {
   }
 
   const handleClosePeriod = async (row: FiscalPeriodListItemResponse) => {
+    if (!canManage) return
     setFeedback(null)
     setError(null)
     try {
@@ -85,6 +91,7 @@ export default function FiscalPeriodsPage() {
   }
 
   const handleReopenPeriod = async (row: FiscalPeriodListItemResponse) => {
+    if (!canManage) return
     setFeedback(null)
     setError(null)
     try {
@@ -109,12 +116,13 @@ export default function FiscalPeriodsPage() {
             <VxTypography variant="h4" sx={{ mb: 1 }}>{t('nav.routeTitles.fiscalPeriods')}</VxTypography>
             <VxTypography color="text.secondary">{t('pages.fiscalPeriods.description')}</VxTypography>
           </VxBox>
-          <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate}>{t('pages.fiscalPeriods.newButton')}</VxButton>
+          {canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate}>{t('pages.fiscalPeriods.newButton')}</VxButton> : null}
         </VxStack>
       </VxPaper>
 
       {error ? <VxAlert severity="error">{error}</VxAlert> : null}
       {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+      {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.billing.manage} /> : null}
 
       <VxPaper elevation={0} className="panel-card products-grid-panel">
         <Suspense fallback={<FiscalPeriodSurfaceFallback />}>
@@ -124,11 +132,12 @@ export default function FiscalPeriodsPage() {
             onEdit={openEdit}
             onClosePeriod={(row) => void handleClosePeriod(row)}
             onReopenPeriod={(row) => void handleReopenPeriod(row)}
+            canManage={canManage}
           />
         </Suspense>
       </VxPaper>
 
-      {isEditorOpen ? (
+      {canManage && isEditorOpen ? (
         <Suspense fallback={<FiscalPeriodSurfaceFallback />}>
           <FiscalPeriodEditorDialog open={isEditorOpen} mode={editorMode} fiscalPeriodId={selectedId} onClose={() => setIsEditorOpen(false)} onSaved={(period, mode) => void handleSaved(period, mode)} />
         </Suspense>

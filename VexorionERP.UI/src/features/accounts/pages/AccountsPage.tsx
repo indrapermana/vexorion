@@ -3,6 +3,8 @@ import { AddRoundedIcon } from '@vexorion/ui'
 import { VxAlert, VxBox, VxButton, VxCircularProgress, VxPaper, VxStack, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
+import { Permissions } from '../../../app/authorization'
+import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 import { ApiError, deleteAccount, getAccounts } from '../../../lib/api'
 import type { AccountDetailsResponse, AccountListItemResponse } from '../../../types/api'
 
@@ -19,7 +21,8 @@ function AccountSurfaceFallback() {
 
 export default function AccountsPage() {
   const { t } = useTranslation()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
+  const canManage = user?.permissions.includes(Permissions.billing.manage) ?? false
   const [rows, setRows] = useState<AccountListItemResponse[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -51,6 +54,7 @@ export default function AccountsPage() {
   }, [loadData])
 
   const openCreate = () => {
+    if (!canManage) return
     setFeedback(null)
     setEditorMode('create')
     setSelectedId(null)
@@ -58,6 +62,7 @@ export default function AccountsPage() {
   }
 
   const openEdit = (accountId: string) => {
+    if (!canManage) return
     setFeedback(null)
     setEditorMode('edit')
     setSelectedId(accountId)
@@ -65,6 +70,7 @@ export default function AccountsPage() {
   }
 
   const handleDelete = async (row: AccountListItemResponse) => {
+    if (!canManage) return
     if (!window.confirm(`Delete account ${row.code}?`)) {
       return
     }
@@ -100,20 +106,21 @@ export default function AccountsPage() {
             <VxTypography variant="h4" sx={{ mb: 1 }}>{t('nav.routeTitles.accounts')}</VxTypography>
             <VxTypography color="text.secondary">{t('pages.accounts.description')}</VxTypography>
           </VxBox>
-          <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate}>{t('pages.accounts.newButton')}</VxButton>
+          {canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate}>{t('pages.accounts.newButton')}</VxButton> : null}
         </VxStack>
       </VxPaper>
 
       {error ? <VxAlert severity="error">{error}</VxAlert> : null}
       {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+      {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.billing.manage} /> : null}
 
       <VxPaper elevation={0} className="panel-card products-grid-panel">
         <Suspense fallback={<AccountSurfaceFallback />}>
-          <AccountDataGrid rows={rows} isLoading={isLoading} onEdit={openEdit} onDelete={handleDelete} />
+          <AccountDataGrid rows={rows} isLoading={isLoading} onEdit={openEdit} onDelete={handleDelete} canManage={canManage} />
         </Suspense>
       </VxPaper>
 
-      {isEditorOpen ? (
+      {canManage && isEditorOpen ? (
         <Suspense fallback={<AccountSurfaceFallback />}>
           <AccountEditorDialog open={isEditorOpen} mode={editorMode} accountId={selectedId} onClose={() => setIsEditorOpen(false)} onSaved={(account, mode) => void handleSaved(account, mode)} />
         </Suspense>

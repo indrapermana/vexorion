@@ -8,9 +8,10 @@ type AccountDataGridProps = {
   isLoading: boolean
   onEdit: (accountId: string) => void
   onDelete: (row: AccountGridRow) => void
+  canManage?: boolean
 }
 
-export default function AccountDataGrid({ rows, isLoading, onEdit, onDelete }: AccountDataGridProps) {
+export default function AccountDataGrid({ rows, isLoading, onEdit, onDelete, canManage = true }: AccountDataGridProps) {
   useTranslation()
   const columns: VxGridColDef<AccountGridRow>[] = [
     { field: 'code', headerName: 'Code', minWidth: 120, flex: 0.5 },
@@ -51,10 +52,10 @@ export default function AccountDataGrid({ rows, isLoading, onEdit, onDelete }: A
       type: 'actions',
       headerName: 'Actions',
       minWidth: 120,
-      getActions: ({ row }) => [
+      getActions: ({ row }) => canManage ? [
         <VxGridActionsCellItem key={`edit-${row.id}`} icon={<EditRoundedIcon />} label="Edit" onClick={() => onEdit(row.id)} showInMenu={false} />,
         <VxGridActionsCellItem key={`delete-${row.id}`} icon={<DeleteOutlineRoundedIcon />} label="Delete" onClick={() => onDelete(row)} showInMenu={false} />,
-      ],
+      ] : [],
     },
   ]
 

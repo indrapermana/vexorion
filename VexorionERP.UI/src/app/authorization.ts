@@ -47,7 +47,7 @@ export const mainRouteAccess: ReadonlyArray<MainRouteAccess> = [
   { match: (path) => path === '/products' || path === '/config/product-categories', requirement: { allOf: [Permissions.products.view] }, actionRequirement: { allOf: [Permissions.products.manage] } },
   { match: (path) => ['/inventory-adjustments', '/stock-counts', '/stock-transfers', '/warehouses'].includes(path), requirement: { allOf: [Permissions.inventory.view] }, actionRequirement: { allOf: [Permissions.inventory.manage] } },
   { match: (path) => ['/accounts', '/fiscal-periods', '/journals'].includes(path), requirement: { allOf: [Permissions.billing.view] }, actionRequirement: { allOf: [Permissions.billing.manage] } },
-  { match: (path) => path === '/config/tax-discount', requirement: { allOf: [Permissions.accounting.view, Permissions.organization.view] }, actionRequirement: { allOf: [Permissions.accounting.manage, Permissions.organization.manage] } },
+  { match: (path) => path === '/config/tax-discount', requirement: { allOf: [Permissions.accounting.view, Permissions.organization.view] }, actionRequirement: { anyOf: [Permissions.accounting.manage, Permissions.organization.manage] } },
   { match: (path) => path === '/audit-logs', requirement: { allOf: [Permissions.accounting.view] } },
   { match: (path) => path === '/reports', requirement: { allOf: [Permissions.reports.view] } },
   { match: (path) => ['/project-categories', '/projects'].includes(path) || path.startsWith('/projects/'), requirement: { allOf: [Permissions.projects.view] }, actionRequirement: { allOf: [Permissions.projects.manage] } },

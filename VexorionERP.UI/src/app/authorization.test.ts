@@ -19,6 +19,12 @@ describe('main authorization matrix', () => {
     expect(canAccessMainRoute([Permissions.accounting.view], '/config/tax-discount')).toBe(false)
   })
 
+  it('recognizes either scoped manage permission on the combined tax and discount page', () => {
+    expect(canPerformMainRouteActions([Permissions.accounting.manage], '/config/tax-discount')).toBe(true)
+    expect(canPerformMainRouteActions([Permissions.organization.manage], '/config/tax-discount')).toBe(true)
+    expect(canPerformMainRouteActions([Permissions.accounting.view, Permissions.organization.view], '/config/tax-discount')).toBe(false)
+  })
+
   it('accepts either import permission for the import workspace', () => {
     expect(canAccessMainRoute([Permissions.imports.validate], '/config/import-data')).toBe(true)
     expect(canAccessMainRoute([Permissions.imports.history], '/config/import-data')).toBe(true)

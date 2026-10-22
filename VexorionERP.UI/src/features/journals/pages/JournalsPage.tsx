@@ -2,6 +2,8 @@ import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react
 import { VxAlert, VxBox, VxButton, VxCircularProgress, VxDivider, VxMenuItem, VxPaper, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
+import { Permissions } from '../../../app/authorization'
+import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 import {
   ApiError,
   getAccounts,
@@ -26,7 +28,8 @@ function JournalSurfaceFallback() {
 
 export default function JournalsPage() {
   const { t } = useTranslation()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
+  const canManage = user?.permissions.includes(Permissions.billing.manage) ?? false
 
   const [journals, setJournals] = useState<JournalEntryListItemResponse[]>([])
   const [accounts, setAccounts] = useState<AccountListItemResponse[]>([])
@@ -60,7 +63,10 @@ export default function JournalsPage() {
     setIsLoading(true)
     setError(null)
     try {
-      const [journalRows, accountRows] = await Promise.all([getJournals(), getAccounts()])
+      const [journalRows, accountRows] = await Promise.all([
+        getJournals(),
+        canManage ? getAccounts() : Promise.resolve([]),
+      ])
       setJournals(journalRows)
       setAccounts(accountRows)
     } catch (loadError) {
@@ -69,7 +75,7 @@ export default function JournalsPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [isAuthenticated])
+  }, [canManage, isAuthenticated])
 
   useEffect(() => {
     void loadData()
@@ -99,6 +105,7 @@ export default function JournalsPage() {
   }
 
   const handlePostSalesInvoice = async () => {
+    if (!canManage) return
     setError(null)
     setFeedback(null)
     try {
@@ -119,6 +126,7 @@ export default function JournalsPage() {
   }
 
   const handlePostPurchaseInvoice = async () => {
+    if (!canManage) return
     setError(null)
     setFeedback(null)
     try {
@@ -139,6 +147,7 @@ export default function JournalsPage() {
   }
 
   const handleReverseJournal = async () => {
+    if (!canManage) return
     setError(null)
     setFeedback(null)
     try {
@@ -166,8 +175,9 @@ export default function JournalsPage() {
 
       {error ? <VxAlert severity="error">{error}</VxAlert> : null}
       {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+      {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.billing.manage} /> : null}
 
-      <VxPaper elevation={0} className="panel-card">
+      {canManage ? <VxPaper elevation={0} className="panel-card">
         <VxStack spacing={2.5}>
           <VxTypography variant="h6">Post sales invoice</VxTypography>
           <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
@@ -218,7 +228,7 @@ export default function JournalsPage() {
           </VxStack>
           <VxButton variant="outlined" onClick={() => void handleReverseJournal()} disabled={!reverseJournalId}>Reverse journal</VxButton>
         </VxStack>
-      </VxPaper>
+      </VxPaper> : null}
 
       <VxPaper elevation={0} className="panel-card products-grid-panel">
         <Suspense fallback={<JournalSurfaceFallback />}>

@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { VxAlert, VxButton, VxFormControlLabel, VxPaper, VxStack, VxSwitch, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
+import { Permissions } from '../../../app/authorization'
+import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 import {
   ApiError,
   createTaxCode,
@@ -29,7 +31,9 @@ const emptyTaxCodeDraft: TaxCodeDraft = {
 
 export default function ConfigTaxDiscountPage() {
   const { t } = useTranslation()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
+  const canManageTax = user?.permissions.includes(Permissions.accounting.manage) ?? false
+  const canManageDiscount = user?.permissions.includes(Permissions.organization.manage) ?? false
   const [taxCodes, setTaxCodes] = useState<TaxCodeListItemResponse[]>([])
   const [draft, setDraft] = useState<TaxCodeDraft>(emptyTaxCodeDraft)
   const [editTargetId, setEditTargetId] = useState<string | null>(null)
@@ -76,6 +80,7 @@ export default function ConfigTaxDiscountPage() {
   }
 
   const submitTaxCode = async () => {
+    if (!canManageTax) return
     setError(null)
     setFeedback(null)
     setIsSaving(true)
@@ -110,6 +115,7 @@ export default function ConfigTaxDiscountPage() {
   }
 
   const startEdit = (taxCode: TaxCodeListItemResponse) => {
+    if (!canManageTax) return
     setEditTargetId(taxCode.id)
     setDraft({
       code: taxCode.code,
@@ -120,6 +126,7 @@ export default function ConfigTaxDiscountPage() {
   }
 
   const removeTaxCode = async (taxCodeId: string) => {
+    if (!canManageTax) return
     setError(null)
     setFeedback(null)
     setIsSaving(true)
@@ -144,6 +151,7 @@ export default function ConfigTaxDiscountPage() {
   }
 
   const saveDiscounts = async () => {
+    if (!canManageDiscount) return
     setError(null)
     setFeedback(null)
     setIsSaving(true)
@@ -187,8 +195,10 @@ export default function ConfigTaxDiscountPage() {
 
       {error ? <VxAlert severity="error">{error}</VxAlert> : null}
       {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+      {!canManageTax ? <PermissionReadOnlyAlert requiredPermission={Permissions.accounting.manage} /> : null}
+      {!canManageDiscount ? <PermissionReadOnlyAlert requiredPermission={Permissions.organization.manage} /> : null}
 
-      <VxPaper elevation={0} className="panel-card">
+      {canManageTax ? <VxPaper elevation={0} className="panel-card">
         <VxTypography variant="h6" sx={{ mb: 2 }}>{editTargetId ? t('config.taxDiscount.editTaxCode') : t('config.taxDiscount.newTaxCode')}</VxTypography>
         <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ alignItems: { md: 'center' } }}>
           <VxTextField size="small" label={t('config.taxDiscount.fields.code')} value={draft.code} onChange={(event) => setDraft((prev) => ({ ...prev, code: event.target.value }))} />
@@ -208,7 +218,7 @@ export default function ConfigTaxDiscountPage() {
           <VxButton variant="contained" onClick={() => void submitTaxCode()} disabled={isSaving}>{t('config.taxDiscount.saveTaxButton')}</VxButton>
           {editTargetId ? <VxButton variant="outlined" onClick={clearTaxDraft}>{t('config.taxDiscount.cancelEdit')}</VxButton> : null}
         </VxStack>
-      </VxPaper>
+      </VxPaper> : null}
 
       <VxPaper elevation={0} className="panel-card">
         <VxTypography variant="h6" sx={{ mb: 1.5 }}>{t('config.taxDiscount.taxCodesSection')}</VxTypography>
@@ -230,12 +240,12 @@ export default function ConfigTaxDiscountPage() {
                 <VxTableCell>{item.ratePercent}</VxTableCell>
                 <VxTableCell>{item.isInclusive ? t('common.yes') : t('common.no')}</VxTableCell>
                 <VxTableCell align="right">
-                  <VxStack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
+                  {canManageTax ? <VxStack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
                     <VxButton size="small" variant="outlined" onClick={() => startEdit(item)}>{t('common.edit')}</VxButton>
                     <VxButton size="small" color="error" variant="outlined" onClick={() => void removeTaxCode(item.id)}>
                       {t('dialogs.delete')}
                     </VxButton>
-                  </VxStack>
+                  </VxStack> : null}
                 </VxTableCell>
               </VxTableRow>
             ))}
@@ -251,6 +261,7 @@ export default function ConfigTaxDiscountPage() {
             type="number"
             label={t('config.taxDiscount.fields.defaultDiscountPercent')}
             value={discountConfig.defaultDiscountPercent}
+            disabled={!canManageDiscount}
             onChange={(event) => setDiscountConfig((prev) => ({ ...prev, defaultDiscountPercent: Number(event.target.value) }))}
             sx={{ width: 200 }}
           />
@@ -259,6 +270,7 @@ export default function ConfigTaxDiscountPage() {
             type="number"
             label={t('config.taxDiscount.fields.maxManualDiscountPercent')}
             value={discountConfig.maxManualDiscountPercent}
+            disabled={!canManageDiscount}
             onChange={(event) => setDiscountConfig((prev) => ({ ...prev, maxManualDiscountPercent: Number(event.target.value) }))}
             sx={{ width: 220 }}
           />
@@ -266,12 +278,13 @@ export default function ConfigTaxDiscountPage() {
             control={
               <VxSwitch
                 checked={discountConfig.allowNegativeDiscount}
+                disabled={!canManageDiscount}
                 onChange={(event) => setDiscountConfig((prev) => ({ ...prev, allowNegativeDiscount: event.target.checked }))}
               />
             }
             label={t('config.taxDiscount.fields.allowNegativeDiscount')}
           />
-          <VxButton variant="contained" onClick={() => void saveDiscounts()} disabled={isSaving}>{t('config.taxDiscount.saveDiscountButton')}</VxButton>
+          {canManageDiscount ? <VxButton variant="contained" onClick={() => void saveDiscounts()} disabled={isSaving}>{t('config.taxDiscount.saveDiscountButton')}</VxButton> : null}
         </VxStack>
       </VxPaper>
     </VxStack>
