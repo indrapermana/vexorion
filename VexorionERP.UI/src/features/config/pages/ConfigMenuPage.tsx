@@ -2,13 +2,16 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { VxAlert, VxButton, VxCheckbox, VxFormControlLabel, VxPaper, VxStack, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
+import { Permissions } from '../../../app/authorization'
+import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 import { ApiError, getTenantPreferences, updateMenuConfiguration } from '../../../lib/api'
 import { getHiddenMenuLinks, saveHiddenMenuLinks } from '../../../lib/menuConfig'
 import { configurableMenuItems } from '../menuItems'
 
 export default function ConfigMenuPage() {
   const { t } = useTranslation()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
+  const canManage = user?.permissions.includes(Permissions.organization.manage) ?? false
   const [hiddenLinks, setHiddenLinks] = useState<string[]>(() => getHiddenMenuLinks())
   const [error, setError] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
@@ -49,6 +52,7 @@ export default function ConfigMenuPage() {
   )
 
   const toggleHidden = (path: string, hidden: boolean) => {
+    if (!canManage) return
     setFeedback(null)
     setHiddenLinks((previous) => {
       if (hidden) {
@@ -64,6 +68,7 @@ export default function ConfigMenuPage() {
   }
 
   const save = async () => {
+    if (!canManage) return
     setError(null)
     setFeedback(null)
     setIsSaving(true)
@@ -85,6 +90,7 @@ export default function ConfigMenuPage() {
   }
 
   const reset = async () => {
+    if (!canManage) return
     setError(null)
     setFeedback(null)
     setIsSaving(true)
@@ -116,14 +122,15 @@ export default function ConfigMenuPage() {
         <VxTypography color="text.secondary" sx={{ mb: 2 }}>
           {t('config.menu.description')}
         </VxTypography>
-        <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+        {canManage ? <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
           <VxButton variant="contained" onClick={() => void save()} disabled={isSaving}>{t('config.menu.saveChanges')}</VxButton>
           <VxButton variant="outlined" onClick={() => void reset()} disabled={isSaving}>{t('config.menu.resetDefaults')}</VxButton>
-        </VxStack>
+        </VxStack> : null}
       </VxPaper>
 
       {error ? <VxAlert severity="error">{error}</VxAlert> : null}
       {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+      {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.organization.manage} /> : null}
 
       {Object.entries(groupedItems).map(([section, items]) => (
         <VxPaper key={section} elevation={0} className="panel-card">
@@ -134,7 +141,7 @@ export default function ConfigMenuPage() {
               return (
                 <VxFormControlLabel
                   key={item.path}
-                  control={<VxCheckbox checked={!isHidden} onChange={(event) => toggleHidden(item.path, !event.target.checked)} />}
+                  control={<VxCheckbox checked={!isHidden} disabled={!canManage} onChange={(event) => toggleHidden(item.path, !event.target.checked)} />}
                   label={`${item.label} (${item.path})`}
                 />
               )

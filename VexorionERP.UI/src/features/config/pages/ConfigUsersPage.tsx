@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { VxAlert, VxButton, VxChip, VxMenuItem, VxPaper, VxStack, VxSwitch, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
+import { Permissions } from '../../../app/authorization'
+import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 import {
   ApiError,
   assignUserRoles,
@@ -36,7 +38,11 @@ const defaultDraft: CreateUserDraft = {
 
 export default function ConfigUsersPage() {
   const { t } = useTranslation()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
+  const canManageUsers = user?.permissions.includes(Permissions.users.manage) ?? false
+  const canViewRoles = user?.permissions.includes(Permissions.roles.view) ?? false
+  const canManageRoles = user?.permissions.includes(Permissions.roles.manage) ?? false
+  const canEditRoles = canViewRoles && canManageRoles
   const [users, setUsers] = useState<UserListItemResponse[]>([])
   const [roles, setRoles] = useState<RolePermissionsResponse[]>([])
   const [roleDraftByUserId, setRoleDraftByUserId] = useState<Record<string, string[]>>({})
@@ -56,7 +62,10 @@ export default function ConfigUsersPage() {
 
     setError(null)
     try {
-      const [nextUsers, nextRoles] = await Promise.all([getUsers(), getRolePermissions()])
+      const [nextUsers, nextRoles] = await Promise.all([
+        getUsers(),
+        canViewRoles ? getRolePermissions() : Promise.resolve([]),
+      ])
       setUsers(nextUsers)
       setRoles(nextRoles)
       setRoleDraftByUserId(
@@ -72,13 +81,14 @@ export default function ConfigUsersPage() {
         setError(t('config.users.errors.load'))
       }
     }
-  }, [isAuthenticated, t])
+  }, [canViewRoles, isAuthenticated, t])
 
   useEffect(() => {
     void loadData()
   }, [loadData])
 
   const updateRoleDraft = (userId: string, value: unknown) => {
+    if (!canEditRoles) return
     const rolesValue = Array.isArray(value)
       ? value.map((item) => String(item))
       : String(value)
@@ -90,6 +100,7 @@ export default function ConfigUsersPage() {
   }
 
   const saveUserRoles = async (userId: string) => {
+    if (!canEditRoles) return
     setError(null)
     setFeedback(null)
     setIsSaving(true)
@@ -109,6 +120,7 @@ export default function ConfigUsersPage() {
   }
 
   const updateUserStatus = async (user: UserListItemResponse, isActive: boolean) => {
+    if (!canManageUsers) return
     setError(null)
     setFeedback(null)
     setIsSaving(true)
@@ -128,6 +140,7 @@ export default function ConfigUsersPage() {
   }
 
   const submitCreate = async () => {
+    if (!canManageUsers) return
     setError(null)
     setFeedback(null)
     setIsSaving(true)
@@ -173,8 +186,11 @@ export default function ConfigUsersPage() {
 
       {error ? <VxAlert severity="error">{error}</VxAlert> : null}
       {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+      {!canManageUsers ? <PermissionReadOnlyAlert requiredPermission={Permissions.users.manage} /> : null}
+      {!canManageRoles ? <PermissionReadOnlyAlert requiredPermission={Permissions.roles.manage} /> : null}
+      {canManageRoles && !canViewRoles ? <PermissionReadOnlyAlert requiredPermission={Permissions.roles.view} /> : null}
 
-      <VxPaper elevation={0} className="panel-card">
+      {canManageUsers ? <VxPaper elevation={0} className="panel-card">
         <VxTypography variant="h6" sx={{ mb: 2 }}>{t('config.users.createSection')}</VxTypography>
         <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ flexWrap: 'wrap' }}>
           <VxTextField
@@ -229,7 +245,7 @@ export default function ConfigUsersPage() {
           </VxTextField>
           <VxButton variant="contained" disabled={isSaving} onClick={() => void submitCreate()}>{t('config.users.createButton')}</VxButton>
         </VxStack>
-      </VxPaper>
+      </VxPaper> : null}
 
       <VxPaper elevation={0} className="panel-card">
         <VxTypography variant="h6" sx={{ mb: 1.5 }}>{t('config.users.listSection')}</VxTypography>
@@ -264,6 +280,7 @@ export default function ConfigUsersPage() {
                     slotProps={{ select: { multiple: true } }}
                     value={roleDraftByUserId[user.id] ?? user.roles}
                     onChange={(event) => updateRoleDraft(user.id, event.target.value)}
+                    disabled={!canEditRoles}
                     fullWidth
                   >
                     {roleOptions.map((role) => (
@@ -275,13 +292,13 @@ export default function ConfigUsersPage() {
                   <VxSwitch
                     checked={user.isActive}
                     onChange={(event) => void updateUserStatus(user, event.target.checked)}
-                    disabled={isSaving}
+                    disabled={isSaving || !canManageUsers}
                   />
                 </VxTableCell>
                 <VxTableCell align="right">
-                  <VxButton size="small" variant="outlined" disabled={isSaving} onClick={() => void saveUserRoles(user.id)}>
+                  {canEditRoles ? <VxButton size="small" variant="outlined" disabled={isSaving} onClick={() => void saveUserRoles(user.id)}>
                     {t('config.users.saveRolesButton')}
-                  </VxButton>
+                  </VxButton> : null}
                 </VxTableCell>
               </VxTableRow>
             ))}

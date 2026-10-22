@@ -25,6 +25,12 @@ describe('main authorization matrix', () => {
     expect(canPerformMainRouteActions([Permissions.accounting.view, Permissions.organization.view], '/config/tax-discount')).toBe(false)
   })
 
+  it('recognizes user-lifecycle and role-assignment actions independently', () => {
+    expect(canPerformMainRouteActions([Permissions.users.manage], '/config/users')).toBe(true)
+    expect(canPerformMainRouteActions([Permissions.roles.manage], '/config/users')).toBe(true)
+    expect(canPerformMainRouteActions([Permissions.users.view], '/config/users')).toBe(false)
+  })
+
   it('accepts either import permission for the import workspace', () => {
     expect(canAccessMainRoute([Permissions.imports.validate], '/config/import-data')).toBe(true)
     expect(canAccessMainRoute([Permissions.imports.history], '/config/import-data')).toBe(true)

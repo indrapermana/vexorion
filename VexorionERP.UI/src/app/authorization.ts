@@ -54,7 +54,7 @@ export const mainRouteAccess: ReadonlyArray<MainRouteAccess> = [
   { match: (path) => path === '/project-documents', requirement: { allOf: [Permissions.projectDocuments.view] } },
   { match: (path) => ['/employees', '/consultants', '/config/company', '/config/menu'].includes(path), requirement: { allOf: [Permissions.organization.view] }, actionRequirement: { allOf: [Permissions.organization.manage] } },
   { match: (path) => path === '/tenant-relationships', requirement: { allOf: [Permissions.tenants.view] }, actionRequirement: { allOf: [Permissions.tenants.manage] } },
-  { match: (path) => path === '/config/users', requirement: { allOf: [Permissions.users.view] }, actionRequirement: { allOf: [Permissions.users.manage] } },
+  { match: (path) => path === '/config/users', requirement: { allOf: [Permissions.users.view] }, actionRequirement: { anyOf: [Permissions.users.manage, Permissions.roles.manage] } },
   { match: (path) => path === '/config/roles', requirement: { allOf: [Permissions.roles.view] }, actionRequirement: { allOf: [Permissions.roles.manage] } },
   { match: (path) => path === '/config/import-data', requirement: { anyOf: [Permissions.imports.validate, Permissions.imports.history] }, actionRequirement: { allOf: [Permissions.imports.submit] } },
   {

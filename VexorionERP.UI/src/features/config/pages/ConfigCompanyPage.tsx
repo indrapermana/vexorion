@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { VxAlert, VxButton, VxFormControlLabel, VxMenuItem, VxPaper, VxStack, VxSwitch, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
+import { Permissions } from '../../../app/authorization'
+import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 import { useCurrency } from '../../../app/CurrencyContext'
 import { ApiError, getCompanies, getCompany, updateCompany } from '../../../lib/api'
 import type { CompanyDetailsResponse, CompanyListItemResponse, UpdateCompanyRequest } from '../../../types/api'
@@ -42,7 +44,8 @@ function toDraft(details: CompanyDetailsResponse): CompanyDraft {
 
 export default function ConfigCompanyPage() {
   const { t } = useTranslation()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
+  const canManage = user?.permissions.includes(Permissions.organization.manage) ?? false
   const { setCurrencyCode } = useCurrency()
   const [companies, setCompanies] = useState<CompanyListItemResponse[]>([])
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('')
@@ -107,7 +110,7 @@ export default function ConfigCompanyPage() {
   }
 
   const save = async () => {
-    if (!draft || !selectedCompanyId) {
+    if (!canManage || !draft || !selectedCompanyId) {
       return
     }
 
@@ -165,6 +168,7 @@ export default function ConfigCompanyPage() {
 
       {error ? <VxAlert severity="error">{error}</VxAlert> : null}
       {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+      {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.organization.manage} /> : null}
 
       <VxPaper elevation={0} className="panel-card">
         <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ alignItems: { md: 'center' } }}>
@@ -182,13 +186,14 @@ export default function ConfigCompanyPage() {
               </VxMenuItem>
             ))}
           </VxTextField>
-          <VxButton variant="contained" onClick={() => void save()} disabled={!draft || isSaving || !selectedCompanyId}>
+          {canManage ? <VxButton variant="contained" onClick={() => void save()} disabled={!draft || isSaving || !selectedCompanyId}>
             {t('config.company.saveButton')}
-          </VxButton>
+          </VxButton> : null}
         </VxStack>
       </VxPaper>
 
       {draft ? (
+        <fieldset disabled={!canManage} style={{ border: 0, margin: 0, padding: 0 }}>
         <VxPaper elevation={0} className="panel-card">
           <VxStack spacing={1.5}>
             <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
@@ -235,6 +240,7 @@ export default function ConfigCompanyPage() {
             </VxStack>
           </VxStack>
         </VxPaper>
+        </fieldset>
       ) : (
         <VxAlert severity="info">{t('config.company.noRecords')}</VxAlert>
       )}

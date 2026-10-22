@@ -15,9 +15,20 @@ const apiMocks = vi.hoisted(() => ({
   mockValidateImportFile: vi.fn<(importType: string, file: File) => Promise<ImportValidationResultResponse>>(),
   mockSubmitImportJob: vi.fn<(importJobId: string) => Promise<ImportJobStatusResponse>>(),
 }))
+const authState = vi.hoisted(() => ({
+  permissions: ['imports.validate', 'imports.submit', 'imports.history.view'],
+}))
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({
+    t: (key: string, options?: { requiredPermission?: string }) => (
+      key === 'authorization.readOnly' ? `Read only: ${options?.requiredPermission}` : key
+    ),
+  }),
+}))
+
+vi.mock('../../../app/AuthContext', () => ({
+  useAuth: () => ({ user: { permissions: authState.permissions } }),
 }))
 
 vi.mock('../../../lib/api', () => ({
@@ -34,9 +45,20 @@ vi.mock('../components/ImportHistoryPanel', () => ({
 describe('ConfigImportDataPage import flow', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    authState.permissions = ['imports.validate', 'imports.submit', 'imports.history.view']
     // Keep default tabs to avoid remount race while selecting a file in tests.
     apiMocks.mockGetAvailableImportTypes.mockResolvedValue([])
     apiMocks.mockDownloadImportTemplate.mockResolvedValue()
+  })
+
+  it('shows history without starting validation-only requests for a history viewer', async () => {
+    authState.permissions = ['imports.history.view']
+    render(<ConfigImportDataPage />)
+
+    expect(await screen.findByTestId('import-history-panel')).toBeInTheDocument()
+    expect(apiMocks.mockGetAvailableImportTypes).not.toHaveBeenCalled()
+    expect(screen.queryByRole('button', { name: 'config.importData.validate' })).not.toBeInTheDocument()
+    expect(screen.getByText(/imports\.validate/)).toBeInTheDocument()
   })
 
   it('supports happy path: validate then submit successfully', async () => {

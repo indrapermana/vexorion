@@ -3,6 +3,8 @@ import { VxAlert, VxButton, VxDialog, VxDialogActions, VxDialogContent, VxDialog
 import { AddIcon, DeleteIcon, EditIcon } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
+import { Permissions } from '../../../app/authorization'
+import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 import {
   ApiError,
   createProductCategory,
@@ -14,7 +16,8 @@ import type { ProductCategoryListItemResponse } from '../../../types/api'
 
 export default function ConfigProductCategoriesPage() {
   const { t } = useTranslation()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
+  const canManage = user?.permissions.includes(Permissions.products.manage) ?? false
   const [categories, setCategories] = useState<ProductCategoryListItemResponse[]>([])
   const [error, setError] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
@@ -53,6 +56,7 @@ export default function ConfigProductCategoriesPage() {
   }, [loadCategories])
 
   const handleCreate = async () => {
+    if (!canManage) return
     if (!createName.trim()) return
     setCreateLoading(true)
     setError(null)
@@ -71,6 +75,7 @@ export default function ConfigProductCategoriesPage() {
   }
 
   const handleEdit = async () => {
+    if (!canManage) return
     if (!editTarget || !editName.trim()) return
     setEditLoading(true)
     setError(null)
@@ -88,6 +93,7 @@ export default function ConfigProductCategoriesPage() {
   }
 
   const handleDelete = async () => {
+    if (!canManage) return
     if (!deleteTarget) return
     setDeleteLoading(true)
     setError(null)
@@ -116,18 +122,19 @@ export default function ConfigProductCategoriesPage() {
             <VxTypography variant="h4" sx={{ mb: 1 }}>{t('config.productCategories.title')}</VxTypography>
             <VxTypography color="text.secondary">{t('config.productCategories.description')}</VxTypography>
           </div>
-          <VxButton
+          {canManage ? <VxButton
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => { setCreateName(''); setCreateOpen(true) }}
           >
             {t('config.productCategories.addButton')}
-          </VxButton>
+          </VxButton> : null}
         </VxStack>
       </VxPaper>
 
       {error ? <VxAlert severity="error">{error}</VxAlert> : null}
       {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+      {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.products.manage} /> : null}
 
       <VxPaper elevation={0} className="panel-card" sx={{ p: 0 }}>
         <VxTableContainer>
@@ -154,6 +161,7 @@ export default function ConfigProductCategoriesPage() {
                     <VxTableCell>{cat.name}</VxTableCell>
                     <VxTableCell>{cat.isActive ? t('common.yes') : t('common.no')}</VxTableCell>
                     <VxTableCell align="right">
+                      {canManage ? <>
                       <VxTooltip title={t('common.edit')}>
                         <VxIconButton
                           size="small"
@@ -167,6 +175,7 @@ export default function ConfigProductCategoriesPage() {
                           <DeleteIcon fontSize="small" />
                         </VxIconButton>
                       </VxTooltip>
+                      </> : null}
                     </VxTableCell>
                   </VxTableRow>
                 ))
@@ -177,7 +186,7 @@ export default function ConfigProductCategoriesPage() {
       </VxPaper>
 
       {/* Create VxDialog */}
-      <VxDialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="xs" fullWidth>
+      <VxDialog open={canManage && createOpen} onClose={() => setCreateOpen(false)} maxWidth="xs" fullWidth>
         <VxDialogTitle>{t('config.productCategories.createDialog.title')}</VxDialogTitle>
         <VxDialogContent>
           <VxTextField
@@ -200,7 +209,7 @@ export default function ConfigProductCategoriesPage() {
       </VxDialog>
 
       {/* Edit VxDialog */}
-      <VxDialog open={!!editTarget} onClose={() => setEditTarget(null)} maxWidth="xs" fullWidth>
+      <VxDialog open={canManage && !!editTarget} onClose={() => setEditTarget(null)} maxWidth="xs" fullWidth>
         <VxDialogTitle>{t('config.productCategories.editDialog.title')}</VxDialogTitle>
         <VxDialogContent>
           <VxStack spacing={2} sx={{ mt: 1 }}>
@@ -228,7 +237,7 @@ export default function ConfigProductCategoriesPage() {
       </VxDialog>
 
       {/* Delete VxDialog */}
-      <VxDialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
+      <VxDialog open={canManage && !!deleteTarget} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
         <VxDialogTitle>{t('config.productCategories.deleteDialog.title')}</VxDialogTitle>
         <VxDialogContent>
           <VxTypography>

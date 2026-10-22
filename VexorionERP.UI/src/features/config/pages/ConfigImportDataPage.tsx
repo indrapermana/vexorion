@@ -2,6 +2,9 @@ import { CheckCircleOutlineRoundedIcon, CloudUploadRoundedIcon, DownloadRoundedI
 import { VxAlert, VxBox, VxButton, VxChip, VxCircularProgress, VxDivider, VxPaper, VxStack, VxTab, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTabs, VxTypography } from '@vexorion/ui'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useAuth } from '../../../app/AuthContext'
+import { Permissions } from '../../../app/authorization'
+import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 import {
   downloadImportTemplate,
   getAvailableImportTypes,
@@ -67,9 +70,10 @@ function downloadBase64File(base64Content: string, fileName: string, contentType
 interface ImportFlowPanelProps {
   importType: string
   onSubmitted?: () => void
+  canSubmit: boolean
 }
 
-function ImportFlowPanel({ importType, onSubmitted }: ImportFlowPanelProps) {
+function ImportFlowPanel({ importType, onSubmitted, canSubmit }: ImportFlowPanelProps) {
   const { t } = useTranslation()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [flow, setFlow] = useState<FlowState>({ phase: 'idle' })
@@ -113,7 +117,7 @@ function ImportFlowPanel({ importType, onSubmitted }: ImportFlowPanelProps) {
   }
 
   const handleSubmit = async () => {
-    if (flow.phase !== 'validated') return
+    if (!canSubmit || flow.phase !== 'validated') return
     const { result } = flow
     if (result.invalidRows > 0 && result.validRows === 0) return
     setFlow({ phase: 'submitting', result })
@@ -259,7 +263,7 @@ function ImportFlowPanel({ importType, onSubmitted }: ImportFlowPanelProps) {
                 )}
               </VxStack>
 
-              {isValid && (
+              {canSubmit && isValid && (
                 <VxAlert severity="success">{t('config.importData.allRowsValid')}</VxAlert>
               )}
 
@@ -364,11 +368,17 @@ function ImportFlowPanel({ importType, onSubmitted }: ImportFlowPanelProps) {
 
 export default function ConfigImportDataPage() {
   const { t } = useTranslation()
+  const { user } = useAuth()
+  const canValidate = user?.permissions.includes(Permissions.imports.validate) ?? false
+  const canSubmit = user?.permissions.includes(Permissions.imports.submit) ?? false
+  const canViewHistory = user?.permissions.includes(Permissions.imports.history) ?? false
   const [importTypes, setImportTypes] = useState<AvailableImportTypeResponse[]>(defaultImportTypes)
   const [selectedTab, setSelectedTab] = useState(0)
   const [historyRefresh, setHistoryRefresh] = useState(0)
 
   useEffect(() => {
+    if (!canValidate) return
+
     getAvailableImportTypes()
       .then((types) => {
         if (types.length > 0) setImportTypes(types)
@@ -376,7 +386,7 @@ export default function ConfigImportDataPage() {
       .catch(() => {
         // fallback to defaults — no user-visible error since defaults are already shown
       })
-  }, [])
+  }, [canValidate])
 
   const activeImportType = importTypes[selectedTab]?.importType ?? ''
 
@@ -386,6 +396,10 @@ export default function ConfigImportDataPage() {
         <VxTypography variant="h5" sx={{ mb: 1 }}>{t('config.importData.title')}</VxTypography>
         <VxTypography color="text.secondary">{t('config.importData.description')}</VxTypography>
       </VxPaper>
+
+      {!canValidate ? <PermissionReadOnlyAlert requiredPermission={Permissions.imports.validate} /> : null}
+      {canValidate && !canSubmit ? <PermissionReadOnlyAlert requiredPermission={Permissions.imports.submit} /> : null}
+      {!canViewHistory ? <PermissionReadOnlyAlert requiredPermission={Permissions.imports.history} /> : null}
 
       <VxPaper elevation={0} className="panel-card" sx={{ p: 0 }}>
         <VxTabs
@@ -406,17 +420,18 @@ export default function ConfigImportDataPage() {
         <VxBox sx={{ p: 3 }}>
           {activeImportType && (
             <>
-              <ImportFlowPanel
+              {canValidate ? <ImportFlowPanel
                 key={activeImportType}
                 importType={activeImportType}
+                canSubmit={canSubmit}
                 onSubmitted={() => setHistoryRefresh((n) => n + 1)}
-              />
-              <VxDivider sx={{ my: 3 }} />
-              <ImportHistoryPanel
+              /> : null}
+              {canValidate && canViewHistory ? <VxDivider sx={{ my: 3 }} /> : null}
+              {canViewHistory ? <ImportHistoryPanel
                 key={`history-${activeImportType}`}
                 importType={activeImportType}
                 refreshTrigger={historyRefresh}
-              />
+              /> : null}
             </>
           )}
         </VxBox>
