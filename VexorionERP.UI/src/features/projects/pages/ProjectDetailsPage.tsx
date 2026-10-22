@@ -22,6 +22,8 @@ import {
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink, useParams } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
+import { Permissions } from '../../../app/authorization'
+import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 import {
   ApiError,
   createProjectParty,
@@ -74,6 +76,7 @@ type PartyDataGridProps = {
   rows: ProjectPartyListItemResponse[]
   onEdit: (party: ProjectPartyListItemResponse) => void
   onDelete: (partyId: string) => void
+  canManage?: boolean
 }
 
 type HistoryDataGridProps = {
@@ -131,7 +134,7 @@ function getRelationshipTypeKey(type: TenantRelationshipType): string {
   }
 }
 
-function PartyDataGrid({ rows, onEdit, onDelete }: PartyDataGridProps) {
+function PartyDataGrid({ rows, onEdit, onDelete, canManage = true }: PartyDataGridProps) {
   const { t } = useTranslation()
 
   const columns: VxGridColDef<ProjectPartyListItemResponse>[] = [
@@ -186,7 +189,7 @@ function PartyDataGrid({ rows, onEdit, onDelete }: PartyDataGridProps) {
       type: 'actions',
       headerName: t('pages.projectDetails.parties.columns.actions'),
       minWidth: 110,
-      getActions: ({ row }) => [
+      getActions: ({ row }) => canManage ? [
         <VxGridActionsCellItem
           key={`edit-${row.id}`}
           icon={<EditRoundedIcon />}
@@ -201,7 +204,7 @@ function PartyDataGrid({ rows, onEdit, onDelete }: PartyDataGridProps) {
           onClick={() => onDelete(row.id)}
           showInMenu={false}
         />,
-      ],
+      ] : [],
     },
   ]
 
@@ -318,7 +321,8 @@ function HistoryDataGrid({ rows }: HistoryDataGridProps) {
 
 export default function ProjectDetailsPage() {
   const { t } = useTranslation()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
+  const canManage = user?.permissions.includes(Permissions.projects.manage) ?? false
   const { projectId } = useParams()
   const [project, setProject] = useState<ProjectDetailsResponse | null>(null)
   const [categories, setCategories] = useState<ProjectCategoryListItemResponse[]>([])
@@ -406,7 +410,7 @@ export default function ProjectDetailsPage() {
   ]
 
   const handleProjectSave = async () => {
-    if (!projectId || !projectFormState) {
+    if (!canManage || !projectId || !projectFormState) {
       return
     }
 
@@ -438,12 +442,14 @@ export default function ProjectDetailsPage() {
   }
 
   const openCreatePartyDialog = () => {
+    if (!canManage) return
     setEditingParty(null)
     setPartyFormState(initialProjectPartyFormState)
     setIsPartyEditorOpen(true)
   }
 
   const openEditPartyDialog = (party: ProjectPartyListItemResponse) => {
+    if (!canManage) return
     setEditingParty(party)
     setPartyFormState({
       relatedTenantId: party.relatedTenantId,
@@ -459,7 +465,7 @@ export default function ProjectDetailsPage() {
   }
 
   const handlePartySave = async () => {
-    if (!projectId || !partyFormState.relatedTenantId.trim()) {
+    if (!canManage || !projectId || !partyFormState.relatedTenantId.trim()) {
       return
     }
 
@@ -499,7 +505,7 @@ export default function ProjectDetailsPage() {
   }
 
   const handlePartyDelete = async () => {
-    if (!projectId || !deletePartyId) {
+    if (!canManage || !projectId || !deletePartyId) {
       return
     }
 
@@ -537,13 +543,14 @@ export default function ProjectDetailsPage() {
           </VxBox>
           <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
             <VxButton variant="outlined" component={RouterLink} to="/projects">{t('pages.projectDetails.backButton')}</VxButton>
-            <VxButton variant="contained" onClick={() => setIsProjectEditorOpen(true)} disabled={!projectFormState}>{t('pages.projectDetails.editButton')}</VxButton>
+            {canManage ? <VxButton variant="contained" onClick={() => setIsProjectEditorOpen(true)} disabled={!projectFormState}>{t('pages.projectDetails.editButton')}</VxButton> : null}
           </VxStack>
         </VxStack>
       </VxPaper>
 
       {error ? <VxAlert severity="error">{error}</VxAlert> : null}
       {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+      {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.projects.manage} /> : null}
 
       <VxPaper elevation={0} className="panel-card">
         <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1}>
@@ -598,12 +605,13 @@ export default function ProjectDetailsPage() {
         <VxPaper elevation={0} className="panel-card" sx={{ p: 0 }}>
           <VxStack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', px: 2.5, pt: 2.5 }}>
             <VxTypography variant="h6">{t('pages.projectDetails.parties.title')}</VxTypography>
-            <VxButton variant="contained" onClick={openCreatePartyDialog}>{t('pages.projectDetails.parties.addButton')}</VxButton>
+            {canManage ? <VxButton variant="contained" onClick={openCreatePartyDialog}>{t('pages.projectDetails.parties.addButton')}</VxButton> : null}
           </VxStack>
           <PartyDataGrid
             rows={parties}
             onEdit={openEditPartyDialog}
             onDelete={(partyId) => setDeletePartyId(partyId)}
+            canManage={canManage}
           />
         </VxPaper>
       ) : null}
@@ -625,7 +633,7 @@ export default function ProjectDetailsPage() {
         </VxPaper>
       ) : null}
 
-      <VxDialog open={isProjectEditorOpen} onClose={() => setIsProjectEditorOpen(false)} maxWidth="md" fullWidth>
+      <VxDialog open={canManage && isProjectEditorOpen} onClose={() => setIsProjectEditorOpen(false)} maxWidth="md" fullWidth>
         <VxDialogTitle>{t('pages.projectDetails.editButton')}</VxDialogTitle>
         <VxDialogContent>
           {projectFormState ? (
@@ -712,7 +720,7 @@ export default function ProjectDetailsPage() {
         </VxDialogActions>
       </VxDialog>
 
-      <VxDialog open={isPartyEditorOpen} onClose={() => setIsPartyEditorOpen(false)} maxWidth="sm" fullWidth>
+      <VxDialog open={canManage && isPartyEditorOpen} onClose={() => setIsPartyEditorOpen(false)} maxWidth="sm" fullWidth>
         <VxDialogTitle>{editingParty ? t('pages.projectDetails.parties.dialogs.edit') : t('pages.projectDetails.parties.dialogs.add')}</VxDialogTitle>
         <VxDialogContent>
           <VxStack spacing={2} sx={{ mt: 1 }}>
@@ -816,7 +824,7 @@ export default function ProjectDetailsPage() {
         </VxDialogActions>
       </VxDialog>
 
-      <VxDialog open={Boolean(deletePartyId)} onClose={() => setDeletePartyId(null)} maxWidth="xs" fullWidth>
+      <VxDialog open={canManage && Boolean(deletePartyId)} onClose={() => setDeletePartyId(null)} maxWidth="xs" fullWidth>
         <VxDialogTitle>{t('pages.projectDetails.parties.dialogs.delete.title')}</VxDialogTitle>
         <VxDialogContent>
           <VxTypography>{t('pages.projectDetails.parties.dialogs.delete.message')}</VxTypography>

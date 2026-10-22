@@ -26,6 +26,8 @@ import {
 } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
+import { Permissions } from '../../../app/authorization'
+import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 import {
   activateTenantRelationship,
   ApiError,
@@ -118,8 +120,8 @@ export default function TenantRelationshipsPage() {
   const { t } = useTranslation()
   const { isAuthenticated, user } = useAuth()
 
-  const canView = user?.permissions.includes('tenants.view') ?? false
-  const canManage = user?.permissions.includes('tenants.manage') ?? false
+  const canView = user?.permissions.includes(Permissions.tenants.view) ?? false
+  const canManage = user?.permissions.includes(Permissions.tenants.manage) ?? false
 
   const [rows, setRows] = useState<TenantRelationshipListItemResponse[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -180,12 +182,14 @@ export default function TenantRelationshipsPage() {
   }, [loadData])
 
   const openCreateDialog = () => {
+    if (!canManage) return
     setEditingItem(null)
     setFormState(defaultFormState)
     setEditorOpen(true)
   }
 
   const openEditDialog = (item: TenantRelationshipListItemResponse) => {
+    if (!canManage) return
     setEditingItem(item)
     setFormState({
       relatedTenantId: item.relatedTenantId,
@@ -206,6 +210,7 @@ export default function TenantRelationshipsPage() {
   }
 
   const openActivateDialog = (item: TenantRelationshipListItemResponse) => {
+    if (!canManage) return
     setActivationItem(item)
     setActivationState({
       effectiveFrom: item.effectiveFrom ?? '',
@@ -222,6 +227,7 @@ export default function TenantRelationshipsPage() {
   }
 
   const saveRelationship = async () => {
+    if (!canManage) return
     if (!formState.relatedTenantId.trim()) {
       return
     }
@@ -272,6 +278,7 @@ export default function TenantRelationshipsPage() {
   }
 
   const activateRelationship = async () => {
+    if (!canManage) return
     if (!activationItem) {
       return
     }
@@ -304,6 +311,7 @@ export default function TenantRelationshipsPage() {
   }
 
   const removeRelationship = async (relationshipId: string) => {
+    if (!canManage) return
     setIsSaving(true)
     setError(null)
     setFeedback(null)
@@ -358,6 +366,7 @@ export default function TenantRelationshipsPage() {
 
       {error ? <VxAlert severity="error">{error}</VxAlert> : null}
       {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+      {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.tenants.manage} /> : null}
 
       <VxPaper elevation={0} className="panel-card">
         {isLoading ? (
@@ -413,7 +422,7 @@ export default function TenantRelationshipsPage() {
         )}
       </VxPaper>
 
-      <VxDialog open={editorOpen} onClose={isSaving ? undefined : closeEditor} maxWidth="md" fullWidth>
+      <VxDialog open={canManage && editorOpen} onClose={isSaving ? undefined : closeEditor} maxWidth="md" fullWidth>
         <VxDialogTitle>{editingItem ? t('pages.tenantRelationships.dialogs.edit') : t('pages.tenantRelationships.dialogs.create')}</VxDialogTitle>
         <VxDialogContent dividers>
           <VxStack spacing={2} sx={{ mt: 1 }}>
@@ -501,7 +510,7 @@ export default function TenantRelationshipsPage() {
         </VxDialogActions>
       </VxDialog>
 
-      <VxDialog open={activationOpen} onClose={isSaving ? undefined : closeActivateDialog} maxWidth="md" fullWidth>
+      <VxDialog open={canManage && activationOpen} onClose={isSaving ? undefined : closeActivateDialog} maxWidth="md" fullWidth>
         <VxDialogTitle>{t('pages.tenantRelationships.dialogs.activate')}</VxDialogTitle>
         <VxDialogContent dividers>
           <VxStack spacing={2} sx={{ mt: 1 }}>

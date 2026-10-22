@@ -23,6 +23,8 @@ import {
 } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
+import { Permissions } from '../../../app/authorization'
+import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 import {
   ApiError,
   createConsultant,
@@ -54,7 +56,8 @@ const initialFormState: ConsultantFormState = {
 
 export default function ConsultantsPage() {
   const { t } = useTranslation()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
+  const canManage = user?.permissions.includes(Permissions.organization.manage) ?? false
   const [rows, setRows] = useState<ConsultantListItemResponse[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -88,12 +91,14 @@ export default function ConsultantsPage() {
   }, [loadData])
 
   const openCreate = () => {
+    if (!canManage) return
     setEditingId(null)
     setFormState(initialFormState)
     setEditorOpen(true)
   }
 
   const openEdit = (row: ConsultantListItemResponse) => {
+    if (!canManage) return
     setEditingId(row.id)
     setFormState({
       consultantNumber: row.consultantNumber,
@@ -114,6 +119,7 @@ export default function ConsultantsPage() {
   }
 
   const save = async () => {
+    if (!canManage) return
     if (!formState.consultantNumber.trim() || !formState.fullName.trim() || !formState.email.trim()) {
       return
     }
@@ -150,6 +156,7 @@ export default function ConsultantsPage() {
   }
 
   const remove = async (consultantId: string) => {
+    if (!canManage) return
     setIsSaving(true)
     setError(null)
     setFeedback(null)
@@ -178,7 +185,7 @@ export default function ConsultantsPage() {
             <VxTypography color="text.secondary">{t('pages.consultants.description')}</VxTypography>
           </VxBox>
           <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
-            <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate}>{t('pages.consultants.newButton')}</VxButton>
+            {canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate}>{t('pages.consultants.newButton')}</VxButton> : null}
             <VxPaper elevation={0} className="products-metric-card">
               <Groups2RoundedIcon fontSize="small" />
               <VxBox>
@@ -192,6 +199,7 @@ export default function ConsultantsPage() {
 
       {error ? <VxAlert severity="error">{error}</VxAlert> : null}
       {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+      {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.organization.manage} /> : null}
 
       <VxPaper elevation={0} className="panel-card">
         {isLoading ? (
@@ -220,10 +228,10 @@ export default function ConsultantsPage() {
                     <VxTableCell>{row.specialty || t('common.labels.none')}</VxTableCell>
                     <VxTableCell>{row.isActive ? t('common.labels.active') : t('common.labels.inactive')}</VxTableCell>
                     <VxTableCell align="right">
-                      <VxStack direction="row" spacing={0.5} sx={{ justifyContent: 'flex-end' }}>
+                      {canManage ? <VxStack direction="row" spacing={0.5} sx={{ justifyContent: 'flex-end' }}>
                         <VxButton size="small" variant="text" onClick={() => openEdit(row)}>{t('common.edit')}</VxButton>
                         <VxButton size="small" color="error" variant="text" onClick={() => void remove(row.id)} disabled={isSaving}>{t('common.delete')}</VxButton>
-                      </VxStack>
+                      </VxStack> : null}
                     </VxTableCell>
                   </VxTableRow>
                 ))}
@@ -240,7 +248,7 @@ export default function ConsultantsPage() {
         )}
       </VxPaper>
 
-      <VxDialog open={editorOpen} onClose={isSaving ? undefined : closeEditor} maxWidth="md" fullWidth>
+      <VxDialog open={canManage && editorOpen} onClose={isSaving ? undefined : closeEditor} maxWidth="md" fullWidth>
         <VxDialogTitle>{editingId ? t('pages.consultants.dialogs.edit') : t('pages.consultants.dialogs.create')}</VxDialogTitle>
         <VxDialogContent dividers>
           <VxStack spacing={2} sx={{ mt: 1 }}>

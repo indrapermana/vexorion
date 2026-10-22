@@ -20,6 +20,8 @@ import {
 } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
+import { Permissions } from '../../../app/authorization'
+import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 import {
   ApiError,
   createProjectCategory,
@@ -33,9 +35,10 @@ type CategoryDataGridProps = {
   rows: ProjectCategoryListItemResponse[]
   onEdit: (category: ProjectCategoryListItemResponse) => void
   onDelete: (category: ProjectCategoryListItemResponse) => void
+  canManage?: boolean
 }
 
-function CategoryDataGrid({ rows, onEdit, onDelete }: CategoryDataGridProps) {
+function CategoryDataGrid({ rows, onEdit, onDelete, canManage = true }: CategoryDataGridProps) {
   const { t } = useTranslation()
 
   const columns: VxGridColDef<ProjectCategoryListItemResponse>[] = [
@@ -73,7 +76,7 @@ function CategoryDataGrid({ rows, onEdit, onDelete }: CategoryDataGridProps) {
       type: 'actions',
       headerName: t('pages.projectCategories.columns.actions'),
       minWidth: 110,
-      getActions: ({ row }) => [
+      getActions: ({ row }) => canManage ? [
         <VxGridActionsCellItem
           key={`edit-${row.id}`}
           icon={<EditRoundedIcon />}
@@ -88,7 +91,7 @@ function CategoryDataGrid({ rows, onEdit, onDelete }: CategoryDataGridProps) {
           onClick={() => onDelete(row)}
           showInMenu={false}
         />,
-      ],
+      ] : [],
     },
   ]
 
@@ -133,7 +136,8 @@ function CategoryDataGrid({ rows, onEdit, onDelete }: CategoryDataGridProps) {
 
 export default function ProjectCategoriesPage() {
   const { t } = useTranslation()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
+  const canManage = user?.permissions.includes(Permissions.projects.manage) ?? false
   const [categories, setCategories] = useState<ProjectCategoryListItemResponse[]>([])
   const [error, setError] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
@@ -173,6 +177,7 @@ export default function ProjectCategoriesPage() {
   }, [loadCategories])
 
   const handleCreate = async () => {
+    if (!canManage) return
     if (!createCode.trim() || !createName.trim()) {
       return
     }
@@ -200,6 +205,7 @@ export default function ProjectCategoriesPage() {
   }
 
   const handleEdit = async () => {
+    if (!canManage) return
     if (!editTarget || !editCode.trim() || !editName.trim()) {
       return
     }
@@ -225,6 +231,7 @@ export default function ProjectCategoriesPage() {
   }
 
   const handleDelete = async () => {
+    if (!canManage) return
     if (!deleteTarget) {
       return
     }
@@ -256,7 +263,7 @@ export default function ProjectCategoriesPage() {
             <VxTypography variant="h4" sx={{ mb: 1 }}>{t('pages.projectCategories.title')}</VxTypography>
             <VxTypography color="text.secondary">{t('pages.projectCategories.description')}</VxTypography>
           </div>
-          <VxButton
+          {canManage ? <VxButton
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => {
@@ -267,12 +274,13 @@ export default function ProjectCategoriesPage() {
             }}
           >
             {t('pages.projectCategories.addButton')}
-          </VxButton>
+          </VxButton> : null}
         </VxStack>
       </VxPaper>
 
       {error ? <VxAlert severity="error">{error}</VxAlert> : null}
       {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+      {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.projects.manage} /> : null}
 
       <VxPaper elevation={0} className="panel-card" sx={{ p: 0 }}>
         <CategoryDataGrid
@@ -285,10 +293,11 @@ export default function ProjectCategoriesPage() {
             setEditIsActive(category.isActive)
           }}
           onDelete={(category) => setDeleteTarget(category)}
+          canManage={canManage}
         />
       </VxPaper>
 
-      <VxDialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="sm" fullWidth>
+      <VxDialog open={canManage && createOpen} onClose={() => setCreateOpen(false)} maxWidth="sm" fullWidth>
         <VxDialogTitle>{t('pages.projectCategories.dialogs.create')}</VxDialogTitle>
         <VxDialogContent>
           <VxStack spacing={2} sx={{ mt: 1 }}>
@@ -326,7 +335,7 @@ export default function ProjectCategoriesPage() {
         </VxDialogActions>
       </VxDialog>
 
-      <VxDialog open={Boolean(editTarget)} onClose={() => setEditTarget(null)} maxWidth="sm" fullWidth>
+      <VxDialog open={canManage && Boolean(editTarget)} onClose={() => setEditTarget(null)} maxWidth="sm" fullWidth>
         <VxDialogTitle>{t('pages.projectCategories.dialogs.edit')}</VxDialogTitle>
         <VxDialogContent>
           <VxStack spacing={2} sx={{ mt: 1 }}>
@@ -365,7 +374,7 @@ export default function ProjectCategoriesPage() {
         </VxDialogActions>
       </VxDialog>
 
-      <VxDialog open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
+      <VxDialog open={canManage && Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
         <VxDialogTitle>{t('pages.projectCategories.dialogs.delete.title')}</VxDialogTitle>
         <VxDialogContent>
           <VxTypography>

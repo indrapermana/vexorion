@@ -23,6 +23,8 @@ import {
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
+import { Permissions } from '../../../app/authorization'
+import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 import {
   ApiError,
   createProject,
@@ -54,6 +56,7 @@ type ProjectsDataGridProps = {
   onOpenDetails: (projectId: string) => void
   onEdit: (project: ProjectGridRow) => void
   onDelete: (project: ProjectGridRow) => void
+  canManage?: boolean
 }
 
 const defaultProjectFormState: ProjectFormState = {
@@ -88,7 +91,7 @@ function getStatusLabelKey(status: ProjectLifecycleStatus): string {
   }
 }
 
-function ProjectsDataGrid({ rows, isLoading, onOpenDetails, onEdit, onDelete }: ProjectsDataGridProps) {
+function ProjectsDataGrid({ rows, isLoading, onOpenDetails, onEdit, onDelete, canManage = true }: ProjectsDataGridProps) {
   const { t } = useTranslation()
 
   const columns: VxGridColDef<ProjectGridRow>[] = [
@@ -155,7 +158,7 @@ function ProjectsDataGrid({ rows, isLoading, onOpenDetails, onEdit, onDelete }: 
           onClick={() => onOpenDetails(row.id)}
           showInMenu
         />,
-        <VxGridActionsCellItem
+        ...(canManage ? [<VxGridActionsCellItem
           key={`edit-${row.id}`}
           icon={<EditRoundedIcon />}
           label={t('common.edit')}
@@ -168,7 +171,7 @@ function ProjectsDataGrid({ rows, isLoading, onOpenDetails, onEdit, onDelete }: 
           label={t('common.delete')}
           onClick={() => onDelete(row)}
           showInMenu={false}
-        />,
+        />] : []),
       ],
     },
   ]
@@ -215,7 +218,8 @@ function ProjectsDataGrid({ rows, isLoading, onOpenDetails, onEdit, onDelete }: 
 
 export default function ProjectsPage() {
   const { t } = useTranslation()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
+  const canManage = user?.permissions.includes(Permissions.projects.manage) ?? false
   const navigate = useNavigate()
   const [categories, setCategories] = useState<ProjectCategoryListItemResponse[]>([])
   const [projects, setProjects] = useState<ProjectGridRow[]>([])
@@ -274,6 +278,7 @@ export default function ProjectsPage() {
   }, [loadProjects])
 
   const openCreateDialog = () => {
+    if (!canManage) return
     setFeedback(null)
     setEditingProject(null)
     setFormState({
@@ -284,6 +289,7 @@ export default function ProjectsPage() {
   }
 
   const openEditDialog = async (project: ProjectGridRow) => {
+    if (!canManage) return
     setFeedback(null)
     setEditingProject(project)
     setError(null)
@@ -320,6 +326,7 @@ export default function ProjectsPage() {
   )
 
   const handleSave = async () => {
+    if (!canManage) return
     if (!formState.projectCategoryId || !formState.projectNumber.trim() || !formState.name.trim() || hasInvalidPeriod) {
       return
     }
@@ -362,7 +369,7 @@ export default function ProjectsPage() {
   }
 
   const handleDelete = async () => {
-    if (!deleteTarget) {
+    if (!canManage || !deleteTarget) {
       return
     }
 
@@ -404,9 +411,9 @@ export default function ProjectsPage() {
             <VxTypography color="text.secondary">{t('pages.projects.description')}</VxTypography>
           </VxBox>
           <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
-            <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog}>
+            {canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog}>
               {t('pages.projects.addButton')}
-            </VxButton>
+            </VxButton> : null}
             <VxPaper elevation={0} className="products-metric-card">
               <VxBox>
                 <VxTypography variant="body2" color="text.secondary">{t('pages.projects.countMetric')}</VxTypography>
@@ -450,6 +457,7 @@ export default function ProjectsPage() {
 
       {error ? <VxAlert severity="error">{error}</VxAlert> : null}
       {feedback ? <VxAlert severity="success">{feedback}</VxAlert> : null}
+      {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.projects.manage} /> : null}
 
       <VxPaper elevation={0} className="panel-card" sx={{ p: 0 }}>
         <ProjectsDataGrid
@@ -458,10 +466,11 @@ export default function ProjectsPage() {
           onOpenDetails={(projectId) => navigate(`/projects/${projectId}`)}
           onEdit={openEditDialog}
           onDelete={(project) => setDeleteTarget(project)}
+          canManage={canManage}
         />
       </VxPaper>
 
-      <VxDialog open={isEditorOpen} onClose={() => setIsEditorOpen(false)} maxWidth="md" fullWidth>
+      <VxDialog open={canManage && isEditorOpen} onClose={() => setIsEditorOpen(false)} maxWidth="md" fullWidth>
         <VxDialogTitle>{editingProject ? t('pages.projects.dialogs.edit') : t('pages.projects.dialogs.create')}</VxDialogTitle>
         <VxDialogContent>
           <VxStack spacing={2} sx={{ mt: 1 }}>
@@ -581,7 +590,7 @@ export default function ProjectsPage() {
         </VxDialogActions>
       </VxDialog>
 
-      <VxDialog open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
+      <VxDialog open={canManage && Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
         <VxDialogTitle>{t('pages.projects.dialogs.delete.title')}</VxDialogTitle>
         <VxDialogContent>
           <VxTypography>

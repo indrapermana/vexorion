@@ -13,13 +13,14 @@ const apiMocks = vi.hoisted(() => ({
   getProjects: vi.fn(),
   updateProject: vi.fn(),
 }))
+const authState = vi.hoisted(() => ({ permissions: ['projects.view', 'projects.manage'] }))
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }))
 
 vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn() }))
-vi.mock('../../../app/AuthContext', () => ({ useAuth: () => ({ isAuthenticated: true }) }))
+vi.mock('../../../app/AuthContext', () => ({ useAuth: () => ({ isAuthenticated: true, user: { permissions: authState.permissions } }) }))
 vi.mock('../../../lib/api', () => ({
   ApiError: class ApiError extends Error {},
   ...apiMocks,
@@ -87,6 +88,7 @@ const projectListItem = {
 describe('ProjectsPage form state', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    authState.permissions = ['projects.view', 'projects.manage']
     apiMocks.getProjectCategories.mockResolvedValue([{ id: 'category-1', code: 'CAT', name: 'Category', isActive: true }])
     apiMocks.getProjects.mockResolvedValue([projectListItem])
     apiMocks.getProject.mockResolvedValue({
@@ -97,6 +99,17 @@ describe('ProjectsPage form state', () => {
       notes: 'Preserve this note',
     })
     apiMocks.updateProject.mockResolvedValue({})
+  })
+
+  it('keeps project details available while hiding mutations from a projects viewer', async () => {
+    authState.permissions = ['projects.view']
+    render(<ProjectsPage />)
+
+    expect(await screen.findByRole('button', { name: 'common.labels.details' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'pages.projects.addButton' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'common.edit' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'common.delete' })).not.toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent('authorization.readOnly')
   })
 
   it('loads complete project details before editing and preserves non-list fields', async () => {
