@@ -237,6 +237,21 @@ export default function ProjectDocumentsPage() {
               onChange={(event) => setToDate(event.target.value)}
               sx={{ minWidth: 180 }}
             />
+            <VxButton
+              variant="text"
+              disabled={!projectId && !projectCategoryId && status === '' && !tag && !searchTerm && !fromDate && !toDate}
+              onClick={() => {
+                setProjectId('')
+                setProjectCategoryId('')
+                setStatus('')
+                setTag('')
+                setSearchTerm('')
+                setFromDate('')
+                setToDate('')
+              }}
+            >
+              {t('common.resetFilters', { defaultValue: 'Reset filters' })}
+            </VxButton>
           </VxStack>
           </VxStack>
         )}

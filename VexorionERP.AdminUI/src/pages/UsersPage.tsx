@@ -281,6 +281,7 @@ export default function UsersPage() {
 
       <VxPageBody>
         <VxDataGrid
+          preferenceKey="admin-users"
           rows={users}
           columns={columns}
           loading={isLoading}

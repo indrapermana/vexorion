@@ -178,6 +178,7 @@ function ProjectsDataGrid({ rows, isLoading, onOpenDetails, onEdit, onDelete, ca
 
   return (
     <VxDataGrid
+      preferenceKey="projects"
       autoHeight
       rows={rows}
       columns={columns}
@@ -438,6 +439,16 @@ export default function ProjectsPage() {
 
           <VxButton variant="outlined" onClick={() => void loadProjects()}>
             {t('pages.projects.filters.apply')}
+          </VxButton>
+          <VxButton
+            variant="text"
+            disabled={statusFilter === 'all' && !relatedTenantIdFilter}
+            onClick={() => {
+              setStatusFilter('all')
+              setRelatedTenantIdFilter('')
+            }}
+          >
+            {t('common.resetFilters', { defaultValue: 'Reset filters' })}
           </VxButton>
         </VxStack>
         )}

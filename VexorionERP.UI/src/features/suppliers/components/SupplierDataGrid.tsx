@@ -57,6 +57,7 @@ export default function SupplierDataGrid({ rows, isLoading, onEdit, onDelete, ca
 
   return (
     <VxDataGrid
+      preferenceKey="suppliers"
       autoHeight
       rows={rows}
       columns={columns}

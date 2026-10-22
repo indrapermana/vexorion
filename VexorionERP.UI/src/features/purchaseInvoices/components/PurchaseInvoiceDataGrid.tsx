@@ -81,6 +81,7 @@ export default function PurchaseInvoiceDataGrid({ rows, isLoading, onEdit, onDel
 
   return (
     <VxDataGrid
+      preferenceKey="purchase-invoices"
       autoHeight
       rows={rows}
       columns={columns}

@@ -142,6 +142,7 @@ export function TenantDataGrid({ rows, isLoading, onEdit, onRemove, effectiveAcc
 
   return (
     <VxDataGrid
+      preferenceKey="admin-tenants"
       rows={rows}
       columns={columns}
       loading={isLoading}

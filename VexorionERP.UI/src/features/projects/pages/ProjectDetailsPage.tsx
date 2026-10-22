@@ -210,6 +210,7 @@ function PartyDataGrid({ rows, onEdit, onDelete, canManage = true }: PartyDataGr
 
   return (
     <VxDataGrid
+      preferenceKey="project-parties"
       autoHeight
       rows={rows}
       columns={columns}
@@ -282,6 +283,7 @@ function HistoryDataGrid({ rows }: HistoryDataGridProps) {
 
   return (
     <VxDataGrid
+      preferenceKey="project-history"
       autoHeight
       rows={rows}
       columns={columns}

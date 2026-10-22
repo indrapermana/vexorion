@@ -61,6 +61,7 @@ export default function AccountDataGrid({ rows, isLoading, onEdit, onDelete, can
 
   return (
     <VxDataGrid
+      preferenceKey="accounts"
       autoHeight
       rows={rows}
       columns={columns}

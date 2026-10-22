@@ -43,6 +43,7 @@ export default function FiscalPeriodDataGrid({ rows, isLoading, onEdit, onCloseP
 
   return (
     <VxDataGrid
+      preferenceKey="fiscal-periods"
       autoHeight
       rows={rows}
       columns={columns}

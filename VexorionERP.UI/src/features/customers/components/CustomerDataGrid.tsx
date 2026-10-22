@@ -76,6 +76,7 @@ export default function CustomerDataGrid({ rows, isLoading, onEdit, onDelete, ca
 
   return (
     <VxDataGrid
+      preferenceKey="customers"
       autoHeight
       rows={rows}
       columns={columns}

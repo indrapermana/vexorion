@@ -46,6 +46,7 @@ export default function JournalDataGrid({ rows, isLoading, onOpen }: JournalData
 
   return (
     <VxDataGrid
+      preferenceKey="journals"
       autoHeight
       rows={rows}
       columns={columns}

@@ -84,6 +84,7 @@ export default function SalesOrderDataGrid({ rows, isLoading, onEdit, onDelete, 
 
   return (
     <VxDataGrid
+      preferenceKey="sales-orders"
       autoHeight
       rows={rows}
       columns={columns}

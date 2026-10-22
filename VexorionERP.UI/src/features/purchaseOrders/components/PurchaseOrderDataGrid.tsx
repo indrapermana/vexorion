@@ -73,6 +73,7 @@ export default function PurchaseOrderDataGrid({ rows, isLoading, onEdit, onDelet
 
   return (
     <VxDataGrid
+      preferenceKey="purchase-orders"
       autoHeight
       rows={rows}
       columns={columns}

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { VxAlert, VxButton, VxMenuItem, VxStack, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxButton, VxMenuItem, VxPagination, VxStack, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { ApiError, getAuditLogs } from '../../../lib/api'
@@ -12,6 +12,7 @@ export default function AuditLogsPage() {
   const [eventType, setEventType] = useState('')
   const [entityName, setEntityName] = useState('')
   const [pageSize, setPageSize] = useState(50)
+  const [page, setPage] = useState(1)
   const [items, setItems] = useState<AuditLogListItemResponse[]>([])
   const [totalCount, setTotalCount] = useState(0)
   const [error, setError] = useState<string | null>(null)
@@ -25,14 +26,14 @@ export default function AuditLogsPage() {
 
     setError(null)
     try {
-      const response = await getAuditLogs({ eventType, entityName, page: 1, pageSize })
+      const response = await getAuditLogs({ eventType, entityName, page, pageSize })
       setItems(response.items)
       setTotalCount(response.totalCount)
     } catch (loadError) {
       if (loadError instanceof ApiError) setError(loadError.message)
       else setError('Unable to load audit logs.')
     }
-  }, [entityName, eventType, isAuthenticated, pageSize])
+  }, [entityName, eventType, isAuthenticated, page, pageSize])
 
   useEffect(() => {
     void loadLogs()
@@ -49,14 +50,14 @@ export default function AuditLogsPage() {
         description={t('pages.auditLogs.description')}
         filters={(
         <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1}>
-          <VxTextField size="small" label={t('pages.auditLogs.eventType')} value={eventType} onChange={(event) => setEventType(event.target.value)} />
-          <VxTextField size="small" label={t('pages.auditLogs.entity')} value={entityName} onChange={(event) => setEntityName(event.target.value)} />
+          <VxTextField size="small" label={t('pages.auditLogs.eventType')} value={eventType} onChange={(event) => { setEventType(event.target.value); setPage(1) }} />
+          <VxTextField size="small" label={t('pages.auditLogs.entity')} value={entityName} onChange={(event) => { setEntityName(event.target.value); setPage(1) }} />
           <VxTextField
             size="small"
             label={t('pages.auditLogs.pageSize')}
             select
             value={pageSize}
-            onChange={(event) => setPageSize(Number(event.target.value))}
+            onChange={(event) => { setPageSize(Number(event.target.value)); setPage(1) }}
             sx={{ minWidth: 140 }}
           >
             <VxMenuItem value={20}>20</VxMenuItem>
@@ -64,6 +65,13 @@ export default function AuditLogsPage() {
             <VxMenuItem value={100}>100</VxMenuItem>
           </VxTextField>
           <VxButton variant="outlined" onClick={() => void loadLogs()}>{t('pages.auditLogs.refresh')}</VxButton>
+          <VxButton
+            variant="text"
+            disabled={!eventType && !entityName && pageSize === 50}
+            onClick={() => { setEventType(''); setEntityName(''); setPageSize(50); setPage(1) }}
+          >
+            {t('common.resetFilters', { defaultValue: 'Reset filters' })}
+          </VxButton>
         </VxStack>
         )}
       />
@@ -94,6 +102,17 @@ export default function AuditLogsPage() {
             ))}
           </VxTableBody>
         </VxTable>
+        {totalCount > pageSize ? (
+          <VxStack direction="row" sx={{ justifyContent: 'flex-end', mt: 2 }}>
+            <VxPagination
+              page={page}
+              count={Math.max(1, Math.ceil(totalCount / pageSize))}
+              onChange={(_, nextPage) => setPage(nextPage)}
+              size="small"
+              color="primary"
+            />
+          </VxStack>
+        ) : null}
       </PageBody>
     </VxStack>
   )

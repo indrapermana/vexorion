@@ -23,7 +23,7 @@ export function VxPageFeedback({ error, success, info, onRetry }: { error?: Reac
 }
 
 export function VxPageBody({ children }: { children: ReactNode }) {
-  return <VxPaper component="section" elevation={0} className="panel-card products-grid-panel" sx={{ p: 2 }}>{children}</VxPaper>
+  return <VxPaper component="section" elevation={0} className="panel-card products-grid-panel" sx={{ p: 2, minWidth: 0, maxWidth: '100%', overflowX: 'auto' }}>{children}</VxPaper>
 }
 
 export function VxPageLoading({ label = 'Loading...' }: { label?: ReactNode }) {

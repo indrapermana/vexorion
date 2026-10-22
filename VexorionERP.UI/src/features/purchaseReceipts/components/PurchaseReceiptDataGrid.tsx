@@ -67,6 +67,7 @@ export default function PurchaseReceiptDataGrid({ rows, isLoading, onPost, onDel
 
   return (
     <VxDataGrid
+      preferenceKey="purchase-receipts"
       rows={rows}
       columns={columns}
       loading={isLoading}

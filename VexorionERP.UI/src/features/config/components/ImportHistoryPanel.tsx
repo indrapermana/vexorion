@@ -1,5 +1,5 @@
 import { RefreshIcon } from '@vexorion/ui'
-import { VxAlert, VxBox, VxChip, VxCircularProgress, VxIconButton, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTooltip, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxChip, VxCircularProgress, VxIconButton, VxTable, VxTableBody, VxTableCell, VxTableContainer, VxTableHead, VxTableRow, VxTooltip, VxTypography } from '@vexorion/ui'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getImportHistory } from '../../../lib/api'
@@ -110,7 +110,8 @@ export default function ImportHistoryPanel({ importType, refreshTrigger }: Props
       )}
 
       {!loading && !error && items.length > 0 && (
-        <VxTable size="small">
+        <VxTableContainer>
+          <VxTable size="small">
           <VxTableHead>
             <VxTableRow>
               <VxTableCell>{t('config.importData.history.table.date')}</VxTableCell>
@@ -137,7 +138,8 @@ export default function ImportHistoryPanel({ importType, refreshTrigger }: Props
               </VxTableRow>
             ))}
           </VxTableBody>
-        </VxTable>
+          </VxTable>
+        </VxTableContainer>
       )}
     </VxBox>
   )

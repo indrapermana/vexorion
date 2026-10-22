@@ -82,6 +82,7 @@ export default function SalesInvoiceDataGrid({ rows, isLoading, onEdit, onDelete
 
   return (
     <VxDataGrid
+      preferenceKey="sales-invoices"
       autoHeight
       rows={rows}
       columns={columns}

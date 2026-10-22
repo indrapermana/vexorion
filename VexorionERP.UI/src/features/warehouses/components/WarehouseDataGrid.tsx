@@ -49,6 +49,7 @@ export default function WarehouseDataGrid({ rows, isLoading, highlightedWarehous
 
   return (
     <VxDataGrid
+      preferenceKey="warehouses"
       autoHeight
       rows={rows}
       columns={columns}

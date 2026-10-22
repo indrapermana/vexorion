@@ -67,6 +67,7 @@ export default function SalesShipmentDataGrid({ rows, isLoading, onPost, onDelet
 
   return (
     <VxDataGrid
+      preferenceKey="sales-shipments"
       rows={rows}
       columns={columns}
       loading={isLoading}

@@ -97,6 +97,7 @@ function CategoryDataGrid({ rows, onEdit, onDelete, canManage = true }: Category
 
   return (
     <VxDataGrid
+      preferenceKey="project-categories"
       autoHeight
       rows={rows}
       columns={columns}

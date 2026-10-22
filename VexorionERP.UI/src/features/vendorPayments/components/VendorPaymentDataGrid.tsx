@@ -56,6 +56,7 @@ export default function VendorPaymentDataGrid({ rows, isLoading, onSelectPayment
 
   return (
     <VxDataGrid
+      preferenceKey="vendor-payments"
       autoHeight
       rows={rows}
       columns={columns}
