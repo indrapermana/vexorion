@@ -52,7 +52,8 @@ const VendorPaymentsPage = lazy(() => import('./pages/VendorPaymentsPage'))
 const WarehousesPage = lazy(() => import('./pages/WarehousesPage'))
 
 function RouteFallback() {
-  return <VxAlert severity="info">Loading workspace...</VxAlert>
+  const { t } = useTranslation()
+  return <VxAlert severity="info">{t('routeGuards.loadingWorkspace')}</VxAlert>
 }
 
 function App() {

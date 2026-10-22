@@ -124,11 +124,11 @@ export default function AccountsPage() {
 
       <VxConfirmActionDialog
         open={canManage && Boolean(deleteTarget)}
-        title="Delete account"
+        title={t('pages.accounts.delete.title')}
         targetName={deleteTarget ? `${deleteTarget.code} — ${deleteTarget.name}` : ''}
-        consequence="This permanently removes the account. Accounts referenced by transactions may be rejected by the server."
-        confirmLabel="Delete account"
-        pendingLabel="Deleting..."
+        consequence={t('pages.accounts.delete.consequence')}
+        confirmLabel={t('pages.accounts.delete.confirm')}
+        pendingLabel={t('dialogs.deleting')}
         pending={isDeleting}
         onClose={() => setDeleteTarget(null)}
         onConfirm={() => void handleDelete()}

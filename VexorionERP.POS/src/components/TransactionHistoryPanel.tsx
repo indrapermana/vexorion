@@ -30,7 +30,7 @@ export function TransactionHistoryPanel() {
               <VxConfirmActionButton
                 title={t('history.clear')}
                 targetName={t('history.title')}
-                consequence="This clears the transaction history stored on this device. Server records are not deleted."
+                consequence={t('history.clearConsequence')}
                 confirmLabel={t('history.clear')}
                 onConfirm={clear}
                 buttonProps={{ size: 'small', startIcon: <DeleteSweepRoundedIcon />, color: 'inherit' }}

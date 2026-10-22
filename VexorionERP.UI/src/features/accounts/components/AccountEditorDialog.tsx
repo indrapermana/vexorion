@@ -22,22 +22,21 @@ const defaultValues: AccountFormValues = {
   description: '',
 }
 
-const schema: yup.ObjectSchema<AccountFormValues> = yup.object({
-  code: yup.string().trim().required('Code is required.').max(30, 'Code must be at most 30 characters.'),
-  name: yup.string().trim().required('Name is required.').max(120, 'Name must be at most 120 characters.'),
-  accountType: yup.number().required(),
-  normalBalance: yup.number().required(),
-  isPostingAllowed: yup.boolean().required(),
-  isActive: yup.boolean().required(),
-  description: yup.string().max(500, 'Description must be at most 500 characters.').defined(),
-})
-
 export default function AccountEditorDialog({ open, mode, accountId, onClose, onSaved }: AccountEditorDialogProps) {
-  useTranslation()
+  const { t } = useTranslation()
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(mode === 'edit')
 
-  const title = useMemo(() => (mode === 'create' ? 'Create account' : 'Edit account'), [mode])
+  const title = mode === 'create' ? t('pages.accounts.editor.createTitle') : t('pages.accounts.editor.editTitle')
+  const schema = useMemo<yup.ObjectSchema<AccountFormValues>>(() => yup.object({
+    code: yup.string().trim().required(t('pages.accounts.validation.codeRequired')).max(30, t('pages.accounts.validation.codeMax')),
+    name: yup.string().trim().required(t('pages.accounts.validation.nameRequired')).max(120, t('pages.accounts.validation.nameMax')),
+    accountType: yup.number().required(),
+    normalBalance: yup.number().required(),
+    isPostingAllowed: yup.boolean().required(),
+    isActive: yup.boolean().required(),
+    description: yup.string().max(500, t('pages.accounts.validation.descriptionMax')).defined(),
+  }), [t])
 
   const {
     control,
@@ -73,7 +72,7 @@ export default function AccountEditorDialog({ open, mode, accountId, onClose, on
       .catch((error) => {
         if (!isMounted) return
         if (error instanceof ApiError) setSubmitError(error.message)
-        else setSubmitError('Unable to load account details.')
+        else setSubmitError(t('pages.accounts.errors.loadDetails'))
       })
       .finally(() => {
         if (isMounted) setIsLoading(false)
@@ -82,7 +81,7 @@ export default function AccountEditorDialog({ open, mode, accountId, onClose, on
     return () => {
       isMounted = false
     }
-  }, [accountId, mode, reset])
+  }, [accountId, mode, reset, t])
 
   const onSubmit = handleSubmit(async (values) => {
     setSubmitError(null)
@@ -116,7 +115,7 @@ export default function AccountEditorDialog({ open, mode, accountId, onClose, on
           })
         }
       } else {
-        setSubmitError('Unable to save account.')
+        setSubmitError(t('pages.accounts.errors.save'))
       }
     }
   })
@@ -133,14 +132,14 @@ export default function AccountEditorDialog({ open, mode, accountId, onClose, on
               name="code"
               control={control}
               render={({ field }) => (
-                <VxTextField {...field} fullWidth label="Code" error={Boolean(errors.code)} helperText={errors.code?.message} disabled={isLoading} />
+                <VxTextField {...field} fullWidth label={t('pages.accounts.fields.code')} error={Boolean(errors.code)} helperText={errors.code?.message} disabled={isLoading} />
               )}
             />
             <Controller
               name="name"
               control={control}
               render={({ field }) => (
-                <VxTextField {...field} fullWidth label="Name" error={Boolean(errors.name)} helperText={errors.name?.message} disabled={isLoading} />
+                <VxTextField {...field} fullWidth label={t('pages.accounts.fields.name')} error={Boolean(errors.name)} helperText={errors.name?.message} disabled={isLoading} />
               )}
             />
           </VxStack>
@@ -150,7 +149,7 @@ export default function AccountEditorDialog({ open, mode, accountId, onClose, on
               name="accountType"
               control={control}
               render={({ field }) => (
-                <VxTextField select fullWidth label="Account type" value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} disabled={isLoading}>
+                <VxTextField select fullWidth label={t('pages.accounts.fields.accountType')} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} disabled={isLoading}>
                   {accountTypeOptions.map((option) => (
                     <VxMenuItem key={option.value} value={option.value}>{option.label}</VxMenuItem>
                   ))}
@@ -161,7 +160,7 @@ export default function AccountEditorDialog({ open, mode, accountId, onClose, on
               name="normalBalance"
               control={control}
               render={({ field }) => (
-                <VxTextField select fullWidth label="Normal balance" value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} disabled={isLoading}>
+                <VxTextField select fullWidth label={t('pages.accounts.fields.normalBalance')} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} disabled={isLoading}>
                   {normalBalanceOptions.map((option) => (
                     <VxMenuItem key={option.value} value={option.value}>{option.label}</VxMenuItem>
                   ))}
@@ -174,7 +173,7 @@ export default function AccountEditorDialog({ open, mode, accountId, onClose, on
             name="description"
             control={control}
             render={({ field }) => (
-              <VxTextField {...field} fullWidth label="Description" multiline minRows={3} error={Boolean(errors.description)} helperText={errors.description?.message ?? 'Optional'} disabled={isLoading} />
+              <VxTextField {...field} fullWidth label={t('pages.accounts.fields.description')} multiline minRows={3} error={Boolean(errors.description)} helperText={errors.description?.message ?? t('pages.accounts.fields.optional')} disabled={isLoading} />
             )}
           />
 
@@ -183,23 +182,23 @@ export default function AccountEditorDialog({ open, mode, accountId, onClose, on
               name="isPostingAllowed"
               control={control}
               render={({ field }) => (
-                <VxFormControlLabel control={<VxSwitch checked={field.value} onChange={(_, checked) => field.onChange(checked)} />} label="Posting allowed" />
+                <VxFormControlLabel control={<VxSwitch checked={field.value} onChange={(_, checked) => field.onChange(checked)} />} label={t('pages.accounts.fields.postingAllowed')} />
               )}
             />
             <Controller
               name="isActive"
               control={control}
               render={({ field }) => (
-                <VxFormControlLabel control={<VxSwitch checked={field.value} onChange={(_, checked) => field.onChange(checked)} />} label="Active" />
+                <VxFormControlLabel control={<VxSwitch checked={field.value} onChange={(_, checked) => field.onChange(checked)} />} label={t('common.labels.active')} />
               )}
             />
           </VxStack>
         </VxStack>
       </VxDialogContent>
       <VxDialogActions sx={{ px: 3, py: 2 }}>
-        <VxButton onClick={onClose} disabled={isSubmitting}>Cancel</VxButton>
+        <VxButton onClick={onClose} disabled={isSubmitting}>{t('common.cancel')}</VxButton>
         <VxButton onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoading}>
-          {isSubmitting ? 'Saving...' : mode === 'create' ? 'Create account' : 'Save changes'}
+          {isSubmitting ? t('pages.accounts.editor.saving') : mode === 'create' ? t('pages.accounts.editor.createTitle') : t('pages.accounts.editor.saveChanges')}
         </VxButton>
       </VxDialogActions>
     </VxDialog>

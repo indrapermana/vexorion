@@ -29,12 +29,12 @@ function getStatusColor(status: number) {
 }
 
 export default function SalesOrderDataGrid({ rows, isLoading, onEdit, onDelete, onManageLines, onCreateInvoice, onViewShipments, canManage = true }: SalesOrderDataGridProps) {
-  useTranslation()
+  const { t } = useTranslation()
   const { formatMoney } = useCurrency()
   const columns: VxGridColDef<SalesOrderGridRow>[] = [
     {
       field: 'orderNumber',
-      headerName: 'Order',
+      headerName: t('orderWorkflow.order'),
       minWidth: 180,
       flex: 1,
       renderCell: ({ row }) => (
@@ -46,20 +46,20 @@ export default function SalesOrderDataGrid({ rows, isLoading, onEdit, onDelete, 
     },
     {
       field: 'orderDate',
-      headerName: 'Order date',
+      headerName: t('orderWorkflow.orderDate'),
       minWidth: 130,
       flex: 0.7,
     },
     {
       field: 'status',
-      headerName: 'Status',
+      headerName: t('common.labels.status'),
       minWidth: 160,
       flex: 0.8,
       renderCell: ({ value }) => <VxChip size="small" color={getStatusColor(Number(value))} label={getDocumentStatusLabel(Number(value))} variant="outlined" />,
     },
     {
       field: 'totalAmount',
-      headerName: 'Total',
+      headerName: t('orderWorkflow.total'),
       minWidth: 130,
       flex: 0.7,
       type: 'number',
@@ -68,15 +68,15 @@ export default function SalesOrderDataGrid({ rows, isLoading, onEdit, onDelete, 
     {
       field: 'actions',
       type: 'actions',
-      headerName: 'Actions',
+      headerName: t('common.actions'),
       minWidth: 200,
       getActions: ({ row }) => [
-        <VxGridActionsCellItem key={`lines-${row.id}`} icon={<FormatListBulletedRoundedIcon />} label="Lines" onClick={() => onManageLines(row)} showInMenu={false} />,
-        <VxGridActionsCellItem key={`shipments-${row.id}`} icon={<LocalShippingRoundedIcon />} label="View shipments" onClick={() => onViewShipments(row)} showInMenu={false} />,
+        <VxGridActionsCellItem key={`lines-${row.id}`} icon={<FormatListBulletedRoundedIcon />} label={t('orderWorkflow.lines')} onClick={() => onManageLines(row)} showInMenu={false} />,
+        <VxGridActionsCellItem key={`shipments-${row.id}`} icon={<LocalShippingRoundedIcon />} label={t('orderWorkflow.viewShipments')} onClick={() => onViewShipments(row)} showInMenu={false} />,
         ...(canManage ? [
-          <VxGridActionsCellItem key={`invoice-${row.id}`} icon={<PostAddRoundedIcon />} label="Create invoice" onClick={() => onCreateInvoice(row)} showInMenu={false} />,
-          <VxGridActionsCellItem key={`edit-${row.id}`} icon={<EditRoundedIcon />} label="Edit" onClick={() => onEdit(row.id)} showInMenu={false} />,
-          <VxGridActionsCellItem key={`delete-${row.id}`} icon={<DeleteOutlineRoundedIcon />} label="Delete" onClick={() => onDelete(row)} showInMenu={false} />,
+          <VxGridActionsCellItem key={`invoice-${row.id}`} icon={<PostAddRoundedIcon />} label={t('orderWorkflow.createInvoice')} onClick={() => onCreateInvoice(row)} showInMenu={false} />,
+          <VxGridActionsCellItem key={`edit-${row.id}`} icon={<EditRoundedIcon />} label={t('common.edit')} onClick={() => onEdit(row.id)} showInMenu={false} />,
+          <VxGridActionsCellItem key={`delete-${row.id}`} icon={<DeleteOutlineRoundedIcon />} label={t('common.delete')} onClick={() => onDelete(row)} showInMenu={false} />,
         ] : []),
       ],
     },

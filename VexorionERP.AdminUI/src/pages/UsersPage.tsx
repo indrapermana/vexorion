@@ -1,6 +1,7 @@
 import { AddRoundedIcon, LockResetRoundedIcon, ManageAccountsRoundedIcon, PersonOffRoundedIcon, VxDataGrid, type VxGridColDef } from '@vexorion/ui'
 import { VxAlert, VxBox, VxButton, VxChip, VxConfirmActionButton, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxMenuItem, VxPageBody, VxPageFeedback, VxPageHeader, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { assignUserRoles, createUser, getRoles, getTenants, getUsersForAdmin, resetUserPassword, setUserStatus } from '../lib/api'
 import type { CreateUserRequest, UserListItemResponse } from '../types/api/users'
 import type { RolePermissionsResponse } from '../types/api/roles'
@@ -25,6 +26,7 @@ const initialCreateForm: CreateUserFormState = {
 }
 
 export default function UsersPage() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const canManage = hasAdminPermissions(user?.permissions, { allOf: [AdminPermissions.users.manage] })
   const canViewRoles = hasAdminPermissions(user?.permissions, { allOf: [AdminPermissions.roles.view] })
@@ -58,12 +60,12 @@ export default function UsersPage() {
       setRoles(roleData)
       setTenants(tenantData)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to load users.')
+      setError(err instanceof Error ? err.message : t('pages.users.errors.load'))
       console.error(err)
     } finally {
       setIsLoading(false)
     }
-  }, [canViewRoles, canViewTenants])
+  }, [canViewRoles, canViewTenants, t])
 
   const loadUsers = useCallback(async () => {
     setIsLoading(true)
@@ -73,12 +75,12 @@ export default function UsersPage() {
       const userData = await getUsersForAdmin(selectedTenantId || undefined)
       setUsers(userData)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to load users.')
+      setError(err instanceof Error ? err.message : t('pages.users.errors.load'))
       console.error(err)
     } finally {
       setIsLoading(false)
     }
-  }, [selectedTenantId])
+  }, [selectedTenantId, t])
 
   useEffect(() => {
     void loadMetadata()
@@ -113,20 +115,20 @@ export default function UsersPage() {
       setCreateRoles([])
       setIsCreateOpen(false)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to create user.')
+      setError(err instanceof Error ? err.message : t('pages.users.errors.create'))
       console.error(err)
     }
   }
 
-  const handleSetUserStatus = async (user: UserListItemResponse, isActive: boolean) => {
+  const handleSetUserStatus = useCallback(async (user: UserListItemResponse, isActive: boolean) => {
     try {
       await setUserStatus(user.id, { isActive })
       setUsers((current) => current.map((x) => (x.id === user.id ? { ...x, isActive } : x)))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to update user status.')
+      setError(err instanceof Error ? err.message : t('pages.users.errors.status'))
       console.error(err)
     }
-  }
+  }, [t])
 
   const handleAssignRoles = async () => {
     if (!rolesDialogUser) return
@@ -137,7 +139,7 @@ export default function UsersPage() {
       setRolesDialogUser(null)
       setRolesSelection([])
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to update user roles.')
+      setError(err instanceof Error ? err.message : t('pages.users.errors.roles'))
       console.error(err)
     }
   }
@@ -150,7 +152,7 @@ export default function UsersPage() {
       setResetDialogUser(null)
       setNewPassword('')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to reset password.')
+      setError(err instanceof Error ? err.message : t('pages.users.errors.password'))
       console.error(err)
     }
   }
@@ -159,7 +161,7 @@ export default function UsersPage() {
     () => [
       {
         field: 'userName',
-        headerName: 'User',
+        headerName: t('pages.users.columns.user'),
         flex: 1,
         minWidth: 180,
         renderCell: (params) => canManage ? (
@@ -167,18 +169,18 @@ export default function UsersPage() {
             <VxTypography variant="body2" sx={{ fontWeight: 600 }}>{params.row.userName}</VxTypography>
             <VxTypography variant="caption" color="text.secondary">{params.row.email}</VxTypography>
           </VxBox>
-        ) : <VxTypography variant="caption" color="text.secondary">View only</VxTypography>,
+        ) : <VxTypography variant="caption" color="text.secondary">{t('common.viewOnly')}</VxTypography>,
       },
       {
         field: 'tenantId',
-        headerName: 'Tenant',
+        headerName: t('pages.users.columns.tenant'),
         flex: 1,
         minWidth: 160,
         valueGetter: (_, row) => tenantNameMap.get(row.tenantId) ?? row.tenantId,
       },
       {
         field: 'roles',
-        headerName: 'Roles',
+        headerName: t('pages.users.columns.roles'),
         flex: 1,
         minWidth: 180,
         renderCell: (params) => (
@@ -191,13 +193,13 @@ export default function UsersPage() {
       },
       {
         field: 'isActive',
-        headerName: 'Status',
+        headerName: t('pages.users.columns.status'),
         width: 120,
-        renderCell: (params) => <VxChip size="small" color={params.row.isActive ? 'success' : 'default'} label={params.row.isActive ? 'Active' : 'Inactive'} />,
+        renderCell: (params) => <VxChip size="small" color={params.row.isActive ? 'success' : 'default'} label={params.row.isActive ? t('components.tenants.grid.active') : t('components.tenants.grid.inactive')} />,
       },
       {
         field: 'id',
-        headerName: 'Actions',
+        headerName: t('pages.users.columns.actions'),
         minWidth: 360,
         sortable: false,
         filterable: false,
@@ -213,7 +215,7 @@ export default function UsersPage() {
                   setRolesSelection(params.row.roles)
                 }}
               >
-                Update Roles
+                {t('pages.users.updateRoles')}
               </VxButton>
             ) : null}
             <VxButton
@@ -225,39 +227,39 @@ export default function UsersPage() {
                 setNewPassword('')
               }}
             >
-              Reset Password
+              {t('pages.users.resetPassword')}
             </VxButton>
             {params.row.isActive ? (
               <VxConfirmActionButton
-                title="Deactivate user"
+                title={t('pages.users.deactivateTitle')}
                 targetName={`${params.row.userName} (${params.row.email})`}
-                consequence="The user will immediately lose access but can be activated again later."
-                confirmLabel="Deactivate user"
+                consequence={t('pages.users.deactivateConsequence')}
+                confirmLabel={t('pages.users.deactivateTitle')}
                 confirmColor="warning"
-                pendingLabel="Deactivating..."
+                pendingLabel={t('pages.users.deactivating')}
                 onConfirm={() => handleSetUserStatus(params.row, false)}
                 buttonProps={{ size: 'small', color: 'warning', variant: 'outlined', startIcon: <PersonOffRoundedIcon /> }}
-              >Deactivate</VxConfirmActionButton>
+              >{t('pages.users.deactivate')}</VxConfirmActionButton>
             ) : (
               <VxButton size="small" color="success" variant="outlined" onClick={() => void handleSetUserStatus(params.row, true)}>
-                Activate
+                {t('pages.users.activate')}
               </VxButton>
             )}
           </VxStack>
         ),
       },
     ],
-    [canManage, canViewRoles, tenantNameMap],
+    [canManage, canViewRoles, handleSetUserStatus, t, tenantNameMap],
   )
 
   return (
     <VxStack spacing={2.5}>
       <VxPageHeader
-        title="Users"
-        description="Manage tenant users, roles, password reset, and activation status."
+        title={t('pages.users.title')}
+        description={t('pages.users.description')}
         action={canManage && canViewRoles ? (
           <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setIsCreateOpen(true)}>
-            Add Tenant User
+            {t('pages.users.add')}
           </VxButton>
         ) : undefined}
         filters={canViewTenants ? (
@@ -265,12 +267,12 @@ export default function UsersPage() {
             {canViewTenants ? <VxTextField
               select
               size="small"
-              label="Tenant filter"
+              label={t('pages.users.tenantFilter')}
               value={selectedTenantId}
               onChange={(event) => setSelectedTenantId(event.target.value)}
               sx={{ minWidth: 220 }}
             >
-              <VxMenuItem value="">All tenants</VxMenuItem>
+              <VxMenuItem value="">{t('pages.users.allTenants')}</VxMenuItem>
               {tenants.map((tenant) => (
                 <VxMenuItem key={tenant.id} value={tenant.id}>{tenant.name} ({tenant.code})</VxMenuItem>
               ))}
@@ -281,10 +283,10 @@ export default function UsersPage() {
 
       <VxPageFeedback
         error={error}
-        info={!canManage ? 'You have view-only access. User creation, role assignment, password reset, and status changes require the users.manage permission.' : undefined}
+        info={!canManage ? t('pages.users.viewOnly') : undefined}
         onRetry={() => void Promise.all([loadMetadata(), loadUsers()])}
       />
-      {canManage && !canViewRoles ? <VxAlert severity="info">Role data is unavailable without roles.view, so user creation and role assignment are hidden.</VxAlert> : null}
+      {canManage && !canViewRoles ? <VxAlert severity="info">{t('pages.users.roleWarning')}</VxAlert> : null}
 
       <VxPageBody>
         <VxDataGrid
@@ -299,17 +301,17 @@ export default function UsersPage() {
       </VxPageBody>
 
       <VxDialog open={canManage && canViewRoles && isCreateOpen} onClose={() => setIsCreateOpen(false)} maxWidth="sm" fullWidth>
-        <VxDialogTitle>Add Tenant User</VxDialogTitle>
+        <VxDialogTitle>{t('pages.users.add')}</VxDialogTitle>
         <VxDialogContent>
           <VxStack spacing={2} sx={{ mt: 1 }}>
-            <VxTextField label="Username" value={createForm.userName} onChange={(event) => setCreateForm((x) => ({ ...x, userName: event.target.value }))} />
-            <VxTextField label="Email" value={createForm.email} onChange={(event) => setCreateForm((x) => ({ ...x, email: event.target.value }))} />
-            <VxTextField label="Password" type="password" value={createForm.password} onChange={(event) => setCreateForm((x) => ({ ...x, password: event.target.value }))} />
-            <VxTextField label="First name" value={createForm.firstName} onChange={(event) => setCreateForm((x) => ({ ...x, firstName: event.target.value }))} />
-            <VxTextField label="Last name" value={createForm.lastName} onChange={(event) => setCreateForm((x) => ({ ...x, lastName: event.target.value }))} />
+            <VxTextField label={t('pages.users.username')} value={createForm.userName} onChange={(event) => setCreateForm((x) => ({ ...x, userName: event.target.value }))} />
+            <VxTextField label={t('pages.users.email')} value={createForm.email} onChange={(event) => setCreateForm((x) => ({ ...x, email: event.target.value }))} />
+            <VxTextField label={t('pages.users.password')} type="password" value={createForm.password} onChange={(event) => setCreateForm((x) => ({ ...x, password: event.target.value }))} />
+            <VxTextField label={t('pages.users.firstName')} value={createForm.firstName} onChange={(event) => setCreateForm((x) => ({ ...x, firstName: event.target.value }))} />
+            <VxTextField label={t('pages.users.lastName')} value={createForm.lastName} onChange={(event) => setCreateForm((x) => ({ ...x, lastName: event.target.value }))} />
             <VxTextField
               select
-              label="Roles"
+              label={t('pages.users.roles')}
               value={createRoles}
               onChange={(event) => setCreateRoles(typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value)}
               slotProps={{
@@ -325,18 +327,18 @@ export default function UsersPage() {
           </VxStack>
         </VxDialogContent>
         <VxDialogActions>
-          <VxButton onClick={() => setIsCreateOpen(false)}>Cancel</VxButton>
-          <VxButton onClick={() => void handleCreateUser()} variant="contained">Create User</VxButton>
+          <VxButton onClick={() => setIsCreateOpen(false)}>{t('common.cancel')}</VxButton>
+          <VxButton onClick={() => void handleCreateUser()} variant="contained">{t('pages.users.create')}</VxButton>
         </VxDialogActions>
       </VxDialog>
 
       <VxDialog open={canManage && canViewRoles && Boolean(rolesDialogUser)} onClose={() => setRolesDialogUser(null)} maxWidth="sm" fullWidth>
-        <VxDialogTitle>Update Roles</VxDialogTitle>
+        <VxDialogTitle>{t('pages.users.updateRoles')}</VxDialogTitle>
         <VxDialogContent>
           <VxTextField
             sx={{ mt: 1 }}
             select
-            label="Roles"
+            label={t('pages.users.roles')}
             value={rolesSelection}
             onChange={(event) => setRolesSelection(typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value)}
             slotProps={{
@@ -352,26 +354,26 @@ export default function UsersPage() {
           </VxTextField>
         </VxDialogContent>
         <VxDialogActions>
-          <VxButton onClick={() => setRolesDialogUser(null)}>Cancel</VxButton>
-          <VxButton onClick={() => void handleAssignRoles()} variant="contained">Save Roles</VxButton>
+          <VxButton onClick={() => setRolesDialogUser(null)}>{t('common.cancel')}</VxButton>
+          <VxButton onClick={() => void handleAssignRoles()} variant="contained">{t('pages.users.saveRoles')}</VxButton>
         </VxDialogActions>
       </VxDialog>
 
       <VxDialog open={canManage && Boolean(resetDialogUser)} onClose={() => setResetDialogUser(null)} maxWidth="sm" fullWidth>
-        <VxDialogTitle>Reset Password</VxDialogTitle>
+        <VxDialogTitle>{t('pages.users.resetPassword')}</VxDialogTitle>
         <VxDialogContent>
           <VxTextField
             sx={{ mt: 1 }}
             fullWidth
             type="password"
-            label="New password"
+            label={t('pages.users.newPassword')}
             value={newPassword}
             onChange={(event) => setNewPassword(event.target.value)}
           />
         </VxDialogContent>
         <VxDialogActions>
-          <VxButton onClick={() => setResetDialogUser(null)}>Cancel</VxButton>
-          <VxButton onClick={() => void handleResetPassword()} variant="contained">Reset</VxButton>
+          <VxButton onClick={() => setResetDialogUser(null)}>{t('common.cancel')}</VxButton>
+          <VxButton onClick={() => void handleResetPassword()} variant="contained">{t('pages.users.reset')}</VxButton>
         </VxDialogActions>
       </VxDialog>
     </VxStack>

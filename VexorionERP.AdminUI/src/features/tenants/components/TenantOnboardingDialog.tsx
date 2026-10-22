@@ -1,5 +1,6 @@
 import { VxAlert, VxButton, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxDivider, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { onboardTenant } from '../../../lib/api'
 import type { OnboardTenantRequest, OnboardTenantResponse, TenantListItemResponse } from '../../../types/api'
 
@@ -22,11 +23,8 @@ const emptyForm: OnboardTenantRequest = {
   lastName: '',
 }
 
-function getErrorMessage(error: unknown) {
-  return error instanceof Error ? error.message : 'Failed to create tenant.'
-}
-
 export function TenantOnboardingDialog({ open, onClose, onCreated }: Props) {
+  const { t } = useTranslation()
   const [form, setForm] = useState<OnboardTenantRequest>(emptyForm)
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
@@ -59,7 +57,7 @@ export function TenantOnboardingDialog({ open, onClose, onCreated }: Props) {
       onCreated(newTenant)
       handleClose()
     } catch (error: unknown) {
-      setError(getErrorMessage(error))
+      setError(error instanceof Error ? error.message : t('components.tenants.onboarding.error'))
     } finally {
       setIsSaving(false)
     }
@@ -67,24 +65,24 @@ export function TenantOnboardingDialog({ open, onClose, onCreated }: Props) {
 
   return (
     <VxDialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <VxDialogTitle>New Tenant</VxDialogTitle>
+      <VxDialogTitle>{t('components.tenants.onboarding.title')}</VxDialogTitle>
       <VxDialogContent>
         <VxStack component="form" id="onboard-form" spacing={2} sx={{ mt: 2 }} onSubmit={handleSubmit}>
           {error && <VxAlert severity="error">{error}</VxAlert>}
 
           <VxTypography variant="subtitle2" color="text.secondary">
-            Tenant
+            {t('components.tenants.onboarding.tenantSection')}
           </VxTypography>
           <VxStack direction="row" spacing={2}>
             <VxTextField
-              label="Tenant Name"
+              label={t('components.tenants.onboarding.tenantName')}
               value={form.tenantName}
               onChange={(e) => setField('tenantName', e.target.value)}
               required
               fullWidth
             />
             <VxTextField
-              label="Tenant Code"
+              label={t('components.tenants.onboarding.tenantCode')}
               value={form.tenantCode}
               onChange={(e) => setField('tenantCode', e.target.value)}
               required
@@ -93,7 +91,7 @@ export function TenantOnboardingDialog({ open, onClose, onCreated }: Props) {
             />
           </VxStack>
           <VxTextField
-            label="Domain (optional)"
+            label={t('components.tenants.onboarding.domain')}
             value={form.domain}
             onChange={(e) => setField('domain', e.target.value)}
             fullWidth
@@ -101,18 +99,18 @@ export function TenantOnboardingDialog({ open, onClose, onCreated }: Props) {
 
           <VxDivider />
           <VxTypography variant="subtitle2" color="text.secondary">
-            Company
+            {t('components.tenants.onboarding.companySection')}
           </VxTypography>
           <VxStack direction="row" spacing={2}>
             <VxTextField
-              label="Company Name"
+              label={t('components.tenants.onboarding.companyName')}
               value={form.companyName}
               onChange={(e) => setField('companyName', e.target.value)}
               required
               fullWidth
             />
             <VxTextField
-              label="Company Code"
+              label={t('components.tenants.onboarding.companyCode')}
               value={form.companyCode}
               onChange={(e) => setField('companyCode', e.target.value)}
               required
@@ -123,18 +121,18 @@ export function TenantOnboardingDialog({ open, onClose, onCreated }: Props) {
 
           <VxDivider />
           <VxTypography variant="subtitle2" color="text.secondary">
-            Admin User
+            {t('components.tenants.onboarding.adminSection')}
           </VxTypography>
           <VxStack direction="row" spacing={2}>
             <VxTextField
-              label="First Name"
+              label={t('components.tenants.onboarding.firstName')}
               value={form.firstName}
               onChange={(e) => setField('firstName', e.target.value)}
               required
               fullWidth
             />
             <VxTextField
-              label="Last Name"
+              label={t('components.tenants.onboarding.lastName')}
               value={form.lastName}
               onChange={(e) => setField('lastName', e.target.value)}
               required
@@ -142,14 +140,14 @@ export function TenantOnboardingDialog({ open, onClose, onCreated }: Props) {
             />
           </VxStack>
           <VxTextField
-            label="Username"
+            label={t('components.tenants.onboarding.username')}
             value={form.adminUserName}
             onChange={(e) => setField('adminUserName', e.target.value)}
             required
             fullWidth
           />
           <VxTextField
-            label="Email"
+            label={t('components.tenants.onboarding.email')}
             type="email"
             value={form.adminEmail}
             onChange={(e) => setField('adminEmail', e.target.value)}
@@ -157,7 +155,7 @@ export function TenantOnboardingDialog({ open, onClose, onCreated }: Props) {
             fullWidth
           />
           <VxTextField
-            label="Password"
+            label={t('components.tenants.onboarding.password')}
             type="password"
             value={form.adminPassword}
             onChange={(e) => setField('adminPassword', e.target.value)}
@@ -168,10 +166,10 @@ export function TenantOnboardingDialog({ open, onClose, onCreated }: Props) {
       </VxDialogContent>
       <VxDialogActions>
         <VxButton onClick={handleClose} disabled={isSaving}>
-          Cancel
+          {t('common.cancel')}
         </VxButton>
         <VxButton type="submit" form="onboard-form" variant="contained" disabled={isSaving}>
-          {isSaving ? 'Creating...' : 'Create Tenant'}
+          {isSaving ? t('components.tenants.onboarding.creating') : t('components.tenants.onboarding.create')}
         </VxButton>
       </VxDialogActions>
     </VxDialog>

@@ -28,6 +28,11 @@ function interpolate(template: string, vars?: Record<string, string | number>) {
   return Object.entries(vars).reduce((result, [key, value]) => result.replaceAll(`{${key}}`, String(value)), template)
 }
 
+export function translateCurrentLocale(key: TranslationKey, vars?: Record<string, string | number>) {
+  const locale = normalizeLocale(typeof localStorage === 'undefined' ? null : localStorage.getItem(LOCALE_STORAGE_KEY))
+  return interpolate(translations[locale][key] ?? translations.en[key], vars)
+}
+
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(() => normalizeLocale(localStorage.getItem(LOCALE_STORAGE_KEY)))
 

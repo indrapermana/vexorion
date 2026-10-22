@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   VxAlert,
   VxBox,
@@ -18,6 +19,7 @@ type PageHeaderProps = {
 }
 
 export function PageHeader({ title, description, primaryAction, filters, metrics }: PageHeaderProps) {
+  const { t } = useTranslation()
   return (
     <VxPaper component="header" elevation={0} className="panel-card">
       <VxStack spacing={2.5}>
@@ -36,7 +38,7 @@ export function PageHeader({ title, description, primaryAction, filters, metrics
         </VxStack>
 
         {filters ? (
-          <VxBox component="section" aria-label="Page filters">
+          <VxBox component="section" aria-label={t('common.pageFilters')}>
             {filters}
           </VxBox>
         ) : null}
@@ -44,7 +46,7 @@ export function PageHeader({ title, description, primaryAction, filters, metrics
         {metrics ? (
           <VxBox
             component="section"
-            aria-label="Page metrics"
+            aria-label={t('common.pageMetrics')}
             sx={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 170px), 1fr))',
@@ -87,7 +89,9 @@ type PageFeedbackProps = {
   onRetry?: () => void
 }
 
-export function PageFeedback({ error, success, info, retryLabel = 'Retry', onRetry }: PageFeedbackProps) {
+export function PageFeedback({ error, success, info, retryLabel, onRetry }: PageFeedbackProps) {
+  const { t } = useTranslation()
+  const resolvedRetryLabel = retryLabel ?? t('common.retry')
   if (!error && !success && !info) {
     return null
   }
@@ -97,7 +101,7 @@ export function PageFeedback({ error, success, info, retryLabel = 'Retry', onRet
       {error ? (
         <VxAlert
           severity="error"
-          action={onRetry ? <VxButton color="inherit" size="small" onClick={onRetry}>{retryLabel}</VxButton> : undefined}
+          action={onRetry ? <VxButton color="inherit" size="small" onClick={onRetry}>{resolvedRetryLabel}</VxButton> : undefined}
         >
           {error}
         </VxAlert>

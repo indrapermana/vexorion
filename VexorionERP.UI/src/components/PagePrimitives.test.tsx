@@ -3,6 +3,16 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { VxButton } from '@vexorion/ui'
 import { describe, expect, it, vi } from 'vitest'
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => ({
+      'common.pageFilters': 'Page filters',
+      'common.pageMetrics': 'Page metrics',
+      'common.retry': 'Retry',
+    } as Record<string, string>)[key] ?? key,
+  }),
+}))
 import {
   PageBody,
   PageEmptyState,

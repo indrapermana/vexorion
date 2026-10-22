@@ -20,7 +20,7 @@ type PurchaseOrderLinesPanelProps = {
 }
 
 export default function PurchaseOrderLinesPanel({ order, lines, isLoading, error, onRefresh, canManage = true, canViewProducts = true, canViewInventory = true }: PurchaseOrderLinesPanelProps) {
-  useTranslation()
+  const { t } = useTranslation()
   const { items: products, error: productsError } = useProductsLookup(Boolean(order) && canViewProducts)
   const { items: warehouses, error: warehousesError } = useWarehousesLookup(Boolean(order) && canViewInventory)
   const { items: balances, error: balancesError } = useInventoryBalancesLookup(Boolean(order) && canViewInventory)
@@ -47,8 +47,8 @@ export default function PurchaseOrderLinesPanel({ order, lines, isLoading, error
   if (!order) {
     return (
       <VxPaper elevation={0} className="panel-card">
-        <VxTypography variant="h6" sx={{ mb: 1 }}>Order lines</VxTypography>
-        <VxTypography color="text.secondary">Pick a purchase order from the grid to manage its lines.</VxTypography>
+        <VxTypography variant="h6" sx={{ mb: 1 }}>{t('orderWorkflow.line.orderLines')}</VxTypography>
+        <VxTypography color="text.secondary">{t('pages.purchaseOrders.lines.selectPrompt')}</VxTypography>
       </VxPaper>
     )
   }
@@ -80,11 +80,11 @@ export default function PurchaseOrderLinesPanel({ order, lines, isLoading, error
       } else if (selectedLine) {
         await updatePurchaseOrderLine(order.id, selectedLine.id, { ...payload, isActive: values.isActive })
       }
-      setFeedback(mode === 'create' ? 'Purchase order line created.' : 'Purchase order line updated.')
+      setFeedback(t(mode === 'create' ? 'pages.purchaseOrders.lines.created' : 'pages.purchaseOrders.lines.updated'))
       setIsEditorOpen(false)
       await onRefresh()
     } catch (error) {
-      setMutationError(error instanceof ApiError ? error.message : 'Unable to save purchase order line.')
+      setMutationError(error instanceof ApiError ? error.message : t('pages.purchaseOrders.lines.saveError'))
     }
   }
 
@@ -93,10 +93,10 @@ export default function PurchaseOrderLinesPanel({ order, lines, isLoading, error
       setMutationError(null)
       setFeedback(null)
       await deletePurchaseOrderLine(order.id, lineId)
-      setFeedback('Purchase order line deleted.')
+      setFeedback(t('pages.purchaseOrders.lines.deleted'))
       await onRefresh()
     } catch (error) {
-      setMutationError(error instanceof ApiError ? error.message : 'Unable to delete purchase order line.')
+      setMutationError(error instanceof ApiError ? error.message : t('pages.purchaseOrders.lines.deleteError'))
     }
   }
 
@@ -104,14 +104,14 @@ export default function PurchaseOrderLinesPanel({ order, lines, isLoading, error
     <VxPaper elevation={0} className="panel-card">
       <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ justifyContent: 'space-between', mb: 2 }}>
         <VxBox>
-          <VxTypography variant="h6">Order lines for {order.orderNumber}</VxTypography>
-          <VxTypography color="text.secondary">Attach products to this purchasing header and track inbound value.</VxTypography>
+          <VxTypography variant="h6">{t('orderWorkflow.line.orderLinesFor', { number: order.orderNumber })}</VxTypography>
+          <VxTypography color="text.secondary">{t('pages.purchaseOrders.lines.description')}</VxTypography>
         </VxBox>
-        {canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate} disabled={!products.length}>Add line</VxButton> : null}
+        {canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate} disabled={!products.length}>{t('orderWorkflow.line.add')}</VxButton> : null}
       </VxStack>
       <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 2, alignItems: { md: 'center' } }}>
-        <VxChip icon={<WarehouseRoundedIcon />} label={warehouseName ? `Receiving warehouse: ${warehouseName}` : `Receiving warehouse: ${order.warehouseId}`} color="primary" variant="outlined" />
-        <VxTypography color="text.secondary">Inventory context is calculated from the warehouse assigned on the purchase order header.</VxTypography>
+        <VxChip icon={<WarehouseRoundedIcon />} label={t('pages.purchaseOrders.lines.warehouse', { warehouse: warehouseName ?? order.warehouseId })} color="primary" variant="outlined" />
+        <VxTypography color="text.secondary">{t('pages.purchaseOrders.lines.inventoryHint')}</VxTypography>
       </VxStack>
       {error ? <VxAlert severity="error" sx={{ mb: 2 }}>{error}</VxAlert> : null}
       {productsError ? <VxAlert severity="warning" sx={{ mb: 2 }}>{productsError}</VxAlert> : null}
@@ -123,12 +123,12 @@ export default function PurchaseOrderLinesPanel({ order, lines, isLoading, error
         <VxTable size="small">
           <VxTableHead>
             <VxTableRow>
-              <VxTableCell>Product</VxTableCell>
-              <VxTableCell align="right">On hand</VxTableCell>
-              <VxTableCell align="right">Qty</VxTableCell>
-              <VxTableCell align="right">Unit cost</VxTableCell>
-              <VxTableCell align="right">Line total</VxTableCell>
-              <VxTableCell align="right">Actions</VxTableCell>
+              <VxTableCell>{t('orderWorkflow.line.product')}</VxTableCell>
+              <VxTableCell align="right">{t('orderWorkflow.line.onHand')}</VxTableCell>
+              <VxTableCell align="right">{t('orderWorkflow.line.quantityShort')}</VxTableCell>
+              <VxTableCell align="right">{t('orderWorkflow.line.unitCost')}</VxTableCell>
+              <VxTableCell align="right">{t('orderWorkflow.line.total')}</VxTableCell>
+              <VxTableCell align="right">{t('common.actions')}</VxTableCell>
             </VxTableRow>
           </VxTableHead>
           <VxTableBody>
@@ -142,23 +142,23 @@ export default function PurchaseOrderLinesPanel({ order, lines, isLoading, error
                   <VxTableCell align="right">${line.unitCost.toFixed(2)}</VxTableCell>
                   <VxTableCell align="right">${line.lineTotal.toFixed(2)}</VxTableCell>
                   <VxTableCell align="right">
-                    {canManage ? <><VxButton size="small" startIcon={<EditRoundedIcon />} onClick={() => openEdit(line)}>Edit</VxButton>
+                    {canManage ? <><VxButton size="small" startIcon={<EditRoundedIcon />} onClick={() => openEdit(line)}>{t('common.edit')}</VxButton>
                     <VxConfirmActionButton
-                      title="Delete purchase order line"
+                      title={t('pages.purchaseOrders.lines.deleteTitle')}
                       targetName={product ? `${product.name} (${product.sku})` : line.productId}
                       consequence={`This removes the line from purchase order ${order.orderNumber} and recalculates its totals.`}
-                      confirmLabel="Delete line"
-                      pendingLabel="Deleting..."
+                      confirmLabel={t('orderWorkflow.line.delete')}
+                      pendingLabel={t('dialogs.deleting')}
                       onConfirm={() => handleDelete(line.id)}
                       buttonProps={{ size: 'small', color: 'error', startIcon: <DeleteOutlineRoundedIcon /> }}
-                    >Delete</VxConfirmActionButton></> : null}
+                    >{t('common.delete')}</VxConfirmActionButton></> : null}
                   </VxTableCell>
                 </VxTableRow>
               )
             })}
             {!isLoading && lines.length === 0 ? (
               <VxTableRow>
-                <VxTableCell colSpan={6}><VxTypography color="text.secondary">No lines yet.</VxTypography></VxTableCell>
+                <VxTableCell colSpan={6}><VxTypography color="text.secondary">{t('orderWorkflow.line.empty')}</VxTypography></VxTableCell>
               </VxTableRow>
             ) : null}
           </VxTableBody>

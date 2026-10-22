@@ -1,5 +1,6 @@
 import { VxBox, VxChip, VxPageFeedback, VxPageHeader, VxPaper, VxStack, VxTypography } from '@vexorion/ui'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ApartmentRoundedIcon, PersonRoundedIcon, StackedBarChartRoundedIcon, TravelExploreRoundedIcon, VxCard } from '@vexorion/ui'
 import { getTenantTelemetry, getTenants, getUsersForAdmin } from '../lib/api'
 import type { TenantListItemResponse, TenantTelemetryListItemResponse } from '../types/api'
@@ -17,6 +18,7 @@ function DashboardMetricCard({ label, value, icon }: { label: string; value: str
 }
 
 export default function DashboardPage() {
+  const { t } = useTranslation()
   const [tenants, setTenants] = useState<TenantListItemResponse[]>([])
   const [users, setUsers] = useState<UserListItemResponse[]>([])
   const [telemetryByTenant, setTelemetryByTenant] = useState<Map<string, TenantTelemetryListItemResponse>>(new Map())
@@ -32,10 +34,10 @@ export default function DashboardPage() {
       setUsers(userData)
       setTelemetryByTenant(new Map(telemetry.tenants.map((item) => [item.tenantId, item])))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to load dashboard metrics right now.')
+      setError(err instanceof Error ? err.message : t('pages.dashboard.loadError'))
       console.error(err)
     }
-  }, [rangeDays])
+  }, [rangeDays, t])
 
   useEffect(() => {
     void loadDashboard()
@@ -77,16 +79,16 @@ export default function DashboardPage() {
 
   return (
     <VxStack spacing={2.5}>
-      <VxPageHeader title="System Admin Dashboard" description="Snapshot across all tenants and users using backend telemetry and tenant analytics." filters={(
+      <VxPageHeader title={t('pages.dashboard.title')} description={t('pages.dashboard.description')} filters={(
           <VxStack direction="row" spacing={1}>
             <VxChip
-              label="Last 7 days"
+              label={t('pages.dashboard.last7Days')}
               color={rangeDays === 7 ? 'primary' : 'default'}
               variant={rangeDays === 7 ? 'filled' : 'outlined'}
               onClick={() => setRangeDays(7)}
             />
             <VxChip
-              label="Last 30 days"
+              label={t('pages.dashboard.last30Days')}
               color={rangeDays === 30 ? 'primary' : 'default'}
               variant={rangeDays === 30 ? 'filled' : 'outlined'}
               onClick={() => setRangeDays(30)}
@@ -98,18 +100,18 @@ export default function DashboardPage() {
 
       <VxBox sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', md: '1fr 1fr', xl: 'repeat(4, 1fr)' } }}>
         <VxBox>
-          <DashboardMetricCard label="Total tenants" value={String(tenants.length)} icon={<ApartmentRoundedIcon />} />
+          <DashboardMetricCard label={t('pages.dashboard.totalTenants')} value={String(tenants.length)} icon={<ApartmentRoundedIcon />} />
         </VxBox>
         <VxBox>
-          <DashboardMetricCard label="Active tenants" value={String(activeTenants)} icon={<StackedBarChartRoundedIcon />} />
+          <DashboardMetricCard label={t('pages.dashboard.activeTenants')} value={String(activeTenants)} icon={<StackedBarChartRoundedIcon />} />
         </VxBox>
         <VxBox>
-          <DashboardMetricCard label="Total users" value={String(users.length)} icon={<PersonRoundedIcon />} />
+          <DashboardMetricCard label={t('pages.dashboard.totalUsers')} value={String(users.length)} icon={<PersonRoundedIcon />} />
         </VxBox>
         <VxBox>
           <DashboardMetricCard
-            label="Most visited page"
-            value={mostVisitedPage.visits > 0 && mostVisitedPage.page ? `${mostVisitedPage.page} (${mostVisitedPage.visits})` : 'N/A'}
+            label={t('pages.dashboard.mostVisitedPage')}
+            value={mostVisitedPage.visits > 0 && mostVisitedPage.page ? `${mostVisitedPage.page} (${mostVisitedPage.visits})` : t('pages.dashboard.notAvailable')}
             icon={<TravelExploreRoundedIcon />}
           />
         </VxBox>
@@ -118,20 +120,20 @@ export default function DashboardPage() {
       <VxBox sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', lg: '1fr 2fr' } }}>
         <VxBox>
           <VxPaper className="panel-card" elevation={0}>
-            <VxTypography variant="h6" sx={{ mb: 1.5 }}>Free vs Paid Tenants</VxTypography>
+            <VxTypography variant="h6" sx={{ mb: 1.5 }}>{t('pages.dashboard.freePaid')}</VxTypography>
             <VxStack direction="row" spacing={1}>
-              <VxChip color="success" label={`Free: ${freeTenants}`} />
-              <VxChip color="primary" label={`Paid: ${paidTenants}`} />
+              <VxChip color="success" label={t('pages.dashboard.free', { count: freeTenants })} />
+              <VxChip color="primary" label={t('pages.dashboard.paid', { count: paidTenants })} />
             </VxStack>
             <VxTypography variant="body2" color="text.secondary" sx={{ mt: 1.25 }}>
-              Paid tenants are inferred from tenants with a configured domain.
+              {t('pages.dashboard.paidHint')}
             </VxTypography>
           </VxPaper>
         </VxBox>
 
         <VxBox>
           <VxPaper className="panel-card" elevation={0}>
-            <VxTypography variant="h6" sx={{ mb: 1.5 }}>Tenant Login Overview</VxTypography>
+            <VxTypography variant="h6" sx={{ mb: 1.5 }}>{t('pages.dashboard.loginOverview')}</VxTypography>
             <VxStack spacing={1}>
               {tenants.map((tenant) => (
                 <VxStack key={tenant.id} direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
@@ -139,15 +141,15 @@ export default function DashboardPage() {
                     {tenant.name} ({tenant.code})
                   </VxTypography>
                   <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                    <VxChip size="small" label={`Users: ${usersByTenant.get(tenant.id) ?? 0}`} />
-                    <VxChip size="small" variant="outlined" label={`Logins: ${telemetryByTenant.get(tenant.id)?.loginCount ?? 0}`} />
+                    <VxChip size="small" label={t('pages.dashboard.users', { count: usersByTenant.get(tenant.id) ?? 0 })} />
+                    <VxChip size="small" variant="outlined" label={t('pages.dashboard.logins', { count: telemetryByTenant.get(tenant.id)?.loginCount ?? 0 })} />
                     <VxChip
                       size="small"
                       variant="outlined"
                       label={
                         telemetryByTenant.get(tenant.id)?.mostVisitedPage
-                          ? `Top page: ${telemetryByTenant.get(tenant.id)?.mostVisitedPage} (${telemetryByTenant.get(tenant.id)?.mostVisitedPageVisits ?? 0})`
-                          : 'Top page: N/A'
+                          ? t('pages.dashboard.topPage', { page: telemetryByTenant.get(tenant.id)?.mostVisitedPage ?? '', count: telemetryByTenant.get(tenant.id)?.mostVisitedPageVisits ?? 0 })
+                          : t('pages.dashboard.topPageUnavailable')
                       }
                     />
                   </VxStack>

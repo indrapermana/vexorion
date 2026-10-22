@@ -17,31 +17,9 @@ const languageOptions = [
   { code: 'idID', label: 'Bahasa Indonesia' },
 ] as const
 
-const navigationSections = [
-  {
-    title: 'Overview',
-    links: [{ to: '/', label: 'Dashboard', icon: <DashboardRoundedIcon /> }],
-  },
-  {
-    title: 'Administration',
-    links: [
-      { to: '/tenants', label: 'Tenants', icon: <StoreRoundedIcon /> },
-      { to: '/users', label: 'Users', icon: <GroupsRoundedIcon /> },
-      { to: '/menu-configuration', label: 'Menu Configuration', icon: <SettingsApplicationsRoundedIcon /> },
-    ],
-  },
-] as const
-
-const routeTitles: Record<string, string> = {
-  '/': 'Dashboard',
-  '/tenants': 'Tenants',
-  '/users': 'Users',
-  '/menu-configuration': 'Menu Configuration',
-}
-
 export default function AppLayout() {
   const location = useLocation()
-  const { i18n } = useTranslation()
+  const { i18n, t } = useTranslation()
   const { mode: themeMode, setMode: setThemeMode } = useThemeMode()
   const { user, isAuthenticated, logout } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -63,7 +41,19 @@ export default function AppLayout() {
     await logout()
   }
 
-  const pageTitle = routeTitles[location.pathname] ?? 'System Admin'
+  const navigationSections = [
+    { title: t('shell.overview'), links: [{ to: '/', label: t('shell.dashboard'), icon: <DashboardRoundedIcon /> }] },
+    { title: t('shell.administration'), links: [
+      { to: '/tenants', label: t('shell.tenants'), icon: <StoreRoundedIcon /> },
+      { to: '/users', label: t('shell.users'), icon: <GroupsRoundedIcon /> },
+      { to: '/menu-configuration', label: t('shell.menuConfiguration'), icon: <SettingsApplicationsRoundedIcon /> },
+    ] },
+  ]
+  const routeTitles: Record<string, string> = {
+    '/': t('shell.dashboard'), '/tenants': t('shell.tenants'), '/users': t('shell.users'),
+    '/menu-configuration': t('shell.menuConfiguration'),
+  }
+  const pageTitle = routeTitles[location.pathname] ?? t('shell.systemAdmin')
   const currentLanguage = i18n.language
   const desktopDrawerWidth = isSidebarCollapsed ? collapsedDrawerWidth : drawerWidth
   const visibleNavigationSections = navigationSections
@@ -82,7 +72,7 @@ export default function AppLayout() {
         {!collapsed ? (
           <VxBox sx={{ minWidth: 0, flex: 1 }}>
             <VxTypography variant="overline" sx={{ color: 'text.secondary', letterSpacing: '0.18em' }}>
-              VEXORION ERP
+              {t('shell.brand')}
             </VxTypography>
           </VxBox>
         ) : null}
@@ -91,7 +81,7 @@ export default function AppLayout() {
       <VxDivider />
 
       <VxBox sx={{ px: collapsed ? 1 : 1.5, py: 1.5 }}>
-        {!collapsed ? <VxTypography className="sidebar-caption">Navigation</VxTypography> : null}
+        {!collapsed ? <VxTypography className="sidebar-caption">{t('shell.navigation')}</VxTypography> : null}
         <VxStack spacing={1.5}>
           {visibleNavigationSections.map((section) => (
             <VxBox key={section.title}>
@@ -140,25 +130,25 @@ export default function AppLayout() {
           {!collapsed ? (
             <>
               <VxTypography variant="body2" sx={{ fontWeight: 700, mb: 0.5 }}>
-                {isAuthenticated && user ? user.displayName : 'Anonymous'}
+                {isAuthenticated && user ? user.displayName : t('shell.anonymous')}
               </VxTypography>
               <VxTypography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                {isAuthenticated && user ? user.email : 'Sign in required'}
+                {isAuthenticated && user ? user.email : t('shell.signInRequired')}
               </VxTypography>
             </>
           ) : null}
           {isAuthenticated ? (
             collapsed ? (
-              <VxIconButton color="primary" onClick={() => void handleLogout()} aria-label="Logout" sx={{ width: '100%' }}>
+              <VxIconButton color="primary" onClick={() => void handleLogout()} aria-label={t('shell.logout')} sx={{ width: '100%' }}>
                 <LogoutRoundedIcon />
               </VxIconButton>
             ) : (
               <VxButton fullWidth variant="contained" startIcon={<LogoutRoundedIcon />} onClick={() => void handleLogout()}>
-                Logout
+                {t('shell.logout')}
               </VxButton>
             )
           ) : (
-            collapsed ? <VxChip size="small" label="P" variant="outlined" /> : <VxChip label="Public access only" variant="outlined" />
+            collapsed ? <VxChip size="small" label="P" variant="outlined" /> : <VxChip label={t('shell.publicAccessOnly')} variant="outlined" />
           )}
         </VxPaper>
       </VxBox>
@@ -198,23 +188,23 @@ export default function AppLayout() {
               size="small"
               value={themeMode}
               onChange={(event) => setThemeMode(event.target.value as 'light' | 'dark')}
-              aria-label="Theme"
+              aria-label={t('shell.theme')}
               sx={{ minWidth: 120, display: { xs: 'none', sm: 'inline-flex' } }}
             >
               <VxMenuItem value="light">
                 <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                   <LightModeRoundedIcon fontSize="small" />
-                  <span>Light</span>
+                  <span>{t('shell.light')}</span>
                 </VxStack>
               </VxMenuItem>
               <VxMenuItem value="dark">
                 <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                   <DarkModeRoundedIcon fontSize="small" />
-                  <span>Dark</span>
+                  <span>{t('shell.dark')}</span>
                 </VxStack>
               </VxMenuItem>
             </VxSelect>
-            <VxIconButton size="small" onClick={toggleThemeMode} aria-label="Toggle theme" sx={{ display: { xs: 'inline-flex', sm: 'none' } }}>
+            <VxIconButton size="small" onClick={toggleThemeMode} aria-label={t('shell.toggleTheme')} sx={{ display: { xs: 'inline-flex', sm: 'none' } }}>
               {themeMode === 'light' ? <DarkModeRoundedIcon fontSize="small" /> : <LightModeRoundedIcon fontSize="small" />}
             </VxIconButton>
             <VxSelect
@@ -223,7 +213,7 @@ export default function AppLayout() {
               onChange={(event) => {
                 void i18n.changeLanguage(event.target.value)
               }}
-              aria-label="Language"
+              aria-label={t('shell.language')}
               sx={{ minWidth: 152 }}
             >
               {languageOptions.map((option) => (
@@ -231,21 +221,21 @@ export default function AppLayout() {
               ))}
             </VxSelect>
             {isAuthenticated ? (
-              <VxChip color="secondary" label={user ? `${user.displayName} · ${user.roles[0] ?? 'User'}` : 'Signed in'} />
+              <VxChip color="secondary" label={user ? `${user.displayName} · ${user.roles[0] ?? t('shell.user')}` : t('shell.signedIn')} />
             ) : (
-              <VxChip label="Public route" variant="outlined" />
+              <VxChip label={t('shell.publicRoute')} variant="outlined" />
             )}
           </VxStack>
           <VxStack direction="row" spacing={2} sx={{ alignItems: 'center', width: '100%' }}>
             <VxIconButton sx={{ display: { lg: 'none' } }} onClick={() => setMobileOpen(true)}>
               <MenuRoundedIcon />
             </VxIconButton>
-            <VxIconButton sx={{ display: { xs: 'none', lg: 'inline-flex' } }} onClick={toggleSidebarCollapsed} aria-label={isSidebarCollapsed ? 'Expand navigation' : 'Collapse navigation'}>
+            <VxIconButton sx={{ display: { xs: 'none', lg: 'inline-flex' } }} onClick={toggleSidebarCollapsed} aria-label={isSidebarCollapsed ? t('shell.expandNavigation') : t('shell.collapseNavigation')}>
               <MenuRoundedIcon />
             </VxIconButton>
             <VxBox sx={{ mr: 'auto', minWidth: 0 }}>
               <VxTypography variant="overline" sx={{ color: 'text.secondary', letterSpacing: '0.18em' }}>
-                ADMIN CONSOLE
+                {t('shell.adminConsole')}
               </VxTypography>
               <VxTypography variant="h5" noWrap>{pageTitle}</VxTypography>
             </VxBox>

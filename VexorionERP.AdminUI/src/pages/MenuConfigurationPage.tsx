@@ -1,38 +1,40 @@
 import { VxAlert, VxBox, VxButton, VxChip, VxMenuItem, VxPageFeedback, VxPageHeader, VxPaper, VxStack, VxSwitch, VxTextField, VxTypography } from '@vexorion/ui'
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { getTenantMenuConfiguration, getTenants, updateTenantMenuConfiguration } from '../lib/api'
 import type { TenantListItemResponse } from '../types/api'
 import { useAuth } from '../app/AuthContext'
 import { AdminPermissions, hasAdminPermissions } from '../app/authorization'
 
 const tenantMenuItems = [
-  { key: '/', label: 'Dashboard' },
-  { key: '/customers', label: 'Customers' },
-  { key: '/sales-orders', label: 'Sales Orders' },
-  { key: '/sales-shipments', label: 'Sales Shipments' },
-  { key: '/sales-invoices', label: 'Sales Invoices' },
-  { key: '/customer-payments', label: 'Customer Payments' },
-  { key: '/suppliers', label: 'Suppliers' },
-  { key: '/purchase-orders', label: 'Purchase Orders' },
-  { key: '/purchase-receipts', label: 'Purchase Receipts' },
-  { key: '/purchase-invoices', label: 'Purchase Invoices' },
-  { key: '/vendor-payments', label: 'Vendor Payments' },
-  { key: '/products', label: 'Products' },
-  { key: '/inventory-adjustments', label: 'Inventory Adjustments' },
-  { key: '/stock-counts', label: 'Stock Counts' },
-  { key: '/stock-transfers', label: 'Stock Transfers' },
-  { key: '/warehouses', label: 'Warehouses' },
-  { key: '/accounts', label: 'Accounts' },
-  { key: '/audit-logs', label: 'Audit Logs' },
-  { key: '/fiscal-periods', label: 'Fiscal Periods' },
-  { key: '/journals', label: 'Journals' },
-  { key: '/reports', label: 'Reports' },
-  { key: '/config', label: 'Configuration Center' },
+  { key: '/', labelKey: 'dashboard' },
+  { key: '/customers', labelKey: 'customers' },
+  { key: '/sales-orders', labelKey: 'salesOrders' },
+  { key: '/sales-shipments', labelKey: 'salesShipments' },
+  { key: '/sales-invoices', labelKey: 'salesInvoices' },
+  { key: '/customer-payments', labelKey: 'customerPayments' },
+  { key: '/suppliers', labelKey: 'suppliers' },
+  { key: '/purchase-orders', labelKey: 'purchaseOrders' },
+  { key: '/purchase-receipts', labelKey: 'purchaseReceipts' },
+  { key: '/purchase-invoices', labelKey: 'purchaseInvoices' },
+  { key: '/vendor-payments', labelKey: 'vendorPayments' },
+  { key: '/products', labelKey: 'products' },
+  { key: '/inventory-adjustments', labelKey: 'inventoryAdjustments' },
+  { key: '/stock-counts', labelKey: 'stockCounts' },
+  { key: '/stock-transfers', labelKey: 'stockTransfers' },
+  { key: '/warehouses', labelKey: 'warehouses' },
+  { key: '/accounts', labelKey: 'accounts' },
+  { key: '/audit-logs', labelKey: 'auditLogs' },
+  { key: '/fiscal-periods', labelKey: 'fiscalPeriods' },
+  { key: '/journals', labelKey: 'journals' },
+  { key: '/reports', labelKey: 'reports' },
+  { key: '/config', labelKey: 'configuration' },
 ] as const
 
 type MenuItemKey = (typeof tenantMenuItems)[number]['key']
 
 export default function MenuConfigurationPage() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const canManage = hasAdminPermissions(user?.permissions, { allOf: [AdminPermissions.tenants.manage] })
   const [tenants, setTenants] = useState<TenantListItemResponse[]>([])
@@ -50,13 +52,13 @@ export default function MenuConfigurationPage() {
           setSelectedTenantId(data[0].id)
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unable to load tenants for menu configuration.')
+        setError(err instanceof Error ? err.message : t('pages.menuConfiguration.errors.tenants'))
         console.error(err)
       }
     }
 
     void loadTenants()
-  }, [])
+  }, [t])
 
   useEffect(() => {
     if (!selectedTenantId) {
@@ -70,14 +72,14 @@ export default function MenuConfigurationPage() {
         const response = await getTenantMenuConfiguration(selectedTenantId)
         setHiddenMenus(response.hiddenMenuLinks as MenuItemKey[])
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unable to load menu configuration for this tenant.')
+        setError(err instanceof Error ? err.message : t('pages.menuConfiguration.errors.load'))
         console.error(err)
         setHiddenMenus([])
       }
     }
 
     void loadConfiguration()
-  }, [selectedTenantId])
+  }, [selectedTenantId, t])
 
   const selectedTenant = useMemo(
     () => tenants.find((tenant) => tenant.id === selectedTenantId) ?? null,
@@ -104,7 +106,7 @@ export default function MenuConfigurationPage() {
       const updated = await updateTenantMenuConfiguration(selectedTenantId, hiddenMenus)
       setHiddenMenus(updated.hiddenMenuLinks as MenuItemKey[])
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to save menu configuration.')
+      setError(err instanceof Error ? err.message : t('pages.menuConfiguration.errors.save'))
       console.error(err)
     } finally {
       setIsSaving(false)
@@ -113,16 +115,16 @@ export default function MenuConfigurationPage() {
 
   return (
     <VxStack spacing={2.5}>
-      <VxPageHeader title="Menu Configuration" description="Enable or disable tenant app menus per tenant. Configuration is persisted in backend tenant preferences." />
+      <VxPageHeader title={t('pages.menuConfiguration.title')} description={t('pages.menuConfiguration.description')} />
 
       <VxPageFeedback error={error} />
-      {!canManage ? <VxAlert severity="info">You have view-only access. Saving menu changes requires the tenants.manage permission.</VxAlert> : null}
+      {!canManage ? <VxAlert severity="info">{t('pages.menuConfiguration.viewOnly')}</VxAlert> : null}
 
       <VxPaper className="panel-card" elevation={0}>
         <VxStack spacing={2}>
           <VxTextField
             select
-            label="Tenant"
+            label={t('pages.menuConfiguration.tenant')}
             value={selectedTenantId}
             onChange={(event) => setSelectedTenantId(event.target.value)}
             fullWidth
@@ -136,8 +138,8 @@ export default function MenuConfigurationPage() {
 
           {selectedTenant ? (
             <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-              <VxChip label={selectedTenant.isActive ? 'Active tenant' : 'Inactive tenant'} color={selectedTenant.isActive ? 'success' : 'default'} size="small" />
-              <VxChip label={selectedTenant.domain ? `Domain: ${selectedTenant.domain}` : 'No custom domain'} size="small" />
+              <VxChip label={selectedTenant.isActive ? t('pages.menuConfiguration.activeTenant') : t('pages.menuConfiguration.inactiveTenant')} color={selectedTenant.isActive ? 'success' : 'default'} size="small" />
+              <VxChip label={selectedTenant.domain ? t('pages.menuConfiguration.domain', { domain: selectedTenant.domain }) : t('pages.menuConfiguration.noDomain')} size="small" />
             </VxStack>
           ) : null}
 
@@ -152,8 +154,8 @@ export default function MenuConfigurationPage() {
                   sx={{ justifyContent: 'space-between', alignItems: 'center', p: 1.25, border: '1px solid rgba(108, 92, 231, 0.08)', borderRadius: 2 }}
                 >
                   <VxBox>
-                    <VxTypography variant="body2" sx={{ fontWeight: 600 }}>{menuItem.label}</VxTypography>
-                    <VxTypography variant="caption" color="text.secondary">menu key: {menuItem.key}</VxTypography>
+                    <VxTypography variant="body2" sx={{ fontWeight: 600 }}>{t(`menuItems.${menuItem.labelKey}`)}</VxTypography>
+                    <VxTypography variant="caption" color="text.secondary">{t('pages.menuConfiguration.menuKey')} {menuItem.key}</VxTypography>
                   </VxBox>
                   <VxSwitch checked={isEnabled} disabled={!canManage} onChange={(_, checked) => toggleMenu(menuItem.key, checked)} />
                 </VxStack>
@@ -163,7 +165,7 @@ export default function MenuConfigurationPage() {
 
           <VxStack direction="row" sx={{ justifyContent: 'flex-end' }}>
             <VxButton variant="contained" onClick={() => void handleSave()} disabled={!canManage || isSaving || !selectedTenantId}>
-              {isSaving ? 'Saving...' : 'Save Configuration'}
+              {isSaving ? t('common.saving') : t('common.save')}
             </VxButton>
           </VxStack>
         </VxStack>

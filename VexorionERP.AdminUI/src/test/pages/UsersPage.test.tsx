@@ -16,6 +16,50 @@ const apiMocks = vi.hoisted(() => ({
   setUserStatus: vi.fn(),
 }))
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => {
+      const messages: Record<string, string> = {
+        'common.cancel': 'Cancel',
+        'common.viewOnly': 'View only',
+        'components.tenants.grid.active': 'Active',
+        'components.tenants.grid.inactive': 'Inactive',
+        'pages.users.activate': 'Activate',
+        'pages.users.add': 'Add Tenant User',
+        'pages.users.allTenants': 'All tenants',
+        'pages.users.columns.actions': 'Actions',
+        'pages.users.columns.roles': 'Roles',
+        'pages.users.columns.status': 'Status',
+        'pages.users.columns.tenant': 'Tenant',
+        'pages.users.columns.user': 'User',
+        'pages.users.create': 'Create User',
+        'pages.users.deactivate': 'Deactivate',
+        'pages.users.deactivateConsequence': 'The user will no longer be able to sign in.',
+        'pages.users.deactivateTitle': 'Deactivate user',
+        'pages.users.deactivating': 'Deactivating...',
+        'pages.users.description': 'Manage tenant users, roles, passwords, and access status.',
+        'pages.users.email': 'Email',
+        'pages.users.firstName': 'First name',
+        'pages.users.lastName': 'Last name',
+        'pages.users.newPassword': 'New password',
+        'pages.users.password': 'Password',
+        'pages.users.reset': 'Reset',
+        'pages.users.resetPassword': 'Reset Password',
+        'pages.users.roleWarning': 'Role changes take effect the next time the user signs in.',
+        'pages.users.roles': 'Roles',
+        'pages.users.saveRoles': 'Save Roles',
+        'pages.users.tenantFilter': 'Tenant',
+        'pages.users.title': 'Users',
+        'pages.users.updateRoles': 'Update Roles',
+        'pages.users.username': 'Username',
+        'pages.users.viewOnly': 'You have view-only access.',
+      }
+
+      return messages[key] ?? key
+    },
+  }),
+}))
+
 vi.mock('../../app/AuthContext', () => ({
   useAuth: () => ({
     user: {

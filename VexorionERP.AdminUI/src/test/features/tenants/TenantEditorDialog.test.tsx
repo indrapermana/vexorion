@@ -17,6 +17,8 @@ vi.mock('react-i18next', () => ({
         'components.tenants.editor.nameLabel': 'Name',
         'components.tenants.editor.domainLabel': 'Domain',
         'components.tenants.editor.activeLabel': 'Active',
+        'components.tenants.editor.validationRequired': 'Name is required',
+        'components.tenants.editor.validationMin': 'Name must be at least 2 characters',
         'common.cancel': 'Cancel',
         'common.save': 'Save',
         'common.saving': 'Saving...',

@@ -1,23 +1,25 @@
 import { ApartmentRoundedIcon, ShieldMoonRoundedIcon, StorefrontRoundedIcon, TrendingUpRoundedIcon } from '@vexorion/ui'
 import { VxBox, VxChip, VxStack, VxTypography } from '@vexorion/ui'
 import { Outlet } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 export default function PublicAuthLayout() {
+  const { t } = useTranslation()
   const features = [
     {
       icon: <ShieldMoonRoundedIcon />,
-      title: 'Secure session controls',
-      description: 'Token refresh and role based access are enforced for admin-only workflows.',
+      title: t('publicAuth.secureTitle'),
+      description: t('publicAuth.secureDescription'),
     },
     {
       icon: <StorefrontRoundedIcon />,
-      title: 'Centralized tenant operations',
-      description: 'Manage tenants, users, and menu controls from one isolated admin workspace.',
+      title: t('publicAuth.operationsTitle'),
+      description: t('publicAuth.operationsDescription'),
     },
     {
       icon: <TrendingUpRoundedIcon />,
-      title: 'Operational visibility',
-      description: 'Track tenant growth and user activity with dashboard-level indicators.',
+      title: t('publicAuth.visibilityTitle'),
+      description: t('publicAuth.visibilityDescription'),
     },
   ]
 
@@ -31,23 +33,23 @@ export default function PublicAuthLayout() {
             </VxBox>
             <VxBox>
               <VxTypography variant="overline" sx={{ color: 'rgba(255,255,255,0.72)', letterSpacing: '0.18em' }}>
-                VEXORION ERP
+                {t('shell.brand')}
               </VxTypography>
-              <VxTypography variant="h6" sx={{ color: '#fff' }}>System Admin Workspace</VxTypography>
+              <VxTypography variant="h6" sx={{ color: '#fff' }}>{t('publicAuth.workspace')}</VxTypography>
             </VxBox>
           </VxStack>
 
           <VxBox>
-            <VxTypography className="public-shell__eyebrow">Admin Portal</VxTypography>
-            <VxTypography variant="h2" className="public-shell__title">Control all tenant workspaces from one place.</VxTypography>
+            <VxTypography className="public-shell__eyebrow">{t('publicAuth.eyebrow')}</VxTypography>
+            <VxTypography variant="h2" className="public-shell__title">{t('publicAuth.title')}</VxTypography>
             <VxTypography className="public-shell__description">
-              Sign in with SystemAdmin credentials to manage tenants, users, and tenant menu configuration safely outside the tenant app.
+              {t('publicAuth.description')}
             </VxTypography>
           </VxBox>
 
           <VxChip
             icon={<ApartmentRoundedIcon />}
-            label="Use tenant code demo for seeded development account"
+            label={t('publicAuth.developmentHint')}
             className="public-shell__chip"
           />
 

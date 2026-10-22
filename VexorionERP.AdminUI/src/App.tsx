@@ -8,6 +8,7 @@ import { createAppTheme } from './theme'
 import { PermissionRoute, ProtectedRoute, PublicOnlyRoute } from './components/RouteGuards'
 import { AdminPermissions } from './app/authorization'
 import type { ThemeMode } from './theme'
+import { useTranslation } from 'react-i18next'
 
 const THEME_MODE_STORAGE_KEY = 'vexorion.admin.themeMode'
 
@@ -24,7 +25,8 @@ function normalizeThemeMode(value: string | null): ThemeMode {
 }
 
 function RouteFallback() {
-  return <VxAlert severity="info">Loading...</VxAlert>
+  const { t } = useTranslation()
+  return <VxAlert severity="info">{t('common.loading')}</VxAlert>
 }
 
 export default function App() {

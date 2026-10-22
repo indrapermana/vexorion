@@ -13,30 +13,30 @@ type FiscalPeriodDataGridProps = {
 }
 
 export default function FiscalPeriodDataGrid({ rows, isLoading, onEdit, onClosePeriod, onReopenPeriod, canManage = true }: FiscalPeriodDataGridProps) {
-  useTranslation()
+  const { t } = useTranslation()
   const columns: VxGridColDef<FiscalPeriodGridRow>[] = [
-    { field: 'periodCode', headerName: 'Period', minWidth: 130, flex: 0.5 },
-    { field: 'startDate', headerName: 'Start date', minWidth: 130, flex: 0.5 },
-    { field: 'endDate', headerName: 'End date', minWidth: 130, flex: 0.5 },
+    { field: 'periodCode', headerName: t('pages.fiscalPeriods.fields.period'), minWidth: 130, flex: 0.5 },
+    { field: 'startDate', headerName: t('pages.fiscalPeriods.fields.startDate'), minWidth: 130, flex: 0.5 },
+    { field: 'endDate', headerName: t('pages.fiscalPeriods.fields.endDate'), minWidth: 130, flex: 0.5 },
     {
       field: 'isClosed',
-      headerName: 'Status',
+      headerName: t('common.labels.status'),
       minWidth: 120,
       flex: 0.4,
       renderCell: ({ row }) => (
-        <VxChip size="small" color={row.isClosed ? 'default' : 'success'} label={row.isClosed ? 'Closed' : 'Open'} />
+        <VxChip size="small" color={row.isClosed ? 'default' : 'success'} label={row.isClosed ? t('pages.fiscalPeriods.grid.closed') : t('common.labels.open')} />
       ),
     },
     {
       field: 'actions',
       type: 'actions',
-      headerName: 'Actions',
+      headerName: t('common.actions'),
       minWidth: 180,
       getActions: ({ row }) => canManage ? [
-        <VxGridActionsCellItem key={`edit-${row.id}`} icon={<EditRoundedIcon />} label="Edit" onClick={() => onEdit(row.id)} showInMenu={false} />,
+        <VxGridActionsCellItem key={`edit-${row.id}`} icon={<EditRoundedIcon />} label={t('common.edit')} onClick={() => onEdit(row.id)} showInMenu={false} />,
         row.isClosed
-          ? <VxGridActionsCellItem key={`reopen-${row.id}`} icon={<LockOpenRoundedIcon />} label="Reopen" onClick={() => onReopenPeriod(row)} showInMenu={false} />
-          : <VxGridActionsCellItem key={`close-${row.id}`} icon={<LockRoundedIcon />} label="Close" onClick={() => onClosePeriod(row)} showInMenu={false} />,
+          ? <VxGridActionsCellItem key={`reopen-${row.id}`} icon={<LockOpenRoundedIcon />} label={t('pages.fiscalPeriods.grid.reopen')} onClick={() => onReopenPeriod(row)} showInMenu={false} />
+          : <VxGridActionsCellItem key={`close-${row.id}`} icon={<LockRoundedIcon />} label={t('pages.fiscalPeriods.grid.close')} onClick={() => onClosePeriod(row)} showInMenu={false} />,
       ] : [],
     },
   ]

@@ -12,5 +12,5 @@ type PurchaseOrderDeleteDialogProps = {
 export default function PurchaseOrderDeleteDialog({ target, isDeleting, onClose, onConfirm }: PurchaseOrderDeleteDialogProps) {
   const { t } = useTranslation()
 
-  return <VxConfirmActionDialog open={Boolean(target)} title="Delete purchase order" targetName={target?.orderNumber ?? ''} consequence="This permanently removes the draft order and its lines. Related invoices or receipts may prevent deletion." confirmLabel={t('dialogs.delete')} pendingLabel={t('dialogs.deleting')} pending={isDeleting} onClose={onClose} onConfirm={onConfirm} />
+  return <VxConfirmActionDialog open={Boolean(target)} title={t('pages.purchaseOrders.delete.title')} targetName={target?.orderNumber ?? ''} consequence={t('pages.purchaseOrders.delete.consequence')} confirmLabel={t('dialogs.delete')} pendingLabel={t('dialogs.deleting')} pending={isDeleting} onClose={onClose} onConfirm={onConfirm} />
 }

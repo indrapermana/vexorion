@@ -12,5 +12,5 @@ type SalesInvoiceDeleteDialogProps = {
 export default function SalesInvoiceDeleteDialog({ target, isDeleting, onClose, onConfirm }: SalesInvoiceDeleteDialogProps) {
   const { t } = useTranslation()
 
-  return <VxConfirmActionDialog open={Boolean(target)} title="Delete sales invoice" targetName={target?.invoiceNumber ?? ''} consequence="This permanently removes the draft invoice and its lines. Posted invoices cannot be deleted." confirmLabel={t('dialogs.delete')} pendingLabel={t('dialogs.deleting')} pending={isDeleting} onClose={onClose} onConfirm={onConfirm} />
+  return <VxConfirmActionDialog open={Boolean(target)} title={t('pages.salesInvoices.delete.title')} targetName={target?.invoiceNumber ?? ''} consequence={t('pages.salesInvoices.delete.consequence')} confirmLabel={t('dialogs.delete')} pendingLabel={t('dialogs.deleting')} pending={isDeleting} onClose={onClose} onConfirm={onConfirm} />
 }

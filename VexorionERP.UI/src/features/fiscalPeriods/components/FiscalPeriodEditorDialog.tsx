@@ -14,19 +14,18 @@ const defaultValues: FiscalPeriodFormValues = {
   isClosed: false,
 }
 
-const schema: yup.ObjectSchema<FiscalPeriodFormValues> = yup.object({
-  periodCode: yup.string().trim().required('Period code is required.').max(30, 'Period code must be at most 30 characters.'),
-  startDate: yup.string().required('Start date is required.'),
-  endDate: yup.string().required('End date is required.'),
-  isClosed: yup.boolean().required(),
-})
-
 export default function FiscalPeriodEditorDialog({ open, mode, fiscalPeriodId, onClose, onSaved }: FiscalPeriodEditorDialogProps) {
-  useTranslation()
+  const { t } = useTranslation()
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(mode === 'edit')
 
-  const title = useMemo(() => (mode === 'create' ? 'Create fiscal period' : 'Edit fiscal period'), [mode])
+  const title = mode === 'create' ? t('pages.fiscalPeriods.editor.createTitle') : t('pages.fiscalPeriods.editor.editTitle')
+  const schema = useMemo<yup.ObjectSchema<FiscalPeriodFormValues>>(() => yup.object({
+    periodCode: yup.string().trim().required(t('pages.fiscalPeriods.validation.codeRequired')).max(30, t('pages.fiscalPeriods.validation.codeMax')),
+    startDate: yup.string().required(t('pages.fiscalPeriods.validation.startRequired')),
+    endDate: yup.string().required(t('pages.fiscalPeriods.validation.endRequired')),
+    isClosed: yup.boolean().required(),
+  }), [t])
 
   const {
     control,
@@ -59,7 +58,7 @@ export default function FiscalPeriodEditorDialog({ open, mode, fiscalPeriodId, o
       .catch((error) => {
         if (!isMounted) return
         if (error instanceof ApiError) setSubmitError(error.message)
-        else setSubmitError('Unable to load fiscal period.')
+        else setSubmitError(t('pages.fiscalPeriods.errors.loadDetails'))
       })
       .finally(() => {
         if (isMounted) setIsLoading(false)
@@ -68,13 +67,13 @@ export default function FiscalPeriodEditorDialog({ open, mode, fiscalPeriodId, o
     return () => {
       isMounted = false
     }
-  }, [fiscalPeriodId, mode, reset])
+  }, [fiscalPeriodId, mode, reset, t])
 
   const onSubmit = handleSubmit(async (values) => {
     setSubmitError(null)
 
     if (values.endDate < values.startDate) {
-      setError('endDate', { message: 'End date must be greater than or equal to start date.' })
+      setError('endDate', { message: t('pages.fiscalPeriods.validation.endAfterStart') })
       return
     }
 
@@ -104,7 +103,7 @@ export default function FiscalPeriodEditorDialog({ open, mode, fiscalPeriodId, o
           })
         }
       } else {
-        setSubmitError('Unable to save fiscal period.')
+        setSubmitError(t('pages.fiscalPeriods.errors.save'))
       }
     }
   })
@@ -120,7 +119,7 @@ export default function FiscalPeriodEditorDialog({ open, mode, fiscalPeriodId, o
             name="periodCode"
             control={control}
             render={({ field }) => (
-              <VxTextField {...field} fullWidth label="Period code" error={Boolean(errors.periodCode)} helperText={errors.periodCode?.message} disabled={isLoading} />
+              <VxTextField {...field} fullWidth label={t('pages.fiscalPeriods.fields.periodCode')} error={Boolean(errors.periodCode)} helperText={errors.periodCode?.message} disabled={isLoading} />
             )}
           />
 
@@ -129,14 +128,14 @@ export default function FiscalPeriodEditorDialog({ open, mode, fiscalPeriodId, o
               name="startDate"
               control={control}
               render={({ field }) => (
-                <VxTextField {...field} fullWidth type="date" label="Start date" slotProps={{ inputLabel: { shrink: true } }} error={Boolean(errors.startDate)} helperText={errors.startDate?.message} disabled={isLoading} />
+                <VxTextField {...field} fullWidth type="date" label={t('pages.fiscalPeriods.fields.startDate')} slotProps={{ inputLabel: { shrink: true } }} error={Boolean(errors.startDate)} helperText={errors.startDate?.message} disabled={isLoading} />
               )}
             />
             <Controller
               name="endDate"
               control={control}
               render={({ field }) => (
-                <VxTextField {...field} fullWidth type="date" label="End date" slotProps={{ inputLabel: { shrink: true } }} error={Boolean(errors.endDate)} helperText={errors.endDate?.message} disabled={isLoading} />
+                <VxTextField {...field} fullWidth type="date" label={t('pages.fiscalPeriods.fields.endDate')} slotProps={{ inputLabel: { shrink: true } }} error={Boolean(errors.endDate)} helperText={errors.endDate?.message} disabled={isLoading} />
               )}
             />
           </VxStack>
@@ -145,15 +144,15 @@ export default function FiscalPeriodEditorDialog({ open, mode, fiscalPeriodId, o
             name="isClosed"
             control={control}
             render={({ field }) => (
-              <VxFormControlLabel control={<VxSwitch checked={field.value} onChange={(_, checked) => field.onChange(checked)} />} label="Closed" />
+              <VxFormControlLabel control={<VxSwitch checked={field.value} onChange={(_, checked) => field.onChange(checked)} />} label={t('pages.fiscalPeriods.grid.closed')} />
             )}
           />
         </VxStack>
       </VxDialogContent>
       <VxDialogActions sx={{ px: 3, py: 2 }}>
-        <VxButton onClick={onClose} disabled={isSubmitting}>Cancel</VxButton>
+        <VxButton onClick={onClose} disabled={isSubmitting}>{t('common.cancel')}</VxButton>
         <VxButton onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoading}>
-          {isSubmitting ? 'Saving...' : mode === 'create' ? 'Create period' : 'Save changes'}
+          {isSubmitting ? t('pages.fiscalPeriods.editor.saving') : mode === 'create' ? t('pages.fiscalPeriods.editor.createTitle') : t('pages.fiscalPeriods.editor.saveChanges')}
         </VxButton>
       </VxDialogActions>
     </VxDialog>

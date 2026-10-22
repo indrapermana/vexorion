@@ -8,6 +8,10 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) => {
       const messages: Record<string, string> = {
+        'common.edit': 'Edit',
+        'common.remove': 'Remove',
+        'common.removing': 'Removing...',
+        'common.viewOnly': 'View only',
         'components.tenants.grid.columns.tenant': 'Tenant',
         'components.tenants.grid.columns.domain': 'Domain',
         'components.tenants.grid.columns.createdAt': 'Created',
@@ -17,6 +21,8 @@ vi.mock('react-i18next', () => ({
         'components.tenants.grid.noDomain': 'No domain',
         'components.tenants.grid.active': 'Active',
         'components.tenants.grid.inactive': 'Inactive',
+        'components.tenants.grid.removeConsequence': 'This permanently removes the tenant and its associated data.',
+        'components.tenants.grid.removeTitle': 'Remove tenant',
       }
 
       return messages[key] ?? key

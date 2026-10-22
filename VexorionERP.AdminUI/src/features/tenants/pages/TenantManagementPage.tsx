@@ -61,12 +61,12 @@ export default function TenantManagementPage() {
         }, {}),
       )
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load tenants')
+      setError(err instanceof Error ? err.message : t('pages.tenantManagement.errors.load'))
       console.error('Error loading tenants:', err)
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     void loadTenants()
@@ -92,7 +92,7 @@ export default function TenantManagementPage() {
       await deleteTenant(tenant.id)
       setTenants((prev) => prev.filter((item) => item.id !== tenant.id))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to remove tenant.')
+      setError(err instanceof Error ? err.message : t('pages.tenantManagement.errors.remove'))
       console.error(err)
     }
   }
@@ -115,7 +115,7 @@ export default function TenantManagementPage() {
           description={t('pages.tenantManagement.description')}
           action={canManage ? (
             <VxButton variant="contained" onClick={() => setIsOnboardingOpen(true)}>
-              New Tenant
+              {t('pages.tenantManagement.newTenant')}
             </VxButton>
           ) : undefined}
         />
@@ -127,28 +127,28 @@ export default function TenantManagementPage() {
           <VxCard title={t('pages.tenantManagement.metrics.active')} className="panel-card" style={{ flex: 1 }}>
             <VxTypography variant="h5">{activeTenants}</VxTypography>
           </VxCard>
-          <VxCard title="Modules Disabled" className="panel-card" style={{ flex: 1 }}>
+          <VxCard title={t('pages.tenantManagement.modulesDisabled')} className="panel-card" style={{ flex: 1 }}>
             <VxTypography variant="h5">{tenantsWithDisabledModules}</VxTypography>
           </VxCard>
         </VxStack>
 
         <VxStack direction={{ xs: 'column', lg: 'row' }} spacing={1.5} sx={{ justifyContent: 'space-between', alignItems: { lg: 'center' } }}>
           <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-            <VxTypography variant="body2" color="textSecondary">Show tenants with disabled modules only</VxTypography>
+            <VxTypography variant="body2" color="textSecondary">{t('pages.tenantManagement.disabledOnly')}</VxTypography>
             <VxSwitch checked={showDisabledModulesOnly} onChange={(event) => setShowDisabledModulesOnly(event.target.checked)} />
           </VxStack>
 
           <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-            <VxTypography variant="caption" color="textSecondary">Legend</VxTypography>
-            <VxChip size="small" color="success" label="ON" />
-            <VxChip size="small" variant="outlined" label="OFF" />
-            <VxTypography variant="caption" color="textSecondary">P=Project D=Document E=Employee</VxTypography>
+            <VxTypography variant="caption" color="textSecondary">{t('pages.tenantManagement.legend')}</VxTypography>
+            <VxChip size="small" color="success" label={t('pages.tenantManagement.enabled')} />
+            <VxChip size="small" variant="outlined" label={t('pages.tenantManagement.disabled')} />
+            <VxTypography variant="caption" color="textSecondary">{t('pages.tenantManagement.moduleLegend')}</VxTypography>
           </VxStack>
         </VxStack>
 
         <VxPageFeedback
           error={error}
-          info={!canManage ? 'You have view-only access. Tenant creation, editing, and removal require the tenants.manage permission.' : undefined}
+          info={!canManage ? t('pages.tenantManagement.viewOnly') : undefined}
           onRetry={() => void loadTenants()}
         />
 

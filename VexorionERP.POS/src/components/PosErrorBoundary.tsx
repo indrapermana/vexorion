@@ -2,6 +2,7 @@ import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { VxAlert, VxBox, VxButton, VxStack, VxTypography } from '@vexorion/ui'
 import { RefreshRoundedIcon } from '@vexorion/ui'
 import { posLogger } from '../lib/posLogger'
+import { translateCurrentLocale } from '../app/I18nContext'
 
 interface Props {
   children: ReactNode
@@ -47,11 +48,10 @@ export class PosErrorBoundary extends Component<Props, State> {
           <VxStack spacing={3} sx={{ maxWidth: 520, width: '100%' }}>
             <VxAlert severity="error" variant="filled">
               <VxTypography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                Something went wrong
+                {translateCurrentLocale('errorBoundary.title')}
               </VxTypography>
               <VxTypography variant="body2" sx={{ mt: 0.5 }}>
-                An unexpected error occurred in the POS application. Your last transaction data is
-                preserved. Reload the page to recover.
+                {translateCurrentLocale('errorBoundary.message')}
               </VxTypography>
             </VxAlert>
 
@@ -66,7 +66,7 @@ export class PosErrorBoundary extends Component<Props, State> {
               startIcon={<RefreshRoundedIcon />}
               onClick={this.handleReload}
             >
-              Reload POS
+              {translateCurrentLocale('errorBoundary.reload')}
             </VxButton>
           </VxStack>
         </VxBox>

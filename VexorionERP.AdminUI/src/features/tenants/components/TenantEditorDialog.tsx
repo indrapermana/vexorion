@@ -3,16 +3,10 @@ import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { useTranslation } from 'react-i18next'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { getTenantModuleEffectiveAccess, updateTenant } from '../../../lib/api'
 import type { TenantModuleEffectiveAccessItemResponse, TenantModuleEffectiveAccessResponse } from '../../../types/api'
 import type { TenantEditorDialogProps } from '../../../types/ui'
-
-const validationSchema: yup.ObjectSchema<FormData> = yup.object({
-  name: yup.string().required('Name is required').min(2, 'Name must be at least 2 characters').max(200),
-  domain: yup.string().nullable().defined(),
-  isActive: yup.boolean().required(),
-})
 
 type FormData = {
   name: string
@@ -22,6 +16,11 @@ type FormData = {
 
 export function TenantEditorDialog({ open, tenant, onClose, onSaved }: TenantEditorDialogProps) {
   const { t } = useTranslation()
+  const validationSchema = useMemo<yup.ObjectSchema<FormData>>(() => yup.object({
+    name: yup.string().required(t('components.tenants.editor.validationRequired')).min(2, t('components.tenants.editor.validationMin')).max(200),
+    domain: yup.string().nullable().defined(),
+    isActive: yup.boolean().required(),
+  }), [t])
   const [isSaving, setIsSaving] = useState(false)
   const [accessPreview, setAccessPreview] = useState<TenantModuleEffectiveAccessResponse | null>(null)
   const [isPreviewLoading, setIsPreviewLoading] = useState(false)
@@ -60,7 +59,7 @@ export function TenantEditorDialog({ open, tenant, onClose, onSaved }: TenantEdi
         }
       } catch (error) {
         if (!isDisposed) {
-          setPreviewError('Failed to load module access preview.')
+          setPreviewError(t('components.tenants.editor.previewError'))
           console.error('Failed to load module access preview:', error)
         }
       } finally {
@@ -74,15 +73,15 @@ export function TenantEditorDialog({ open, tenant, onClose, onSaved }: TenantEdi
     return () => {
       isDisposed = true
     }
-  }, [open, tenant])
+  }, [open, t, tenant])
 
   const renderModuleRow = (label: string, item: TenantModuleEffectiveAccessItemResponse) => (
     <VxStack key={label} direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ alignItems: { md: 'center' }, justifyContent: 'space-between' }}>
       <VxTypography variant="body2">{label}</VxTypography>
       <VxStack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
-        <VxChip size="small" label={`Toggle: ${item.toggleEnabled ? 'ON' : 'OFF'}`} color={item.toggleEnabled ? 'success' : 'default'} />
-        <VxChip size="small" label={`Rollout: ${item.allowedByRollout ? 'ALLOW' : 'BLOCK'} (${item.rolloutMode})`} color={item.allowedByRollout ? 'success' : 'warning'} />
-        <VxChip size="small" label={`Effective: ${item.effectiveEnabled ? 'ENABLED' : 'DISABLED'}`} color={item.effectiveEnabled ? 'success' : 'error'} />
+        <VxChip size="small" label={t('components.tenants.editor.toggle', { state: t(item.toggleEnabled ? 'components.tenants.editor.on' : 'components.tenants.editor.off') })} color={item.toggleEnabled ? 'success' : 'default'} />
+        <VxChip size="small" label={t('components.tenants.editor.rollout', { state: t(item.allowedByRollout ? 'components.tenants.editor.allow' : 'components.tenants.editor.block'), mode: item.rolloutMode })} color={item.allowedByRollout ? 'success' : 'warning'} />
+        <VxChip size="small" label={t('components.tenants.editor.effective', { state: t(item.effectiveEnabled ? 'components.tenants.editor.enabled' : 'components.tenants.editor.disabled') })} color={item.effectiveEnabled ? 'success' : 'error'} />
       </VxStack>
     </VxStack>
   )
@@ -136,15 +135,15 @@ export function TenantEditorDialog({ open, tenant, onClose, onSaved }: TenantEdi
           />
 
           <VxStack spacing={1.25} sx={{ pt: 1 }}>
-            <VxTypography variant="subtitle2">Effective Module Access Preview</VxTypography>
-            {isPreviewLoading ? <VxTypography variant="body2" color="text.secondary">Loading module access preview...</VxTypography> : null}
+            <VxTypography variant="subtitle2">{t('components.tenants.editor.accessPreview')}</VxTypography>
+            {isPreviewLoading ? <VxTypography variant="body2" color="text.secondary">{t('components.tenants.editor.loadingPreview')}</VxTypography> : null}
             {previewError ? <VxAlert severity="warning">{previewError}</VxAlert> : null}
             {accessPreview
               ? (
                   <VxStack spacing={1.25}>
-                    {renderModuleRow('Project Management', accessPreview.project)}
-                    {renderModuleRow('Document Management', accessPreview.document)}
-                    {renderModuleRow('Employee Management', accessPreview.employee)}
+                    {renderModuleRow(t('components.tenants.editor.project'), accessPreview.project)}
+                    {renderModuleRow(t('components.tenants.editor.document'), accessPreview.document)}
+                    {renderModuleRow(t('components.tenants.editor.employee'), accessPreview.employee)}
                   </VxStack>
                 )
               : null}

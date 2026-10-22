@@ -41,10 +41,11 @@ type ModuleRouteGuardProps = {
 }
 
 export function ModuleRouteGuard({ module }: ModuleRouteGuardProps) {
+  const { t } = useTranslation()
   const { isLoading, projectManagementEnabled, employeeManagementEnabled, documentManagementEnabled } = useTenantModules()
 
   if (isLoading) {
-    return <VxAlert severity="info">Loading workspace...</VxAlert>
+    return <VxAlert severity="info">{t('routeGuards.loadingWorkspace')}</VxAlert>
   }
 
   const enabled =

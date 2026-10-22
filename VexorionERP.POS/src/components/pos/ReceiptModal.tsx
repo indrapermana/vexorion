@@ -70,7 +70,7 @@ export function ReceiptModal({ open, data, onClose }: Props) {
           <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
             <VxTypography variant="body2">{data.customerLabel}</VxTypography>
             {data.isDelivery ? (
-              <VxChip size="small" label="Delivery" color="primary" variant="outlined" />
+              <VxChip size="small" label={t('receipt.delivery')} color="primary" variant="outlined" />
             ) : null}
           </VxStack>
         </VxStack>
@@ -179,7 +179,7 @@ export function ReceiptModal({ open, data, onClose }: Props) {
         <VxButton
           variant="contained"
           startIcon={<PrintRoundedIcon />}
-          onClick={() => printReceipt(data)}
+          onClick={() => printReceipt(data, t)}
         >
           {t('receipt.print')}
         </VxButton>

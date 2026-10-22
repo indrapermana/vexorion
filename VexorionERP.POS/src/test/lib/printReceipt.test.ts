@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { printReceipt } from '../../lib/printReceipt'
 import type { ReceiptData } from '../../components/pos/ReceiptModal'
+import en from '../../app/i18n/locales/enUS'
+import type { TranslationKey } from '../../app/i18n/types'
+
+const t = (key: TranslationKey) => en[key]
 
 function makeReceipt(overrides: Partial<ReceiptData> = {}): ReceiptData {
   return {
@@ -58,7 +62,7 @@ describe('printReceipt', () => {
 
     vi.spyOn(window, 'open').mockReturnValue(fakeWindow as never)
 
-    printReceipt(makeReceipt())
+    printReceipt(makeReceipt(), t)
 
     expect(fakeWindow.document.write).toHaveBeenCalledOnce()
     expect(writtenHtml).toContain('&lt;img src=x onerror=alert(1)&gt;')
@@ -85,7 +89,7 @@ describe('printReceipt', () => {
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
     vi.spyOn(window, 'open').mockReturnValue(null)
 
-    printReceipt(makeReceipt())
+    printReceipt(makeReceipt(), t)
 
     expect(alertSpy).toHaveBeenCalledOnce()
   })

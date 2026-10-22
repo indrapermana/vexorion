@@ -28,6 +28,8 @@ const esES = {
     save: 'Guardar',
     actions: 'Acciones',
     retry: 'Reintentar',
+    pageFilters: 'Filtros de página',
+    pageMetrics: 'Métricas de página',
       labels: {
         active: 'Activo',
         inactive: 'Inactivo',
@@ -70,6 +72,10 @@ const esES = {
     checkingSession: 'Comprobando tu sesión...',
     loadingWorkspace: 'Cargando espacio de trabajo...',
     permissionDenied: 'No tienes permiso para abrir este espacio de trabajo.',
+  },
+  orderWorkflow: {
+    order: 'Pedido', orderDate: 'Fecha del pedido', invoice: 'Factura', invoiceDate: 'Fecha de factura', dueDate: 'Fecha de vencimiento', total: 'Total', balance: 'Saldo', lines: 'Líneas', createInvoice: 'Crear factura', viewShipments: 'Ver envíos', viewReceipts: 'Ver recepciones', recordPayment: 'Registrar pago',
+    line: { orderLines: 'Líneas del pedido', invoiceLines: 'Líneas de la factura', orderLinesFor: 'Líneas del pedido {{number}}', invoiceLinesFor: 'Líneas de la factura {{number}}', add: 'Agregar línea', product: 'Producto', available: 'Disponible', onHand: 'Existencias', quantityShort: 'Cant.', unitPrice: 'Precio unitario', unitCost: 'Costo unitario', discount: 'Descuento', tax: 'Impuesto', total: 'Total de línea', delete: 'Eliminar línea', empty: 'Aún no hay líneas.' },
   },
   authorization: {
     readOnly: 'Tienes acceso de solo lectura. Los cambios requieren el permiso {{requiredPermission}}.',
@@ -543,6 +549,37 @@ const esES = {
     common: {
       withEmail: 'Con correo',
     },
+    employees: {
+      signInRequired: 'Inicia sesión primero. Las API de empleados requieren acceso autenticado.',
+      description: 'Datos maestros de empleados de `/api/employees` para asignaciones y dotación de proyectos.',
+      newButton: 'Nuevo empleado',
+      noRows: 'No se encontraron empleados.',
+      metrics: { rows: 'Filas de empleados' },
+      columns: { number: 'Número de empleado', name: 'Nombre', email: 'Correo electrónico', jobTitle: 'Cargo', company: 'Empresa', active: 'Activo' },
+      dialogs: { create: 'Crear empleado', edit: 'Editar empleado' },
+      fields: {
+        company: 'Empresa', departmentId: 'ID de departamento', employeeNumber: 'Número de empleado', firstName: 'Nombre',
+        lastName: 'Apellido', email: 'Correo electrónico', phoneNumber: 'Número de teléfono', jobTitle: 'Cargo',
+        hireDate: 'Fecha de contratación', isActive: 'Activo',
+      },
+      feedback: { created: 'Empleado creado.', updated: 'Empleado actualizado.', deleted: 'Empleado eliminado.' },
+      errors: { load: 'No se pudieron cargar los empleados.', save: 'No se pudo guardar el empleado.', delete: 'No se pudo eliminar el empleado.' },
+    },
+    consultants: {
+      signInRequired: 'Inicia sesión primero. Las API de consultores requieren acceso autenticado.',
+      description: 'Datos maestros de consultores de `/api/consultants` para colaboración y asignaciones de proyectos.',
+      newButton: 'Nuevo consultor',
+      noRows: 'No se encontraron consultores.',
+      metrics: { rows: 'Filas de consultores' },
+      columns: { number: 'Número de consultor', fullName: 'Nombre completo', email: 'Correo electrónico', organization: 'Organización', specialty: 'Especialidad', active: 'Activo' },
+      dialogs: { create: 'Crear consultor', edit: 'Editar consultor' },
+      fields: {
+        consultantNumber: 'Número de consultor', fullName: 'Nombre completo', email: 'Correo electrónico', phoneNumber: 'Número de teléfono',
+        organizationName: 'Nombre de la organización', specialty: 'Especialidad', isActive: 'Activo',
+      },
+      feedback: { created: 'Consultor creado.', updated: 'Consultor actualizado.', deleted: 'Consultor eliminado.' },
+      errors: { load: 'No se pudieron cargar los consultores.', save: 'No se pudo guardar el consultor.', delete: 'No se pudo eliminar el consultor.' },
+    },
     tenantRelationships: {
       signInRequired: 'Inicia sesión primero. Las API de relaciones de inquilinos requieren acceso autenticado.',
       noAccess: 'No tienes permiso para ver relaciones de inquilinos.',
@@ -941,6 +978,8 @@ const esES = {
       newButton: 'Nuevo pedido de venta',
       createCustomerFirst: 'Crea al menos un cliente antes de crear pedidos de venta.',
       createWarehouseFirst: 'Crea al menos un almacén antes de crear pedidos de venta.',
+      delete: { title: 'Eliminar pedido de venta', consequence: 'Esto elimina permanentemente el pedido borrador y sus líneas. Las facturas o envíos relacionados pueden impedir la eliminación.' },
+      lines: { selectPrompt: 'Selecciona un pedido de la tabla para gestionar sus líneas.', description: 'Agrega productos a este encabezado y mantén visibles los totales.', warehouse: 'Almacén de despacho: {{warehouse}}', inventoryHint: 'La disponibilidad se calcula con el almacén asignado al pedido de venta.', created: 'Línea de pedido de venta creada.', updated: 'Línea de pedido de venta actualizada.', deleted: 'Línea de pedido de venta eliminada.', saveError: 'No se pudo guardar la línea del pedido de venta.', deleteError: 'No se pudo eliminar la línea del pedido de venta.', deleteTitle: 'Eliminar línea del pedido de venta' },
       metrics: { openHeaders: 'Encabezados abiertos', draftOrders: 'Pedidos borrador', totalValue: 'Valor total' },
     },
     salesInvoices: {
@@ -952,6 +991,8 @@ const esES = {
       outstandingOnly: 'Solo pendientes',
       showingOutstandingOnly: 'Mostrando solo facturas pendientes.',
       showingAll: 'Mostrando todas las facturas.',
+      delete: { title: 'Eliminar factura de venta', consequence: 'Esto elimina permanentemente la factura borrador y sus líneas. Las facturas contabilizadas no se pueden eliminar.' },
+      lines: { selectPrompt: 'Selecciona una factura de venta de la tabla para gestionar sus líneas.', description: 'Gestiona las líneas facturables y los impuestos de esta factura.', created: 'Línea de factura de venta creada.', updated: 'Línea de factura de venta actualizada.', deleted: 'Línea de factura de venta eliminada.', saveError: 'No se pudo guardar la línea de factura de venta.', deleteError: 'No se pudo eliminar la línea de factura de venta.', deleteTitle: 'Eliminar línea de factura de venta' },
       metrics: { invoices: 'Facturas', openBalance: 'Saldo abierto', paidTotal: 'Total pagado' },
     },
     salesShipments: {
@@ -969,6 +1010,8 @@ const esES = {
       newButton: 'Nueva orden de compra',
       createSupplierFirst: 'Crea al menos un proveedor antes de crear órdenes de compra.',
       createWarehouseFirst: 'Crea al menos un almacén antes de crear órdenes de compra.',
+      delete: { title: 'Eliminar pedido de compra', consequence: 'Esto elimina permanentemente el pedido borrador y sus líneas. Las facturas o recepciones relacionadas pueden impedir la eliminación.' },
+      lines: { selectPrompt: 'Selecciona un pedido de compra de la tabla para gestionar sus líneas.', description: 'Agrega productos a este encabezado de compra y controla el valor entrante.', warehouse: 'Almacén de recepción: {{warehouse}}', inventoryHint: 'El contexto de inventario se calcula con el almacén asignado al pedido de compra.', created: 'Línea de pedido de compra creada.', updated: 'Línea de pedido de compra actualizada.', deleted: 'Línea de pedido de compra eliminada.', saveError: 'No se pudo guardar la línea del pedido de compra.', deleteError: 'No se pudo eliminar la línea del pedido de compra.', deleteTitle: 'Eliminar línea del pedido de compra' },
       metrics: { openHeaders: 'Encabezados abiertos', draftOrders: 'Órdenes borrador', totalValue: 'Valor total' },
     },
     purchaseInvoices: {
@@ -980,6 +1023,8 @@ const esES = {
       outstandingOnly: 'Solo pendientes',
       showingOutstandingOnly: 'Mostrando solo facturas pendientes.',
       showingAll: 'Mostrando todas las facturas.',
+      delete: { title: 'Eliminar factura de compra', consequence: 'Esto elimina permanentemente la factura borrador y sus líneas. Las facturas contabilizadas no se pueden eliminar.' },
+      lines: { selectPrompt: 'Selecciona una factura de compra de la tabla para gestionar sus líneas.', description: 'Gestiona las líneas facturadas por el proveedor y los impuestos de esta factura.', created: 'Línea de factura de compra creada.', updated: 'Línea de factura de compra actualizada.', deleted: 'Línea de factura de compra eliminada.', saveError: 'No se pudo guardar la línea de factura de compra.', deleteError: 'No se pudo eliminar la línea de factura de compra.', deleteTitle: 'Eliminar línea de factura de compra' },
       metrics: { invoices: 'Facturas', openBalance: 'Saldo abierto', paidTotal: 'Total pagado' },
     },
     purchaseReceipts: {
@@ -1034,7 +1079,15 @@ const esES = {
       focusedMovedTop: 'El almacén enfocado se movió al inicio de la lista.',
       metrics: { rows: 'Filas de almacenes', activeLocations: 'Ubicaciones activas', codesReady: 'Códigos listos' },
     },
-    accounts: { signInRequired: 'Inicia sesión primero. Las cuentas requieren permisos de facturación.', description: 'Cuentas contables desde /api/accounts.', newButton: 'Nueva cuenta' },
+    accounts: {
+      signInRequired: 'Inicia sesión primero. Las cuentas requieren permisos de facturación.', description: 'Cuentas contables desde /api/accounts.', newButton: 'Nueva cuenta',
+      fields: { code: 'Código', name: 'Nombre', accountType: 'Tipo de cuenta', normalBalance: 'Saldo normal', description: 'Descripción', optional: 'Opcional', postingAllowed: 'Contabilización permitida' },
+      grid: { posting: 'Contabilización', allowed: 'Permitida', blocked: 'Bloqueada' },
+      editor: { createTitle: 'Crear cuenta', editTitle: 'Editar cuenta', saveChanges: 'Guardar cambios', saving: 'Guardando...' },
+      delete: { title: 'Eliminar cuenta', consequence: 'Esto elimina permanentemente la cuenta. El servidor puede rechazar cuentas referenciadas por transacciones.', confirm: 'Eliminar cuenta' },
+      validation: { codeRequired: 'El código es obligatorio.', codeMax: 'El código debe tener como máximo 30 caracteres.', nameRequired: 'El nombre es obligatorio.', nameMax: 'El nombre debe tener como máximo 120 caracteres.', descriptionMax: 'La descripción debe tener como máximo 500 caracteres.' },
+      errors: { loadDetails: 'No se pudieron cargar los detalles de la cuenta.', save: 'No se pudo guardar la cuenta.' },
+    },
     auditLogs: {
       signInRequired: 'Inicia sesión primero. Los registros de auditoría requieren permisos contables.',
       description: 'Explora la actividad del sistema con filtros básicos para verificación de control.',
@@ -1044,7 +1097,15 @@ const esES = {
       refresh: 'Actualizar',
       showingEntries: 'Mostrando {{shown}} de {{total}} registros.',
     },
-    fiscalPeriods: { signInRequired: 'Inicia sesión primero. Los períodos fiscales requieren permisos de facturación.', description: 'Períodos contables desde /api/fiscal-periods.', newButton: 'Nuevo período' },
+    fiscalPeriods: {
+      signInRequired: 'Inicia sesión primero. Los períodos fiscales requieren permisos de facturación.', description: 'Períodos contables desde /api/fiscal-periods.', newButton: 'Nuevo período',
+      fields: { period: 'Período', periodCode: 'Código del período', startDate: 'Fecha de inicio', endDate: 'Fecha de fin' },
+      grid: { closed: 'Cerrado', reopen: 'Reabrir', close: 'Cerrar' },
+      editor: { createTitle: 'Crear período fiscal', editTitle: 'Editar período fiscal', saveChanges: 'Guardar cambios', saving: 'Guardando...' },
+      closeDialog: { title: 'Cerrar período fiscal', consequence: 'El cierre impide nuevas contabilizaciones en este período hasta que un usuario autorizado lo reabra.', confirm: 'Cerrar período', pending: 'Cerrando...' },
+      validation: { codeRequired: 'El código del período es obligatorio.', codeMax: 'El código del período debe tener como máximo 30 caracteres.', startRequired: 'La fecha de inicio es obligatoria.', endRequired: 'La fecha de fin es obligatoria.', endAfterStart: 'La fecha de fin debe ser igual o posterior a la fecha de inicio.' },
+      errors: { loadDetails: 'No se pudo cargar el período fiscal.', save: 'No se pudo guardar el período fiscal.' },
+    },
     journals: { signInRequired: 'Inicia sesión primero. Los diarios requieren permisos de facturación.', title: 'Diarios y contabilización', description: 'Publica facturas y gestiona reversiones de diarios mediante /api/posting y /api/journals.' },
     reports: { signInRequired: 'Inicia sesión primero. Los informes requieren permisos de facturación.', description: 'Antigüedad de CxC, antigüedad de CxP y balance de comprobación.', asOfDate: 'Fecha de corte', comparativePriorPeriod: 'Comparativo período anterior' },
     auth: {
@@ -1090,6 +1151,7 @@ const esES = {
       validating: 'Validando…',
       submit: 'Enviar importación',
       submitting: 'Enviando…',
+      downloadErrorWorkbook: 'Descargar libro de errores',
       importAnother: 'Importar otro',
       allRowsValid: 'Todas las filas son válidas. Haz clic en Enviar para importar.',
       totalRows: 'Total de filas',

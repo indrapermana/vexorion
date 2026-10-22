@@ -12,5 +12,5 @@ type SalesOrderDeleteDialogProps = {
 export default function SalesOrderDeleteDialog({ target, isDeleting, onClose, onConfirm }: SalesOrderDeleteDialogProps) {
   const { t } = useTranslation()
 
-  return <VxConfirmActionDialog open={Boolean(target)} title="Delete sales order" targetName={target?.orderNumber ?? ''} consequence="This permanently removes the draft order and its lines. Related invoices or shipments may prevent deletion." confirmLabel={t('dialogs.delete')} pendingLabel={t('dialogs.deleting')} pending={isDeleting} onClose={onClose} onConfirm={onConfirm} />
+  return <VxConfirmActionDialog open={Boolean(target)} title={t('pages.salesOrders.delete.title')} targetName={target?.orderNumber ?? ''} consequence={t('pages.salesOrders.delete.consequence')} confirmLabel={t('dialogs.delete')} pendingLabel={t('dialogs.deleting')} pending={isDeleting} onClose={onClose} onConfirm={onConfirm} />
 }

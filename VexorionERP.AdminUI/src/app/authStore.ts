@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 import { ApiError, getCurrentUser, login as loginRequest, logoutRefreshSession, refreshSession } from '../lib/api'
 import { setApiAccessToken, setApiRefreshHandler, setApiUnauthorizedHandler } from '../lib/apiAuth'
 import type { AuthState } from '../types/ui'
+import i18n from '../i18n'
 
 export type AuthStoreState = AuthState
 
@@ -92,7 +93,7 @@ export const useAuthStore = create<AuthStoreState>()(
           if (error instanceof ApiError) {
             set({ error: error.message, validation: error.validation ?? null })
           } else {
-            set({ error: 'Unable to sign in right now.', validation: null })
+            set({ error: i18n.t('login.error'), validation: null })
           }
 
           throw error

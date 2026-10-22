@@ -6,7 +6,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { ModuleRouteGuard, PermissionRoute, ProtectedRoute, PublicOnlyRoute } from '../components/RouteGuards'
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({ t: (key: string) => key === 'routeGuards.loadingWorkspace' ? 'Loading workspace...' : key }),
 }))
 
 const mockUseAuth = vi.fn()
@@ -94,7 +94,7 @@ describe('PublicOnlyRoute', () => {
       </MemoryRouter>,
     )
     expect(screen.getByRole('alert')).toBeInTheDocument()
-    expect(screen.getByText('routeGuards.loadingWorkspace')).toBeInTheDocument()
+    expect(screen.getByText('Loading workspace...')).toBeInTheDocument()
   })
 
   it('redirects to / when already authenticated', () => {

@@ -144,12 +144,12 @@ export default function FiscalPeriodsPage() {
 
       <VxConfirmActionDialog
         open={canManage && Boolean(closeTarget)}
-        title="Close fiscal period"
+        title={t('pages.fiscalPeriods.closeDialog.title')}
         targetName={closeTarget?.periodCode ?? ''}
-        consequence="Closing prevents new postings in this period until an authorized user reopens it."
-        confirmLabel="Close period"
+        consequence={t('pages.fiscalPeriods.closeDialog.consequence')}
+        confirmLabel={t('pages.fiscalPeriods.closeDialog.confirm')}
         confirmColor="warning"
-        pendingLabel="Closing..."
+        pendingLabel={t('pages.fiscalPeriods.closeDialog.pending')}
         pending={isClosing}
         onClose={() => setCloseTarget(null)}
         onConfirm={() => { if (closeTarget) void handleClosePeriod(closeTarget) }}

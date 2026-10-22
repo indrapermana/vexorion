@@ -28,6 +28,8 @@ const enUS = {
     save: 'Save',
     actions: 'Actions',
     retry: 'Retry',
+    pageFilters: 'Page filters',
+    pageMetrics: 'Page metrics',
       labels: {
         active: 'Active',
         inactive: 'Inactive',
@@ -70,6 +72,10 @@ const enUS = {
     checkingSession: 'Checking your session...',
     loadingWorkspace: 'Loading workspace...',
     permissionDenied: 'You do not have permission to open this workspace.',
+  },
+  orderWorkflow: {
+    order: 'Order', orderDate: 'Order date', invoice: 'Invoice', invoiceDate: 'Invoice date', dueDate: 'Due date', total: 'Total', balance: 'Balance', lines: 'Lines', createInvoice: 'Create invoice', viewShipments: 'View shipments', viewReceipts: 'View receipts', recordPayment: 'Record payment',
+    line: { orderLines: 'Order lines', invoiceLines: 'Invoice lines', orderLinesFor: 'Order lines for {{number}}', invoiceLinesFor: 'Invoice lines for {{number}}', add: 'Add line', product: 'Product', available: 'Available', onHand: 'On hand', quantityShort: 'Qty', unitPrice: 'Unit price', unitCost: 'Unit cost', discount: 'Discount', tax: 'Tax', total: 'Line total', delete: 'Delete line', empty: 'No lines yet.' },
   },
   authorization: {
     readOnly: 'You have view-only access. Changes require the {{requiredPermission}} permission.',
@@ -957,6 +963,8 @@ const enUS = {
       newButton: 'New sales order',
       createCustomerFirst: 'Create at least one customer before creating sales orders.',
       createWarehouseFirst: 'Create at least one warehouse before creating sales orders.',
+      delete: { title: 'Delete sales order', consequence: 'This permanently removes the draft order and its lines. Related invoices or shipments may prevent deletion.' },
+      lines: { selectPrompt: 'Pick an order from the grid to manage its lines.', description: 'Attach products to this order header and keep totals visible.', warehouse: 'Fulfillment warehouse: {{warehouse}}', inventoryHint: 'Availability is calculated from the warehouse assigned on the sales order header.', created: 'Sales order line created.', updated: 'Sales order line updated.', deleted: 'Sales order line deleted.', saveError: 'Unable to save sales order line.', deleteError: 'Unable to delete sales order line.', deleteTitle: 'Delete sales order line' },
       metrics: {
         openHeaders: 'Open headers',
         draftOrders: 'Draft orders',
@@ -972,6 +980,8 @@ const enUS = {
       outstandingOnly: 'Outstanding only',
       showingOutstandingOnly: 'Showing outstanding invoices only.',
       showingAll: 'Showing all invoices.',
+      delete: { title: 'Delete sales invoice', consequence: 'This permanently removes the draft invoice and its lines. Posted invoices cannot be deleted.' },
+      lines: { selectPrompt: 'Pick a sales invoice from the grid to manage its lines.', description: 'Manage billable lines and taxes on this invoice header.', created: 'Sales invoice line created.', updated: 'Sales invoice line updated.', deleted: 'Sales invoice line deleted.', saveError: 'Unable to save sales invoice line.', deleteError: 'Unable to delete sales invoice line.', deleteTitle: 'Delete sales invoice line' },
       metrics: {
         invoices: 'Invoices',
         openBalance: 'Open balance',
@@ -993,6 +1003,8 @@ const enUS = {
       newButton: 'New purchase order',
       createSupplierFirst: 'Create at least one supplier before creating purchase orders.',
       createWarehouseFirst: 'Create at least one warehouse before creating purchase orders.',
+      delete: { title: 'Delete purchase order', consequence: 'This permanently removes the draft order and its lines. Related invoices or receipts may prevent deletion.' },
+      lines: { selectPrompt: 'Pick a purchase order from the grid to manage its lines.', description: 'Attach products to this purchasing header and track inbound value.', warehouse: 'Receiving warehouse: {{warehouse}}', inventoryHint: 'Inventory context is calculated from the warehouse assigned on the purchase order header.', created: 'Purchase order line created.', updated: 'Purchase order line updated.', deleted: 'Purchase order line deleted.', saveError: 'Unable to save purchase order line.', deleteError: 'Unable to delete purchase order line.', deleteTitle: 'Delete purchase order line' },
       metrics: {
         openHeaders: 'Open headers',
         draftOrders: 'Draft orders',
@@ -1008,6 +1020,8 @@ const enUS = {
       outstandingOnly: 'Outstanding only',
       showingOutstandingOnly: 'Showing outstanding invoices only.',
       showingAll: 'Showing all invoices.',
+      delete: { title: 'Delete purchase invoice', consequence: 'This permanently removes the draft invoice and its lines. Posted invoices cannot be deleted.' },
+      lines: { selectPrompt: 'Pick a purchase invoice from the grid to manage its lines.', description: 'Manage vendor billed lines and taxes on this invoice header.', created: 'Purchase invoice line created.', updated: 'Purchase invoice line updated.', deleted: 'Purchase invoice line deleted.', saveError: 'Unable to save purchase invoice line.', deleteError: 'Unable to delete purchase invoice line.', deleteTitle: 'Delete purchase invoice line' },
       metrics: {
         invoices: 'Invoices',
         openBalance: 'Open balance',
@@ -1074,6 +1088,12 @@ const enUS = {
       signInRequired: 'Sign in first. Accounts require billing permissions.',
       description: 'General ledger accounts from /api/accounts.',
       newButton: 'New account',
+      fields: { code: 'Code', name: 'Name', accountType: 'Account type', normalBalance: 'Normal balance', description: 'Description', optional: 'Optional', postingAllowed: 'Posting allowed' },
+      grid: { posting: 'Posting', allowed: 'Allowed', blocked: 'Blocked' },
+      editor: { createTitle: 'Create account', editTitle: 'Edit account', saveChanges: 'Save changes', saving: 'Saving...' },
+      delete: { title: 'Delete account', consequence: 'This permanently removes the account. Accounts referenced by transactions may be rejected by the server.', confirm: 'Delete account' },
+      validation: { codeRequired: 'Code is required.', codeMax: 'Code must be at most 30 characters.', nameRequired: 'Name is required.', nameMax: 'Name must be at most 120 characters.', descriptionMax: 'Description must be at most 500 characters.' },
+      errors: { loadDetails: 'Unable to load account details.', save: 'Unable to save account.' },
     },
     auditLogs: {
       signInRequired: 'Sign in first. Audit logs require accounting permissions.',
@@ -1088,6 +1108,12 @@ const enUS = {
       signInRequired: 'Sign in first. Fiscal periods require billing permissions.',
       description: 'Accounting periods from /api/fiscal-periods.',
       newButton: 'New period',
+      fields: { period: 'Period', periodCode: 'Period code', startDate: 'Start date', endDate: 'End date' },
+      grid: { closed: 'Closed', reopen: 'Reopen', close: 'Close' },
+      editor: { createTitle: 'Create fiscal period', editTitle: 'Edit fiscal period', saveChanges: 'Save changes', saving: 'Saving...' },
+      closeDialog: { title: 'Close fiscal period', consequence: 'Closing prevents new postings in this period until an authorized user reopens it.', confirm: 'Close period', pending: 'Closing...' },
+      validation: { codeRequired: 'Period code is required.', codeMax: 'Period code must be at most 30 characters.', startRequired: 'Start date is required.', endRequired: 'End date is required.', endAfterStart: 'End date must be greater than or equal to start date.' },
+      errors: { loadDetails: 'Unable to load fiscal period.', save: 'Unable to save fiscal period.' },
     },
     journals: {
       signInRequired: 'Sign in first. Journals require billing permissions.',

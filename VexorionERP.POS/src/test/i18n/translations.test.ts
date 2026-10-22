@@ -40,3 +40,15 @@ describe('i18n — values are non-empty strings', () => {
     })
   }
 })
+
+describe('i18n — interpolation variables match English', () => {
+  const variables = (value: string) => [...value.matchAll(/{([^}\s]+)}/g)].map((match) => match[1]).sort()
+
+  for (const [name, dict] of Object.entries(locales)) {
+    it(`${name} preserves every interpolation variable`, () => {
+      for (const key of allKeys) {
+        expect(variables(dict[key]), `${name}.${key}`).toEqual(variables(en[key]))
+      }
+    })
+  }
+})

@@ -33,7 +33,7 @@ export function TenantDataGrid({ rows, isLoading, onEdit, onRemove, effectiveAcc
               {t('components.tenants.grid.codePrefix')} {params.row.code}
             </VxTypography>
           </VxBox>
-        ) : <VxTypography variant="caption" color="text.secondary">View only</VxTypography>,
+        ) : <VxTypography variant="caption" color="text.secondary">{t('common.viewOnly')}</VxTypography>,
       },
       {
         field: 'domain',
@@ -64,7 +64,7 @@ export function TenantDataGrid({ rows, isLoading, onEdit, onRemove, effectiveAcc
       },
       {
         field: 'moduleAccess',
-        headerName: 'Module Access',
+        headerName: t('components.tenants.editor.moduleAccess'),
         flex: 1,
         minWidth: 220,
         sortable: false,
@@ -72,7 +72,7 @@ export function TenantDataGrid({ rows, isLoading, onEdit, onRemove, effectiveAcc
         renderCell: (params) => {
           const access = effectiveAccessByTenantId?.[params.row.id]
           if (!access) {
-            return <VxTypography variant="caption" color="text.secondary">Loading...</VxTypography>
+            return <VxTypography variant="caption" color="text.secondary">{t('common.loading')}</VxTypography>
           }
 
           const chips = [
@@ -106,18 +106,18 @@ export function TenantDataGrid({ rows, isLoading, onEdit, onRemove, effectiveAcc
         renderCell: (params) => (
           <VxBox sx={{ display: 'flex', gap: 1 }}>
             <VxButton size="small" variant="contained" onClick={() => onEdit(params.row)}>
-              Edit
+              {t('common.edit')}
             </VxButton>
             <VxConfirmActionButton
-              title="Remove tenant"
+              title={t('components.tenants.grid.removeTitle')}
               targetName={`${params.row.name} (${params.row.code})`}
-              consequence="This permanently removes the tenant and its tenant-owned records. This action cannot be undone."
-              confirmLabel="Remove tenant"
-              pendingLabel="Removing..."
+              consequence={t('components.tenants.grid.removeConsequence')}
+              confirmLabel={t('components.tenants.grid.removeTitle')}
+              pendingLabel={t('common.removing')}
               onConfirm={() => onRemove(params.row)}
               buttonProps={{ size: 'small', color: 'error', variant: 'outlined' }}
             >
-              Remove
+              {t('common.remove')}
             </VxConfirmActionButton>
           </VxBox>
         ),
