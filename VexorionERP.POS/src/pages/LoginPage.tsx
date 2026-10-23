@@ -2,7 +2,7 @@ import { PointOfSaleRoundedIcon } from '@vexorion/ui'
 import { VxAlert, VxBox, VxButton, VxPaper, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ApiError } from '../lib/api'
+import { ApiError, reportClientDiagnostic } from '../lib/api'
 import { useAuth } from '../app/AuthContext'
 import { useI18n } from '../app/I18nContext'
 
@@ -33,7 +33,7 @@ export default function LoginPage() {
       navigate('/')
     } catch (requestError) {
       if (!(requestError instanceof ApiError)) {
-        console.error(requestError)
+        reportClientDiagnostic('operation.failed', requestError)
       }
     } finally {
       setIsSubmitting(false)

@@ -2,7 +2,7 @@ import { VxBox, VxButton, VxChip, VxFormControlLabel, VxPageBody, VxPageFeedback
 import { lazy, useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { VxCard } from '@vexorion/ui'
-import { deleteTenant, getTenantModuleEffectiveAccess, getTenants } from '../../../lib/api'
+import { ApiError, deleteTenant, getTenantModuleEffectiveAccess, getTenants, reportClientDiagnostic } from '../../../lib/api'
 import type { TenantListItemResponse, TenantModuleEffectiveAccessResponse } from '../../../types/api'
 import { TenantDataGrid } from '../components/TenantDataGrid'
 import { TenantOnboardingDialog } from '../components/TenantOnboardingDialog'
@@ -46,7 +46,7 @@ export default function TenantManagementPage() {
             const access = await getTenantModuleEffectiveAccess(tenant.id)
             return [tenant.id, access] as const
           } catch (accessError) {
-            console.error(`Error loading module access for tenant ${tenant.id}:`, accessError)
+            if (!(accessError instanceof ApiError)) reportClientDiagnostic('operation.failed', accessError)
             return null
           }
         }),
@@ -61,8 +61,8 @@ export default function TenantManagementPage() {
         }, {}),
       )
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('pages.tenantManagement.errors.load'))
-      console.error('Error loading tenants:', err)
+      setError(err instanceof ApiError ? err.message : t('pages.tenantManagement.errors.load'))
+      if (!(err instanceof ApiError)) reportClientDiagnostic('operation.failed', err)
     } finally {
       setIsLoading(false)
     }
@@ -92,8 +92,8 @@ export default function TenantManagementPage() {
       await deleteTenant(tenant.id)
       setTenants((prev) => prev.filter((item) => item.id !== tenant.id))
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('pages.tenantManagement.errors.remove'))
-      console.error(err)
+      setError(err instanceof ApiError ? err.message : t('pages.tenantManagement.errors.remove'))
+      if (!(err instanceof ApiError)) reportClientDiagnostic('operation.failed', err)
     }
   }
 

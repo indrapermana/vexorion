@@ -1,7 +1,8 @@
-import { Component, type ErrorInfo, type ReactNode } from 'react'
+import { Component, type ReactNode } from 'react'
 import { VxAlert, VxBox, VxButton, VxStack, VxTypography } from '@vexorion/ui'
 import { RefreshRoundedIcon } from '@vexorion/ui'
 import { posLogger } from '../lib/posLogger'
+import { reportClientDiagnostic } from '../lib/api/core'
 import { translateCurrentLocale } from '../app/I18nContext'
 
 interface Props {
@@ -9,24 +10,19 @@ interface Props {
 }
 
 interface State {
-  error: Error | null
-  errorInfo: ErrorInfo | null
+  hasError: boolean
 }
 
 export class PosErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props)
-    this.state = { error: null, errorInfo: null }
+    this.state = { hasError: false }
   }
 
-  override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    this.setState({ error, errorInfo })
-
-    posLogger.error('runtime.uncaughtError', {
-      message: error.message,
-      stack: error.stack,
-      componentStack: errorInfo.componentStack,
-    })
+  override componentDidCatch() {
+    this.setState({ hasError: true })
+    reportClientDiagnostic('runtime.error')
+    posLogger.error('runtime.uncaughtError')
   }
 
   private handleReload = () => {
@@ -34,7 +30,7 @@ export class PosErrorBoundary extends Component<Props, State> {
   }
 
   override render() {
-    if (this.state.error) {
+    if (this.state.hasError) {
       return (
         <VxBox
           sx={{
@@ -54,12 +50,6 @@ export class PosErrorBoundary extends Component<Props, State> {
                 {translateCurrentLocale('errorBoundary.message')}
               </VxTypography>
             </VxAlert>
-
-            <VxBox sx={{ bgcolor: 'action.hover', borderRadius: 1, p: 2 }}>
-              <VxTypography variant="caption" component="pre" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-                {this.state.error.message}
-              </VxTypography>
-            </VxBox>
 
             <VxButton
               variant="contained"

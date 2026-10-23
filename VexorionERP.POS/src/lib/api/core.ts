@@ -100,6 +100,35 @@ export class ApiError extends Error {
   }
 }
 
+type ClientDiagnosticEvent = 'api.server-error' | 'api.network-error' | 'runtime.error' | 'operation.failed'
+
+export function reportClientDiagnostic(eventName: ClientDiagnosticEvent, error?: unknown) {
+  const token = getApiAccessToken()
+  if (!token || typeof window === 'undefined') return
+
+  const apiError = error instanceof ApiError ? error : undefined
+  if (apiError && apiError.status > 0 && apiError.status < 500) return
+
+  const request = {
+    application: 'pos',
+    eventName,
+    ...(apiError ? {
+      apiStatus: apiError.status,
+      ...(/^[A-Za-z0-9._-]{1,80}$/.test(apiError.code) ? { apiCode: apiError.code } : {}),
+      ...(apiError.traceId && /^[A-Za-z0-9._:-]{1,128}$/.test(apiError.traceId)
+        ? { clientTraceId: apiError.traceId }
+        : {}),
+    } : {}),
+  }
+
+  void axios.post(`${apiBaseUrl.replace(/\/$/, '')}/telemetry/client-errors`, request, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).catch((reportError: unknown) => {
+    const status = reportError instanceof AxiosError ? reportError.response?.status ?? 0 : 0
+    console.warn('Client diagnostic delivery failed', { status })
+  })
+}
+
 export async function requestJson<T>(path: string, method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' = 'GET', body?: unknown): Promise<T> {
   let attempt = 0
 
@@ -130,7 +159,11 @@ export async function requestJson<T>(path: string, method: 'GET' | 'POST' | 'PUT
 
         const status = error.response?.status ?? 0
         const normalized = normalizeApiError(error.response?.data, status, error.message)
-        throw new ApiError(status, normalized.message, normalized.code, normalized.validation, normalized.traceId)
+        const apiError = new ApiError(status, normalized.message, normalized.code, normalized.validation, normalized.traceId)
+        if (status === 0 || status >= 500) {
+          reportClientDiagnostic(status === 0 ? 'api.network-error' : 'api.server-error', apiError)
+        }
+        throw apiError
       }
 
       throw error

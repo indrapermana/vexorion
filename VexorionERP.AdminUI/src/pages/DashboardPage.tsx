@@ -2,7 +2,7 @@ import { VxBox, VxChip, VxPageFeedback, VxPageHeader, VxPaper, VxStack, VxTypogr
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ApartmentRoundedIcon, PersonRoundedIcon, StackedBarChartRoundedIcon, TravelExploreRoundedIcon, VxCard } from '@vexorion/ui'
-import { getTenantTelemetry, getTenants, getUsersForAdmin } from '../lib/api'
+import { ApiError, getTenantTelemetry, getTenants, getUsersForAdmin, reportClientDiagnostic } from '../lib/api'
 import type { TenantListItemResponse, TenantTelemetryListItemResponse } from '../types/api'
 import type { UserListItemResponse } from '../types/api/users'
 
@@ -34,8 +34,8 @@ export default function DashboardPage() {
       setUsers(userData)
       setTelemetryByTenant(new Map(telemetry.tenants.map((item) => [item.tenantId, item])))
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('pages.dashboard.loadError'))
-      console.error(err)
+      setError(err instanceof ApiError ? err.message : t('pages.dashboard.loadError'))
+      if (!(err instanceof ApiError)) reportClientDiagnostic('operation.failed', err)
     }
   }, [rangeDays, t])
 

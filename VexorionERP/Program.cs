@@ -92,6 +92,7 @@ builder.Host.UseSerilog((ctx, services, cfg) =>
 const string CorsPolicy = "CorsPolicy";
 const string ShortLivedAuthorizedGetPolicy = "ShortLivedAuthorizedGet";
 const string TenantRateLimitPolicy = "tenant-fixed";
+const string ClientDiagnosticsRateLimitPolicy = "client-diagnostics";
 
 builder.Services.AddApplicationIdentity(builder.Configuration);
 builder.Services.AddApplicationAuthorization();
@@ -175,6 +176,16 @@ builder.Services.AddRateLimiter(options =>
         limiter.QueueLimit = 0;
         limiter.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
     });
+    options.AddPolicy(ClientDiagnosticsRateLimitPolicy, context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                Window = TimeSpan.FromMinutes(1),
+                PermitLimit = 20,
+                QueueLimit = 0,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst
+            }));
 });
 
 var app = builder.Build();

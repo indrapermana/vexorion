@@ -38,7 +38,7 @@ import type {
   PosStockInsufficientItem,
   ProductListItemResponse,
 } from '../types/api'
-import { ApiError } from '../lib/api/core'
+import { ApiError, reportClientDiagnostic } from '../lib/api/core'
 import { generateDocumentNumber } from '../lib/posDocuments'
 import { PosPermissions } from '../app/authorization'
 
@@ -292,7 +292,7 @@ export default function PosPage() {
       setIsQuickCreateOpen(false)
       setQuickCustomer({ name: '', phoneNumber: '', email: '' })
     } catch (requestError) {
-      console.error(requestError)
+      if (!(requestError instanceof ApiError)) reportClientDiagnostic('operation.failed', requestError)
       setError(requestError instanceof ApiError ? requestError.message : t('page.quickCustomerError'))
     }
   }
@@ -499,7 +499,6 @@ export default function PosPage() {
       setPaymentAmount(0)
       setIsDelivery(false)
     } catch (requestError) {
-      console.error(requestError)
       const durationMs = Math.round(performance.now() - startTime)
 
       if (requestError instanceof ApiError && requestError.code === 'inventory.insufficient_stock') {
@@ -524,12 +523,8 @@ export default function PosPage() {
             .filter((item) => item.requested > item.available),
         )
       } else {
-        posLogger.error('checkout.failure', {
-          reason: 'api_error',
-          durationMs,
-          errorStatus: requestError instanceof ApiError ? requestError.status : undefined,
-          errorMessage: requestError instanceof Error ? requestError.message : String(requestError),
-        })
+        posLogger.error('checkout.failure')
+        if (!(requestError instanceof ApiError)) reportClientDiagnostic('operation.failed', requestError)
         setError(requestError instanceof ApiError ? requestError.message : t('page.processingError'))
       }
     } finally {

@@ -32,12 +32,13 @@ describe('posLogger', () => {
     expect(parsed.level).toBe('warn')
   })
 
-  it('logs error to console.error', () => {
-    posLogger.error('error.event', { code: 500 })
-    expect(captured[0].method).toBe('error')
-    const parsed = JSON.parse(captured[0].args[1] as string) as PosLogEntry
-    expect(parsed.level).toBe('error')
-    expect(parsed.data).toEqual({ code: 500 })
+  it('keeps error entries local and excludes error details', () => {
+    posLogger.error('error.event', { code: 500, message: 'sensitive detail' })
+    expect(captured).toHaveLength(0)
+    const logs = (window as Window & { __posLogs?: () => PosLogEntry[] }).__posLogs!()
+    const entry = logs.find((item) => item.event === 'error.event')
+    expect(entry).toMatchObject({ level: 'error', event: 'error.event' })
+    expect(entry).not.toHaveProperty('data')
   })
 
   it('exposes __posLogs on window', () => {

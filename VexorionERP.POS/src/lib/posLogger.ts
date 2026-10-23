@@ -30,17 +30,15 @@ function log(level: PosLogLevel, event: string, data?: Record<string, unknown>) 
     timestamp: new Date().toISOString(),
     level,
     event,
-    ...(data !== undefined ? { data } : {}),
+    ...(data !== undefined && level !== 'error' ? { data } : {}),
   }
 
   push(entry)
 
   const output = JSON.stringify(entry)
-  if (level === 'error') {
-    console.error('[POS]', output)
-  } else if (level === 'warn') {
+  if (level === 'warn') {
     console.warn('[POS]', output)
-  } else {
+  } else if (level === 'info') {
     console.info('[POS]', output)
   }
 }

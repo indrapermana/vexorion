@@ -2,7 +2,7 @@ import { VxAlert, VxBox, VxButton, VxDivider, VxStack, VxTextField, VxTypography
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { ApiError } from '../lib/api'
+import { ApiError, reportClientDiagnostic } from '../lib/api'
 import { useAuth } from '../app/AuthContext'
 
 export default function LoginPage() {
@@ -32,7 +32,7 @@ export default function LoginPage() {
       navigate('/')
     } catch (requestError) {
       if (!(requestError instanceof ApiError)) {
-        console.error(requestError)
+        reportClientDiagnostic('operation.failed', requestError)
       }
     } finally {
       setIsSubmitting(false)

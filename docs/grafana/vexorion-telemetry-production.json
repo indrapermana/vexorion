@@ -1,0 +1,305 @@
+{
+  "uid": "vexorion-telemetry-prod",
+  "title": "Vexorion Telemetry - Production",
+  "tags": [
+    "vexorion",
+    "telemetry",
+    "Production"
+  ],
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "refresh": "1m",
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Client diagnostics (range)",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({app=\"vexorionerp\", env=\"Production\"} |= \"Client diagnostic\" [$__range]))",
+          "queryType": "instant",
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          }
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "API server errors",
+      "gridPos": {
+        "x": 6,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({app=\"vexorionerp\", env=\"Production\"} |= \"Client diagnostic\" |= \"api.server-error\" [$__range]))",
+          "queryType": "instant",
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          }
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Network errors",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({app=\"vexorionerp\", env=\"Production\"} |= \"Client diagnostic\" |= \"api.network-error\" [$__range]))",
+          "queryType": "instant",
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          }
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Runtime crashes",
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({app=\"vexorionerp\", env=\"Production\"} |= \"Client diagnostic\" |= \"runtime.error\" [$__range]))",
+          "queryType": "instant",
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          }
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Diagnostics by event",
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (event) (count_over_time({app=\"vexorionerp\", env=\"Production\"} |= \"Client diagnostic\" | regexp \"Client diagnostic (?P<app>\\\\S+) (?P<event>\\\\S+);\" [$__interval]))",
+          "legendFormat": "{{event}}",
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 60
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Diagnostics by application",
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (application) (count_over_time({app=\"vexorionerp\", env=\"Production\"} |= \"Client diagnostic\" | regexp \"Client diagnostic (?P<application>\\\\S+) (?P<event>\\\\S+);\" [$__interval]))",
+          "legendFormat": "{{application}}",
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 60
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 7,
+      "type": "logs",
+      "title": "Recent client diagnostics",
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 24,
+        "h": 10
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{app=\"vexorionerp\", env=\"Production\"} |= \"Client diagnostic\" |~ \"(?i)$search\"",
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          }
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "sortOrder": "Descending",
+        "enableLogDetails": true
+      }
+    },
+    {
+      "id": 8,
+      "type": "logs",
+      "title": "Backend errors (Error level)",
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 24,
+        "h": 10
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{app=\"vexorionerp\", env=\"Production\"} |~ \"(?i)\\\\[(ERR|FTL)\\\\]|error|exception\" != \"Client diagnostic\"",
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          }
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "sortOrder": "Descending"
+      }
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "label": "Loki",
+        "type": "datasource",
+        "query": "loki",
+        "current": {},
+        "hide": 0
+      },
+      {
+        "name": "search",
+        "label": "Search / trace ID",
+        "type": "textbox",
+        "query": ".*",
+        "current": {
+          "text": ".*",
+          "value": ".*"
+        },
+        "hide": 0
+      }
+    ]
+  }
+}

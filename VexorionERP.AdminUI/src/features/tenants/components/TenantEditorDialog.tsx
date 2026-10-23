@@ -4,7 +4,7 @@ import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { useTranslation } from 'react-i18next'
 import { useEffect, useMemo, useState } from 'react'
-import { getTenantModuleEffectiveAccess, updateTenant } from '../../../lib/api'
+import { ApiError, getTenantModuleEffectiveAccess, reportClientDiagnostic, updateTenant } from '../../../lib/api'
 import type { TenantModuleEffectiveAccessItemResponse, TenantModuleEffectiveAccessResponse } from '../../../types/api'
 import type { TenantEditorDialogProps } from '../../../types/ui'
 
@@ -25,6 +25,7 @@ export function TenantEditorDialog({ open, tenant, onClose, onSaved }: TenantEdi
   const [accessPreview, setAccessPreview] = useState<TenantModuleEffectiveAccessResponse | null>(null)
   const [isPreviewLoading, setIsPreviewLoading] = useState(false)
   const [previewError, setPreviewError] = useState<string | null>(null)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const {
     register,
     handleSubmit,
@@ -60,7 +61,7 @@ export function TenantEditorDialog({ open, tenant, onClose, onSaved }: TenantEdi
       } catch (error) {
         if (!isDisposed) {
           setPreviewError(t('components.tenants.editor.previewError'))
-          console.error('Failed to load module access preview:', error)
+          if (!(error instanceof ApiError)) reportClientDiagnostic('operation.failed', error)
         }
       } finally {
         if (!isDisposed) {
@@ -90,6 +91,7 @@ export function TenantEditorDialog({ open, tenant, onClose, onSaved }: TenantEdi
     if (!tenant) return
 
     setIsSaving(true)
+    setSaveError(null)
     try {
       const updated = await updateTenant(tenant.id, {
         name: data.name,
@@ -100,7 +102,8 @@ export function TenantEditorDialog({ open, tenant, onClose, onSaved }: TenantEdi
       onClose()
       reset()
     } catch (error) {
-      console.error('Failed to save tenant:', error)
+      setSaveError(error instanceof ApiError ? error.message : t('components.tenants.editor.errors.save'))
+      if (!(error instanceof ApiError)) reportClientDiagnostic('operation.failed', error)
     } finally {
       setIsSaving(false)
     }
@@ -116,6 +119,7 @@ export function TenantEditorDialog({ open, tenant, onClose, onSaved }: TenantEdi
       <VxDialogTitle>{t('components.tenants.editor.editTitle')}</VxDialogTitle>
       <VxDialogContent>
         <VxStack spacing={2} sx={{ mt: 2 }}>
+          {saveError ? <VxAlert severity="error" role="alert">{saveError}</VxAlert> : null}
           <VxTextField disabled label={t('components.tenants.editor.codeLabel')} value={tenant?.code ?? ''} />
           <VxTextField
             label={t('components.tenants.editor.nameLabel')}

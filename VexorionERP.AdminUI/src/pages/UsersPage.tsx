@@ -2,7 +2,7 @@ import { AddRoundedIcon, LockResetRoundedIcon, ManageAccountsRoundedIcon, Person
 import { VxAlert, VxBox, VxButton, VxChip, VxConfirmActionButton, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxMenuItem, VxPageBody, VxPageFeedback, VxPageHeader, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { assignUserRoles, createUser, getRoles, getTenants, getUsersForAdmin, resetUserPassword, setUserStatus } from '../lib/api'
+import { ApiError, assignUserRoles, createUser, getRoles, getTenants, getUsersForAdmin, reportClientDiagnostic, resetUserPassword, setUserStatus } from '../lib/api'
 import type { CreateUserRequest, UserListItemResponse } from '../types/api/users'
 import type { RolePermissionsResponse } from '../types/api/roles'
 import type { TenantListItemResponse } from '../types/api'
@@ -60,8 +60,8 @@ export default function UsersPage() {
       setRoles(roleData)
       setTenants(tenantData)
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('pages.users.errors.load'))
-      console.error(err)
+      setError(err instanceof ApiError ? err.message : t('pages.users.errors.load'))
+      if (!(err instanceof ApiError)) reportClientDiagnostic('operation.failed', err)
     } finally {
       setIsLoading(false)
     }
@@ -75,8 +75,8 @@ export default function UsersPage() {
       const userData = await getUsersForAdmin(selectedTenantId || undefined)
       setUsers(userData)
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('pages.users.errors.load'))
-      console.error(err)
+      setError(err instanceof ApiError ? err.message : t('pages.users.errors.load'))
+      if (!(err instanceof ApiError)) reportClientDiagnostic('operation.failed', err)
     } finally {
       setIsLoading(false)
     }
@@ -115,8 +115,8 @@ export default function UsersPage() {
       setCreateRoles([])
       setIsCreateOpen(false)
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('pages.users.errors.create'))
-      console.error(err)
+      setError(err instanceof ApiError ? err.message : t('pages.users.errors.create'))
+      if (!(err instanceof ApiError)) reportClientDiagnostic('operation.failed', err)
     }
   }
 
@@ -125,8 +125,8 @@ export default function UsersPage() {
       await setUserStatus(user.id, { isActive })
       setUsers((current) => current.map((x) => (x.id === user.id ? { ...x, isActive } : x)))
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('pages.users.errors.status'))
-      console.error(err)
+      setError(err instanceof ApiError ? err.message : t('pages.users.errors.status'))
+      if (!(err instanceof ApiError)) reportClientDiagnostic('operation.failed', err)
     }
   }, [t])
 
@@ -139,8 +139,8 @@ export default function UsersPage() {
       setRolesDialogUser(null)
       setRolesSelection([])
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('pages.users.errors.roles'))
-      console.error(err)
+      setError(err instanceof ApiError ? err.message : t('pages.users.errors.roles'))
+      if (!(err instanceof ApiError)) reportClientDiagnostic('operation.failed', err)
     }
   }
 
@@ -152,8 +152,8 @@ export default function UsersPage() {
       setResetDialogUser(null)
       setNewPassword('')
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('pages.users.errors.password'))
-      console.error(err)
+      setError(err instanceof ApiError ? err.message : t('pages.users.errors.password'))
+      if (!(err instanceof ApiError)) reportClientDiagnostic('operation.failed', err)
     }
   }
 

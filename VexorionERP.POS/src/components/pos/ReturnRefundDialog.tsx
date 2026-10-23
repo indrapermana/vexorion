@@ -3,6 +3,7 @@ import { UndoRoundedIcon } from '@vexorion/ui'
 import { VxAlert, VxBox, VxButton, VxChip, VxCircularProgress, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxDivider, VxFormControl, VxInputLabel, VxMenuItem, VxSelect, VxStack, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
 import { useI18n } from '../../app/I18nContext'
 import { posLogger } from '../../lib/posLogger'
+import { ApiError, reportClientDiagnostic } from '../../lib/api/core'
 import {
   createCustomerPayment,
   createSalesInvoice,
@@ -228,13 +229,9 @@ export default function ReturnRefundDialog({
       setSuccessCreditNoteId(creditNote.id)
       setStep('success')
     } catch (error) {
-      setProcessError(error instanceof Error ? error.message : t('return.error'))
-      posLogger.error('refund.failed', {
-        actorId: cashierId,
-        actorName: cashierName,
-        originalInvoiceId: foundInvoice.id,
-        errorMessage: error instanceof Error ? error.message : String(error),
-      })
+      setProcessError(error instanceof ApiError ? error.message : t('return.error'))
+      posLogger.error('refund.failed')
+      if (!(error instanceof ApiError)) reportClientDiagnostic('operation.failed', error)
     } finally {
       setIsProcessing(false)
     }

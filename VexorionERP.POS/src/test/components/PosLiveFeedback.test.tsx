@@ -24,6 +24,7 @@ describe('POS live feedback accessibility', () => {
     )
 
     expect(screen.getByRole('alert')).toHaveTextContent(/something went wrong/i)
+    expect(screen.queryByText('test render failure')).not.toBeInTheDocument()
   })
 })
 

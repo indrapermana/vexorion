@@ -1,7 +1,7 @@
 import { VxAlert, VxBox, VxButton, VxChip, VxMenuItem, VxPageFeedback, VxPageHeader, VxPaper, VxStack, VxSwitch, VxTextField, VxTypography } from '@vexorion/ui'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { getTenantMenuConfiguration, getTenants, updateTenantMenuConfiguration } from '../lib/api'
+import { ApiError, getTenantMenuConfiguration, getTenants, reportClientDiagnostic, updateTenantMenuConfiguration } from '../lib/api'
 import type { TenantListItemResponse } from '../types/api'
 import { useAuth } from '../app/AuthContext'
 import { AdminPermissions, hasAdminPermissions } from '../app/authorization'
@@ -52,8 +52,8 @@ export default function MenuConfigurationPage() {
           setSelectedTenantId(data[0].id)
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : t('pages.menuConfiguration.errors.tenants'))
-        console.error(err)
+        setError(err instanceof ApiError ? err.message : t('pages.menuConfiguration.errors.tenants'))
+        if (!(err instanceof ApiError)) reportClientDiagnostic('operation.failed', err)
       }
     }
 
@@ -72,8 +72,8 @@ export default function MenuConfigurationPage() {
         const response = await getTenantMenuConfiguration(selectedTenantId)
         setHiddenMenus(response.hiddenMenuLinks as MenuItemKey[])
       } catch (err) {
-        setError(err instanceof Error ? err.message : t('pages.menuConfiguration.errors.load'))
-        console.error(err)
+        setError(err instanceof ApiError ? err.message : t('pages.menuConfiguration.errors.load'))
+        if (!(err instanceof ApiError)) reportClientDiagnostic('operation.failed', err)
         setHiddenMenus([])
       }
     }
@@ -106,8 +106,8 @@ export default function MenuConfigurationPage() {
       const updated = await updateTenantMenuConfiguration(selectedTenantId, hiddenMenus)
       setHiddenMenus(updated.hiddenMenuLinks as MenuItemKey[])
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('pages.menuConfiguration.errors.save'))
-      console.error(err)
+      setError(err instanceof ApiError ? err.message : t('pages.menuConfiguration.errors.save'))
+      if (!(err instanceof ApiError)) reportClientDiagnostic('operation.failed', err)
     } finally {
       setIsSaving(false)
     }
