@@ -159,7 +159,7 @@ describe('UsersPage dialogs', () => {
 
     fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'bob' } })
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'bob@example.com' } })
-    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'topsecret123' } })
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'TopSecret123' } })
     fireEvent.change(screen.getByLabelText('First name'), { target: { value: 'Bob' } })
     fireEvent.change(screen.getByLabelText('Last name'), { target: { value: 'Builder' } })
     await user.click(screen.getByRole('button', { name: 'Create User' }))
@@ -168,7 +168,7 @@ describe('UsersPage dialogs', () => {
       expect(apiMocks.createUser).toHaveBeenCalledWith({
         userName: 'bob',
         email: 'bob@example.com',
-        password: 'topsecret123',
+        password: 'TopSecret123',
         firstName: 'Bob',
         lastName: 'Builder',
         roles: [],
@@ -204,12 +204,12 @@ describe('UsersPage dialogs', () => {
     await screen.findByText('alice')
     await userEvent.click(screen.getByRole('button', { name: /reset password/i }))
 
-    await userEvent.type(screen.getByLabelText('New password'), 'new-password-456')
+    await userEvent.type(screen.getByLabelText('New password'), 'NewPassword456')
     await userEvent.click(screen.getByRole('button', { name: 'Reset' }))
 
     await waitFor(() => {
       expect(apiMocks.resetUserPassword).toHaveBeenCalledWith('user-1', {
-        newPassword: 'new-password-456',
+        newPassword: 'NewPassword456',
       })
     })
 

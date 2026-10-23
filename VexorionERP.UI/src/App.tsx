@@ -29,6 +29,8 @@ const CustomerPaymentsPage = lazy(() => import('./pages/CustomerPaymentsPage'))
 const FiscalPeriodsPage = lazy(() => import('./pages/FiscalPeriodsPage'))
 const JournalsPage = lazy(() => import('./pages/JournalsPage'))
 const LoginPage = lazy(() => import('./pages/LoginPage'))
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'))
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'))
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'))
 const InventoryAdjustmentsPage = lazy(() => import('./pages/InventoryAdjustmentsPage'))
 const PurchaseInvoicesPage = lazy(() => import('./pages/PurchaseInvoicesPage'))
@@ -152,6 +154,8 @@ function AppRoutes() {
               <Route element={<PublicOnlyRoute />}>
                 <Route path="/login" element={<LoginPage />} />
               </Route>
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/tenants" element={<TenantsPage />} />
               <Route path="/login/*" element={<NotFoundPage variant="public" backTo="/login" backLabel={t('pages.notFound.backToSignIn')} />} />
               <Route path="/tenants/*" element={<NotFoundPage variant="public" backTo="/tenants" backLabel={t('pages.notFound.backToOnboarding')} />} />

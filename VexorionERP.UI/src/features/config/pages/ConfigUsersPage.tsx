@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { VxAlert, VxButton, VxChip, VxConfirmActionDialog, VxMenuItem, VxPaper, VxStack, VxSwitch, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxButton, VxChip, VxConfirmActionDialog, VxMenuItem, VxPaper, VxStack, VxSwitch, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTextField, VxTypography, isPasswordPolicyMet } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
@@ -157,6 +157,10 @@ export default function ConfigUsersPage() {
     if (!canManageUsers) return
     setError(null)
     setFeedback(null)
+    if (!isPasswordPolicyMet(createDraft.password)) {
+      setError(t('pages.auth.login.passwordPolicy'))
+      return
+    }
     setIsSaving(true)
 
     const payload: CreateUserRequest = {
@@ -176,7 +180,8 @@ export default function ConfigUsersPage() {
       await loadData()
     } catch (saveError) {
       if (saveError instanceof ApiError) {
-        setError(saveError.message)
+        const details = Object.values(saveError.validation ?? {}).flat().join(' ')
+        setError(details || saveError.message)
       } else {
         setError(t('config.users.errors.create'))
       }
@@ -217,8 +222,11 @@ export default function ConfigUsersPage() {
             label={t('config.users.fields.password')}
             size="small"
             type="password"
+            autoComplete="new-password"
             value={createDraft.password}
             onChange={(event) => setCreateDraft((prev) => ({ ...prev, password: event.target.value }))}
+            error={createDraft.password.length > 0 && !isPasswordPolicyMet(createDraft.password)}
+            helperText={t('pages.auth.login.passwordPolicy')}
           />
           <VxTextField
             label={t('config.users.fields.firstName')}

@@ -37,7 +37,7 @@ test.describe('Authentication', () => {
     // Clear pre-filled demo values then submit
     await page.getByLabel(/tenant code/i).clear()
     await page.getByLabel(/username or email/i).clear()
-    await page.getByLabel(/password/i).clear()
+    await page.getByLabel(/^password/i).clear()
     await page.getByRole('button', { name: /sign in/i }).click()
     // Stay on login page
     await expect(page).toHaveURL(/\/login/)

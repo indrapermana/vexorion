@@ -26,7 +26,9 @@ internal static class IdentityTestHelper
                 opts.Password.RequiredLength = 4;
             })
             .AddRoles<IdentityRole<Guid>>()
-            .AddEntityFrameworkStores<AppDbContext>();
+            .AddEntityFrameworkStores<AppDbContext>()
+            .AddDefaultTokenProviders();
+        services.AddDataProtection();
         services.AddLogging();
         return services.BuildServiceProvider();
     }

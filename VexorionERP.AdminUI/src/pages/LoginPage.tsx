@@ -1,8 +1,9 @@
-import { VxAlert, VxBox, VxButton, VxDivider, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxDivider, VxPasswordField, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { ApiError, reportClientDiagnostic } from '../lib/api'
+import { consumeSessionExpired } from '../lib/sessionNotice'
 import { useAuth } from '../app/AuthContext'
 
 export default function LoginPage() {
@@ -10,10 +11,11 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const { login, error, validation, clearFeedback } = useAuth()
   const [form, setForm] = useState({
-    tenantCode: 'demo',
-    userNameOrEmail: 'admin@demo.local',
-    password: 'DemoAdmin123!',
+    tenantCode: '',
+    userNameOrEmail: '',
+    password: '',
   })
+  const [sessionExpired] = useState(consumeSessionExpired)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const getValidationMessage = (key: string) => {
@@ -47,9 +49,14 @@ export default function LoginPage() {
       </VxBox>
 
       {error ? <VxAlert severity="error" role="alert">{error}</VxAlert> : null}
+      {!error && sessionExpired ? <VxAlert severity="info" role="status">{t('login.sessionExpired')}</VxAlert> : null}
 
       <VxTextField
         label={t('login.tenantCode')}
+        name="tenantCode"
+        autoComplete="organization"
+        autoFocus
+        slotProps={{ htmlInput: { autoCapitalize: 'none', spellCheck: false } }}
         value={form.tenantCode}
         onChange={(event) => setForm((current) => ({ ...current, tenantCode: event.target.value }))}
         error={Boolean(validation?.TenantCode)}
@@ -57,14 +64,21 @@ export default function LoginPage() {
       />
       <VxTextField
         label={t('login.emailOrUsername')}
+        name="userNameOrEmail"
+        autoComplete="username"
+        slotProps={{ htmlInput: { autoCapitalize: 'none', spellCheck: false } }}
         value={form.userNameOrEmail}
         onChange={(event) => setForm((current) => ({ ...current, userNameOrEmail: event.target.value }))}
         error={Boolean(validation?.UserNameOrEmail)}
         helperText={getValidationMessage('UserNameOrEmail')}
       />
-      <VxTextField
-        type="password"
+      <VxPasswordField
         label={t('login.password')}
+        name="password"
+        autoComplete="current-password"
+        showPasswordLabel={t('login.showPassword')}
+        hidePasswordLabel={t('login.hidePassword')}
+        capsLockMessage={t('login.capsLockOn')}
         value={form.password}
         onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
         error={Boolean(validation?.Password)}

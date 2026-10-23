@@ -84,6 +84,7 @@ export { default as TrendingDownRoundedIcon } from '@mui/icons-material/Trending
 export { default as TrendingUpRoundedIcon } from '@mui/icons-material/TrendingUpRounded'
 export { default as TuneRoundedIcon } from '@mui/icons-material/TuneRounded'
 export { default as UndoRoundedIcon } from '@mui/icons-material/UndoRounded'
+export { default as VisibilityOffRoundedIcon } from '@mui/icons-material/VisibilityOffRounded'
 export { default as VisibilityRoundedIcon } from '@mui/icons-material/VisibilityRounded'
 export { default as WarehouseRoundedIcon } from '@mui/icons-material/WarehouseRounded'
 export { default as WarningAmberRoundedIcon } from '@mui/icons-material/WarningAmberRounded'

@@ -78,7 +78,7 @@ public class UserManagementService(
         var createResult = await userManager.CreateAsync(user, request.Password);
         if (!createResult.Succeeded)
         {
-            return ServiceResult<UserListItemResponse>.ValidationFailure(createResult.Errors.GroupBy(x => x.Code).ToDictionary(group => group.Key, group => group.Select(x => x.Description).ToArray()));
+            return ServiceResult<UserListItemResponse>.ValidationFailure(IdentityErrorFieldMapper.ToFieldErrors(createResult.Errors, nameof(request.Password), nameof(request.UserName), nameof(request.Email)));
         }
 
         if (request.Roles.Count > 0)

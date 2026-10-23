@@ -406,12 +406,12 @@ The target is a clean, simple, data-dense business interface: one obvious primar
 
 **Plan**
 
-- [ ] `UX-AUTH-01` Remove embedded demo credentials/development guidance from shipped pages; keep examples only in local setup/seed documentation.
-- [ ] `UX-AUTH-02` Rewrite Main login around connected sales, purchasing, inventory, finance, projects, and team operations, avoiding framework terminology.
-- [ ] `UX-AUTH-03` Rewrite and localize Admin login around tenant onboarding, platform users, module/menu governance, and restricted administrator access.
-- [ ] `UX-AUTH-04` Redesign POS login as a branded, responsive, touch-friendly cashier entry screen with concise store/shift context.
-- [ ] `UX-AUTH-05` Add password visibility, Caps Lock feedback, autocomplete attributes, enter-key/focus verification, and consistent invalid-session feedback.
-- [ ] `UX-AUTH-06` Decide administrator-only reset versus secure self-service forgot/change-password flows; implement only the approved audited/rate-limited model.
+- [x] `UX-AUTH-01` Remove embedded demo credentials/development guidance from shipped pages; keep examples only in local setup/seed documentation. Completed: Main and Admin sign-in forms start empty, and the seeded-tenant guidance and development hints are removed from all three apps.
+- [x] `UX-AUTH-02` Rewrite Main login around connected sales, purchasing, inventory, finance, projects, and team operations, avoiding framework terminology. Completed: Main sign-in and the shared public shell now describe connected sales, purchasing, inventory, finance, projects, and teams in en/es/id, with no framework terminology.
+- [x] `UX-AUTH-03` Rewrite and localize Admin login around tenant onboarding, platform users, module/menu governance, and restricted administrator access. Completed: Admin sign-in copy is localized (en/es/id) around tenant onboarding, platform users, module/menu governance, and restricted administrator access.
+- [x] `UX-AUTH-04` Redesign POS login as a branded, responsive, touch-friendly cashier entry screen with concise store/shift context. Completed: POS sign-in is a branded, responsive card with shift/secure-access context and 56px touch targets. Localized in en/es/id.
+- [x] `UX-AUTH-05` Add password visibility, Caps Lock feedback, autocomplete attributes, enter-key/focus verification, and consistent invalid-session feedback. Completed: shared `VxPasswordField` provides a show/hide toggle and a Caps Lock status message. All three apps use autocomplete attributes, and a session-expired notice appears after refresh failure or a 401 on an existing session. Locally validated with unit tests (Main 163, Admin 52, POS 91), production builds, and updated E2E label selectors; Playwright was not run.
+- [x] `UX-AUTH-06` Self-service forgot/reset password (Main UI only) approved and implemented: `POST api/auth/forgot-password` (always 202, no account enumeration), `reset-password/validate`, `reset-password`; rate limited (`password-reset`, 10/10 min per IP), audited, stateless HMAC token (15 min, single-use via security stamp + password hash), all sessions revoked on reset, reset and password-changed emails via Resend (en/es/id), dev-only `Email:RedirectPlusAddressing` sends `name+tag@x` mail to `name@x`. Config: `Email:ResendApiKey`, `FromAddress`, `MainUiBaseUrl`. Admin UI/POS not included; Playwright not run.
 
 ### 5.3 Dashboard and navigation
 

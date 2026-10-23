@@ -93,6 +93,7 @@ const string CorsPolicy = "CorsPolicy";
 const string ShortLivedAuthorizedGetPolicy = "ShortLivedAuthorizedGet";
 const string TenantRateLimitPolicy = "tenant-fixed";
 const string ClientDiagnosticsRateLimitPolicy = "client-diagnostics";
+const string PasswordResetRateLimitPolicy = "password-reset";
 
 builder.Services.AddApplicationIdentity(builder.Configuration);
 builder.Services.AddApplicationAuthorization();
@@ -176,6 +177,16 @@ builder.Services.AddRateLimiter(options =>
         limiter.QueueLimit = 0;
         limiter.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
     });
+    options.AddPolicy(PasswordResetRateLimitPolicy, context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                Window = TimeSpan.FromMinutes(10),
+                PermitLimit = 10,
+                QueueLimit = 0,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst
+            }));
     options.AddPolicy(ClientDiagnosticsRateLimitPolicy, context =>
         RateLimitPartition.GetFixedWindowLimiter(
             context.Connection.RemoteIpAddress?.ToString() ?? "unknown",

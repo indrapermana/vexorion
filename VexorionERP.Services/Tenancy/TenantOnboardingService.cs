@@ -95,7 +95,7 @@ public class TenantOnboardingService(
         if (!createResult.Succeeded)
         {
             await transaction.RollbackAsync(cancellationToken);
-            return ServiceResult<OnboardTenantResponse>.ValidationFailure(createResult.Errors.GroupBy(x => x.Code).ToDictionary(group => group.Key, group => group.Select(x => x.Description).ToArray()));
+            return ServiceResult<OnboardTenantResponse>.ValidationFailure(IdentityErrorFieldMapper.ToFieldErrors(createResult.Errors, nameof(request.AdminPassword), nameof(request.AdminUserName), nameof(request.AdminEmail)));
         }
 
         // First tenant admin gets SystemAdmin role; subsequent ones get TenantAdmin only

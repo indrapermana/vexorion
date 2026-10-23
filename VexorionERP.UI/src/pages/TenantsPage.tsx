@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { VxAlert, VxBox, VxButton, VxDivider, VxGrid, VxLink, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxDivider, VxGrid, VxLink, VxPasswordField, VxStack, VxTextField, VxTypography, isPasswordPolicyMet } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
 import { ApiError, onboardTenant } from '../lib/api'
@@ -39,10 +39,14 @@ export default function TenantsPage() {
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    setIsSubmitting(true)
     setResult(null)
     setError(null)
     setValidation(null)
+    if (!isPasswordPolicyMet(form.adminPassword)) {
+      setValidation({ AdminPassword: [t('pages.auth.login.passwordPolicy')] })
+      return
+    }
+    setIsSubmitting(true)
 
     try {
       const response = await onboardTenant(form)
@@ -98,7 +102,7 @@ export default function TenantsPage() {
           <VxTextField fullWidth label={t('pages.auth.tenants.fields.adminEmail')} value={form.adminEmail} onChange={(event) => setField('adminEmail', event.target.value)} error={Boolean(validation?.AdminEmail)} helperText={validation?.AdminEmail?.[0]} />
         </VxGrid>
         <VxGrid size={{ xs: 12, md: 6 }}>
-          <VxTextField fullWidth type="password" label={t('pages.auth.tenants.fields.adminPassword')} value={form.adminPassword} onChange={(event) => setField('adminPassword', event.target.value)} error={Boolean(validation?.AdminPassword)} helperText={validation?.AdminPassword?.[0]} />
+          <VxPasswordField fullWidth name="adminPassword" autoComplete="new-password" label={t('pages.auth.tenants.fields.adminPassword')} showPasswordLabel={t('pages.auth.login.showPassword')} hidePasswordLabel={t('pages.auth.login.hidePassword')} capsLockMessage={t('pages.auth.login.capsLockOn')} value={form.adminPassword} onChange={(event) => setField('adminPassword', event.target.value)} error={Boolean(validation?.AdminPassword) || (form.adminPassword.length > 0 && !isPasswordPolicyMet(form.adminPassword))} helperText={validation?.AdminPassword?.[0] ?? t('pages.auth.login.passwordPolicy')} />
         </VxGrid>
         <VxGrid size={{ xs: 12, md: 6 }}>
           <VxTextField fullWidth label={t('pages.auth.tenants.fields.firstName')} value={form.firstName} onChange={(event) => setField('firstName', event.target.value)} error={Boolean(validation?.FirstName)} helperText={validation?.FirstName?.[0]} />

@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { ApiError, getCurrentUser, login as loginRequest, logoutRefreshSession, refreshSession } from '../lib/api'
 import { setApiAccessToken, setApiRefreshHandler, setApiUnauthorizedHandler } from '../lib/apiAuth'
+import { markSessionExpired } from '../lib/sessionNotice'
 import type { AuthState } from '../types/auth'
 
 let initializePromise: Promise<void> | null = null
@@ -10,6 +11,13 @@ let refreshPromise: Promise<string | null> | null = null
 function clearAuthState() {
   useAuthStore.setState({ session: null, user: null, error: null, validation: null, isLoading: false })
   setApiAccessToken(null)
+}
+
+function expireAuthState() {
+  if (useAuthStore.getState().session) {
+    markSessionExpired()
+  }
+  clearAuthState()
 }
 
 async function refreshAccessToken() {
@@ -30,7 +38,7 @@ async function refreshAccessToken() {
       useAuthStore.setState({ session: nextSession })
       return nextSession.accessToken
     } catch {
-      clearAuthState()
+      expireAuthState()
       return null
     }
   })()
@@ -68,7 +76,7 @@ export const useAuthStore = create<AuthState>()(
             const user = await getCurrentUser()
             set({ user, isLoading: false })
           } catch {
-            clearAuthState()
+            expireAuthState()
           }
         })()
 
@@ -127,7 +135,7 @@ export const useAuthStore = create<AuthState>()(
       name: 'vexorionerp.pos.auth',
       partialize: (state) => ({ session: state.session }),
       onRehydrateStorage: () => (state) => {
-        setApiUnauthorizedHandler(clearAuthState)
+        setApiUnauthorizedHandler(expireAuthState)
         setApiRefreshHandler(refreshAccessToken)
         setApiAccessToken(state?.session?.accessToken ?? null)
       },
@@ -135,5 +143,5 @@ export const useAuthStore = create<AuthState>()(
   ),
 )
 
-setApiUnauthorizedHandler(clearAuthState)
+setApiUnauthorizedHandler(expireAuthState)
 setApiRefreshHandler(refreshAccessToken)

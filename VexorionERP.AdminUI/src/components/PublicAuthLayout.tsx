@@ -49,7 +49,7 @@ export default function PublicAuthLayout() {
 
           <VxChip
             icon={<ApartmentRoundedIcon />}
-            label={t('publicAuth.developmentHint')}
+            label={t('publicAuth.restrictedHint')}
             className="public-shell__chip"
           />
 

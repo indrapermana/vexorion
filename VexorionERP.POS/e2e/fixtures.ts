@@ -40,7 +40,7 @@ export class LoginPageObject {
   async login(tenantCode: string, username: string, password: string) {
     await this.page.getByLabel(/tenant/i).fill(tenantCode)
     await this.page.getByLabel(/username|email/i).fill(username)
-    await this.page.getByLabel(/password/i).fill(password)
+    await this.page.getByLabel(/^password/i).fill(password)
     await this.page.getByRole('button', { name: /sign in|login/i }).click()
   }
 }

@@ -1,20 +1,49 @@
 using Mediator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using VexorionERP.Contracts;
 using VexorionERP.Handler;
+using VexorionERP.Services;
 
 namespace VexorionERP;
 
 [ApiController]
 [Route("api/auth")]
-public class AuthController(IMediator mediator) : ServiceResultControllerBase
+public class AuthController(IMediator mediator, IPasswordResetService passwordResetService) : ServiceResultControllerBase
 {
     [AllowAnonymous]
     [HttpPost("login")]
     public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request)
     {
         var result = await mediator.Send(new LoginCommand(request));
+        return ToActionResult(result);
+    }
+
+    [AllowAnonymous]
+    [EnableRateLimiting("password-reset")]
+    [HttpPost("forgot-password")]
+    public async Task<ActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+    {
+        await passwordResetService.RequestResetAsync(request, HttpContext.RequestAborted);
+        return Accepted();
+    }
+
+    [AllowAnonymous]
+    [EnableRateLimiting("password-reset")]
+    [HttpPost("reset-password/validate")]
+    public async Task<ActionResult> ValidateResetToken([FromBody] ResetTokenRequest request)
+    {
+        var result = await passwordResetService.ValidateTokenAsync(request, HttpContext.RequestAborted);
+        return ToActionResult(result);
+    }
+
+    [AllowAnonymous]
+    [EnableRateLimiting("password-reset")]
+    [HttpPost("reset-password")]
+    public async Task<ActionResult> ResetPassword([FromBody] CompletePasswordResetRequest request)
+    {
+        var result = await passwordResetService.CompleteResetAsync(request, HttpContext.RequestAborted);
         return ToActionResult(result);
     }
 

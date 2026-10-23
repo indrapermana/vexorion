@@ -317,6 +317,7 @@
   border-radius: 50%;
   background: rgba(162, 155, 254, 0.18);
   filter: blur(6px);
+  pointer-events: none;
 }
 
 .brand-mark {

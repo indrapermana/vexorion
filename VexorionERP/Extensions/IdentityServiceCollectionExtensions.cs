@@ -26,6 +26,7 @@ public static class IdentityServiceCollectionExtensions
         }
 
         services.Configure<BootstrapOptions>(configuration.GetSection(BootstrapOptions.SectionName));
+        services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.SectionName));
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.Configure<TenantGovernanceDefaultsOptions>(configuration.GetSection(TenantGovernanceDefaultsOptions.SectionName));
         services.Configure<TenantModuleRolloutOptions>(configuration.GetSection(TenantModuleRolloutOptions.SectionName));
@@ -76,6 +77,41 @@ public static class IdentityServiceCollectionExtensions
         services.AddScoped<IAuditLogQueryService, AuditLogQueryService>();
         services.AddScoped<IProjectTimelineQueryService, ProjectTimelineQueryService>();
         services.AddScoped<IAuthApplicationService, AuthApplicationService>();
+        services.AddScoped<IPasswordResetService, PasswordResetService>();
+        services.AddHttpClient<IEmailSender, ResendEmailSender>(client =>
+        {
+            client.BaseAddress = new Uri("https://api.resend.com/");
+            client.Timeout = TimeSpan.FromSeconds(10);
+        }).ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+        {
+            ConnectTimeout = TimeSpan.FromSeconds(4),
+            // Hosts without working IPv6 would otherwise stall on the first AAAA address until the request times out.
+            ConnectCallback = async (context, cancellationToken) =>
+            {
+                var addresses = (await System.Net.Dns.GetHostAddressesAsync(context.DnsEndPoint.Host, cancellationToken))
+                    .OrderBy(address => address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork ? 0 : 1)
+                    .ToArray();
+                Exception? lastError = null;
+                foreach (var address in addresses)
+                {
+                    var socket = new System.Net.Sockets.Socket(address.AddressFamily, System.Net.Sockets.SocketType.Stream, System.Net.Sockets.ProtocolType.Tcp) { NoDelay = true };
+                    try
+                    {
+                        using var attempt = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                        attempt.CancelAfter(TimeSpan.FromSeconds(3));
+                        await socket.ConnectAsync(new System.Net.IPEndPoint(address, context.DnsEndPoint.Port), attempt.Token);
+                        return new System.Net.Sockets.NetworkStream(socket, ownsSocket: true);
+                    }
+                    catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
+                    {
+                        socket.Dispose();
+                        lastError = ex;
+                    }
+                }
+
+                throw new HttpRequestException($"Could not connect to {context.DnsEndPoint.Host}.", lastError);
+            }
+        });
         services.AddScoped<IInventoryMovementPostingService, InventoryMovementPostingService>();
         services.AddScoped<IProductPurchasePriceHistoryQueryService, ProductPurchasePriceHistoryQueryService>();
         services.AddScoped<IPostingService, PostingService>();

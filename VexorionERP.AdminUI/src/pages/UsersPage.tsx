@@ -1,5 +1,5 @@
 import { AddRoundedIcon, LockResetRoundedIcon, ManageAccountsRoundedIcon, PersonOffRoundedIcon, VxDataGrid, type VxGridColDef } from '@vexorion/ui'
-import { VxAlert, VxBox, VxButton, VxChip, VxConfirmActionButton, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxMenuItem, VxPageBody, VxPageFeedback, VxPageHeader, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxChip, VxConfirmActionButton, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxMenuItem, VxPageBody, VxPageFeedback, VxPageHeader, VxStack, VxTextField, VxTypography, isPasswordPolicyMet } from '@vexorion/ui'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ApiError, assignUserRoles, createUser, getRoles, getTenants, getUsersForAdmin, reportClientDiagnostic, resetUserPassword, setUserStatus } from '../lib/api'
@@ -47,6 +47,7 @@ export default function UsersPage() {
 
   const [resetDialogUser, setResetDialogUser] = useState<UserListItemResponse | null>(null)
   const [newPassword, setNewPassword] = useState('')
+  const [createErrors, setCreateErrors] = useState<Record<string, string[] | string>>({})
 
   const loadMetadata = useCallback(async () => {
     setIsLoading(true)
@@ -99,6 +100,12 @@ export default function UsersPage() {
   const roleOptions = roles.map((x) => x.role)
 
   const handleCreateUser = async () => {
+    setCreateErrors({})
+    if (!isPasswordPolicyMet(createForm.password)) {
+      setCreateErrors({ Password: [t('login.passwordPolicy')] })
+      return
+    }
+
     const payload: CreateUserRequest = {
       userName: createForm.userName,
       email: createForm.email,
@@ -115,6 +122,10 @@ export default function UsersPage() {
       setCreateRoles([])
       setIsCreateOpen(false)
     } catch (err) {
+      if (err instanceof ApiError && err.validation) {
+        setCreateErrors(err.validation)
+        return
+      }
       setError(err instanceof ApiError ? err.message : t('pages.users.errors.create'))
       if (!(err instanceof ApiError)) reportClientDiagnostic('operation.failed', err)
     }
@@ -304,9 +315,9 @@ export default function UsersPage() {
         <VxDialogTitle>{t('pages.users.add')}</VxDialogTitle>
         <VxDialogContent>
           <VxStack spacing={2} sx={{ mt: 1 }}>
-            <VxTextField label={t('pages.users.username')} value={createForm.userName} onChange={(event) => setCreateForm((x) => ({ ...x, userName: event.target.value }))} />
-            <VxTextField label={t('pages.users.email')} value={createForm.email} onChange={(event) => setCreateForm((x) => ({ ...x, email: event.target.value }))} />
-            <VxTextField label={t('pages.users.password')} type="password" value={createForm.password} onChange={(event) => setCreateForm((x) => ({ ...x, password: event.target.value }))} />
+            <VxTextField label={t('pages.users.username')} value={createForm.userName} onChange={(event) => setCreateForm((x) => ({ ...x, userName: event.target.value }))} error={Boolean(createErrors.UserName)} helperText={[createErrors.UserName].flat()[0]} />
+            <VxTextField label={t('pages.users.email')} value={createForm.email} onChange={(event) => setCreateForm((x) => ({ ...x, email: event.target.value }))} error={Boolean(createErrors.Email)} helperText={[createErrors.Email].flat()[0]} />
+            <VxTextField label={t('pages.users.password')} type="password" autoComplete="new-password" value={createForm.password} onChange={(event) => setCreateForm((x) => ({ ...x, password: event.target.value }))} error={Boolean(createErrors.Password) || (createForm.password.length > 0 && !isPasswordPolicyMet(createForm.password))} helperText={[createErrors.Password].flat()[0] ?? t('login.passwordPolicy')} />
             <VxTextField label={t('pages.users.firstName')} value={createForm.firstName} onChange={(event) => setCreateForm((x) => ({ ...x, firstName: event.target.value }))} />
             <VxTextField label={t('pages.users.lastName')} value={createForm.lastName} onChange={(event) => setCreateForm((x) => ({ ...x, lastName: event.target.value }))} />
             <VxTextField
@@ -367,13 +378,16 @@ export default function UsersPage() {
             fullWidth
             type="password"
             label={t('pages.users.newPassword')}
+            autoComplete="new-password"
             value={newPassword}
             onChange={(event) => setNewPassword(event.target.value)}
+            error={newPassword.length > 0 && !isPasswordPolicyMet(newPassword)}
+            helperText={t('login.passwordPolicy')}
           />
         </VxDialogContent>
         <VxDialogActions>
           <VxButton onClick={() => setResetDialogUser(null)}>{t('common.cancel')}</VxButton>
-          <VxButton onClick={() => void handleResetPassword()} variant="contained">{t('pages.users.reset')}</VxButton>
+          <VxButton onClick={() => void handleResetPassword()} variant="contained" disabled={!isPasswordPolicyMet(newPassword)}>{t('pages.users.reset')}</VxButton>
         </VxDialogActions>
       </VxDialog>
     </VxStack>

@@ -1,7 +1,7 @@
-import { VxAlert, VxButton, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxDivider, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxButton, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxDivider, VxStack, VxTextField, VxTypography, isPasswordPolicyMet } from '@vexorion/ui'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { onboardTenant } from '../../../lib/api'
+import { ApiError, onboardTenant } from '../../../lib/api'
 import type { OnboardTenantRequest, OnboardTenantResponse, TenantListItemResponse } from '../../../types/api'
 
 type Props = {
@@ -28,6 +28,8 @@ export function TenantOnboardingDialog({ open, onClose, onCreated }: Props) {
   const [form, setForm] = useState<OnboardTenantRequest>(emptyForm)
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[] | string>>({})
+  const fieldError = (field: string) => [fieldErrors[field[0].toUpperCase() + field.slice(1)]].flat()[0]
 
   const setField = (field: keyof OnboardTenantRequest, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -36,12 +38,18 @@ export function TenantOnboardingDialog({ open, onClose, onCreated }: Props) {
   const handleClose = () => {
     setForm(emptyForm)
     setError(null)
+    setFieldErrors({})
     onClose()
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    setFieldErrors({})
+    if (!isPasswordPolicyMet(form.adminPassword)) {
+      setFieldErrors({ AdminPassword: [t('login.passwordPolicy')] })
+      return
+    }
     setIsSaving(true)
     try {
       const result: OnboardTenantResponse = await onboardTenant(form)
@@ -57,6 +65,11 @@ export function TenantOnboardingDialog({ open, onClose, onCreated }: Props) {
       onCreated(newTenant)
       handleClose()
     } catch (error: unknown) {
+      if (error instanceof ApiError && error.validation) {
+        setFieldErrors(error.validation)
+        setError(t('components.tenants.onboarding.reviewFields'))
+        return
+      }
       setError(error instanceof Error ? error.message : t('components.tenants.onboarding.error'))
     } finally {
       setIsSaving(false)
@@ -78,6 +91,8 @@ export function TenantOnboardingDialog({ open, onClose, onCreated }: Props) {
               label={t('components.tenants.onboarding.tenantName')}
               value={form.tenantName}
               onChange={(e) => setField('tenantName', e.target.value)}
+              error={Boolean(fieldError('tenantName'))}
+              helperText={fieldError('tenantName')}
               required
               fullWidth
             />
@@ -85,6 +100,8 @@ export function TenantOnboardingDialog({ open, onClose, onCreated }: Props) {
               label={t('components.tenants.onboarding.tenantCode')}
               value={form.tenantCode}
               onChange={(e) => setField('tenantCode', e.target.value)}
+              error={Boolean(fieldError('tenantCode'))}
+              helperText={fieldError('tenantCode')}
               required
               fullWidth
               slotProps={{ htmlInput: { style: { textTransform: 'lowercase' } } }}
@@ -94,6 +111,8 @@ export function TenantOnboardingDialog({ open, onClose, onCreated }: Props) {
             label={t('components.tenants.onboarding.domain')}
             value={form.domain}
             onChange={(e) => setField('domain', e.target.value)}
+              error={Boolean(fieldError('domain'))}
+              helperText={fieldError('domain')}
             fullWidth
           />
 
@@ -106,6 +125,8 @@ export function TenantOnboardingDialog({ open, onClose, onCreated }: Props) {
               label={t('components.tenants.onboarding.companyName')}
               value={form.companyName}
               onChange={(e) => setField('companyName', e.target.value)}
+              error={Boolean(fieldError('companyName'))}
+              helperText={fieldError('companyName')}
               required
               fullWidth
             />
@@ -113,6 +134,8 @@ export function TenantOnboardingDialog({ open, onClose, onCreated }: Props) {
               label={t('components.tenants.onboarding.companyCode')}
               value={form.companyCode}
               onChange={(e) => setField('companyCode', e.target.value)}
+              error={Boolean(fieldError('companyCode'))}
+              helperText={fieldError('companyCode')}
               required
               fullWidth
               slotProps={{ htmlInput: { style: { textTransform: 'uppercase' } } }}
@@ -128,6 +151,8 @@ export function TenantOnboardingDialog({ open, onClose, onCreated }: Props) {
               label={t('components.tenants.onboarding.firstName')}
               value={form.firstName}
               onChange={(e) => setField('firstName', e.target.value)}
+              error={Boolean(fieldError('firstName'))}
+              helperText={fieldError('firstName')}
               required
               fullWidth
             />
@@ -135,6 +160,8 @@ export function TenantOnboardingDialog({ open, onClose, onCreated }: Props) {
               label={t('components.tenants.onboarding.lastName')}
               value={form.lastName}
               onChange={(e) => setField('lastName', e.target.value)}
+              error={Boolean(fieldError('lastName'))}
+              helperText={fieldError('lastName')}
               required
               fullWidth
             />
@@ -143,6 +170,8 @@ export function TenantOnboardingDialog({ open, onClose, onCreated }: Props) {
             label={t('components.tenants.onboarding.username')}
             value={form.adminUserName}
             onChange={(e) => setField('adminUserName', e.target.value)}
+              error={Boolean(fieldError('adminUserName'))}
+              helperText={fieldError('adminUserName')}
             required
             fullWidth
           />
@@ -151,6 +180,8 @@ export function TenantOnboardingDialog({ open, onClose, onCreated }: Props) {
             type="email"
             value={form.adminEmail}
             onChange={(e) => setField('adminEmail', e.target.value)}
+              error={Boolean(fieldError('adminEmail'))}
+              helperText={fieldError('adminEmail')}
             required
             fullWidth
           />
@@ -159,6 +190,9 @@ export function TenantOnboardingDialog({ open, onClose, onCreated }: Props) {
             type="password"
             value={form.adminPassword}
             onChange={(e) => setField('adminPassword', e.target.value)}
+            autoComplete="new-password"
+            error={Boolean(fieldError('adminPassword')) || (form.adminPassword.length > 0 && !isPasswordPolicyMet(form.adminPassword))}
+            helperText={fieldError('adminPassword') ?? t('login.passwordPolicy')}
             required
             fullWidth
           />
