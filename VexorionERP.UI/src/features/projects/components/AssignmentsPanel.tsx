@@ -24,6 +24,7 @@ import {
 } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
+import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import {
   ApiError,
   createProjectAssignment,
@@ -106,6 +107,7 @@ export default function AssignmentsPanel({ projectId }: AssignmentsPanelProps) {
   const [editorOpen, setEditorOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<ProjectAssignmentListItemResponse | null>(null)
   const [formState, setFormState] = useState<AssignmentFormState>(initialFormState)
+  const [initialForm, setInitialForm] = useState<AssignmentFormState>(initialFormState)
 
   const loadData = useCallback(async () => {
     if (!canView) return
@@ -167,12 +169,21 @@ export default function AssignmentsPanel({ projectId }: AssignmentsPanelProps) {
   const resetEditor = () => {
     setEditingItem(null)
     setFormState(initialFormState)
+    setInitialForm(initialFormState)
     setEditorOpen(false)
   }
+
+  const { requestClose, confirmationDialog } = useUnsavedChangesPrompt(
+    canManage && editorOpen && JSON.stringify(formState) !== JSON.stringify(initialForm),
+    isSaving,
+    resetEditor,
+    () => setFormState(initialForm),
+  )
 
   const openCreateDialog = () => {
     setEditingItem(null)
     setFormState(initialFormState)
+    setInitialForm(initialFormState)
     setEditorOpen(true)
   }
 
@@ -181,7 +192,7 @@ export default function AssignmentsPanel({ projectId }: AssignmentsPanelProps) {
     const assigneeId = item.employeeId ?? item.consultantId ?? ''
 
     setEditingItem(item)
-    setFormState({
+    const nextForm: AssignmentFormState = {
       assigneeType,
       assigneeId,
       roleTitle: item.roleTitle,
@@ -190,7 +201,9 @@ export default function AssignmentsPanel({ projectId }: AssignmentsPanelProps) {
       isPrimaryAssignment: item.isPrimaryAssignment,
       notes: item.notes ?? '',
       isActive: item.isActive,
-    })
+    }
+    setFormState(nextForm)
+    setInitialForm(nextForm)
     setEditorOpen(true)
   }
 
@@ -372,7 +385,7 @@ export default function AssignmentsPanel({ projectId }: AssignmentsPanelProps) {
         </VxStack>
       </VxPaper>
 
-      <VxDialog open={editorOpen} onClose={isSaving ? undefined : resetEditor} maxWidth="sm" fullWidth>
+      <VxDialog open={editorOpen} onClose={requestClose} maxWidth="sm" fullWidth>
         <VxDialogTitle>
           {editingItem
             ? t('pages.projectDetails.assignmentsPanel.dialogs.edit')
@@ -477,7 +490,7 @@ export default function AssignmentsPanel({ projectId }: AssignmentsPanelProps) {
           </VxStack>
         </VxDialogContent>
         <VxDialogActions>
-          <VxButton onClick={resetEditor}>{t('common.cancel')}</VxButton>
+          <VxButton onClick={requestClose} disabled={isSaving}>{t('common.cancel')}</VxButton>
           <VxButton
             variant="contained"
             disabled={!formState.assigneeId.trim() || !formState.roleTitle.trim() || !formState.startDate || hasInvalidPeriod || isSaving}
@@ -487,6 +500,7 @@ export default function AssignmentsPanel({ projectId }: AssignmentsPanelProps) {
           </VxButton>
         </VxDialogActions>
       </VxDialog>
+      {confirmationDialog}
     </VxStack>
   )
 }

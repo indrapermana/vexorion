@@ -2,12 +2,13 @@ import './App.css'
 import { Suspense, lazy } from 'react'
 import { VxAlert } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { createBrowserRouter, Route, Routes, RouterProvider } from 'react-router-dom'
 import { AuthProvider } from './app/AuthContext'
 import { CurrencyProvider } from './app/CurrencyContext'
 import { TenantModuleProvider } from './app/TenantModuleContext'
 import { ModuleRouteGuard, PermissionRoute, ProtectedRoute, PublicOnlyRoute } from './components/RouteGuards'
 import { Permissions } from './app/authorization'
+import { UnsavedChangesNavigationGuard } from './hooks/useUnsavedChangesPrompt'
 
 const AppLayout = lazy(() => import('./components/AppLayout'))
 const AccountsPage = lazy(() => import('./pages/AccountsPage'))
@@ -56,16 +57,12 @@ function RouteFallback() {
   return <VxAlert severity="info">{t('routeGuards.loadingWorkspace')}</VxAlert>
 }
 
-function App() {
+function AppRoutes() {
   const { t } = useTranslation()
 
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <TenantModuleProvider>
-          <CurrencyProvider>
-        <Suspense fallback={<RouteFallback />}>
-          <Routes>
+    <Suspense fallback={<RouteFallback />}>
+      <Routes>
             <Route element={<AppLayout />}>
               <Route element={<ProtectedRoute />}>
                 <Route element={<PermissionRoute requirement={{ allOf: [Permissions.reports.view] }} />}>
@@ -163,13 +160,29 @@ function App() {
             <Route element={<AppLayout />}>
               <Route path="*" element={<NotFoundPage variant="admin" />} />
             </Route>
-          </Routes>
-        </Suspense>
-          </CurrencyProvider>
-        </TenantModuleProvider>
-      </AuthProvider>
-    </BrowserRouter>
+      </Routes>
+    </Suspense>
   )
+}
+
+function AppShell() {
+  return (
+    <AuthProvider>
+      <TenantModuleProvider>
+        <CurrencyProvider>
+          <UnsavedChangesNavigationGuard>
+            <AppRoutes />
+          </UnsavedChangesNavigationGuard>
+        </CurrencyProvider>
+      </TenantModuleProvider>
+    </AuthProvider>
+  )
+}
+
+const router = createBrowserRouter([{ path: '*', element: <AppShell /> }])
+
+function App() {
+  return <RouterProvider router={router} />
 }
 
 export default App

@@ -21,11 +21,12 @@ import {
   VxTypography,
 } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
 import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 import { PageBody, PageFeedback, PageHeader, PageMetric } from '../../../components/PagePrimitives'
+import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import {
   ApiError,
   createProject,
@@ -90,6 +91,12 @@ function getStatusLabelKey(status: ProjectLifecycleStatus): string {
     default:
       return 'common.statusLabels.draft'
   }
+}
+
+function parseStatusFilter(value: string | null): ProjectStatusFilterValue {
+  if (value === null) return 'all'
+  const status = Number(value)
+  return [1, 2, 3, 4, 5, 6].includes(status) ? status as ProjectLifecycleStatus : 'all'
 }
 
 function ProjectsDataGrid({ rows, isLoading, onOpenDetails, onEdit, onDelete, canManage = true }: ProjectsDataGridProps) {
@@ -223,20 +230,37 @@ export default function ProjectsPage() {
   const { isAuthenticated, user } = useAuth()
   const canManage = user?.permissions.includes(Permissions.projects.manage) ?? false
   const navigate = useNavigate()
+  const location = useLocation()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [categories, setCategories] = useState<ProjectCategoryListItemResponse[]>([])
   const [projects, setProjects] = useState<ProjectGridRow[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
 
-  const [statusFilter, setStatusFilter] = useState<ProjectStatusFilterValue>('all')
-  const [relatedTenantIdFilter, setRelatedTenantIdFilter] = useState('')
+  const [statusFilter, setStatusFilter] = useState<ProjectStatusFilterValue>(() => parseStatusFilter(searchParams.get('status')))
+  const [relatedTenantIdFilter, setRelatedTenantIdFilter] = useState(() => searchParams.get('relatedTenantId') ?? '')
 
   const [isEditorOpen, setIsEditorOpen] = useState(false)
   const [editingProject, setEditingProject] = useState<ProjectGridRow | null>(null)
   const [formState, setFormState] = useState<ProjectFormState>(defaultProjectFormState)
+  const [initialFormState, setInitialFormState] = useState<ProjectFormState | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [isLoadingEditor, setIsLoadingEditor] = useState(false)
+  const isEditorDirty = Boolean(initialFormState && JSON.stringify(formState) !== JSON.stringify(initialFormState))
+
+  const closeEditor = useCallback(() => {
+    setIsEditorOpen(false)
+    setInitialFormState(null)
+  }, [])
+  const { requestClose: requestEditorClose, confirmationDialog: editorDiscardDialog } = useUnsavedChangesPrompt(
+    isEditorOpen && isEditorDirty,
+    isSaving || isLoadingEditor,
+    closeEditor,
+    () => {
+      if (initialFormState) setFormState(initialFormState)
+    },
+  )
 
   const [deleteTarget, setDeleteTarget] = useState<ProjectGridRow | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -283,10 +307,12 @@ export default function ProjectsPage() {
     if (!canManage) return
     setFeedback(null)
     setEditingProject(null)
-    setFormState({
+    const nextFormState = {
       ...defaultProjectFormState,
       projectCategoryId: categories[0]?.id ?? '',
-    })
+    }
+    setFormState(nextFormState)
+    setInitialFormState(nextFormState)
     setIsEditorOpen(true)
   }
 
@@ -294,13 +320,14 @@ export default function ProjectsPage() {
     if (!canManage) return
     setFeedback(null)
     setEditingProject(project)
+    setInitialFormState(null)
     setError(null)
     setIsLoadingEditor(true)
     setIsEditorOpen(true)
 
     try {
       const details = await getProject(project.id)
-      setFormState({
+      const nextFormState = {
         projectCategoryId: details.projectCategoryId,
         projectNumber: details.projectNumber,
         name: details.name,
@@ -311,7 +338,9 @@ export default function ProjectsPage() {
         status: details.status,
         notes: details.notes ?? '',
         isActive: details.isActive,
-      })
+      }
+      setFormState(nextFormState)
+      setInitialFormState(nextFormState)
     } catch (loadError) {
       setIsEditorOpen(false)
       setEditingProject(null)
@@ -400,6 +429,20 @@ export default function ProjectsPage() {
     { value: 6, label: t('common.statusLabels.cancelled') },
   ]
 
+  const applyFilters = () => {
+    const nextParams = new URLSearchParams()
+    if (statusFilter !== 'all') nextParams.set('status', String(statusFilter))
+    if (relatedTenantIdFilter.trim()) nextParams.set('relatedTenantId', relatedTenantIdFilter.trim())
+    setSearchParams(nextParams)
+    void loadProjects()
+  }
+
+  const resetFilters = () => {
+    setStatusFilter('all')
+    setRelatedTenantIdFilter('')
+    setSearchParams(new URLSearchParams())
+  }
+
   if (!isAuthenticated) {
     return <VxAlert severity="info">{t('pages.projects.signInRequired')}</VxAlert>
   }
@@ -438,16 +481,13 @@ export default function ProjectsPage() {
             fullWidth
           />
 
-          <VxButton variant="outlined" onClick={() => void loadProjects()}>
+          <VxButton variant="outlined" onClick={applyFilters}>
             {t('pages.projects.filters.apply')}
           </VxButton>
           <VxButton
             variant="text"
             disabled={statusFilter === 'all' && !relatedTenantIdFilter}
-            onClick={() => {
-              setStatusFilter('all')
-              setRelatedTenantIdFilter('')
-            }}
+            onClick={resetFilters}
           >
             {t('common.resetFilters', { defaultValue: 'Reset filters' })}
           </VxButton>
@@ -462,14 +502,14 @@ export default function ProjectsPage() {
         <ProjectsDataGrid
           rows={projects}
           isLoading={isLoading}
-          onOpenDetails={(projectId) => navigate(`/projects/${projectId}`)}
+          onOpenDetails={(projectId) => navigate(`/projects/${projectId}`, { state: { returnTo: `${location.pathname}${location.search}` } })}
           onEdit={openEditDialog}
           onDelete={(project) => setDeleteTarget(project)}
           canManage={canManage}
         />
       </PageBody>
 
-      <VxDialog open={canManage && isEditorOpen} onClose={() => setIsEditorOpen(false)} maxWidth="md" fullWidth>
+      <VxDialog open={canManage && isEditorOpen} onClose={requestEditorClose} maxWidth="md" fullWidth>
         <VxDialogTitle>{editingProject ? t('pages.projects.dialogs.edit') : t('pages.projects.dialogs.create')}</VxDialogTitle>
         <VxDialogContent>
           <VxStack spacing={2} sx={{ mt: 1 }}>
@@ -582,12 +622,13 @@ export default function ProjectsPage() {
           </VxStack>
         </VxDialogContent>
         <VxDialogActions>
-          <VxButton onClick={() => setIsEditorOpen(false)}>{t('common.cancel')}</VxButton>
+          <VxButton onClick={requestEditorClose}>{t('common.cancel')}</VxButton>
           <VxButton variant="contained" onClick={() => void handleSave()} disabled={isSaving || isLoadingEditor || hasInvalidPeriod || !formState.projectCategoryId || !formState.projectNumber.trim() || !formState.name.trim()}>
             {editingProject ? t('common.save') : t('common.create')}
           </VxButton>
         </VxDialogActions>
       </VxDialog>
+      {editorDiscardDialog}
 
       <VxConfirmActionDialog open={canManage && Boolean(deleteTarget)} title={t('pages.projects.dialogs.delete.title')} targetName={deleteTarget ? `${deleteTarget.projectNumber} — ${deleteTarget.name}` : ''} consequence={t('pages.projects.dialogs.delete.message', { name: deleteTarget?.name ?? '' })} confirmLabel={t('common.delete')} pendingLabel={t('dialogs.deleting')} pending={isDeleting} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} />
     </VxStack>

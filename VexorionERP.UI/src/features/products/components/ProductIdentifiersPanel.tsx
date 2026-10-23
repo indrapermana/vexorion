@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { AddRoundedIcon, DeleteOutlineRoundedIcon, EditRoundedIcon } from '@vexorion/ui'
 import { VxAlert, VxBox, VxButton, VxChip, VxCircularProgress, VxConfirmActionDialog, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxFormControlLabel, VxIconButton, VxMenuItem, VxStack, VxSwitch, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTextField, VxTooltip, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
+import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import {
   ApiError,
   createProductIdentifier,
@@ -29,6 +30,7 @@ export default function ProductIdentifiersPanel({ productId, canManage = true }:
   const [createCodeType, setCreateCodeType] = useState('EAN13')
   const [createCodeValue, setCreateCodeValue] = useState('')
   const [createIsPrimary, setCreateIsPrimary] = useState(false)
+  const [createBaseline, setCreateBaseline] = useState({ codeType: 'EAN13', codeValue: '', isPrimary: false })
   const [isSaving, setIsSaving] = useState(false)
 
   // edit dialog
@@ -37,6 +39,29 @@ export default function ProductIdentifiersPanel({ productId, canManage = true }:
   const [editCodeValue, setEditCodeValue] = useState('')
   const [editIsPrimary, setEditIsPrimary] = useState(false)
   const [editIsActive, setEditIsActive] = useState(true)
+  const [editBaseline, setEditBaseline] = useState<{ codeType: string, codeValue: string, isPrimary: boolean, isActive: boolean } | null>(null)
+  const { requestClose: requestCreateClose, confirmationDialog: createDiscardDialog } = useUnsavedChangesPrompt(
+    canManage && createOpen && JSON.stringify({ codeType: createCodeType, codeValue: createCodeValue, isPrimary: createIsPrimary }) !== JSON.stringify(createBaseline),
+    isSaving,
+    () => setCreateOpen(false),
+    () => {
+      setCreateCodeType(createBaseline.codeType)
+      setCreateCodeValue(createBaseline.codeValue)
+      setCreateIsPrimary(createBaseline.isPrimary)
+    },
+  )
+  const { requestClose: requestEditClose, confirmationDialog: editDiscardDialog } = useUnsavedChangesPrompt(
+    canManage && Boolean(editTarget && editBaseline && JSON.stringify({ codeType: editCodeType, codeValue: editCodeValue, isPrimary: editIsPrimary, isActive: editIsActive }) !== JSON.stringify(editBaseline)),
+    isSaving,
+    () => setEditTarget(null),
+    () => {
+      if (!editBaseline) return
+      setEditCodeType(editBaseline.codeType)
+      setEditCodeValue(editBaseline.codeValue)
+      setEditIsPrimary(editBaseline.isPrimary)
+      setEditIsActive(editBaseline.isActive)
+    },
+  )
 
   // delete dialog
   const [deleteTarget, setDeleteTarget] = useState<ProductIdentifierListItemResponse | null>(null)
@@ -63,6 +88,7 @@ export default function ProductIdentifiersPanel({ productId, canManage = true }:
     setCreateCodeType('EAN13')
     setCreateCodeValue('')
     setCreateIsPrimary(false)
+    setCreateBaseline({ codeType: 'EAN13', codeValue: '', isPrimary: false })
     setCreateOpen(true)
   }
 
@@ -86,6 +112,7 @@ export default function ProductIdentifiersPanel({ productId, canManage = true }:
     setEditCodeValue(item.codeValue)
     setEditIsPrimary(item.isPrimary)
     setEditIsActive(item.isActive)
+    setEditBaseline({ codeType: item.codeType, codeValue: item.codeValue, isPrimary: item.isPrimary, isActive: item.isActive })
   }
 
   const handleUpdate = async () => {
@@ -198,7 +225,7 @@ export default function ProductIdentifiersPanel({ productId, canManage = true }:
       </VxStack>
 
       {/* Create dialog */}
-      <VxDialog open={canManage && createOpen} onClose={() => setCreateOpen(false)} maxWidth="xs" fullWidth>
+      <VxDialog open={canManage && createOpen} onClose={requestCreateClose} maxWidth="xs" fullWidth>
         <VxDialogTitle>{t('components.products.identifiers.createDialog.title')}</VxDialogTitle>
         <VxDialogContent>
           <VxStack spacing={2} sx={{ pt: 1 }}>
@@ -229,7 +256,7 @@ export default function ProductIdentifiersPanel({ productId, canManage = true }:
           </VxStack>
         </VxDialogContent>
         <VxDialogActions>
-          <VxButton onClick={() => setCreateOpen(false)}>{t('common.cancel')}</VxButton>
+          <VxButton onClick={requestCreateClose} disabled={isSaving}>{t('common.cancel')}</VxButton>
           <VxButton
             variant="contained"
             onClick={() => void handleCreate()}
@@ -239,9 +266,10 @@ export default function ProductIdentifiersPanel({ productId, canManage = true }:
           </VxButton>
         </VxDialogActions>
       </VxDialog>
+      {createDiscardDialog}
 
       {/* Edit dialog */}
-      <VxDialog open={canManage && editTarget !== null} onClose={() => setEditTarget(null)} maxWidth="xs" fullWidth>
+      <VxDialog open={canManage && editTarget !== null} onClose={requestEditClose} maxWidth="xs" fullWidth>
         <VxDialogTitle>{t('components.products.identifiers.editDialog.title')}</VxDialogTitle>
         <VxDialogContent>
           <VxStack spacing={2} sx={{ pt: 1 }}>
@@ -276,7 +304,7 @@ export default function ProductIdentifiersPanel({ productId, canManage = true }:
           </VxStack>
         </VxDialogContent>
         <VxDialogActions>
-          <VxButton onClick={() => setEditTarget(null)}>{t('common.cancel')}</VxButton>
+          <VxButton onClick={requestEditClose} disabled={isSaving}>{t('common.cancel')}</VxButton>
           <VxButton
             variant="contained"
             onClick={() => void handleUpdate()}
@@ -286,6 +314,7 @@ export default function ProductIdentifiersPanel({ productId, canManage = true }:
           </VxButton>
         </VxDialogActions>
       </VxDialog>
+      {editDiscardDialog}
 
       <VxConfirmActionDialog
         open={canManage && deleteTarget !== null}

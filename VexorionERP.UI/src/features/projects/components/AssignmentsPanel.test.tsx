@@ -209,6 +209,29 @@ describe('AssignmentsPanel assignment and relationship UI logic', () => {
     })
   })
 
+  it('confirms discarding unsaved assignment changes', async () => {
+    authMocks.mockUseAuth.mockReturnValue({ user: { permissions: ['projects.view', 'projects.manage'] } })
+    const user = userEvent.setup()
+
+    render(<AssignmentsPanel projectId="project-1" />)
+    await waitFor(() => {
+      expect(apiMocks.mockGetProjectAssignableEmployees).toHaveBeenCalledWith('project-1')
+    })
+
+    await user.click(screen.getByRole('button', { name: 'pages.projectDetails.assignmentsPanel.add' }))
+    const roleTitle = screen.getByLabelText('pages.projectDetails.assignmentsPanel.fields.roleTitle')
+    await user.type(roleTitle, 'Draft role')
+    await user.click(screen.getByRole('button', { name: 'common.cancel' }))
+
+    expect(screen.getByText('common.unsavedChanges.message')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'common.unsavedChanges.keepEditing' }))
+    expect(roleTitle).toHaveValue('Draft role')
+
+    await user.click(screen.getByRole('button', { name: 'common.cancel' }))
+    await user.click(screen.getByRole('button', { name: 'common.unsavedChanges.discard' }))
+    expect(screen.queryByLabelText('pages.projectDetails.assignmentsPanel.fields.roleTitle')).not.toBeInTheDocument()
+  })
+
   it('switches to consultant mode and submits consultant assignment payload', async () => {
     authMocks.mockUseAuth.mockReturnValue({ user: { permissions: ['projects.view', 'projects.manage'] } })
     const user = userEvent.setup()

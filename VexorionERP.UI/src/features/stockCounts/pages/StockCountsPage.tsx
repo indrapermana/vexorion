@@ -7,6 +7,7 @@ import { Permissions } from '../../../app/authorization'
 import LookupSelectField from '../../../components/LookupSelectField'
 import OrderWorkspace from '../../../components/OrderWorkspace'
 import { useInventoryBalancesLookup, useProductsLookup, useWarehousesLookup } from '../../../hooks/useLookups'
+import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import {
   ApiError,
   createStockCount,
@@ -98,6 +99,7 @@ export default function StockCountsPage() {
   const [editorLoading, setEditorLoading] = useState(false)
   const [editorError, setEditorError] = useState<string | null>(null)
   const [editorForm, setEditorForm] = useState<CountFormState>(defaultCountForm)
+  const [initialEditorForm, setInitialEditorForm] = useState<CountFormState | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<CountGridRow | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [lineMode, setLineMode] = useState<DialogMode>('create')
@@ -105,10 +107,33 @@ export default function StockCountsPage() {
   const [lineSaving, setLineSaving] = useState(false)
   const [lineError, setLineError] = useState<string | null>(null)
   const [lineForm, setLineForm] = useState<CountLineFormState>(defaultLineForm)
+  const [initialLineForm, setInitialLineForm] = useState<CountLineFormState | null>(null)
   const [selectedLine, setSelectedLine] = useState<StockCountLineDetailsResponse | null>(null)
   const [postDialogOpen, setPostDialogOpen] = useState(false)
   const [reverseDialogOpen, setReverseDialogOpen] = useState(false)
   const [statusActionLoading, setStatusActionLoading] = useState(false)
+  const { requestClose: requestEditorClose, confirmationDialog: editorDiscardDialog } = useUnsavedChangesPrompt(
+    canManage && editorOpen && Boolean(initialEditorForm && JSON.stringify(editorForm) !== JSON.stringify(initialEditorForm)),
+    editorLoading,
+    () => {
+      if (!editorLoading) {
+        setEditorOpen(false)
+        setEditorError(null)
+      }
+    },
+    () => setEditorForm(initialEditorForm ?? defaultCountForm),
+  )
+  const { requestClose: requestLineClose, confirmationDialog: lineDiscardDialog } = useUnsavedChangesPrompt(
+    canManage && lineOpen && Boolean(initialLineForm && JSON.stringify(lineForm) !== JSON.stringify(initialLineForm)),
+    lineSaving,
+    () => {
+      if (!lineSaving) {
+        setLineOpen(false)
+        setLineError(null)
+      }
+    },
+    () => setLineForm(initialLineForm ?? defaultLineForm),
+  )
 
   const loadRows = useCallback(async () => {
     if (!isAuthenticated) {
@@ -166,6 +191,7 @@ export default function StockCountsPage() {
   const resetEditor = () => {
     setEditorError(null)
     setEditorForm(defaultCountForm)
+    setInitialEditorForm(defaultCountForm)
   }
 
   const openCreateDialog = () => {
@@ -183,31 +209,25 @@ export default function StockCountsPage() {
     setEditorOpen(true)
     setEditorLoading(true)
     setEditorError(null)
+    setInitialEditorForm(null)
 
     try {
       const detail = await getStockCount(row.id)
       setSelectedCount(detail)
-      setEditorForm({
+      const nextForm = {
         countNumber: detail.countNumber,
         warehouseId: detail.warehouseId,
         countDate: detail.countDate,
         status: detail.status,
         notes: detail.notes ?? '',
-      })
+      }
+      setEditorForm(nextForm)
+      setInitialEditorForm(nextForm)
     } catch (loadError) {
       setEditorError(loadError instanceof ApiError ? loadError.message : t('pages.stockCounts.errors.loadEdit'))
     } finally {
       setEditorLoading(false)
     }
-  }
-
-  const closeEditorDialog = () => {
-    if (editorLoading) {
-      return
-    }
-
-    setEditorOpen(false)
-    setEditorError(null)
   }
 
   const saveHeader = async () => {
@@ -297,6 +317,7 @@ export default function StockCountsPage() {
     setLineMode('create')
     setLineError(null)
     setLineForm(defaultLineForm)
+    setInitialLineForm(defaultLineForm)
     setSelectedLine(null)
     setLineOpen(true)
   }
@@ -309,18 +330,11 @@ export default function StockCountsPage() {
 
     setLineMode('edit')
     setLineError(null)
-    setLineForm(buildLineForm(line))
+    const nextForm = buildLineForm(line)
+    setLineForm(nextForm)
+    setInitialLineForm(nextForm)
     setSelectedLine(line)
     setLineOpen(true)
-  }
-
-  const closeLineDialog = () => {
-    if (lineSaving) {
-      return
-    }
-
-    setLineOpen(false)
-    setLineError(null)
   }
 
   const saveLine = async () => {
@@ -611,7 +625,7 @@ export default function StockCountsPage() {
       )}
       editor={(
         <>
-          <VxDialog open={canManage && editorOpen} onClose={closeEditorDialog} fullWidth maxWidth="sm">
+          <VxDialog open={canManage && editorOpen} onClose={requestEditorClose} fullWidth maxWidth="sm">
             <VxDialogTitle>{t(editorMode === 'create' ? 'pages.stockCounts.editor.createTitle' : 'pages.stockCounts.editor.editTitle')}</VxDialogTitle>
             <VxDialogContent>
               <VxStack spacing={2} sx={{ mt: 1 }}>
@@ -669,14 +683,15 @@ export default function StockCountsPage() {
               </VxStack>
             </VxDialogContent>
             <VxDialogActions>
-              <VxButton onClick={closeEditorDialog} disabled={editorLoading}>{t('pages.stockCounts.editor.cancel')}</VxButton>
+              <VxButton onClick={requestEditorClose} disabled={editorLoading}>{t('pages.stockCounts.editor.cancel')}</VxButton>
               <VxButton onClick={() => void saveHeader()} disabled={editorLoading} variant="contained">
                 {editorLoading ? t('pages.stockCounts.editor.saving') : t('pages.stockCounts.editor.save')}
               </VxButton>
             </VxDialogActions>
           </VxDialog>
+          {editorDiscardDialog}
 
-          <VxDialog open={canManage && lineOpen} onClose={closeLineDialog} fullWidth maxWidth="sm">
+          <VxDialog open={canManage && lineOpen} onClose={requestLineClose} fullWidth maxWidth="sm">
             <VxDialogTitle>{t(lineMode === 'create' ? 'pages.stockCounts.lineEditor.createTitle' : 'pages.stockCounts.lineEditor.editTitle')}</VxDialogTitle>
             <VxDialogContent>
               <VxStack spacing={2} sx={{ mt: 1 }}>
@@ -724,12 +739,13 @@ export default function StockCountsPage() {
               </VxStack>
             </VxDialogContent>
             <VxDialogActions>
-              <VxButton onClick={closeLineDialog} disabled={lineSaving}>{t('pages.stockCounts.lineEditor.cancel')}</VxButton>
+              <VxButton onClick={requestLineClose} disabled={lineSaving}>{t('pages.stockCounts.lineEditor.cancel')}</VxButton>
               <VxButton onClick={() => void saveLine()} disabled={lineSaving} variant="contained">
                 {lineSaving ? t('pages.stockCounts.lineEditor.saving') : t('pages.stockCounts.lineEditor.save')}
               </VxButton>
             </VxDialogActions>
           </VxDialog>
+          {lineDiscardDialog}
 
           <VxConfirmActionDialog open={canManage && postDialogOpen} title={t('pages.stockCounts.actions.postTitle')} targetName={selectedCount?.countNumber ?? ''} consequence={t('pages.stockCounts.actions.postConsequence')} confirmLabel={t('pages.stockCounts.actions.postConfirm')} confirmColor="success" pendingLabel={t('pages.stockCounts.actions.posting')} pending={statusActionLoading} onClose={() => setPostDialogOpen(false)} onConfirm={() => void confirmPost()} />
 

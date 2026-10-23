@@ -24,6 +24,7 @@ import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
 import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 import { PageBody, PageFeedback, PageHeader, PageLoadingState, PageMetric } from '../../../components/PagePrimitives'
+import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import {
   ApiError,
   createConsultant,
@@ -66,6 +67,17 @@ export default function ConsultantsPage() {
   const [editorOpen, setEditorOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [formState, setFormState] = useState<ConsultantFormState>(initialFormState)
+  const [initialForm, setInitialForm] = useState<ConsultantFormState>(initialFormState)
+  const { requestClose, confirmationDialog } = useUnsavedChangesPrompt(
+    canManage && editorOpen && JSON.stringify(formState) !== JSON.stringify(initialForm),
+    isSaving,
+    () => {
+      setEditorOpen(false)
+      setEditingId(null)
+      setFormState(initialFormState)
+    },
+    () => setFormState(initialForm),
+  )
 
   const loadData = useCallback(async () => {
     if (!isAuthenticated) {
@@ -93,13 +105,14 @@ export default function ConsultantsPage() {
     if (!canManage) return
     setEditingId(null)
     setFormState(initialFormState)
+    setInitialForm(initialFormState)
     setEditorOpen(true)
   }
 
   const openEdit = (row: ConsultantListItemResponse) => {
     if (!canManage) return
     setEditingId(row.id)
-    setFormState({
+    const nextForm: ConsultantFormState = {
       consultantNumber: row.consultantNumber,
       fullName: row.fullName,
       email: row.email,
@@ -107,7 +120,9 @@ export default function ConsultantsPage() {
       organizationName: row.organizationName ?? '',
       specialty: row.specialty ?? '',
       isActive: row.isActive,
-    })
+    }
+    setFormState(nextForm)
+    setInitialForm(nextForm)
     setEditorOpen(true)
   }
 
@@ -242,7 +257,7 @@ export default function ConsultantsPage() {
         )}
       </PageBody>
 
-      <VxDialog open={canManage && editorOpen} onClose={isSaving ? undefined : closeEditor} maxWidth="md" fullWidth>
+      <VxDialog open={canManage && editorOpen} onClose={requestClose} maxWidth="md" fullWidth>
         <VxDialogTitle>{editingId ? t('pages.consultants.dialogs.edit') : t('pages.consultants.dialogs.create')}</VxDialogTitle>
         <VxDialogContent dividers>
           <VxStack spacing={2} sx={{ mt: 1 }}>
@@ -267,10 +282,11 @@ export default function ConsultantsPage() {
           </VxStack>
         </VxDialogContent>
         <VxDialogActions>
-          <VxButton onClick={closeEditor}>{t('common.cancel')}</VxButton>
+          <VxButton onClick={requestClose} disabled={isSaving}>{t('common.cancel')}</VxButton>
           <VxButton variant="contained" disabled={isSaving || !formState.consultantNumber.trim() || !formState.fullName.trim() || !formState.email.trim()} onClick={() => void save()}>{editingId ? t('common.save') : t('common.create')}</VxButton>
         </VxDialogActions>
       </VxDialog>
+      {confirmationDialog}
     </VxStack>
   )
 }

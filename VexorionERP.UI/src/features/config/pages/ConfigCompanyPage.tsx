@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { VxAlert, VxButton, VxFormControlLabel, VxMenuItem, VxPaper, VxStack, VxSwitch, VxTextField } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
@@ -6,6 +6,7 @@ import { Permissions } from '../../../app/authorization'
 import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 import { PageFeedback, PageHeader } from '../../../components/PagePrimitives'
 import { useCurrency } from '../../../app/CurrencyContext'
+import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import { ApiError, getCompanies, getCompany, updateCompany } from '../../../lib/api'
 import type { CompanyDetailsResponse, CompanyListItemResponse, UpdateCompanyRequest } from '../../../types/api'
 
@@ -51,6 +52,8 @@ export default function ConfigCompanyPage() {
   const [companies, setCompanies] = useState<CompanyListItemResponse[]>([])
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('')
   const [draft, setDraft] = useState<CompanyDraft | null>(null)
+  const [initialDraft, setInitialDraft] = useState<CompanyDraft | null>(null)
+  const pendingCompanyId = useRef<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
@@ -60,6 +63,7 @@ export default function ConfigCompanyPage() {
       setCompanies([])
       setSelectedCompanyId('')
       setDraft(null)
+      setInitialDraft(null)
       return
     }
 
@@ -70,6 +74,7 @@ export default function ConfigCompanyPage() {
       if (list.length === 0) {
         setSelectedCompanyId('')
         setDraft(null)
+        setInitialDraft(null)
         return
       }
 
@@ -79,7 +84,9 @@ export default function ConfigCompanyPage() {
 
       setSelectedCompanyId(nextSelectedCompanyId)
       const details = await getCompany(nextSelectedCompanyId)
-      setDraft(toDraft(details))
+      const nextDraft = toDraft(details)
+      setDraft(nextDraft)
+      setInitialDraft(nextDraft)
     } catch (loadError) {
       if (loadError instanceof ApiError) {
         setError(loadError.message)
@@ -100,7 +107,9 @@ export default function ConfigCompanyPage() {
 
     try {
       const details = await getCompany(companyId)
-      setDraft(toDraft(details))
+      const nextDraft = toDraft(details)
+      setDraft(nextDraft)
+      setInitialDraft(nextDraft)
     } catch (loadError) {
       if (loadError instanceof ApiError) {
         setError(loadError.message)
@@ -108,6 +117,24 @@ export default function ConfigCompanyPage() {
         setError(t('config.company.errors.loadSelected'))
       }
     }
+  }
+
+  const { requestClose: requestCompanyChange, confirmationDialog } = useUnsavedChangesPrompt(
+    Boolean(draft && initialDraft && JSON.stringify(draft) !== JSON.stringify(initialDraft)),
+    isSaving,
+    () => {
+      const nextCompanyId = pendingCompanyId.current
+      pendingCompanyId.current = null
+      if (nextCompanyId) void loadCompany(nextCompanyId)
+    },
+    () => {
+      if (initialDraft) setDraft(initialDraft)
+    },
+  )
+
+  const handleCompanySelection = (companyId: string) => {
+    pendingCompanyId.current = companyId
+    requestCompanyChange()
   }
 
   const save = async () => {
@@ -137,7 +164,9 @@ export default function ConfigCompanyPage() {
 
     try {
       const updated = await updateCompany(selectedCompanyId, payload)
-      setDraft(toDraft(updated))
+      const updatedDraft = toDraft(updated)
+      setDraft(updatedDraft)
+      setInitialDraft(updatedDraft)
       if (updated.currencyCode) {
         setCurrencyCode(updated.currencyCode)
       }
@@ -172,7 +201,7 @@ export default function ConfigCompanyPage() {
             label={t('config.company.companyField')}
             value={selectedCompanyId}
             select
-            onChange={(event) => void loadCompany(event.target.value)}
+            onChange={(event) => handleCompanySelection(event.target.value)}
             sx={{ minWidth: 260 }}
           >
             {companies.map((company) => (
@@ -239,6 +268,7 @@ export default function ConfigCompanyPage() {
       ) : (
         <VxAlert severity="info">{t('config.company.noRecords')}</VxAlert>
       )}
+      {confirmationDialog}
     </VxStack>
   )
 }

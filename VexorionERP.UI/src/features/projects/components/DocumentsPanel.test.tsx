@@ -189,6 +189,38 @@ describe('DocumentsPanel upload/version flows', () => {
     })
   })
 
+  it('confirms discarding unsaved upload details and restores the form baseline', async () => {
+    authMocks.mockUseAuth.mockReturnValue({
+      user: { permissions: ['project-documents.view', 'project-documents.upload'] },
+    })
+
+    const user = userEvent.setup()
+    const { container } = render(<DocumentsPanel projectId="project-1" />)
+    await waitFor(() => {
+      expect(apiMocks.mockGetProjectDocuments).toHaveBeenCalledWith('project-1')
+    })
+
+    await user.click(screen.getByRole('button', { name: 'pages.projectDetails.documentsPanel.upload' }))
+    const titleInput = screen.getByLabelText('pages.projectDetails.documentsPanel.columns.title')
+    await user.type(titleInput, 'Unsaved title')
+    const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement
+    fireEvent.change(fileInput, {
+      target: { files: [new File(['draft'], 'draft.pdf', { type: 'application/pdf' })] },
+    })
+
+    await user.click(screen.getByRole('button', { name: 'common.cancel' }))
+    expect(screen.getByText('common.unsavedChanges.message')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'common.unsavedChanges.keepEditing' }))
+    expect(titleInput).toHaveValue('Unsaved title')
+
+    await user.click(screen.getByRole('button', { name: 'common.cancel' }))
+    await user.click(screen.getByRole('button', { name: 'common.unsavedChanges.discard' }))
+    await user.click(screen.getAllByRole('button', { name: 'pages.projectDetails.documentsPanel.upload' })[0])
+
+    expect(screen.getByLabelText('pages.projectDetails.documentsPanel.columns.title')).toHaveValue('')
+    expect(container.querySelector('input[type="file"]')).toHaveProperty('files.length', 0)
+  })
+
   it('adds a new version when a file is selected', async () => {
     authMocks.mockUseAuth.mockReturnValue({
       user: { permissions: ['project-documents.view', 'project-documents.upload'] },

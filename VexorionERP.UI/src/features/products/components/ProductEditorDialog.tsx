@@ -4,6 +4,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { useTranslation } from 'react-i18next'
+import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import { ApiError, createProduct, getProduct, updateProduct, uploadProductImage } from '../../../lib/api'
 import type { ValidationProblem } from '../../../types/api'
 import type { ProductEditorDialogProps, ProductFormValues } from '../../../types/ui'
@@ -63,11 +64,12 @@ export default function ProductEditorDialog({
 		handleSubmit,
 		reset,
 		setError,
-		formState: { errors, isSubmitting },
+		formState: { errors, isSubmitting, isDirty },
 	} = useForm<ProductFormValues>({
 		defaultValues,
 		resolver: yupResolver(validationSchema),
 	})
+	const { requestClose, confirmationDialog } = useUnsavedChangesPrompt(open && isDirty, isSubmitting || isUploadingImage || isLoadingProduct, onClose, () => reset())
 
 	useEffect(() => {
 		if (mode === 'create') {
@@ -197,7 +199,8 @@ export default function ProductEditorDialog({
 	})
 
 	return (
-		<VxDialog open={open} onClose={isSubmitting || isUploadingImage ? undefined : onClose} fullWidth maxWidth="md">
+		<>
+		<VxDialog open={open} onClose={requestClose} fullWidth maxWidth="md">
 			<VxDialogTitle>{title}</VxDialogTitle>
 			<VxDialogContent dividers>
 				{isLoadingProduct ? (
@@ -367,7 +370,7 @@ export default function ProductEditorDialog({
 				)}
 			</VxDialogContent>
 			<VxDialogActions sx={{ px: 3, py: 2 }}>
-				<VxButton onClick={onClose} disabled={isSubmitting || isUploadingImage}>{t('dialogs.cancel')}</VxButton>
+				<VxButton onClick={requestClose} disabled={isSubmitting || isUploadingImage}>{t('dialogs.cancel')}</VxButton>
 				<VxButton onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoadingProduct || isUploadingImage}>
 					{isSubmitting
 						? t('components.products.editor.saving')
@@ -377,5 +380,7 @@ export default function ProductEditorDialog({
 				</VxButton>
 			</VxDialogActions>
 		</VxDialog>
+		{confirmationDialog}
+		</>
 	)
 }

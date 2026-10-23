@@ -6,6 +6,7 @@ import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
 import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 import { PageBody, PageFeedback, PageHeader } from '../../../components/PagePrimitives'
+import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import {
   ApiError,
   createProductCategory,
@@ -27,16 +28,34 @@ export default function ConfigProductCategoriesPage() {
   const [createOpen, setCreateOpen] = useState(false)
   const [createName, setCreateName] = useState('')
   const [createLoading, setCreateLoading] = useState(false)
+  const [createBaseline, setCreateBaseline] = useState('')
 
   // Edit dialog state
   const [editTarget, setEditTarget] = useState<ProductCategoryListItemResponse | null>(null)
   const [editName, setEditName] = useState('')
   const [editIsActive, setEditIsActive] = useState(true)
   const [editLoading, setEditLoading] = useState(false)
+  const [editBaseline, setEditBaseline] = useState<{ name: string, isActive: boolean } | null>(null)
 
   // Delete dialog state
   const [deleteTarget, setDeleteTarget] = useState<ProductCategoryListItemResponse | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
+  const { requestClose: requestCreateClose, confirmationDialog: createDiscardDialog } = useUnsavedChangesPrompt(
+    canManage && createOpen && createName !== createBaseline,
+    createLoading,
+    () => setCreateOpen(false),
+    () => setCreateName(createBaseline),
+  )
+  const { requestClose: requestEditClose, confirmationDialog: editDiscardDialog } = useUnsavedChangesPrompt(
+    canManage && Boolean(editTarget && editBaseline && (editName !== editBaseline.name || editIsActive !== editBaseline.isActive)),
+    editLoading,
+    () => setEditTarget(null),
+    () => {
+      if (!editBaseline) return
+      setEditName(editBaseline.name)
+      setEditIsActive(editBaseline.isActive)
+    },
+  )
 
   const loadCategories = useCallback(async () => {
     if (!isAuthenticated) {
@@ -123,7 +142,7 @@ export default function ConfigProductCategoriesPage() {
         primaryAction={canManage ? <VxButton
             variant="contained"
             startIcon={<AddIcon />}
-            onClick={() => { setCreateName(''); setCreateOpen(true) }}
+            onClick={() => { setCreateName(''); setCreateBaseline(''); setCreateOpen(true) }}
           >
             {t('config.productCategories.addButton')}
           </VxButton> : null}
@@ -161,7 +180,7 @@ export default function ConfigProductCategoriesPage() {
                       <VxTooltip title={t('common.edit')}>
                         <VxIconButton
                           size="small"
-                          onClick={() => { setEditTarget(cat); setEditName(cat.name); setEditIsActive(cat.isActive) }}
+                          onClick={() => { setEditTarget(cat); setEditName(cat.name); setEditIsActive(cat.isActive); setEditBaseline({ name: cat.name, isActive: cat.isActive }) }}
                           aria-label={t('common.edit')}
                         >
                           <EditIcon fontSize="small" />
@@ -183,7 +202,7 @@ export default function ConfigProductCategoriesPage() {
       </PageBody>
 
       {/* Create VxDialog */}
-      <VxDialog open={canManage && createOpen} onClose={() => setCreateOpen(false)} maxWidth="xs" fullWidth>
+      <VxDialog open={canManage && createOpen} onClose={requestCreateClose} maxWidth="xs" fullWidth>
         <VxDialogTitle>{t('config.productCategories.createDialog.title')}</VxDialogTitle>
         <VxDialogContent>
           <VxTextField
@@ -198,15 +217,16 @@ export default function ConfigProductCategoriesPage() {
           />
         </VxDialogContent>
         <VxDialogActions>
-          <VxButton onClick={() => setCreateOpen(false)}>{t('common.cancel')}</VxButton>
+          <VxButton onClick={requestCreateClose} disabled={createLoading}>{t('common.cancel')}</VxButton>
           <VxButton variant="contained" onClick={() => void handleCreate()} disabled={!createName.trim() || createLoading}>
             {t('common.create')}
           </VxButton>
         </VxDialogActions>
       </VxDialog>
+      {createDiscardDialog}
 
       {/* Edit VxDialog */}
-      <VxDialog open={canManage && !!editTarget} onClose={() => setEditTarget(null)} maxWidth="xs" fullWidth>
+      <VxDialog open={canManage && !!editTarget} onClose={requestEditClose} maxWidth="xs" fullWidth>
         <VxDialogTitle>{t('config.productCategories.editDialog.title')}</VxDialogTitle>
         <VxDialogContent>
           <VxStack spacing={2} sx={{ mt: 1 }}>
@@ -226,12 +246,13 @@ export default function ConfigProductCategoriesPage() {
           </VxStack>
         </VxDialogContent>
         <VxDialogActions>
-          <VxButton onClick={() => setEditTarget(null)}>{t('common.cancel')}</VxButton>
+          <VxButton onClick={requestEditClose} disabled={editLoading}>{t('common.cancel')}</VxButton>
           <VxButton variant="contained" onClick={() => void handleEdit()} disabled={!editName.trim() || editLoading}>
             {t('common.save')}
           </VxButton>
         </VxDialogActions>
       </VxDialog>
+      {editDiscardDialog}
 
       <VxConfirmActionDialog open={canManage && Boolean(deleteTarget)} title={t('config.productCategories.deleteDialog.title')} targetName={deleteTarget?.name ?? ''} consequence={t('config.productCategories.deleteDialog.message', { name: deleteTarget?.name })} confirmLabel={t('common.delete')} pendingLabel={t('dialogs.deleting')} pending={deleteLoading} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} />
     </VxStack>

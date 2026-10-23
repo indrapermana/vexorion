@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   VxAlert,
   VxBox,
@@ -24,6 +24,7 @@ import {
 } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
+import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import {
   ApiError,
   addProjectDocumentVersion,
@@ -56,6 +57,26 @@ type FolderEditorState = {
   parentFolderId?: string | null
   name: string
   description: string
+}
+
+type UploadFormBaseline = {
+  title: string
+  tags: string
+  notes: string
+  folderId: string | undefined
+  file: File | null
+}
+
+type MetadataFormBaseline = {
+  title: string
+  tags: string
+  notes: string
+  folderId: string
+}
+
+type VersionFormBaseline = {
+  notes: string
+  file: File | null
 }
 
 const statusOptions: Array<{ value: ManagedDocumentStatus; key: string }> = [
@@ -120,6 +141,90 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
   const [editNotes, setEditNotes] = useState('')
   const [editFolderId, setEditFolderId] = useState<string | ''>('')
   const [nextStatus, setNextStatus] = useState<ManagedDocumentStatus | ''>('')
+  const folderBaseline = useRef<FolderEditorState | null>(null)
+  const uploadBaseline = useRef<UploadFormBaseline | null>(null)
+  const metadataBaseline = useRef<MetadataFormBaseline | null>(null)
+  const versionBaseline = useRef<VersionFormBaseline | null>(null)
+  const [uploadFileInputKey, setUploadFileInputKey] = useState(0)
+  const [versionFileInputKey, setVersionFileInputKey] = useState(0)
+
+  const { requestClose: requestFolderClose, confirmationDialog: folderDiscardDialog } = useUnsavedChangesPrompt(
+    Boolean(folderEditor && folderBaseline.current && JSON.stringify(folderEditor) !== JSON.stringify(folderBaseline.current)),
+    isSaving,
+    () => setFolderEditor(null),
+    () => setFolderEditor(folderBaseline.current),
+  )
+  const { requestClose: requestUploadClose, confirmationDialog: uploadDiscardDialog } = useUnsavedChangesPrompt(
+    uploadDialogOpen && Boolean(uploadBaseline.current && (
+      uploadTitle !== uploadBaseline.current.title
+      || uploadTags !== uploadBaseline.current.tags
+      || uploadNotes !== uploadBaseline.current.notes
+      || selectedFolderId !== uploadBaseline.current.folderId
+      || uploadFile !== uploadBaseline.current.file
+    )),
+    isSaving,
+    () => setUploadDialogOpen(false),
+    () => {
+      const baseline = uploadBaseline.current
+      if (!baseline) return
+      setUploadTitle(baseline.title)
+      setUploadTags(baseline.tags)
+      setUploadNotes(baseline.notes)
+      setSelectedFolderId(baseline.folderId)
+      setUploadFile(baseline.file)
+      setUploadFileInputKey((key) => key + 1)
+    },
+  )
+  const { requestClose: requestMetadataClose, confirmationDialog: metadataDiscardDialog } = useUnsavedChangesPrompt(
+    metaEditorOpen && Boolean(metadataBaseline.current && (
+      editTitle !== metadataBaseline.current.title
+      || editTags !== metadataBaseline.current.tags
+      || editNotes !== metadataBaseline.current.notes
+      || editFolderId !== metadataBaseline.current.folderId
+    )),
+    isSaving,
+    () => setMetaEditorOpen(false),
+    () => {
+      const baseline = metadataBaseline.current
+      if (!baseline) return
+      setEditTitle(baseline.title)
+      setEditTags(baseline.tags)
+      setEditNotes(baseline.notes)
+      setEditFolderId(baseline.folderId)
+    },
+  )
+  const { requestClose: requestVersionClose, confirmationDialog: versionDiscardDialog } = useUnsavedChangesPrompt(
+    newVersionDialogOpen && Boolean(versionBaseline.current && (
+      versionNotes !== versionBaseline.current.notes
+      || versionFile !== versionBaseline.current.file
+    )),
+    isSaving,
+    () => setNewVersionDialogOpen(false),
+    () => {
+      const baseline = versionBaseline.current
+      if (!baseline) return
+      setVersionNotes(baseline.notes)
+      setVersionFile(baseline.file)
+      setVersionFileInputKey((key) => key + 1)
+    },
+  )
+
+  const openFolderEditor = (next: FolderEditorState) => {
+    folderBaseline.current = next
+    setFolderEditor(next)
+  }
+  const openUploadDialog = () => {
+    uploadBaseline.current = { title: uploadTitle, tags: uploadTags, notes: uploadNotes, folderId: selectedFolderId, file: uploadFile }
+    setUploadDialogOpen(true)
+  }
+  const openMetadataEditor = () => {
+    metadataBaseline.current = { title: editTitle, tags: editTags, notes: editNotes, folderId: editFolderId }
+    setMetaEditorOpen(true)
+  }
+  const openVersionDialog = () => {
+    versionBaseline.current = { notes: versionNotes, file: versionFile }
+    setNewVersionDialogOpen(true)
+  }
 
   const visibleDocuments = useMemo(() => {
     const normalized = searchTerm.trim().toLowerCase()
@@ -223,7 +328,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
           </VxButton>
           {canManage ? (
             <>
-              <VxButton size="small" variant="text" onClick={() => setFolderEditor({ mode: 'edit', folderId: folder.id, parentFolderId: folder.parentFolderId ?? null, name: folder.name, description: folder.description ?? '' })}>
+              <VxButton size="small" variant="text" onClick={() => openFolderEditor({ mode: 'edit', folderId: folder.id, parentFolderId: folder.parentFolderId ?? null, name: folder.name, description: folder.description ?? '' })}>
                 {t('common.edit')}
               </VxButton>
               <VxConfirmActionButton
@@ -274,7 +379,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
               <VxStack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
                 <VxTypography variant="subtitle1">{t('pages.projectDetails.documentsPanel.folders')}</VxTypography>
                 {canManage ? (
-                  <VxButton size="small" variant="contained" onClick={() => setFolderEditor({ mode: 'create', parentFolderId: selectedFolderId ?? null, name: '', description: '' })}>
+                  <VxButton size="small" variant="contained" onClick={() => openFolderEditor({ mode: 'create', parentFolderId: selectedFolderId ?? null, name: '', description: '' })}>
                     {t('pages.projectDetails.documentsPanel.newFolder')}
                   </VxButton>
                 ) : null}
@@ -313,7 +418,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
                   </VxTextField>
                 </VxStack>
                 {canUpload ? (
-                  <VxButton variant="contained" onClick={() => setUploadDialogOpen(true)}>
+                  <VxButton variant="contained" onClick={openUploadDialog}>
                     {t('pages.projectDetails.documentsPanel.upload')}
                   </VxButton>
                 ) : null}
@@ -391,7 +496,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
                               ) : null}
                               {canManage ? (
                                 <>
-                                  <VxButton size="small" variant="text" onClick={(event) => { event.stopPropagation(); setMetaEditorOpen(true) }}>
+                                  <VxButton size="small" variant="text" onClick={(event) => { event.stopPropagation(); openMetadataEditor() }}>
                                     {t('common.edit')}
                                   </VxButton>
                                   <VxConfirmActionButton
@@ -447,7 +552,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
             <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ justifyContent: 'space-between', alignItems: { md: 'center' } }}>
               <VxTypography component="h3" variant="h6">{t('pages.projectDetails.documentsPanel.versions')}</VxTypography>
               {canUpload ? (
-                <VxButton variant="outlined" onClick={() => setNewVersionDialogOpen(true)}>{t('pages.projectDetails.documentsPanel.addVersion')}</VxButton>
+                <VxButton variant="outlined" onClick={openVersionDialog}>{t('pages.projectDetails.documentsPanel.addVersion')}</VxButton>
               ) : null}
             </VxStack>
             <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1}>
@@ -516,7 +621,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
         </VxPaper>
       ) : null}
 
-      <VxDialog open={folderEditor !== null} onClose={isSaving ? undefined : () => setFolderEditor(null)} maxWidth="sm" fullWidth>
+      <VxDialog open={folderEditor !== null} onClose={requestFolderClose} maxWidth="sm" fullWidth>
         <VxDialogTitle>{folderEditor?.mode === 'edit' ? t('pages.projectDetails.documentsPanel.editFolder') : t('pages.projectDetails.documentsPanel.newFolder')}</VxDialogTitle>
         <VxDialogContent dividers>
           <VxStack spacing={2} sx={{ mt: 1 }}>
@@ -539,7 +644,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
           </VxStack>
         </VxDialogContent>
         <VxDialogActions>
-          <VxButton onClick={() => setFolderEditor(null)}>{t('common.cancel')}</VxButton>
+          <VxButton onClick={requestFolderClose} disabled={isSaving}>{t('common.cancel')}</VxButton>
           <VxButton
             variant="contained"
             disabled={!folderEditor?.name.trim() || isSaving}
@@ -578,7 +683,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
         </VxDialogActions>
       </VxDialog>
 
-      <VxDialog open={uploadDialogOpen} onClose={isSaving ? undefined : () => setUploadDialogOpen(false)} maxWidth="sm" fullWidth>
+      <VxDialog open={uploadDialogOpen} onClose={requestUploadClose} maxWidth="sm" fullWidth>
         <VxDialogTitle>{t('pages.projectDetails.documentsPanel.upload')}</VxDialogTitle>
         <VxDialogContent dividers>
           <VxStack spacing={2} sx={{ mt: 1 }}>
@@ -592,6 +697,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
             <VxBox>
               <VxTypography variant="caption" color="text.secondary">{t('pages.projectDetails.documentsPanel.columns.file')}</VxTypography>
               <input
+                key={uploadFileInputKey}
                 type="file"
                 onChange={(event) => setUploadFile(event.currentTarget.files?.[0] ?? null)}
                 style={{ width: '100%', marginTop: 6 }}
@@ -600,7 +706,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
           </VxStack>
         </VxDialogContent>
         <VxDialogActions>
-          <VxButton onClick={() => setUploadDialogOpen(false)}>{t('common.cancel')}</VxButton>
+          <VxButton onClick={requestUploadClose} disabled={isSaving}>{t('common.cancel')}</VxButton>
           <VxButton
             variant="contained"
             disabled={!uploadTitle.trim() || !uploadFile || isSaving}
@@ -623,6 +729,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
                 setUploadTags('')
                 setUploadNotes('')
                 setUploadFile(null)
+                setUploadFileInputKey((key) => key + 1)
                 await loadContext()
               } catch (uploadError) {
                 setError(uploadError instanceof ApiError ? uploadError.message : t('pages.projectDetails.documentsPanel.errors.upload'))
@@ -636,7 +743,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
         </VxDialogActions>
       </VxDialog>
 
-      <VxDialog open={metaEditorOpen && selectedDocument !== null} onClose={isSaving ? undefined : () => setMetaEditorOpen(false)} maxWidth="sm" fullWidth>
+      <VxDialog open={metaEditorOpen && selectedDocument !== null} onClose={requestMetadataClose} maxWidth="sm" fullWidth>
         <VxDialogTitle>{t('pages.projectDetails.documentsPanel.editDocument')}</VxDialogTitle>
         <VxDialogContent dividers>
           <VxStack spacing={2} sx={{ mt: 1 }}>
@@ -650,7 +757,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
           </VxStack>
         </VxDialogContent>
         <VxDialogActions>
-          <VxButton onClick={() => setMetaEditorOpen(false)}>{t('common.cancel')}</VxButton>
+          <VxButton onClick={requestMetadataClose} disabled={isSaving}>{t('common.cancel')}</VxButton>
           <VxButton
             variant="contained"
             disabled={!selectedDocument || !editTitle.trim() || isSaving}
@@ -681,7 +788,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
         </VxDialogActions>
       </VxDialog>
 
-      <VxDialog open={newVersionDialogOpen && selectedDocument !== null} onClose={isSaving ? undefined : () => setNewVersionDialogOpen(false)} maxWidth="sm" fullWidth>
+      <VxDialog open={newVersionDialogOpen && selectedDocument !== null} onClose={requestVersionClose} maxWidth="sm" fullWidth>
         <VxDialogTitle>{t('pages.projectDetails.documentsPanel.addVersion')}</VxDialogTitle>
         <VxDialogContent dividers>
           <VxStack spacing={2} sx={{ mt: 1 }}>
@@ -689,6 +796,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
             <VxBox>
               <VxTypography variant="caption" color="text.secondary">{t('pages.projectDetails.documentsPanel.columns.file')}</VxTypography>
               <input
+                key={versionFileInputKey}
                 type="file"
                 onChange={(event) => setVersionFile(event.currentTarget.files?.[0] ?? null)}
                 style={{ width: '100%', marginTop: 6 }}
@@ -697,7 +805,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
           </VxStack>
         </VxDialogContent>
         <VxDialogActions>
-          <VxButton onClick={() => setNewVersionDialogOpen(false)}>{t('common.cancel')}</VxButton>
+          <VxButton onClick={requestVersionClose} disabled={isSaving}>{t('common.cancel')}</VxButton>
           <VxButton
             variant="contained"
             disabled={!selectedDocument || !versionFile || isSaving}
@@ -715,6 +823,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
                 setNewVersionDialogOpen(false)
                 setVersionNotes('')
                 setVersionFile(null)
+                setVersionFileInputKey((key) => key + 1)
                 await loadContext()
               } catch (versionError) {
                 setError(versionError instanceof ApiError ? versionError.message : t('pages.projectDetails.documentsPanel.errors.versionUpload'))
@@ -727,6 +836,10 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
           </VxButton>
         </VxDialogActions>
       </VxDialog>
+      {folderDiscardDialog}
+      {uploadDiscardDialog}
+      {metadataDiscardDialog}
+      {versionDiscardDialog}
     </VxStack>
   )
 }

@@ -23,6 +23,7 @@ import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
 import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 import { PageBody, PageFeedback, PageHeader } from '../../../components/PagePrimitives'
+import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import {
   ApiError,
   createProjectCategory,
@@ -37,6 +38,13 @@ type CategoryDataGridProps = {
   onEdit: (category: ProjectCategoryListItemResponse) => void
   onDelete: (category: ProjectCategoryListItemResponse) => void
   canManage?: boolean
+}
+
+type CategoryEditorBaseline = {
+  code: string
+  name: string
+  description: string
+  isActive?: boolean
 }
 
 function CategoryDataGrid({ rows, onEdit, onDelete, canManage = true }: CategoryDataGridProps) {
@@ -149,6 +157,7 @@ export default function ProjectCategoriesPage() {
   const [createName, setCreateName] = useState('')
   const [createDescription, setCreateDescription] = useState('')
   const [createLoading, setCreateLoading] = useState(false)
+  const [createBaseline, setCreateBaseline] = useState<CategoryEditorBaseline>({ code: '', name: '', description: '' })
 
   const [editTarget, setEditTarget] = useState<ProjectCategoryListItemResponse | null>(null)
   const [editCode, setEditCode] = useState('')
@@ -156,9 +165,32 @@ export default function ProjectCategoriesPage() {
   const [editDescription, setEditDescription] = useState('')
   const [editIsActive, setEditIsActive] = useState(true)
   const [editLoading, setEditLoading] = useState(false)
+  const [editBaseline, setEditBaseline] = useState<CategoryEditorBaseline | null>(null)
 
   const [deleteTarget, setDeleteTarget] = useState<ProjectCategoryListItemResponse | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
+  const { requestClose: requestCreateClose, confirmationDialog: createDiscardDialog } = useUnsavedChangesPrompt(
+    canManage && createOpen && JSON.stringify({ code: createCode, name: createName, description: createDescription }) !== JSON.stringify(createBaseline),
+    createLoading,
+    () => setCreateOpen(false),
+    () => {
+      setCreateCode(createBaseline.code)
+      setCreateName(createBaseline.name)
+      setCreateDescription(createBaseline.description)
+    },
+  )
+  const { requestClose: requestEditClose, confirmationDialog: editDiscardDialog } = useUnsavedChangesPrompt(
+    canManage && Boolean(editTarget && editBaseline && JSON.stringify({ code: editCode, name: editName, description: editDescription, isActive: editIsActive }) !== JSON.stringify(editBaseline)),
+    editLoading,
+    () => setEditTarget(null),
+    () => {
+      if (!editBaseline) return
+      setEditCode(editBaseline.code)
+      setEditName(editBaseline.name)
+      setEditDescription(editBaseline.description)
+      setEditIsActive(editBaseline.isActive ?? true)
+    },
+  )
 
   const loadCategories = useCallback(async () => {
     if (!isAuthenticated) {
@@ -197,6 +229,7 @@ export default function ProjectCategoriesPage() {
       setCreateCode('')
       setCreateName('')
       setCreateDescription('')
+      setCreateBaseline({ code: '', name: '', description: '' })
       setFeedback(t('pages.projectCategories.feedback.created'))
       await loadCategories()
     } catch (saveError) {
@@ -269,6 +302,7 @@ export default function ProjectCategoriesPage() {
               setCreateCode('')
               setCreateName('')
               setCreateDescription('')
+              setCreateBaseline({ code: '', name: '', description: '' })
               setCreateOpen(true)
             }}
           >
@@ -288,13 +322,14 @@ export default function ProjectCategoriesPage() {
             setEditName(category.name)
             setEditDescription(category.description || '')
             setEditIsActive(category.isActive)
+            setEditBaseline({ code: category.code, name: category.name, description: category.description || '', isActive: category.isActive })
           }}
           onDelete={(category) => setDeleteTarget(category)}
           canManage={canManage}
         />
       </PageBody>
 
-      <VxDialog open={canManage && createOpen} onClose={() => setCreateOpen(false)} maxWidth="sm" fullWidth>
+      <VxDialog open={canManage && createOpen} onClose={requestCreateClose} maxWidth="sm" fullWidth>
         <VxDialogTitle>{t('pages.projectCategories.dialogs.create')}</VxDialogTitle>
         <VxDialogContent>
           <VxStack spacing={2} sx={{ mt: 1 }}>
@@ -325,14 +360,15 @@ export default function ProjectCategoriesPage() {
           </VxStack>
         </VxDialogContent>
         <VxDialogActions>
-          <VxButton onClick={() => setCreateOpen(false)}>{t('common.cancel')}</VxButton>
+          <VxButton onClick={requestCreateClose} disabled={createLoading}>{t('common.cancel')}</VxButton>
           <VxButton variant="contained" onClick={() => void handleCreate()} disabled={!createCode.trim() || !createName.trim() || createLoading}>
             {t('common.create')}
           </VxButton>
         </VxDialogActions>
       </VxDialog>
+      {createDiscardDialog}
 
-      <VxDialog open={canManage && Boolean(editTarget)} onClose={() => setEditTarget(null)} maxWidth="sm" fullWidth>
+      <VxDialog open={canManage && Boolean(editTarget)} onClose={requestEditClose} maxWidth="sm" fullWidth>
         <VxDialogTitle>{t('pages.projectCategories.dialogs.edit')}</VxDialogTitle>
         <VxDialogContent>
           <VxStack spacing={2} sx={{ mt: 1 }}>
@@ -368,12 +404,13 @@ export default function ProjectCategoriesPage() {
           </VxStack>
         </VxDialogContent>
         <VxDialogActions>
-          <VxButton onClick={() => setEditTarget(null)}>{t('common.cancel')}</VxButton>
+          <VxButton onClick={requestEditClose} disabled={editLoading}>{t('common.cancel')}</VxButton>
           <VxButton variant="contained" onClick={() => void handleEdit()} disabled={!editCode.trim() || !editName.trim() || editLoading}>
             {t('common.save')}
           </VxButton>
         </VxDialogActions>
       </VxDialog>
+      {editDiscardDialog}
 
       <VxConfirmActionDialog open={canManage && Boolean(deleteTarget)} title={t('pages.projectCategories.dialogs.delete.title')} targetName={deleteTarget ? `${deleteTarget.code} — ${deleteTarget.name}` : ''} consequence={t('pages.projectCategories.dialogs.delete.message', { name: deleteTarget?.name ?? '' })} confirmLabel={t('common.delete')} pendingLabel={t('dialogs.deleting')} pending={deleteLoading} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} />
     </VxStack>

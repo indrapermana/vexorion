@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
+import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import { ApiError, createFiscalPeriod, getFiscalPeriod, updateFiscalPeriod } from '../../../lib/api'
 import type { FiscalPeriodEditorDialogProps, FiscalPeriodFormValues } from '../../../types/ui'
 
@@ -32,8 +33,9 @@ export default function FiscalPeriodEditorDialog({ open, mode, fiscalPeriodId, o
     handleSubmit,
     reset,
     setError,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = useForm<FiscalPeriodFormValues>({ defaultValues, resolver: yupResolver(schema) })
+  const { requestClose, confirmationDialog } = useUnsavedChangesPrompt(open && isDirty, isSubmitting || isLoading, onClose, () => reset())
 
   useEffect(() => {
     reset(defaultValues)
@@ -109,7 +111,8 @@ export default function FiscalPeriodEditorDialog({ open, mode, fiscalPeriodId, o
   })
 
   return (
-    <VxDialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="sm">
+    <>
+    <VxDialog open={open} onClose={requestClose} fullWidth maxWidth="sm">
       <VxDialogTitle>{title}</VxDialogTitle>
       <VxDialogContent dividers>
         <VxStack spacing={2.5} sx={{ pt: 1 }}>
@@ -150,11 +153,13 @@ export default function FiscalPeriodEditorDialog({ open, mode, fiscalPeriodId, o
         </VxStack>
       </VxDialogContent>
       <VxDialogActions sx={{ px: 3, py: 2 }}>
-        <VxButton onClick={onClose} disabled={isSubmitting}>{t('common.cancel')}</VxButton>
+        <VxButton onClick={requestClose} disabled={isSubmitting}>{t('common.cancel')}</VxButton>
         <VxButton onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoading}>
           {isSubmitting ? t('pages.fiscalPeriods.editor.saving') : mode === 'create' ? t('pages.fiscalPeriods.editor.createTitle') : t('pages.fiscalPeriods.editor.saveChanges')}
         </VxButton>
       </VxDialogActions>
     </VxDialog>
+    {confirmationDialog}
+    </>
   )
 }

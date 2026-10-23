@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
+import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import { ApiError, createAccount, getAccount, updateAccount } from '../../../lib/api'
 import {
   accountTypeOptions,
@@ -43,8 +44,9 @@ export default function AccountEditorDialog({ open, mode, accountId, onClose, on
     handleSubmit,
     reset,
     setError,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = useForm<AccountFormValues>({ defaultValues, resolver: yupResolver(schema) })
+  const { requestClose, confirmationDialog } = useUnsavedChangesPrompt(open && isDirty, isSubmitting || isLoading, onClose, () => reset())
 
   useEffect(() => {
     reset(defaultValues)
@@ -121,7 +123,8 @@ export default function AccountEditorDialog({ open, mode, accountId, onClose, on
   })
 
   return (
-    <VxDialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="md">
+    <>
+    <VxDialog open={open} onClose={requestClose} fullWidth maxWidth="md">
       <VxDialogTitle>{title}</VxDialogTitle>
       <VxDialogContent dividers>
         <VxStack spacing={2.5} sx={{ pt: 1 }}>
@@ -196,11 +199,13 @@ export default function AccountEditorDialog({ open, mode, accountId, onClose, on
         </VxStack>
       </VxDialogContent>
       <VxDialogActions sx={{ px: 3, py: 2 }}>
-        <VxButton onClick={onClose} disabled={isSubmitting}>{t('common.cancel')}</VxButton>
+        <VxButton onClick={requestClose} disabled={isSubmitting}>{t('common.cancel')}</VxButton>
         <VxButton onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoading}>
           {isSubmitting ? t('pages.accounts.editor.saving') : mode === 'create' ? t('pages.accounts.editor.createTitle') : t('pages.accounts.editor.saveChanges')}
         </VxButton>
       </VxDialogActions>
     </VxDialog>
+    {confirmationDialog}
+    </>
   )
 }

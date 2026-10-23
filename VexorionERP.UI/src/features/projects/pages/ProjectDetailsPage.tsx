@@ -20,11 +20,12 @@ import {
   VxTypography,
 } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
-import { Link as RouterLink, useParams } from 'react-router-dom'
+import { Link as RouterLink, useLocation, useParams } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
 import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 import { PageFeedback, PageHeader, PageLoadingState, PageMetric } from '../../../components/PagePrimitives'
+import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import {
   ApiError,
   createProjectParty,
@@ -327,6 +328,12 @@ export default function ProjectDetailsPage() {
   const { isAuthenticated, user } = useAuth()
   const canManage = user?.permissions.includes(Permissions.projects.manage) ?? false
   const { projectId } = useParams()
+  const location = useLocation()
+  const requestedReturnTo = (location.state as { returnTo?: unknown } | null)?.returnTo
+  const returnTo = typeof requestedReturnTo === 'string'
+    && (requestedReturnTo === '/projects' || requestedReturnTo.startsWith('/projects?') || requestedReturnTo.startsWith('/projects/'))
+    ? requestedReturnTo
+    : '/projects'
   const [project, setProject] = useState<ProjectDetailsResponse | null>(null)
   const [categories, setCategories] = useState<ProjectCategoryListItemResponse[]>([])
   const [parties, setParties] = useState<ProjectPartyListItemResponse[]>([])
@@ -338,15 +345,52 @@ export default function ProjectDetailsPage() {
 
   const [isProjectEditorOpen, setIsProjectEditorOpen] = useState(false)
   const [projectFormState, setProjectFormState] = useState<ProjectFormState | null>(null)
+  const [initialProjectFormState, setInitialProjectFormState] = useState<ProjectFormState | null>(null)
   const [isSavingProject, setIsSavingProject] = useState(false)
 
   const [isPartyEditorOpen, setIsPartyEditorOpen] = useState(false)
   const [editingParty, setEditingParty] = useState<ProjectPartyListItemResponse | null>(null)
   const [partyFormState, setPartyFormState] = useState<ProjectPartyFormState>(initialProjectPartyFormState)
+  const [initialPartyFormState, setInitialPartyFormState] = useState<ProjectPartyFormState | null>(null)
   const [isSavingParty, setIsSavingParty] = useState(false)
 
   const [deletePartyId, setDeletePartyId] = useState<string | null>(null)
   const [isDeletingParty, setIsDeletingParty] = useState(false)
+
+  const closeProjectEditor = useCallback(() => {
+    setIsProjectEditorOpen(false)
+    setInitialProjectFormState(null)
+  }, [])
+  const projectEditorDirty = Boolean(
+    projectFormState
+    && initialProjectFormState
+    && JSON.stringify(projectFormState) !== JSON.stringify(initialProjectFormState),
+  )
+  const { requestClose: requestProjectEditorClose, confirmationDialog: projectDiscardDialog } = useUnsavedChangesPrompt(
+    isProjectEditorOpen && projectEditorDirty,
+    isSavingProject,
+    closeProjectEditor,
+    () => {
+      if (initialProjectFormState) setProjectFormState(initialProjectFormState)
+    },
+  )
+
+  const closePartyEditor = useCallback(() => {
+    setIsPartyEditorOpen(false)
+    setInitialPartyFormState(null)
+  }, [])
+  const partyEditorDirty = Boolean(
+    initialPartyFormState
+    && JSON.stringify(partyFormState) !== JSON.stringify(initialPartyFormState),
+  )
+  const { requestClose: requestPartyEditorClose, confirmationDialog: partyDiscardDialog } = useUnsavedChangesPrompt(
+    isPartyEditorOpen && partyEditorDirty,
+    isSavingParty,
+    closePartyEditor,
+    () => {
+      if (initialPartyFormState) setPartyFormState(initialPartyFormState)
+    },
+  )
 
   const loadProjectContext = useCallback(async () => {
     if (!isAuthenticated || !projectId) {
@@ -368,7 +412,7 @@ export default function ProjectDetailsPage() {
       setCategories(categoryResult)
       setParties(partiesResult)
       setTimeline(timelineResult)
-      setProjectFormState({
+      const nextProjectFormState = {
         projectCategoryId: projectResult.projectCategoryId,
         projectNumber: projectResult.projectNumber,
         name: projectResult.name,
@@ -379,7 +423,9 @@ export default function ProjectDetailsPage() {
         status: projectResult.status,
         notes: projectResult.notes || '',
         isActive: projectResult.isActive,
-      })
+      }
+      setProjectFormState(nextProjectFormState)
+      setInitialProjectFormState(nextProjectFormState)
     } catch (loadError) {
       setError(loadError instanceof ApiError ? loadError.message : t('pages.projectDetails.errors.load'))
     } finally {
@@ -448,13 +494,14 @@ export default function ProjectDetailsPage() {
     if (!canManage) return
     setEditingParty(null)
     setPartyFormState(initialProjectPartyFormState)
+    setInitialPartyFormState(initialProjectPartyFormState)
     setIsPartyEditorOpen(true)
   }
 
   const openEditPartyDialog = (party: ProjectPartyListItemResponse) => {
     if (!canManage) return
     setEditingParty(party)
-    setPartyFormState({
+    const nextPartyFormState = {
       relatedTenantId: party.relatedTenantId,
       relationshipType: party.relationshipType,
       canViewDocuments: party.canViewDocuments,
@@ -463,7 +510,9 @@ export default function ProjectDetailsPage() {
       effectiveFrom: party.effectiveFrom || '',
       effectiveTo: party.effectiveTo || '',
       isActive: party.isActive,
-    })
+    }
+    setPartyFormState(nextPartyFormState)
+    setInitialPartyFormState(nextPartyFormState)
     setIsPartyEditorOpen(true)
   }
 
@@ -543,7 +592,7 @@ export default function ProjectDetailsPage() {
         description={`${t('pages.projectDetails.projectIdLabel')}: ${projectId}`}
         primaryAction={(
           <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-            <VxButton variant="outlined" component={RouterLink} to="/projects">{t('pages.projectDetails.backButton')}</VxButton>
+            <VxButton variant="outlined" component={RouterLink} to={returnTo}>{t('pages.projectDetails.backButton')}</VxButton>
             {canManage ? <VxButton variant="contained" onClick={() => setIsProjectEditorOpen(true)} disabled={!projectFormState}>{t('pages.projectDetails.editButton')}</VxButton> : null}
           </VxStack>
         )}
@@ -618,7 +667,7 @@ export default function ProjectDetailsPage() {
         </VxPaper>
       ) : null}
 
-      <VxDialog open={canManage && isProjectEditorOpen} onClose={() => setIsProjectEditorOpen(false)} maxWidth="md" fullWidth>
+      <VxDialog open={canManage && isProjectEditorOpen} onClose={requestProjectEditorClose} maxWidth="md" fullWidth>
         <VxDialogTitle>{t('pages.projectDetails.editButton')}</VxDialogTitle>
         <VxDialogContent>
           {projectFormState ? (
@@ -700,12 +749,13 @@ export default function ProjectDetailsPage() {
           ) : null}
         </VxDialogContent>
         <VxDialogActions>
-          <VxButton onClick={() => setIsProjectEditorOpen(false)}>{t('common.cancel')}</VxButton>
+          <VxButton onClick={requestProjectEditorClose}>{t('common.cancel')}</VxButton>
           <VxButton variant="contained" onClick={() => void handleProjectSave()} disabled={!projectFormState || isSavingProject}>{t('common.save')}</VxButton>
         </VxDialogActions>
       </VxDialog>
+      {projectDiscardDialog}
 
-      <VxDialog open={canManage && isPartyEditorOpen} onClose={() => setIsPartyEditorOpen(false)} maxWidth="sm" fullWidth>
+      <VxDialog open={canManage && isPartyEditorOpen} onClose={requestPartyEditorClose} maxWidth="sm" fullWidth>
         <VxDialogTitle>{editingParty ? t('pages.projectDetails.parties.dialogs.edit') : t('pages.projectDetails.parties.dialogs.add')}</VxDialogTitle>
         <VxDialogContent>
           <VxStack spacing={2} sx={{ mt: 1 }}>
@@ -802,12 +852,13 @@ export default function ProjectDetailsPage() {
           </VxStack>
         </VxDialogContent>
         <VxDialogActions>
-          <VxButton onClick={() => setIsPartyEditorOpen(false)}>{t('common.cancel')}</VxButton>
+          <VxButton onClick={requestPartyEditorClose}>{t('common.cancel')}</VxButton>
           <VxButton variant="contained" onClick={() => void handlePartySave()} disabled={isSavingParty || !partyFormState.relatedTenantId.trim()}>
             {editingParty ? t('common.save') : t('common.create')}
           </VxButton>
         </VxDialogActions>
       </VxDialog>
+      {partyDiscardDialog}
 
       <VxConfirmActionDialog open={canManage && Boolean(deletePartyId)} title={t('pages.projectDetails.parties.dialogs.delete.title')} targetName={parties.find((party) => party.id === deletePartyId)?.relatedTenantId ?? ''} consequence={t('pages.projectDetails.parties.dialogs.delete.message')} confirmLabel={t('common.delete')} pendingLabel={t('dialogs.deleting')} pending={isDeletingParty} onClose={() => setDeletePartyId(null)} onConfirm={() => void handlePartyDelete()} />
     </VxStack>

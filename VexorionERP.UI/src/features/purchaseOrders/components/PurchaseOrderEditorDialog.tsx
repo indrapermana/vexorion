@@ -5,6 +5,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import LookupSelectField from '../../../components/LookupSelectField'
+import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import { ApiError, createPurchaseOrder, getPurchaseOrder, updatePurchaseOrder } from '../../../lib/api'
 import type { ValidationProblem } from '../../../types/api'
 import { documentStatusOptions, type PurchaseOrderEditorDialogProps, type PurchaseOrderFormValues } from '../../../types/ui'
@@ -55,7 +56,8 @@ export default function PurchaseOrderEditorDialog({ open, mode, purchaseOrderId,
     notes: yup.string().max(1000, t('common.validation.notesMaxLength', { count: 1000 })).defined(),
     isActive: yup.boolean().required(),
   }), [t])
-  const { control, handleSubmit, reset, setError, formState: { errors, isSubmitting } } = useForm<PurchaseOrderFormValues>({ defaultValues, resolver: yupResolver(validationSchema) })
+  const { control, handleSubmit, reset, setError, formState: { errors, isSubmitting, isDirty } } = useForm<PurchaseOrderFormValues>({ defaultValues, resolver: yupResolver(validationSchema) })
+  const { requestClose, confirmationDialog } = useUnsavedChangesPrompt(open && isDirty, isSubmitting, onClose, () => reset())
 
   useEffect(() => {
     if (mode === 'create' || !purchaseOrderId) {
@@ -135,7 +137,8 @@ export default function PurchaseOrderEditorDialog({ open, mode, purchaseOrderId,
   })
 
   return (
-    <VxDialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="md">
+    <>
+    <VxDialog open={open} onClose={requestClose} fullWidth maxWidth="md">
       <VxDialogTitle>{title}</VxDialogTitle>
       <VxDialogContent dividers>
         {isLoadingPurchaseOrder ? (
@@ -170,9 +173,11 @@ export default function PurchaseOrderEditorDialog({ open, mode, purchaseOrderId,
         )}
       </VxDialogContent>
       <VxDialogActions sx={{ px: 3, py: 2 }}>
-        <VxButton onClick={onClose} disabled={isSubmitting}>{t('common.cancel')}</VxButton>
+        <VxButton onClick={requestClose} disabled={isSubmitting}>{t('common.cancel')}</VxButton>
         <VxButton onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoadingPurchaseOrder || suppliers.length === 0 || warehouses.length === 0}>{isSubmitting ? t('common.saving') : mode === 'create' ? t('purchaseOrders.editor.createButton') : t('common.saveChanges')}</VxButton>
       </VxDialogActions>
     </VxDialog>
+    {confirmationDialog}
+    </>
   )
 }

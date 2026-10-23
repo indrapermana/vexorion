@@ -6,6 +6,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import LookupSelectField from '../../../components/LookupSelectField'
+import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import { ApiError, getProduct } from '../../../lib/api'
 import type { SalesInvoiceLineEditorDialogProps, SalesInvoiceLineFormValues } from '../../../types/ui'
 
@@ -37,7 +38,8 @@ export default function SalesInvoiceLineEditorDialog({ open, mode, line, product
       .required(t('common.validation.required', { field: t('salesInvoices.lineEditor.tax') })),
     isActive: yup.boolean().required(),
   }), [t])
-  const { control, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<SalesInvoiceLineFormValues>({ defaultValues, resolver: yupResolver(validationSchema) })
+  const { control, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting, isDirty } } = useForm<SalesInvoiceLineFormValues>({ defaultValues, resolver: yupResolver(validationSchema) })
+  const { requestClose, confirmationDialog } = useUnsavedChangesPrompt(open && isDirty, isSubmitting, onClose, () => reset())
   const [autofillHint, setAutofillHint] = useState<string | null>(null)
   const selectedProductId = watch('productId')
 
@@ -78,7 +80,8 @@ export default function SalesInvoiceLineEditorDialog({ open, mode, line, product
   const productOptions = products.map((product) => ({ value: product.id, label: `${product.name} (${product.sku})` }))
 
   return (
-    <VxDialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="sm">
+    <>
+    <VxDialog open={open} onClose={requestClose} fullWidth maxWidth="sm">
       <VxDialogTitle>{t(mode === 'create' ? 'salesInvoices.lineEditor.createTitle' : 'salesInvoices.lineEditor.editTitle')}</VxDialogTitle>
       <VxDialogContent dividers>
         {!products.length ? <VxAlert severity="warning">{t('salesInvoices.lineEditor.createProductsFirst')}</VxAlert> : null}
@@ -96,9 +99,11 @@ export default function SalesInvoiceLineEditorDialog({ open, mode, line, product
         </VxStack>
       </VxDialogContent>
       <VxDialogActions sx={{ px: 3, py: 2 }}>
-        <VxButton onClick={onClose} disabled={isSubmitting}>{t('common.cancel')}</VxButton>
+        <VxButton onClick={requestClose} disabled={isSubmitting}>{t('common.cancel')}</VxButton>
         <VxButton onClick={() => void handleSubmit(async (values) => { await onSaved(mode, values) })()} variant="contained" disabled={isSubmitting || !products.length}>{isSubmitting ? t('common.saving') : mode === 'create' ? t('salesInvoices.lineEditor.addButton') : t('salesInvoices.lineEditor.saveButton')}</VxButton>
       </VxDialogActions>
     </VxDialog>
+    {confirmationDialog}
+    </>
   )
 }

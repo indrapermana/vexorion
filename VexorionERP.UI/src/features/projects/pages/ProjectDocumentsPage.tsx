@@ -22,6 +22,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { PageBody, PageFeedback, PageHeader, PageLoadingState } from '../../../components/PagePrimitives'
+import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import {
   ApiError,
   getProjectCategories,
@@ -92,6 +93,27 @@ export default function ProjectDocumentsPage() {
   const [uploadNotes, setUploadNotes] = useState('')
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const [uploadBaseline, setUploadBaseline] = useState({ projectId: '', title: '', tags: '', notes: '', file: null as File | null })
+  const [fileInputKey, setFileInputKey] = useState(0)
+  const { requestClose, confirmationDialog } = useUnsavedChangesPrompt(
+    canUpload && uploadDialogOpen && (
+      uploadProjectId !== uploadBaseline.projectId
+      || uploadTitle !== uploadBaseline.title
+      || uploadTags !== uploadBaseline.tags
+      || uploadNotes !== uploadBaseline.notes
+      || uploadFile !== uploadBaseline.file
+    ),
+    isUploading,
+    () => setUploadDialogOpen(false),
+    () => {
+      setUploadProjectId(uploadBaseline.projectId)
+      setUploadTitle(uploadBaseline.title)
+      setUploadTags(uploadBaseline.tags)
+      setUploadNotes(uploadBaseline.notes)
+      setUploadFile(uploadBaseline.file)
+      setFileInputKey((key) => key + 1)
+    },
+  )
 
   const projectLabelById = useMemo(
     () => new Map(projects.map((item) => [item.id, `${item.projectNumber} - ${item.name}`])),
@@ -154,6 +176,12 @@ export default function ProjectDocumentsPage() {
                   variant="contained"
                   onClick={() => {
                     setUploadProjectId(projectId)
+                    setUploadTitle('')
+                    setUploadTags('')
+                    setUploadNotes('')
+                    setUploadFile(null)
+                    setFileInputKey((key) => key + 1)
+                    setUploadBaseline({ projectId, title: '', tags: '', notes: '', file: null })
                     setUploadDialogOpen(true)
                   }}
                 >
@@ -348,7 +376,7 @@ export default function ProjectDocumentsPage() {
           )}
       </PageBody>
 
-      <VxDialog open={uploadDialogOpen} onClose={isUploading ? undefined : () => setUploadDialogOpen(false)} maxWidth="sm" fullWidth>
+      <VxDialog open={uploadDialogOpen} onClose={requestClose} maxWidth="sm" fullWidth>
         <VxDialogTitle>{t('pages.projectDetails.documentsPanel.upload', { defaultValue: 'Upload document' })}</VxDialogTitle>
         <VxDialogContent dividers>
           <VxStack spacing={2} sx={{ mt: 1 }}>
@@ -373,6 +401,7 @@ export default function ProjectDocumentsPage() {
             <VxTextField label={t('pages.projectDetails.documentsPanel.tags', { defaultValue: 'Tags' })} value={uploadTags} onChange={(event) => setUploadTags(event.target.value)} fullWidth />
             <VxTextField label={t('pages.projectDetails.documentsPanel.notes', { defaultValue: 'Notes' })} value={uploadNotes} onChange={(event) => setUploadNotes(event.target.value)} fullWidth multiline minRows={2} />
             <input
+              key={fileInputKey}
               type="file"
               aria-label={t('pages.projectDetails.documentsPanel.columns.file', { defaultValue: 'File' })}
               onChange={(event) => setUploadFile(event.currentTarget.files?.[0] ?? null)}
@@ -380,7 +409,7 @@ export default function ProjectDocumentsPage() {
           </VxStack>
         </VxDialogContent>
         <VxDialogActions>
-          <VxButton onClick={() => setUploadDialogOpen(false)} disabled={isUploading}>{t('common.cancel', { defaultValue: 'Cancel' })}</VxButton>
+          <VxButton onClick={requestClose} disabled={isUploading}>{t('common.cancel', { defaultValue: 'Cancel' })}</VxButton>
           <VxButton
             variant="contained"
             disabled={!uploadProjectId || !uploadTitle.trim() || !uploadFile || isUploading}
@@ -401,6 +430,7 @@ export default function ProjectDocumentsPage() {
                 setUploadTags('')
                 setUploadNotes('')
                 setUploadFile(null)
+                setFileInputKey((key) => key + 1)
                 setFeedback(t('pages.projectDetails.documentsPanel.feedback.uploaded', { defaultValue: 'Document uploaded.' }))
                 await load()
               } catch (uploadError) {
@@ -418,6 +448,7 @@ export default function ProjectDocumentsPage() {
           </VxButton>
         </VxDialogActions>
       </VxDialog>
+      {confirmationDialog}
     </VxStack>
   )
 }

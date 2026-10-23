@@ -31,6 +31,12 @@ const idID = {
     save: 'Simpan',
     saveChanges: 'Simpan perubahan',
     saving: 'Menyimpan...',
+    unsavedChanges: {
+      title: 'Buang perubahan yang belum disimpan?',
+      message: 'Perubahan Anda belum disimpan. Buang perubahan tersebut?',
+      keepEditing: 'Lanjutkan mengedit',
+      discard: 'Buang perubahan',
+    },
     required: 'Wajib diisi',
     noOptionsAvailable: 'Tidak ada opsi tersedia',
     optional: 'Opsional',

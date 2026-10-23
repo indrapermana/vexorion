@@ -4,6 +4,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { useTranslation } from 'react-i18next'
+import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import { ApiError, createWarehouse, getWarehouse, updateWarehouse } from '../../../lib/api'
 import type { ValidationProblem } from '../../../types/api'
 import type { WarehouseEditorDialogProps, WarehouseFormValues } from '../../../types/ui'
@@ -45,10 +46,11 @@ export default function WarehouseEditorDialog({ open, mode, warehouseId, onClose
     () => (mode === 'create' ? t('components.warehouses.editor.createTitle') : t('components.warehouses.editor.editTitle')),
     [mode, t],
   )
-  const { control, handleSubmit, reset, setError, formState: { errors, isSubmitting } } = useForm<WarehouseFormValues>({
+  const { control, handleSubmit, reset, setError, formState: { errors, isSubmitting, isDirty } } = useForm<WarehouseFormValues>({
     defaultValues,
     resolver: yupResolver(validationSchema),
   })
+  const { requestClose, confirmationDialog } = useUnsavedChangesPrompt(open && isDirty, isSubmitting || isLoadingWarehouse, onClose, () => reset())
 
   useEffect(() => {
     if (mode === 'create' || !warehouseId) {
@@ -135,7 +137,8 @@ export default function WarehouseEditorDialog({ open, mode, warehouseId, onClose
   })
 
   return (
-    <VxDialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="sm">
+    <>
+    <VxDialog open={open} onClose={requestClose} fullWidth maxWidth="sm">
       <VxDialogTitle>{title}</VxDialogTitle>
       <VxDialogContent dividers>
         {isLoadingWarehouse ? (
@@ -159,9 +162,11 @@ export default function WarehouseEditorDialog({ open, mode, warehouseId, onClose
         )}
       </VxDialogContent>
       <VxDialogActions sx={{ px: 3, py: 2 }}>
-        <VxButton onClick={onClose} disabled={isSubmitting}>{t('dialogs.cancel')}</VxButton>
+        <VxButton onClick={requestClose} disabled={isSubmitting}>{t('dialogs.cancel')}</VxButton>
         <VxButton onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoadingWarehouse}>{isSubmitting ? t('components.warehouses.editor.saving') : mode === 'create' ? t('components.warehouses.editor.createAction') : t('components.warehouses.editor.saveAction')}</VxButton>
       </VxDialogActions>
     </VxDialog>
+    {confirmationDialog}
+    </>
   )
 }

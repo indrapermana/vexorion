@@ -14,12 +14,20 @@ const apiMocks = vi.hoisted(() => ({
   updateProject: vi.fn(),
 }))
 const authState = vi.hoisted(() => ({ permissions: ['projects.view', 'projects.manage'] }))
+const routerMocks = vi.hoisted(() => ({
+  navigate: vi.fn(),
+  search: '?status=2&relatedTenantId=tenant-1',
+}))
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }))
 
-vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn() }))
+vi.mock('react-router-dom', () => ({
+  useLocation: () => ({ pathname: '/projects', search: routerMocks.search }),
+  useNavigate: () => routerMocks.navigate,
+  useSearchParams: () => [new URLSearchParams(routerMocks.search), vi.fn()],
+}))
 vi.mock('../../../app/AuthContext', () => ({ useAuth: () => ({ isAuthenticated: true, user: { permissions: authState.permissions } }) }))
 vi.mock('../../../lib/api', () => ({
   ApiError: class ApiError extends Error {},
@@ -89,6 +97,7 @@ const projectListItem = {
 describe('ProjectsPage form state', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    routerMocks.search = '?status=2&relatedTenantId=tenant-1'
     authState.permissions = ['projects.view', 'projects.manage']
     apiMocks.getProjectCategories.mockResolvedValue([{ id: 'category-1', code: 'CAT', name: 'Category', isActive: true }])
     apiMocks.getProjects.mockResolvedValue([projectListItem])
@@ -111,6 +120,17 @@ describe('ProjectsPage form state', () => {
     expect(screen.queryByRole('button', { name: 'common.edit' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'common.delete' })).not.toBeInTheDocument()
     expect(screen.getByRole('alert')).toHaveTextContent('authorization.readOnly')
+  })
+
+  it('returns from a project detail with the current list filters in the URL', async () => {
+    const user = userEvent.setup()
+    render(<ProjectsPage />)
+
+    await user.click(await screen.findByRole('button', { name: 'common.labels.details' }))
+
+    expect(routerMocks.navigate).toHaveBeenCalledWith('/projects/project-1', {
+      state: { returnTo: '/projects?status=2&relatedTenantId=tenant-1' },
+    })
   })
 
   it('loads complete project details before editing and preserves non-list fields', async () => {
@@ -143,5 +163,25 @@ describe('ProjectsPage form state', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('pages.projects.errors.invalidPeriod')
     expect(screen.getByRole('button', { name: 'common.save' })).toBeDisabled()
     expect(apiMocks.updateProject).not.toHaveBeenCalled()
+  })
+
+  it('asks before discarding a multi-field project edit and keeps values when editing continues', async () => {
+    const user = userEvent.setup()
+    render(<ProjectsPage />)
+
+    await user.click(await screen.findByRole('button', { name: 'pages.projects.addButton' }))
+    const nameField = screen.getByLabelText('pages.projects.fields.projectName')
+    await user.type(nameField, 'Unsaved project')
+    await user.click(screen.getByRole('button', { name: 'common.cancel' }))
+
+    expect(screen.getByText('common.unsavedChanges.message')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'common.create' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'common.unsavedChanges.keepEditing' }))
+    expect(screen.getByLabelText('pages.projects.fields.projectName')).toHaveValue('Unsaved project')
+
+    await user.click(screen.getByRole('button', { name: 'common.cancel' }))
+    await user.click(screen.getByRole('button', { name: 'common.unsavedChanges.discard' }))
+    expect(screen.queryByLabelText('pages.projects.fields.projectName')).not.toBeInTheDocument()
   })
 })

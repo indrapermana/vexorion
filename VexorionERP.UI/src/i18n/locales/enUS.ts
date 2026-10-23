@@ -31,6 +31,12 @@ const enUS = {
     save: 'Save',
     saveChanges: 'Save changes',
     saving: 'Saving...',
+    unsavedChanges: {
+      title: 'Discard unsaved changes?',
+      message: 'Your changes have not been saved. Do you want to discard them?',
+      keepEditing: 'Keep editing',
+      discard: 'Discard changes',
+    },
     required: 'Required',
     noOptionsAvailable: 'No options available',
     optional: 'Optional',

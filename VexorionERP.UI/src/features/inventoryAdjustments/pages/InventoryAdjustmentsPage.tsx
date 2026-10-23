@@ -8,6 +8,7 @@ import { useCurrency } from '../../../app/CurrencyContext'
 import LookupSelectField from '../../../components/LookupSelectField'
 import OrderWorkspace from '../../../components/OrderWorkspace'
 import { useInventoryBalancesLookup, useProductsLookup, useWarehousesLookup } from '../../../hooks/useLookups'
+import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import {
   ApiError,
   createInventoryAdjustment,
@@ -104,8 +105,10 @@ export default function InventoryAdjustmentsPage() {
   const [editorMode, setEditorMode] = useState<DialogMode>('create')
   const [editorOpen, setEditorOpen] = useState(false)
   const [editorLoading, setEditorLoading] = useState(false)
+  const [editorSaving, setEditorSaving] = useState(false)
   const [editorError, setEditorError] = useState<string | null>(null)
   const [editorForm, setEditorForm] = useState<AdjustmentFormState>(defaultAdjustmentForm)
+  const [initialEditorForm, setInitialEditorForm] = useState<AdjustmentFormState | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<AdjustmentGridRow | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [lineMode, setLineMode] = useState<DialogMode>('create')
@@ -113,8 +116,21 @@ export default function InventoryAdjustmentsPage() {
   const [lineSaving, setLineSaving] = useState(false)
   const [lineError, setLineError] = useState<string | null>(null)
   const [lineForm, setLineForm] = useState<AdjustmentLineFormState>(defaultLineForm)
+  const [initialLineForm, setInitialLineForm] = useState<AdjustmentLineFormState | null>(null)
   const [selectedLine, setSelectedLine] = useState<InventoryAdjustmentLineDetailsResponse | null>(null)
   const [lineAutofillHint, setLineAutofillHint] = useState<string | null>(null)
+  const { requestClose: requestEditorClose, confirmationDialog: editorDiscardDialog } = useUnsavedChangesPrompt(
+    canManage && editorOpen && Boolean(initialEditorForm && JSON.stringify(editorForm) !== JSON.stringify(initialEditorForm)),
+    editorLoading || editorSaving,
+    () => setEditorOpen(false),
+    () => setEditorForm(initialEditorForm ?? defaultAdjustmentForm),
+  )
+  const { requestClose: requestLineClose, confirmationDialog: lineDiscardDialog } = useUnsavedChangesPrompt(
+    canManage && lineOpen && Boolean(initialLineForm && JSON.stringify(lineForm) !== JSON.stringify(initialLineForm)),
+    lineSaving,
+    () => setLineOpen(false),
+    () => setLineForm(initialLineForm ?? defaultLineForm),
+  )
 
   const loadRows = useCallback(async () => {
     if (!isAuthenticated) {
@@ -171,6 +187,7 @@ export default function InventoryAdjustmentsPage() {
   const resetEditor = () => {
     setEditorError(null)
     setEditorForm(defaultAdjustmentForm)
+    setInitialEditorForm(defaultAdjustmentForm)
   }
 
   const openCreateDialog = () => {
@@ -188,18 +205,21 @@ export default function InventoryAdjustmentsPage() {
     setEditorOpen(true)
     setEditorLoading(true)
     setEditorError(null)
+    setInitialEditorForm(null)
 
     try {
       const detail = await getInventoryAdjustment(row.id)
       setSelectedAdjustment(detail)
-      setEditorForm({
+      const nextForm = {
         adjustmentNumber: detail.adjustmentNumber,
         warehouseId: detail.warehouseId,
         adjustmentDate: detail.adjustmentDate,
         status: detail.status,
         reason: detail.reason,
         notes: detail.notes ?? '',
-      })
+      }
+      setEditorForm(nextForm)
+      setInitialEditorForm(nextForm)
     } catch (loadError) {
       setEditorError(loadError instanceof ApiError ? loadError.message : t('pages.inventoryAdjustments.errors.loadDetails'))
     } finally {
@@ -215,6 +235,7 @@ export default function InventoryAdjustmentsPage() {
       return
     }
 
+    setEditorSaving(true)
     try {
       const payload = {
         adjustmentNumber: editorForm.adjustmentNumber.trim(),
@@ -235,6 +256,8 @@ export default function InventoryAdjustmentsPage() {
       await loadRows()
     } catch (saveError) {
       setEditorError(saveError instanceof ApiError ? saveError.message : t('pages.inventoryAdjustments.errors.save'))
+    } finally {
+      setEditorSaving(false)
     }
   }
 
@@ -266,6 +289,7 @@ export default function InventoryAdjustmentsPage() {
     setLineMode('create')
     setSelectedLine(null)
     setLineForm(defaultLineForm)
+    setInitialLineForm(defaultLineForm)
     setLineError(null)
     setLineAutofillHint(null)
     setLineOpen(true)
@@ -274,7 +298,9 @@ export default function InventoryAdjustmentsPage() {
   const openEditLine = (line: InventoryAdjustmentLineDetailsResponse) => {
     setLineMode('edit')
     setSelectedLine(line)
-    setLineForm(buildLineForm(line))
+    const nextForm = buildLineForm(line)
+    setLineForm(nextForm)
+    setInitialLineForm(nextForm)
     setLineError(null)
     setLineAutofillHint(null)
     setLineOpen(true)
@@ -329,6 +355,7 @@ export default function InventoryAdjustmentsPage() {
 
       setLineOpen(false)
       setLineForm(defaultLineForm)
+      setInitialLineForm(defaultLineForm)
       setSelectedLine(null)
       setLineAutofillHint(null)
       setFeedback(t(lineMode === 'create' ? 'pages.inventoryAdjustments.feedback.lineCreated' : 'pages.inventoryAdjustments.feedback.lineUpdated'))
@@ -519,7 +546,8 @@ export default function InventoryAdjustmentsPage() {
         </VxPaper>
       }
       editor={
-        <VxDialog open={canManage && editorOpen} onClose={editorLoading ? undefined : () => setEditorOpen(false)} fullWidth maxWidth="md">
+        <>
+        <VxDialog open={canManage && editorOpen} onClose={requestEditorClose} fullWidth maxWidth="md">
           <VxDialogTitle>{t(editorMode === 'create' ? 'pages.inventoryAdjustments.editor.createTitle' : 'pages.inventoryAdjustments.editor.editTitle')}</VxDialogTitle>
           <VxDialogContent dividers>
             {editorLoading ? (
@@ -546,15 +574,17 @@ export default function InventoryAdjustmentsPage() {
             )}
           </VxDialogContent>
           <VxDialogActions sx={{ px: 3, py: 2 }}>
-            <VxButton onClick={() => setEditorOpen(false)} disabled={editorLoading}>{t('pages.inventoryAdjustments.editor.cancel')}</VxButton>
-            <VxButton variant="contained" onClick={() => void saveEditor()} disabled={editorLoading || warehouses.length === 0}>{editorMode === 'create' ? t('pages.inventoryAdjustments.editor.create') : t('pages.inventoryAdjustments.editor.save')}</VxButton>
+            <VxButton onClick={requestEditorClose} disabled={editorLoading || editorSaving}>{t('pages.inventoryAdjustments.editor.cancel')}</VxButton>
+            <VxButton variant="contained" onClick={() => void saveEditor()} disabled={editorLoading || editorSaving || warehouses.length === 0}>{editorMode === 'create' ? t('pages.inventoryAdjustments.editor.create') : t('pages.inventoryAdjustments.editor.save')}</VxButton>
           </VxDialogActions>
         </VxDialog>
+        {editorDiscardDialog}
+        </>
       }
       deleteDialog={
         <>
           <VxConfirmActionDialog open={canManage && Boolean(deleteTarget)} title={t('pages.inventoryAdjustments.editor.deleteTitle')} targetName={deleteTarget?.adjustmentNumber ?? ''} consequence={t('pages.inventoryAdjustments.editor.deleteConsequence')} confirmLabel={t('pages.inventoryAdjustments.editor.deleteConfirm')} pendingLabel={t('pages.inventoryAdjustments.linePanel.deleting')} pending={isDeleting} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} />
-          <VxDialog open={canManage && lineOpen} onClose={lineSaving ? undefined : () => setLineOpen(false)} fullWidth maxWidth="sm">
+          <VxDialog open={canManage && lineOpen} onClose={requestLineClose} fullWidth maxWidth="sm">
             <VxDialogTitle>{t(lineMode === 'create' ? 'pages.inventoryAdjustments.lineEditor.createTitle' : 'pages.inventoryAdjustments.lineEditor.editTitle')}</VxDialogTitle>
             <VxDialogContent dividers>
               <VxStack spacing={2.5} sx={{ pt: 1 }}>
@@ -570,10 +600,11 @@ export default function InventoryAdjustmentsPage() {
               </VxStack>
             </VxDialogContent>
             <VxDialogActions sx={{ px: 3, py: 2 }}>
-              <VxButton onClick={() => setLineOpen(false)} disabled={lineSaving}>{t('pages.inventoryAdjustments.lineEditor.cancel')}</VxButton>
+              <VxButton onClick={requestLineClose} disabled={lineSaving}>{t('pages.inventoryAdjustments.lineEditor.cancel')}</VxButton>
               <VxButton variant="contained" onClick={() => void saveLine()} disabled={lineSaving || !products.length}>{lineSaving ? t('pages.inventoryAdjustments.lineEditor.saving') : lineMode === 'create' ? t('pages.inventoryAdjustments.lineEditor.add') : t('pages.inventoryAdjustments.lineEditor.save')}</VxButton>
             </VxDialogActions>
           </VxDialog>
+          {lineDiscardDialog}
         </>
       }
     />

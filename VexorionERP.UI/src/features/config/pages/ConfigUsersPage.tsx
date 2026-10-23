@@ -5,6 +5,7 @@ import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
 import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 import { PageBody, PageFeedback, PageHeader } from '../../../components/PagePrimitives'
+import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import {
   ApiError,
   assignUserRoles,
@@ -47,11 +48,22 @@ export default function ConfigUsersPage() {
   const [users, setUsers] = useState<UserListItemResponse[]>([])
   const [roles, setRoles] = useState<RolePermissionsResponse[]>([])
   const [roleDraftByUserId, setRoleDraftByUserId] = useState<Record<string, string[]>>({})
+  const [initialRoleDraftByUserId, setInitialRoleDraftByUserId] = useState<Record<string, string[]>>({})
   const [createDraft, setCreateDraft] = useState<CreateUserDraft>(defaultDraft)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
   const [deactivateTarget, setDeactivateTarget] = useState<UserListItemResponse | null>(null)
+  const { confirmationDialog } = useUnsavedChangesPrompt(
+    (canManageUsers && JSON.stringify(createDraft) !== JSON.stringify(defaultDraft))
+      || (canEditRoles && JSON.stringify(roleDraftByUserId) !== JSON.stringify(initialRoleDraftByUserId)),
+    isSaving,
+    () => {},
+    () => {
+      setCreateDraft(defaultDraft)
+      setRoleDraftByUserId(initialRoleDraftByUserId)
+    },
+  )
 
   const roleOptions = useMemo(() => roles.map((item) => item.role), [roles])
 
@@ -70,12 +82,12 @@ export default function ConfigUsersPage() {
       ])
       setUsers(nextUsers)
       setRoles(nextRoles)
-      setRoleDraftByUserId(
-        nextUsers.reduce<Record<string, string[]>>((acc, user) => {
-          acc[user.id] = [...user.roles]
-          return acc
-        }, {}),
-      )
+      const nextRoleDrafts = nextUsers.reduce<Record<string, string[]>>((acc, user) => {
+        acc[user.id] = [...user.roles]
+        return acc
+      }, {})
+      setRoleDraftByUserId(nextRoleDrafts)
+      setInitialRoleDraftByUserId(nextRoleDrafts)
     } catch (loadError) {
       if (loadError instanceof ApiError) {
         setError(loadError.message)
@@ -332,6 +344,7 @@ export default function ConfigUsersPage() {
           void updateUserStatus(deactivateTarget, false).then(() => setDeactivateTarget(null))
         }}
       />
+      {confirmationDialog}
     </VxStack>
   )
 }

@@ -5,6 +5,7 @@ import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
 import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 import { PageBody, PageFeedback, PageHeader } from '../../../components/PagePrimitives'
+import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import {
   ApiError,
   createTaxCode,
@@ -37,8 +38,14 @@ export default function ConfigTaxDiscountPage() {
   const canManageDiscount = user?.permissions.includes(Permissions.organization.manage) ?? false
   const [taxCodes, setTaxCodes] = useState<TaxCodeListItemResponse[]>([])
   const [draft, setDraft] = useState<TaxCodeDraft>(emptyTaxCodeDraft)
+  const [taxBaseline, setTaxBaseline] = useState<TaxCodeDraft>(emptyTaxCodeDraft)
   const [editTargetId, setEditTargetId] = useState<string | null>(null)
   const [discountConfig, setDiscountConfig] = useState({
+    defaultDiscountPercent: 0,
+    maxManualDiscountPercent: 25,
+    allowNegativeDiscount: false,
+  })
+  const [discountBaseline, setDiscountBaseline] = useState({
     defaultDiscountPercent: 0,
     maxManualDiscountPercent: 25,
     allowNegativeDiscount: false,
@@ -57,11 +64,13 @@ export default function ConfigTaxDiscountPage() {
     try {
       const [codes, preferences] = await Promise.all([getTaxCodes(), getTenantPreferences()])
       setTaxCodes(codes)
-      setDiscountConfig({
+      const nextDiscountBaseline = {
         defaultDiscountPercent: preferences.defaultDiscountPercent,
         maxManualDiscountPercent: preferences.maxManualDiscountPercent,
         allowNegativeDiscount: preferences.allowNegativeDiscount,
-      })
+      }
+      setDiscountConfig(nextDiscountBaseline)
+      setDiscountBaseline(nextDiscountBaseline)
     } catch (loadError) {
       if (loadError instanceof ApiError) {
         setError(loadError.message)
@@ -77,8 +86,22 @@ export default function ConfigTaxDiscountPage() {
 
   const clearTaxDraft = () => {
     setDraft(emptyTaxCodeDraft)
+    setTaxBaseline(emptyTaxCodeDraft)
     setEditTargetId(null)
   }
+
+  const { requestClose: requestTaxClose, confirmationDialog: taxDiscardDialog } = useUnsavedChangesPrompt(
+    canManageTax && JSON.stringify(draft) !== JSON.stringify(taxBaseline),
+    isSaving,
+    clearTaxDraft,
+    () => setDraft(taxBaseline),
+  )
+  const { confirmationDialog: discountDiscardDialog } = useUnsavedChangesPrompt(
+    canManageDiscount && JSON.stringify(discountConfig) !== JSON.stringify(discountBaseline),
+    isSaving,
+    () => {},
+    () => setDiscountConfig(discountBaseline),
+  )
 
   const submitTaxCode = async () => {
     if (!canManageTax) return
@@ -118,12 +141,14 @@ export default function ConfigTaxDiscountPage() {
   const startEdit = (taxCode: TaxCodeListItemResponse) => {
     if (!canManageTax) return
     setEditTargetId(taxCode.id)
-    setDraft({
+    const nextDraft = {
       code: taxCode.code,
       name: taxCode.name,
       ratePercent: String(taxCode.ratePercent),
       isInclusive: taxCode.isInclusive,
-    })
+    }
+    setDraft(nextDraft)
+    setTaxBaseline(nextDraft)
   }
 
   const removeTaxCode = async (taxCodeId: string) => {
@@ -164,11 +189,13 @@ export default function ConfigTaxDiscountPage() {
         allowNegativeDiscount: discountConfig.allowNegativeDiscount,
       })
 
-      setDiscountConfig({
+      const updatedBaseline = {
         defaultDiscountPercent: updated.defaultDiscountPercent,
         maxManualDiscountPercent: updated.maxManualDiscountPercent,
         allowNegativeDiscount: updated.allowNegativeDiscount,
-      })
+      }
+      setDiscountConfig(updatedBaseline)
+      setDiscountBaseline(updatedBaseline)
       setFeedback(t('config.taxDiscount.feedback.discountSaved'))
     } catch (saveError) {
       if (saveError instanceof ApiError) {
@@ -211,7 +238,7 @@ export default function ConfigTaxDiscountPage() {
             label={t('config.taxDiscount.fields.inclusive')}
           />
           <VxButton variant="contained" onClick={() => void submitTaxCode()} disabled={isSaving}>{t('config.taxDiscount.saveTaxButton')}</VxButton>
-          {editTargetId ? <VxButton variant="outlined" onClick={clearTaxDraft}>{t('config.taxDiscount.cancelEdit')}</VxButton> : null}
+          {editTargetId ? <VxButton variant="outlined" onClick={requestTaxClose} disabled={isSaving}>{t('config.taxDiscount.cancelEdit')}</VxButton> : null}
         </VxStack>
       </VxPaper> : null}
 
@@ -288,6 +315,8 @@ export default function ConfigTaxDiscountPage() {
           {canManageDiscount ? <VxButton variant="contained" onClick={() => void saveDiscounts()} disabled={isSaving}>{t('config.taxDiscount.saveDiscountButton')}</VxButton> : null}
         </VxStack>
       </VxPaper>
+      {taxDiscardDialog}
+      {discountDiscardDialog}
     </VxStack>
   )
 }

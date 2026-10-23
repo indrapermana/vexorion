@@ -3,6 +3,7 @@ import { VxAlert, VxBox, VxButton, VxDivider, VxGrid, VxLink, VxStack, VxTextFie
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router-dom'
 import { ApiError, onboardTenant } from '../lib/api'
+import { useUnsavedChangesPrompt } from '../hooks/useUnsavedChangesPrompt'
 import type { OnboardTenantRequest, OnboardTenantResponse, ValidationProblem } from '../types/api'
 
 const initialForm: OnboardTenantRequest = {
@@ -25,6 +26,12 @@ export default function TenantsPage() {
   const [error, setError] = useState<string | null>(null)
   const [validation, setValidation] = useState<ValidationProblem | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const { confirmationDialog } = useUnsavedChangesPrompt(
+    JSON.stringify(form) !== JSON.stringify(initialForm),
+    isSubmitting,
+    () => {},
+    () => setForm(initialForm),
+  )
 
   const setField = (field: keyof OnboardTenantRequest, value: string) => {
     setForm((current) => ({ ...current, [field]: value }))
@@ -104,6 +111,7 @@ export default function TenantsPage() {
       <VxButton type="submit" variant="contained" size="large" disabled={isSubmitting}>
         {isSubmitting ? t('pages.auth.tenants.creating') : t('pages.auth.tenants.createButton')}
       </VxButton>
+      {confirmationDialog}
 
       <VxDivider />
 

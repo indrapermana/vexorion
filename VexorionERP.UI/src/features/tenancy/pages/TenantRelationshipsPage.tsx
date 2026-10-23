@@ -27,6 +27,7 @@ import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
 import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 import { PageBody, PageFeedback, PageHeader, PageLoadingState, PageMetric } from '../../../components/PagePrimitives'
+import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import {
   activateTenantRelationship,
   ApiError,
@@ -132,10 +133,32 @@ export default function TenantRelationshipsPage() {
   const [editorOpen, setEditorOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<TenantRelationshipListItemResponse | null>(null)
   const [formState, setFormState] = useState<RelationshipFormState>(defaultFormState)
+  const [initialForm, setInitialForm] = useState<RelationshipFormState>(defaultFormState)
 
   const [activationOpen, setActivationOpen] = useState(false)
   const [activationItem, setActivationItem] = useState<TenantRelationshipListItemResponse | null>(null)
   const [activationState, setActivationState] = useState<ActivationFormState>(defaultActivationState)
+  const [initialActivationState, setInitialActivationState] = useState<ActivationFormState>(defaultActivationState)
+  const { requestClose: requestEditorClose, confirmationDialog: editorDiscardDialog } = useUnsavedChangesPrompt(
+    canManage && editorOpen && JSON.stringify(formState) !== JSON.stringify(initialForm),
+    isSaving,
+    () => {
+      setEditorOpen(false)
+      setEditingItem(null)
+      setFormState(defaultFormState)
+    },
+    () => setFormState(initialForm),
+  )
+  const { requestClose: requestActivationClose, confirmationDialog: activationDiscardDialog } = useUnsavedChangesPrompt(
+    canManage && activationOpen && JSON.stringify(activationState) !== JSON.stringify(initialActivationState),
+    isSaving,
+    () => {
+      setActivationOpen(false)
+      setActivationItem(null)
+      setActivationState(defaultActivationState)
+    },
+    () => setActivationState(initialActivationState),
+  )
 
   const statusLabelMap = useMemo(() => ({
     1: t('pages.tenantRelationships.status.pending'),
@@ -184,13 +207,14 @@ export default function TenantRelationshipsPage() {
     if (!canManage) return
     setEditingItem(null)
     setFormState(defaultFormState)
+    setInitialForm(defaultFormState)
     setEditorOpen(true)
   }
 
   const openEditDialog = (item: TenantRelationshipListItemResponse) => {
     if (!canManage) return
     setEditingItem(item)
-    setFormState({
+    const nextForm: RelationshipFormState = {
       relatedTenantId: item.relatedTenantId,
       relationshipType: item.relationshipType,
       status: item.status,
@@ -198,7 +222,9 @@ export default function TenantRelationshipsPage() {
       effectiveTo: item.effectiveTo ?? '',
       contractReference: item.contractReference ?? '',
       scopeJson: item.scopeJson ?? '',
-    })
+    }
+    setFormState(nextForm)
+    setInitialForm(nextForm)
     setEditorOpen(true)
   }
 
@@ -216,6 +242,11 @@ export default function TenantRelationshipsPage() {
       effectiveTo: item.effectiveTo ?? '',
       scopeJson: item.scopeJson ?? '',
     })
+    setInitialActivationState({
+      effectiveFrom: item.effectiveFrom ?? '',
+      effectiveTo: item.effectiveTo ?? '',
+      scopeJson: item.scopeJson ?? '',
+    })
     setActivationOpen(true)
   }
 
@@ -223,6 +254,7 @@ export default function TenantRelationshipsPage() {
     setActivationOpen(false)
     setActivationItem(null)
     setActivationState(defaultActivationState)
+    setInitialActivationState(defaultActivationState)
   }
 
   const saveRelationship = async () => {
@@ -418,7 +450,7 @@ export default function TenantRelationshipsPage() {
         )}
       </PageBody>
 
-      <VxDialog open={canManage && editorOpen} onClose={isSaving ? undefined : closeEditor} maxWidth="md" fullWidth>
+      <VxDialog open={canManage && editorOpen} onClose={requestEditorClose} maxWidth="md" fullWidth>
         <VxDialogTitle>{editingItem ? t('pages.tenantRelationships.dialogs.edit') : t('pages.tenantRelationships.dialogs.create')}</VxDialogTitle>
         <VxDialogContent dividers>
           <VxStack spacing={2} sx={{ mt: 1 }}>
@@ -495,7 +527,7 @@ export default function TenantRelationshipsPage() {
           </VxStack>
         </VxDialogContent>
         <VxDialogActions>
-          <VxButton onClick={closeEditor}>{t('common.cancel')}</VxButton>
+          <VxButton onClick={requestEditorClose} disabled={isSaving}>{t('common.cancel')}</VxButton>
           <VxButton
             variant="contained"
             disabled={isSaving || !formState.relatedTenantId.trim()}
@@ -505,8 +537,9 @@ export default function TenantRelationshipsPage() {
           </VxButton>
         </VxDialogActions>
       </VxDialog>
+      {editorDiscardDialog}
 
-      <VxDialog open={canManage && activationOpen} onClose={isSaving ? undefined : closeActivateDialog} maxWidth="md" fullWidth>
+      <VxDialog open={canManage && activationOpen} onClose={requestActivationClose} maxWidth="md" fullWidth>
         <VxDialogTitle>{t('pages.tenantRelationships.dialogs.activate')}</VxDialogTitle>
         <VxDialogContent dividers>
           <VxStack spacing={2} sx={{ mt: 1 }}>
@@ -541,12 +574,13 @@ export default function TenantRelationshipsPage() {
           </VxStack>
         </VxDialogContent>
         <VxDialogActions>
-          <VxButton onClick={closeActivateDialog}>{t('common.cancel')}</VxButton>
+          <VxButton onClick={requestActivationClose} disabled={isSaving}>{t('common.cancel')}</VxButton>
           <VxButton variant="contained" disabled={isSaving} onClick={() => void activateRelationship()}>
             {t('pages.tenantRelationships.activateButton')}
           </VxButton>
         </VxDialogActions>
       </VxDialog>
+      {activationDiscardDialog}
     </VxStack>
   )
 }

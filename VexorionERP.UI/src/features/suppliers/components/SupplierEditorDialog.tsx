@@ -4,6 +4,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { useTranslation } from 'react-i18next'
+import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import { ApiError, createSupplier, getSupplier, updateSupplier } from '../../../lib/api'
 import type { ValidationProblem } from '../../../types/api'
 import type { SupplierEditorDialogProps, SupplierFormValues } from '../../../types/ui'
@@ -53,10 +54,11 @@ export default function SupplierEditorDialog({ open, mode, supplierId, onClose, 
     () => (mode === 'create' ? t('components.suppliers.editor.createTitle') : t('components.suppliers.editor.editTitle')),
     [mode, t],
   )
-  const { control, handleSubmit, reset, setError, formState: { errors, isSubmitting } } = useForm<SupplierFormValues>({
+  const { control, handleSubmit, reset, setError, formState: { errors, isSubmitting, isDirty } } = useForm<SupplierFormValues>({
     defaultValues,
     resolver: yupResolver(validationSchema),
   })
+  const { requestClose, confirmationDialog } = useUnsavedChangesPrompt(open && isDirty, isSubmitting || isLoadingSupplier, onClose, () => reset())
 
   useEffect(() => {
     if (mode === 'create' || !supplierId) {
@@ -151,7 +153,8 @@ export default function SupplierEditorDialog({ open, mode, supplierId, onClose, 
   })
 
   return (
-    <VxDialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="md">
+    <>
+    <VxDialog open={open} onClose={requestClose} fullWidth maxWidth="md">
       <VxDialogTitle>{title}</VxDialogTitle>
       <VxDialogContent dividers>
         {isLoadingSupplier ? (
@@ -195,7 +198,7 @@ export default function SupplierEditorDialog({ open, mode, supplierId, onClose, 
         )}
       </VxDialogContent>
       <VxDialogActions sx={{ px: 3, py: 2 }}>
-        <VxButton onClick={onClose} disabled={isSubmitting}>{t('dialogs.cancel')}</VxButton>
+        <VxButton onClick={requestClose} disabled={isSubmitting}>{t('dialogs.cancel')}</VxButton>
         <VxButton onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoadingSupplier}>
           {isSubmitting
             ? t('components.suppliers.editor.saving')
@@ -205,5 +208,7 @@ export default function SupplierEditorDialog({ open, mode, supplierId, onClose, 
         </VxButton>
       </VxDialogActions>
     </VxDialog>
+    {confirmationDialog}
+    </>
   )
 }

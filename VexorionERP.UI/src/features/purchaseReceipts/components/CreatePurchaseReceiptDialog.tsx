@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useCurrency } from '../../../app/CurrencyContext'
 import { ApiError, createPurchaseReceipt, getPurchaseOrderLines } from '../../../lib/api'
 import { useProductsLookup } from '../../../hooks/useLookups'
+import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import LookupSelectField from '../../../components/LookupSelectField'
 import type { PurchaseReceiptEditorDialogProps } from '../../../types/ui'
 
@@ -28,6 +29,26 @@ export default function CreatePurchaseReceiptDialog({ open, purchaseOrderId, war
   const [notes, setNotes] = useState('')
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [initialFormSnapshot, setInitialFormSnapshot] = useState<string | null>(null)
+  const currentFormSnapshot = JSON.stringify({
+    receiptNumber,
+    warehouseId,
+    receiptDate,
+    notes,
+    lines: orderLines.map(({ purchaseOrderLineId, receivedQuantity }) => ({ purchaseOrderLineId, receivedQuantity })),
+  })
+  const { requestClose, confirmationDialog } = useUnsavedChangesPrompt(
+    open && initialFormSnapshot !== null && currentFormSnapshot !== initialFormSnapshot,
+    isSubmitting || isLoadingLines,
+    onClose,
+    () => {
+      setReceiptNumber('')
+      setWarehouseId(warehouses[0]?.id ?? '')
+      setReceiptDate(new Date().toISOString().slice(0, 10))
+      setNotes('')
+      setOrderLines((lines) => lines.map((line) => ({ ...line, receivedQuantity: '' })))
+    },
+  )
 
   useEffect(() => {
     if (!open) return
@@ -36,13 +57,13 @@ export default function CreatePurchaseReceiptDialog({ open, purchaseOrderId, war
     setReceiptDate(new Date().toISOString().slice(0, 10))
     setNotes('')
     setSubmitError(null)
+    setInitialFormSnapshot(null)
 
     void (async () => {
       setIsLoadingLines(true)
       try {
         const lines = await getPurchaseOrderLines(purchaseOrderId)
-        setOrderLines(
-          lines.filter(l => l.isActive).map(l => ({
+        const nextOrderLines = lines.filter(l => l.isActive).map(l => ({
             purchaseOrderLineId: l.id,
             productId: l.productId,
             productName: '',
@@ -50,9 +71,23 @@ export default function CreatePurchaseReceiptDialog({ open, purchaseOrderId, war
             unitCost: l.unitCost,
             receivedQuantity: '',
           }))
-        )
+        setOrderLines(nextOrderLines)
+        setInitialFormSnapshot(JSON.stringify({
+          receiptNumber: '',
+          warehouseId: warehouses[0]?.id ?? '',
+          receiptDate: new Date().toISOString().slice(0, 10),
+          notes: '',
+          lines: nextOrderLines.map(({ purchaseOrderLineId, receivedQuantity }) => ({ purchaseOrderLineId, receivedQuantity })),
+        }))
       } catch {
         setOrderLines([])
+        setInitialFormSnapshot(JSON.stringify({
+          receiptNumber: '',
+          warehouseId: warehouses[0]?.id ?? '',
+          receiptDate: new Date().toISOString().slice(0, 10),
+          notes: '',
+          lines: [],
+        }))
       } finally {
         setIsLoadingLines(false)
       }
@@ -114,7 +149,8 @@ export default function CreatePurchaseReceiptDialog({ open, purchaseOrderId, war
   }
 
   return (
-    <VxDialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <>
+    <VxDialog open={open} onClose={requestClose} maxWidth="md" fullWidth>
       <VxDialogTitle>{t('pages.purchaseReceipts.editor.title')}</VxDialogTitle>
       <VxDialogContent dividers>
         <VxStack spacing={2}>
@@ -202,11 +238,13 @@ export default function CreatePurchaseReceiptDialog({ open, purchaseOrderId, war
         </VxStack>
       </VxDialogContent>
       <VxDialogActions>
-        <VxButton onClick={onClose} disabled={isSubmitting}>{t('pages.purchaseReceipts.editor.cancel')}</VxButton>
+        <VxButton onClick={requestClose} disabled={isSubmitting}>{t('pages.purchaseReceipts.editor.cancel')}</VxButton>
         <VxButton variant="contained" onClick={handleSubmit} disabled={isSubmitting || isLoadingLines}>
           {isSubmitting ? <VxCircularProgress size={18} /> : t('pages.purchaseReceipts.editor.create')}
         </VxButton>
       </VxDialogActions>
     </VxDialog>
+    {confirmationDialog}
+    </>
   )
 }

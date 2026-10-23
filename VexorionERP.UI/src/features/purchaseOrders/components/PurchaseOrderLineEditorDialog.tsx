@@ -6,6 +6,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import LookupSelectField from '../../../components/LookupSelectField'
+import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import { ApiError, getProduct } from '../../../lib/api'
 import type { PurchaseOrderLineEditorDialogProps, PurchaseOrderLineFormValues } from '../../../types/ui'
 
@@ -29,7 +30,8 @@ export default function PurchaseOrderLineEditorDialog({ open, mode, line, produc
       .required(t('common.validation.required', { field: t('purchaseOrders.lineEditor.unitCost') })),
     isActive: yup.boolean().required(),
   }), [t])
-  const { control, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<PurchaseOrderLineFormValues>({ defaultValues, resolver: yupResolver(validationSchema) })
+  const { control, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting, isDirty } } = useForm<PurchaseOrderLineFormValues>({ defaultValues, resolver: yupResolver(validationSchema) })
+  const { requestClose, confirmationDialog } = useUnsavedChangesPrompt(open && isDirty, isSubmitting, onClose, () => reset())
   const [autofillHint, setAutofillHint] = useState<string | null>(null)
   const selectedProductId = watch('productId')
 
@@ -74,7 +76,8 @@ export default function PurchaseOrderLineEditorDialog({ open, mode, line, produc
   const productOptions = products.map((product) => ({ value: product.id, label: `${product.name} (${product.sku})` }))
 
   return (
-    <VxDialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="sm">
+    <>
+    <VxDialog open={open} onClose={requestClose} fullWidth maxWidth="sm">
       <VxDialogTitle>{t(mode === 'create' ? 'purchaseOrders.lineEditor.createTitle' : 'purchaseOrders.lineEditor.editTitle')}</VxDialogTitle>
       <VxDialogContent dividers>
         {!products.length ? <VxAlert severity="warning">{t('purchaseOrders.lineEditor.createProductsFirst')}</VxAlert> : null}
@@ -88,9 +91,11 @@ export default function PurchaseOrderLineEditorDialog({ open, mode, line, produc
         </VxStack>
       </VxDialogContent>
       <VxDialogActions sx={{ px: 3, py: 2 }}>
-        <VxButton onClick={onClose} disabled={isSubmitting}>{t('common.cancel')}</VxButton>
+        <VxButton onClick={requestClose} disabled={isSubmitting}>{t('common.cancel')}</VxButton>
         <VxButton onClick={() => void handleSubmit(async (values) => { await onSaved(mode, values) })()} variant="contained" disabled={isSubmitting || !products.length}>{isSubmitting ? t('common.saving') : mode === 'create' ? t('purchaseOrders.lineEditor.addButton') : t('purchaseOrders.lineEditor.saveButton')}</VxButton>
       </VxDialogActions>
     </VxDialog>
+    {confirmationDialog}
+    </>
   )
 }

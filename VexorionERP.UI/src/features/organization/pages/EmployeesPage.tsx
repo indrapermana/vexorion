@@ -24,6 +24,7 @@ import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
 import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 import { PageBody, PageFeedback, PageHeader, PageLoadingState, PageMetric } from '../../../components/PagePrimitives'
+import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import {
   ApiError,
   createEmployee,
@@ -78,6 +79,17 @@ export default function EmployeesPage() {
   const [editorOpen, setEditorOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [formState, setFormState] = useState<EmployeeFormState>(initialFormState)
+  const [initialForm, setInitialForm] = useState<EmployeeFormState>(initialFormState)
+  const { requestClose, confirmationDialog } = useUnsavedChangesPrompt(
+    canManage && editorOpen && JSON.stringify(formState) !== JSON.stringify(initialForm),
+    isSaving,
+    () => {
+      setEditorOpen(false)
+      setEditingId(null)
+      setFormState(initialFormState)
+    },
+    () => setFormState(initialForm),
+  )
 
   const loadData = useCallback(async () => {
     if (!isAuthenticated) {
@@ -115,13 +127,14 @@ export default function EmployeesPage() {
     if (!canManage) return
     setEditingId(null)
     setFormState(initialFormState)
+    setInitialForm(initialFormState)
     setEditorOpen(true)
   }
 
   const openEdit = (row: EmployeeListItemResponse) => {
     if (!canManage) return
     setEditingId(row.id)
-    setFormState({
+    const nextForm: EmployeeFormState = {
       companyId: row.companyId,
       departmentId: row.departmentId ?? '',
       employeeNumber: row.employeeNumber,
@@ -132,7 +145,9 @@ export default function EmployeesPage() {
       jobTitle: row.jobTitle,
       hireDate: '',
       isActive: row.isActive,
-    })
+    }
+    setFormState(nextForm)
+    setInitialForm(nextForm)
     setEditorOpen(true)
   }
 
@@ -270,7 +285,7 @@ export default function EmployeesPage() {
         )}
       </PageBody>
 
-      <VxDialog open={canManage && editorOpen} onClose={isSaving ? undefined : closeEditor} maxWidth="md" fullWidth>
+      <VxDialog open={canManage && editorOpen} onClose={requestClose} maxWidth="md" fullWidth>
         <VxDialogTitle>{editingId ? t('pages.employees.dialogs.edit') : t('pages.employees.dialogs.create')}</VxDialogTitle>
         <VxDialogContent dividers>
           <VxStack spacing={2} sx={{ mt: 1 }}>
@@ -304,10 +319,11 @@ export default function EmployeesPage() {
           </VxStack>
         </VxDialogContent>
         <VxDialogActions>
-          <VxButton onClick={closeEditor}>{t('common.cancel')}</VxButton>
+          <VxButton onClick={requestClose} disabled={isSaving}>{t('common.cancel')}</VxButton>
           <VxButton variant="contained" disabled={isSaving || !formState.companyId || !formState.employeeNumber.trim() || !formState.firstName.trim() || !formState.lastName.trim() || !formState.email.trim() || !formState.jobTitle.trim() || !formState.hireDate} onClick={() => void save()}>{editingId ? t('common.save') : t('common.create')}</VxButton>
         </VxDialogActions>
       </VxDialog>
+      {confirmationDialog}
     </VxStack>
   )
 }

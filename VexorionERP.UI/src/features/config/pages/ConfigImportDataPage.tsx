@@ -6,6 +6,7 @@ import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
 import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 import { PageBody, PageHeader } from '../../../components/PagePrimitives'
+import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import {
   downloadImportTemplate,
   getAvailableImportTypes,
@@ -79,7 +80,6 @@ function ImportFlowPanel({ importType, onSubmitted, canSubmit }: ImportFlowPanel
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [flow, setFlow] = useState<FlowState>({ phase: 'idle' })
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
-
   const reset = () => {
     setFlow({ phase: 'idle' })
     setSelectedFile(null)
@@ -87,6 +87,13 @@ function ImportFlowPanel({ importType, onSubmitted, canSubmit }: ImportFlowPanel
       fileInputRef.current.value = ''
     }
   }
+
+  const { confirmationDialog } = useUnsavedChangesPrompt(
+    selectedFile !== null && flow.phase !== 'submitted',
+    flow.phase === 'downloading' || flow.phase === 'validating' || flow.phase === 'submitting',
+    () => {},
+    reset,
+  )
 
   const handleDownloadTemplate = async () => {
     setFlow({ phase: 'downloading' })
@@ -125,6 +132,8 @@ function ImportFlowPanel({ importType, onSubmitted, canSubmit }: ImportFlowPanel
     try {
       const jobStatus = await submitImportJob(result.importJobId)
       setFlow({ phase: 'submitted', jobStatus })
+      setSelectedFile(null)
+      if (fileInputRef.current) fileInputRef.current.value = ''
       onSubmitted?.()
     } catch {
       setFlow({ phase: 'error', message: t('pages.importData.errors.submit') })
@@ -363,6 +372,7 @@ function ImportFlowPanel({ importType, onSubmitted, canSubmit }: ImportFlowPanel
           {flow.message}
         </VxAlert>
       )}
+      {confirmationDialog}
     </VxStack>
   )
 }

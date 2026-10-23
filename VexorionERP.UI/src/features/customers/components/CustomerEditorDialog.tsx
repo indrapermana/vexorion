@@ -4,6 +4,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { useTranslation } from 'react-i18next'
+import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import { ApiError, createCustomer, getCustomer, updateCustomer } from '../../../lib/api'
 import type { ValidationProblem } from '../../../types/api'
 import type { CustomerEditorDialogProps, CustomerFormValues } from '../../../types/ui'
@@ -66,11 +67,12 @@ export default function CustomerEditorDialog({
     handleSubmit,
     reset,
     setError,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = useForm<CustomerFormValues>({
     defaultValues,
     resolver: yupResolver(validationSchema),
   })
+  const { requestClose, confirmationDialog } = useUnsavedChangesPrompt(open && isDirty, isSubmitting || isLoadingCustomer, onClose, () => reset())
 
   useEffect(() => {
     if (mode === 'create') {
@@ -170,7 +172,8 @@ export default function CustomerEditorDialog({
   })
 
   return (
-    <VxDialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="md">
+    <>
+    <VxDialog open={open} onClose={requestClose} fullWidth maxWidth="md">
       <VxDialogTitle>{title}</VxDialogTitle>
       <VxDialogContent dividers>
         {isLoadingCustomer ? (
@@ -324,7 +327,7 @@ export default function CustomerEditorDialog({
         )}
       </VxDialogContent>
       <VxDialogActions sx={{ px: 3, py: 2 }}>
-        <VxButton onClick={onClose} disabled={isSubmitting}>{t('dialogs.cancel')}</VxButton>
+        <VxButton onClick={requestClose} disabled={isSubmitting}>{t('dialogs.cancel')}</VxButton>
         <VxButton onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoadingCustomer}>
           {isSubmitting
             ? t('components.customers.editor.saving')
@@ -334,5 +337,7 @@ export default function CustomerEditorDialog({
         </VxButton>
       </VxDialogActions>
     </VxDialog>
+    {confirmationDialog}
+    </>
   )
 }

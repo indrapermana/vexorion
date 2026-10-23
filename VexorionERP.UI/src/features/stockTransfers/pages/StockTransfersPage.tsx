@@ -8,6 +8,7 @@ import { useCurrency } from '../../../app/CurrencyContext'
 import LookupSelectField from '../../../components/LookupSelectField'
 import OrderWorkspace from '../../../components/OrderWorkspace'
 import { useInventoryBalancesLookup, useProductsLookup, useWarehousesLookup } from '../../../hooks/useLookups'
+import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import {
   ApiError,
   createStockTransfer,
@@ -104,6 +105,8 @@ export default function StockTransfersPage() {
   const [editorLoading, setEditorLoading] = useState(false)
   const [editorError, setEditorError] = useState<string | null>(null)
   const [editorForm, setEditorForm] = useState<TransferFormState>(defaultTransferForm)
+  const [initialEditorForm, setInitialEditorForm] = useState<TransferFormState | null>(null)
+  const [editorSaving, setEditorSaving] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<TransferGridRow | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [lineMode, setLineMode] = useState<DialogMode>('create')
@@ -111,8 +114,21 @@ export default function StockTransfersPage() {
   const [lineSaving, setLineSaving] = useState(false)
   const [lineError, setLineError] = useState<string | null>(null)
   const [lineForm, setLineForm] = useState<TransferLineFormState>(defaultLineForm)
+  const [initialLineForm, setInitialLineForm] = useState<TransferLineFormState | null>(null)
   const [selectedLine, setSelectedLine] = useState<StockTransferLineDetailsResponse | null>(null)
   const [lineAutofillHint, setLineAutofillHint] = useState<string | null>(null)
+  const { requestClose: requestEditorClose, confirmationDialog: editorDiscardDialog } = useUnsavedChangesPrompt(
+    canManage && editorOpen && Boolean(initialEditorForm && JSON.stringify(editorForm) !== JSON.stringify(initialEditorForm)),
+    editorLoading || editorSaving,
+    () => setEditorOpen(false),
+    () => setEditorForm(initialEditorForm ?? defaultTransferForm),
+  )
+  const { requestClose: requestLineClose, confirmationDialog: lineDiscardDialog } = useUnsavedChangesPrompt(
+    canManage && lineOpen && Boolean(initialLineForm && JSON.stringify(lineForm) !== JSON.stringify(initialLineForm)),
+    lineSaving,
+    () => setLineOpen(false),
+    () => setLineForm(initialLineForm ?? defaultLineForm),
+  )
 
   const loadRows = useCallback(async () => {
     if (!isAuthenticated) {
@@ -170,6 +186,7 @@ export default function StockTransfersPage() {
   const resetEditor = () => {
     setEditorError(null)
     setEditorForm(defaultTransferForm)
+    setInitialEditorForm(defaultTransferForm)
   }
 
   const openCreateDialog = () => {
@@ -187,18 +204,21 @@ export default function StockTransfersPage() {
     setEditorOpen(true)
     setEditorLoading(true)
     setEditorError(null)
+    setInitialEditorForm(null)
 
     try {
       const detail = await getStockTransfer(row.id)
       setSelectedTransfer(detail)
-      setEditorForm({
+      const nextForm = {
         transferNumber: detail.transferNumber,
         sourceWarehouseId: detail.sourceWarehouseId,
         destinationWarehouseId: detail.destinationWarehouseId,
         transferDate: detail.transferDate,
         status: detail.status,
         notes: detail.notes ?? '',
-      })
+      }
+      setEditorForm(nextForm)
+      setInitialEditorForm(nextForm)
     } catch (loadError) {
       setEditorError(loadError instanceof ApiError ? loadError.message : t('pages.stockTransfers.errors.loadDetails'))
     } finally {
@@ -219,6 +239,7 @@ export default function StockTransfersPage() {
       return
     }
 
+    setEditorSaving(true)
     try {
       const payload = {
         transferNumber: editorForm.transferNumber.trim(),
@@ -239,6 +260,8 @@ export default function StockTransfersPage() {
       await loadRows()
     } catch (saveError) {
       setEditorError(saveError instanceof ApiError ? saveError.message : t('pages.stockTransfers.errors.save'))
+    } finally {
+      setEditorSaving(false)
     }
   }
 
@@ -271,6 +294,7 @@ export default function StockTransfersPage() {
     setLineMode('create')
     setSelectedLine(null)
     setLineForm(defaultLineForm)
+    setInitialLineForm(defaultLineForm)
     setLineError(null)
     setLineAutofillHint(null)
     setLineOpen(true)
@@ -280,7 +304,9 @@ export default function StockTransfersPage() {
     if (!canManage) return
     setLineMode('edit')
     setSelectedLine(line)
-    setLineForm(buildLineForm(line))
+    const nextForm = buildLineForm(line)
+    setLineForm(nextForm)
+    setInitialLineForm(nextForm)
     setLineError(null)
     setLineAutofillHint(null)
     setLineOpen(true)
@@ -334,6 +360,7 @@ export default function StockTransfersPage() {
 
       setLineOpen(false)
       setLineForm(defaultLineForm)
+      setInitialLineForm(defaultLineForm)
       setSelectedLine(null)
       setLineAutofillHint(null)
       setFeedback(t(lineMode === 'create' ? 'pages.stockTransfers.feedback.lineCreated' : 'pages.stockTransfers.feedback.lineUpdated'))
@@ -522,7 +549,8 @@ export default function StockTransfersPage() {
         </VxPaper>
       }
       editor={
-        <VxDialog open={canManage && editorOpen} onClose={editorLoading ? undefined : () => setEditorOpen(false)} fullWidth maxWidth="md">
+        <>
+        <VxDialog open={canManage && editorOpen} onClose={requestEditorClose} fullWidth maxWidth="md">
           <VxDialogTitle>{t(editorMode === 'create' ? 'pages.stockTransfers.editor.createTitle' : 'pages.stockTransfers.editor.editTitle')}</VxDialogTitle>
           <VxDialogContent dividers>
             {editorLoading ? (
@@ -549,15 +577,17 @@ export default function StockTransfersPage() {
             )}
           </VxDialogContent>
           <VxDialogActions sx={{ px: 3, py: 2 }}>
-            <VxButton onClick={() => setEditorOpen(false)} disabled={editorLoading}>{t('pages.stockTransfers.editor.cancel')}</VxButton>
-            <VxButton variant="contained" onClick={() => void saveEditor()} disabled={editorLoading || warehouses.length < 2}>{t(editorMode === 'create' ? 'pages.stockTransfers.editor.create' : 'pages.stockTransfers.editor.save')}</VxButton>
+            <VxButton onClick={requestEditorClose} disabled={editorLoading || editorSaving}>{t('pages.stockTransfers.editor.cancel')}</VxButton>
+            <VxButton variant="contained" onClick={() => void saveEditor()} disabled={editorLoading || editorSaving || warehouses.length < 2}>{t(editorMode === 'create' ? 'pages.stockTransfers.editor.create' : 'pages.stockTransfers.editor.save')}</VxButton>
           </VxDialogActions>
         </VxDialog>
+        {editorDiscardDialog}
+        </>
       }
       deleteDialog={
         <>
           <VxConfirmActionDialog open={canManage && Boolean(deleteTarget)} title={t('pages.stockTransfers.delete.title')} targetName={deleteTarget?.transferNumber ?? ''} consequence={t('pages.stockTransfers.delete.consequence')} confirmLabel={t('pages.stockTransfers.delete.confirm')} pendingLabel={t('pages.stockTransfers.delete.deleting')} pending={isDeleting} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} />
-          <VxDialog open={canManage && lineOpen} onClose={lineSaving ? undefined : () => setLineOpen(false)} fullWidth maxWidth="sm">
+          <VxDialog open={canManage && lineOpen} onClose={requestLineClose} fullWidth maxWidth="sm">
             <VxDialogTitle>{t(lineMode === 'create' ? 'pages.stockTransfers.lineEditor.createTitle' : 'pages.stockTransfers.lineEditor.editTitle')}</VxDialogTitle>
             <VxDialogContent dividers>
               <VxStack spacing={2.5} sx={{ pt: 1 }}>
@@ -572,10 +602,11 @@ export default function StockTransfersPage() {
               </VxStack>
             </VxDialogContent>
             <VxDialogActions sx={{ px: 3, py: 2 }}>
-              <VxButton onClick={() => setLineOpen(false)} disabled={lineSaving}>{t('pages.stockTransfers.lineEditor.cancel')}</VxButton>
+              <VxButton onClick={requestLineClose} disabled={lineSaving}>{t('pages.stockTransfers.lineEditor.cancel')}</VxButton>
               <VxButton variant="contained" onClick={() => void saveLine()} disabled={lineSaving || !products.length}>{lineSaving ? t('pages.stockTransfers.lineEditor.saving') : t(lineMode === 'create' ? 'pages.stockTransfers.lineEditor.add' : 'pages.stockTransfers.lineEditor.save')}</VxButton>
             </VxDialogActions>
           </VxDialog>
+          {lineDiscardDialog}
         </>
       }
     />

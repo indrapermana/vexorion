@@ -31,6 +31,12 @@ const esES = {
     save: 'Guardar',
     saveChanges: 'Guardar cambios',
     saving: 'Guardando...',
+    unsavedChanges: {
+      title: '¿Descartar los cambios sin guardar?',
+      message: 'Los cambios no se han guardado. ¿Quieres descartarlos?',
+      keepEditing: 'Seguir editando',
+      discard: 'Descartar cambios',
+    },
     required: 'Obligatorio',
     noOptionsAvailable: 'No hay opciones disponibles',
     optional: 'Opcional',
