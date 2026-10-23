@@ -137,7 +137,7 @@ export default function MenuConfigurationPage() {
           </VxTextField>
 
           {selectedTenant ? (
-            <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+            <VxStack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
               <VxChip label={selectedTenant.isActive ? t('pages.menuConfiguration.activeTenant') : t('pages.menuConfiguration.inactiveTenant')} color={selectedTenant.isActive ? 'success' : 'default'} size="small" />
               <VxChip label={selectedTenant.domain ? t('pages.menuConfiguration.domain', { domain: selectedTenant.domain }) : t('pages.menuConfiguration.noDomain')} size="small" />
             </VxStack>
@@ -151,11 +151,11 @@ export default function MenuConfigurationPage() {
                 <VxStack
                   key={menuItem.key}
                   direction="row"
-                  sx={{ justifyContent: 'space-between', alignItems: 'center', p: 1.25, border: '1px solid rgba(108, 92, 231, 0.08)', borderRadius: 2 }}
+                  sx={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1, minWidth: 0, p: 1.25, border: '1px solid rgba(108, 92, 231, 0.08)', borderRadius: 2 }}
                 >
-                  <VxBox>
+                  <VxBox sx={{ minWidth: 0 }}>
                     <VxTypography variant="body2" sx={{ fontWeight: 600 }}>{t(`menuItems.${menuItem.labelKey}`)}</VxTypography>
-                    <VxTypography variant="caption" color="text.secondary">{t('pages.menuConfiguration.menuKey')} {menuItem.key}</VxTypography>
+                    <VxTypography variant="caption" color="text.secondary" sx={{ overflowWrap: 'anywhere' }}>{t('pages.menuConfiguration.menuKey')} {menuItem.key}</VxTypography>
                   </VxBox>
                   <VxSwitch checked={isEnabled} disabled={!canManage} onChange={(_, checked) => toggleMenu(menuItem.key, checked)} />
                 </VxStack>

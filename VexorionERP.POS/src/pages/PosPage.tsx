@@ -564,7 +564,7 @@ export default function PosPage() {
           }) : undefined}
       />
 
-      <VxBox sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', lg: '3fr 1fr' } }}>
+      <VxBox sx={{ display: 'grid', gap: 2, minWidth: 0, gridTemplateColumns: { xs: 'minmax(0, 1fr)', lg: 'minmax(0, 3fr) minmax(0, 1fr)' } }}>
         <ProductCatalogPanel
           selectedCustomerId={selectedCustomerId}
           selectedWarehouseId={selectedWarehouseId}

@@ -635,11 +635,28 @@ export default function AppLayout() {
           transition: "margin-left 180ms ease",
         }}
       >
-        <VxToolbar className="dashboard-topbar" sx={{ position: "relative" }}>
+        <VxToolbar
+          className="dashboard-topbar"
+          sx={{
+            position: "relative",
+            alignItems: { xs: "stretch", lg: "center" },
+            flexDirection: { xs: "column", lg: "row" },
+            gap: { xs: 1, lg: 0 },
+            minHeight: { xs: "auto", lg: 64 },
+            py: { xs: 1, lg: 0 },
+          }}
+        >
           <VxStack
             direction="row"
             spacing={1}
-            sx={{ position: "absolute", top: 8, right: 16 }}
+            sx={{
+              position: { xs: "static", lg: "absolute" },
+              top: 8,
+              right: 16,
+              width: { xs: "100%", lg: "auto" },
+              justifyContent: { xs: "flex-end", lg: "initial" },
+              flexWrap: { xs: "wrap", lg: "nowrap" },
+            }}
           >
             <VxSelect
               size="small"
@@ -710,6 +727,13 @@ export default function AppLayout() {
                     ? `${user.firstName ?? user.userName} · ${user.roles[0] ?? t("app.userRoleFallback")}`
                     : t("app.signedIn")
                 }
+                sx={{
+                  maxWidth: { xs: 180, lg: "none" },
+                  "& .MuiChip-label": {
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  },
+                }}
               />
             ) : (
               <VxChip label={t("app.publicRoute")} variant="outlined" />
@@ -718,7 +742,7 @@ export default function AppLayout() {
           <VxStack
             direction="row"
             spacing={2}
-            sx={{ alignItems: "center", width: "100%" }}
+            sx={{ alignItems: "center", width: "100%", minWidth: 0 }}
           >
             <VxIconButton
               sx={{ display: { lg: "none" } }}

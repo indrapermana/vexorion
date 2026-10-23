@@ -169,7 +169,7 @@ export function ProductCatalogPanel({
   }
 
   return (
-    <VxPaper sx={{ p: 2 }}>
+    <VxPaper sx={{ p: 2, minWidth: 0, maxWidth: '100%' }}>
       <VxTypography variant="h6" sx={{ mb: 1.5 }}>{t('catalog.title')}</VxTypography>
       <VxStack spacing={1.5}>
         <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>

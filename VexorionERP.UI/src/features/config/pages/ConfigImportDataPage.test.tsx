@@ -57,7 +57,7 @@ describe('ConfigImportDataPage import flow', () => {
 
     expect(await screen.findByTestId('import-history-panel')).toBeInTheDocument()
     expect(apiMocks.mockGetAvailableImportTypes).not.toHaveBeenCalled()
-    expect(screen.queryByRole('button', { name: 'config.importData.validate' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'pages.importData.validate' })).not.toBeInTheDocument()
     expect(screen.getByText(/imports\.validate/)).toBeInTheDocument()
   })
 
@@ -99,7 +99,7 @@ describe('ConfigImportDataPage import flow', () => {
     })
 
     fireEvent.change(fileInput as HTMLInputElement, { target: { files: [file] } })
-    await user.click(screen.getByRole('button', { name: 'config.importData.validate' }))
+    await user.click(screen.getByRole('button', { name: 'pages.importData.validate' }))
 
     await waitFor(() => {
       expect(apiMocks.mockValidateImportFile).toHaveBeenCalled()
@@ -108,15 +108,15 @@ describe('ConfigImportDataPage import flow', () => {
     const [calledImportType] = apiMocks.mockValidateImportFile.mock.calls[0]
     expect(String(calledImportType).toLowerCase()).toBe('customer')
 
-    expect(screen.getByText('config.importData.allRowsValid')).toBeInTheDocument()
+    expect(screen.getByText('pages.importData.allRowsValid')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: 'config.importData.submit' }))
+    await user.click(screen.getByRole('button', { name: 'pages.importData.submit' }))
 
     await waitFor(() => {
       expect(apiMocks.mockSubmitImportJob).toHaveBeenCalledWith(validationResult.importJobId)
     })
 
-    expect(screen.getByText('config.importData.submitSuccess')).toBeInTheDocument()
+    expect(screen.getByText('pages.importData.submitSuccess')).toBeInTheDocument()
   })
 
   it('shows validation errors and keeps submit disabled when file is invalid', async () => {
@@ -150,14 +150,14 @@ describe('ConfigImportDataPage import flow', () => {
     })
 
     fireEvent.change(fileInput as HTMLInputElement, { target: { files: [file] } })
-    await user.click(screen.getByRole('button', { name: 'config.importData.validate' }))
+    await user.click(screen.getByRole('button', { name: 'pages.importData.validate' }))
 
     await waitFor(() => {
       expect(apiMocks.mockValidateImportFile).toHaveBeenCalledOnce()
     })
 
     expect(screen.getByText('Invalid email format')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'config.importData.submit' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'pages.importData.submit' })).not.toBeInTheDocument()
     expect(apiMocks.mockSubmitImportJob).not.toHaveBeenCalled()
   })
 })

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
 import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
-import { PageFeedback, PageHeader } from '../../../components/PagePrimitives'
+import { PageBody, PageFeedback, PageHeader } from '../../../components/PagePrimitives'
 import {
   ApiError,
   createTaxCode,
@@ -215,7 +215,7 @@ export default function ConfigTaxDiscountPage() {
         </VxStack>
       </VxPaper> : null}
 
-      <VxPaper elevation={0} className="panel-card">
+      <PageBody>
         <VxTypography variant="h6" sx={{ mb: 1.5 }}>{t('config.taxDiscount.taxCodesSection')}</VxTypography>
         <VxTable size="small">
           <VxTableHead>
@@ -252,7 +252,7 @@ export default function ConfigTaxDiscountPage() {
             ))}
           </VxTableBody>
         </VxTable>
-      </VxPaper>
+      </PageBody>
 
       <VxPaper elevation={0} className="panel-card">
         <VxTypography variant="h6" sx={{ mb: 2 }}>{t('config.taxDiscount.discountSection')}</VxTypography>

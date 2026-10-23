@@ -29,10 +29,10 @@ export function PageHeader({ title, description, primaryAction, filters, metrics
           sx={{ alignItems: { md: 'flex-start' }, justifyContent: 'space-between' }}
         >
           <VxBox sx={{ minWidth: 0 }}>
-            <VxTypography component="h1" variant="h4" sx={{ mb: description ? 1 : 0 }}>
+            <VxTypography component="h1" variant="h4" sx={{ mb: description ? 1 : 0, overflowWrap: 'anywhere' }}>
               {title}
             </VxTypography>
-            {description ? <VxTypography color="text.secondary">{description}</VxTypography> : null}
+            {description ? <VxTypography color="text.secondary" sx={{ overflowWrap: 'anywhere' }}>{description}</VxTypography> : null}
           </VxBox>
           {primaryAction ? <VxBox sx={{ flexShrink: 0 }}>{primaryAction}</VxBox> : null}
         </VxStack>
@@ -124,6 +124,7 @@ export function PageBody({ children, labelledBy }: PageBodyProps) {
       aria-labelledby={labelledBy}
       elevation={0}
       className="panel-card products-grid-panel"
+      sx={{ minWidth: 0, maxWidth: '100%', overflowX: 'auto' }}
     >
       {children}
     </VxPaper>

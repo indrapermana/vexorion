@@ -529,7 +529,7 @@ export default function StockCountsPage() {
       )}
       linesPanel={(
         <VxPaper elevation={0} className="panel-card">
-          <VxStack direction={{ xs: 'column', sm: 'row' }} sx={{ justifyContent: 'space-between', mb: 2 }} spacing={1.5}>
+          <VxStack direction={{ xs: 'column', lg: 'row' }} sx={{ justifyContent: 'space-between', mb: 2 }} spacing={1.5}>
             <VxBox>
               <VxTypography variant="h6">{t('pages.stockCounts.linePanel.title')}</VxTypography>
               <VxTypography variant="body2" color="text.secondary">
@@ -538,7 +538,7 @@ export default function StockCountsPage() {
                   : t('pages.stockCounts.linePanel.selectPrompt')}
               </VxTypography>
             </VxBox>
-            {canManage ? <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+            {canManage ? <VxStack direction={{ xs: 'column', lg: 'row' }} spacing={1}>
               <VxButton variant="contained" color="success" onClick={() => setPostDialogOpen(true)} disabled={!canPost || statusActionLoading}>
                 {t('pages.stockCounts.linePanel.post')}
               </VxButton>

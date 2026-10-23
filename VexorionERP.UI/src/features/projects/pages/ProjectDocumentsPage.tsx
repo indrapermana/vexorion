@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
+  VxBox,
   VxAlert,
   VxButton,
   VxChip,
@@ -166,14 +167,14 @@ export default function ProjectDocumentsPage() {
         )}
         filters={(
           <VxStack spacing={2}>
-          <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1}>
+          <VxBox sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 1 }}>
             <VxTextField
               select
               size="small"
               label={t('pages.projectDocuments.filters.project', { defaultValue: 'Project' })}
               value={projectId}
               onChange={(event) => setProjectId(event.target.value)}
-              sx={{ minWidth: 240 }}
+              sx={{ minWidth: 0, width: '100%' }}
             >
               <VxMenuItem value="">{t('common.labels.all', { defaultValue: 'All' })}</VxMenuItem>
               {projects.map((project) => <VxMenuItem key={project.id} value={project.id}>{project.projectNumber} - {project.name}</VxMenuItem>)}
@@ -185,7 +186,7 @@ export default function ProjectDocumentsPage() {
               label={t('pages.projectDocuments.filters.category', { defaultValue: 'Category' })}
               value={projectCategoryId}
               onChange={(event) => setProjectCategoryId(event.target.value)}
-              sx={{ minWidth: 220 }}
+              sx={{ minWidth: 0, width: '100%' }}
             >
               <VxMenuItem value="">{t('common.labels.all', { defaultValue: 'All' })}</VxMenuItem>
               {categories.map((category) => <VxMenuItem key={category.id} value={category.id}>{category.code} - {category.name}</VxMenuItem>)}
@@ -197,7 +198,7 @@ export default function ProjectDocumentsPage() {
               label={t('pages.projectDocuments.filters.status', { defaultValue: 'Status' })}
               value={status}
               onChange={(event) => setStatus(event.target.value === '' ? '' : Number(event.target.value) as ManagedDocumentStatus)}
-              sx={{ minWidth: 180 }}
+              sx={{ minWidth: 0, width: '100%' }}
             >
               <VxMenuItem value="">{t('common.labels.all', { defaultValue: 'All' })}</VxMenuItem>
               {statusOptions.map((option) => <VxMenuItem key={option.value} value={option.value}>{t(`pages.projectDetails.documentsPanel.status.${option.key}`)}</VxMenuItem>)}
@@ -208,7 +209,7 @@ export default function ProjectDocumentsPage() {
               label={t('pages.projectDocuments.filters.tag', { defaultValue: 'Tag' })}
               value={tag}
               onChange={(event) => setTag(event.target.value)}
-              sx={{ minWidth: 180 }}
+              sx={{ minWidth: 0, width: '100%' }}
             />
 
             <VxTextField
@@ -216,18 +217,18 @@ export default function ProjectDocumentsPage() {
               label={t('pages.projectDocuments.filters.search', { defaultValue: 'Search' })}
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
-              sx={{ minWidth: 220 }}
+              sx={{ minWidth: 0, width: '100%' }}
             />
-          </VxStack>
+          </VxBox>
 
-          <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1}>
+          <VxBox sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 1, alignItems: 'center' }}>
             <VxTextField
               type="date"
               size="small"
               label={t('pages.projectDocuments.filters.fromDate', { defaultValue: 'From date' })}
               value={fromDate}
               onChange={(event) => setFromDate(event.target.value)}
-              sx={{ minWidth: 180 }}
+              sx={{ minWidth: 0, width: '100%' }}
             />
             <VxTextField
               type="date"
@@ -235,7 +236,7 @@ export default function ProjectDocumentsPage() {
               label={t('pages.projectDocuments.filters.toDate', { defaultValue: 'To date' })}
               value={toDate}
               onChange={(event) => setToDate(event.target.value)}
-              sx={{ minWidth: 180 }}
+              sx={{ minWidth: 0, width: '100%' }}
             />
             <VxButton
               variant="text"
@@ -252,7 +253,7 @@ export default function ProjectDocumentsPage() {
             >
               {t('common.resetFilters', { defaultValue: 'Reset filters' })}
             </VxButton>
-          </VxStack>
+          </VxBox>
           </VxStack>
         )}
       />

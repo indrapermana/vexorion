@@ -80,7 +80,7 @@ export default function DashboardPage() {
   return (
     <VxStack spacing={2.5}>
       <VxPageHeader title={t('pages.dashboard.title')} description={t('pages.dashboard.description')} filters={(
-          <VxStack direction="row" spacing={1}>
+          <VxStack direction="row" spacing={1} sx={{ flexWrap: 'wrap', rowGap: 1 }}>
             <VxChip
               label={t('pages.dashboard.last7Days')}
               color={rangeDays === 7 ? 'primary' : 'default'}
@@ -121,7 +121,7 @@ export default function DashboardPage() {
         <VxBox>
           <VxPaper className="panel-card" elevation={0}>
             <VxTypography variant="h6" sx={{ mb: 1.5 }}>{t('pages.dashboard.freePaid')}</VxTypography>
-            <VxStack direction="row" spacing={1}>
+            <VxStack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
               <VxChip color="success" label={t('pages.dashboard.free', { count: freeTenants })} />
               <VxChip color="primary" label={t('pages.dashboard.paid', { count: paidTenants })} />
             </VxStack>
@@ -136,11 +136,11 @@ export default function DashboardPage() {
             <VxTypography variant="h6" sx={{ mb: 1.5 }}>{t('pages.dashboard.loginOverview')}</VxTypography>
             <VxStack spacing={1}>
               {tenants.map((tenant) => (
-                <VxStack key={tenant.id} direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-                  <VxTypography variant="body2" sx={{ fontWeight: 600 }}>
+                <VxStack key={tenant.id} direction={{ xs: 'column', sm: 'row' }} sx={{ justifyContent: 'space-between', alignItems: { sm: 'center' }, minWidth: 0 }}>
+                  <VxTypography variant="body2" sx={{ fontWeight: 600, minWidth: 0, overflowWrap: 'anywhere' }}>
                     {tenant.name} ({tenant.code})
                   </VxTypography>
-                  <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                  <VxStack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
                     <VxChip size="small" label={t('pages.dashboard.users', { count: usersByTenant.get(tenant.id) ?? 0 })} />
                     <VxChip size="small" variant="outlined" label={t('pages.dashboard.logins', { count: telemetryByTenant.get(tenant.id)?.loginCount ?? 0 })} />
                     <VxChip

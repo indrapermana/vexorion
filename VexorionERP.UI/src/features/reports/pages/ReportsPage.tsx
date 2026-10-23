@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { VxAlert, VxButton, VxFormControlLabel, VxLink, VxMenuItem, VxPaper, VxStack, VxSwitch, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxFormControlLabel, VxLink, VxMenuItem, VxPaper, VxStack, VxSwitch, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { PageFeedback, PageHeader } from '../../../components/PagePrimitives'
@@ -281,28 +281,30 @@ export default function ReportsPage() {
             {t('pages.reports.actions.exportDrillDownCsv')}
           </VxButton>
         </VxStack>
-        <VxTable size="small" sx={{ mt: 1 }}>
-          <VxTableHead>
-            <VxTableRow>
-              <VxTableCell>{t('pages.reports.table.date')}</VxTableCell>
-              <VxTableCell>{t('pages.reports.table.journal')}</VxTableCell>
-              <VxTableCell>{t('pages.reports.table.description')}</VxTableCell>
-              <VxTableCell align="right">{t('pages.reports.table.debit')}</VxTableCell>
-              <VxTableCell align="right">{t('pages.reports.table.credit')}</VxTableCell>
-            </VxTableRow>
-          </VxTableHead>
-          <VxTableBody>
-            {getFilteredDrillDownLines(drillDown?.lines ?? [], drillDownFilter, drillDownSort).map((line) => (
-              <VxTableRow key={line.journalEntryId}>
-                <VxTableCell>{line.postingDate}</VxTableCell>
-                <VxTableCell>{line.journalNumber}</VxTableCell>
-                <VxTableCell>{line.description}</VxTableCell>
-                <VxTableCell align="right">{line.debitAmount.toFixed(2)}</VxTableCell>
-                <VxTableCell align="right">{line.creditAmount.toFixed(2)}</VxTableCell>
+        <VxBox sx={{ minWidth: 0, maxWidth: '100%', overflowX: 'auto' }}>
+          <VxTable size="small" sx={{ mt: 1 }}>
+            <VxTableHead>
+              <VxTableRow>
+                <VxTableCell>{t('pages.reports.table.date')}</VxTableCell>
+                <VxTableCell>{t('pages.reports.table.journal')}</VxTableCell>
+                <VxTableCell>{t('pages.reports.table.description')}</VxTableCell>
+                <VxTableCell align="right">{t('pages.reports.table.debit')}</VxTableCell>
+                <VxTableCell align="right">{t('pages.reports.table.credit')}</VxTableCell>
               </VxTableRow>
-            ))}
-          </VxTableBody>
-        </VxTable>
+            </VxTableHead>
+            <VxTableBody>
+              {getFilteredDrillDownLines(drillDown?.lines ?? [], drillDownFilter, drillDownSort).map((line) => (
+                <VxTableRow key={line.journalEntryId}>
+                  <VxTableCell>{line.postingDate}</VxTableCell>
+                  <VxTableCell>{line.journalNumber}</VxTableCell>
+                  <VxTableCell>{line.description}</VxTableCell>
+                  <VxTableCell align="right">{line.debitAmount.toFixed(2)}</VxTableCell>
+                  <VxTableCell align="right">{line.creditAmount.toFixed(2)}</VxTableCell>
+                </VxTableRow>
+              ))}
+            </VxTableBody>
+          </VxTable>
+        </VxBox>
       </VxPaper>
     </VxStack>
   )
@@ -380,33 +382,35 @@ function StatementLinesTable({ lines, priorLines, showComparative, onLineSelect 
           <VxMenuItem value="desc">{t('pages.reports.table.descending')}</VxMenuItem>
         </VxTextField>
       </VxStack>
-      <VxTable size="small">
-        <VxTableHead>
-          <VxTableRow>
-            <VxTableCell>{t('pages.reports.table.account')}</VxTableCell>
-            <VxTableCell align="right">{t('pages.reports.table.current')}</VxTableCell>
-            {showComparative ? <VxTableCell align="right">{t('pages.reports.table.prior')}</VxTableCell> : null}
-            {showComparative ? <VxTableCell align="right">{t('pages.reports.table.variance')}</VxTableCell> : null}
-          </VxTableRow>
-        </VxTableHead>
-        <VxTableBody>
-          {sortedLines.map((line) => {
-            const priorAmount = priorByCode.get(line.accountCode)?.amount ?? 0
-            return (
-              <VxTableRow key={line.accountId}>
-                <VxTableCell>
-                  <VxLink component="button" underline="hover" onClick={() => void onLineSelect(line)}>
-                    {line.accountCode} - {line.accountName}
-                  </VxLink>
-                </VxTableCell>
-                <VxTableCell align="right">{line.amount.toFixed(2)}</VxTableCell>
-                {showComparative ? <VxTableCell align="right">{priorAmount.toFixed(2)}</VxTableCell> : null}
-                {showComparative ? <VxTableCell align="right">{(line.amount - priorAmount).toFixed(2)}</VxTableCell> : null}
-              </VxTableRow>
-            )
-          })}
-        </VxTableBody>
-      </VxTable>
+      <VxBox sx={{ minWidth: 0, maxWidth: '100%', overflowX: 'auto' }}>
+        <VxTable size="small">
+          <VxTableHead>
+            <VxTableRow>
+              <VxTableCell>{t('pages.reports.table.account')}</VxTableCell>
+              <VxTableCell align="right">{t('pages.reports.table.current')}</VxTableCell>
+              {showComparative ? <VxTableCell align="right">{t('pages.reports.table.prior')}</VxTableCell> : null}
+              {showComparative ? <VxTableCell align="right">{t('pages.reports.table.variance')}</VxTableCell> : null}
+            </VxTableRow>
+          </VxTableHead>
+          <VxTableBody>
+            {sortedLines.map((line) => {
+              const priorAmount = priorByCode.get(line.accountCode)?.amount ?? 0
+              return (
+                <VxTableRow key={line.accountId}>
+                  <VxTableCell>
+                    <VxLink component="button" underline="hover" onClick={() => void onLineSelect(line)}>
+                      {line.accountCode} - {line.accountName}
+                    </VxLink>
+                  </VxTableCell>
+                  <VxTableCell align="right">{line.amount.toFixed(2)}</VxTableCell>
+                  {showComparative ? <VxTableCell align="right">{priorAmount.toFixed(2)}</VxTableCell> : null}
+                  {showComparative ? <VxTableCell align="right">{(line.amount - priorAmount).toFixed(2)}</VxTableCell> : null}
+                </VxTableRow>
+              )
+            })}
+          </VxTableBody>
+        </VxTable>
+      </VxBox>
     </>
   )
 }

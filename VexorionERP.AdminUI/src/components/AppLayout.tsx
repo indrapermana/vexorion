@@ -24,6 +24,7 @@ export default function AppLayout() {
   const { user, isAuthenticated, logout } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => localStorage.getItem(sidebarCollapsedStorageKey) === 'true')
+  const displayName = user?.displayName?.trim() || user?.email || t('shell.user')
 
   const toggleThemeMode = () => {
     setThemeMode(themeMode === 'light' ? 'dark' : 'light')
@@ -130,7 +131,7 @@ export default function AppLayout() {
           {!collapsed ? (
             <>
               <VxTypography variant="body2" sx={{ fontWeight: 700, mb: 0.5 }}>
-                {isAuthenticated && user ? user.displayName : t('shell.anonymous')}
+                {isAuthenticated && user ? displayName : t('shell.anonymous')}
               </VxTypography>
               <VxTypography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
                 {isAuthenticated && user ? user.email : t('shell.signInRequired')}
@@ -182,8 +183,29 @@ export default function AppLayout() {
       </VxDrawer>
 
       <VxBox className="dashboard-main" sx={{ ml: { lg: `${desktopDrawerWidth}px` }, transition: 'margin-left 180ms ease' }}>
-        <VxToolbar className="dashboard-topbar" sx={{ position: 'relative' }}>
-          <VxStack direction="row" spacing={1} sx={{ position: 'absolute', top: 8, right: 16 }}>
+        <VxToolbar
+          className="dashboard-topbar"
+          sx={{
+            position: 'relative',
+            alignItems: { xs: 'stretch', lg: 'center' },
+            flexDirection: { xs: 'column', lg: 'row' },
+            gap: { xs: 1, lg: 0 },
+            minHeight: { xs: 'auto', lg: 64 },
+            py: { xs: 1, lg: 0 },
+          }}
+        >
+          <VxStack
+            direction="row"
+            spacing={1}
+            sx={{
+              position: { xs: 'static', lg: 'absolute' },
+              top: 8,
+              right: 16,
+              width: { xs: '100%', lg: 'auto' },
+              justifyContent: { xs: 'flex-end', lg: 'initial' },
+              flexWrap: { xs: 'wrap', lg: 'nowrap' },
+            }}
+          >
             <VxSelect
               size="small"
               value={themeMode}
@@ -221,12 +243,19 @@ export default function AppLayout() {
               ))}
             </VxSelect>
             {isAuthenticated ? (
-              <VxChip color="secondary" label={user ? `${user.displayName} · ${user.roles[0] ?? t('shell.user')}` : t('shell.signedIn')} />
+              <VxChip
+                color="secondary"
+                label={user ? `${displayName} · ${user.roles[0] ?? t('shell.user')}` : t('shell.signedIn')}
+                sx={{
+                  maxWidth: { xs: 180, lg: 'none' },
+                  '& .MuiChip-label': { overflow: 'hidden', textOverflow: 'ellipsis' },
+                }}
+              />
             ) : (
               <VxChip label={t('shell.publicRoute')} variant="outlined" />
             )}
           </VxStack>
-          <VxStack direction="row" spacing={2} sx={{ alignItems: 'center', width: '100%' }}>
+          <VxStack direction="row" spacing={2} sx={{ alignItems: 'center', width: '100%', minWidth: 0 }}>
             <VxIconButton sx={{ display: { lg: 'none' } }} onClick={() => setMobileOpen(true)}>
               <MenuRoundedIcon />
             </VxIconButton>
@@ -237,7 +266,7 @@ export default function AppLayout() {
               <VxTypography variant="overline" sx={{ color: 'text.secondary', letterSpacing: '0.18em' }}>
                 {t('shell.adminConsole')}
               </VxTypography>
-              <VxTypography variant="h5" noWrap>{pageTitle}</VxTypography>
+              <VxTypography variant="h5" sx={{ overflowWrap: 'anywhere' }}>{pageTitle}</VxTypography>
             </VxBox>
           </VxStack>
         </VxToolbar>

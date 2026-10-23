@@ -94,7 +94,7 @@ function ImportFlowPanel({ importType, onSubmitted, canSubmit }: ImportFlowPanel
       await downloadImportTemplate(importType)
       setFlow({ phase: 'idle' })
     } catch {
-      setFlow({ phase: 'error', message: t('config.importData.errors.downloadTemplate') })
+      setFlow({ phase: 'error', message: t('pages.importData.errors.downloadTemplate') })
     }
   }
 
@@ -113,7 +113,7 @@ function ImportFlowPanel({ importType, onSubmitted, canSubmit }: ImportFlowPanel
       const result = await validateImportFile(importType, selectedFile)
       setFlow({ phase: 'validated', result })
     } catch {
-      setFlow({ phase: 'error', message: t('config.importData.errors.validate') })
+      setFlow({ phase: 'error', message: t('pages.importData.errors.validate') })
     }
   }
 
@@ -127,7 +127,7 @@ function ImportFlowPanel({ importType, onSubmitted, canSubmit }: ImportFlowPanel
       setFlow({ phase: 'submitted', jobStatus })
       onSubmitted?.()
     } catch {
-      setFlow({ phase: 'error', message: t('config.importData.errors.submit') })
+      setFlow({ phase: 'error', message: t('pages.importData.errors.submit') })
     }
   }
 
@@ -154,11 +154,11 @@ function ImportFlowPanel({ importType, onSubmitted, canSubmit }: ImportFlowPanel
           <VxStack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
             <DownloadRoundedIcon color="action" />
             <VxTypography variant="subtitle1" sx={{ fontWeight: 600 }}>
-              {t('config.importData.steps.downloadTemplate')}
+              {t('pages.importData.steps.downloadTemplate')}
             </VxTypography>
           </VxStack>
           <VxTypography variant="body2" color="text.secondary">
-            {t('config.importData.steps.downloadTemplateDesc')}
+            {t('pages.importData.steps.downloadTemplateDesc')}
           </VxTypography>
           <VxBox>
             <VxButton
@@ -168,7 +168,7 @@ function ImportFlowPanel({ importType, onSubmitted, canSubmit }: ImportFlowPanel
               disabled={flow.phase === 'downloading' || flow.phase === 'validating' || flow.phase === 'submitting'}
               size="small"
             >
-              {flow.phase === 'downloading' ? t('config.importData.downloading') : t('config.importData.downloadTemplate')}
+              {flow.phase === 'downloading' ? t('pages.importData.downloading') : t('pages.importData.downloadTemplate')}
             </VxButton>
           </VxBox>
         </VxStack>
@@ -182,11 +182,11 @@ function ImportFlowPanel({ importType, onSubmitted, canSubmit }: ImportFlowPanel
           <VxStack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
             <CloudUploadRoundedIcon color="action" />
             <VxTypography variant="subtitle1" sx={{ fontWeight: 600 }}>
-              {t('config.importData.steps.uploadFile')}
+              {t('pages.importData.steps.uploadFile')}
             </VxTypography>
           </VxStack>
           <VxTypography variant="body2" color="text.secondary">
-            {t('config.importData.steps.uploadFileDesc')}
+            {t('pages.importData.steps.uploadFileDesc')}
           </VxTypography>
           <VxStack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
             <input
@@ -205,7 +205,7 @@ function ImportFlowPanel({ importType, onSubmitted, canSubmit }: ImportFlowPanel
                 size="small"
                 disabled={flow.phase === 'validating' || flow.phase === 'submitting'}
               >
-                {t('config.importData.chooseFile')}
+                {t('pages.importData.chooseFile')}
               </VxButton>
             </label>
             {selectedFile && (
@@ -223,7 +223,7 @@ function ImportFlowPanel({ importType, onSubmitted, canSubmit }: ImportFlowPanel
                 disabled={flow.phase === 'validating' || flow.phase === 'submitting'}
                 size="small"
               >
-                {flow.phase === 'validating' ? t('config.importData.validating') : t('config.importData.validate')}
+                {flow.phase === 'validating' ? t('pages.importData.validating') : t('pages.importData.validate')}
               </VxButton>
             </VxBox>
           )}
@@ -241,31 +241,31 @@ function ImportFlowPanel({ importType, onSubmitted, canSubmit }: ImportFlowPanel
                   ? <CheckCircleOutlineRoundedIcon color="success" />
                   : <ErrorOutlineRoundedIcon color="error" />}
                 <VxTypography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                  {t('config.importData.steps.validationResult')}
+                  {t('pages.importData.steps.validationResult')}
                 </VxTypography>
               </VxStack>
 
               <VxStack direction="row" spacing={2} sx={{ flexWrap: 'wrap' }}>
                 <VxChip
-                  label={`${t('config.importData.totalRows')}: ${validationResult.totalRows}`}
+                  label={`${t('pages.importData.totalRows')}: ${validationResult.totalRows}`}
                   size="small"
                 />
                 <VxChip
                   color="success"
-                  label={`${t('config.importData.validRows')}: ${validationResult.validRows}`}
+                  label={`${t('pages.importData.validRows')}: ${validationResult.validRows}`}
                   size="small"
                 />
                 {validationResult.invalidRows > 0 && (
                   <VxChip
                     color="error"
-                    label={`${t('config.importData.invalidRows')}: ${validationResult.invalidRows}`}
+                    label={`${t('pages.importData.invalidRows')}: ${validationResult.invalidRows}`}
                     size="small"
                   />
                 )}
               </VxStack>
 
               {canSubmit && isValid && (
-                <VxAlert severity="success">{t('config.importData.allRowsValid')}</VxAlert>
+                <VxAlert severity="success">{t('pages.importData.allRowsValid')}</VxAlert>
               )}
 
               {!isValid && validationResult.errors.length > 0 && (
@@ -278,7 +278,7 @@ function ImportFlowPanel({ importType, onSubmitted, canSubmit }: ImportFlowPanel
                         onClick={handleDownloadErrorWorkbook}
                         size="small"
                       >
-                        {t('config.importData.downloadErrorWorkbook')}
+                        {t('pages.importData.downloadErrorWorkbook')}
                       </VxButton>
                     </VxBox>
                   )}
@@ -286,10 +286,10 @@ function ImportFlowPanel({ importType, onSubmitted, canSubmit }: ImportFlowPanel
                     <VxTable size="small">
                       <VxTableHead>
                         <VxTableRow>
-                          <VxTableCell>{t('config.importData.table.row')}</VxTableCell>
-                          <VxTableCell>{t('config.importData.table.column')}</VxTableCell>
-                          <VxTableCell>{t('config.importData.table.category')}</VxTableCell>
-                          <VxTableCell>{t('config.importData.table.message')}</VxTableCell>
+                          <VxTableCell>{t('pages.importData.table.row')}</VxTableCell>
+                          <VxTableCell>{t('pages.importData.table.column')}</VxTableCell>
+                          <VxTableCell>{t('pages.importData.table.category')}</VxTableCell>
+                          <VxTableCell>{t('pages.importData.table.message')}</VxTableCell>
                         </VxTableRow>
                       </VxTableHead>
                       <VxTableBody>
@@ -304,7 +304,7 @@ function ImportFlowPanel({ importType, onSubmitted, canSubmit }: ImportFlowPanel
                         {validationResult.errors.length > 50 && (
                           <VxTableRow>
                             <VxTableCell colSpan={4} sx={{ textAlign: 'center', color: 'text.secondary', fontStyle: 'italic' }}>
-                              {t('config.importData.moreErrors', { count: validationResult.errors.length - 50 })}
+                              {t('pages.importData.moreErrors', { count: validationResult.errors.length - 50 })}
                             </VxTableCell>
                           </VxTableRow>
                         )}
@@ -324,7 +324,7 @@ function ImportFlowPanel({ importType, onSubmitted, canSubmit }: ImportFlowPanel
                     disabled={flow.phase === 'submitting'}
                     size="small"
                   >
-                    {flow.phase === 'submitting' ? t('config.importData.submitting') : t('config.importData.submit')}
+                    {flow.phase === 'submitting' ? t('pages.importData.submitting') : t('pages.importData.submit')}
                   </VxButton>
                 </VxBox>
               )}
@@ -339,11 +339,11 @@ function ImportFlowPanel({ importType, onSubmitted, canSubmit }: ImportFlowPanel
           severity="success"
           action={
             <VxButton color="inherit" size="small" onClick={reset}>
-              {t('config.importData.importAnother')}
+              {t('pages.importData.importAnother')}
             </VxButton>
           }
         >
-          {t('config.importData.submitSuccess', {
+          {t('pages.importData.submitSuccess', {
             status: getJobStatusLabel(flow.jobStatus.status),
             jobId: flow.jobStatus.importJobId,
           })}
@@ -393,7 +393,7 @@ export default function ConfigImportDataPage() {
 
   return (
     <VxStack spacing={3}>
-      <PageHeader title={t('config.importData.title')} description={t('config.importData.description')} />
+      <PageHeader title={t('pages.importData.title')} description={t('pages.importData.description')} />
 
       {!canValidate ? <PermissionReadOnlyAlert requiredPermission={Permissions.imports.validate} /> : null}
       {canValidate && !canSubmit ? <PermissionReadOnlyAlert requiredPermission={Permissions.imports.submit} /> : null}
@@ -410,12 +410,12 @@ export default function ConfigImportDataPage() {
           {importTypes.map((dt) => (
             <VxTab
               key={dt.importType}
-              label={t(`config.importData.entityTypes.${dt.importType}`, { defaultValue: dt.importType })}
+              label={t(`pages.importData.entityTypes.${dt.importType}`, { defaultValue: dt.importType })}
             />
           ))}
         </VxTabs>
 
-        <VxBox sx={{ p: 3 }}>
+        <VxBox sx={{ p: 3, minWidth: 0 }}>
           {activeImportType && (
             <>
               {canValidate ? <ImportFlowPanel

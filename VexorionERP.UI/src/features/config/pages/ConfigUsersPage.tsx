@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
 import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
-import { PageFeedback, PageHeader } from '../../../components/PagePrimitives'
+import { PageBody, PageFeedback, PageHeader } from '../../../components/PagePrimitives'
 import {
   ApiError,
   assignUserRoles,
@@ -243,7 +243,7 @@ export default function ConfigUsersPage() {
         </VxStack>
       </VxPaper> : null}
 
-      <VxPaper elevation={0} className="panel-card">
+      <PageBody>
         <VxTypography variant="h6" sx={{ mb: 1.5 }}>{t('config.users.listSection')}</VxTypography>
         <VxTable size="small">
           <VxTableHead>
@@ -261,7 +261,7 @@ export default function ConfigUsersPage() {
                 <VxTableCell>
                   <VxStack spacing={0.4}>
                     <VxTypography sx={{ fontWeight: 700 }}>{user.userName}</VxTypography>
-                    <VxStack direction="row" spacing={0.75}>
+                    <VxStack direction="row" spacing={0.75} sx={{ flexWrap: 'wrap', rowGap: 0.5 }}>
                       {(roleDraftByUserId[user.id] ?? user.roles).map((role) => (
                         <VxChip key={`${user.id}:${role}`} size="small" label={role} variant="outlined" />
                       ))}
@@ -303,7 +303,7 @@ export default function ConfigUsersPage() {
             ))}
           </VxTableBody>
         </VxTable>
-      </VxPaper>
+      </PageBody>
 
       <VxConfirmActionDialog
         open={Boolean(deactivateTarget)}

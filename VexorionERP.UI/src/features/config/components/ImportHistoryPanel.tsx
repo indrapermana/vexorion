@@ -13,15 +13,15 @@ interface Props {
 function statusChip(status: number, t: (k: string) => string) {
   switch (status) {
     case 1:
-      return <VxChip label={t('config.importData.history.statusLabels.draft')} size="small" />
+      return <VxChip label={t('pages.importData.history.statusLabels.draft')} size="small" />
     case 2:
-      return <VxChip label={t('config.importData.history.statusLabels.validated')} size="small" color="info" />
+      return <VxChip label={t('pages.importData.history.statusLabels.validated')} size="small" color="info" />
     case 3:
-      return <VxChip label={t('config.importData.history.statusLabels.failedValidation')} size="small" color="warning" />
+      return <VxChip label={t('pages.importData.history.statusLabels.failedValidation')} size="small" color="warning" />
     case 4:
-      return <VxChip label={t('config.importData.history.statusLabels.imported')} size="small" color="success" />
+      return <VxChip label={t('pages.importData.history.statusLabels.imported')} size="small" color="success" />
     case 5:
-      return <VxChip label={t('config.importData.history.statusLabels.importFailed')} size="small" color="error" />
+      return <VxChip label={t('pages.importData.history.statusLabels.importFailed')} size="small" color="error" />
     default:
       return <VxChip label={String(status)} size="small" />
   }
@@ -76,9 +76,9 @@ export default function ImportHistoryPanel({ importType, refreshTrigger }: Props
     <VxBox sx={{ mt: 4 }}>
       <VxBox sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
         <VxTypography variant="subtitle1" sx={{ fontWeight: 600, flexGrow: 1 }}>
-          {t('config.importData.history.title')}
+          {t('pages.importData.history.title')}
         </VxTypography>
-        <VxTooltip title={t('config.importData.history.refresh')}>
+        <VxTooltip title={t('pages.importData.history.refresh')}>
           <span>
             <VxIconButton onClick={load} size="small" disabled={loading}>
               <RefreshIcon fontSize="small" />
@@ -99,13 +99,13 @@ export default function ImportHistoryPanel({ importType, refreshTrigger }: Props
             <RefreshIcon fontSize="small" />
           </VxIconButton>
         }>
-          {t('config.importData.history.error')}
+          {t('pages.importData.history.error')}
         </VxAlert>
       )}
 
       {!loading && !error && items.length === 0 && (
         <VxTypography color="text.secondary" variant="body2">
-          {t('config.importData.history.empty')}
+          {t('pages.importData.history.empty')}
         </VxTypography>
       )}
 
@@ -114,12 +114,12 @@ export default function ImportHistoryPanel({ importType, refreshTrigger }: Props
           <VxTable size="small">
           <VxTableHead>
             <VxTableRow>
-              <VxTableCell>{t('config.importData.history.table.date')}</VxTableCell>
-              <VxTableCell>{t('config.importData.history.table.file')}</VxTableCell>
-              <VxTableCell>{t('config.importData.history.table.status')}</VxTableCell>
-              <VxTableCell align="right">{t('config.importData.history.table.totalRows')}</VxTableCell>
-              <VxTableCell align="right">{t('config.importData.history.table.validRows')}</VxTableCell>
-              <VxTableCell align="right">{t('config.importData.history.table.invalidRows')}</VxTableCell>
+              <VxTableCell>{t('pages.importData.history.table.date')}</VxTableCell>
+              <VxTableCell>{t('pages.importData.history.table.file')}</VxTableCell>
+              <VxTableCell>{t('pages.importData.history.table.status')}</VxTableCell>
+              <VxTableCell align="right">{t('pages.importData.history.table.totalRows')}</VxTableCell>
+              <VxTableCell align="right">{t('pages.importData.history.table.validRows')}</VxTableCell>
+              <VxTableCell align="right">{t('pages.importData.history.table.invalidRows')}</VxTableCell>
             </VxTableRow>
           </VxTableHead>
           <VxTableBody>

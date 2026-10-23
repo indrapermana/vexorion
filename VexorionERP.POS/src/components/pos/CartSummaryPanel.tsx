@@ -75,7 +75,7 @@ export function CartSummaryPanel({
   }
 
   return (
-    <VxPaper sx={{ p: 2 }}>
+    <VxPaper sx={{ p: 2, minWidth: 0, maxWidth: '100%', overflowX: 'auto' }}>
       <VxStack spacing={1.5}>
         <VxStack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
           <VxTypography variant="h6">{t('cart.title')}</VxTypography>
@@ -169,7 +169,7 @@ export function CartSummaryPanel({
           <VxTypography variant="h6">{t('cart.grandTotal', { value: formatMoney(grandTotal, currencyCode) })}</VxTypography>
         </VxStack>
 
-        <VxStack direction="row" spacing={1.5}>
+        <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
           <VxTextField
             type="number"
             label={t('cart.paymentAmount')}

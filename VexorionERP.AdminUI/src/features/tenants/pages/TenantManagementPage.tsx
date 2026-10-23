@@ -120,7 +120,7 @@ export default function TenantManagementPage() {
           ) : undefined}
         />
 
-        <VxStack direction="row" spacing={2}>
+        <VxBox sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: 2, minWidth: 0 }}>
           <VxCard title={t('pages.tenantManagement.metrics.rows')} className="panel-card" style={{ flex: 1 }}>
             <VxTypography variant="h5">{tenants.length}</VxTypography>
           </VxCard>
@@ -130,10 +130,10 @@ export default function TenantManagementPage() {
           <VxCard title={t('pages.tenantManagement.modulesDisabled')} className="panel-card" style={{ flex: 1 }}>
             <VxTypography variant="h5">{tenantsWithDisabledModules}</VxTypography>
           </VxCard>
-        </VxStack>
+        </VxBox>
 
         <VxStack direction={{ xs: 'column', lg: 'row' }} spacing={1.5} sx={{ justifyContent: 'space-between', alignItems: { lg: 'center' } }}>
-          <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+          <VxStack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
             <VxTypography variant="body2" color="textSecondary">{t('pages.tenantManagement.disabledOnly')}</VxTypography>
             <VxSwitch checked={showDisabledModulesOnly} onChange={(event) => setShowDisabledModulesOnly(event.target.checked)} />
           </VxStack>

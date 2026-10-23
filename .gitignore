@@ -57,6 +57,12 @@ node_modules/
 .turbo/
 packages/*/node_modules/
 packages/*/dist/
+
+# Playwright-generated reports and test output
+**/playwright-report/
+**/test-results/
+**/blob-report/
+
 # Playwright E2E lifecycle diagnostics contain ephemeral tenant identifiers.
 **/test-results/e2e-tenant-lifecycle.json
 **/test-results/e2e-tenant-failed

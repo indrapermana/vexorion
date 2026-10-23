@@ -130,6 +130,9 @@
 
 .dashboard-content {
   padding: 1.25rem;
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .public-shell {

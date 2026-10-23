@@ -27,7 +27,7 @@ export function PosHeader({ canManageRoles, currencyCode, isShiftOpen, canCloseS
           <PointOfSaleRoundedIcon color="primary" />
           <VxTypography variant="h5">{t('header.title')}</VxTypography>
         </VxStack>
-        <VxStack direction="row" spacing={1}>
+        <VxStack direction="row" spacing={1} sx={{ flexWrap: 'wrap', alignItems: 'center', minWidth: 0 }}>
           <VxChip label={t('header.currency', { code: currencyCode })} color="primary" variant="outlined" />
           <VxChip
             label={
