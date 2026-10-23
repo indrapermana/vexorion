@@ -19,13 +19,14 @@ type PosHeaderProps = {
 export function PosHeader({ canManageRoles, currencyCode, isShiftOpen, canCloseShift, shiftOpenedAt, onCloseShift, canRefund, onOpenReturn }: PosHeaderProps) {
   const { themeMode, toggleThemeMode } = useThemeMode()
   const { locale, setLocale, t } = useI18n()
+  const themeButtonLabel = `${t('header.theme')}: ${themeMode === 'dark' ? t('common.light') : t('common.dark')}`
 
   return (
     <VxPaper sx={{ p: 2 }}>
       <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ alignItems: { md: 'center' }, justifyContent: 'space-between' }}>
         <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
           <PointOfSaleRoundedIcon color="primary" />
-          <VxTypography variant="h5">{t('header.title')}</VxTypography>
+          <VxTypography component="h1" variant="h5">{t('header.title')}</VxTypography>
         </VxStack>
         <VxStack direction="row" spacing={1} sx={{ flexWrap: 'wrap', alignItems: 'center', minWidth: 0 }}>
           <VxChip label={t('header.currency', { code: currencyCode })} color="primary" variant="outlined" />
@@ -46,7 +47,7 @@ export function PosHeader({ canManageRoles, currencyCode, isShiftOpen, canCloseS
             </VxButton>
           ) : null}
           {canRefund ? (
-            <VxButton variant="outlined" color="secondary" startIcon={<UndoRoundedIcon />} onClick={onOpenReturn}>
+            <VxButton variant="outlined" color="primary" startIcon={<UndoRoundedIcon />} onClick={onOpenReturn}>
               {t('return.button')}
             </VxButton>
           ) : null}
@@ -65,8 +66,8 @@ export function PosHeader({ canManageRoles, currencyCode, isShiftOpen, canCloseS
             <VxMenuItem value="id">ID</VxMenuItem>
             <VxMenuItem value="es">ES</VxMenuItem>
           </VxTextField>
-          <VxTooltip title={`${t('header.theme')}: ${themeMode === 'dark' ? t('common.dark') : t('common.light')}`}>
-            <VxIconButton onClick={toggleThemeMode} color="primary">
+          <VxTooltip title={themeButtonLabel}>
+            <VxIconButton onClick={toggleThemeMode} color="primary" aria-label={themeButtonLabel}>
               {themeMode === 'dark' ? <LightModeRoundedIcon /> : <DarkModeRoundedIcon />}
             </VxIconButton>
           </VxTooltip>

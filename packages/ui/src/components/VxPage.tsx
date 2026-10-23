@@ -15,10 +15,10 @@ export function VxPageHeader({ title, description, action, filters }: { title: R
 
 export function VxPageFeedback({ error, success, info, onRetry }: { error?: ReactNode; success?: ReactNode; info?: ReactNode; onRetry?: () => void }) {
   if (!error && !success && !info) return null
-  return <VxStack spacing={1.5} aria-live="polite">
-    {error ? <VxAlert severity="error" action={onRetry ? <VxButton color="inherit" size="small" onClick={onRetry}>Retry</VxButton> : undefined}>{error}</VxAlert> : null}
-    {success ? <VxAlert severity="success">{success}</VxAlert> : null}
-    {info ? <VxAlert severity="info">{info}</VxAlert> : null}
+  return <VxStack spacing={1.5}>
+    {error ? <VxAlert severity="error" role="alert" action={onRetry ? <VxButton color="inherit" size="small" onClick={onRetry}>Retry</VxButton> : undefined}>{error}</VxAlert> : null}
+    {success ? <VxAlert severity="success" role="status">{success}</VxAlert> : null}
+    {info ? <VxAlert severity="info" role="status">{info}</VxAlert> : null}
   </VxStack>
 }
 

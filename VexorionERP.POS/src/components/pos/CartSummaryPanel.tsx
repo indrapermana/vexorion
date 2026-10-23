@@ -78,11 +78,11 @@ export function CartSummaryPanel({
     <VxPaper sx={{ p: 2, minWidth: 0, maxWidth: '100%', overflowX: 'auto' }}>
       <VxStack spacing={1.5}>
         <VxStack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-          <VxTypography variant="h6">{t('cart.title')}</VxTypography>
+          <VxTypography component="h2" variant="h6">{t('cart.title')}</VxTypography>
           <VxChip label={t('cart.items', { count: cart.length })} />
         </VxStack>
 
-        <VxTable size="small">
+        <VxTable size="small" aria-label={t('cart.title')}>
           <VxTableHead>
             <VxTableRow>
               <VxTableCell>{t('cart.product')}</VxTableCell>
@@ -121,14 +121,33 @@ export function CartSummaryPanel({
                         if (e.key === 'Enter') commitQtyEdit(line.productId, editingQty.value)
                         if (e.key === 'Escape') setEditingQty(null)
                       }}
-                      slotProps={{ htmlInput: { min: 1, style: { textAlign: 'center', padding: '2px 4px' } } }}
+                      slotProps={{
+                        htmlInput: {
+                          min: 1,
+                          step: 1,
+                          'aria-label': `${t('cart.qty')}: ${line.productName}`,
+                          style: { textAlign: 'center', padding: '2px 4px' },
+                        },
+                      }}
                       sx={{ width: 64 }}
                     />
                   ) : (
                     <VxBox
-                      component="span"
+                      component="button"
+                      type="button"
+                      aria-label={`${t('cart.qty')}: ${line.productName}`}
                       onClick={() => setEditingQty({ productId: line.productId, value: String(line.quantity) })}
-                      sx={{ cursor: 'pointer', px: 0.75, borderRadius: 0.5, '&:hover': { bgcolor: 'action.hover' } }}
+                      sx={{
+                        cursor: 'pointer',
+                        px: 0.75,
+                        border: 0,
+                        borderRadius: 0.5,
+                        color: 'inherit',
+                        backgroundColor: 'transparent',
+                        font: 'inherit',
+                        '&:hover': { bgcolor: 'action.hover' },
+                        '&:focus-visible': { outline: '3px solid', outlineColor: 'primary.main', outlineOffset: 2 },
+                      }}
                     >
                       {line.quantity}
                     </VxBox>
@@ -144,6 +163,7 @@ export function CartSummaryPanel({
                     slotProps={{
                       htmlInput: {
                         inputMode: 'decimal',
+                        'aria-label': `${t('cart.discount')}: ${line.productName}`,
                       },
                     }}
                     sx={{ width: 96 }}
@@ -151,7 +171,12 @@ export function CartSummaryPanel({
                 </VxTableCell>
                 <VxTableCell align="right">{formatMoney(line.unitPrice * line.quantity - line.discountAmount, currencyCode)}</VxTableCell>
                 <VxTableCell align="right">
-                  <VxButton size="small" color="error" onClick={() => onRemoveCartLine(line.productId)}>
+                  <VxButton
+                    size="small"
+                    color="error"
+                    aria-label={`${t('cart.remove')}: ${line.productName}`}
+                    onClick={() => onRemoveCartLine(line.productId)}
+                  >
                     {t('cart.remove')}
                   </VxButton>
                 </VxTableCell>
@@ -166,7 +191,7 @@ export function CartSummaryPanel({
         <VxStack spacing={1}>
           <VxTypography variant="body2">{t('cart.subtotal', { value: formatMoney(subtotal, currencyCode) })}</VxTypography>
           <VxTypography variant="body2">{t('cart.discount')}: {formatMoney(discountTotal, currencyCode)}</VxTypography>
-          <VxTypography variant="h6">{t('cart.grandTotal', { value: formatMoney(grandTotal, currencyCode) })}</VxTypography>
+          <VxTypography component="p" variant="h6">{t('cart.grandTotal', { value: formatMoney(grandTotal, currencyCode) })}</VxTypography>
         </VxStack>
 
         <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
@@ -194,7 +219,11 @@ export function CartSummaryPanel({
         <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
           <DeliveryDiningRoundedIcon fontSize="small" color={isDelivery ? 'primary' : 'disabled'} />
           <VxTypography variant="body2" sx={{ mr: 'auto' }}>{t('cart.deliveryTransaction')}</VxTypography>
-          <VxSwitch checked={isDelivery} onChange={(_, checked) => onDeliveryChange(checked)} />
+          <VxSwitch
+            checked={isDelivery}
+            onChange={(_, checked) => onDeliveryChange(checked)}
+            slotProps={{ input: { 'aria-label': t('cart.deliveryTransaction') } }}
+          />
         </VxStack>
 
         <VxTypography variant="caption" color="text.secondary" sx={{ textAlign: 'center', display: 'block' }}>

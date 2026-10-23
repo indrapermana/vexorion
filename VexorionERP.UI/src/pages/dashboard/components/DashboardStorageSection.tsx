@@ -42,7 +42,7 @@ export default function DashboardStorageSection({ t, summary, topConsumers }: Da
       <VxGrid size={{ xs: 12, lg: 5 }}>
         <VxPaper elevation={0} sx={{ p: 2.5, borderRadius: 2 }}>
           <VxStack spacing={1.5}>
-            <VxTypography variant="h6">{t('dashboard.storage.title', { defaultValue: 'Storage & quota' })}</VxTypography>
+            <VxTypography component="h2" variant="h6">{t('dashboard.storage.title', { defaultValue: 'Storage & quota' })}</VxTypography>
             <VxTypography variant="body2" color="text.secondary">
               {t('dashboard.storage.subtitle', { defaultValue: 'Tenant-level storage usage and plan limits.' })}
             </VxTypography>
@@ -96,10 +96,10 @@ export default function DashboardStorageSection({ t, summary, topConsumers }: Da
       <VxGrid size={{ xs: 12, lg: 7 }}>
         <VxPaper elevation={0} sx={{ p: 2.5, borderRadius: 2 }}>
           <VxStack spacing={2}>
-            <VxTypography variant="h6">{t('dashboard.storage.topConsumers', { defaultValue: 'Top consumers' })}</VxTypography>
+            <VxTypography component="h3" variant="h6">{t('dashboard.storage.topConsumers', { defaultValue: 'Top consumers' })}</VxTypography>
 
             <VxStack spacing={1}>
-              <VxTypography variant="subtitle2">{t('dashboard.storage.topProjects', { defaultValue: 'Top projects' })}</VxTypography>
+              <VxTypography component="h4" variant="subtitle2">{t('dashboard.storage.topProjects', { defaultValue: 'Top projects' })}</VxTypography>
               {(topConsumers?.topProjects ?? []).slice(0, 3).map((item) => (
                 <VxStack key={item.projectId} direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
                   <VxTypography variant="body2">{item.projectName}</VxTypography>
@@ -114,7 +114,7 @@ export default function DashboardStorageSection({ t, summary, topConsumers }: Da
             </VxStack>
 
             <VxStack spacing={1}>
-              <VxTypography variant="subtitle2">{t('dashboard.storage.topDocuments', { defaultValue: 'Top documents' })}</VxTypography>
+              <VxTypography component="h4" variant="subtitle2">{t('dashboard.storage.topDocuments', { defaultValue: 'Top documents' })}</VxTypography>
               {(topConsumers?.topDocuments ?? []).slice(0, 3).map((item) => (
                 <VxStack key={item.projectDocumentId} direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
                   <VxTypography variant="body2">{item.title || item.fileName}</VxTypography>

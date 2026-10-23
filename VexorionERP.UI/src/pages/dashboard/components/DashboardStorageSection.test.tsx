@@ -36,7 +36,9 @@ describe('DashboardStorageSection', () => {
       </CurrencyProvider>,
     )
 
-    expect(screen.getByText('dashboard.storage.title')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: 'dashboard.storage.title' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 4, name: 'dashboard.storage.topProjects' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 4, name: 'dashboard.storage.topDocuments' })).toBeInTheDocument()
     expect(screen.getByText('Bridge Project')).toBeInTheDocument()
     expect(screen.getByText('Blueprint')).toBeInTheDocument()
     expect(screen.getByText('50% dashboard.storage.used')).toBeInTheDocument()

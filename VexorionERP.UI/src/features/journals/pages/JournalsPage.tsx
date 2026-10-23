@@ -172,7 +172,7 @@ export default function JournalsPage() {
 
       {canManage ? <VxPaper elevation={0} className="panel-card">
         <VxStack spacing={2.5}>
-          <VxTypography variant="h6">{t('pages.journals.actions.postSales')}</VxTypography>
+          <VxTypography component="h2" variant="h6">{t('pages.journals.actions.postSales')}</VxTypography>
           <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
             <VxTextField fullWidth label={t('pages.journals.fields.salesInvoiceId')} value={salesInvoiceId} onChange={(e) => setSalesInvoiceId(e.target.value)} />
             <VxTextField fullWidth type="date" label={t('pages.journals.fields.postingDate')} value={postingDate} onChange={(e) => setPostingDate(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
@@ -201,7 +201,7 @@ export default function JournalsPage() {
 
           <VxDivider />
 
-          <VxTypography variant="h6">{t('pages.journals.actions.postPurchase')}</VxTypography>
+          <VxTypography component="h2" variant="h6">{t('pages.journals.actions.postPurchase')}</VxTypography>
           <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
             <VxTextField fullWidth label={t('pages.journals.fields.purchaseInvoiceId')} value={purchaseInvoiceId} onChange={(e) => setPurchaseInvoiceId(e.target.value)} />
             <VxTextField fullWidth type="date" label={t('pages.journals.fields.postingDate')} value={postingDate} onChange={(e) => setPostingDate(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
@@ -230,7 +230,7 @@ export default function JournalsPage() {
 
           <VxDivider />
 
-          <VxTypography variant="h6">{t('pages.journals.actions.reverseJournal')}</VxTypography>
+          <VxTypography component="h2" variant="h6">{t('pages.journals.actions.reverseJournal')}</VxTypography>
           <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
             <VxTextField fullWidth label={t('pages.journals.fields.journalEntryId')} value={reverseJournalId} onChange={(e) => setReverseJournalId(e.target.value)} />
             <VxTextField fullWidth type="date" label={t('pages.journals.fields.reversalDate')} value={reversalDate} onChange={(e) => setReversalDate(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
@@ -255,7 +255,7 @@ export default function JournalsPage() {
 
       {selectedJournal ? (
         <VxPaper elevation={0} className="panel-card">
-          <VxTypography variant="h6" sx={{ mb: 2 }}>{t('pages.journals.details.title', { journalNumber: selectedJournal.journalNumber })}</VxTypography>
+          <VxTypography component="h2" variant="h6" sx={{ mb: 2 }}>{t('pages.journals.details.title', { journalNumber: selectedJournal.journalNumber })}</VxTypography>
           <VxTypography color="text.secondary" sx={{ mb: 1 }}>{t('pages.journals.details.source')}: {selectedJournal.sourceDocumentType} / {selectedJournal.sourceDocumentId ?? t('pages.journals.details.notAvailable')}</VxTypography>
           <VxTypography color="text.secondary" sx={{ mb: 2 }}>{t('pages.journals.details.debit')} {selectedJournal.totalDebit.toFixed(2)} / {t('pages.journals.details.credit')} {selectedJournal.totalCredit.toFixed(2)}</VxTypography>
           <VxStack spacing={1}>

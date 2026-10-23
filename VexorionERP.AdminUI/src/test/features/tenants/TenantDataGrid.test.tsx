@@ -23,6 +23,11 @@ vi.mock('react-i18next', () => ({
         'components.tenants.grid.inactive': 'Inactive',
         'components.tenants.grid.removeConsequence': 'This permanently removes the tenant and its associated data.',
         'components.tenants.grid.removeTitle': 'Remove tenant',
+        'components.tenants.editor.project': 'Project Management',
+        'components.tenants.editor.document': 'Document Management',
+        'components.tenants.editor.employee': 'Employee Management',
+        'components.tenants.editor.enabled': 'ENABLED',
+        'components.tenants.editor.disabled': 'DISABLED',
       }
 
       return messages[key] ?? key
@@ -77,11 +82,44 @@ describe('TenantDataGrid', () => {
 
     render(<TenantDataGrid rows={[ROW]} isLoading={false} onEdit={onEdit} onRemove={onRemove} />)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Edit' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Remove' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Edit: Acme Corp' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Remove: Acme Corp' }))
     await userEvent.click(screen.getByRole('button', { name: 'Remove tenant' }))
 
     expect(onEdit).toHaveBeenCalledWith(ROW)
     expect(onRemove).toHaveBeenCalledWith(ROW)
+  })
+
+  it('announces module access and status without relying on color or abbreviations', () => {
+    const enabled = {
+      toggleEnabled: true,
+      rolloutGateEnabled: true,
+      rolloutMode: 'AllowAll',
+      allowedByRollout: true,
+      effectiveEnabled: true,
+    }
+    render(
+      <TenantDataGrid
+        rows={[ROW]}
+        isLoading={false}
+        onEdit={vi.fn()}
+        onRemove={vi.fn()}
+        effectiveAccessByTenantId={{
+          [ROW.id]: {
+            tenantId: ROW.id,
+            tenantCode: ROW.code,
+            project: enabled,
+            document: { ...enabled, effectiveEnabled: false },
+            employee: enabled,
+          },
+        }}
+      />,
+    )
+
+    expect(screen.getByLabelText('Project Management: ENABLED')).toBeInTheDocument()
+    expect(screen.getByLabelText('Document Management: DISABLED')).toBeInTheDocument()
+    expect(screen.getByLabelText('Employee Management: ENABLED')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Edit: Acme Corp' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Remove: Acme Corp' })).toBeInTheDocument()
   })
 })

@@ -42,11 +42,11 @@ export default function LoginPage() {
   return (
     <VxStack component="form" spacing={2.5} onSubmit={onSubmit} className="public-form-card public-form-card--login">
       <VxBox>
-        <VxTypography variant="h4" sx={{ mb: 1 }}>{t('login.title')}</VxTypography>
+        <VxTypography component="h1" variant="h4" sx={{ mb: 1 }}>{t('login.title')}</VxTypography>
         <VxTypography color="text.secondary">{t('login.description')}</VxTypography>
       </VxBox>
 
-      {error ? <VxAlert severity="error">{error}</VxAlert> : null}
+      {error ? <VxAlert severity="error" role="alert">{error}</VxAlert> : null}
 
       <VxTextField
         label={t('login.tenantCode')}

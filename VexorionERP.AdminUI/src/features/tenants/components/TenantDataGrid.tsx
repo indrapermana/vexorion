@@ -76,9 +76,9 @@ export function TenantDataGrid({ rows, isLoading, onEdit, onRemove, effectiveAcc
           }
 
           const chips = [
-            { label: 'P', enabled: access.project.effectiveEnabled },
-            { label: 'D', enabled: access.document.effectiveEnabled },
-            { label: 'E', enabled: access.employee.effectiveEnabled },
+            { label: 'P', module: t('components.tenants.editor.project'), enabled: access.project.effectiveEnabled },
+            { label: 'D', module: t('components.tenants.editor.document'), enabled: access.document.effectiveEnabled },
+            { label: 'E', module: t('components.tenants.editor.employee'), enabled: access.employee.effectiveEnabled },
           ]
 
           return (
@@ -87,6 +87,7 @@ export function TenantDataGrid({ rows, isLoading, onEdit, onRemove, effectiveAcc
                 <VxChip
                   key={chip.label}
                   label={chip.label}
+                  aria-label={`${chip.module}: ${t(chip.enabled ? 'components.tenants.editor.enabled' : 'components.tenants.editor.disabled')}`}
                   size="small"
                   color={chip.enabled ? 'success' : 'default'}
                   variant={chip.enabled ? 'filled' : 'outlined'}
@@ -105,7 +106,12 @@ export function TenantDataGrid({ rows, isLoading, onEdit, onRemove, effectiveAcc
         filterable: false,
         renderCell: (params) => (
           <VxBox sx={{ display: 'flex', gap: 1 }}>
-            <VxButton size="small" variant="contained" onClick={() => onEdit(params.row)}>
+            <VxButton
+              size="small"
+              variant="contained"
+              aria-label={`${t('common.edit')}: ${params.row.name}`}
+              onClick={() => onEdit(params.row)}
+            >
               {t('common.edit')}
             </VxButton>
             <VxConfirmActionButton
@@ -115,7 +121,12 @@ export function TenantDataGrid({ rows, isLoading, onEdit, onRemove, effectiveAcc
               confirmLabel={t('components.tenants.grid.removeTitle')}
               pendingLabel={t('common.removing')}
               onConfirm={() => onRemove(params.row)}
-              buttonProps={{ size: 'small', color: 'error', variant: 'outlined' }}
+              buttonProps={{
+                size: 'small',
+                color: 'error',
+                variant: 'outlined',
+                'aria-label': `${t('common.remove')}: ${params.row.name}`,
+              }}
             >
               {t('common.remove')}
             </VxConfirmActionButton>

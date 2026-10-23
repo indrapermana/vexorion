@@ -452,21 +452,21 @@ export default function StockTransfersPage() {
         <VxPaper elevation={0} className="panel-card">
           {!selectedTransfer ? (
             <>
-              <VxTypography variant="h6" sx={{ mb: 1 }}>{t('pages.stockTransfers.linePanel.title')}</VxTypography>
+              <VxTypography component="h2" variant="h6" sx={{ mb: 1 }}>{t('pages.stockTransfers.linePanel.title')}</VxTypography>
               <VxTypography color="text.secondary">{t('pages.stockTransfers.linePanel.selectPrompt')}</VxTypography>
             </>
           ) : (
             <>
               <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ justifyContent: 'space-between', mb: 2 }}>
                 <VxBox>
-                  <VxTypography variant="h6">{t('pages.stockTransfers.linePanel.titleFor', { number: selectedTransfer.transferNumber })}</VxTypography>
+                  <VxTypography component="h2" variant="h6">{t('pages.stockTransfers.linePanel.titleFor', { number: selectedTransfer.transferNumber })}</VxTypography>
                   <VxTypography color="text.secondary">{t('pages.stockTransfers.linePanel.completionHint')}</VxTypography>
                 </VxBox>
                 {canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateLine} disabled={selectedTransfer.status !== 1 || products.length === 0}>{t('pages.stockTransfers.linePanel.add')}</VxButton> : null}
               </VxStack>
               <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 2 }}>
                 <VxChip icon={<WarehouseRoundedIcon />} label={t('pages.stockTransfers.linePanel.source', { warehouse: warehouseNameById.get(selectedTransfer.sourceWarehouseId) ?? selectedTransfer.sourceWarehouseId })} variant="outlined" color="primary" />
-                <VxChip icon={<WarehouseRoundedIcon />} label={t('pages.stockTransfers.linePanel.destination', { warehouse: warehouseNameById.get(selectedTransfer.destinationWarehouseId) ?? selectedTransfer.destinationWarehouseId })} variant="outlined" color="secondary" />
+                <VxChip icon={<WarehouseRoundedIcon />} label={t('pages.stockTransfers.linePanel.destination', { warehouse: warehouseNameById.get(selectedTransfer.destinationWarehouseId) ?? selectedTransfer.destinationWarehouseId })} variant="outlined" color="primary" />
               </VxStack>
               {selectedTransfer.status !== 1 ? <VxAlert severity="info" sx={{ mb: 2 }}>{t('pages.stockTransfers.linePanel.locked')}</VxAlert> : null}
               {lineError ? <VxAlert severity="error" sx={{ mb: 2 }}>{lineError}</VxAlert> : null}

@@ -262,7 +262,7 @@ export default function AssignmentsPanel({ projectId }: AssignmentsPanelProps) {
       <VxPaper elevation={0} className="panel-card">
         <VxStack spacing={2}>
           <VxStack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-            <VxTypography variant="h6">{t('pages.projectDetails.assignmentsPanel.title')}</VxTypography>
+            <VxTypography component="h2" variant="h6">{t('pages.projectDetails.assignmentsPanel.title')}</VxTypography>
             {canManage ? (
               <VxButton variant="contained" onClick={openCreateDialog}>
                 {t('pages.projectDetails.assignmentsPanel.add')}
@@ -339,7 +339,7 @@ export default function AssignmentsPanel({ projectId }: AssignmentsPanelProps) {
 
       <VxPaper elevation={0} className="panel-card">
         <VxStack spacing={1.5}>
-          <VxTypography variant="h6">{t('pages.projectDetails.assignmentsPanel.historyTitle')}</VxTypography>
+          <VxTypography component="h3" variant="h6">{t('pages.projectDetails.assignmentsPanel.historyTitle')}</VxTypography>
           <VxTableContainer>
             <VxTable size="small">
               <VxTableHead>

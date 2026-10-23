@@ -29,7 +29,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: #8c87b8;
+  color: #68639a;
 }
 
 .dashboard-nav-item {
@@ -67,7 +67,7 @@
 
 .dashboard-nav-item:hover {
   background: rgba(108, 92, 231, 0.08);
-  color: #6c5ce7;
+  color: #5443cf;
 }
 
 .dashboard-nav-item-active {
@@ -155,18 +155,18 @@
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.72);
+  color: #ffffff;
 }
 
 .public-shell__title {
-  color: #fff;
+  color: #ffffff;
   max-width: 10ch;
   margin-bottom: 1rem;
 }
 
 .public-shell__description {
   max-width: 56ch;
-  color: rgba(255, 255, 255, 0.78);
+  color: #ffffff;
   line-height: 1.7;
 }
 
@@ -201,7 +201,7 @@
 }
 
 .public-feature-row__description {
-  color: rgba(255, 255, 255, 0.74);
+  color: #ffffff;
   line-height: 1.65;
 }
 

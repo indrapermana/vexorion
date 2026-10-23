@@ -34,7 +34,7 @@ export default function SalesInvoiceLinesPanel({ invoice, lines, isLoading, erro
   if (!invoice) {
     return (
       <VxPaper elevation={0} className="panel-card">
-        <VxTypography variant="h6" sx={{ mb: 1 }}>{t('orderWorkflow.line.invoiceLines')}</VxTypography>
+        <VxTypography component="h2" variant="h6" sx={{ mb: 1 }}>{t('orderWorkflow.line.invoiceLines')}</VxTypography>
         <VxTypography color="text.secondary">{t('pages.salesInvoices.lines.selectPrompt')}</VxTypography>
       </VxPaper>
     )
@@ -96,7 +96,7 @@ export default function SalesInvoiceLinesPanel({ invoice, lines, isLoading, erro
     <VxPaper elevation={0} className="panel-card">
       <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ justifyContent: 'space-between', mb: 2 }}>
         <VxBox>
-          <VxTypography variant="h6">{t('orderWorkflow.line.invoiceLinesFor', { number: invoice.invoiceNumber })}</VxTypography>
+          <VxTypography component="h2" variant="h6">{t('orderWorkflow.line.invoiceLinesFor', { number: invoice.invoiceNumber })}</VxTypography>
           <VxTypography color="text.secondary">{t('pages.salesInvoices.lines.description')}</VxTypography>
         </VxBox>
         {canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate} disabled={!products.length}>{t('orderWorkflow.line.add')}</VxButton> : null}

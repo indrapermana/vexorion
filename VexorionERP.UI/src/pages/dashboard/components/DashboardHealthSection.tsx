@@ -22,7 +22,7 @@ export default function DashboardHealthSection({
     <VxGrid container spacing={2}>
       <VxGrid size={{ xs: 12, md: 6 }}>
         <VxPaper elevation={0} sx={{ p: 2.5, borderRadius: 2 }}>
-          <VxTypography variant="h6" sx={{ mb: 2.5 }}>{t('dashboard.health.receivables')}</VxTypography>
+          <VxTypography component="h2" variant="h6" sx={{ mb: 2.5 }}>{t('dashboard.health.receivables')}</VxTypography>
           <VxStack spacing={2}>
             <VxBox>
               <VxBox sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
@@ -33,7 +33,7 @@ export default function DashboardHealthSection({
             </VxBox>
             <VxBox sx={{ pt: 1 }}>
               <VxTypography variant="caption" color="text.secondary">{t('dashboard.health.totalReceivables')}</VxTypography>
-              <VxTypography variant="h6">{formatMoney(totalReceivables)}</VxTypography>
+              <VxTypography component="p" variant="h6">{formatMoney(totalReceivables)}</VxTypography>
             </VxBox>
           </VxStack>
         </VxPaper>
@@ -41,7 +41,7 @@ export default function DashboardHealthSection({
 
       <VxGrid size={{ xs: 12, md: 6 }}>
         <VxPaper elevation={0} sx={{ p: 2.5, borderRadius: 2 }}>
-          <VxTypography variant="h6" sx={{ mb: 2.5 }}>{t('dashboard.health.payables')}</VxTypography>
+          <VxTypography component="h2" variant="h6" sx={{ mb: 2.5 }}>{t('dashboard.health.payables')}</VxTypography>
           <VxStack spacing={2}>
             <VxBox>
               <VxBox sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
@@ -52,7 +52,7 @@ export default function DashboardHealthSection({
             </VxBox>
             <VxBox sx={{ pt: 1 }}>
               <VxTypography variant="caption" color="text.secondary">{t('dashboard.health.totalPayables')}</VxTypography>
-              <VxTypography variant="h6">{formatMoney(totalPayables)}</VxTypography>
+              <VxTypography component="p" variant="h6">{formatMoney(totalPayables)}</VxTypography>
             </VxBox>
           </VxStack>
         </VxPaper>

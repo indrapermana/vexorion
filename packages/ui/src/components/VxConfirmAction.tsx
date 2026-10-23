@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useId, useState, type ReactNode } from 'react'
 import type { ButtonProps } from '@mui/material'
 import { VxAlert, VxButton, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxStack, VxTypography } from './material'
 
@@ -29,10 +29,21 @@ export function VxConfirmActionDialog({
   onClose,
   onConfirm,
 }: VxConfirmActionDialogProps) {
+  const titleId = useId()
+  const descriptionId = useId()
+
   return (
-    <VxDialog open={open} onClose={pending ? undefined : onClose} maxWidth="xs" fullWidth aria-busy={pending}>
-      <VxDialogTitle>{title}</VxDialogTitle>
-      <VxDialogContent>
+    <VxDialog
+      open={open}
+      onClose={pending ? undefined : onClose}
+      maxWidth="xs"
+      fullWidth
+      aria-busy={pending}
+      aria-labelledby={titleId}
+      aria-describedby={descriptionId}
+    >
+      <VxDialogTitle id={titleId}>{title}</VxDialogTitle>
+      <VxDialogContent id={descriptionId}>
         <VxStack spacing={1.5}>
           <VxTypography sx={{ fontWeight: 700, overflowWrap: 'anywhere' }}>{targetName}</VxTypography>
           <VxTypography color="text.secondary">{consequence}</VxTypography>

@@ -187,7 +187,7 @@ export default function ConfigUsersPage() {
       {canManageRoles && !canViewRoles ? <PermissionReadOnlyAlert requiredPermission={Permissions.roles.view} /> : null}
 
       {canManageUsers ? <VxPaper elevation={0} className="panel-card">
-        <VxTypography variant="h6" sx={{ mb: 2 }}>{t('config.users.createSection')}</VxTypography>
+        <VxTypography component="h2" variant="h6" sx={{ mb: 2 }}>{t('config.users.createSection')}</VxTypography>
         <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ flexWrap: 'wrap' }}>
           <VxTextField
             label={t('config.users.fields.userName')}
@@ -244,8 +244,8 @@ export default function ConfigUsersPage() {
       </VxPaper> : null}
 
       <PageBody>
-        <VxTypography variant="h6" sx={{ mb: 1.5 }}>{t('config.users.listSection')}</VxTypography>
-        <VxTable size="small">
+        <VxTypography component="h2" variant="h6" sx={{ mb: 1.5 }}>{t('config.users.listSection')}</VxTypography>
+        <VxTable size="small" aria-label={t('config.users.listSection')}>
           <VxTableHead>
             <VxTableRow>
               <VxTableCell>{t('config.users.columns.user')}</VxTableCell>
@@ -273,7 +273,12 @@ export default function ConfigUsersPage() {
                   <VxTextField
                     size="small"
                     select
-                    slotProps={{ select: { multiple: true } }}
+                    slotProps={{
+                      select: {
+                        multiple: true,
+                        'aria-label': `${t('config.users.columns.roles')}: ${user.userName}`,
+                      },
+                    }}
                     value={roleDraftByUserId[user.id] ?? user.roles}
                     onChange={(event) => updateRoleDraft(user.id, event.target.value)}
                     disabled={!canEditRoles}
@@ -287,6 +292,7 @@ export default function ConfigUsersPage() {
                 <VxTableCell>
                   <VxSwitch
                     checked={user.isActive}
+                    slotProps={{ input: { 'aria-label': `${t('config.users.columns.active')}: ${user.userName}` } }}
                     onChange={(event) => {
                       if (event.target.checked) void updateUserStatus(user, true)
                       else setDeactivateTarget(user)
@@ -295,7 +301,13 @@ export default function ConfigUsersPage() {
                   />
                 </VxTableCell>
                 <VxTableCell align="right">
-                  {canEditRoles ? <VxButton size="small" variant="outlined" disabled={isSaving} onClick={() => void saveUserRoles(user.id)}>
+                  {canEditRoles ? <VxButton
+                    size="small"
+                    variant="outlined"
+                    aria-label={`${t('config.users.saveRolesButton')}: ${user.userName}`}
+                    disabled={isSaving}
+                    onClick={() => void saveUserRoles(user.id)}
+                  >
                     {t('config.users.saveRolesButton')}
                   </VxButton> : null}
                 </VxTableCell>

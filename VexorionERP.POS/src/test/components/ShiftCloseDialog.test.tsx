@@ -55,6 +55,22 @@ describe('ShiftCloseDialog', () => {
     expect(screen.getByRole('dialog')).toBeInTheDocument()
   })
 
+  it('uses section headings beneath the dialog title', () => {
+    renderWithProviders(
+      <ShiftCloseDialog
+        open
+        shift={SHIFT}
+        currencyCode="USD"
+        onClose={vi.fn()}
+        onConfirm={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('heading', { name: 'Close Shift', level: 2 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Shift Summary', level: 3 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Cash Reconciliation', level: 3 })).toBeInTheDocument()
+  })
+
   it('does not render when open=false', () => {
     renderWithProviders(
       <ShiftCloseDialog

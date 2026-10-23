@@ -1,4 +1,4 @@
-import { VxBox, VxButton, VxChip, VxPageBody, VxPageFeedback, VxPageHeader, VxStack, VxSwitch, VxTypography } from '@vexorion/ui'
+import { VxBox, VxButton, VxChip, VxFormControlLabel, VxPageBody, VxPageFeedback, VxPageHeader, VxStack, VxSwitch, VxTypography } from '@vexorion/ui'
 import { lazy, useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { VxCard } from '@vexorion/ui'
@@ -111,7 +111,7 @@ export default function TenantManagementPage() {
     <VxBox sx={{ p: 3 }}>
       <VxStack spacing={3}>
         <VxPageHeader
-          title={t('pages.tenantManagement.loadingTools')}
+          title={t('shell.tenants')}
           description={t('pages.tenantManagement.description')}
           action={canManage ? (
             <VxButton variant="contained" onClick={() => setIsOnboardingOpen(true)}>
@@ -121,28 +121,34 @@ export default function TenantManagementPage() {
         />
 
         <VxBox sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: 2, minWidth: 0 }}>
-          <VxCard title={t('pages.tenantManagement.metrics.rows')} className="panel-card" style={{ flex: 1 }}>
-            <VxTypography variant="h5">{tenants.length}</VxTypography>
+          <VxCard title={t('pages.tenantManagement.metrics.rows')} titleComponent="p" className="panel-card" style={{ flex: 1 }}>
+            <VxTypography component="p" variant="h5">{tenants.length}</VxTypography>
           </VxCard>
-          <VxCard title={t('pages.tenantManagement.metrics.active')} className="panel-card" style={{ flex: 1 }}>
-            <VxTypography variant="h5">{activeTenants}</VxTypography>
+          <VxCard title={t('pages.tenantManagement.metrics.active')} titleComponent="p" className="panel-card" style={{ flex: 1 }}>
+            <VxTypography component="p" variant="h5">{activeTenants}</VxTypography>
           </VxCard>
-          <VxCard title={t('pages.tenantManagement.modulesDisabled')} className="panel-card" style={{ flex: 1 }}>
-            <VxTypography variant="h5">{tenantsWithDisabledModules}</VxTypography>
+          <VxCard title={t('pages.tenantManagement.modulesDisabled')} titleComponent="p" className="panel-card" style={{ flex: 1 }}>
+            <VxTypography component="p" variant="h5">{tenantsWithDisabledModules}</VxTypography>
           </VxCard>
         </VxBox>
 
         <VxStack direction={{ xs: 'column', lg: 'row' }} spacing={1.5} sx={{ justifyContent: 'space-between', alignItems: { lg: 'center' } }}>
           <VxStack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
-            <VxTypography variant="body2" color="textSecondary">{t('pages.tenantManagement.disabledOnly')}</VxTypography>
-            <VxSwitch checked={showDisabledModulesOnly} onChange={(event) => setShowDisabledModulesOnly(event.target.checked)} />
+            <VxFormControlLabel
+              control={<VxSwitch checked={showDisabledModulesOnly} onChange={(event) => setShowDisabledModulesOnly(event.target.checked)} />}
+              label={t('pages.tenantManagement.disabledOnly')}
+            />
           </VxStack>
 
-          <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+          <VxStack spacing={0.5} sx={{ alignItems: { xs: 'flex-start', lg: 'flex-end' } }}>
             <VxTypography variant="caption" color="textSecondary">{t('pages.tenantManagement.legend')}</VxTypography>
-            <VxChip size="small" color="success" label={t('pages.tenantManagement.enabled')} />
-            <VxChip size="small" variant="outlined" label={t('pages.tenantManagement.disabled')} />
-            <VxTypography variant="caption" color="textSecondary">{t('pages.tenantManagement.moduleLegend')}</VxTypography>
+            <VxStack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+              <VxChip size="small" color="success" label={t('pages.tenantManagement.enabled')} />
+              <VxChip size="small" variant="outlined" label={t('pages.tenantManagement.disabled')} />
+              <VxChip size="small" variant="outlined" label={t('pages.tenantManagement.modules.project')} />
+              <VxChip size="small" variant="outlined" label={t('pages.tenantManagement.modules.document')} />
+              <VxChip size="small" variant="outlined" label={t('pages.tenantManagement.modules.employee')} />
+            </VxStack>
           </VxStack>
         </VxStack>
 

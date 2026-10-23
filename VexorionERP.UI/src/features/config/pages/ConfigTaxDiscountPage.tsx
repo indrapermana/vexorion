@@ -194,7 +194,7 @@ export default function ConfigTaxDiscountPage() {
       {!canManageDiscount ? <PermissionReadOnlyAlert requiredPermission={Permissions.organization.manage} /> : null}
 
       {canManageTax ? <VxPaper elevation={0} className="panel-card">
-        <VxTypography variant="h6" sx={{ mb: 2 }}>{editTargetId ? t('config.taxDiscount.editTaxCode') : t('config.taxDiscount.newTaxCode')}</VxTypography>
+        <VxTypography component="h2" variant="h6" sx={{ mb: 2 }}>{editTargetId ? t('config.taxDiscount.editTaxCode') : t('config.taxDiscount.newTaxCode')}</VxTypography>
         <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ alignItems: { md: 'center' } }}>
           <VxTextField size="small" label={t('config.taxDiscount.fields.code')} value={draft.code} onChange={(event) => setDraft((prev) => ({ ...prev, code: event.target.value }))} />
           <VxTextField size="small" label={t('config.taxDiscount.fields.name')} value={draft.name} onChange={(event) => setDraft((prev) => ({ ...prev, name: event.target.value }))} />
@@ -216,7 +216,7 @@ export default function ConfigTaxDiscountPage() {
       </VxPaper> : null}
 
       <PageBody>
-        <VxTypography variant="h6" sx={{ mb: 1.5 }}>{t('config.taxDiscount.taxCodesSection')}</VxTypography>
+        <VxTypography component="h2" variant="h6" sx={{ mb: 1.5 }}>{t('config.taxDiscount.taxCodesSection')}</VxTypography>
         <VxTable size="small">
           <VxTableHead>
             <VxTableRow>
@@ -255,7 +255,7 @@ export default function ConfigTaxDiscountPage() {
       </PageBody>
 
       <VxPaper elevation={0} className="panel-card">
-        <VxTypography variant="h6" sx={{ mb: 2 }}>{t('config.taxDiscount.discountSection')}</VxTypography>
+        <VxTypography component="h2" variant="h6" sx={{ mb: 2 }}>{t('config.taxDiscount.discountSection')}</VxTypography>
         <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ alignItems: { md: 'center' } }}>
           <VxTextField
             size="small"

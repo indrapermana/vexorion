@@ -36,12 +36,21 @@ describe('VxDataGrid', () => {
     const props = dataGridSpy.mock.lastCall?.[0]
     expect(props).toMatchObject({
       density: 'compact',
+      'aria-label': 'Data grid',
       disableRowSelectionOnClick: true,
       pageSizeOptions: [10, 25, 50],
       showToolbar: true,
       slotProps: { toolbar: { showQuickFilter: true } },
     })
     expect(props.initialState.pagination.paginationModel).toEqual({ page: 0, pageSize: 10 })
+  })
+
+  it('uses a readable preference-key label unless a localized label is provided', () => {
+    const { rerender } = render(<VxDataGrid preferenceKey="customer-payments" rows={[]} columns={[]} />)
+    expect(dataGridSpy.mock.lastCall?.[0]['aria-label']).toBe('customer payments')
+
+    rerender(<VxDataGrid preferenceKey="customer-payments" aria-label="Pagos de clientes" rows={[]} columns={[]} />)
+    expect(dataGridSpy.mock.lastCall?.[0]['aria-label']).toBe('Pagos de clientes')
   })
 
   it('restores and updates pagination for grids with a preference key', () => {

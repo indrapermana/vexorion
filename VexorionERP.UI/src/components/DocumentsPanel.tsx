@@ -152,7 +152,7 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
   if (!sourceEntityId) {
     return (
       <VxPaper elevation={0} className="panel-card">
-        <VxTypography variant="h6" sx={{ mb: 1 }}>{t('pages.documentsPanel.title')}</VxTypography>
+        <VxTypography component="h2" variant="h6" sx={{ mb: 1 }}>{t('pages.documentsPanel.title')}</VxTypography>
         <VxTypography color="text.secondary">{t('pages.documentsPanel.selectRecord')}</VxTypography>
       </VxPaper>
     )
@@ -166,7 +166,7 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
         <VxStack direction="row" spacing={1.5} sx={{ alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
           <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
             <DescriptionRoundedIcon fontSize="small" color="action" />
-            <VxTypography variant="h6">{t('pages.documentsPanel.title')}</VxTypography>
+            <VxTypography component="h2" variant="h6">{t('pages.documentsPanel.title')}</VxTypography>
           </VxStack>
           {canGenerate && (
             <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>

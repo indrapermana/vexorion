@@ -179,12 +179,12 @@ export default function ProductIdentifiersPanel({ productId, canManage = true }:
                   <VxTableCell align="right">
                     {canManage ? <VxStack direction="row" spacing={0.5} sx={{ justifyContent: 'flex-end' }}>
                       <VxTooltip title={t('common.edit')}>
-                        <VxIconButton size="small" onClick={() => openEdit(item)}>
+                        <VxIconButton size="small" onClick={() => openEdit(item)} aria-label={t('common.edit')}>
                           <EditRoundedIcon fontSize="small" />
                         </VxIconButton>
                       </VxTooltip>
                       <VxTooltip title={t('dialogs.delete')}>
-                        <VxIconButton size="small" color="error" onClick={() => setDeleteTarget(item)}>
+                        <VxIconButton size="small" color="error" onClick={() => setDeleteTarget(item)} aria-label={t('dialogs.delete')}>
                           <DeleteOutlineRoundedIcon fontSize="small" />
                         </VxIconButton>
                       </VxTooltip>

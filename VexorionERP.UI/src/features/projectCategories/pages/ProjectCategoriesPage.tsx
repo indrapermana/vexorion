@@ -360,7 +360,11 @@ export default function ProjectCategoriesPage() {
               multiline
               minRows={3}
             />
-            <VxSwitch checked={editIsActive} onChange={(event) => setEditIsActive(event.target.checked)} />
+            <VxSwitch
+              checked={editIsActive}
+              slotProps={{ input: { 'aria-label': `${t('pages.projectCategories.fields.isActive')}: ${editName || editCode}` } }}
+              onChange={(event) => setEditIsActive(event.target.checked)}
+            />
           </VxStack>
         </VxDialogContent>
         <VxDialogActions>

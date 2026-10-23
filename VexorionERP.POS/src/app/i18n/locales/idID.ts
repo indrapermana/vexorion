@@ -27,6 +27,8 @@ const id: Dictionary = {
   'catalog.stock': 'Sisa stok',
   'catalog.outOfStock': 'Stok habis',
   'catalog.add': 'Tambah',
+  'catalog.decreaseQty': 'Kurangi jumlah',
+  'catalog.increaseQty': 'Tambah jumlah',
   'catalog.noProducts': 'Tidak ada produk yang cocok dengan filter katalog/pencarian.',
   'catalog.showing': 'Menampilkan {current} dari {total} produk (ukuran halaman: {size})',
   'cart.title': 'Keranjang',

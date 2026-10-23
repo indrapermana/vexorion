@@ -162,12 +162,13 @@ export default function ConfigProductCategoriesPage() {
                         <VxIconButton
                           size="small"
                           onClick={() => { setEditTarget(cat); setEditName(cat.name); setEditIsActive(cat.isActive) }}
+                          aria-label={t('common.edit')}
                         >
                           <EditIcon fontSize="small" />
                         </VxIconButton>
                       </VxTooltip>
                       <VxTooltip title={t('common.delete')}>
-                        <VxIconButton size="small" color="error" onClick={() => setDeleteTarget(cat)}>
+                        <VxIconButton size="small" color="error" onClick={() => setDeleteTarget(cat)} aria-label={t('common.delete')}>
                           <DeleteIcon fontSize="small" />
                         </VxIconButton>
                       </VxTooltip>

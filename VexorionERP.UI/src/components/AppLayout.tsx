@@ -469,7 +469,11 @@ export default function AppLayout() {
 
       <VxDivider />
 
-      <VxBox sx={{ px: collapsed ? 1 : 1.5, py: 1.5 }}>
+      <VxBox
+        component="nav"
+        aria-label={t("app.navigation")}
+        sx={{ px: collapsed ? 1 : 1.5, py: 1.5 }}
+      >
         {!collapsed ? (
           <VxTypography className="sidebar-caption">
             {t("app.navigation")}
@@ -604,6 +608,7 @@ export default function AppLayout() {
         open={mobileOpen}
         onClose={() => setMobileOpen(false)}
         ModalProps={{ keepMounted: true }}
+        slotProps={{ paper: { "aria-label": t("app.navigation") } }}
         sx={{
           display: { xs: "block", lg: "none" },
           "& .MuiDrawer-paper": { width: drawerWidth, boxSizing: "border-box" },
@@ -747,6 +752,8 @@ export default function AppLayout() {
             <VxIconButton
               sx={{ display: { lg: "none" } }}
               onClick={() => setMobileOpen(true)}
+              aria-label={t("app.navigation")}
+              aria-expanded={mobileOpen}
             >
               <MenuRoundedIcon />
             </VxIconButton>
@@ -766,14 +773,14 @@ export default function AppLayout() {
               >
                 {t("app.adminConsole")}
               </VxTypography>
-              <VxTypography variant="h5" noWrap>
+              <VxTypography component="div" variant="h5" noWrap>
                 {pageTitle}
               </VxTypography>
             </VxBox>
           </VxStack>
         </VxToolbar>
 
-        <VxBox className="dashboard-content">
+        <VxBox component="main" className="dashboard-content">
           <Outlet />
         </VxBox>
       </VxBox>

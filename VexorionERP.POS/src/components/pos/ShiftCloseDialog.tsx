@@ -106,7 +106,7 @@ export function ShiftCloseDialog({ open, shift, currencyCode, onClose, onConfirm
           <VxDivider />
 
           {/* Sales breakdown — Item 7 */}
-          <VxTypography variant="subtitle2">{t('shift.summary.title')}</VxTypography>
+          <VxTypography component="h3" variant="subtitle2">{t('shift.summary.title')}</VxTypography>
           <VxStack spacing={0.5}>
             <SummaryRow label={t('shift.summary.totalSales')} value={fmt(totalSales)} bold />
             <SummaryRow label={t('shift.summary.cashSales')} value={fmt(cashSales)} indent />
@@ -118,7 +118,7 @@ export function ShiftCloseDialog({ open, shift, currencyCode, onClose, onConfirm
           <VxDivider />
 
           {/* Cash reconciliation — Item 8 */}
-          <VxTypography variant="subtitle2">{t('shift.summary.cashReconcile')}</VxTypography>
+          <VxTypography component="h3" variant="subtitle2">{t('shift.summary.cashReconcile')}</VxTypography>
           <VxStack spacing={0.5}>
             <SummaryRow label={t('shift.summary.openingFloat')} value={fmt(shift.openingFloat)} />
             <SummaryRow label={t('shift.summary.cashSales')} value={fmt(cashSales)} indent />

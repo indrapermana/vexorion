@@ -8,10 +8,10 @@ import type { UserListItemResponse } from '../types/api/users'
 
 function DashboardMetricCard({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
   return (
-    <VxCard title={label} className="stat-card dashboard-stat-card">
+    <VxCard title={label} titleComponent="p" className="stat-card dashboard-stat-card">
       <VxStack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
         <VxBox className="metric-icon">{icon}</VxBox>
-        <VxTypography variant="h5">{value}</VxTypography>
+        <VxTypography component="p" variant="h5">{value}</VxTypography>
       </VxStack>
     </VxCard>
   )
@@ -85,12 +85,14 @@ export default function DashboardPage() {
               label={t('pages.dashboard.last7Days')}
               color={rangeDays === 7 ? 'primary' : 'default'}
               variant={rangeDays === 7 ? 'filled' : 'outlined'}
+              aria-pressed={rangeDays === 7}
               onClick={() => setRangeDays(7)}
             />
             <VxChip
               label={t('pages.dashboard.last30Days')}
               color={rangeDays === 30 ? 'primary' : 'default'}
               variant={rangeDays === 30 ? 'filled' : 'outlined'}
+              aria-pressed={rangeDays === 30}
               onClick={() => setRangeDays(30)}
             />
           </VxStack>
@@ -120,7 +122,7 @@ export default function DashboardPage() {
       <VxBox sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', lg: '1fr 2fr' } }}>
         <VxBox>
           <VxPaper className="panel-card" elevation={0}>
-            <VxTypography variant="h6" sx={{ mb: 1.5 }}>{t('pages.dashboard.freePaid')}</VxTypography>
+            <VxTypography component="h2" variant="h6" sx={{ mb: 1.5 }}>{t('pages.dashboard.freePaid')}</VxTypography>
             <VxStack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
               <VxChip color="success" label={t('pages.dashboard.free', { count: freeTenants })} />
               <VxChip color="primary" label={t('pages.dashboard.paid', { count: paidTenants })} />
@@ -133,7 +135,7 @@ export default function DashboardPage() {
 
         <VxBox>
           <VxPaper className="panel-card" elevation={0}>
-            <VxTypography variant="h6" sx={{ mb: 1.5 }}>{t('pages.dashboard.loginOverview')}</VxTypography>
+            <VxTypography component="h2" variant="h6" sx={{ mb: 1.5 }}>{t('pages.dashboard.loginOverview')}</VxTypography>
             <VxStack spacing={1}>
               {tenants.map((tenant) => (
                 <VxStack key={tenant.id} direction={{ xs: 'column', sm: 'row' }} sx={{ justifyContent: 'space-between', alignItems: { sm: 'center' }, minWidth: 0 }}>

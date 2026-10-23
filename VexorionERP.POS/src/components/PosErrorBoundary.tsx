@@ -46,7 +46,7 @@ export class PosErrorBoundary extends Component<Props, State> {
           }}
         >
           <VxStack spacing={3} sx={{ maxWidth: 520, width: '100%' }}>
-            <VxAlert severity="error" variant="filled">
+            <VxAlert severity="error" role="alert" variant="filled">
               <VxTypography variant="subtitle1" sx={{ fontWeight: 600 }}>
                 {translateCurrentLocale('errorBoundary.title')}
               </VxTypography>

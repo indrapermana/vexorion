@@ -9,16 +9,32 @@ export function createAppTheme(mode: ThemeMode) {
     palette: {
       mode,
       primary: {
-        main: isDark ? '#9E8FFF' : '#6C5CE7',
+        main: isDark ? '#9E8FFF' : '#6252DB',
         light: isDark ? '#c1b8ff' : '#8a7df0',
         dark: isDark ? '#7868df' : '#5443cf',
-        contrastText: '#f8f7ff',
+        contrastText: isDark ? '#241d54' : '#f8f7ff',
       },
       secondary: {
-        main: isDark ? '#7ee0ff' : '#A29BFE',
+        main: isDark ? '#7ee0ff' : '#5E50C2',
         light: isDark ? '#b5efff' : '#beb9ff',
         dark: isDark ? '#58b8d5' : '#877cf4',
-        contrastText: isDark ? '#08202a' : '#241d54',
+        contrastText: isDark ? '#08202a' : '#ffffff',
+      },
+      info: {
+        main: isDark ? '#7fc8ff' : '#006B9A',
+        contrastText: isDark ? '#141226' : '#ffffff',
+      },
+      success: {
+        main: isDark ? '#66bb6a' : '#2e7d32',
+        contrastText: isDark ? '#141226' : '#ffffff',
+      },
+      warning: {
+        main: isDark ? '#ffa726' : '#A84400',
+        contrastText: isDark ? '#241d54' : '#ffffff',
+      },
+      error: {
+        main: isDark ? '#f44336' : '#c62828',
+        contrastText: isDark ? '#141226' : '#ffffff',
       },
       background: {
         default: isDark ? '#141226' : '#f4f1ff',
@@ -63,6 +79,10 @@ export function createAppTheme(mode: ThemeMode) {
     components: {
       MuiCssBaseline: {
         styleOverrides: {
+          '*:focus-visible': {
+            outline: `3px solid ${isDark ? '#c1b8ff' : '#5443cf'}`,
+            outlineOffset: '2px',
+          },
           body: {
             background: isDark
               ? 'radial-gradient(circle at top left, rgba(126, 108, 220, 0.22), transparent 28%), radial-gradient(circle at right 20%, rgba(76, 147, 255, 0.2), transparent 24%), linear-gradient(180deg, #181430 0%, #121024 100%)'

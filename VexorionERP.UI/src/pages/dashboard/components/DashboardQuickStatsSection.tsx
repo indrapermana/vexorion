@@ -17,7 +17,7 @@ export default function DashboardQuickStatsSection({ t, quickStats }: DashboardQ
             <VxTypography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>
               {stat.label}
             </VxTypography>
-            <VxTypography variant="h6" sx={{ mb: 0.5 }}>
+            <VxTypography component="p" variant="h6" sx={{ mb: 0.5 }}>
               {stat.value}
             </VxTypography>
             <VxBox sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 0.25 }}>

@@ -47,7 +47,7 @@ export default function SalesOrderLinesPanel({ order, lines, isLoading, error, o
   if (!order) {
     return (
       <VxPaper elevation={0} className="panel-card">
-        <VxTypography variant="h6" sx={{ mb: 1 }}>{t('orderWorkflow.line.orderLines')}</VxTypography>
+        <VxTypography component="h2" variant="h6" sx={{ mb: 1 }}>{t('orderWorkflow.line.orderLines')}</VxTypography>
         <VxTypography color="text.secondary">{t('pages.salesOrders.lines.selectPrompt')}</VxTypography>
       </VxPaper>
     )
@@ -109,7 +109,7 @@ export default function SalesOrderLinesPanel({ order, lines, isLoading, error, o
     <VxPaper elevation={0} className="panel-card">
       <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ justifyContent: 'space-between', mb: 2 }}>
         <VxBox>
-          <VxTypography variant="h6">{t('orderWorkflow.line.orderLinesFor', { number: order.orderNumber })}</VxTypography>
+          <VxTypography component="h2" variant="h6">{t('orderWorkflow.line.orderLinesFor', { number: order.orderNumber })}</VxTypography>
           <VxTypography color="text.secondary">{t('pages.salesOrders.lines.description')}</VxTypography>
         </VxBox>
         {canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate} disabled={!products.length}>{t('orderWorkflow.line.add')}</VxButton> : null}

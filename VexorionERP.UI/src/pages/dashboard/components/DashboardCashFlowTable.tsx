@@ -14,7 +14,7 @@ export default function DashboardCashFlowTable({ t, periodDays, cashRows }: Dash
       <VxGrid size={{ xs: 12 }}>
         <VxPaper elevation={0} sx={{ p: 2.5, borderRadius: 2 }}>
           <VxStack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <VxTypography variant="h6">{t('dashboard.cashSnapshot.title')}</VxTypography>
+            <VxTypography component="h2" variant="h6">{t('dashboard.cashSnapshot.title')}</VxTypography>
             <VxChip label={t('dashboard.cashSnapshot.window', { days: periodDays })} size="small" variant="outlined" />
           </VxStack>
           <VxTableContainer>

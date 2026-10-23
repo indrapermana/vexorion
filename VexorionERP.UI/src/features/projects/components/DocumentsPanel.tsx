@@ -445,7 +445,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
         <VxPaper elevation={0} className="panel-card">
           <VxStack spacing={1.5}>
             <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ justifyContent: 'space-between', alignItems: { md: 'center' } }}>
-              <VxTypography variant="h6">{t('pages.projectDetails.documentsPanel.versions')}</VxTypography>
+              <VxTypography component="h3" variant="h6">{t('pages.projectDetails.documentsPanel.versions')}</VxTypography>
               {canUpload ? (
                 <VxButton variant="outlined" onClick={() => setNewVersionDialogOpen(true)}>{t('pages.projectDetails.documentsPanel.addVersion')}</VxButton>
               ) : null}

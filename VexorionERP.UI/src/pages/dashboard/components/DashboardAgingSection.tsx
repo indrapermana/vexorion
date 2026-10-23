@@ -17,7 +17,7 @@ function AgingCard({ t, title, data, totals, emptyText }: AgingCardProps) {
   const { formatMoney } = useCurrency()
   return (
     <VxPaper elevation={0} sx={{ p: 3, borderRadius: 2 }}>
-      <VxTypography variant="h6" sx={{ mb: 2 }}>{title}</VxTypography>
+      <VxTypography component="h2" variant="h6" sx={{ mb: 2 }}>{title}</VxTypography>
       {data.length > 0 ? (
         <VxBox sx={{ width: '100%', height: 300 }}>
           <VxBarChart

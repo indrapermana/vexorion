@@ -170,7 +170,7 @@ export function ProductCatalogPanel({
 
   return (
     <VxPaper sx={{ p: 2, minWidth: 0, maxWidth: '100%' }}>
-      <VxTypography variant="h6" sx={{ mb: 1.5 }}>{t('catalog.title')}</VxTypography>
+      <VxTypography component="h2" variant="h6" sx={{ mb: 1.5 }}>{t('catalog.title')}</VxTypography>
       <VxStack spacing={1.5}>
         <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
           <VxTextField
@@ -253,7 +253,11 @@ export function ProductCatalogPanel({
           }}
         />
         {scanFeedback ? (
-          <VxAlert severity={scanFeedback.type} sx={{ py: 0.5 }}>
+          <VxAlert
+            severity={scanFeedback.type}
+            role={scanFeedback.type === 'error' ? 'alert' : 'status'}
+            sx={{ py: 0.5 }}
+          >
             {scanFeedback.message}
           </VxAlert>
         ) : null}
@@ -335,7 +339,11 @@ export function ProductCatalogPanel({
                 </VxMuiCardContent>
                 <VxMuiCardActions sx={{ px: 1, pb: 1, pt: 0, display: 'flex', gap: 0.75, alignItems: 'center' }}>
                   <VxStack direction="row" spacing={0.25} sx={{ alignItems: 'center' }}>
-                    <VxIconButton size="small" onClick={() => updateQty(product.id, qty - 1)}>
+                    <VxIconButton
+                      size="small"
+                      onClick={() => updateQty(product.id, qty - 1)}
+                      aria-label={`${t('catalog.decreaseQty')}: ${product.name}`}
+                    >
                       <RemoveRoundedIcon fontSize="small" />
                     </VxIconButton>
                     <VxTextField
@@ -352,7 +360,11 @@ export function ProductCatalogPanel({
                       }}
                       sx={{ width: 62 }}
                     />
-                    <VxIconButton size="small" onClick={() => updateQty(product.id, qty + 1)}>
+                    <VxIconButton
+                      size="small"
+                      onClick={() => updateQty(product.id, qty + 1)}
+                      aria-label={`${t('catalog.increaseQty')}: ${product.name}`}
+                    >
                       <AddRoundedIcon fontSize="small" />
                     </VxIconButton>
                   </VxStack>
@@ -373,7 +385,7 @@ export function ProductCatalogPanel({
         </VxBox>
 
         {filteredProducts.length === 0 ? (
-          <VxAlert severity="info">{t('catalog.noProducts')}</VxAlert>
+          <VxAlert severity="info" role="status">{t('catalog.noProducts')}</VxAlert>
         ) : null}
 
         <VxStack direction={{ xs: 'column', sm: 'row' }} sx={{ justifyContent: 'space-between', alignItems: { sm: 'center' } }}>

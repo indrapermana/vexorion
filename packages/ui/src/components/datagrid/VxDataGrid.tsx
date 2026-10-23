@@ -40,6 +40,7 @@ export function VxDataGrid({
   disableRowSelectionOnClick = true,
   density = 'compact',
   initialState,
+  'aria-label': ariaLabel,
   onPaginationModelChange,
   pageSizeOptions = [10, 25, 50],
   paginationModel,
@@ -66,6 +67,7 @@ export function VxDataGrid({
       {...props}
       disableRowSelectionOnClick={disableRowSelectionOnClick}
       density={density}
+      aria-label={ariaLabel ?? preferenceKey?.replace(/[-_]/g, ' ') ?? 'Data grid'}
       initialState={{
         ...initialState,
         pagination: {

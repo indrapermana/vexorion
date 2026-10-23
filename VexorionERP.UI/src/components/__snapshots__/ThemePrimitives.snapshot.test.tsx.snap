@@ -155,14 +155,14 @@ exports[`UI theme primitives snapshots > matches the light theme button, chip, a
     class="MuiStack-root css-lkr0zo-MuiStack-root"
   >
     <button
-      class="MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-sizeMedium MuiButton-colorPrimary css-eazmic-MuiButtonBase-root-MuiButton-root"
+      class="MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-sizeMedium MuiButton-colorPrimary css-19ljaqc-MuiButtonBase-root-MuiButton-root"
       tabindex="0"
       type="button"
     >
       Primary Action
     </button>
     <div
-      class="MuiChip-root MuiChip-filled MuiChip-sizeMedium MuiChip-colorSuccess css-1ym7y3g-MuiChip-root"
+      class="MuiChip-root MuiChip-filled MuiChip-sizeMedium MuiChip-colorSuccess css-1ja5spv-MuiChip-root"
     >
       <span
         class="MuiChip-label css-1dybbl5-MuiChip-label"
@@ -174,7 +174,7 @@ exports[`UI theme primitives snapshots > matches the light theme button, chip, a
       class="MuiFormControl-root MuiTextField-root css-1xp5r68-MuiFormControl-root-MuiTextField-root"
     >
       <label
-        class="MuiFormLabel-root MuiInputLabel-root MuiInputLabel-formControl MuiInputLabel-animated MuiInputLabel-shrink MuiInputLabel-outlined MuiFormLabel-colorPrimary MuiFormLabel-filled MuiInputLabel-root MuiInputLabel-formControl MuiInputLabel-animated MuiInputLabel-shrink MuiInputLabel-outlined css-1mvzzqx-MuiFormLabel-root-MuiInputLabel-root"
+        class="MuiFormLabel-root MuiInputLabel-root MuiInputLabel-formControl MuiInputLabel-animated MuiInputLabel-shrink MuiInputLabel-outlined MuiFormLabel-colorPrimary MuiFormLabel-filled MuiInputLabel-root MuiInputLabel-formControl MuiInputLabel-animated MuiInputLabel-shrink MuiInputLabel-outlined css-1hwnu7i-MuiFormLabel-root-MuiInputLabel-root"
         data-shrink="true"
         for="_r_2_"
         id="_r_2_-label"
@@ -182,7 +182,7 @@ exports[`UI theme primitives snapshots > matches the light theme button, chip, a
         Workspace name
       </label>
       <div
-        class="MuiInputBase-root MuiOutlinedInput-root MuiInputBase-colorPrimary MuiInputBase-formControl css-jqnj18-MuiInputBase-root-MuiOutlinedInput-root"
+        class="MuiInputBase-root MuiOutlinedInput-root MuiInputBase-colorPrimary MuiInputBase-formControl css-15wga6n-MuiInputBase-root-MuiOutlinedInput-root"
       >
         <input
           aria-describedby="_r_2_-helper-text"
@@ -206,7 +206,7 @@ exports[`UI theme primitives snapshots > matches the light theme button, chip, a
         </fieldset>
       </div>
       <p
-        class="MuiFormHelperText-root MuiFormHelperText-sizeMedium MuiFormHelperText-contained MuiFormHelperText-filled css-1nsc75b-MuiFormHelperText-root"
+        class="MuiFormHelperText-root MuiFormHelperText-sizeMedium MuiFormHelperText-contained MuiFormHelperText-filled css-pr5k66-MuiFormHelperText-root"
         id="_r_2_-helper-text"
       >
         Required

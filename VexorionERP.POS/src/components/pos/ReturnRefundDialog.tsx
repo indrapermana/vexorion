@@ -243,7 +243,7 @@ export default function ReturnRefundDialog({
   return (
     <VxDialog
       open={open}
-      onClose={step === 'success' ? onClose : undefined}
+      onClose={isProcessing ? undefined : onClose}
       fullWidth
       maxWidth="md"
     >
@@ -267,7 +267,7 @@ export default function ReturnRefundDialog({
               autoFocus
               fullWidth
             />
-            {searchError ? <VxAlert severity="warning">{searchError}</VxAlert> : null}
+            {searchError ? <VxAlert severity="warning" role="alert">{searchError}</VxAlert> : null}
           </VxStack>
         )}
 
@@ -301,14 +301,14 @@ export default function ReturnRefundDialog({
             </VxBox>
 
             {/* Invoice lines table */}
-            <VxTypography variant="subtitle2">{t('return.linesTitle')}</VxTypography>
+            <VxTypography component="h3" variant="subtitle2">{t('return.linesTitle')}</VxTypography>
             {isLoadingLines ? (
               <VxBox sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
                 <VxCircularProgress size={28} />
               </VxBox>
             ) : (
               <VxBox sx={{ overflowX: 'auto' }}>
-                <VxTable size="small">
+                <VxTable size="small" aria-label={t('return.linesTitle')}>
                   <VxTableHead>
                     <VxTableRow>
                       <VxTableCell>{t('return.product')}</VxTableCell>
@@ -409,13 +409,13 @@ export default function ReturnRefundDialog({
               </VxBox>
             )}
 
-            {processError ? <VxAlert severity="error">{processError}</VxAlert> : null}
+            {processError ? <VxAlert severity="error" role="alert">{processError}</VxAlert> : null}
           </VxStack>
         )}
 
         {/* ---- Step: Success ---- */}
         {step === 'success' && successCreditNoteId && (
-          <VxAlert severity="success">
+          <VxAlert severity="success" role="status">
             {t('return.success').replace('{creditNoteId}', successCreditNoteId)}
           </VxAlert>
         )}

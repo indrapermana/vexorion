@@ -27,6 +27,8 @@ export type TranslationKey =
   | 'catalog.stock'
   | 'catalog.outOfStock'
   | 'catalog.add'
+  | 'catalog.decreaseQty'
+  | 'catalog.increaseQty'
   | 'catalog.noProducts'
   | 'catalog.showing'
   | 'cart.title'

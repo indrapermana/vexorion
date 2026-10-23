@@ -157,7 +157,12 @@ export default function MenuConfigurationPage() {
                     <VxTypography variant="body2" sx={{ fontWeight: 600 }}>{t(`menuItems.${menuItem.labelKey}`)}</VxTypography>
                     <VxTypography variant="caption" color="text.secondary" sx={{ overflowWrap: 'anywhere' }}>{t('pages.menuConfiguration.menuKey')} {menuItem.key}</VxTypography>
                   </VxBox>
-                  <VxSwitch checked={isEnabled} disabled={!canManage} onChange={(_, checked) => toggleMenu(menuItem.key, checked)} />
+                  <VxSwitch
+                    checked={isEnabled}
+                    slotProps={{ input: { 'aria-label': t(`menuItems.${menuItem.labelKey}`) } }}
+                    disabled={!canManage}
+                    onChange={(_, checked) => toggleMenu(menuItem.key, checked)}
+                  />
                 </VxStack>
               )
             })}

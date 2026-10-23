@@ -132,7 +132,7 @@ export default function ConfigMenuPage() {
 
       {Object.entries(groupedItems).map(([section, items]) => (
         <VxPaper key={section} elevation={0} className="panel-card">
-          <VxTypography variant="h6" sx={{ mb: 1.5 }}>{section}</VxTypography>
+          <VxTypography component="h2" variant="h6" sx={{ mb: 1.5 }}>{section}</VxTypography>
           <VxStack spacing={1}>
             {items.map((item) => {
               const isHidden = hiddenLinks.includes(item.path)

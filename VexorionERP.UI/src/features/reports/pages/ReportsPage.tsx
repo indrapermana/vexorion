@@ -135,19 +135,19 @@ export default function ReportsPage() {
       <PageFeedback error={error} onRetry={error ? () => void loadReports() : undefined} />
 
       <VxPaper elevation={0} className="panel-card">
-        <VxTypography variant="h6" sx={{ mb: 1 }}>{t('pages.reports.sections.arAging')}</VxTypography>
+        <VxTypography component="h2" variant="h6" sx={{ mb: 1 }}>{t('pages.reports.sections.arAging')}</VxTypography>
         <VxTypography color="text.secondary">{t('pages.reports.summary.total')}: {arAging ? arAging.totals.total.toFixed(2) : '0.00'}</VxTypography>
         <VxTypography color="text.secondary">{t('pages.reports.summary.customers')}: {arAging ? arAging.items.length : 0}</VxTypography>
       </VxPaper>
 
       <VxPaper elevation={0} className="panel-card">
-        <VxTypography variant="h6" sx={{ mb: 1 }}>{t('pages.reports.sections.apAging')}</VxTypography>
+        <VxTypography component="h2" variant="h6" sx={{ mb: 1 }}>{t('pages.reports.sections.apAging')}</VxTypography>
         <VxTypography color="text.secondary">{t('pages.reports.summary.total')}: {apAging ? apAging.totals.total.toFixed(2) : '0.00'}</VxTypography>
         <VxTypography color="text.secondary">{t('pages.reports.summary.suppliers')}: {apAging ? apAging.items.length : 0}</VxTypography>
       </VxPaper>
 
       <VxPaper elevation={0} className="panel-card">
-        <VxTypography variant="h6" sx={{ mb: 1 }}>{t('pages.reports.sections.trialBalance')}</VxTypography>
+        <VxTypography component="h2" variant="h6" sx={{ mb: 1 }}>{t('pages.reports.sections.trialBalance')}</VxTypography>
         <VxTypography color="text.secondary">{t('pages.reports.summary.totalDebit')}: {trialBalance ? trialBalance.totalDebit.toFixed(2) : '0.00'}</VxTypography>
         <VxTypography color="text.secondary">{t('pages.reports.summary.totalCredit')}: {trialBalance ? trialBalance.totalCredit.toFixed(2) : '0.00'}</VxTypography>
         <VxTypography color="text.secondary">{t('pages.reports.summary.accounts')}: {trialBalance ? trialBalance.lines.length : 0}</VxTypography>
@@ -162,7 +162,7 @@ export default function ReportsPage() {
       </VxPaper>
 
       <VxPaper elevation={0} className="panel-card">
-        <VxTypography variant="h6" sx={{ mb: 1 }}>{t('pages.reports.sections.profitAndLoss')}</VxTypography>
+        <VxTypography component="h2" variant="h6" sx={{ mb: 1 }}>{t('pages.reports.sections.profitAndLoss')}</VxTypography>
         <VxTypography color="text.secondary">{t('pages.reports.summary.revenue')}: {profitAndLoss ? profitAndLoss.totalRevenue.toFixed(2) : '0.00'}</VxTypography>
         <VxTypography color="text.secondary">{t('pages.reports.summary.expenses')}: {profitAndLoss ? profitAndLoss.totalExpenses.toFixed(2) : '0.00'}</VxTypography>
         <VxTypography color="text.secondary">{t('pages.reports.summary.netIncome')}: {profitAndLoss ? profitAndLoss.netIncome.toFixed(2) : '0.00'}</VxTypography>
@@ -196,7 +196,7 @@ export default function ReportsPage() {
       </VxPaper>
 
       <VxPaper elevation={0} className="panel-card">
-        <VxTypography variant="h6" sx={{ mb: 1 }}>{t('pages.reports.sections.balanceSheet')}</VxTypography>
+        <VxTypography component="h2" variant="h6" sx={{ mb: 1 }}>{t('pages.reports.sections.balanceSheet')}</VxTypography>
         <VxTypography color="text.secondary">{t('pages.reports.summary.assets')}: {balanceSheet ? balanceSheet.totalAssets.toFixed(2) : '0.00'}</VxTypography>
         <VxTypography color="text.secondary">{t('pages.reports.summary.liabilitiesEquity')}: {balanceSheet ? balanceSheet.totalLiabilitiesAndEquity.toFixed(2) : '0.00'}</VxTypography>
         <VxTypography color="text.secondary">{t('pages.reports.summary.currentEarnings')}: {balanceSheet ? balanceSheet.currentEarnings.toFixed(2) : '0.00'}</VxTypography>
@@ -242,7 +242,7 @@ export default function ReportsPage() {
       </VxPaper>
 
       <VxPaper elevation={0} className="panel-card">
-        <VxTypography variant="h6" sx={{ mb: 1 }}>{t('pages.reports.sections.accountDrillDown')}</VxTypography>
+        <VxTypography component="h2" variant="h6" sx={{ mb: 1 }}>{t('pages.reports.sections.accountDrillDown')}</VxTypography>
         <VxTypography color="text.secondary">{drillDownAccountLabel ?? t('pages.reports.drillDown.selectPrompt')}</VxTypography>
         <VxTypography color="text.secondary">{t('pages.reports.summary.entries')}: {drillDown?.lines.length ?? 0}</VxTypography>
         <VxTypography color="text.secondary">{t('pages.reports.summary.totalDebit')}: {drillDown ? drillDown.totalDebit.toFixed(2) : '0.00'}</VxTypography>

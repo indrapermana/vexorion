@@ -81,7 +81,7 @@ export function ReceiptModal({ open, data, onClose }: Props) {
             {t('receipt.noLines')}
           </VxTypography>
         ) : (
-          <VxTable size="small">
+          <VxTable size="small" aria-label={t('receipt.title')}>
             <VxTableHead>
               <VxTableRow>
                 <VxTableCell>{t('cart.product')}</VxTableCell>

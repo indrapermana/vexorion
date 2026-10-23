@@ -80,7 +80,7 @@ export default function ImportHistoryPanel({ importType, refreshTrigger }: Props
         </VxTypography>
         <VxTooltip title={t('pages.importData.history.refresh')}>
           <span>
-            <VxIconButton onClick={load} size="small" disabled={loading}>
+            <VxIconButton onClick={load} size="small" disabled={loading} aria-label={t('pages.importData.history.refresh')}>
               <RefreshIcon fontSize="small" />
             </VxIconButton>
           </span>
@@ -95,7 +95,7 @@ export default function ImportHistoryPanel({ importType, refreshTrigger }: Props
 
       {!loading && error && (
         <VxAlert severity="error" action={
-          <VxIconButton size="small" color="inherit" onClick={load}>
+          <VxIconButton size="small" color="inherit" onClick={load} aria-label={t('pages.importData.history.refresh')}>
             <RefreshIcon fontSize="small" />
           </VxIconButton>
         }>

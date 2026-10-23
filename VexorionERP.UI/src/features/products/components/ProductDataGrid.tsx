@@ -140,7 +140,11 @@ export default function ProductDataGrid({ rows, isLoading, expandedProductIds, o
                   }}
                 >
                   <VxTableCell>
-                    <VxIconButton size="small" onClick={() => onToggleExpanded(row.id)} aria-label={isExpanded ? t('components.products.grid.collapse') : t('components.products.grid.expand')}>
+                    <VxIconButton
+                      size="small"
+                      onClick={() => onToggleExpanded(row.id)}
+                      aria-label={`${t(isExpanded ? 'components.products.grid.collapse' : 'components.products.grid.expand')}: ${row.name}`}
+                    >
                       {isExpanded ? <KeyboardArrowUpRoundedIcon /> : <KeyboardArrowDownRoundedIcon />}
                     </VxIconButton>
                   </VxTableCell>
@@ -185,12 +189,12 @@ export default function ProductDataGrid({ rows, isLoading, expandedProductIds, o
                   <VxTableCell align="right">
                     {canManage ? <VxStack direction="row" spacing={0.5} sx={{ justifyContent: 'flex-end' }}>
                       <VxTooltip title={t('common.edit')}>
-                        <VxIconButton size="small" onClick={() => onEdit(row.id)}>
+                        <VxIconButton size="small" onClick={() => onEdit(row.id)} aria-label={`${t('common.edit')}: ${row.name}`}>
                           <EditRoundedIcon fontSize="small" />
                         </VxIconButton>
                       </VxTooltip>
                       <VxTooltip title={t('dialogs.delete')}>
-                        <VxIconButton size="small" color="error" onClick={() => onDelete(row)}>
+                        <VxIconButton size="small" color="error" onClick={() => onDelete(row)} aria-label={`${t('dialogs.delete')}: ${row.name}`}>
                           <DeleteOutlineRoundedIcon fontSize="small" />
                         </VxIconButton>
                       </VxTooltip>

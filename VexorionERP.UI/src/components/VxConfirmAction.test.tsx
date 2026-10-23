@@ -1,6 +1,7 @@
 /// <reference types="vitest/globals" />
 
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { VxConfirmActionButton, VxConfirmActionDialog } from '@vexorion/ui'
 
@@ -18,9 +19,41 @@ describe('VxConfirmAction', () => {
       />,
     )
 
+    expect(screen.getByRole('dialog', { name: 'Delete account' })).toHaveAccessibleDescription(
+      '1000 — Cash This permanently removes the account.',
+    )
     expect(screen.getByText('1000 — Cash')).toBeInTheDocument()
     expect(screen.getByText('This permanently removes the account.')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus()
+  })
+
+  it('closes with Escape and restores focus to the trigger', async () => {
+    const user = userEvent.setup()
+    render(
+      <VxConfirmActionButton
+        title="Delete item"
+        targetName="Widget"
+        consequence="The item will be removed."
+        confirmLabel="Delete"
+        onConfirm={vi.fn()}
+      >Open delete dialog</VxConfirmActionButton>,
+    )
+
+    const trigger = screen.getByRole('button', { name: 'Open delete dialog' })
+    await user.click(trigger)
+
+    screen.getByRole('dialog', { name: 'Delete item' })
+    expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus()
+    await user.tab()
+    expect(screen.getByRole('button', { name: 'Delete' })).toHaveFocus()
+    await user.tab()
+    expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus()
+    await user.tab({ shift: true })
+    expect(screen.getByRole('button', { name: 'Delete' })).toHaveFocus()
+    await user.keyboard('{Escape}')
+
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Delete item' })).not.toBeInTheDocument())
+    expect(trigger).toHaveFocus()
   })
 
   it('locks controls while processing and keeps failures available for retry', async () => {

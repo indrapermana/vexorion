@@ -18,7 +18,7 @@ export default function DashboardChartsSection({
     <VxGrid container spacing={2}>
       <VxGrid size={{ xs: 12, md: 6 }}>
         <VxPaper elevation={0} sx={{ p: 3, borderRadius: 2 }}>
-          <VxTypography variant="h6" sx={{ mb: 2 }}>{t('dashboard.charts.cashFlowTrends')}</VxTypography>
+          <VxTypography component="h2" variant="h6" sx={{ mb: 2 }}>{t('dashboard.charts.cashFlowTrends')}</VxTypography>
           <VxBox sx={{ width: '100%', height: 300 }}>
             <VxLineChart
               series={[
@@ -34,7 +34,7 @@ export default function DashboardChartsSection({
 
       <VxGrid size={{ xs: 12, md: 6 }}>
         <VxPaper elevation={0} sx={{ p: 3, borderRadius: 2 }}>
-          <VxTypography variant="h6" sx={{ mb: 2 }}>{t('dashboard.charts.receivablesVsPayables')}</VxTypography>
+          <VxTypography component="h2" variant="h6" sx={{ mb: 2 }}>{t('dashboard.charts.receivablesVsPayables')}</VxTypography>
           <VxBox sx={{ width: '100%', height: 300 }}>
             <VxBarChart
               dataset={receivablesVsPayablesData}

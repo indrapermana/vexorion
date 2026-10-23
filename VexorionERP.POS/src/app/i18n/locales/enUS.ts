@@ -27,6 +27,8 @@ const en: Dictionary = {
   'catalog.stock': 'Stock left',
   'catalog.outOfStock': 'Out of stock',
   'catalog.add': 'Add',
+  'catalog.decreaseQty': 'Decrease quantity',
+  'catalog.increaseQty': 'Increase quantity',
   'catalog.noProducts': 'No products match the selected catalog/search.',
   'catalog.showing': 'Showing {current} of {total} products (page size: {size})',
   'cart.title': 'Cart',

@@ -62,7 +62,7 @@ export default function PosAdminPage() {
         {usersQuery.isLoading ? (
           <VxPageLoading />
         ) : (
-          <VxTable size="small">
+          <VxTable size="small" aria-label={t('admin.title')}>
             <VxTableHead>
               <VxTableRow>
                 <VxTableCell>{t('admin.user')}</VxTableCell>
@@ -111,6 +111,7 @@ export default function PosAdminPage() {
                     <VxTableCell align="center">
                       <VxSwitch
                         checked={hasPosRole}
+                        slotProps={{ input: { 'aria-label': `${t('admin.posUser')}: ${u.userName}` } }}
                         disabled={isPending || !u.isActive}
                         onChange={(_, checked) => void togglePosRole(u, checked)}
                         size="small"

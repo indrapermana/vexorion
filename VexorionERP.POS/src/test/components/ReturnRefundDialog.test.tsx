@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { renderWithProviders, screen, waitFor, fireEvent } from '../testUtils'
+import { renderWithProviders, screen, waitFor, fireEvent, userEvent } from '../testUtils'
 
 // ---------------------------------------------------------------------------
 // Mock the barrel API module BEFORE importing the component under test.
@@ -93,6 +93,15 @@ describe('ReturnRefundDialog', () => {
     // Click the Cancel button (search step has a cancel/close action)
     const cancelBtn = screen.getByRole('button', { name: /cancel|close|tutup|batal|cerrar/i })
     cancelBtn.click()
+    expect(onClose).toHaveBeenCalledOnce()
+  })
+
+  it('closes from the keyboard while search is active', async () => {
+    const onClose = vi.fn()
+    const user = userEvent.setup()
+    renderWithProviders(<ReturnRefundDialog {...BASE_PROPS} onClose={onClose} />)
+    await user.keyboard('{Escape}')
+
     expect(onClose).toHaveBeenCalledOnce()
   })
 })

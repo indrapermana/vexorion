@@ -1,17 +1,18 @@
 import { Card, CardContent, Typography, type CardProps } from '@mui/material'
-import type { ReactNode } from 'react'
+import type { ElementType, ReactNode } from 'react'
 
 type VxCardProps = CardProps & {
   title: string
+  titleComponent?: ElementType
   subtitle?: string
   children: ReactNode
 }
 
-export function VxCard({ title, subtitle, children, ...cardProps }: VxCardProps) {
+export function VxCard({ title, titleComponent = 'h6', subtitle, children, ...cardProps }: VxCardProps) {
   return (
     <Card elevation={0} {...cardProps}>
       <CardContent>
-        <Typography variant="h6" sx={{ mb: 0.5 }}>
+        <Typography component={titleComponent} variant="h6" sx={{ mb: 0.5 }}>
           {title}
         </Typography>
         {subtitle ? (

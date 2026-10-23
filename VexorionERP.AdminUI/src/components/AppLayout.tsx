@@ -256,7 +256,12 @@ export default function AppLayout() {
             )}
           </VxStack>
           <VxStack direction="row" spacing={2} sx={{ alignItems: 'center', width: '100%', minWidth: 0 }}>
-            <VxIconButton sx={{ display: { lg: 'none' } }} onClick={() => setMobileOpen(true)}>
+            <VxIconButton
+              sx={{ display: { lg: 'none' } }}
+              onClick={() => setMobileOpen(true)}
+              aria-label={t('shell.navigation')}
+              aria-expanded={mobileOpen}
+            >
               <MenuRoundedIcon />
             </VxIconButton>
             <VxIconButton sx={{ display: { xs: 'none', lg: 'inline-flex' } }} onClick={toggleSidebarCollapsed} aria-label={isSidebarCollapsed ? t('shell.expandNavigation') : t('shell.collapseNavigation')}>
@@ -266,12 +271,12 @@ export default function AppLayout() {
               <VxTypography variant="overline" sx={{ color: 'text.secondary', letterSpacing: '0.18em' }}>
                 {t('shell.adminConsole')}
               </VxTypography>
-              <VxTypography variant="h5" sx={{ overflowWrap: 'anywhere' }}>{pageTitle}</VxTypography>
+              <VxTypography component="p" variant="h5" sx={{ overflowWrap: 'anywhere' }}>{pageTitle}</VxTypography>
             </VxBox>
           </VxStack>
         </VxToolbar>
 
-        <VxBox className="dashboard-content">
+        <VxBox component="main" className="dashboard-content">
           <Outlet />
         </VxBox>
       </VxBox>

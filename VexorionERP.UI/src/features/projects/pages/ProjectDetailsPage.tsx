@@ -554,11 +554,11 @@ export default function ProjectDetailsPage() {
 
       <VxPaper elevation={0} className="panel-card">
         <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1}>
-          <VxButton variant={activeTab === 'overview' ? 'contained' : 'outlined'} onClick={() => setActiveTab('overview')}>{t('pages.projectDetails.tabs.overview')}</VxButton>
-          <VxButton variant={activeTab === 'parties' ? 'contained' : 'outlined'} onClick={() => setActiveTab('parties')}>{t('pages.projectDetails.tabs.parties')}</VxButton>
-          <VxButton variant={activeTab === 'assignments' ? 'contained' : 'outlined'} onClick={() => setActiveTab('assignments')}>{t('pages.projectDetails.tabs.assignments')}</VxButton>
-          <VxButton variant={activeTab === 'documents' ? 'contained' : 'outlined'} onClick={() => setActiveTab('documents')}>{t('pages.projectDetails.tabs.documents')}</VxButton>
-          <VxButton variant={activeTab === 'history' ? 'contained' : 'outlined'} onClick={() => setActiveTab('history')}>{t('pages.projectDetails.tabs.history')}</VxButton>
+          <VxButton variant={activeTab === 'overview' ? 'contained' : 'outlined'} aria-pressed={activeTab === 'overview'} onClick={() => setActiveTab('overview')}>{t('pages.projectDetails.tabs.overview')}</VxButton>
+          <VxButton variant={activeTab === 'parties' ? 'contained' : 'outlined'} aria-pressed={activeTab === 'parties'} onClick={() => setActiveTab('parties')}>{t('pages.projectDetails.tabs.parties')}</VxButton>
+          <VxButton variant={activeTab === 'assignments' ? 'contained' : 'outlined'} aria-pressed={activeTab === 'assignments'} onClick={() => setActiveTab('assignments')}>{t('pages.projectDetails.tabs.assignments')}</VxButton>
+          <VxButton variant={activeTab === 'documents' ? 'contained' : 'outlined'} aria-pressed={activeTab === 'documents'} onClick={() => setActiveTab('documents')}>{t('pages.projectDetails.tabs.documents')}</VxButton>
+          <VxButton variant={activeTab === 'history' ? 'contained' : 'outlined'} aria-pressed={activeTab === 'history'} onClick={() => setActiveTab('history')}>{t('pages.projectDetails.tabs.history')}</VxButton>
         </VxStack>
       </VxPaper>
 
@@ -571,7 +571,7 @@ export default function ProjectDetailsPage() {
       {activeTab === 'overview' && project ? (
         <VxPaper elevation={0} className="panel-card">
           <VxStack spacing={2}>
-            <VxTypography variant="h6">{t('pages.projectDetails.overview.title')}</VxTypography>
+            <VxTypography component="h2" variant="h6">{t('pages.projectDetails.overview.title')}</VxTypography>
             <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
               <PageMetric label={t('pages.projectDetails.overview.projectNumber')} value={project.projectNumber} />
               <PageMetric label={t('pages.projectDetails.overview.category')} value={categoryLabelById.get(project.projectCategoryId) || project.projectCategoryId} />
@@ -589,7 +589,7 @@ export default function ProjectDetailsPage() {
       {activeTab === 'parties' ? (
         <VxPaper elevation={0} className="panel-card" sx={{ p: 0 }}>
           <VxStack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', px: 2.5, pt: 2.5 }}>
-            <VxTypography variant="h6">{t('pages.projectDetails.parties.title')}</VxTypography>
+            <VxTypography component="h2" variant="h6">{t('pages.projectDetails.parties.title')}</VxTypography>
             {canManage ? <VxButton variant="contained" onClick={openCreatePartyDialog}>{t('pages.projectDetails.parties.addButton')}</VxButton> : null}
           </VxStack>
           <PartyDataGrid
@@ -612,7 +612,7 @@ export default function ProjectDetailsPage() {
       {activeTab === 'history' ? (
         <VxPaper elevation={0} className="panel-card" sx={{ p: 0 }}>
           <VxStack sx={{ px: 2.5, pt: 2.5 }}>
-            <VxTypography variant="h6">{t('pages.projectDetails.history.title')}</VxTypography>
+            <VxTypography component="h2" variant="h6">{t('pages.projectDetails.history.title')}</VxTypography>
           </VxStack>
           <HistoryDataGrid rows={timeline} />
         </VxPaper>

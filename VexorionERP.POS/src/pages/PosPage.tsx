@@ -542,7 +542,7 @@ export default function PosPage() {
     }, [checkout])
 
   return (
-    <VxStack spacing={2} sx={{ p: 2 }}>
+    <VxStack component="main" spacing={2} sx={{ p: 2 }}>
       <PosHeader
         canManageRoles={canManageRoles}
         currencyCode={currencyCode}

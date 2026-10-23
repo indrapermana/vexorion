@@ -46,10 +46,10 @@ export default function LoginPage() {
         <VxStack component="form" spacing={2} onSubmit={onSubmit}>
           <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
             <PointOfSaleRoundedIcon color="primary" />
-            <VxTypography variant="h5">{t('login.title')}</VxTypography>
+            <VxTypography component="h1" variant="h5">{t('login.title')}</VxTypography>
           </VxStack>
 
-          {error ? <VxAlert severity="error">{error}</VxAlert> : null}
+          {error ? <VxAlert severity="error" role="alert">{error}</VxAlert> : null}
 
           <VxTextField
             label={t('login.tenantCode')}

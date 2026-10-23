@@ -18,6 +18,11 @@ describe('PosHeader', () => {
     expect(screen.getByText(/vexorion pos/i)).toBeInTheDocument()
   })
 
+  it('gives the theme icon button an accessible name', () => {
+    renderWithProviders(<PosHeader {...BASE_PROPS} />)
+    expect(screen.getByRole('button', { name: /theme:/i })).toBeInTheDocument()
+  })
+
   it('shows currency chip', () => {
     renderWithProviders(<PosHeader {...BASE_PROPS} currencyCode="EUR" />)
     expect(screen.getByText(/EUR/)).toBeInTheDocument()
@@ -31,6 +36,13 @@ describe('PosHeader', () => {
   it('shows Return button when canRefund=true', () => {
     renderWithProviders(<PosHeader {...BASE_PROPS} canRefund />)
     expect(screen.getByRole('button', { name: /return|retur|devolucion/i })).toBeInTheDocument()
+  })
+
+  it('uses the accessible primary palette for the outlined Return button', () => {
+    renderWithProviders(<PosHeader {...BASE_PROPS} canRefund />)
+    const returnButton = screen.getByRole('button', { name: /return|retur|devolucion/i })
+    expect(returnButton).toHaveClass('MuiButton-colorPrimary')
+    expect(returnButton).not.toHaveClass('MuiButton-colorSecondary')
   })
 
   it('calls onOpenReturn when Return button is clicked', () => {

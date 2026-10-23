@@ -36,7 +36,7 @@ export default function LoginPage() {
   return (
     <VxStack component="form" spacing={2.5} onSubmit={onSubmit} className="public-form-card public-form-card--login">
       <VxBox>
-        <VxTypography variant="h4" sx={{ mb: 1 }}>{t('pages.auth.login.title')}</VxTypography>
+        <VxTypography component="h1" variant="h4" sx={{ mb: 1 }}>{t('pages.auth.login.title')}</VxTypography>
         <VxTypography color="text.secondary">
           {t('pages.auth.login.description')}
         </VxTypography>

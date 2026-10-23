@@ -447,14 +447,14 @@ export default function InventoryAdjustmentsPage() {
         <VxPaper elevation={0} className="panel-card">
           {!selectedAdjustment ? (
             <>
-              <VxTypography variant="h6" sx={{ mb: 1 }}>{t('pages.inventoryAdjustments.linePanel.title')}</VxTypography>
+              <VxTypography component="h2" variant="h6" sx={{ mb: 1 }}>{t('pages.inventoryAdjustments.linePanel.title')}</VxTypography>
               <VxTypography color="text.secondary">{t('pages.inventoryAdjustments.linePanel.selectPrompt')}</VxTypography>
             </>
           ) : (
             <>
               <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ justifyContent: 'space-between', mb: 2 }}>
                 <VxBox>
-                  <VxTypography variant="h6">{t('pages.inventoryAdjustments.linePanel.titleFor', { number: selectedAdjustment.adjustmentNumber })}</VxTypography>
+                  <VxTypography component="h2" variant="h6">{t('pages.inventoryAdjustments.linePanel.titleFor', { number: selectedAdjustment.adjustmentNumber })}</VxTypography>
                   <VxTypography color="text.secondary">{t('pages.inventoryAdjustments.linePanel.deltaHelp')}</VxTypography>
                 </VxBox>
                 {canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateLine} disabled={selectedAdjustment.status !== 1 || products.length === 0}>{t('pages.inventoryAdjustments.linePanel.add')}</VxButton> : null}

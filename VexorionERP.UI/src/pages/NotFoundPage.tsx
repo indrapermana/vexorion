@@ -21,7 +21,7 @@ export default function NotFoundPage({
           color="secondary"
           sx={{ alignSelf: 'flex-start' }}
         />
-        <VxTypography variant="h2">{t('pages.notFound.title')}</VxTypography>
+        <VxTypography component="h1" variant="h2">{t('pages.notFound.title')}</VxTypography>
         <VxTypography color="text.secondary">
           {isPublic
             ? t('pages.notFound.publicDescription')

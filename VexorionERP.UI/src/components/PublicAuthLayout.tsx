@@ -48,16 +48,16 @@ export default function PublicAuthLayout() {
               <AutoGraphRoundedIcon />
             </VxBox>
             <VxBox>
-              <VxTypography variant="overline" sx={{ color: 'rgba(255,255,255,0.72)', letterSpacing: '0.18em' }}>
+              <VxTypography variant="overline" sx={{ color: '#ffffff', letterSpacing: '0.18em' }}>
                 {t('app.brand')}
               </VxTypography>
-              <VxTypography variant="h6" sx={{ color: '#fff' }}>{t('publicAuth.workspaceAccess')}</VxTypography>
+              <VxTypography component="p" variant="h6" sx={{ color: '#fff' }}>{t('publicAuth.workspaceAccess')}</VxTypography>
             </VxBox>
           </VxStack>
 
           <VxBox>
             <VxTypography className="public-shell__eyebrow">{content.eyebrow}</VxTypography>
-            <VxTypography variant="h2" className="public-shell__title">{content.title}</VxTypography>
+            <VxTypography component="p" variant="h2" className="public-shell__title">{content.title}</VxTypography>
             <VxTypography className="public-shell__description">{content.description}</VxTypography>
           </VxBox>
 
@@ -72,7 +72,7 @@ export default function PublicAuthLayout() {
               <VxBox key={feature.title} className="public-feature-row">
                 <VxBox className="public-feature-row__icon">{feature.icon}</VxBox>
                 <VxBox>
-                  <VxTypography variant="subtitle1" sx={{ color: '#fff', fontWeight: 700 }}>
+                  <VxTypography component="p" variant="subtitle1" sx={{ color: '#fff', fontWeight: 700 }}>
                     {feature.title}
                   </VxTypography>
                   <VxTypography className="public-feature-row__description">{feature.description}</VxTypography>
@@ -83,7 +83,7 @@ export default function PublicAuthLayout() {
         </VxStack>
       </VxBox>
 
-      <VxBox className="public-shell__panel public-shell__panel--form">
+      <VxBox component="main" className="public-shell__panel public-shell__panel--form">
         <VxBox className="public-shell__form-wrap">
           <Outlet />
         </VxBox>

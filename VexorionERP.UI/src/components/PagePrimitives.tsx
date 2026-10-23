@@ -75,7 +75,7 @@ export function PageMetric({ icon, label, value }: PageMetricProps) {
         <VxTypography variant="body2" color="text.secondary" sx={{ overflowWrap: 'anywhere' }}>
           {label}
         </VxTypography>
-        <VxTypography variant="h6" sx={{ overflowWrap: 'anywhere' }}>{value}</VxTypography>
+        <VxTypography component="p" variant="h6" sx={{ overflowWrap: 'anywhere' }}>{value}</VxTypography>
       </VxBox>
     </VxPaper>
   )
@@ -97,17 +97,18 @@ export function PageFeedback({ error, success, info, retryLabel, onRetry }: Page
   }
 
   return (
-    <VxStack spacing={1.5} aria-live="polite">
+    <VxStack spacing={1.5}>
       {error ? (
         <VxAlert
           severity="error"
+          role="alert"
           action={onRetry ? <VxButton color="inherit" size="small" onClick={onRetry}>{resolvedRetryLabel}</VxButton> : undefined}
         >
           {error}
         </VxAlert>
       ) : null}
-      {success ? <VxAlert severity="success">{success}</VxAlert> : null}
-      {info ? <VxAlert severity="info">{info}</VxAlert> : null}
+      {success ? <VxAlert severity="success" role="status">{success}</VxAlert> : null}
+      {info ? <VxAlert severity="info" role="status">{info}</VxAlert> : null}
     </VxStack>
   )
 }
@@ -157,7 +158,7 @@ export function PageEmptyState({ title, description, action }: PageEmptyStatePro
   return (
     <VxBox sx={{ display: 'grid', placeItems: 'center', minHeight: 180, px: 2, textAlign: 'center' }}>
       <VxStack spacing={1.5} sx={{ alignItems: 'center', maxWidth: 520 }}>
-        <VxTypography variant="h6">{title}</VxTypography>
+        <VxTypography component="h2" variant="h6">{title}</VxTypography>
         {description ? <VxTypography color="text.secondary">{description}</VxTypography> : null}
         {action}
       </VxStack>
@@ -176,7 +177,7 @@ export function PageErrorState({ title, description, retryLabel = 'Retry', onRet
   return (
     <VxBox role="alert" sx={{ display: 'grid', placeItems: 'center', minHeight: 180, px: 2, textAlign: 'center' }}>
       <VxStack spacing={1.5} sx={{ alignItems: 'center', maxWidth: 520 }}>
-        <VxTypography variant="h6">{title}</VxTypography>
+        <VxTypography component="h2" variant="h6">{title}</VxTypography>
         {description ? <VxTypography color="text.secondary">{description}</VxTypography> : null}
         {onRetry ? <VxButton variant="outlined" onClick={onRetry}>{retryLabel}</VxButton> : null}
       </VxStack>

@@ -55,7 +55,7 @@ export default function TenantsPage() {
   return (
     <VxStack component="form" spacing={2.5} onSubmit={onSubmit} className="public-form-card public-form-card--tenant">
       <VxBox>
-        <VxTypography variant="h4" sx={{ mb: 1 }}>{t('pages.auth.tenants.title')}</VxTypography>
+        <VxTypography component="h1" variant="h4" sx={{ mb: 1 }}>{t('pages.auth.tenants.title')}</VxTypography>
         <VxTypography color="text.secondary">
           {t('pages.auth.tenants.description')}
         </VxTypography>

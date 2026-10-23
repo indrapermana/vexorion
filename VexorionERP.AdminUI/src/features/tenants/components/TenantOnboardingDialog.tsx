@@ -68,7 +68,7 @@ export function TenantOnboardingDialog({ open, onClose, onCreated }: Props) {
       <VxDialogTitle>{t('components.tenants.onboarding.title')}</VxDialogTitle>
       <VxDialogContent>
         <VxStack component="form" id="onboard-form" spacing={2} sx={{ mt: 2 }} onSubmit={handleSubmit}>
-          {error && <VxAlert severity="error">{error}</VxAlert>}
+          {error && <VxAlert severity="error" role="alert">{error}</VxAlert>}
 
           <VxTypography variant="subtitle2" color="text.secondary">
             {t('components.tenants.onboarding.tenantSection')}

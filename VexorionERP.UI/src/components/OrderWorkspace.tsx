@@ -50,7 +50,15 @@ export default function OrderWorkspace({
         ))}
       />
 
-      {alerts.map((alert) => <VxAlert key={`${alert.severity}:${alert.message}`} severity={alert.severity}>{alert.message}</VxAlert>)}
+      {alerts.map((alert) => (
+        <VxAlert
+          key={`${alert.severity}:${alert.message}`}
+          severity={alert.severity}
+          role={alert.severity === 'error' ? 'alert' : 'status'}
+        >
+          {alert.message}
+        </VxAlert>
+      ))}
 
       <PageBody>
         {grid}

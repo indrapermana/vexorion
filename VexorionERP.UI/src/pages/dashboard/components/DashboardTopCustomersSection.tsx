@@ -18,7 +18,7 @@ export default function DashboardTopCustomersSection({ t, topCustomers }: Dashbo
           <VxStack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <VxStack direction="row" sx={{ alignItems: 'center', gap: 1 }}>
               <PersonRoundedIcon sx={{ color: 'primary.main' }} />
-              <VxTypography variant="h6">{t('dashboard.topCustomers.title')}</VxTypography>
+              <VxTypography component="h2" variant="h6">{t('dashboard.topCustomers.title')}</VxTypography>
             </VxStack>
             <VxChip label={t('dashboard.topCustomers.totalCustomers', { count: topCustomers.length })} size="small" variant="outlined" />
           </VxStack>

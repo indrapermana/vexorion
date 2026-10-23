@@ -63,6 +63,7 @@ describe('TenantEditorDialog', () => {
     expect(screen.getByDisplayValue('ACME')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Acme Corp')).toBeInTheDocument()
     expect(screen.getByDisplayValue('acme.test')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'components.tenants.editor.accessPreview', level: 3 })).toBeInTheDocument()
   })
 
   it('calls onClose when cancel is clicked', async () => {

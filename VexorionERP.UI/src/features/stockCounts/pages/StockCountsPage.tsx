@@ -531,7 +531,7 @@ export default function StockCountsPage() {
         <VxPaper elevation={0} className="panel-card">
           <VxStack direction={{ xs: 'column', lg: 'row' }} sx={{ justifyContent: 'space-between', mb: 2 }} spacing={1.5}>
             <VxBox>
-              <VxTypography variant="h6">{t('pages.stockCounts.linePanel.title')}</VxTypography>
+              <VxTypography component="h2" variant="h6">{t('pages.stockCounts.linePanel.title')}</VxTypography>
               <VxTypography variant="body2" color="text.secondary">
                 {selectedCount
                   ? t('pages.stockCounts.linePanel.forCount', { number: selectedCount.countNumber, status: getDocumentStatusLabel(selectedCount.status) })

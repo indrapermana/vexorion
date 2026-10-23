@@ -83,7 +83,7 @@ export default function ConfigPage() {
           >
             <VxStack spacing={1.5} sx={{ height: '100%' }}>
               <VxStack direction="row" sx={{ alignItems: 'start', justifyContent: 'space-between' }}>
-                <VxTypography variant="h6" sx={{ fontSize: '1.02rem', pr: 1 }}>{t(item.titleKey)}</VxTypography>
+                <VxTypography component="h2" variant="h6" sx={{ fontSize: '1.02rem', pr: 1 }}>{t(item.titleKey)}</VxTypography>
                 <VxTooltip title={t('configCenter.openSetting')}>
                   <VxIconButton
                     component={RouterLink}

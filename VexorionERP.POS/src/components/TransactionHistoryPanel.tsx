@@ -110,6 +110,7 @@ export function TransactionHistoryPanel() {
                     <VxTooltip title={t('receipt.reprint')}>
                       <VxIconButton
                         size="small"
+                        aria-label={t('receipt.reprint')}
                         onClick={() =>
                           setReprintData({
                             completedAt: transaction.completedAt,

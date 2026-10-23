@@ -135,7 +135,7 @@ export function TenantEditorDialog({ open, tenant, onClose, onSaved }: TenantEdi
           />
 
           <VxStack spacing={1.25} sx={{ pt: 1 }}>
-            <VxTypography variant="subtitle2">{t('components.tenants.editor.accessPreview')}</VxTypography>
+            <VxTypography component="h3" variant="subtitle2">{t('components.tenants.editor.accessPreview')}</VxTypography>
             {isPreviewLoading ? <VxTypography variant="body2" color="text.secondary">{t('components.tenants.editor.loadingPreview')}</VxTypography> : null}
             {previewError ? <VxAlert severity="warning">{previewError}</VxAlert> : null}
             {accessPreview

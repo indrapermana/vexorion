@@ -22,7 +22,7 @@ export default function DashboardKpiCards({ t, snapshot, periodDays }: Dashboard
                 <VxTypography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
                   {t('dashboard.summary.openReceivables')}
                 </VxTypography>
-                <VxTypography variant="h5" sx={{ mt: 0.5 }}>
+                <VxTypography component="p" variant="h5" sx={{ mt: 0.5 }}>
                   {formatMoney(snapshot?.receivablesOpen ?? 0)}
                 </VxTypography>
               </VxBox>
@@ -48,7 +48,7 @@ export default function DashboardKpiCards({ t, snapshot, periodDays }: Dashboard
                 <VxTypography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
                   {t('dashboard.summary.openPayables')}
                 </VxTypography>
-                <VxTypography variant="h5" sx={{ mt: 0.5 }}>
+                <VxTypography component="p" variant="h5" sx={{ mt: 0.5 }}>
                   {formatMoney(snapshot?.payablesOpen ?? 0)}
                 </VxTypography>
               </VxBox>
@@ -74,7 +74,7 @@ export default function DashboardKpiCards({ t, snapshot, periodDays }: Dashboard
                 <VxTypography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
                   {t('dashboard.summary.revenuePeriod', { days: periodDays })}
                 </VxTypography>
-                <VxTypography variant="h5" sx={{ mt: 0.5 }}>
+                <VxTypography component="p" variant="h5" sx={{ mt: 0.5 }}>
                   {formatMoney(snapshot?.revenueInPeriod ?? 0)}
                 </VxTypography>
               </VxBox>
@@ -100,7 +100,7 @@ export default function DashboardKpiCards({ t, snapshot, periodDays }: Dashboard
                 <VxTypography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
                   {t('dashboard.summary.netCashFlow')}
                 </VxTypography>
-                <VxTypography variant="h5" sx={{ mt: 0.5 }}>
+                <VxTypography component="p" variant="h5" sx={{ mt: 0.5 }}>
                   {formatMoney(snapshot?.netCashInPeriod ?? 0)}
                 </VxTypography>
               </VxBox>

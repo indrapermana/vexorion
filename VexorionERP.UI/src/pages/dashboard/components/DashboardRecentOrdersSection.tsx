@@ -23,7 +23,7 @@ export default function DashboardRecentOrdersSection({ t, recentOrders }: Dashbo
       <VxGrid size={{ xs: 12 }}>
         <VxPaper elevation={0} sx={{ p: 2.5, borderRadius: 2 }}>
           <VxStack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <VxTypography variant="h6">{t('dashboard.recentOrders.title')}</VxTypography>
+            <VxTypography component="h2" variant="h6">{t('dashboard.recentOrders.title')}</VxTypography>
             <VxChip label={t('dashboard.recentOrders.totalOrders', { count: recentOrders.length })} size="small" variant="outlined" />
           </VxStack>
           {recentOrders.length > 0 ? (
