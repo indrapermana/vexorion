@@ -1,6 +1,6 @@
-import { VxStack, VxTextField } from '@vexorion/ui'
+import { VxStack, VxTextField, VxTypography } from '@vexorion/ui'
 import type { TFunction } from 'i18next'
-import { PageFeedback, PageHeader } from '../../../components/PagePrimitives'
+import { PageFeedback } from '../../../components/PagePrimitives'
 
 type DashboardHeaderFiltersProps = {
   t: TFunction
@@ -23,17 +23,16 @@ export default function DashboardHeaderFilters({
 }: DashboardHeaderFiltersProps) {
   return (
     <VxStack spacing={2}>
-      <PageHeader
-        title={t('dashboard.hero.title')}
-        description={t('dashboard.hero.description')}
-        filters={<VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+      <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ justifyContent: 'space-between', alignItems: { md: 'center' } }}>
+        <VxTypography id="dashboard-overview-title" component="h2" variant="h6">{t('dashboard.sections.overview')}</VxTypography>
+        <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
         <VxTextField
           type="date"
           label={t('dashboard.filters.asOfDate')}
           value={asOfDate}
           onChange={(event) => onAsOfDateChange(event.target.value)}
           slotProps={{ inputLabel: { shrink: true } }}
-          sx={{ maxWidth: 220 }}
+          sx={{ width: { xs: '100%', sm: 220 } }}
         />
         <VxTextField
           select
@@ -41,14 +40,14 @@ export default function DashboardHeaderFilters({
           value={periodDays}
           onChange={(event) => onPeriodChange(Number(event.target.value))}
           slotProps={{ select: { native: true } }}
-          sx={{ maxWidth: 220 }}
+          sx={{ width: { xs: '100%', sm: 220 } }}
         >
           {periodOptions.map((option) => (
             <option key={option} value={option}>{t('dashboard.filters.daysOption', { days: option })}</option>
           ))}
         </VxTextField>
-        </VxStack>}
-      />
+        </VxStack>
+      </VxStack>
       <PageFeedback error={error} />
     </VxStack>
   )

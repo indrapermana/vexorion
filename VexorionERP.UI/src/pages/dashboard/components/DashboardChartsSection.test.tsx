@@ -3,23 +3,17 @@
 import { render, screen } from '@testing-library/react'
 import DashboardChartsSection from './DashboardChartsSection'
 import type { TFunction } from 'i18next'
-import type { BalancePoint, CashFlowPoint } from '../types'
+import type { BalancePoint } from '../types'
 
 vi.mock('@vexorion/ui', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@vexorion/ui')>()
   return {
     ...actual,
-    VxLineChart: () => <div data-testid="line-chart" />,
-    VxBarChart: () => <div data-testid="bar-chart" />,
+    VxBarChart: ({ series }: { series: unknown }) => <div data-testid="bar-chart">{JSON.stringify(series)}</div>,
   }
 })
 
 const t = ((key: string) => key) as unknown as TFunction
-
-const cashFlowData: CashFlowPoint[] = [
-  { day: 1, inflow: 1000, outflow: 500 },
-  { day: 2, inflow: 1500, outflow: 700 },
-]
 
 const balanceData: BalancePoint[] = [
   { name: 'Jan', open: 3000, overdue: 500 },
@@ -27,37 +21,43 @@ const balanceData: BalancePoint[] = [
 ]
 
 describe('DashboardChartsSection', () => {
-  it('renders the cash flow trends title', () => {
+  it('renders the period cash flow title', () => {
     render(
       <DashboardChartsSection
         t={t}
-        cashFlowChartData={cashFlowData}
+        cashIn={1000}
+        cashOut={500}
+        periodDays={30}
         receivablesVsPayablesData={balanceData}
       />,
     )
-    expect(screen.getByText('dashboard.charts.cashFlowTrends')).toBeInTheDocument()
+    expect(screen.getByText('dashboard.charts.cashFlowPeriod')).toBeInTheDocument()
   })
 
   it('renders the receivables vs payables title', () => {
     render(
       <DashboardChartsSection
         t={t}
-        cashFlowChartData={cashFlowData}
+        cashIn={1000}
+        cashOut={500}
+        periodDays={30}
         receivablesVsPayablesData={balanceData}
       />,
     )
     expect(screen.getByText('dashboard.charts.receivablesVsPayables')).toBeInTheDocument()
   })
 
-  it('renders a line chart and a bar chart', () => {
+  it('charts the exact reported cash totals rather than a synthetic daily trend', () => {
     render(
       <DashboardChartsSection
         t={t}
-        cashFlowChartData={cashFlowData}
+        cashIn={1000}
+        cashOut={500}
+        periodDays={30}
         receivablesVsPayablesData={balanceData}
       />,
     )
-    expect(screen.getByTestId('line-chart')).toBeInTheDocument()
-    expect(screen.getByTestId('bar-chart')).toBeInTheDocument()
+    expect(screen.getAllByTestId('bar-chart')).toHaveLength(2)
+    expect(screen.getAllByTestId('bar-chart')[0]).toHaveTextContent('"data":[1000,500]')
   })
 })

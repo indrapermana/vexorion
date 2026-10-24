@@ -147,8 +147,15 @@ const enUS = {
     },
   },
   dashboard: {
+    sections: {
+      finance: 'Finance',
+      overview: 'Financial Overview',
+      attention: 'Overdue Balances and Aging',
+      analysis: 'Cash Flow and Balances',
+      activity: 'Recent Sales Activity',
+    },
     hero: {
-      title: 'Run Vexorion like an operations dashboard, not a placeholder homepage.',
+      title: 'Dashboard',
       description: 'Finance KPIs update by as-of date and analysis window so operations can see receivables, payables, revenue, and cash momentum in one screen.',
     },
     filters: {
@@ -177,6 +184,7 @@ const enUS = {
       unknownCustomer: 'Unknown customer',
     },
     charts: {
+      cashFlowPeriod: 'Cash Flow ({{days}} days)',
       cashFlowTrends: 'Cash Flow Trends',
       receivablesVsPayables: 'Receivables vs Payables',
     },

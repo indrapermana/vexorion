@@ -147,8 +147,15 @@ const idID = {
     },
   },
   dashboard: {
+    sections: {
+      finance: 'Keuangan',
+      overview: 'Ringkasan Keuangan',
+      attention: 'Saldo Jatuh Tempo dan Umur Saldo',
+      analysis: 'Arus Kas dan Saldo',
+      activity: 'Aktivitas Penjualan Terbaru',
+    },
     hero: {
-      title: 'Jalankan Vexorion seperti dashboard operasi, bukan homepage placeholder.',
+      title: 'Dasbor',
       description: 'KPI keuangan diperbarui berdasarkan tanggal acuan dan jendela analisis agar operasional melihat piutang, utang, pendapatan, dan momentum kas dalam satu layar.',
     },
     filters: { asOfDate: 'Tanggal acuan', window: 'Jendela', daysOption: '{{days}} hari' },
@@ -173,6 +180,7 @@ const idID = {
       unknownCustomer: 'Pelanggan tidak dikenal',
     },
     charts: {
+      cashFlowPeriod: 'Arus Kas ({{days}} hari)',
       cashFlowTrends: 'Tren Arus Kas',
       receivablesVsPayables: 'Piutang vs Utang',
     },

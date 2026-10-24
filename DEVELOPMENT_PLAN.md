@@ -9,13 +9,7 @@ This is the single source of truth for implementation status and upcoming develo
 
 VexorionERP has broad functional coverage: core ERP workflows, POS, finance, imports, generated documents, project/document management, tenant collaboration, module controls, and storage governance are all represented in code. The frontend production build succeeds and the service test project is healthy.
 
-The project is **not release-ready**. P0-1 through P0-4 established a trustworthy validation baseline, P1-1 substantially hardened project/document workflows, the backend now targets .NET 10, and state-changing database/bootstrap work has been removed from normal API startup. Remaining readiness gaps are provider migration, evidence, and operational hardening:
-
-1. Playwright jobs are defined but hard-disabled in CI, so there is no current E2E release evidence.
-2. Clean installation, least-privilege runtime access, idempotent bootstrap, authentication, credential rotation, and point-in-time restore were integration-validated using separate Neon rehearsal and production databases. The owner selected one persistent production environment for the early pilot; the GitHub environment and Neon project used for staging are deleted, and the GCP staging project is in its provider deletion window. A production-like upgrade rehearsal has not been recorded.
-3. Cloudflare R2 upload, delivery, deletion, and signed-URL expiry are integration-validated against the configured real buckets. Backup/restore, rollback, monitoring, performance, accessibility, and penetration checks remain unvalidated.
-4. Several critical workflows still need the P1/P2 tests and semantic reconciliation listed below.
-5. No single release-candidate commit has passed backend, frontend, E2E, migration, storage, and smoke gates together.
+The project is **not release-ready**. P0-1 through P0-4 established a trustworthy validation baseline, POS checkout/refund and their core browser/database gates are complete, the backend targets .NET 10, and state-changing database/bootstrap work has been removed from normal API startup. Remaining product, security, operational, and release work is consolidated in the final prioritized backlog, ordered Main UI, AdminUI, then POS.
 
 The active execution track is now **feature completion and UI/UX hardening**. The low-cost production architecture is operational, while `MIG-M06` backup/disaster-recovery work is deliberately parked until the unfinished product workflows and usability backlog below are resolved. No review finding is authorization to change production behavior: each unchecked item must be implemented, tested, and accepted separately.
 
@@ -58,14 +52,7 @@ Percentage-complete labels are intentionally not used. Capability-inventory chec
 | Neon production and Cloud Run | OWNER CONFIRMED | The database has `pg_trgm` and all five migrations; least-privilege roles, idempotent bootstrap, and password rotation passed. Production CI/OIDC, live/ready, anonymous 401, authenticated admin, Loki, reversible category/project/document writes, byte-identical R2 download, object/API deletion, and rollback to the prior healthy revision and forward to the CI revision passed. Release-candidate and recovery evidence remain pending. |
 | Durable artifacts | NOT RECORDED | Local terminal validation produced no durable artifact URLs. CI artifact/run links must be recorded against a release-candidate commit. |
 
-### Still not validated
-
-- A production-like upgrade migration rehearsal against Neon PostgreSQL; current provider metadata and temporary-branch cleanup also require operator recording.
-- Cloudflare R2 upload/delivery/deletion/expiry behavior is integration-validated. Operational object-protection, credential-rotation rehearsal, and disaster-recovery evidence remain pending.
-- CI Playwright execution and the remaining end-to-end workflows requiring live services and credentials.
-- Independent production backup/restore, cold-start timing, performance, accessibility, or penetration testing.
-
-Any capability requiring those checks remains **implemented** or **locally validated**, not integration- or release-validated.
+Any capability requiring pending release evidence remains **implemented**, **locally validated**, or **integration validated**, not release validated. Outstanding evidence and operations gates are in the final prioritized backlog.
 
 ## 3. Implemented capability inventory
 
@@ -223,7 +210,7 @@ Implementation evidence (2026-10-13):
 
 - [x] Finish project assignment matrix UX and targeted project form/state tests.
 - [x] Add E2E: tenant A creates a project and links tenant B. Locally integration-validated against the running API/database.
-- [ ] Add E2E: upload a document, add a version, preview/download it, and verify immutable history. The test is implemented, but integration validation is blocked at upload by the disabled Azure Storage account.
+- Remaining project-document browser acceptance is listed in the final Main UI backlog; the existing upload/version scenario remains blocked by the disabled Azure Storage account.
 - [x] Add E2E: tenant B is allowed/denied exactly according to relationship scopes and validity dates. Locally integration-validated against the running API/database.
 - [x] Add E2E: storage warning, soft-block, and hard-block behavior. Dashboard states are deterministic and the real HTTP 507 quota boundary is locally integration-validated.
 - [x] Run index/query-plan review for project/document search, histories, storage trend, and top-consumer queries. Completed with rollback-only PostgreSQL data; production-scale validation remains a release gate.
@@ -231,91 +218,50 @@ Implementation evidence (2026-10-13):
 - [x] Define and enforce daily aggregation for storage-trend responses. Responses are capped at 365 UTC day-end points with carry-forward semantics and explicit range metadata.
 - [x] Add retry/compensation tests for blob upload succeeding while database persistence fails, and vice versa. Initial and version upload coverage is complete; confirmed pre-persistence failures are safe to retry, while unknown outcomes require list reconciliation because the endpoint has no idempotency key.
 - [x] Enforce and test MIME/signature validation, canonical stored content types, safe cross-platform filenames, attachment download headers, and absolute plus tenant-plan upload limits.
-- [ ] Provision a production-accessible ClamAV endpoint, enable it with `DocumentSecurity:RequireMalwareScan=true`, and record clean-file, EICAR rejection, timeout/unavailable fail-closed, and monitoring evidence. The adapter and policy are implemented and locally unit-tested; live scanner integration is not yet validated.
+- Live ClamAV provisioning and clean/infected/unavailable monitoring evidence are listed in the final Main UI backlog.
 - [x] Verify audit event durability and correlation for both allowed and denied paths. Allowed records are persisted and queryable through the audit API; denied records retain the same trace ID returned in the HTTP error contract.
 
 ### P1-2 — Import and document-generation hardening remains incomplete
 
-- [ ] Add web tests for import and generated-document endpoints, authorization, tenant isolation, content types, and file limits.
-- [ ] Add mocked blob integration tests plus an optional real-container suite.
-- [ ] Add E2E correction loop: download template → invalid upload → annotated errors → correction → validate → submit → verify records.
-- [ ] Add E2E generation loop: generate → history → inline preview → download → regenerate/version.
-- [ ] Test idempotent import submission and concurrent duplicate requests; document whether the existing implementation fully enforces the intended lock.
-- [ ] Enforce and test document retention/lifecycle policy for superseded versions.
-- [ ] Create import and document-generation operator runbooks, rollback steps, and failure-recovery procedures.
+Import and generated-document hardening work is consolidated in the final Main UI backlog.
 
 ### P1-3 — ERP business semantics and QA expectations need reconciliation
 
-**Status: D3 and D4 approved by the owner on 24 October 2026. D7 and D9 are deferred for POS-02; D1, D2, D5, D6, and D8 remain draft. POS-02 implements the approved D3/D4 rules only for POS sales and does not change general document lifecycle or ledger behavior.**
+**Decision record: D3 and D4 were approved on 24 October 2026. D7 and D9 are deferred for POS. Remaining general ERP decisions are consolidated in the final Main UI and shared-work backlog.**
 
-Verified current behavior: the sales credit note (`CreateCreditNoteAsync`) is full-invoice only, with no stock return, no refund payment and no POS link. A payment is allocated to exactly one invoice and cannot exceed its balance. Shipment post deducts stock and moves the order to Partially/Completed. A POS sale creates an issued invoice and payment but no journal entry.
+Before POS-02, general sales credit notes were full-invoice only and a POS sale had no journal entry. POS-02 now implements partial per-line POS returns, stock disposition, capped refunds/credits, and audit without changing general credit-note or ledger behavior. A payment is allocated to one invoice and shipment posting updates stock as before.
 
 | # | Topic | Draft decision |
 |---|-------|----------------|
-| D1 | Vocabulary | **Post** makes a document final and applies its effects (stock, ledger). **Reverse** undoes a posted document with a new opposite entry. **Cancel** abandons a document that was never posted. UI shows inventory `Completed` as `Posted`; the stored enum is unchanged. |
-| D2 | Immutable posted records | After post/issue: no edits to header, lines, amounts, dates or party, and no delete. Only notes and attachments may change. Corrections go through reversal or credit note. Line endpoints and balance-mutation APIs must refuse posted parents. |
 | D3 | Cancel vs reverse | **APPROVED 24 Oct 2026.** Draft or never-posted: cancel (no ledger or stock effect). Posted: reverse only; the original stays visible. A reversal needs a reason, a permission and an audit entry. A paid invoice cannot be reversed until its payments are reversed or refunded. POS-02 creates an auditable credit note/refund against the immutable original sale; broader reversal endpoints remain out of scope. |
 | D4 | Credit notes and refunds | **APPROVED 24 Oct 2026.** A return is a credit note (partial allowed, per line, quantity capped at sold minus earlier returns) plus optional stock return plus optional refund. Per line: return to stock (default) or write off. Refund defaults to the original payment method and is capped at what was paid for the credited lines. An unpaid invoice gets a credit against its balance, not a cash refund. Replace the full-only credit note with the partial version; a full credit is "all lines". |
-| D5 | Partial fulfilment and concurrency | Quantities are re-checked at post time inside the transaction (exists). Add concurrency tokens to order lines and stock balances so two simultaneous posts cannot both pass. Over-shipment stays blocked. Back-orders stay on the open order; no automatic split. |
-| D6 | Payment allocation | One payment to one invoice. Overpayment is rejected, not stored. Customer credit balance and multi-invoice allocation are deferred. |
 | D7 | Approvals | **DEFERRED for POS-02 (24 Oct 2026).** No second-approver workflow is added. POS refunds require the existing `pos.refund` permission and are audited. Decide thresholds separately before implementing approvals. |
-| D8 | Manual journals | Implement balanced draft, post and reverse with fiscal-period lock checks (see `FEAT-FIN-01`). |
 | D9 | POS ledger posting | **DEFERRED for POS-02 (24 Oct 2026).** Preserve current behavior; POS sales/refunds do not gain new ledger postings. Decide automatic posting versus shift-close batching as separate finance work. |
 
-Delivery order: implement POS returns/refunds under approved D3/D4; then resolve D1, D2, D5, D6, and D8 for `FEAT-TRADE-01`/`FEAT-FIN-01`; take D7 and D9 as separately approved follow-up work.
-
-Checklist (tick when decided and implemented):
-
-- [ ] Audit immutable-posted/reversal-only behavior across every aggregate and endpoint, including line endpoints and direct balance mutation APIs. Draft: D2.
-- [ ] Reconcile terminology: inventory documents use `Completed/Cancelled` while UI/test documents sometimes say `Post/Reverse`; define one user vocabulary and explicit state mapping. Draft: D1.
-- [ ] Correct QA expectation that saving an inventory adjustment immediately updates balance if actual behavior requires completion/posting.
-- [ ] Confirm whether manual journal creation is supported. Current controller surface is read/reverse oriented while the QA plan expects create and post. Draft: D8.
-- [ ] Confirm credit-note, return/refund, allocation, cancellation, and reversal accounting semantics end-to-end, including source status and inventory/GL effects. Draft: D3, D4, D6, D9.
-- [ ] Verify partial receipt/shipment cancellation correctly restores remaining quantities and prevents over-execution under concurrency. Draft: D5.
-- [ ] Add approval rules by document type and amount beyond the current invoice workflow. Draft: D7 (open).
+The approved/deferred POS decisions are recorded above; unresolved lifecycle, allocation, concurrency, journal, and approval decisions are tasks in the final Main UI and shared-work backlog.
 
 ### P1-4 — Remaining reporting breadth
 
-- [ ] Inventory valuation report endpoint and UI, using the chosen moving-average costing semantics.
-- [ ] Inventory movement audit report endpoint and UI with source-document traceability.
-- [ ] Low-stock/reorder recommendation report endpoint and UI with explicit reorder rules.
-- [ ] Reconcile report totals to journal/inventory source data and add non-empty, tenant-isolation, date-boundary, and export tests.
+Inventory valuation, movement audit, reorder recommendations, and report reconciliation are in the final Main UI backlog.
 
 ### P1-5 — Release operations and observability
 
 - [x] Complete the Cloudflare Pages cutover for Main UI, AdminUI, POS, and the public landing page using `docs/CLOUDFLARE_FRONTEND_MIGRATION.md`. Deployment jobs, custom domains, apex/`www` routing, static headers, and the landing implementation are present; Azure Static Web Apps deployment jobs were retired. The owner confirmed successful login on all three authenticated applications on 20 October 2026.
-- [ ] Retire remaining Azure API/database/storage resources only after the replacement Cloud Run, Neon, and R2 environment passes cutover, rollback, and retention checks. Azure subscription remediation remains owner-managed and must not block code-first staging work.
-- [ ] Apply the current migrations to both a clean database and a production-like upgraded snapshot; verify rollback/forward-fix procedure.
-- [ ] Create support runbook, admin training material, incident paths, backup/restore evidence, and release smoke checklist.
-- [ ] Add dashboards/alerts for API 5xx, authorization denials, import failures, document/blob failures, checkout failures, latency, rate limiting, and quota blocks.
-- [ ] Define log retention, PII redaction, trace correlation, and audit retention.
-- [ ] Run manual smoke flows across onboarding, permissions, inventory, orders, receipts/shipments, invoices, payments, posting, reports, POS, projects, documents, and cross-tenant access.
-- [ ] Establish a release candidate only after backend, frontend, E2E, migration, and smoke gates pass on the same commit.
+Remaining provider retirement, upgrade/rollback rehearsal, runbooks, observability, manual smoke, and release-candidate gates are consolidated in the final shared/release backlog.
 
 ### P2-1 — Performance and maintainability
 
-- [ ] Reduce the Main UI 690.05 kB minified chunk through route/vendor splitting and add a bundle budget to CI.
-- [ ] Consolidate the three duplicated API clients and error parsing without coupling app-specific auth/session behavior.
-- [ ] Replace handler service-locator dependency resolution with explicit constructor dependencies where practical; this improves composition safety and test clarity.
-- [ ] Review large page components and separate orchestration, form state, grids, and business actions where it improves targeted testing.
-- [ ] Add accessibility checks for dialogs, grids, keyboard-only POS operation, focus restoration, validation announcements, and color contrast.
-- [ ] Add locale completeness tests to Main UI and AdminUI; remove hard-coded English operational messages from localized surfaces.
+Performance, shared-client, maintainability, accessibility, and locale follow-up is prioritized in the final application/shared backlog.
 
 ### P2-2 — Storage/security clarification
 
 - [x] Generated/project documents use a private blob container and SAS-based access.
-- [ ] Add automated proof that document containers cannot be anonymously read and SAS URLs expire with read-only scope.
 - [x] Product images are intentionally public and non-sensitive through a dedicated R2 bucket/custom domain; private documents use a separate bucket and signed delivery. The Main UI product editor now exposes image selection, preview, upload, and actionable API errors.
-- [ ] Rotate and externally manage storage credentials; verify no connection strings or signing secrets are committed.
-- [ ] Threat-model cross-tenant identifiers, file preview, CSV/Excel formula injection, upload content, and signed-link leakage.
+Remaining storage-access proof, credential management, and threat-model work is in the final shared/release backlog.
 
 ### P3 — Optional product expansion after release readiness
 
-- [ ] Government submission package generator with manifest/metadata.
-- [ ] Document expiry reminders and compliance checklists.
-- [ ] OCR and metadata extraction.
-- [ ] Digital-signature workflow integration.
-- [ ] Tenant-to-tenant project templates.
+Optional product expansion is deferred and listed at the end of the final backlog.
 
 ## 5. UI/UX and feature-completion review by module — 21 October 2026
 
@@ -438,17 +384,17 @@ The target is a clean, simple, data-dense business interface: one obvious primar
 
 **Findings**
 
-- Dashboard breadth is strong, but KPIs, charts, aging, cash flow, orders, customers, health, storage, and quick statistics compete without role/task prioritization.
-- Hero copy includes product-development language (“not a placeholder homepage”).
+- Initial review found KPIs, charts, aging, cash flow, orders, customers, health, storage, and quick statistics competing without role/task prioritization. UX-DASH-01 now groups them by operational priority.
+- Initial hero copy included product-development language (“not a placeholder homepage”); the visible heading is now a concise localized Dashboard title. Broader KPI definitions remain under UX-DASH-02.
 - Hidden menu preference, disabled module, and missing permission are not clearly distinguished.
 - Several Main pages include developer-facing descriptions such as live API paths and implementation details instead of explaining the user's task.
 
-**Plan**
+**Completed UX**
 
-- [ ] `UX-DASH-01` Establish a hierarchy: critical KPI row, exceptions/attention, trend analysis, and recent activity; keep filters beside affected data.
-- [ ] `UX-DASH-02` Replace development copy and add plain-language definitions for KPI dates, windows, signs, and currency.
-- [ ] `UX-DASH-03` Give each section loading/error/retry and last-updated context so one failed query is unambiguous.
-- [ ] `UX-DASH-04` Distinguish preference, module entitlement, and permission states, including administrator effective-access preview.
+- [x] `UX-DASH-01` Establish KPI, attention/exception, analysis, and recent-activity hierarchy; keep filters beside affected data. Locally completed 24 October 2026: Financial Overview and its date/window controls lead the finance area, followed by overdue balances/aging and cash/balance analysis. Recent sales activity and storage are outside the finance filter scope and hidden without their respective permissions. Recent orders precede customer rankings. Cash-flow bars use exact API period totals instead of the former fabricated daily curve; historical trends require a real time-series contract and are not inferred from totals. Section labels and page titles are localized in en/id/es.
+  - Evidence: dashboard tests 48/48, full Main UI tests 173/173, TypeScript and production build pass, changed-file lint has zero errors and two existing `formatMoney` dependency warnings. Authenticated Playwright passes 2/2 including setup, with screenshots/no document overflow at 390/768/1024/1440 px, a settled desktop sidebar-position check, a real finance-window query, isolated tenant deletion, and orphan check. Full-app lint remains blocked by 20 existing `react-hooks/refs` errors in the untouched project `DocumentsPanel`; the production build retains the known large-chunk warning. This is local UX acceptance, not the single-commit release gate.
+
+Remaining Dashboard work is consolidated in the final Main UI backlog.
 
 ### 5.4 Master data and configuration
 
@@ -461,14 +407,7 @@ Scope: Customers, Suppliers, Products, Categories/Identifiers, Warehouses, Accou
 - Accounts use native delete confirmation. Role/configuration screens expose technical concepts with limited downstream-impact guidance.
 - Employee, consultant, project assignment, and relationship surfaces need a clearer record/engagement boundary.
 
-**Plan**
-
-- [ ] `UX-MASTER-01` Apply the shared list/editor pattern across master data with consistent search, active filters, counts, empty states, and named deletion.
-- [ ] `UX-MASTER-02` Give Product a coherent detail/edit experience for core data, image, identifiers, stock by warehouse, and price history.
-- [ ] `UX-MASTER-03` Replace native/immediate deletion with the shared destructive-action pattern.
-- [ ] `UX-MASTER-04` Show dependency/impact before delete/deactivate and explicitly distinguish deactivation from permanent deletion.
-- [ ] `UX-MASTER-05` Explain role, menu, tax/discount, numbering, and module consequences in business language and preview effective access.
-- [ ] `UX-MASTER-06` Reconcile employee, consultant, assignment, and tenant-relationship vocabulary and avoid duplicate entry where references are safe.
+Open master-data and configuration work is consolidated in the final Main UI backlog.
 
 ### 5.5 Sales, procurement, billing, and payments
 
@@ -482,15 +421,7 @@ Scope: Sales Orders/Shipments/Invoices/Customer Payments and Purchase Orders/Rec
 - Payment allocation lacks one consistent balance/allocation/unapplied/over-allocation summary.
 - P1-3 semantic questions remain open: immutable posted records, cancel/reverse vocabulary, partial fulfillment under concurrency, credit notes/refunds, allocations, and approvals.
 
-**Plan**
-
-- [ ] `UX-TRADE-01` Create a shared document-workspace contract for filters, status, metrics, rows, lines, totals, and confirmations while preserving business rules.
-- [ ] `UX-TRADE-02` Show lifecycle and permitted next actions on every document, including reasons and confirmation for post/approve/cancel/reverse.
-- [ ] `UX-TRADE-03` Add a detail-first review view for header, parties, dates, terms, lines, totals, fulfillment/allocation, generated documents, audit, and state actions.
-- [ ] `UX-TRADE-04` Optimize receipt/shipment entry for keyboard/tablet, showing ordered, previously processed, remaining, entered, and resulting quantities.
-- [ ] `UX-TRADE-05` Standardize payment allocation summaries and pre-submit validation.
-- [ ] `FEAT-TRADE-01` Complete P1-3 semantics and encode agreed transitions/accounting/inventory effects in backend rules, API codes, UI, and tests. Draft decisions D1–D6 in P1-3; blocked until approved.
-- [ ] `FEAT-TRADE-02` Decide and implement approval rules by document type/amount with approver visibility and history. Draft D7 (refunds/reversals above a threshold) is open.
+Open sales, procurement, billing, and payment work is consolidated in the final Main UI backlog.
 
 ### 5.6 Inventory operations
 
@@ -503,13 +434,7 @@ Scope: Adjustments, Counts, Transfers, Receipts, Shipments, balances, and moveme
 - Lifecycle terminology alternates between complete/cancel and post/reverse.
 - Balance/movement behavior exists, but there is no focused movement/audit workspace and the valuation/reorder reports remain pending.
 
-**Plan**
-
-- [ ] `UX-INV-01` Split operations into list, detail, line editor, and state-action components with a consistent document workspace.
-- [ ] `UX-INV-02` Make expected versus entered/resulting quantities, variance, warehouses, and posting effects explicit before confirmation.
-- [ ] `UX-INV-03` Standardize line/document confirmations, prevent immutable-state edits, and explain why.
-- [ ] `FEAT-INV-01` Finalize lifecycle vocabulary and reversal behavior across API, UI, tests, and `TEST_PLAN.md`.
-- [ ] `FEAT-INV-02` Implement P1-4 valuation, movement audit, and reorder reports with reconciliation tests.
+Open inventory workspace and reporting work is consolidated in the final Main UI backlog.
 
 ### 5.7 Finance, fiscal periods, journals, reports, and audit
 
@@ -520,14 +445,7 @@ Scope: Adjustments, Counts, Transfers, Receipts, Shipments, balances, and moveme
 - Audit browsing is a basic table/filter scaffold without readable event detail, before/after presentation, trace navigation, or export/support flow.
 - Report reconciliation/export coverage and inventory report breadth remain incomplete.
 
-**Plan**
-
-- [ ] `UX-FIN-01` Replace raw-ID journal actions with searchable contextual document selection; prefer posting from the source document where safer.
-- [ ] `UX-FIN-02` Provide a fiscal-period calendar/status view and warn about locks before users complete unpostable forms.
-- [ ] `UX-FIN-03` Standardize currency/date/sign formatting, totals, comparisons, drill-down, export progress, and no-data explanations.
-- [ ] `UX-FIN-04` Add an audit detail drawer with actor, tenant, action, entity, time, trace ID, safe before/after, copyable support context, pagination, and export.
-- [ ] `FEAT-FIN-01` Decide manual-journal support: implement balanced draft/create/post/reverse or remove that expectation from QA/UI. Draft D8: implement, with period-lock checks, after `FEAT-POS-02`.
-- [ ] `FEAT-FIN-02` Complete report reconciliation, tenant/date-boundary, non-empty, and CSV formula-injection tests.
+Open finance, journal, reporting, and audit work is consolidated in the final Main UI backlog.
 
 ### 5.8 Projects, documents, assignments, and tenant relationships
 
@@ -538,14 +456,7 @@ Scope: Adjustments, Counts, Transfers, Receipts, Shipments, balances, and moveme
 - Relationship/party forms expose raw tenant IDs and JSON scope text, which is error-prone for administrators.
 - Malware scanning remains intentionally disabled pending private scanner integration and live evidence.
 
-**Plan**
-
-- [ ] `UX-PROJ-01` Restructure Project Details into Overview, Parties, Assignments, Documents, and History tabs with counts, permissions, and deep links.
-- [ ] `UX-PROJ-02` Clarify global Document Center versus project Documents and preserve navigation/filter context.
-- [ ] `UX-PROJ-03` Replace tenant-ID entry with an authorized picker and JSON scope editing with named controls plus effective-access summary.
-- [ ] `UX-PROJ-04` Add document breadcrumbs/clear selection and prioritize Preview, Download, Upload Version, Metadata, and Delete by frequency/risk.
-- [ ] `FEAT-PROJ-01` Complete live ClamAV integration only with private `clamd`, monitoring, and clean/EICAR/unavailable fail-closed evidence.
-- [ ] `FEAT-PROJ-02` Finish document retention/lifecycle and unknown-upload-outcome reconciliation guidance.
+Open project, document, relationship, and malware-scanning work is consolidated in the final Main UI backlog.
 
 ### 5.9 Import and generated documents
 
@@ -554,12 +465,7 @@ Scope: Adjustments, Counts, Transfers, Receipts, Shipments, balances, and moveme
 - Import functionality exists, but the correction loop and idempotent/concurrent submission behavior lack E2E evidence.
 - Generated-document history/preview/download/regenerate exists, but authorization, isolation, retention, real-storage behavior, and recovery remain incomplete.
 
-**Plan**
-
-- [ ] `UX-IMP-01` Present import as choose type → template → file → validate → correct → confirm → submit → monitor; prevent accidental duplicate submission.
-- [ ] `UX-IMP-02` Make errors searchable/actionable with sheet, row, column, field, cause, and retry path.
-- [ ] `UX-DOC-01` Standardize generated-document panels with version, format, state, creator/time, preview, download, regenerate, and failure recovery.
-- [ ] `FEAT-IMP-01` Complete all P1-2 endpoint, tenant-isolation, idempotency, E2E, storage, retention, rollback, and runbook work.
+Open import and generated-document work is consolidated in the final Main UI backlog.
 
 ### 5.10 Admin UI
 
@@ -573,48 +479,37 @@ Scope: Adjustments, Counts, Transfers, Receipts, Shipments, balances, and moveme
 - Admin dashboard showed zero tenants and users while its Tenant/User screens showed existing records. The dashboard data contract, filters, permissions, and loading semantics therefore need reconciliation before its metrics are trusted.
 - At 390 px, topbar controls overlap the page title; the Users header becomes a narrow text column beside its filters/button, and action/status columns are outside the initial visible grid area.
 
-**Plan**
-
-- [ ] `UX-ADMIN-01` Fully localize the shell/pages and align list, metrics, filters, loading, empty, feedback, and actions with Main UI.
-- [ ] `UX-ADMIN-02` Replace per-tenant access requests with a summary/batch contract or lazy detail; expose partial failure/retry.
-- [ ] `UX-ADMIN-03` Split creation, roles, account state, and password reset into a clear user detail/action model with audit/security context.
-- [ ] `UX-ADMIN-04` Explain lifecycle/module/menu changes and preview the result, distinguishing platform policy, entitlement, role permission, and preference.
-- [ ] `FEAT-ADMIN-01` Review user deactivate/reactivate, session revocation, credential rotation, tenant suspend/reactivate, and audit history; implement approved semantics only.
+Open AdminUI work is consolidated in the final AdminUI backlog.
 
 ### 5.11 POS UI and transaction integrity
 
 **Findings**
 
-- Desktop uses `3fr 1fr` for catalog/cart, but the cart contains six columns plus payment controls. Its narrow column is structurally incompatible with its content.
+- Initial review found the `3fr 1fr` catalog/cart split too narrow for the six-column cart. UX-POS-01/02 changed this to a 1.35fr catalog plus a 380 px minimum cart on desktop, and a one-column stepped flow on small screens.
 - Catalog/scanner/customer/delivery/shift/return/history/language/theme/admin actions compete without a strong cashier-task hierarchy.
-- Quantity edit is hidden behind clicking plain text. Discount accepts formatted free numeric text, increasing cashier error risk.
-- Checkout is client-orchestrated across multiple API operations; a mid-flow failure can leave partial business records and unsafe retry ambiguity.
-- Return/refund similarly coordinates multiple effects without atomic/idempotent reconciliation evidence.
+- Initial review found hidden quantity editing and free-form discount entry. UX-POS-02 replaces these with visible quantity controls and a numeric discount input.
+- Checkout and refund now use atomic idempotent API commands with PostgreSQL and authenticated retry evidence, as recorded under FEAT-POS-01B/02.
 - Useful shortcuts, conflict handling, shifts, receipts/history, and telemetry exist, but the design does not prioritize fast scan-add-pay or touch targets.
-- Runtime evidence confirms document widths of 653 px for POS and 563 px for POS Admin in a 390 px viewport. Header actions overlap/clip, and the POS Admin table extends beyond its card without an obvious responsive affordance.
+- Initial runtime review found horizontal overflow on POS and POS Admin at 390 px. UX-POS-01/02 now pass the cashier workspace at 390/768/1024/1440 px; the POS Admin narrow-table issue remains.
 
-**Plan**
+**Completed UX**
 
 - [x] `UX-POS-01` Redesign around select/scan → review cart/customer → payment, with a usable minimum cart width and deliberate single-column tablet/mobile mode. Completed 24 October 2026: mobile POS now has explicit Catalog and Cart/Payment steps with Review and Back actions; desktop retains side-by-side work areas with a 380 px minimum cart track. The authenticated E2E matrix passes without document overflow at 390, 768, 1024, and 1440 px.
 - [x] `UX-POS-02` Replace the six-column cart with compact line items exposing increment/decrement/direct quantity, discount, stock warning, remove, and total. Completed 24 October 2026: cart lines are product-first and wrap on narrow screens, quantity steppers and direct numeric edit are keyboard accessible, discount is numeric, shortages show requested/available quantities, and remove/line total remain visible. Cart accessibility/interaction tests pass within the 97/97 POS suite.
-- [ ] `UX-POS-03` Keep scanner/search and high-frequency product selection persistent; group shift/history/returns/settings as clearly labelled secondary actions.
-- [ ] `UX-POS-04` Make payment a focused step with tender presets, method, amount due, change, validation, progress, retry/recovery, explicit success, and duplicate prevention.
-- [ ] `UX-POS-05` Improve shift, history, receipt, return/refund, conflict, and customer dialogs for touch, keyboard, long content, and consequences.
-- [ ] `UX-POS-06` Add cashier-oriented empty/offline/session-expiry/recovery states that never imply an unknown transaction is safe to retry.
-- [ ] `UX-POS-07` Validate keyboard/scanner operation, touch targets, focus, labels, 1024×768 use, and receipt printing on supported hardware/browsers.
+- Remaining `UX-POS-03` through `UX-POS-07` tasks are in the final POS backlog.
 - [x] `FEAT-POS-01` Replace client checkout orchestration with one atomic, idempotent server command covering shift, permission, stock, pricing, discount, order, invoice, shipment, payment, and receipt.
   - Done: `POST api/pos/checkout` (`Pos.Checkout`) runs `PosCheckoutService` in one DB transaction: shift ownership/open check, customer/warehouse/product checks, order, shipment (posted unless delivery, so stock is checked and deducted), invoice from the order and shipment, payment, audit log.
   - Idempotency: client key per attempt (reused while the same sale is retried), unique `PosCheckoutRecord` per tenant and key, replay returns the original result, key reuse with a different payload returns 409 `pos.idempotency_key_reused`. Server generates document numbers and returns change due. New migration `AddPosCheckoutRecords`.
   - POS client now makes one call; the old per-document calls and the stock pre-check are gone from checkout.
-  - Tests: 11 service tests, 3 Web authorization tests, 1 client API test. The in-memory DB ignores transactions, so rollback on a mid-flow failure is not proven by tests; verify against PostgreSQL.
-  - Not yet done: tax is still zero; the sale is linked to its shift through the checkout record only; no Playwright run.
+  - Initial tests: 11 service tests, 3 Web authorization tests, and 1 client API test. FEAT-POS-01B below adds the PostgreSQL transaction and authenticated browser evidence.
+  - Current limitations: tax is still zero and the sale is linked to its shift through the checkout record; tax/ledger scope remains a separate finance decision.
 - [x] `FEAT-POS-01A` Harden checkout pricing and commit boundaries before extending POS features.
   - Server-authoritative pricing: the service ignores the deprecated client unit-price compatibility value, resolves the current product sales price, validates discounts against that amount, persists it across order/shipment/invoice, and returns resolved lines for receipt/history rendering. The deprecated field remains temporarily so a rolling frontend/backend deployment cannot create zero-price sales against an older API.
   - Commit integrity: the audit row is now written inside the checkout transaction, before commit, so an audit-write failure cannot report checkout failure after the sale already committed.
   - Focused validation: authoritative-price and server-price discount-boundary coverage added; 11/11 service tests, POS typecheck, focused client test, lint (zero errors; five pre-existing hook warnings), and diff checks pass.
 - [x] `FEAT-POS-01B` Prove checkout rollback and concurrent idempotency against PostgreSQL, then add an authenticated Playwright sale/retry/receipt path. Completed 24 October 2026.
   - PostgreSQL integration `Checkout_RollsBackEveryCheckpoint_AndConcurrentRetryCreatesOneSale` passed 1/1 against the dedicated `vexorionerp_test_checkout` database. It injected failures after order, shipment, invoice, payment, checkout-record, and audit writes; each rollback left no partial records or stock changes. Concurrent same-key requests returned one replay and persisted one sale.
-  - Authenticated Playwright checkout scenario passed as part of the combined POS E2E spec (7/7 including setup): it seeds isolated stock, opens a shift, adds a product in the cashier UI, drops the first committed checkout response, verifies same-key replay and a single invoice, checks the receipt and stock, then cleans the tenant and passes the orphan check.
+  - Authenticated Playwright checkout scenario passed as part of the combined POS E2E spec (8/8 including setup): it seeds isolated stock, opens a shift, adds a product in the cashier UI, drops the first committed checkout response, verifies same-key replay and a single invoice, checks the receipt and stock, then cleans the tenant and passes the orphan check.
 - [x] `FEAT-POS-02` Replace multi-call return/refund with an atomic idempotent workflow and reconcile inventory, credit note, refund/payment, source transaction, and audit. Implementation and acceptance completed 24 October 2026.
   - `POST api/pos/refund` (`Pos.Refund`) runs one database transaction, locks the source invoice row in PostgreSQL, records a unique per-tenant idempotency key, replays the stored result, and returns 409 if a key is reused with a different payload.
   - The authenticated `GET api/pos/refund/{salesInvoiceId}/lines` returns remaining quantities and whether the original shipment permits restocking. Refunds reject non-POS invoices, unfulfilled shipments, closed/foreign shifts, prior external credit notes, invalid lines, and quantities above sold minus prior POS returns.
@@ -622,15 +517,15 @@ Scope: Adjustments, Counts, Transfers, Receipts, Shipments, balances, and moveme
   - A partial negative credit note is linked to the original invoice. Any cash refund is capped at the paid share of the credited amount, uses the original POS checkout payment method, and is stored as a negative customer-payment entry against the original invoice. Unpaid value is represented by the invoice credit; no cash payment is created. Applied credits participate in balance, overpayment, outstanding-invoice, and AR-aging calculations.
   - The refund record stores the cashier, open shift, reason, line dispositions, payment, credit note, response, and idempotency hash. Audit is written inside the transaction. The UI uses one API mutation and persists the exact request in session storage after an unknown outcome, allowing only a same-key retry.
   - Migration: `20261024053601_AddPosRefundWorkflow`; EF reports no pending model changes. The PostgreSQL integration test successfully applied the full migration set to an empty disposable database.
-  - Local evidence: refund service tests 6/6, PostgreSQL refund transaction/concurrency test 1/1, clean-database migration application verified through `20261024053601_AddPosRefundWorkflow`, refund route authorization included in Web tests 217/217, POS tests 96/96, POS typecheck/build pass, and lint has zero errors (five existing hook warnings). Full solution tests pass 932 with the two destructive PostgreSQL tests skipped unless explicitly opted in.
-  - Authenticated POS Playwright validation passed within the combined suite (7/7 including setup) on 24 October 2026 against the local API: it provisions customer/product/warehouse/stock through the isolated tenant API, creates a POS sale, submits a real partial refund, drops the first committed response, verifies automatic same-key replay and persisted invoice/inventory balances, then cleans the tenant and passes the orphan check. Node received the locally exported development certificate only for this run; TLS validation remained enabled.
+  - Local evidence: refund service tests 6/6, PostgreSQL refund transaction/concurrency test 1/1, clean-database migration application verified through `20261024053601_AddPosRefundWorkflow`, refund route authorization included in Web tests 217/217, POS tests 97/97, POS typecheck/build pass, and lint has zero errors (five existing hook warnings). Full solution tests pass 932 with the two destructive PostgreSQL tests skipped unless explicitly opted in.
+  - Authenticated POS Playwright validation passed within the combined checkout/refund/responsive suite (8/8 including setup) on 24 October 2026 against the local API: it provisions customer/product/warehouse/stock through the isolated tenant API, creates a POS sale, submits a real partial refund, drops committed responses, verifies automatic same-key replays and persisted invoice/inventory balances, then cleans the tenant and passes the orphan check. Node received the locally exported development certificate only for this run; TLS validation remained enabled.
   - Migration upgrade rehearsal: owner-confirmed against the production-like local `vexorionerp` database on 24 October 2026; verified latest migration is `20261024053601_AddPosRefundWorkflow`. The clean-database application and isolated refund transaction proof also pass.
   - D7 approvals and D9 ledger posting are deferred; POS-02 retains the existing `pos.refund` authorization and current no-new-ledger-posting behavior.
 - [x] `FEAT-POS-03` Decide the first-pilot POS scope before implementing optional capabilities. Decision recorded 24 October 2026 for a cash-capable pilot:
   - Include shift cash-in/out movements and end-of-shift reconciliation. Expected cash is opening float + cash sales - cash refunds + cash-in - cash-out; compare with counted cash, record the variance, and require a reason when it is non-zero. Keep card/transfer totals separately visible. This is operational till tracking, not D9 general-ledger posting.
   - Do not add a separate post-sale void/delete operation. Uncommitted cart edits can be discarded; completed sales are corrected through the POS return/refund flow. Preserve a reason and audit trail for any future persisted pre-completion void.
   - Defer hold/resume, generic manager override, and offline mode until pilot evidence supports them. Initial hardware scope is keyboard-wedge scanning and browser printing; defer model-specific scanner/printer/cash-drawer integration until target devices are confirmed.
-- [ ] `FEAT-POS-04` Implement shift cash-in/out and end-of-shift reconciliation for the cash-capable pilot. Add audited shift-scoped movement records, expected-cash and tender summaries, counted-cash variance, required explanation for non-zero variance, POS UI and localization, and unit/API/E2E coverage. Do not create general-ledger entries; D9 remains deferred.
+- `FEAT-POS-04` cash movements and end-of-shift reconciliation are tracked in the final POS backlog; do not create general-ledger entries while D9 is deferred.
 
 ### 5.12 Review coverage and completion evidence
 
@@ -651,72 +546,31 @@ Scope: Adjustments, Counts, Transfers, Receipts, Shipments, balances, and moveme
   - Record provisioning, authentication, test, cleanup, and orphan-detection results as CI artifacts without secret/token values. A run fails if setup, any test, cleanup, or the final orphan check fails.
   - Cover setup/teardown idempotency, partial provisioning failure, retry behavior, parallel workers, interrupted runs, expired sessions, and orphan cleanup with focused automated tests.
   - Locally validated on 21 October 2026 — the shared lifecycle provisions through the existing onboarding contract, requires explicit non-production opt-ins, rejects protected hosts/codes, verifies SystemAdmin control identity, removes control credentials before test workers start, writes ignored per-run credentials, cleans prefixed child tenants before the primary tenant, and records sanitized provision/authentication/test/cleanup/orphan outcomes. Mutable fixture identifiers are run-scoped, and every child tenant inherits the run prefix so interrupted cleanup can find it. Hard tenant deletion removes distinct project-document versions, generated documents, and product images from configured storage before deleting database rows; storage failures preserve the tenant record and return an actionable gateway error. Retention is local-only, explicit, and limited to failed runs. Focused lifecycle tests pass 7/7, tenant storage-cleanup tests pass 3/3, the handler failure-path test passes 1/1, and the complete backend suite passes 887/887. A live Main UI run provisioned and authenticated an isolated tenant, passed all six authentication scenarios (including invalid credentials and logout), then deleted the tenant with the orphan check passing. A separate forced-interruption rehearsal left guarded metadata and a tenant behind; the next run removed that orphan before provisioning, authenticating, testing, and cleaning its own tenant. All three Playwright configurations use the generated tenant without demo/manual-tenant fallbacks. CI Playwright jobs remain intentionally disabled until a disposable non-production API/database exists; that deployment decision does not weaken the local production-host refusal guard.
-- [ ] Each implementation item receives focused behavior tests and before/after screenshots.
-- [ ] Each mutation is tested for permission denial, validation, conflict, duplicate submission, unknown outcome, and recovery messaging.
+- Shared behavior-test and screenshot requirements are in the final cross-app acceptance backlog.
 - [x] Each currently reachable route received an authenticated read-only render at desktop and narrow widths before implementation.
-- [ ] Each implementation item receives a full interactive acceptance pass afterward, including its dialog, populated, validation, permission, and recovery states.
-- [ ] All frontends pass lint, typecheck, tests, build, accessibility scan, browser-console check, and critical Playwright flows on one commit.
-- [ ] No item is marked complete from source presence alone; use section 2 evidence states.
+- Shared interactive and release-gate requirements are in the final cross-app acceptance backlog; capability completion remains evidence-based under Section 2.
 
-## 6. Recommended delivery sequence
+## 6. Delivery order
 
-### Milestone UX-1 — Shared foundations, authentication, and isolated E2E
+Execute application work in this order: **Main UI**, then **AdminUI**, then **POS**. Finish the active application's module backlog before moving to the next application. Shared/release operations follow the three application queues; optional expansion remains deferred until release readiness.
 
-Scope: `UX-FND-*`, `UX-AUTH-*`, and `E2E-FND-01`.
-
-Exit criteria:
-
-- Routes, permissions, page structure, feedback, destructive actions, localization, responsiveness, and accessibility have one tested contract.
-- All three login experiences are production-safe, accurate, localized, responsive, and accessible.
-- The authenticated baseline visual walkthrough is recorded.
-- Every E2E run provisions and safely removes its own automation tenant; all application test projects use that tenant and cannot target protected environments or tenant codes.
-
-### Milestone UX-2 — POS safety and usability
-
-Scope: `UX-POS-*`, `FEAT-POS-01`, `FEAT-POS-02`, and the approved cash-control scope in `FEAT-POS-04`; `FEAT-POS-03` is decided, with hold/resume, manager override, offline mode, and model-specific hardware deferred.
-
-Exit criteria:
-
-- Cashier scan/add/pay and return flows are usable at target desktop/tablet sizes and by keyboard/scanner.
-- Checkout and refund are atomic, idempotent, audited, and recover safely from conflicts and unknown outcomes.
-- Shift, history, receipt, and recovery flows pass interactive acceptance.
-
-### Milestone UX-3 — Core ERP workspaces
-
-Scope: dashboard, master/configuration, trade, inventory, and finance items in sections 5.3–5.7.
-
-Exit criteria:
-
-- Core lists/details/forms share the foundation patterns and remain data-dense and responsive.
-- Lifecycle, accounting, inventory, approval, allocation, and journal semantics are agreed and tested.
-- Required inventory reports and audit/support workflows are complete.
-
-### Milestone UX-4 — Projects, documents, imports, and platform administration
-
-Scope: sections 5.8–5.10 and their mapped P1 items.
-
-Exit criteria:
-
-- Complex project/document/admin pages are decomposed into task-oriented workflows.
-- Raw identifiers/JSON configuration are replaced with safe business controls.
-- Import/generated-document correction, idempotency, storage, retention, and operator paths pass E2E acceptance.
-
-### Milestone R5 — Operations and optional expansion
-
-Scope: remaining P1-5/P2 security/performance work, parked `MIG-M06`, and then P3 only after UX-1 through UX-4 are complete.
+1. Main UI: dashboard, master data, sales/procurement, inventory, finance, projects/documents, imports, and reporting.
+2. AdminUI: tenant/user lifecycle, module/menu governance, admin workflows, and access behavior.
+3. POS: cashier usability and the approved cash-control feature. `FEAT-POS-03` is decided; optional capabilities remain deferred.
+4. Shared/release: cross-app quality, security, operations, migration rollback, and release-candidate evidence.
 
 ## 7. Definition of done for every future item
 
 An item is done only when all applicable conditions are satisfied:
 
-- [ ] Business rule and state transition are explicit, including tenant and permission behavior.
-- [ ] API success and error contracts are defined with machine-readable codes.
-- [ ] Backend implementation, migration/configuration, frontend workflow, and localization are complete.
-- [ ] Unit/integration tests cover success, validation, conflict, permission, tenant isolation, and retry/reversal paths.
-- [ ] Critical user flow has E2E evidence where applicable.
-- [ ] Logging/audit/telemetry are present without leaking sensitive data.
-- [ ] Documentation and runbooks are updated in this file or the README/QA plan as appropriate.
-- [ ] Repository-wide build and test gates pass on the same commit.
+- Business rules and state transitions are explicit, including tenant and permission behavior.
+- API success/error contracts use machine-readable codes.
+- Backend, migration/configuration, frontend workflow, and localization are complete.
+- Tests cover success, validation, conflict, permission, tenant isolation, and retry/reversal paths.
+- Critical user flows have E2E evidence where applicable.
+- Logging/audit/telemetry avoid sensitive data.
+- Documentation and runbooks are current.
+- Required build and test gates pass on the same commit.
 
 ## 8. Documentation ownership
 
@@ -726,3 +580,114 @@ An item is done only when all applicable conditions are satisfied:
 - `SalesKit/*`: customer-facing sales material, not implementation status.
 
 Historical milestone/checklist/roadmap documents were removed after consolidation because their duplicated status markers had diverged from the current code and test evidence.
+
+## 9. Prioritized unfinished work
+
+Complete application work in order: **Main UI → AdminUI → POS**. Finish the active application's module queue before moving to the next. Shared/release gates follow the application queues. This section is the source of truth for all remaining actionable work; earlier sections contain findings, decisions, and completed evidence only.
+
+### Stage 1 — Main UI
+
+#### Dashboard and navigation
+
+- [ ] `UX-DASH-02` Replace development copy and define KPI dates, windows, signs, and currency in plain language.
+- [ ] `UX-DASH-03` Add section-level loading/error/retry and last-updated context.
+- [ ] `UX-DASH-04` Distinguish menu preference, module entitlement, and permission states; include effective-access preview.
+
+#### Master data and configuration
+
+- [ ] `UX-MASTER-01` Apply shared list/editor patterns across master data.
+- [ ] `UX-MASTER-02` Give Product a coherent detail/edit experience for core data, image, identifiers, stock, and price history.
+- [ ] `UX-MASTER-03` Standardize destructive actions with the shared confirmation pattern.
+- [ ] `UX-MASTER-04` Explain dependency/impact before deactivate/delete and distinguish reversible deactivation from permanent deletion.
+- [ ] `UX-MASTER-05` Explain role, menu, tax/discount, numbering, and module effects; preview effective access.
+- [ ] `UX-MASTER-06` Reconcile employee, consultant, assignment, and tenant-relationship vocabulary.
+
+#### Sales, procurement, inventory, and finance
+
+- [ ] `UX-TRADE-01` Create a shared document-workspace contract for filters, status, metrics, lines, totals, and confirmations.
+- [ ] `UX-TRADE-02` Show lifecycle, permitted next actions, and reasons for disabled actions on every document.
+- [ ] `UX-TRADE-03` Add detail-first review for parties, dates, terms, lines, fulfillment/allocation, generated documents, audit, and state actions.
+- [ ] `UX-TRADE-04` Optimize receipt/shipment entry for keyboard/tablet with ordered, processed, remaining, entered, and resulting quantities.
+- [ ] `UX-TRADE-05` Standardize payment allocation summaries and pre-submit validation.
+- [ ] `FEAT-TRADE-01` Resolve and implement general ERP semantics: D1 vocabulary, D2 posted-record immutability, D5 fulfillment concurrency, D6 payment allocation, and D8 manual journals. D3/D4 POS return rules are approved; broader aggregate behavior still needs audit.
+- [ ] `FEAT-TRADE-02` Decide future approval rules by document type/amount with approver visibility and history. D7 is deferred from POS-02, not approved globally.
+- [ ] `UX-INV-01` Split adjustment/count/transfer operations into list, detail, line editor, and state-action components.
+- [ ] `UX-INV-02` Show expected versus counted/resulting quantities, variance, warehouses, and posting effects before confirmation.
+- [ ] `UX-INV-03` Standardize line/document confirmations and prevent or explain immutable-state edits.
+- [ ] `FEAT-INV-01` Finalize inventory lifecycle vocabulary and reversal behavior across API, UI, tests, and QA documentation.
+- [ ] `FEAT-INV-02` Implement inventory valuation, movement audit, and reorder reports with reconciliation tests.
+- [ ] `UX-FIN-01` Replace raw-ID journal actions with searchable contextual document selection.
+- [ ] `UX-FIN-02` Provide a fiscal-period status/calendar view and warn about locked periods before entry.
+- [ ] `UX-FIN-03` Standardize currency/date/sign formatting, totals, comparisons, drill-down, exports, and no-data explanations.
+- [ ] `UX-FIN-04` Add an audit detail view with actor, entity, trace ID, safe before/after, support context, pagination, and export.
+- [ ] `FEAT-FIN-01` Decide manual-journal support; implement balanced draft/post/reverse with period locks or remove that expectation from QA/UI.
+- [ ] `FEAT-FIN-02` Complete report reconciliation, tenant/date-boundary, non-empty, and CSV formula-injection tests.
+
+#### Projects, documents, imports, and generated documents
+
+- [ ] `UX-PROJ-01` Restructure Project Details into Overview, Parties, Assignments, Documents, and History tabs.
+- [ ] `UX-PROJ-02` Clarify global Document Center versus project Documents and preserve navigation/filter context.
+- [ ] `UX-PROJ-03` Replace tenant-ID and JSON-scope entry with authorized pickers and named controls.
+- [ ] `UX-PROJ-04` Improve document breadcrumbs/selection and prioritize preview, download, upload version, metadata, and delete.
+- [ ] Add authenticated E2E: upload a project document, add a version, preview/download, and verify immutable history. Current live run is blocked by the disabled Azure Storage account.
+- [ ] `FEAT-PROJ-01` Provision private ClamAV and validate clean, EICAR, unavailable/timeout fail-closed behavior, and monitoring.
+- [ ] `FEAT-PROJ-02` Enforce document retention/lifecycle and unknown-upload-outcome reconciliation guidance.
+- [ ] `UX-IMP-01` Present imports as template → file → validate → correct → confirm → submit → monitor; prevent duplicate submission.
+- [ ] `UX-IMP-02` Make import errors actionable by sheet, row, column, field, cause, and retry path.
+- [ ] `UX-DOC-01` Standardize generated-document history, preview, download, regeneration, and failure recovery.
+- [ ] Add import/generated-document endpoint tests for authorization, tenant isolation, content types, file limits, and mocked storage; keep a real-container suite optional.
+- [ ] Add import E2E: template download → invalid upload → annotated errors → correction → validation → submit → verify records.
+- [ ] Add generated-document E2E: generate → history → preview → download → regenerate/version.
+- [ ] Verify idempotent/concurrent import submissions, document retention, rollback, and operator runbooks.
+- [ ] `FEAT-IMP-01` Complete import/generated-document tenant isolation, storage, idempotency, E2E, retention, rollback, and runbook work.
+
+#### Main UI performance and localization
+
+- [ ] Reduce the Main UI minified bundle through route/vendor splitting and add a CI bundle budget.
+- [ ] Finish Main UI locale completeness and remove hard-coded operational copy with parity tests.
+- [ ] Decompose large Main UI page components where it improves task clarity and testability.
+- [ ] Complete Main UI authenticated interactive acceptance at 768/1024 widths, dark mode, zoom, dialogs/actions, and populated edge cases.
+
+### Stage 2 — AdminUI
+
+- [ ] `UX-ADMIN-01` Align shell/pages, localization, lists, metrics, filters, loading, empty, feedback, and actions with shared patterns.
+- [ ] `UX-ADMIN-02` Replace per-tenant effective-access requests with a batch/summary or lazy-detail contract; expose partial failure/retry.
+- [ ] `UX-ADMIN-03` Clarify user creation, roles, account state, and password reset with security/audit context.
+- [ ] `UX-ADMIN-04` Explain tenant/module/menu changes and preview effective access, distinguishing policy, entitlement, permission, and preference.
+- [ ] `FEAT-ADMIN-01` Review user activation, session revocation, credential rotation, tenant suspension/reactivation, and audit history; implement only approved semantics.
+- [ ] Reconcile AdminUI dashboard metrics with tenant/user list data and validate populated, dark-mode, narrow-width, and interactive states.
+
+### Stage 3 — POS
+
+- [ ] `UX-POS-03` Keep scanner/search and high-frequency product selection persistent; group shift/history/returns/settings as clearly labelled secondary actions.
+- [ ] `UX-POS-04` Focus payment around tender/method, amount due, change, validation, progress, retry/recovery, explicit success, and duplicate prevention.
+- [ ] `UX-POS-05` Improve shift, history, receipt, return/refund, conflict, and customer dialogs for touch, keyboard, long content, and consequences.
+- [ ] `UX-POS-06` Add cashier-oriented empty/offline/session-expiry/recovery states that never imply an unknown transaction is safe to retry.
+- [ ] `UX-POS-07` Validate scanner/keyboard operation, touch targets, focus/labels, 1024×768 use, and browser receipt printing.
+- [ ] `FEAT-POS-04` Implement audited shift cash-in/out and end-of-shift reconciliation: expected cash, tender totals, counted-cash variance, reason for non-zero variance, POS UI/localization, and unit/API/E2E coverage. Do not add GL postings; D9 remains deferred.
+- [ ] Resolve POS Admin narrow-table overflow and verify populated, dark-mode, hardware-oriented, and recovery states.
+
+### Shared and release operations
+
+- [ ] Apply/verify migrations on a clean database and production-like upgraded snapshot; rehearse rollback/forward-fix. POS-02 has clean-database and owner-confirmed production-like migration evidence; broader release rehearsal remains open.
+- [ ] Retire Azure API/database/storage resources only after Cloud Run, Neon, and R2 cutover, rollback, and retention checks.
+- [ ] Create support runbook, admin training, incident paths, backup/restore evidence, and release smoke checklist.
+- [ ] Complete parked `MIG-M06` backup/disaster-recovery design and exercise, including recovery objectives, restore verification, and operator procedures.
+- [ ] Add dashboards/alerts for API 5xx, authorization denials, import/document/storage failures, checkout failures, latency, throttling, and quota blocks.
+- [ ] Define log retention, PII redaction, trace correlation, and audit retention.
+- [ ] Run manual cross-module smoke flows and establish a release candidate after backend, frontend, E2E, migration, storage, and smoke gates pass on one commit.
+- [ ] Add proof that private document containers cannot be anonymously read and signed URLs are read-only and expire.
+- [ ] Rotate/externalize storage credentials and threat-model tenant IDs, file preview, formula injection, uploads, and signed-link leakage.
+- [ ] Consolidate duplicated API clients; replace handler service-locator resolution where practical.
+- [ ] Complete cross-app accessibility acceptance for dialogs, grids, keyboard, focus restoration, validation announcements, and contrast.
+- [ ] Enforce locale-key completeness and remove hard-coded operational copy across applications.
+- [ ] Complete a single-commit lint/typecheck/test/build/accessibility/browser-console/critical-E2E acceptance pass.
+- [ ] Run production backup/restore, cold-start, performance, and penetration checks before release.
+
+### Deferred optional expansion
+
+- [ ] Government submission package generator with manifest/metadata.
+- [ ] Document expiry reminders and compliance checklists.
+- [ ] OCR and metadata extraction.
+- [ ] Digital-signature workflow integration.
+- [ ] Tenant-to-tenant project templates.

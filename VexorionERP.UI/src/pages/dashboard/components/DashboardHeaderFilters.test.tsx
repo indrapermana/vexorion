@@ -20,10 +20,11 @@ const defaultProps = {
 }
 
 describe('DashboardHeaderFilters', () => {
-  it('renders the dashboard title and description', () => {
+  it('labels the financial overview without presenting filters as page-wide controls', () => {
     render(<DashboardHeaderFilters {...defaultProps} />)
-    expect(screen.getByText('dashboard.hero.title')).toBeInTheDocument()
-    expect(screen.getByText('dashboard.hero.description')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: 'dashboard.sections.overview' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument()
+    expect(screen.queryByText('dashboard.hero.description')).not.toBeInTheDocument()
   })
 
   it('renders the date filter with the provided value', () => {

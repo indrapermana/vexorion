@@ -4,6 +4,39 @@
 import { test, expect } from './fixtures'
 
 test.describe('Dashboard', () => {
+  test('UX-DASH-01: hierarchy and finance filters fit desktop and mobile', async ({ page, dashboardPage }, testInfo) => {
+    await dashboardPage.goto()
+    await dashboardPage.waitForLoad()
+
+    const finance = page.getByRole('region', { name: 'Finance', exact: true })
+    const activity = page.getByRole('region', { name: 'Recent Sales Activity', exact: true })
+    await expect(finance.getByLabel('As-of date')).toBeVisible()
+    await expect(activity.getByLabel('As-of date')).toHaveCount(0)
+
+    const expectedHeadings = ['Financial Overview', 'Overdue Balances and Aging', 'Cash Flow and Balances', 'Recent Sales Activity']
+    for (const width of [390, 768, 1024, 1440]) {
+      await page.setViewportSize({ width, height: 900 })
+      const headings = await page.locator('h2[id^="dashboard-"]').allTextContents()
+      expect(headings).toEqual(expectedHeadings)
+      await expect(finance.getByLabel('As-of date')).toBeVisible()
+      await expect(finance.getByLabel('Window')).toBeVisible()
+      await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1)
+      if (width >= 1200) {
+        await expect.poll(async () => (await page.getByRole('heading', { level: 1, name: 'Dashboard', exact: true }).boundingBox())?.x ?? 0).toBeGreaterThanOrEqual(280)
+      }
+      await page.screenshot({ path: testInfo.outputPath(`dashboard-${width}.png`), fullPage: true, animations: 'disabled' })
+    }
+
+    const snapshotResponse = page.waitForResponse((response) => (
+      new URL(response.url()).pathname.endsWith('/reports/dashboard')
+      && new URL(response.url()).searchParams.get('periodDays') === '90'
+      && response.ok()
+    ))
+    await finance.getByLabel('Window').selectOption('90')
+    await snapshotResponse
+    await expect(finance.getByRole('heading', { name: 'Cash Flow (90 days)', exact: true })).toBeVisible()
+  })
+
   test('TC-M-006: dashboard loads after login', async ({ page, dashboardPage }) => {
     await dashboardPage.goto()
     await dashboardPage.waitForLoad()

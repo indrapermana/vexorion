@@ -138,8 +138,15 @@ const esES = {
     },
   },
   dashboard: {
+    sections: {
+      finance: 'Finanzas',
+      overview: 'Resumen Financiero',
+      attention: 'Saldos Vencidos y Antigüedad',
+      analysis: 'Flujo de Caja y Saldos',
+      activity: 'Actividad de Ventas Reciente',
+    },
     hero: {
-      title: 'Opera Vexorion como un dashboard de operaciones, no como una portada de relleno.',
+      title: 'Panel de Control',
       description: 'Los KPI financieros se actualizan por fecha de corte y ventana de análisis para ver CxC, CxP, ingresos y momentum de caja en una sola vista.',
     },
     filters: { asOfDate: 'Fecha de corte', window: 'Ventana', daysOption: '{{days}} días' },
@@ -160,6 +167,7 @@ const esES = {
       unknownCustomer: 'Cliente desconocido',
     },
     charts: {
+      cashFlowPeriod: 'Flujo de Caja ({{days}} días)',
       cashFlowTrends: 'Tendencias de Flujo de Caja',
       receivablesVsPayables: 'CxC vs CxP',
     },
