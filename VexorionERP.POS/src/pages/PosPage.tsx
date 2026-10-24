@@ -19,18 +19,11 @@ import type { CartLine, QuickCustomerForm } from '../components/pos/types'
 import { posLogger } from '../lib/posLogger'
 import {
   createCustomer,
-  createCustomerPayment,
-  createSalesInvoice,
-  createSalesInvoiceLine,
-  createSalesOrder,
-  createSalesOrderLine,
-  createSalesShipment,
   getCustomers,
   getInventoryBalances,
   getProducts,
   getWarehouses,
-  postSalesShipment,
-  validatePosStock,
+  checkoutSale,
 } from '../lib/api'
 import type {
   CreateCustomerRequest,
@@ -39,7 +32,6 @@ import type {
   ProductListItemResponse,
 } from '../types/api'
 import { ApiError, reportClientDiagnostic } from '../lib/api/core'
-import { generateDocumentNumber } from '../lib/posDocuments'
 import { PosPermissions } from '../app/authorization'
 
 type CheckoutResult = {
@@ -206,6 +198,7 @@ export default function PosPage() {
 
   // Stable ref so the keyboard handler always calls the latest checkout closure
   const checkoutRef = useRef<() => Promise<void>>(() => Promise.resolve())
+  const attemptRef = useRef<{ key: string; signature: string } | null>(null)
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -333,116 +326,41 @@ export default function PosPage() {
     setIsProcessing(true)
 
     try {
-      // Item 13: server-side stock pre-check before creating any documents
-      const stockCheck = await validatePosStock({
-        lines: cart.map((line) => ({
-          productId: line.productId,
-          warehouseId: selectedWarehouse.id,
-          quantity: line.quantity,
-        })),
-      })
-
-      if (!stockCheck.isValid) {
-        setStockConflict(stockCheck.insufficientItems)
-        return
-      }
-
       let customerId = selectedCustomerId
       const customerSnapshot = customersQuery.data ?? []
       if (selectedCustomerId === GUEST_CUSTOMER_TAG) {
         customerId = await ensureGuestCustomer(customerSnapshot)
       }
 
-      const order = await createSalesOrder({
-        orderNumber: generateDocumentNumber('SO-POS'),
+      const saleRequest = {
+        shiftId: currentShift.id,
         customerId,
         warehouseId: selectedWarehouse.id,
-        orderDate: new Date().toISOString().slice(0, 10),
-        requiredDate: new Date().toISOString().slice(0, 10),
-        status: 2,
-        currencyCode,
+        isDelivery,
         notes: notes.trim() || null,
-      })
-
-      const orderLineIds: Array<{ salesOrderLineId: string; productId: string; unitPrice: number; quantity: number; discountAmount: number }> = []
-      for (const line of cart) {
-        const createdOrderLine = await createSalesOrderLine(order.id, {
+        paymentMethod,
+        paymentAmount,
+        lines: cart.map((line) => ({
           productId: line.productId,
           quantity: line.quantity,
           unitPrice: line.unitPrice,
           discountAmount: line.discountAmount,
-        })
-
-        orderLineIds.push({
-          salesOrderLineId: createdOrderLine.id,
-          productId: line.productId,
-          unitPrice: line.unitPrice,
-          quantity: line.quantity,
-          discountAmount: line.discountAmount,
-        })
+        })),
       }
 
-      let shipmentId: string | undefined
-      if (orderLineIds.length > 0) {
-        const shipment = await createSalesShipment({
-          shipmentNumber: generateDocumentNumber('SHP-POS'),
-          salesOrderId: order.id,
-          warehouseId: selectedWarehouse.id,
-          shipmentDate: new Date().toISOString().slice(0, 10),
-          notes: isDelivery ? 'Delivery order from POS' : 'Counter sale from POS',
-          lines: orderLineIds.map((line) => ({
-            salesOrderLineId: line.salesOrderLineId,
-            productId: line.productId,
-            shippedQuantity: line.quantity,
-            unitPrice: line.unitPrice,
-          })),
-        })
-
-        shipmentId = shipment.id
-
-        if (!isDelivery) {
-          await postSalesShipment(shipment.id)
-        }
+      // Reuse the key while the same sale is retried so an unknown outcome can never create a duplicate.
+      const signature = JSON.stringify(saleRequest)
+      if (attemptRef.current?.signature !== signature) {
+        attemptRef.current = { key: crypto.randomUUID(), signature }
       }
 
-      const invoice = await createSalesInvoice({
-        invoiceNumber: generateDocumentNumber('INV-POS'),
-        customerId,
-        sourceSalesOrderId: order.id,
-        sourceSalesShipmentId: shipmentId ?? null,
-        invoiceDate: new Date().toISOString().slice(0, 10),
-        dueDate: new Date().toISOString().slice(0, 10),
-        paymentTermId: null,
-        status: 2,
-        currencyCode,
-        notes: notes.trim() || null,
-      })
+      const sale = await checkoutSale({ idempotencyKey: attemptRef.current.key, ...saleRequest })
+      attemptRef.current = null
 
-      for (const line of cart) {
-        await createSalesInvoiceLine(invoice.id, {
-          productId: line.productId,
-          quantity: line.quantity,
-          unitPrice: line.unitPrice,
-          discountAmount: line.discountAmount,
-          taxAmount: 0,
-          taxCodeId: null,
-        })
-      }
-
-      let paymentId: string | undefined
-      if (paymentAmount > 0) {
-        const payment = await createCustomerPayment({
-          customerId,
-          salesInvoiceId: invoice.id,
-          paymentDate: new Date().toISOString().slice(0, 10),
-          amount: paymentAmount,
-          currencyCode,
-          paymentMethod,
-          notes: 'POS checkout payment',
-          referenceNumber: null,
-        })
-        paymentId = payment.id
-      }
+      const order = { id: sale.salesOrderId }
+      const invoice = { id: sale.salesInvoiceId }
+      const shipmentId: string | undefined = sale.salesShipmentId
+      const paymentId: string | undefined = sale.customerPaymentId ?? undefined
 
       setCheckoutResult({ orderId: order.id, shipmentId, invoiceId: invoice.id, paymentId })
 

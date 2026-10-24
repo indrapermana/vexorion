@@ -23,6 +23,43 @@ export type PosStockInsufficientItem = {
   requested: number
 }
 
+export type PosCheckoutLine = {
+  productId: string
+  quantity: number
+  unitPrice: number
+  discountAmount: number
+}
+
+export type PosCheckoutRequest = {
+  idempotencyKey: string
+  shiftId: string
+  customerId: string
+  warehouseId: string
+  isDelivery: boolean
+  notes: string | null
+  paymentMethod: string
+  paymentAmount: number
+  lines: PosCheckoutLine[]
+}
+
+export type PosCheckoutResponse = {
+  salesOrderId: string
+  orderNumber: string
+  salesShipmentId: string
+  shipmentNumber: string
+  salesInvoiceId: string
+  invoiceNumber: string
+  customerPaymentId: string | null
+  shiftId: string
+  currencyCode: string
+  grandTotal: number
+  amountTendered: number
+  amountApplied: number
+  changeDue: number
+  completedAtUtc: string
+  replayed: boolean
+}
+
 export type PosStockValidationResponse = {
   isValid: boolean
   insufficientItems: PosStockInsufficientItem[]

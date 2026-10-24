@@ -581,7 +581,12 @@ Scope: Adjustments, Counts, Transfers, Receipts, Shipments, balances, and moveme
 - [ ] `UX-POS-05` Improve shift, history, receipt, return/refund, conflict, and customer dialogs for touch, keyboard, long content, and consequences.
 - [ ] `UX-POS-06` Add cashier-oriented empty/offline/session-expiry/recovery states that never imply an unknown transaction is safe to retry.
 - [ ] `UX-POS-07` Validate keyboard/scanner operation, touch targets, focus, labels, 1024×768 use, and receipt printing on supported hardware/browsers.
-- [ ] `FEAT-POS-01` Replace client checkout orchestration with one atomic, idempotent server command covering shift, permission, stock, pricing, discount, order, invoice, shipment, payment, and receipt.
+- [x] `FEAT-POS-01` Replace client checkout orchestration with one atomic, idempotent server command covering shift, permission, stock, pricing, discount, order, invoice, shipment, payment, and receipt.
+  - Done: `POST api/pos/checkout` (`Pos.Checkout`) runs `PosCheckoutService` in one DB transaction: shift ownership/open check, customer/warehouse/product checks, order, shipment (posted unless delivery, so stock is checked and deducted), invoice from the order and shipment, payment, audit log.
+  - Idempotency: client key per attempt (reused while the same sale is retried), unique `PosCheckoutRecord` per tenant and key, replay returns the original result, key reuse with a different payload returns 409 `pos.idempotency_key_reused`. Server generates document numbers and returns change due. New migration `AddPosCheckoutRecords`.
+  - POS client now makes one call; the old per-document calls and the stock pre-check are gone from checkout.
+  - Tests: 9 service tests, 3 Web authorization tests, 1 client API test. The in-memory DB ignores transactions, so rollback on a mid-flow failure is not proven by tests; verify against PostgreSQL.
+  - Not yet done: unit prices are still taken from the client (validated only for sign and discount bounds); tax is still zero; the sale is linked to its shift through the checkout record only; no Playwright run.
 - [ ] `FEAT-POS-02` Replace multi-call return/refund with an atomic idempotent workflow and reconcile inventory, credit note, refund/payment, source transaction, and audit.
 - [ ] `FEAT-POS-03` Decide whether pilot needs hold/resume, void reason, manager override, cash movement, end-of-day reconciliation, offline mode, or hardware integration before implementing them.
 

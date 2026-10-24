@@ -1,4 +1,6 @@
 import type {
+  PosCheckoutRequest,
+  PosCheckoutResponse,
   PosSessionResponse,
   PosStockValidationRequest,
   PosStockValidationResponse,
@@ -14,6 +16,10 @@ export function getPosSession() {
 
 export function validatePosStock(request: PosStockValidationRequest) {
   return requestJson<PosStockValidationResponse>('/pos/validate-stock', 'POST', request)
+}
+
+export function checkoutSale(request: PosCheckoutRequest) {
+  return requestJson<PosCheckoutResponse>('/pos/checkout', 'POST', request)
 }
 
 export function openShiftApi(request: OpenShiftRequest) {

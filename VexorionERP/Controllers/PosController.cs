@@ -6,6 +6,7 @@ using System.Security.Claims;
 using VexorionERP.Contracts;
 using VexorionERP.Database;
 using VexorionERP.Models;
+using VexorionERP.Services;
 
 namespace VexorionERP;
 
@@ -74,6 +75,25 @@ public class PosController(AppDbContext dbContext, ICurrentTenantProvider curren
         }
 
         return Ok(response);
+    }
+
+    /// <summary>
+    /// Completes a POS sale atomically: order, shipment, invoice and payment are created in one transaction.
+    /// Safe to retry with the same idempotency key; a completed sale is replayed instead of duplicated.
+    /// </summary>
+    [HttpPost("checkout")]
+    [Authorize(Policy = AppPermissions.Pos.Checkout)]
+    public async Task<ActionResult<PosCheckoutResponse>> Checkout(
+        [FromBody] PosCheckoutRequest request,
+        [FromServices] IPosCheckoutService checkoutService,
+        CancellationToken cancellationToken)
+    {
+        var cashierId = GetCurrentUserId();
+        if (!cashierId.HasValue)
+            return Unauthorized();
+
+        var result = await checkoutService.CheckoutAsync(cashierId.Value, request, cancellationToken);
+        return ToActionResult(result);
     }
 
     /// <summary>

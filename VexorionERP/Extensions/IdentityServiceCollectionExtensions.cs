@@ -3,6 +3,7 @@ using Amazon.S3;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using VexorionERP;
 using VexorionERP.Database;
 using VexorionERP.Models;
@@ -138,6 +139,9 @@ public static class IdentityServiceCollectionExtensions
         services.AddScoped<ITenantOnboardingService, TenantOnboardingService>();
         services.AddScoped<IUserManagementService, UserManagementService>();
         services.AddScoped<SalesInvoiceCommandService>();
+        services.TryAddScoped<SalesShipmentCommandService>();
+        services.TryAddScoped<CustomerPaymentCommandService>();
+        services.AddScoped<IPosCheckoutService, PosCheckoutService>();
         services.AddScoped<IApplicationProvisioner, ApplicationProvisioner>();
         services.AddScoped<IApplicationRuntimeValidator, ApplicationRuntimeValidator>();
 
