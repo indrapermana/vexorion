@@ -2,9 +2,15 @@
 
 import { render, screen, fireEvent } from '@testing-library/react'
 import DashboardHeaderFilters from './DashboardHeaderFilters'
-import type { TFunction } from 'i18next'
+import { createInstance, type TFunction } from 'i18next'
+import type { FinanceDashboardSnapshotResponse } from '../../../types/api'
+import enUS from '../../../i18n/locales/enUS'
+import idID from '../../../i18n/locales/idID'
+import esES from '../../../i18n/locales/esES'
 
 const t = ((key: string, opts?: Record<string, unknown>) => {
+  if (key === 'dashboard.context.period') return `${opts?.start} to ${opts?.end}: ${opts?.days} days inclusive`
+  if (key === 'dashboard.context.currency') return `Display currency: ${opts?.currency}`
   if (opts?.days) return `Last ${opts.days} days`
   return key
 }) as unknown as TFunction
@@ -19,7 +25,40 @@ const defaultProps = {
   onPeriodChange: vi.fn(),
 }
 
+const snapshot: FinanceDashboardSnapshotResponse = {
+  asOfDate: '2026-05-03', periodStartDate: '2026-04-04', periodDays: 30,
+  receivablesOpen: 0, receivablesOverdue: 0, payablesOpen: 0, payablesOverdue: 0,
+  revenueInPeriod: 0, cashInInPeriod: 0, cashOutInPeriod: 0, netCashInPeriod: 0,
+}
+
 describe('DashboardHeaderFilters', () => {
+  it.each([
+    ['2026-05-03', '2026-04-04', 30, /Apr 4, 2026 to May 3, 2026: 30 days inclusive/],
+    ['2024-03-01', '2024-02-01', 30, /Feb 1, 2024 to Mar 1, 2024: 30 days inclusive/],
+    ['2026-01-01', '2026-01-01', 1, /Jan 1, 2026 to Jan 1, 2026: 1 days inclusive/],
+  ])('shows the returned inclusive period ending %s', (asOfDate, periodStartDate, periodDays, expected) => {
+    render(<DashboardHeaderFilters {...defaultProps} snapshot={{ ...snapshot, asOfDate, periodStartDate, periodDays }} />)
+    expect(screen.getByText(expected)).toBeInTheDocument()
+    expect(screen.getByText('Display currency: USD')).toBeInTheDocument()
+  })
+
+  it.each([['en-US', enUS], ['id-ID', idID], ['es-ES', esES]] as const)('ships complete KPI definitions in %s', async (language, resource) => {
+    const translations = createInstance()
+    await translations.init({ lng: language, resources: { [language]: { translation: resource } }, interpolation: { escapeValue: false } })
+    const keys = [
+      'context.period', 'context.balances', 'context.currency',
+      'definitions.receivables', 'definitions.payables', 'definitions.invoicedSales', 'definitions.netCash',
+      'quickStats.notApplicable', 'quickStats.currentShareDefinition', 'quickStats.overdueShareDefinition', 'quickStats.netBalanceDefinition',
+      'aging.current', 'aging.days1To30', 'aging.days31To60', 'aging.days61To90', 'aging.daysOver90',
+      'summary.balancedFlow', 'cashRows.balanced',
+    ]
+    for (const key of keys) expect(translations.exists(`dashboard.${key}`)).toBe(true)
+    render(<DashboardHeaderFilters {...defaultProps} t={translations.t} snapshot={snapshot} />)
+    expect(screen.getByText(translations.t('dashboard.context.currency', { currency: 'USD' }))).toBeInTheDocument()
+    expect(screen.getByText(resource.dashboard.context.balances)).toBeInTheDocument()
+    expect(screen.queryByText(/\{\{|dashboard\./)).not.toBeInTheDocument()
+  })
+
   it('labels the financial overview without presenting filters as page-wide controls', () => {
     render(<DashboardHeaderFilters {...defaultProps} />)
     expect(screen.getByRole('heading', { level: 2, name: 'dashboard.sections.overview' })).toBeInTheDocument()

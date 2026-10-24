@@ -19,6 +19,13 @@ const defaultProps = {
 }
 
 describe('DashboardHealthSection', () => {
+  it('does not represent empty balances as 100% healthy', () => {
+    render(<DashboardHealthSection {...defaultProps} totalReceivables={0} totalPayables={0} receivablesHealthPercent={0} payablesHealthPercent={0} />)
+    expect(screen.getAllByText('dashboard.quickStats.notApplicable')).toHaveLength(2)
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
+    expect(screen.queryByText('100%')).not.toBeInTheDocument()
+  })
+
   it('renders receivables and payables section headings', () => {
     render(<DashboardHealthSection {...defaultProps} />)
     expect(screen.getByText('dashboard.health.receivables')).toBeInTheDocument()

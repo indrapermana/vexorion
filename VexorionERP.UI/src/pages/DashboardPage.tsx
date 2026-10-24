@@ -9,6 +9,7 @@ import type { AgingPoint, BalancePoint, CashRowView, QuickStat, RecentOrderView,
 import DashboardSectionLoader from './dashboard/components/DashboardSectionLoader'
 import { Permissions } from '../app/authorization'
 import { PageHeader } from '../components/PagePrimitives'
+import { getIntlLocale } from '../i18n/translationConstant'
 
 const DashboardHeaderFilters = lazy(() => import('./dashboard/components/DashboardHeaderFilters'))
 const DashboardKpiCards = lazy(() => import('./dashboard/components/DashboardKpiCards'))
@@ -24,7 +25,7 @@ const DashboardStorageSection = lazy(() => import('./dashboard/components/Dashbo
 const periodOptions = [7, 30, 90, 180]
 
 export default function DashboardPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { user } = useAuth()
   const { formatMoney } = useCurrency()
   const [asOfDate, setAsOfDate] = useState(new Date().toISOString().slice(0, 10))
@@ -64,9 +65,9 @@ export default function DashboardPage() {
     () => [
       { id: 'CASH-IN', owner: t('dashboard.cashRows.customerReceipts'), status: t('dashboard.cashRows.inflow'), amount: formatMoney(snapshot?.cashInInPeriod ?? 0) },
       { id: 'CASH-OUT', owner: t('dashboard.cashRows.vendorPayouts'), status: t('dashboard.cashRows.outflow'), amount: formatMoney(snapshot?.cashOutInPeriod ?? 0) },
-      { id: 'NET', owner: t('dashboard.cashRows.windowDays', { days: periodDays }), status: (snapshot?.netCashInPeriod ?? 0) >= 0 ? t('dashboard.cashRows.positive') : t('dashboard.cashRows.negative'), amount: formatMoney(snapshot?.netCashInPeriod ?? 0) },
+      { id: 'NET', owner: t('dashboard.cashRows.windowDays', { days: periodDays }), status: (snapshot?.netCashInPeriod ?? 0) === 0 ? t('dashboard.cashRows.balanced') : (snapshot?.netCashInPeriod ?? 0) > 0 ? t('dashboard.cashRows.positive') : t('dashboard.cashRows.negative'), amount: formatMoney(snapshot?.netCashInPeriod ?? 0) },
     ],
-    [snapshot, periodDays, t],
+    [snapshot, periodDays, t, formatMoney],
   )
 
   const customersById = useMemo(() => {
@@ -96,42 +97,42 @@ export default function DashboardPage() {
     return [
       {
         name: t('dashboard.summary.receivables'),
-        open: snapshot?.receivablesOpen ?? 0,
+        open: (snapshot?.receivablesOpen ?? 0) - (snapshot?.receivablesOverdue ?? 0),
         overdue: snapshot?.receivablesOverdue ?? 0,
       },
       {
         name: t('dashboard.summary.payables'),
-        open: snapshot?.payablesOpen ?? 0,
+        open: (snapshot?.payablesOpen ?? 0) - (snapshot?.payablesOverdue ?? 0),
         overdue: snapshot?.payablesOverdue ?? 0,
       },
     ]
   }, [snapshot, t])
 
-  const totalReceivables = (snapshot?.receivablesOpen ?? 0) + (snapshot?.receivablesOverdue ?? 0)
-  const totalPayables = (snapshot?.payablesOpen ?? 0) + (snapshot?.payablesOverdue ?? 0)
-  const receivablesHealthPercent = totalReceivables > 0 ? Math.round(((snapshot?.receivablesOpen ?? 0) / totalReceivables) * 100) : 100
-  const payablesHealthPercent = totalPayables > 0 ? Math.round(((snapshot?.payablesOpen ?? 0) / totalPayables) * 100) : 100
+  const totalReceivables = snapshot?.receivablesOpen ?? 0
+  const totalPayables = snapshot?.payablesOpen ?? 0
+  const receivablesHealthPercent = totalReceivables > 0 ? Math.round(((totalReceivables - (snapshot?.receivablesOverdue ?? 0)) / totalReceivables) * 100) : 0
+  const payablesHealthPercent = totalPayables > 0 ? Math.round(((totalPayables - (snapshot?.payablesOverdue ?? 0)) / totalPayables) * 100) : 0
 
   // Aging breakdown data for AR
   const arAgingData: AgingPoint[] = !arAging?.totals
     ? []
     : [
-      { name: 'Current', value: arAging.totals.current },
-      { name: '1-30 Days', value: arAging.totals.due1To30 },
-      { name: '31-60 Days', value: arAging.totals.due31To60 },
-      { name: '61-90 Days', value: arAging.totals.due61To90 },
-      { name: '90+ Days', value: arAging.totals.dueOver90 },
+      { name: t('dashboard.aging.current'), value: arAging.totals.current },
+      { name: t('dashboard.aging.days1To30'), value: arAging.totals.due1To30 },
+      { name: t('dashboard.aging.days31To60'), value: arAging.totals.due31To60 },
+      { name: t('dashboard.aging.days61To90'), value: arAging.totals.due61To90 },
+      { name: t('dashboard.aging.daysOver90'), value: arAging.totals.dueOver90 },
     ].filter((item) => item.value > 0)
 
   // Aging breakdown data for AP
   const apAgingData: AgingPoint[] = !apAging?.totals
     ? []
     : [
-      { name: 'Current', value: apAging.totals.current },
-      { name: '1-30 Days', value: apAging.totals.due1To30 },
-      { name: '31-60 Days', value: apAging.totals.due31To60 },
-      { name: '61-90 Days', value: apAging.totals.due61To90 },
-      { name: '90+ Days', value: apAging.totals.dueOver90 },
+      { name: t('dashboard.aging.current'), value: apAging.totals.current },
+      { name: t('dashboard.aging.days1To30'), value: apAging.totals.due1To30 },
+      { name: t('dashboard.aging.days31To60'), value: apAging.totals.due31To60 },
+      { name: t('dashboard.aging.days61To90'), value: apAging.totals.due61To90 },
+      { name: t('dashboard.aging.daysOver90'), value: apAging.totals.dueOver90 },
     ].filter((item) => item.value > 0)
 
   // Top customers by sales amount
@@ -166,41 +167,29 @@ export default function DashboardPage() {
         id: order.id,
         orderReference: order.orderNumber,
         customerLabel: getCustomerLabel(order.customerId),
-        orderDateLabel: new Date(order.orderDate).toLocaleDateString(),
+        orderDateLabel: new Date(order.orderDate).toLocaleDateString(getIntlLocale(i18n.resolvedLanguage)),
         status: order.status,
           statusLabel: getSalesOrderStatusLabel(order.status),
         amount: order.totalAmount,
       }))
-        }, [getCustomerLabel, getSalesOrderStatusLabel, salesOrders])
+        }, [getCustomerLabel, getSalesOrderStatusLabel, salesOrders, i18n.resolvedLanguage])
 
-  // Quick stats calculations
   const quickStats = useMemo<QuickStat[]>(() => {
     const ar = snapshot?.receivablesOpen ?? 0
     const ap = snapshot?.payablesOpen ?? 0
     const arOverdue = snapshot?.receivablesOverdue ?? 0
     const apOverdue = snapshot?.payablesOverdue ?? 0
-
-    // AR Collection Efficiency = Current AR / Total AR
-    const arCollectionRate = totalReceivables > 0 ? Math.round(((snapshot?.receivablesOpen ?? 0) / totalReceivables) * 100) : 0
-    
-    // AP Payment Rate = Current AP / Total AP
-    const apPaymentRate = totalPayables > 0 ? Math.round(((snapshot?.payablesOpen ?? 0) / totalPayables) * 100) : 0
-    
-    // Overdue ratio = Overdue amount / Total
-    const arOverdueRatio = totalReceivables > 0 ? ((arOverdue / totalReceivables) * 100).toFixed(1) : '0.0'
-    const apOverdueRatio = totalPayables > 0 ? ((apOverdue / totalPayables) * 100).toFixed(1) : '0.0'
-    
-    // Working Capital = AR + Inventory - AP (we're using receivables for now)
-    const workingCapital = ar - ap
+    const percent = new Intl.NumberFormat(getIntlLocale(i18n.resolvedLanguage), { style: 'percent', maximumFractionDigits: 1 })
+    const share = (amount: number, total: number) => total > 0 ? percent.format(amount / total) : t('dashboard.quickStats.notApplicable')
 
     return [
-      { label: t('dashboard.quickStats.arCollectionRate'), value: `${arCollectionRate}%`, trend: 'positive' as const },
-      { label: t('dashboard.quickStats.apPaymentRate'), value: `${apPaymentRate}%`, trend: 'positive' as const },
-      { label: t('dashboard.quickStats.arOverduePercent'), value: `${arOverdueRatio}%`, trend: arOverdueRatio === '0.0' ? 'positive' : 'negative' as const },
-      { label: t('dashboard.quickStats.apOverduePercent'), value: `${apOverdueRatio}%`, trend: apOverdueRatio === '0.0' ? 'positive' : 'negative' as const },
-      { label: t('dashboard.quickStats.workingCapital'), value: formatMoney(workingCapital), trend: workingCapital >= 0 ? 'positive' : 'negative' as const },
+      { label: t('dashboard.quickStats.arCollectionRate'), value: share(ar - arOverdue, ar), description: t('dashboard.quickStats.currentShareDefinition') },
+      { label: t('dashboard.quickStats.apPaymentRate'), value: share(ap - apOverdue, ap), description: t('dashboard.quickStats.currentShareDefinition') },
+      { label: t('dashboard.quickStats.arOverduePercent'), value: share(arOverdue, ar), description: t('dashboard.quickStats.overdueShareDefinition') },
+      { label: t('dashboard.quickStats.apOverduePercent'), value: share(apOverdue, ap), description: t('dashboard.quickStats.overdueShareDefinition') },
+      { label: t('dashboard.quickStats.workingCapital'), value: formatMoney(ar - ap), description: t('dashboard.quickStats.netBalanceDefinition') },
     ]
-  }, [snapshot, t, totalReceivables, totalPayables])
+  }, [snapshot, t, formatMoney, i18n.resolvedLanguage])
 
   return (
     <VxStack spacing={3}>
@@ -213,6 +202,7 @@ export default function DashboardPage() {
               asOfDate={asOfDate}
               periodDays={periodDays}
               periodOptions={periodOptions}
+              snapshot={snapshot}
               error={errorMessage ?? (financeQuery.isError ? t('dashboard.errors.loadMetrics') : null)}
               onAsOfDateChange={setAsOfDate}
               onPeriodChange={setPeriodDays}

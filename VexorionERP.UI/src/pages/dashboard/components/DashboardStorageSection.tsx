@@ -1,6 +1,5 @@
 import { VxChip, VxGrid, VxPaper, VxStack, VxTypography } from '@vexorion/ui'
 import type { TFunction } from 'i18next'
-import { useCurrency } from '../../../app/CurrencyContext'
 import type { StorageTopConsumersResponse, StorageUsageSummaryResponse } from '../../../types/api'
 
 type DashboardStorageSectionProps = {
@@ -32,7 +31,6 @@ function getThresholdColor(thresholdStatus: StorageUsageSummaryResponse['thresho
 }
 
 export default function DashboardStorageSection({ t, summary, topConsumers }: DashboardStorageSectionProps) {
-  const { formatMoney } = useCurrency()
   const usedBytes = summary?.usedBytes ?? 0
   const maxBytes = summary?.maxStorageBytes ?? 0
   const usedPercent = summary?.usedPercent ?? 0
@@ -83,12 +81,6 @@ export default function DashboardStorageSection({ t, summary, topConsumers }: Da
               })}
             </VxTypography>
 
-            <VxTypography variant="caption" color="text.secondary">
-              {t('dashboard.storage.note', {
-                defaultValue: 'Capacity planning benchmark value: {{money}}',
-                money: formatMoney((usedBytes / (1024 * 1024 * 1024)) * 2),
-              })}
-            </VxTypography>
           </VxStack>
         </VxPaper>
       </VxGrid>

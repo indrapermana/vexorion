@@ -14,7 +14,7 @@ type AgingCardProps = {
 }
 
 function AgingCard({ t, title, data, totals, emptyText }: AgingCardProps) {
-  const { formatMoney } = useCurrency()
+  const { currencyCode, formatMoney } = useCurrency()
   return (
     <VxPaper elevation={0} sx={{ p: 3, borderRadius: 2 }}>
       <VxTypography component="h2" variant="h6" sx={{ mb: 2 }}>{title}</VxTypography>
@@ -23,7 +23,8 @@ function AgingCard({ t, title, data, totals, emptyText }: AgingCardProps) {
           <VxBarChart
             dataset={data}
             xAxis={[{ scaleType: 'band', dataKey: 'name' }]}
-            series={[{ dataKey: 'value', label: t('dashboard.table.amount') }]}
+            series={[{ dataKey: 'value', label: t('dashboard.table.amount'), valueFormatter: (value) => formatMoney(value ?? 0) }]}
+            yAxis={[{ label: currencyCode }]}
             margin={{ top: 10, bottom: 30, left: 60, right: 10 }}
           />
         </VxBox>

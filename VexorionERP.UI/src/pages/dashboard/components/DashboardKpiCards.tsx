@@ -1,4 +1,4 @@
-import { InsightsRoundedIcon, Inventory2RoundedIcon, PaidRoundedIcon, TrendingDownRoundedIcon, TrendingUpRoundedIcon } from '@vexorion/ui'
+import { InsightsRoundedIcon, Inventory2RoundedIcon, PaidRoundedIcon } from '@vexorion/ui'
 import { VxBox, VxGrid, VxPaper, VxStack, VxTypography } from '@vexorion/ui'
 import type { TFunction } from 'i18next'
 import { useCurrency } from '../../../app/CurrencyContext'
@@ -30,12 +30,12 @@ export default function DashboardKpiCards({ t, snapshot, periodDays }: Dashboard
             </VxBox>
             {(snapshot?.receivablesOverdue ?? 0) > 0 && (
               <VxBox sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <TrendingDownRoundedIcon sx={{ fontSize: 18, color: 'warning.main' }} />
                 <VxTypography variant="caption" color="warning.main">
                   {t('dashboard.summary.overdueAmount', { amount: formatMoney(snapshot?.receivablesOverdue ?? 0) })}
                 </VxTypography>
               </VxBox>
             )}
+            <VxTypography variant="caption" color="text.secondary">{t('dashboard.definitions.receivables')}</VxTypography>
           </VxStack>
         </VxPaper>
       </VxGrid>
@@ -56,12 +56,12 @@ export default function DashboardKpiCards({ t, snapshot, periodDays }: Dashboard
             </VxBox>
             {(snapshot?.payablesOverdue ?? 0) > 0 && (
               <VxBox sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <TrendingDownRoundedIcon sx={{ fontSize: 18, color: 'warning.main' }} />
                 <VxTypography variant="caption" color="warning.main">
                   {t('dashboard.summary.overdueAmount', { amount: formatMoney(snapshot?.payablesOverdue ?? 0) })}
                 </VxTypography>
               </VxBox>
             )}
+            <VxTypography variant="caption" color="text.secondary">{t('dashboard.definitions.payables')}</VxTypography>
           </VxStack>
         </VxPaper>
       </VxGrid>
@@ -80,14 +80,7 @@ export default function DashboardKpiCards({ t, snapshot, periodDays }: Dashboard
               </VxBox>
               <InsightsRoundedIcon sx={{ color: 'success.main', fontSize: 28, opacity: 0.7 }} />
             </VxBox>
-            {(snapshot?.revenueInPeriod ?? 0) > 0 && (
-              <VxBox sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <TrendingUpRoundedIcon sx={{ fontSize: 18, color: 'success.main' }} />
-                <VxTypography variant="caption" color="success.main">
-                  {t('dashboard.summary.netCashAmount', { amount: formatMoney(snapshot?.netCashInPeriod ?? 0) })}
-                </VxTypography>
-              </VxBox>
-            )}
+            <VxTypography variant="caption" color="text.secondary">{t('dashboard.definitions.invoicedSales')}</VxTypography>
           </VxStack>
         </VxPaper>
       </VxGrid>
@@ -107,10 +100,11 @@ export default function DashboardKpiCards({ t, snapshot, periodDays }: Dashboard
               <PaidRoundedIcon sx={{ color: 'warning.main', fontSize: 28, opacity: 0.7 }} />
             </VxBox>
             <VxBox sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <VxTypography variant="caption" color={(snapshot?.netCashInPeriod ?? 0) >= 0 ? 'success.main' : 'error.main'}>
-                {(snapshot?.netCashInPeriod ?? 0) >= 0 ? t('dashboard.summary.positiveFlow') : t('dashboard.summary.negativeFlow')}
+              <VxTypography variant="caption" color={(snapshot?.netCashInPeriod ?? 0) === 0 ? 'text.secondary' : (snapshot?.netCashInPeriod ?? 0) > 0 ? 'success.main' : 'error.main'}>
+                {(snapshot?.netCashInPeriod ?? 0) === 0 ? t('dashboard.summary.balancedFlow') : (snapshot?.netCashInPeriod ?? 0) > 0 ? t('dashboard.summary.positiveFlow') : t('dashboard.summary.negativeFlow')}
               </VxTypography>
             </VxBox>
+            <VxTypography variant="caption" color="text.secondary">{t('dashboard.definitions.netCash')}</VxTypography>
           </VxStack>
         </VxPaper>
       </VxGrid>

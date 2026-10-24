@@ -2,6 +2,7 @@ import { VxBox, VxGrid, VxPaper, VxTypography } from '@vexorion/ui'
 import { VxBarChart } from '@vexorion/ui'
 import type { TFunction } from 'i18next'
 import type { BalancePoint } from '../types'
+import { useCurrency } from '../../../app/CurrencyContext'
 
 type DashboardChartsSectionProps = {
   t: TFunction
@@ -18,6 +19,7 @@ export default function DashboardChartsSection({
   periodDays,
   receivablesVsPayablesData,
 }: DashboardChartsSectionProps) {
+  const { currencyCode, formatMoney } = useCurrency()
   return (
     <VxGrid container spacing={2}>
       <VxGrid size={{ xs: 12, md: 6 }}>
@@ -25,8 +27,9 @@ export default function DashboardChartsSection({
           <VxTypography component="h3" variant="subtitle1" sx={{ mb: 2 }}>{t('dashboard.charts.cashFlowPeriod', { days: periodDays })}</VxTypography>
           <VxBox sx={{ width: '100%', height: 300 }}>
             <VxBarChart
-              series={[{ data: [cashIn, cashOut], label: t('dashboard.charts.cashFlowPeriod', { days: periodDays }) }]}
+              series={[{ data: [cashIn, cashOut], label: t('dashboard.charts.cashFlowPeriod', { days: periodDays }), valueFormatter: (value) => formatMoney(value ?? 0) }]}
               xAxis={[{ data: [t('dashboard.cashRows.inflow'), t('dashboard.cashRows.outflow')], scaleType: 'band' }]}
+              yAxis={[{ label: currencyCode }]}
               margin={{ top: 10, bottom: 30, left: 60, right: 10 }}
             />
           </VxBox>
@@ -41,9 +44,10 @@ export default function DashboardChartsSection({
               dataset={receivablesVsPayablesData}
               xAxis={[{ scaleType: 'band', dataKey: 'name' }]}
               series={[
-                { dataKey: 'open', label: t('dashboard.health.current') },
-                { dataKey: 'overdue', label: t('dashboard.aging.overdue') },
+                { dataKey: 'open', label: t('dashboard.health.current'), valueFormatter: (value) => formatMoney(value ?? 0) },
+                { dataKey: 'overdue', label: t('dashboard.aging.overdue'), valueFormatter: (value) => formatMoney(value ?? 0) },
               ]}
+              yAxis={[{ label: currencyCode }]}
               margin={{ top: 10, bottom: 30, left: 60, right: 10 }}
             />
           </VxBox>

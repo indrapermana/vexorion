@@ -2,6 +2,9 @@
  * dashboard.spec.ts — TC-M-006 to TC-M-011 (Dashboard scenarios)
  */
 import { test, expect } from './fixtures'
+import enUS from '../src/i18n/locales/enUS'
+import idID from '../src/i18n/locales/idID'
+import esES from '../src/i18n/locales/esES'
 
 test.describe('Dashboard', () => {
   test('UX-DASH-01: hierarchy and finance filters fit desktop and mobile', async ({ page, dashboardPage }, testInfo) => {
@@ -10,16 +13,16 @@ test.describe('Dashboard', () => {
 
     const finance = page.getByRole('region', { name: 'Finance', exact: true })
     const activity = page.getByRole('region', { name: 'Recent Sales Activity', exact: true })
-    await expect(finance.getByLabel('As-of date')).toBeVisible()
-    await expect(activity.getByLabel('As-of date')).toHaveCount(0)
+    await expect(finance.getByLabel('Reference date')).toBeVisible()
+    await expect(activity.getByLabel('Reference date')).toHaveCount(0)
 
     const expectedHeadings = ['Financial Overview', 'Overdue Balances and Aging', 'Cash Flow and Balances', 'Recent Sales Activity']
     for (const width of [390, 768, 1024, 1440]) {
       await page.setViewportSize({ width, height: 900 })
       const headings = await page.locator('h2[id^="dashboard-"]').allTextContents()
       expect(headings).toEqual(expectedHeadings)
-      await expect(finance.getByLabel('As-of date')).toBeVisible()
-      await expect(finance.getByLabel('Window')).toBeVisible()
+      await expect(finance.getByLabel('Reference date')).toBeVisible()
+      await expect(finance.getByLabel('Reporting period')).toBeVisible()
       await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1)
       if (width >= 1200) {
         await expect.poll(async () => (await page.getByRole('heading', { level: 1, name: 'Dashboard', exact: true }).boundingBox())?.x ?? 0).toBeGreaterThanOrEqual(280)
@@ -32,9 +35,39 @@ test.describe('Dashboard', () => {
       && new URL(response.url()).searchParams.get('periodDays') === '90'
       && response.ok()
     ))
-    await finance.getByLabel('Window').selectOption('90')
+    await finance.getByLabel('Reporting period').selectOption('90')
     await snapshotResponse
     await expect(finance.getByRole('heading', { name: 'Cash Flow (90 days)', exact: true })).toBeVisible()
+  })
+
+  test('UX-DASH-02: reporting definitions and localized copy fit narrow screens', async ({ page, dashboardPage }, testInfo) => {
+    await dashboardPage.goto()
+    await dashboardPage.waitForLoad()
+    const responsePromise = page.waitForResponse((response) => (
+      new URL(response.url()).pathname.endsWith('/reports/dashboard')
+      && new URL(response.url()).searchParams.get('asOfDate') === '2024-03-01'
+      && response.ok()
+    ))
+    await page.getByLabel('Reference date').fill('2024-03-01')
+    await responsePromise
+    await expect(page.getByText('Feb 1, 2024 to Mar 1, 2024 · 30 days, both dates included', { exact: true })).toBeVisible()
+
+    for (const [language, copy] of [['enUS', enUS], ['idID', idID], ['esES', esES]] as const) {
+      await page.getByLabel(/Language selector|Pemilih bahasa|Selector de idioma/).click()
+      await page.locator(`[role="option"][data-value="${language}"]`).click()
+      await expect(page.getByText(copy.dashboard.context.balances, { exact: true })).toBeVisible()
+      await expect(page.getByText(copy.dashboard.context.currency.replace('{{currency}}', 'USD'), { exact: true })).toBeVisible()
+      await expect(page.getByText(copy.dashboard.definitions.invoicedSales, { exact: true })).toBeVisible()
+      await expect(page.getByRole('heading', { name: copy.dashboard.storage.title, exact: true })).toBeVisible()
+      const indicators = page.getByRole('region', { name: copy.dashboard.quickStats.title, exact: true })
+      await expect(indicators.getByText(copy.dashboard.quickStats.notApplicable, { exact: true })).toHaveCount(4)
+      await expect(page.getByText(/Capacity planning benchmark/)).toHaveCount(0)
+      for (const width of [390, 1440]) {
+        await page.setViewportSize({ width, height: 900 })
+        await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1)
+        await page.screenshot({ path: testInfo.outputPath(`dashboard-definitions-${language}-${width}.png`), fullPage: true, animations: 'disabled' })
+      }
+    }
   })
 
   test('TC-M-006: dashboard loads after login', async ({ page, dashboardPage }) => {

@@ -10,14 +10,14 @@ vi.mock('../../../app/CurrencyContext', () => ({
 }))
 
 const t = ((key: string, opts?: Record<string, unknown>) => {
-  if (key === 'dashboard.summary.revenuePeriod') return `Revenue (${opts?.days}d)`
+  if (key === 'dashboard.summary.revenuePeriod') return `Invoiced sales (${opts?.days} days)`
   if (key === 'dashboard.summary.overdueAmount') return `Overdue: ${opts?.amount}`
   return key
 }) as unknown as TFunction
 
 const snapshot: FinanceDashboardSnapshotResponse = {
   asOfDate: '2026-05-03',
-  periodStartDate: '2026-04-03',
+  periodStartDate: '2026-04-04',
   periodDays: 30,
   receivablesOpen: 10000,
   receivablesOverdue: 2000,
@@ -30,6 +30,17 @@ const snapshot: FinanceDashboardSnapshotResponse = {
 }
 
 describe('DashboardKpiCards', () => {
+  it.each([
+    [4000, 'positiveFlow'],
+    [-4000, 'negativeFlow'],
+    [0, 'balancedFlow'],
+  ])('explains net cash %s without treating zero as a positive flow', (netCashInPeriod, key) => {
+    render(<DashboardKpiCards t={t} snapshot={{ ...snapshot, netCashInPeriod }} periodDays={30} />)
+    expect(screen.getByText(`dashboard.summary.${key}`)).toBeInTheDocument()
+    expect(screen.getByText(`$${netCashInPeriod.toFixed(2)}`)).toBeInTheDocument()
+    expect(screen.getByText('dashboard.definitions.netCash')).toBeInTheDocument()
+  })
+
   it('renders the open receivables label', () => {
     render(<DashboardKpiCards t={t} snapshot={snapshot} periodDays={30} />)
     expect(screen.getByText('dashboard.summary.openReceivables')).toBeInTheDocument()
@@ -66,8 +77,9 @@ describe('DashboardKpiCards', () => {
     expect(screen.getAllByText('$0.00').length).toBeGreaterThan(0)
   })
 
-  it('renders revenue period label with days', () => {
+  it('labels invoice totals as invoiced sales rather than recognized revenue', () => {
     render(<DashboardKpiCards t={t} snapshot={snapshot} periodDays={30} />)
-    expect(screen.getByText('Revenue (30d)')).toBeInTheDocument()
+    expect(screen.getByText('Invoiced sales (30 days)')).toBeInTheDocument()
+    expect(screen.getByText('dashboard.definitions.invoicedSales')).toBeInTheDocument()
   })
 })

@@ -385,7 +385,7 @@ The target is a clean, simple, data-dense business interface: one obvious primar
 **Findings**
 
 - Initial review found KPIs, charts, aging, cash flow, orders, customers, health, storage, and quick statistics competing without role/task prioritization. UX-DASH-01 now groups them by operational priority.
-- Initial hero copy included product-development language (“not a placeholder homepage”); the visible heading is now a concise localized Dashboard title. Broader KPI definitions remain under UX-DASH-02.
+- Initial hero copy included product-development language (“not a placeholder homepage”); UX-DASH-01 replaced the title, and UX-DASH-02 now defines the financial dates, amounts, ratios, signs, and currency limitations in business language.
 - Hidden menu preference, disabled module, and missing permission are not clearly distinguished.
 - Several Main pages include developer-facing descriptions such as live API paths and implementation details instead of explaining the user's task.
 
@@ -393,6 +393,10 @@ The target is a clean, simple, data-dense business interface: one obvious primar
 
 - [x] `UX-DASH-01` Establish KPI, attention/exception, analysis, and recent-activity hierarchy; keep filters beside affected data. Locally completed 24 October 2026: Financial Overview and its date/window controls lead the finance area, followed by overdue balances/aging and cash/balance analysis. Recent sales activity and storage are outside the finance filter scope and hidden without their respective permissions. Recent orders precede customer rankings. Cash-flow bars use exact API period totals instead of the former fabricated daily curve; historical trends require a real time-series contract and are not inferred from totals. Section labels and page titles are localized in en/id/es.
   - Evidence: dashboard tests 48/48, full Main UI tests 173/173, TypeScript and production build pass, changed-file lint has zero errors and two existing `formatMoney` dependency warnings. Authenticated Playwright passes 2/2 including setup, with screenshots/no document overflow at 390/768/1024/1440 px, a settled desktop sidebar-position check, a real finance-window query, isolated tenant deletion, and orphan check. Full-app lint remains blocked by 20 existing `react-hooks/refs` errors in the untouched project `DocumentsPanel`; the production build retains the known large-chunk warning. This is local UX acceptance, not the single-commit release gate.
+
+- [x] `UX-DASH-02` Replace development copy and define KPI dates, windows, signs, and currency in plain language. Locally completed 24 October 2026: the finance area shows the server-returned inclusive period and display currency, explains that outstanding balances are current unpaid amounts rather than historical balances, and uses the reference date for overdue/aging classification. Invoice totals are labelled invoiced sales, not recognized revenue; net cash is recorded customer payments minus vendor payments, not a bank balance, with explicit positive/negative/zero meaning. Overdue amounts are no longer counted twice in totals or chart categories. Current/overdue shares use the outstanding balance denominator, empty denominators are not applicable, and receivables less payables is no longer called working capital. Removed trend/good-health claims and the invented storage benchmark; localized definitions, aging buckets, and storage labels in en/id/es. App locale IDs are mapped to valid Intl tags for dates/percentages.
+  - Evidence: dashboard tests 60/60, translation/mapping tests 11/11, full Main UI tests 190/190 with two workers, scoped lint with zero errors/warnings, and TypeScript/production build pass. Authenticated Playwright passes 3/3 including setup: UX-DASH-01 responsive hierarchy at 390/768/1024/1440 px, UX-DASH-02 reference-date/leap-day range, locale switching and copy at 390/1440 px for en/id/es, screenshots, tenant deletion, and orphan check. An initial locale-ID runtime crash was fixed and regression-tested; unrestricted unit workers and one concurrent build/browser login setup showed local timing failures, while the bounded-worker suite and standalone browser rerun passed. The known large-chunk build warning and previously recorded unrelated full-app lint blocker remain outside this item.
+  - Contract limitations remain explicit: reporting sums recorded amounts without FX conversion, and past reference dates do not reconstruct historical unpaid balances. This item changes presentation/calculations only, with no backend accounting, migration, or currency-conversion changes. Loading/error/retry and last-updated behavior remain UX-DASH-03; release acceptance remains a separate gate.
 
 Remaining Dashboard work is consolidated in the final Main UI backlog.
 
@@ -589,7 +593,6 @@ Complete application work in order: **Main UI → AdminUI → POS**. Finish the 
 
 #### Dashboard and navigation
 
-- [ ] `UX-DASH-02` Replace development copy and define KPI dates, windows, signs, and currency in plain language.
 - [ ] `UX-DASH-03` Add section-level loading/error/retry and last-updated context.
 - [ ] `UX-DASH-04` Distinguish menu preference, module entitlement, and permission states; include effective-access preview.
 

@@ -54,15 +54,16 @@ describe('Dashboard section smoke tests', () => {
 
   it('renders quick stats labels and values', () => {
     const stats: QuickStat[] = [
-      { label: 'AR Collection Rate', value: '91%', trend: 'positive' },
-      { label: 'Working Capital', value: '$2,300.00', trend: 'negative' },
+      { label: 'Receivables not overdue', value: '91%', description: 'Share of outstanding receivables' },
+      { label: 'Net receivables less payables', value: '$2,300.00', description: 'Not working capital' },
     ]
 
     render(<DashboardQuickStatsSection t={t} quickStats={stats} />)
 
-    expect(screen.getByText('AR Collection Rate')).toBeInTheDocument()
+    expect(screen.getByText('Receivables not overdue')).toBeInTheDocument()
     expect(screen.getByText('91%')).toBeInTheDocument()
-    expect(screen.getByText('Working Capital')).toBeInTheDocument()
+    expect(screen.getByText('Net receivables less payables')).toBeInTheDocument()
+    expect(screen.getByText('Not working capital')).toBeInTheDocument()
     expect(screen.getByText('$2,300.00')).toBeInTheDocument()
   })
 })

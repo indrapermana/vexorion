@@ -25,7 +25,7 @@ export type AgingPoint = {
 export type QuickStat = {
   label: string
   value: string
-  trend: 'positive' | 'negative'
+  description: string
 }
 
 export type TopCustomerView = {

@@ -58,3 +58,12 @@ export function normalizeTranslationLanguage(language: string | null | undefined
 
   return TranslationLanguages.enUS
 }
+
+export function getIntlLocale(language: string | null | undefined): string {
+  const locales: Record<TranslationLanguage, string> = {
+    enUS: 'en-US',
+    idID: 'id-ID',
+    esES: 'es-ES',
+  }
+  return locales[normalizeTranslationLanguage(language)]
+}
