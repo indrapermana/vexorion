@@ -50,7 +50,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../app/AuthContext";
-import { canAccessMainRoute } from "../app/authorization";
+import { getMainMenuAccess } from "../app/authorization";
 import { useTenantModules } from "../app/TenantModuleContext";
 import { useThemeMode } from "../app/ThemeModeContext";
 import {
@@ -311,7 +311,7 @@ function getRouteTitleKey(pathname: string) {
 export default function AppLayout() {
   const { t, i18n } = useTranslation();
   const { user, isAuthenticated, logout } = useAuth();
-  const { projectManagementEnabled, employeeManagementEnabled } = useTenantModules();
+  const tenantModules = useTenantModules();
   const { mode: themeMode, setMode: setThemeMode } = useThemeMode();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -325,20 +325,8 @@ export default function AppLayout() {
   const currentLanguage = normalizeTranslationLanguage(i18n.language);
 
   const isLinkVisible = useCallback((path: string) => {
-    if (!canAccessMainRoute(user?.permissions, path)) {
-      return false;
-    }
-
-    if (["/project-categories", "/project-documents", "/projects", "/tenant-relationships"].includes(path)) {
-      return projectManagementEnabled;
-    }
-
-    if (["/employees", "/consultants"].includes(path)) {
-      return employeeManagementEnabled;
-    }
-
-    return true;
-  }, [employeeManagementEnabled, projectManagementEnabled, user?.permissions]);
+    return getMainMenuAccess(user?.permissions, path, hiddenMenuLinks, tenantModules).visible;
+  }, [hiddenMenuLinks, tenantModules, user?.permissions]);
 
   const handleLanguageChange = (nextLanguage: TranslationLanguage) => {
     void i18n.changeLanguage(nextLanguage);
@@ -412,11 +400,11 @@ export default function AppLayout() {
         .map((section) => ({
           ...section,
           links: section.links.filter(
-            (link) => !hiddenMenuLinks.includes(link.to) && isLinkVisible(link.to),
+            (link) => isLinkVisible(link.to),
           ),
         }))
         .filter((section) => section.links.length > 0),
-    [hiddenMenuLinks, isLinkVisible],
+    [isLinkVisible],
   );
 
   const handleLogout = async () => {

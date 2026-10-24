@@ -386,7 +386,7 @@ The target is a clean, simple, data-dense business interface: one obvious primar
 
 - Initial review found KPIs, charts, aging, cash flow, orders, customers, health, storage, and quick statistics competing without role/task prioritization. UX-DASH-01 now groups them by operational priority.
 - Initial hero copy included product-development language (“not a placeholder homepage”); UX-DASH-01 replaced the title, and UX-DASH-02 now defines the financial dates, amounts, ratios, signs, and currency limitations in business language.
-- Hidden menu preference, disabled module, and missing permission are not clearly distinguished.
+- Initial menu configuration did not distinguish hidden preference, disabled module, and missing permission; UX-DASH-04 now previews these layers independently for the current account.
 - Several Main pages include developer-facing descriptions such as live API paths and implementation details instead of explaining the user's task.
 
 **Completed UX**
@@ -401,7 +401,11 @@ The target is a clean, simple, data-dense business interface: one obvious primar
 - [x] `UX-DASH-03` Add section-level loading/error/retry and last-updated context. Locally completed 24 October 2026: query boundaries show named loading states, resource-scoped retry/refresh controls, and localized last-fetched timestamps from successful query responses. Initial failures do not render zero-valued metrics or false empty states. Cached data stays visible during background refresh and is explicitly marked stale if refresh fails; its timestamp advances only after a successful response. Receivables/payables aging and storage usage/top consumers recover independently, while customer-name lookup loading/failure does not hide sales orders. Finance-derived panels share their finance query without hiding healthy neighboring resources. Error text is localized and does not expose raw API failure details; freshness controls retain existing permissions and filter scope.
   - Evidence: full Main UI tests 200/200 with two workers, focused page/query-state tests 16/16, final boundary/translation checks 17/17, scoped lint with zero errors/warnings, TypeScript and production build pass. Authenticated Playwright UX-DASH-01/02/03 passes 4/4 including setup, with responsive/localized regression coverage and fault injection for initial finance/aging failures, loading, healthy-neighbor preservation, query-only retries, cached refresh failure, unchanged stale timestamps, successful freshness advancement, and narrow-screen screenshots. Isolated tenant deletion and orphan check pass. The known bundle-size warning and previously recorded unrelated full-app lint blocker remain; no backend or database changes were made. This is local UX acceptance, not the release gate.
 
-Remaining Dashboard work is consolidated in the final Main UI backlog.
+- [x] `UX-DASH-04` Distinguish menu preference, module entitlement, and permission states; include effective-access preview. Locally completed 24 October 2026: Menu Configuration previews all 28 sidebar links with separate tenant visibility preference, module status, current-account view permission, and effective result. The sidebar and preview share the same access decision. Unsaved preferences affect only the preview; saving updates navigation without changing direct-route permissions, modules, or account grants. Reset restores preferences only. Read-only users retain the preview without mutation controls; failed initial loads cannot overwrite unknown preferences, and failed saves retain/retry the draft. Loading/unavailable module metadata is not represented as enabled. Existing project/employee route gates are preserved, including the project gate for document routes; no independent document-module policy is introduced. Labels, policy text, status, and feedback are localized in en/id/es.
+  - Browser validation exposed an existing first-load PostgreSQL race: concurrent preference GETs attempted duplicate inserts into `IX_TenantPreference_TenantId`. GET now returns unchanged defaults without persistence when no row exists; write handlers retain create-if-missing behavior. Three handler regressions cover no-write defaults, later write/read persistence, and missing-tenant failure. No endpoint authorization, DTO shape, or database migration changed.
+  - Evidence: Main UI tests 212/212, focused access/page tests 20/20, scoped lint with zero errors/warnings, TypeScript and production build pass. Backend suite: 935 passed, two explicitly guarded PostgreSQL tests skipped. Combined authenticated UX-DASH-01/02/03/04 browser checks pass 5/5 including setup, tenant deletion, and orphan check. UX-DASH-04 uses a browser-scoped disabled-module response fixture, real preference GET/PUT persistence (including a newly configurable document link), saved sidebar updates, direct authorized Customers access after hiding its link, preference-only reset, and en/id/es screenshots at 390/768/1440 px without document overflow; narrow tables scroll internally. Missing-permission/read-only cases have component and access-rule coverage rather than separate browser identities. Known bundle-size and unrelated full-app lint caveats remain; this is local acceptance, not the release gate.
+
+All four dashboard/navigation items are locally accepted. Remaining Main UI work follows the final prioritized backlog.
 
 ### 5.4 Master data and configuration
 
@@ -593,10 +597,6 @@ Historical milestone/checklist/roadmap documents were removed after consolidatio
 Complete application work in order: **Main UI → AdminUI → POS**. Finish the active application's module queue before moving to the next. Shared/release gates follow the application queues. This section is the source of truth for all remaining actionable work; earlier sections contain findings, decisions, and completed evidence only.
 
 ### Stage 1 — Main UI
-
-#### Dashboard and navigation
-
-- [ ] `UX-DASH-04` Distinguish menu preference, module entitlement, and permission states; include effective-access preview.
 
 #### Master data and configuration
 

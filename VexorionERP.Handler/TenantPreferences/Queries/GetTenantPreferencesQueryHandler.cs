@@ -9,7 +9,7 @@ public sealed class GetTenantPreferencesQueryHandler(IServiceProvider servicePro
 {
     public async ValueTask<ServiceResult<TenantPreferencesResponse>> Handle(GetTenantPreferencesQuery request, CancellationToken cancellationToken)
     {
-        var preference = await GetOrCreatePreferenceAsync(cancellationToken);
+        var preference = await GetOrCreatePreferenceAsync(cancellationToken, persistIfMissing: false);
         if (preference is null)
         {
             return MissingTenant();

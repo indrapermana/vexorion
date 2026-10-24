@@ -1,7 +1,36 @@
 import { describe, expect, it } from 'vitest'
-import { Permissions, canAccessMainRoute, canPerformMainRouteActions, hasRequiredPermissions } from './authorization'
+import { Permissions, canAccessMainRoute, canPerformMainRouteActions, getMainMenuAccess, hasRequiredPermissions } from './authorization'
 
 describe('main authorization matrix', () => {
+  const modules = { isLoading: false, projectManagementEnabled: true, documentManagementEnabled: true, employeeManagementEnabled: true }
+
+  it('distinguishes a hidden menu preference from route access', () => {
+    const access = getMainMenuAccess([Permissions.projects.view], '/projects', ['/projects'], modules)
+    expect(access.status).toBe('hidden')
+    expect(access.routeAvailable).toBe(true)
+    expect(access.visible).toBe(false)
+    expect(canAccessMainRoute([Permissions.projects.view], '/projects')).toBe(true)
+  })
+
+  it('does not let a shown preference override module or permission restrictions', () => {
+    expect(getMainMenuAccess([Permissions.projects.view], '/projects', [], { ...modules, projectManagementEnabled: false }).status).toBe('moduleDisabled')
+    expect(getMainMenuAccess([], '/projects', [], modules).status).toBe('permissionDenied')
+    expect(getMainMenuAccess([], '/projects', [], modules).visible).toBe(false)
+  })
+
+  it('distinguishes unresolved module configuration without blocking unrelated routes', () => {
+    expect(getMainMenuAccess([Permissions.projects.view], '/projects', [], { ...modules, isLoading: true }).status).toBe('moduleLoading')
+    expect(getMainMenuAccess([Permissions.projects.view], '/projects', [], { ...modules, isError: true }).status).toBe('moduleUnavailable')
+    expect(getMainMenuAccess([Permissions.customers.view], '/customers', [], { ...modules, isLoading: true }).visible).toBe(true)
+  })
+
+  it('matches the project-document and employee gates registered by the router', () => {
+    expect(getMainMenuAccess([Permissions.projectDocuments.view], '/project-documents', [], { ...modules, projectManagementEnabled: false }).status).toBe('moduleDisabled')
+    expect(getMainMenuAccess([Permissions.projectDocuments.view], '/project-documents', [], { ...modules, documentManagementEnabled: false }).visible).toBe(true)
+    expect(getMainMenuAccess([Permissions.organization.view], '/employees', [], { ...modules, employeeManagementEnabled: false }).status).toBe('moduleDisabled')
+    expect(getMainMenuAccess([Permissions.projects.view], '/projects', [], { ...modules, documentManagementEnabled: false }).visible).toBe(true)
+  })
+
   it('requires the view permission assigned to a route', () => {
     expect(canAccessMainRoute([Permissions.products.view], '/products')).toBe(true)
     expect(canAccessMainRoute([Permissions.customers.view], '/products')).toBe(false)

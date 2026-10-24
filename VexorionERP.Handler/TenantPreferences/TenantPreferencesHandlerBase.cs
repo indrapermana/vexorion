@@ -19,7 +19,7 @@ public abstract class TenantPreferencesHandlerBase(IServiceProvider serviceProvi
         return ServiceResult<TenantPreferencesResponse>.Failure(400, "Tenant context is required.");
     }
 
-    protected async Task<TenantPreference?> GetOrCreatePreferenceAsync(CancellationToken cancellationToken)
+    protected async Task<TenantPreference?> GetOrCreatePreferenceAsync(CancellationToken cancellationToken, bool persistIfMissing = true)
     {
         if (!CurrentTenantProvider.TenantId.HasValue)
         {
@@ -45,8 +45,11 @@ public abstract class TenantPreferencesHandlerBase(IServiceProvider serviceProvi
             AllowNegativeDiscount = false,
         };
 
-        DbContext.TenantPreferences.Add(preference);
-        await DbContext.SaveChangesAsync(cancellationToken);
+        if (persistIfMissing)
+        {
+            DbContext.TenantPreferences.Add(preference);
+            await DbContext.SaveChangesAsync(cancellationToken);
+        }
         return preference;
     }
 

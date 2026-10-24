@@ -93,3 +93,29 @@ export function canPerformMainRouteActions(grantedPermissions: readonly string[]
   const route = mainRouteAccess.find((entry) => entry.match(pathname))
   return Boolean(route?.actionRequirement && hasRequiredPermissions(grantedPermissions, route.actionRequirement))
 }
+
+export type MainMenuModules = {
+  isLoading: boolean
+  isError?: boolean
+  projectManagementEnabled: boolean
+  documentManagementEnabled: boolean
+  employeeManagementEnabled: boolean
+}
+
+export function getMainMenuAccess(
+  grantedPermissions: readonly string[] | undefined,
+  pathname: string,
+  hiddenLinks: readonly string[],
+  modules: MainMenuModules,
+) {
+  const permissionAllowed = canAccessMainRoute(grantedPermissions, pathname)
+  const preferenceVisible = !hiddenLinks.includes(pathname)
+  const projectRequired = ['/project-categories', '/project-documents', '/projects', '/tenant-relationships'].includes(pathname) || pathname.startsWith('/projects/')
+  const employeeRequired = ['/employees', '/consultants'].includes(pathname)
+  const moduleRequired = projectRequired || employeeRequired
+  const moduleEnabled = (!projectRequired || modules.projectManagementEnabled) && (!employeeRequired || modules.employeeManagementEnabled)
+  const moduleStatus = !moduleRequired ? 'notRequired' : modules.isLoading ? 'loading' : modules.isError ? 'unavailable' : moduleEnabled ? 'enabled' : 'disabled'
+  const routeAvailable = permissionAllowed && (moduleStatus === 'notRequired' || moduleStatus === 'enabled')
+  const status = !permissionAllowed ? 'permissionDenied' : moduleStatus === 'loading' ? 'moduleLoading' : moduleStatus === 'unavailable' ? 'moduleUnavailable' : moduleStatus === 'disabled' ? 'moduleDisabled' : !preferenceVisible ? 'hidden' : 'visible'
+  return { permissionAllowed, preferenceVisible, moduleStatus, routeAvailable, status, visible: routeAvailable && preferenceVisible }
+}

@@ -4,6 +4,7 @@ import { useAuth } from './AuthContext'
 
 type TenantModulesState = {
   isLoading: boolean
+  isError?: boolean
   projectManagementEnabled: boolean
   documentManagementEnabled: boolean
   employeeManagementEnabled: boolean
@@ -11,6 +12,7 @@ type TenantModulesState = {
 
 const TenantModulesContext = createContext<TenantModulesState>({
   isLoading: true,
+  isError: false,
   projectManagementEnabled: true,
   documentManagementEnabled: true,
   employeeManagementEnabled: true,
@@ -20,6 +22,7 @@ export function TenantModuleProvider({ children }: { children: ReactNode }) {
   const { user, isAuthenticated } = useAuth()
   const [state, setState] = useState<TenantModulesState>({
     isLoading: true,
+    isError: false,
     projectManagementEnabled: true,
     documentManagementEnabled: true,
     employeeManagementEnabled: true,
@@ -29,6 +32,7 @@ export function TenantModuleProvider({ children }: { children: ReactNode }) {
     if (!isAuthenticated || !user?.tenantId) {
       setState({
         isLoading: false,
+        isError: false,
         projectManagementEnabled: true,
         documentManagementEnabled: true,
         employeeManagementEnabled: true,
@@ -39,7 +43,7 @@ export function TenantModuleProvider({ children }: { children: ReactNode }) {
     let cancelled = false
 
     const load = async () => {
-      setState((current) => ({ ...current, isLoading: true }))
+      setState((current) => ({ ...current, isLoading: true, isError: false }))
 
       try {
         const config = await getTenantModuleConfig(user.tenantId)
@@ -49,6 +53,7 @@ export function TenantModuleProvider({ children }: { children: ReactNode }) {
 
         setState({
           isLoading: false,
+          isError: false,
           projectManagementEnabled: config.projectManagementEnabled,
           documentManagementEnabled: config.documentManagementEnabled,
           employeeManagementEnabled: config.employeeManagementEnabled,
@@ -60,6 +65,7 @@ export function TenantModuleProvider({ children }: { children: ReactNode }) {
 
         setState({
           isLoading: false,
+          isError: true,
           projectManagementEnabled: true,
           documentManagementEnabled: true,
           employeeManagementEnabled: true,
