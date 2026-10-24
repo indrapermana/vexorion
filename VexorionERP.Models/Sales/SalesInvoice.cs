@@ -16,7 +16,8 @@ public class SalesInvoice : TenantEntityBase
     public decimal TaxTotal { get; set; }
     public decimal GrandTotal { get; set; }
     public decimal PaidTotal { get; set; }
-    public decimal BalanceDue => GrandTotal - PaidTotal;
+    public decimal AppliedCreditTotal { get; set; }
+    public decimal BalanceDue => GrandTotal - PaidTotal - AppliedCreditTotal;
     public InvoiceStatus Status { get; set; } = InvoiceStatus.Draft;
     public DateTime? PostedAtUtc { get; set; }
     public DateTime? ReversedAtUtc { get; set; }

@@ -45,4 +45,45 @@ public class PosCheckoutAuthorizationTests : IClassFixture<TestWebApplicationFac
         // The test principal has a non-GUID user id, so the action answers 401 only after DI resolved the service.
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
+
+    [Fact]
+    public async Task Refund_Unauthenticated_ReturnsUnauthorized()
+    {
+        var response = await _factory.CreateClient().PostAsJsonAsync("/api/pos/refund", new PosRefundRequest());
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Refund_WithoutRefundPermission_ReturnsForbidden()
+    {
+        var client = _factory.CreateClient();
+        client.SetBearerToken(Guid.NewGuid(), AppPermissions.Pos.Checkout);
+
+        var response = await client.PostAsJsonAsync("/api/pos/refund", new PosRefundRequest());
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Refund_WithPermission_ResolvesServiceAndReachesAction()
+    {
+        var client = _factory.CreateClient();
+        client.SetBearerToken(Guid.NewGuid(), AppPermissions.Pos.Refund);
+
+        var response = await client.PostAsJsonAsync("/api/pos/refund", new PosRefundRequest());
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task RefundLines_WithoutRefundPermission_ReturnsForbidden()
+    {
+        var client = _factory.CreateClient();
+        client.SetBearerToken(Guid.NewGuid(), AppPermissions.Pos.Checkout);
+
+        var response = await client.GetAsync($"/api/pos/refund/{Guid.NewGuid()}/lines");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
 }

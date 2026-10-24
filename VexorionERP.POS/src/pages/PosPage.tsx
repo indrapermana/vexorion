@@ -474,7 +474,7 @@ export default function PosPage() {
         canCloseShift={canCloseShift}
         shiftOpenedAt={currentShift?.openedAt}
         onCloseShift={() => setIsCloseShiftOpen(true)}
-        canRefund={canRefund}
+        canRefund={canRefund && isShiftOpen}
         onOpenReturn={() => setIsReturnOpen(true)}
         onSignOut={logout}
       />
@@ -591,6 +591,7 @@ export default function PosPage() {
           currencyCode={currencyCode}
           cashierId={user?.id ?? ''}
           cashierName={cashierName}
+          shiftId={currentShift?.id ?? ''}
         />
       ) : null}
     </VxStack>

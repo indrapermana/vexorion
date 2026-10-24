@@ -24,5 +24,10 @@ public class InventoryMovementConfiguration : TenantEntityConfiguration<Inventor
             .WithMany(x => x.InventoryMovements)
             .HasForeignKey(x => x.WarehouseId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<PosRefundRecord>()
+            .WithMany()
+            .HasForeignKey(x => x.PosRefundRecordId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

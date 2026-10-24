@@ -16,6 +16,7 @@ public class SalesInvoiceListItemResponse : IEntityListResponse<SalesInvoice>
     public decimal TaxTotal { get; set; }
     public decimal GrandTotal { get; set; }
     public decimal PaidTotal { get; set; }
+    public decimal AppliedCreditTotal { get; set; }
     public decimal BalanceDue { get; set; }
     public bool IsActive { get; set; }
 }

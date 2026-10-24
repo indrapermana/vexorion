@@ -100,6 +100,17 @@ public class PosCheckoutPostgreSqlIntegrationTests
         var data = new CheckoutData();
         await using var db = new AppDbContext(options, new FixedTenantProvider(data.TenantId));
         db.Tenants.Add(new Tenant { Id = data.TenantId, Code = $"POS-{data.TenantId:N}", Name = "POS integration" });
+        var cashierUserName = $"cashier-{data.TenantId:N}";
+        var cashierEmail = $"cashier-{data.TenantId:N}@pos.test";
+        db.Users.Add(new User
+        {
+            Id = data.CashierId,
+            TenantId = data.TenantId,
+            UserName = cashierUserName,
+            NormalizedUserName = cashierUserName.ToUpperInvariant(),
+            Email = cashierEmail,
+            NormalizedEmail = cashierEmail.ToUpperInvariant(),
+        });
         db.ShiftSessions.Add(new ShiftSession
         {
             Id = data.ShiftId,

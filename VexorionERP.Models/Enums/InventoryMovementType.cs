@@ -11,5 +11,6 @@ public enum InventoryMovementType
     StockTransferOut = 7,
     StockTransferIn = 8,
     StockCountVarianceIncrease = 9,
-    StockCountVarianceDecrease = 10
+    StockCountVarianceDecrease = 10,
+    PosCustomerReturn = 11
 }

@@ -1,6 +1,9 @@
 import type {
   PosCheckoutRequest,
   PosCheckoutResponse,
+  PosRefundRequest,
+  PosRefundResponse,
+  PosRefundEligibleLinesResponse,
   PosSessionResponse,
   PosStockValidationRequest,
   PosStockValidationResponse,
@@ -20,6 +23,14 @@ export function validatePosStock(request: PosStockValidationRequest) {
 
 export function checkoutSale(request: PosCheckoutRequest) {
   return requestJson<PosCheckoutResponse>('/pos/checkout', 'POST', request)
+}
+
+export function refundSale(request: PosRefundRequest) {
+  return requestJson<PosRefundResponse>('/pos/refund', 'POST', request)
+}
+
+export function getPosRefundEligibleLines(salesInvoiceId: string) {
+  return requestJson<PosRefundEligibleLinesResponse>(`/pos/refund/${salesInvoiceId}/lines`)
 }
 
 export function openShiftApi(request: OpenShiftRequest) {

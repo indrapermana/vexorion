@@ -15,7 +15,7 @@ public class SalesInvoiceQueryService(
     protected override bool DefaultFilter => false;
 
     protected override IQueryable<SalesInvoice> ApplyFilter(IQueryable<SalesInvoice> query, bool outstandingOnly)
-        => outstandingOnly ? query.Where(x => x.GrandTotal > x.PaidTotal) : query;
+        => outstandingOnly ? query.Where(x => x.GrandTotal > x.PaidTotal + x.AppliedCreditTotal) : query;
 
     protected override IQueryable<SalesInvoice> ApplyOrdering(IQueryable<SalesInvoice> query)
         => query.OrderByDescending(x => x.InvoiceDate);

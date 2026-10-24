@@ -87,6 +87,8 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
     public DbSet<TenantPageVisit> TenantPageVisits => Set<TenantPageVisit>();
     public DbSet<ShiftSession> ShiftSessions => Set<ShiftSession>();
     public DbSet<PosCheckoutRecord> PosCheckoutRecords => Set<PosCheckoutRecord>();
+    public DbSet<PosRefundRecord> PosRefundRecords => Set<PosRefundRecord>();
+    public DbSet<PosRefundLine> PosRefundLines => Set<PosRefundLine>();
     public DbSet<ImportJob> ImportJobs => Set<ImportJob>();
     public DbSet<GeneratedDocument> GeneratedDocuments => Set<GeneratedDocument>();
 

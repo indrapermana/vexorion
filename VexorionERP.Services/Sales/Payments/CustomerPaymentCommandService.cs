@@ -53,7 +53,7 @@ public class CustomerPaymentCommandService(
             return ServiceResult<IEntityResponse<CustomerPayment>>.Failure(StatusCodes.Status400BadRequest, "Payments can only be allocated to active issued invoices.");
 
         var nextPaidTotal = salesInvoice.PaidTotal + createRequest.Amount;
-        if (nextPaidTotal > salesInvoice.GrandTotal)
+        if (nextPaidTotal + salesInvoice.AppliedCreditTotal > salesInvoice.GrandTotal)
             return ServiceResult<IEntityResponse<CustomerPayment>>.Failure(StatusCodes.Status400BadRequest, "Payment allocation exceeds the remaining balance.");
 
         var payment = new CustomerPayment

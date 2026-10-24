@@ -151,10 +151,10 @@ public class ReportingService(
         var openSalesInvoices = await dbContext.SalesInvoices
             .AsNoTracking()
             .Where(x => x.TenantId == tenantId
-                        && (x.GrandTotal - x.PaidTotal) > 0m
+                        && (x.GrandTotal - x.PaidTotal - x.AppliedCreditTotal) > 0m
                         && x.Status != InvoiceStatus.Draft
                         && x.Status != InvoiceStatus.Cancelled)
-            .Select(x => new { x.DueDate, BalanceDue = x.GrandTotal - x.PaidTotal })
+            .Select(x => new { x.DueDate, BalanceDue = x.GrandTotal - x.PaidTotal - x.AppliedCreditTotal })
             .ToListAsync(cancellationToken);
 
         var openPurchaseInvoices = await dbContext.PurchaseInvoices
@@ -215,7 +215,7 @@ public class ReportingService(
         var rows = await dbContext.SalesInvoices
             .AsNoTracking()
             .Where(x => x.TenantId == tenantId
-                        && (x.GrandTotal - x.PaidTotal) > 0m
+                        && (x.GrandTotal - x.PaidTotal - x.AppliedCreditTotal) > 0m
                         && x.Status != InvoiceStatus.Draft
                         && x.Status != InvoiceStatus.Cancelled)
             .Select(x => new
@@ -225,7 +225,7 @@ public class ReportingService(
                 CustomerName = x.Customer != null ? x.Customer.Name : string.Empty,
                 x.CurrencyCode,
                 x.DueDate,
-                BalanceDue = x.GrandTotal - x.PaidTotal,
+                BalanceDue = x.GrandTotal - x.PaidTotal - x.AppliedCreditTotal,
             })
             .ToListAsync(cancellationToken);
 

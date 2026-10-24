@@ -35,12 +35,17 @@ describe('PosHeader', () => {
   })
 
   it('shows Return button when canRefund=true', () => {
-    renderWithProviders(<PosHeader {...BASE_PROPS} canRefund />)
+    renderWithProviders(<PosHeader {...BASE_PROPS} canRefund isShiftOpen />)
     expect(screen.getByRole('button', { name: /return|retur|devolucion/i })).toBeInTheDocument()
   })
 
+  it('does NOT show Return button without an open shift', () => {
+    renderWithProviders(<PosHeader {...BASE_PROPS} canRefund isShiftOpen={false} />)
+    expect(screen.queryByRole('button', { name: /return|retur|devolucion/i })).not.toBeInTheDocument()
+  })
+
   it('uses the accessible primary palette for the outlined Return button', () => {
-    renderWithProviders(<PosHeader {...BASE_PROPS} canRefund />)
+    renderWithProviders(<PosHeader {...BASE_PROPS} canRefund isShiftOpen />)
     const returnButton = screen.getByRole('button', { name: /return|retur|devolucion/i })
     expect(returnButton).toHaveClass('MuiButton-colorPrimary')
     expect(returnButton).not.toHaveClass('MuiButton-colorSecondary')
@@ -48,7 +53,7 @@ describe('PosHeader', () => {
 
   it('calls onOpenReturn when Return button is clicked', () => {
     const onOpenReturn = vi.fn()
-    renderWithProviders(<PosHeader {...BASE_PROPS} canRefund onOpenReturn={onOpenReturn} />)
+    renderWithProviders(<PosHeader {...BASE_PROPS} canRefund isShiftOpen onOpenReturn={onOpenReturn} />)
     screen.getByRole('button', { name: /return|retur|devolucion/i }).click()
     expect(onOpenReturn).toHaveBeenCalledOnce()
   })

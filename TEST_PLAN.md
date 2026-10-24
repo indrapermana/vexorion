@@ -360,10 +360,14 @@
 
 | # | Scenario | Steps | Expected Result |
 |---|----------|-------|-----------------|
-| 2.7.1 | Open refund dialog | Click Return/Refund | Dialog opens with transaction ID field |
-| 2.7.2 | Valid return | Enter a valid transaction ID → select items → Confirm | Refund recorded; inventory restocked |
-| 2.7.3 | Invalid transaction ID | Enter non-existent ID | Error: transaction not found |
-| 2.7.4 | Partial return | Select only some items from the original sale | Only selected items refunded |
+| 2.7.1 | Open refund dialog | Open a cashier shift → click Return/Refund | Dialog opens; the action is unavailable without an open shift |
+| 2.7.2 | Find original POS sale | Search by invoice number | Original POS invoice and server-calculated remaining quantities are shown; non-POS invoices are rejected |
+| 2.7.3 | Reject unfulfilled sale | Search a POS delivery invoice whose shipment is not posted | Return is rejected; no credit note, payment, or stock movement is created |
+| 2.7.4 | Partial return to stock | Select a quantity within the remaining amount; choose Return to stock; enter reason; confirm | One refund request creates a linked partial credit note, capped cash refund using the original tender, audit event, and warehouse inventory movement |
+| 2.7.5 | Partial return write-off | Select a quantity within the remaining amount; choose Write off; confirm | Credit/refund is recorded; stock is not increased and no return-to-stock movement is written |
+| 2.7.6 | Unpaid invoice return | Return an eligible item from an unpaid invoice | Credit reduces invoice balance; no cash refund payment is created |
+| 2.7.7 | Reject excess quantity | Return more than sold minus prior POS returns | Conflict is shown; no additional records or stock changes are committed |
+| 2.7.8 | Unknown outcome recovery | Simulate a lost response after submission; reload/reopen and retry | Same payload and idempotency key are replayed; no duplicate credit note, payment, or inventory movement is created |
 
 ---
 

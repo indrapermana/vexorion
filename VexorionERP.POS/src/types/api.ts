@@ -68,6 +68,50 @@ export type PosCheckoutResponse = {
   }>
 }
 
+export type PosRefundRequest = {
+  idempotencyKey: string
+  shiftId: string
+  salesInvoiceId: string
+  reason: string
+  lines: Array<{
+    salesInvoiceLineId: string
+    quantity: number
+    returnToStock: boolean
+  }>
+}
+
+export type PosRefundResponse = {
+  refundId: string
+  salesInvoiceId: string
+  creditNoteId: string
+  refundPaymentId: string | null
+  creditNoteNumber: string
+  currencyCode: string
+  totalCreditAmount: number
+  refundAmount: number
+  appliedCreditAmount: number
+  paymentMethod: string | null
+  completedAtUtc: string
+  replayed: boolean
+  lines: Array<{
+    salesInvoiceLineId: string
+    productId: string
+    quantity: number
+    returnedToStock: boolean
+  }>
+}
+
+export type PosRefundEligibleLinesResponse = {
+  salesInvoiceId: string
+  lines: Array<{
+    salesInvoiceLineId: string
+    quantitySold: number
+    quantityReturned: number
+    quantityRemaining: number
+    canReturnToStock: boolean
+  }>
+}
+
 export type PosStockValidationResponse = {
   isValid: boolean
   insufficientItems: PosStockInsufficientItem[]
@@ -351,6 +395,7 @@ export type SalesInvoiceLineListItemResponse = {
   quantity: number
   unitPrice: number
   discountAmount: number
+  taxAmount: number
   lineTotal: number
   isActive: boolean
 }

@@ -1,18 +1,19 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { UndoRoundedIcon } from '@vexorion/ui'
 import { VxAlert, VxBox, VxButton, VxChip, VxCircularProgress, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxDivider, VxFormControl, VxInputLabel, VxMenuItem, VxSelect, VxStack, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
 import { useI18n } from '../../app/I18nContext'
 import { posLogger } from '../../lib/posLogger'
 import { ApiError, reportClientDiagnostic } from '../../lib/api/core'
 import {
-  createCustomerPayment,
-  createSalesInvoice,
-  createSalesInvoiceLine,
+  getPosRefundEligibleLines,
   getSalesInvoiceLines,
   getSalesInvoices,
+  refundSale,
 } from '../../lib/api'
 import type {
   ProductListItemResponse,
+  PosRefundRequest,
+  PosRefundResponse,
   SalesInvoiceLineListItemResponse,
   SalesInvoiceListItemResponse,
 } from '../../types/api'
@@ -24,6 +25,7 @@ type Props = {
   currencyCode: string
   cashierId: string
   cashierName: string
+  shiftId: string
 }
 
 type Step = 'search' | 'review' | 'success'
@@ -39,6 +41,7 @@ const REASONS = [
 ] as const
 
 type Reason = (typeof REASONS)[number]
+const getPendingRefundStorageKey = (cashierId: string) => `vexorionerp.pos.pendingRefund.${cashierId}`
 
 export default function ReturnRefundDialog({
   open,
@@ -47,6 +50,7 @@ export default function ReturnRefundDialog({
   currencyCode,
   cashierId,
   cashierName,
+  shiftId,
 }: Props) {
   const { t } = useI18n()
 
@@ -62,16 +66,42 @@ export default function ReturnRefundDialog({
   const [lines, setLines] = useState<SalesInvoiceLineListItemResponse[]>([])
   const [isLoadingLines, setIsLoadingLines] = useState(false)
   const [returnQtys, setReturnQtys] = useState<ReturnQty>({})
+  const [remainingQtys, setRemainingQtys] = useState<ReturnQty>({})
+  const [canRestock, setCanRestock] = useState<Record<string, boolean>>({})
+  const [returnToStock, setReturnToStock] = useState<Record<string, boolean>>({})
   const [reason, setReason] = useState<Reason>('return.reason.defective')
   const [otherReason, setOtherReason] = useState('')
 
   // --- Processing state ---
   const [isProcessing, setIsProcessing] = useState(false)
+  const [hasAttempted, setHasAttempted] = useState(false)
   const [processError, setProcessError] = useState<string | null>(null)
-  const [successCreditNoteId, setSuccessCreditNoteId] = useState<string | null>(null)
+  const [successResponse, setSuccessResponse] = useState<PosRefundResponse | null>(null)
+  const [pendingRecovery, setPendingRecovery] = useState(false)
+  const idempotencyKey = useRef<string | null>(null)
+  const pendingRequest = useRef<PosRefundRequest | null>(null)
 
   // Reset all state when dialog closes
   useEffect(() => {
+    if (open) {
+      const pending = window.sessionStorage.getItem(getPendingRefundStorageKey(cashierId))
+      if (pending) {
+        try {
+          const saved = JSON.parse(pending) as { request: PosRefundRequest; invoiceNumber: string }
+          if (saved.request?.idempotencyKey && saved.request.salesInvoiceId && Array.isArray(saved.request.lines)) {
+            pendingRequest.current = saved.request
+            idempotencyKey.current = saved.request.idempotencyKey
+            setSearchQuery(saved.invoiceNumber ?? '')
+            setPendingRecovery(true)
+            setHasAttempted(true)
+          }
+        } catch {
+          window.sessionStorage.removeItem(getPendingRefundStorageKey(cashierId))
+        }
+      }
+      return
+    }
+
     if (!open) {
       const tid = setTimeout(() => {
         setStep('search')
@@ -80,14 +110,21 @@ export default function ReturnRefundDialog({
         setFoundInvoice(null)
         setLines([])
         setReturnQtys({})
+        setRemainingQtys({})
+        setCanRestock({})
+        setReturnToStock({})
         setReason('return.reason.defective')
         setOtherReason('')
+        setHasAttempted(false)
+        setPendingRecovery(false)
         setProcessError(null)
-        setSuccessCreditNoteId(null)
+        setSuccessResponse(null)
+        idempotencyKey.current = null
+        pendingRequest.current = null
       }, 300)
       return () => clearTimeout(tid)
     }
-  }, [open])
+  }, [open, cashierId])
 
   const productMap = useMemo(() => {
     const m = new Map<string, ProductListItemResponse>()
@@ -116,14 +153,28 @@ export default function ReturnRefundDialog({
       // ---- Item 10: Load invoice lines ----
       setIsLoadingLines(true)
       try {
-        const invoiceLines = await getSalesInvoiceLines(match.id)
+        const [invoiceLines, eligible] = await Promise.all([
+          getSalesInvoiceLines(match.id),
+          getPosRefundEligibleLines(match.id),
+        ])
         const activeLines = invoiceLines.filter((l) => l.isActive && l.quantity > 0)
         setLines(activeLines)
+        const eligibleById = new Map(eligible.lines.map((line) => [line.salesInvoiceLineId, line]))
         const initial: ReturnQty = {}
+        const remaining: ReturnQty = {}
+        const restockable: Record<string, boolean> = {}
+        const defaultRestock: Record<string, boolean> = {}
         activeLines.forEach((l) => {
           initial[l.id] = 0
+          const eligibility = eligibleById.get(l.id)
+          remaining[l.id] = eligibility?.quantityRemaining ?? 0
+          restockable[l.id] = eligibility?.canReturnToStock ?? false
+          defaultRestock[l.id] = eligibility?.canReturnToStock ?? false
         })
         setReturnQtys(initial)
+        setRemainingQtys(remaining)
+        setCanRestock(restockable)
+        setReturnToStock(defaultRestock)
         setStep('review')
       } finally {
         setIsLoadingLines(false)
@@ -144,10 +195,53 @@ export default function ReturnRefundDialog({
   const refundTotal = returnLines.reduce((sum, l) => {
     const qty = returnQtys[l.id] ?? 0
     const proRataDiscount = l.quantity > 0 ? (l.discountAmount / l.quantity) * qty : 0
-    return sum + l.unitPrice * qty - proRataDiscount
+    const proRataTax = l.quantity > 0 ? ((l.taxAmount ?? 0) / l.quantity) * qty : 0
+    return sum + l.unitPrice * qty - proRataDiscount + proRataTax
   }, 0)
 
-  // ---- Item 11 + 12: Process return — credit note + refund payment + audit ----
+  const submitRefund = async (request: PosRefundRequest) => {
+    setIsProcessing(true)
+    setHasAttempted(true)
+    setProcessError(null)
+    try {
+      const result = await refundSale(request)
+      window.sessionStorage.removeItem(getPendingRefundStorageKey(cashierId))
+      pendingRequest.current = null
+      setPendingRecovery(false)
+      posLogger.info('refund.success', {
+        actorId: cashierId,
+        actorName: cashierName,
+        reason: request.reason,
+        originalInvoiceId: request.salesInvoiceId,
+        creditNoteId: result.creditNoteId,
+        refundId: result.refundId,
+        refundAmount: result.refundAmount,
+      })
+      setSuccessResponse(result)
+      setStep('success')
+    } catch (error) {
+      const definitiveFailure = error instanceof ApiError && error.status >= 400 && error.status < 500
+      if (definitiveFailure) {
+        window.sessionStorage.removeItem(getPendingRefundStorageKey(cashierId))
+        pendingRequest.current = null
+        idempotencyKey.current = null
+        setPendingRecovery(false)
+        setHasAttempted(false)
+      } else {
+        setPendingRecovery(true)
+      }
+      setProcessError(error instanceof ApiError ? error.message : t('return.unknownOutcome'))
+      posLogger.error('refund.failed')
+      if (!(error instanceof ApiError)) reportClientDiagnostic('operation.failed', error)
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  const retryPendingRefund = () => {
+    if (pendingRequest.current) void submitRefund(pendingRequest.current)
+  }
+
   const handleConfirm = async () => {
     if (!foundInvoice) return
     setProcessError(null)
@@ -161,86 +255,37 @@ export default function ReturnRefundDialog({
       return
     }
 
-    setIsProcessing(true)
-    try {
-      const now = new Date()
-      const dateStr = now.toISOString().slice(0, 10)
-      const creditNoteNotes = [
-        t('return.creditNote').replace('{invoiceNumber}', foundInvoice.invoiceNumber),
-        `Reason: ${effectiveReason}`,
-        `Cashier: ${cashierName}`,
-        now.toISOString(),
-      ].join(' — ')
-
-      // Step 1: Create credit note invoice
-      const creditNote = await createSalesInvoice({
-        invoiceNumber: `CR-${foundInvoice.invoiceNumber}-${now.getTime()}`,
-        customerId: foundInvoice.customerId,
-        invoiceDate: dateStr,
-        dueDate: dateStr,
-        currencyCode: foundInvoice.currencyCode,
-        status: 2, // posted / approved
-        notes: creditNoteNotes,
-      })
-
-      // Step 2: Create credit note lines (returned quantities)
-      for (const line of returnLines) {
-        const qty = returnQtys[line.id] ?? 0
-        const proRataDiscount =
-          line.quantity > 0 ? (line.discountAmount / line.quantity) * qty : 0
-        await createSalesInvoiceLine(creditNote.id, {
-          productId: line.productId,
-          quantity: qty,
-          unitPrice: line.unitPrice,
-          discountAmount: proRataDiscount,
-          taxAmount: 0,
-        })
-      }
-
-      // Step 3: Create refund payment — negative amount credits back to customer
-      const refundPayment = await createCustomerPayment({
-        customerId: foundInvoice.customerId,
-        salesInvoiceId: creditNote.id,
-        amount: -refundTotal,
-        currencyCode: foundInvoice.currencyCode,
-        paymentDate: dateStr,
-        notes: t('return.refundPayment').replace(
-          '{invoiceNumber}',
-          foundInvoice.invoiceNumber,
-        ),
-      })
-
-      // Step 4: Structured audit trail
-      posLogger.info('refund.success', {
-        actorId: cashierId,
-        actorName: cashierName,
-        reason: effectiveReason,
-        originalInvoiceId: foundInvoice.id,
-        originalInvoiceNumber: foundInvoice.invoiceNumber,
-        creditNoteId: creditNote.id,
-        refundPaymentId: refundPayment.id,
-        refundTotal,
-        returnedLines: returnLines.map((l) => ({
-          productId: l.productId,
-          qty: returnQtys[l.id],
-        })),
-      })
-
-      setSuccessCreditNoteId(creditNote.id)
-      setStep('success')
-    } catch (error) {
-      setProcessError(error instanceof ApiError ? error.message : t('return.error'))
-      posLogger.error('refund.failed')
-      if (!(error instanceof ApiError)) reportClientDiagnostic('operation.failed', error)
-    } finally {
-      setIsProcessing(false)
+    idempotencyKey.current ??= crypto.randomUUID()
+    const request: PosRefundRequest = {
+      idempotencyKey: idempotencyKey.current,
+      shiftId,
+      salesInvoiceId: foundInvoice.id,
+      reason: effectiveReason,
+      lines: returnLines.map((line) => ({
+        salesInvoiceLineId: line.id,
+        quantity: returnQtys[line.id] ?? 0,
+        returnToStock: returnToStock[line.id] ?? false,
+      })),
     }
+    pendingRequest.current = request
+    try {
+      window.sessionStorage.setItem(getPendingRefundStorageKey(cashierId), JSON.stringify({
+        request,
+        invoiceNumber: foundInvoice.invoiceNumber,
+      }))
+    } catch {
+      pendingRequest.current = null
+      idempotencyKey.current = null
+      setProcessError(t('return.recoveryUnavailable'))
+      return
+    }
+    await submitRefund(request)
   }
 
   return (
     <VxDialog
       open={open}
-      onClose={isProcessing ? undefined : onClose}
+      onClose={isProcessing || pendingRecovery ? undefined : onClose}
       fullWidth
       maxWidth="md"
     >
@@ -257,6 +302,7 @@ export default function ReturnRefundDialog({
               label={t('return.searchLabel')}
               placeholder={t('return.searchPlaceholder')}
               value={searchQuery}
+              disabled={pendingRecovery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') void handleSearch()
@@ -264,7 +310,11 @@ export default function ReturnRefundDialog({
               autoFocus
               fullWidth
             />
-            {searchError ? <VxAlert severity="warning" role="alert">{searchError}</VxAlert> : null}
+            {pendingRecovery || searchError ? (
+              <VxAlert severity={pendingRecovery ? 'error' : 'warning'} role="alert">
+                {pendingRecovery ? t('return.unknownOutcome') : searchError}
+              </VxAlert>
+            ) : null}
           </VxStack>
         )}
 
@@ -310,8 +360,10 @@ export default function ReturnRefundDialog({
                     <VxTableRow>
                       <VxTableCell>{t('return.product')}</VxTableCell>
                       <VxTableCell align="right">{t('return.qtySold')}</VxTableCell>
+                      <VxTableCell align="right">{t('return.qtyRemaining')}</VxTableCell>
                       <VxTableCell align="right">{t('return.unitPrice')}</VxTableCell>
                       <VxTableCell align="right">{t('return.qtyLabel')}</VxTableCell>
+                      <VxTableCell>{t('return.disposition')}</VxTableCell>
                     </VxTableRow>
                   </VxTableHead>
                   <VxTableBody>
@@ -324,6 +376,7 @@ export default function ReturnRefundDialog({
                         <VxTableRow key={line.id}>
                           <VxTableCell>{productLabel}</VxTableCell>
                           <VxTableCell align="right">{line.quantity}</VxTableCell>
+                          <VxTableCell align="right">{remainingQtys[line.id] ?? 0}</VxTableCell>
                           <VxTableCell align="right">
                             {line.unitPrice.toFixed(2)}
                           </VxTableCell>
@@ -332,18 +385,36 @@ export default function ReturnRefundDialog({
                               type="number"
                               size="small"
                               value={returnQtys[line.id] ?? 0}
+                              disabled={hasAttempted || (remainingQtys[line.id] ?? 0) <= 0}
                               slotProps={{
-                                htmlInput: { min: 0, max: line.quantity, step: 1 },
+                                htmlInput: { min: 0, max: remainingQtys[line.id] ?? 0, step: 1 },
                               }}
                               onChange={(e) => {
                                 const val = Math.min(
-                                  line.quantity,
+                                  remainingQtys[line.id] ?? 0,
                                   Math.max(0, Number(e.target.value)),
                                 )
                                 setReturnQtys((prev) => ({ ...prev, [line.id]: val }))
                               }}
                               sx={{ width: 84 }}
                             />
+                          </VxTableCell>
+                          <VxTableCell>
+                            <VxFormControl size="small" sx={{ minWidth: 130 }}>
+                              <VxInputLabel>{t('return.disposition')}</VxInputLabel>
+                              <VxSelect
+                                value={returnToStock[line.id] ? 'stock' : 'writeoff'}
+                                label={t('return.disposition')}
+                                disabled={hasAttempted || (remainingQtys[line.id] ?? 0) <= 0}
+                                onChange={(e) => setReturnToStock((prev) => ({
+                                  ...prev,
+                                  [line.id]: e.target.value === 'stock',
+                                }))}
+                              >
+                                <VxMenuItem value="stock" disabled={!canRestock[line.id]}>{t('return.restock')}</VxMenuItem>
+                                <VxMenuItem value="writeoff">{t('return.writeOff')}</VxMenuItem>
+                              </VxSelect>
+                            </VxFormControl>
                           </VxTableCell>
                         </VxTableRow>
                       )
@@ -361,6 +432,7 @@ export default function ReturnRefundDialog({
               <VxSelect
                 value={reason}
                 label={t('return.reason')}
+                disabled={hasAttempted}
                 onChange={(e) => setReason(e.target.value as Reason)}
               >
                 {REASONS.map((r) => (
@@ -376,6 +448,7 @@ export default function ReturnRefundDialog({
                 label={t('return.reasonOther')}
                 value={otherReason}
                 onChange={(e) => setOtherReason(e.target.value)}
+                disabled={hasAttempted}
                 fullWidth
                 required
               />
@@ -411,31 +484,51 @@ export default function ReturnRefundDialog({
         )}
 
         {/* ---- Step: Success ---- */}
-        {step === 'success' && successCreditNoteId && (
-          <VxAlert severity="success" role="status">
-            {t('return.success').replace('{creditNoteId}', successCreditNoteId)}
-          </VxAlert>
+        {step === 'success' && successResponse && (
+          <VxStack spacing={1}>
+            <VxAlert severity="success" role="status">
+              {t('return.success').replace('{creditNoteId}', successResponse.creditNoteNumber)}
+            </VxAlert>
+            <VxTypography>{t('return.refundTotal')}: {currencyCode} {successResponse.totalCreditAmount.toFixed(2)}</VxTypography>
+            <VxTypography>{t('return.cashRefund')}: {currencyCode} {successResponse.refundAmount.toFixed(2)}</VxTypography>
+            <VxTypography>{t('return.invoiceCredit')}: {currencyCode} {successResponse.appliedCreditAmount.toFixed(2)}</VxTypography>
+            {successResponse.paymentMethod ? (
+              <VxTypography>{t('return.paymentMethod')}: {successResponse.paymentMethod}</VxTypography>
+            ) : null}
+          </VxStack>
         )}
       </VxDialogContent>
 
       <VxDialogActions>
         {step === 'search' && (
           <>
-            <VxButton onClick={onClose}>{t('common.cancel')}</VxButton>
-            <VxButton
-              variant="contained"
-              onClick={() => void handleSearch()}
-              disabled={!searchQuery.trim() || isSearching}
-              startIcon={isSearching ? <VxCircularProgress size={16} /> : null}
-            >
-              {t('return.searchButton')}
-            </VxButton>
+            <VxButton onClick={onClose} disabled={pendingRecovery}>{t('common.cancel')}</VxButton>
+            {pendingRecovery ? (
+              <VxButton
+                variant="contained"
+                onClick={retryPendingRefund}
+                disabled={isProcessing}
+                startIcon={isProcessing ? <VxCircularProgress size={16} /> : null}
+              >
+                {isProcessing ? t('return.processing') : t('return.retrySame')}
+              </VxButton>
+            ) : (
+              <VxButton
+                variant="contained"
+                onClick={() => void handleSearch()}
+                disabled={!searchQuery.trim() || isSearching}
+                startIcon={isSearching ? <VxCircularProgress size={16} /> : null}
+              >
+                {t('return.searchButton')}
+              </VxButton>
+            )}
           </>
         )}
 
         {step === 'review' && (
           <>
             <VxButton
+              disabled={hasAttempted}
               onClick={() => {
                 setStep('search')
                 setFoundInvoice(null)
@@ -444,7 +537,7 @@ export default function ReturnRefundDialog({
             >
               {t('return.back')}
             </VxButton>
-            <VxButton onClick={onClose}>{t('common.cancel')}</VxButton>
+            <VxButton onClick={onClose} disabled={isProcessing}>{t('common.cancel')}</VxButton>
             <VxButton
               variant="contained"
               color="warning"
@@ -457,7 +550,7 @@ export default function ReturnRefundDialog({
               }
               startIcon={isProcessing ? <VxCircularProgress size={16} /> : null}
             >
-              {isProcessing ? t('return.processing') : t('return.confirm')}
+              {isProcessing ? t('return.processing') : t(pendingRecovery ? 'return.retrySame' : 'return.confirm')}
             </VxButton>
           </>
         )}

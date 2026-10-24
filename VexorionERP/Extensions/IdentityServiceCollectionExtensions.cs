@@ -143,6 +143,7 @@ public static class IdentityServiceCollectionExtensions
         services.TryAddScoped<CustomerPaymentCommandService>();
         services.TryAddSingleton<IPosCheckoutTransactionObserver, NoOpPosCheckoutTransactionObserver>();
         services.AddScoped<IPosCheckoutService, PosCheckoutService>();
+        services.AddScoped<IPosRefundService, PosRefundService>();
         services.AddScoped<IApplicationProvisioner, ApplicationProvisioner>();
         services.AddScoped<IApplicationRuntimeValidator, ApplicationRuntimeValidator>();
 

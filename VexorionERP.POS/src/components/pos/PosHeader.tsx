@@ -56,7 +56,7 @@ export function PosHeader({ canManageRoles, currencyCode, isShiftOpen, canCloseS
               {t('shift.close.button')}
             </VxButton>
           ) : null}
-          {canRefund ? (
+          {canRefund && isShiftOpen ? (
             <VxButton variant="outlined" color="primary" startIcon={<UndoRoundedIcon />} onClick={onOpenReturn}>
               {t('return.button')}
             </VxButton>

@@ -96,6 +96,35 @@ public class PosController(AppDbContext dbContext, ICurrentTenantProvider curren
         return ToActionResult(result);
     }
 
+    [HttpGet("refund/{salesInvoiceId:guid}/lines")]
+    [Authorize(Policy = AppPermissions.Pos.Refund)]
+    public async Task<ActionResult<PosRefundEligibleLinesResponse>> GetRefundEligibleLines(
+        Guid salesInvoiceId,
+        [FromServices] IPosRefundService refundService,
+        CancellationToken cancellationToken)
+    {
+        var result = await refundService.GetEligibleLinesAsync(salesInvoiceId, cancellationToken);
+        return ToActionResult(result);
+    }
+
+    /// <summary>
+    /// Applies a POS return atomically, including its credit note, any cash refund, inventory return, and audit entry.
+    /// </summary>
+    [HttpPost("refund")]
+    [Authorize(Policy = AppPermissions.Pos.Refund)]
+    public async Task<ActionResult<PosRefundResponse>> Refund(
+        [FromBody] PosRefundRequest request,
+        [FromServices] IPosRefundService refundService,
+        CancellationToken cancellationToken)
+    {
+        var cashierId = GetCurrentUserId();
+        if (!cashierId.HasValue)
+            return Unauthorized();
+
+        var result = await refundService.RefundAsync(cashierId.Value, request, cancellationToken);
+        return ToActionResult(result);
+    }
+
     /// <summary>
     /// Opens a new shift for the currently authenticated cashier.
     /// Returns 409 Conflict if the cashier already has an open shift.

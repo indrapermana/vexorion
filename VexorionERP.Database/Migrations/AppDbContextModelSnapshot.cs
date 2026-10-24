@@ -1309,6 +1309,9 @@ namespace VexorionERP.Database.Migrations
                     b.Property<int>("MovementType")
                         .HasColumnType("integer");
 
+                    b.Property<Guid?>("PosRefundRecordId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uuid");
 
@@ -1369,6 +1372,8 @@ namespace VexorionERP.Database.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PosRefundRecordId");
 
                     b.HasIndex("ProductId");
 
@@ -1791,6 +1796,151 @@ namespace VexorionERP.Database.Migrations
                     b.HasIndex("TenantId", "ShiftId");
 
                     b.ToTable("PosCheckoutRecord", (string)null);
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.PosRefundLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<Guid>("PosRefundRecordId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<bool>("ReturnToStock")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("SalesInvoiceLineId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PosRefundRecordId");
+
+                    b.HasIndex("SalesInvoiceLineId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "SalesInvoiceLineId");
+
+                    b.HasIndex("TenantId", "PosRefundRecordId", "SalesInvoiceLineId")
+                        .IsUnique();
+
+                    b.ToTable("PosRefundLine", (string)null);
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.PosRefundRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("AppliedCreditAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<Guid>("CashierId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CompletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreditNoteId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("IdempotencyKey")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("PaymentMethod")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<decimal>("RefundAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<Guid?>("RefundPaymentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RequestHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("ResponseJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("SalesInvoiceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ShiftId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("TotalCreditAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreditNoteId");
+
+                    b.HasIndex("RefundPaymentId");
+
+                    b.HasIndex("SalesInvoiceId");
+
+                    b.HasIndex("ShiftId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "IdempotencyKey")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "SalesInvoiceId");
+
+                    b.HasIndex("TenantId", "ShiftId");
+
+                    b.ToTable("PosRefundRecord", (string)null);
                 });
 
             modelBuilder.Entity("VexorionERP.Models.Product", b =>
@@ -2786,6 +2936,10 @@ namespace VexorionERP.Database.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<decimal>("AppliedCreditTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -4575,6 +4729,11 @@ namespace VexorionERP.Database.Migrations
 
             modelBuilder.Entity("VexorionERP.Models.InventoryMovement", b =>
                 {
+                    b.HasOne("VexorionERP.Models.PosRefundRecord", null)
+                        .WithMany()
+                        .HasForeignKey("PosRefundRecordId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("VexorionERP.Models.Product", "Product")
                         .WithMany()
                         .HasForeignKey("ProductId")
@@ -4723,6 +4882,67 @@ namespace VexorionERP.Database.Migrations
 
             modelBuilder.Entity("VexorionERP.Models.PosCheckoutRecord", b =>
                 {
+                    b.HasOne("VexorionERP.Models.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.PosRefundLine", b =>
+                {
+                    b.HasOne("VexorionERP.Models.PosRefundRecord", "Refund")
+                        .WithMany("Lines")
+                        .HasForeignKey("PosRefundRecordId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VexorionERP.Models.SalesInvoiceLine", "SalesInvoiceLine")
+                        .WithMany()
+                        .HasForeignKey("SalesInvoiceLineId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("VexorionERP.Models.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Refund");
+
+                    b.Navigation("SalesInvoiceLine");
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.PosRefundRecord", b =>
+                {
+                    b.HasOne("VexorionERP.Models.SalesInvoice", null)
+                        .WithMany()
+                        .HasForeignKey("CreditNoteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("VexorionERP.Models.CustomerPayment", null)
+                        .WithMany()
+                        .HasForeignKey("RefundPaymentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("VexorionERP.Models.SalesInvoice", null)
+                        .WithMany()
+                        .HasForeignKey("SalesInvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("VexorionERP.Models.ShiftSession", null)
+                        .WithMany()
+                        .HasForeignKey("ShiftId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("VexorionERP.Models.Tenant", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
@@ -5668,6 +5888,11 @@ namespace VexorionERP.Database.Migrations
                     b.Navigation("Lines");
 
                     b.Navigation("ReversalEntries");
+                });
+
+            modelBuilder.Entity("VexorionERP.Models.PosRefundRecord", b =>
+                {
+                    b.Navigation("Lines");
                 });
 
             modelBuilder.Entity("VexorionERP.Models.Product", b =>

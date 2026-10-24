@@ -278,7 +278,7 @@ public class SalesInvoiceCommandService : BaseCommandService<SalesInvoice>
             return ServiceResult<SalesInvoiceDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Payments can only be allocated to active issued invoices.");
 
         var nextPaidTotal = invoice.PaidTotal + amount;
-        if (nextPaidTotal > invoice.GrandTotal)
+        if (nextPaidTotal + invoice.AppliedCreditTotal > invoice.GrandTotal)
             return ServiceResult<SalesInvoiceDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Payment allocation exceeds the remaining balance.");
 
         invoice.PaidTotal = nextPaidTotal;
