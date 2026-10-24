@@ -50,7 +50,7 @@ Percentage-complete labels are intentionally not used. Capability-inventory chec
 | `dotnet package list --project VexorionERP.sln --vulnerable --include-transitive --no-restore` | PASS | NuGet reported no vulnerable direct or transitive packages in all nine projects, including AWSSDK.S3 4.0.104.5. |
 | `npm run test:run` | PASS | 195/195 frontend tests: Main UI 94, AdminUI 30, POS 71, plus 7/7 isolated E2E tenant-lifecycle tests. The command also validates the local API routing contract for all three applications before running unit tests. |
 | `npm run build` | PASS WITH WARNING | All four frontend packages built; Main UI emitted the known chunk-size warning. |
-| POS checkout/refund validation | PASS; FEAT-POS-01B and FEAT-POS-02 acceptance complete | POS frontend tests 96/96, production build, typecheck, and lint (zero errors; five existing hook warnings); guarded PostgreSQL checkout and refund integrations each pass 1/1; clean `vexorionerp_test` and owner-confirmed production-like `vexorionerp` both include `20261024053601_AddPosRefundWorkflow`; authenticated combined checkout/refund Playwright spec passes 7/7 with isolated tenant cleanup and orphan check. Full solution tests: 932 passed/2 guarded PostgreSQL tests skipped. Broader release rollback/forward-fix rehearsal remains under P1-5. |
+| POS checkout/refund and cashier UX validation | PASS; FEAT-POS-01B/02 and UX-POS-01/02 locally accepted | POS frontend tests 97/97, production build, typecheck, and lint (zero errors; five existing hook warnings); guarded PostgreSQL checkout and refund integrations each pass 1/1; authenticated combined checkout/refund/responsive Playwright spec passes 8/8 with isolated tenant cleanup and orphan check. Responsive run covers 390/768/1024/1440 px with no document overflow. Clean `vexorionerp_test` and owner-confirmed production-like `vexorionerp` include `20261024053601_AddPosRefundWorkflow`. Full solution tests: 932 passed/2 guarded PostgreSQL tests skipped. Broader release rollback/forward-fix rehearsal remains under P1-5. |
 | EF migration model state | PASS | `dotnet ef migrations has-pending-model-changes` reports no model change since the last migration; existing migrations were preserved. All five migrations were applied independently to empty Neon staging and production databases. A production-like upgrade rehearsal remains unvalidated. |
 | Cloudflare frontend to production API | OWNER CONFIRMED | Exact production CORS checks passed and login succeeds on Main UI, Admin UI, and POS after all three were rebuilt against the production Cloud Run `/api` URL. This confirms deployed authentication routing, not full workflow or release validation. |
 | Cloudflare R2 integration | OWNER CONFIRMED | Product-image delivery, private-document upload/preview/download, product/document/project deletion cleanup, and signed-URL expiry work against the configured real buckets. |
@@ -595,8 +595,8 @@ Scope: Adjustments, Counts, Transfers, Receipts, Shipments, balances, and moveme
 
 **Plan**
 
-- [ ] `UX-POS-01` Redesign around select/scan → review cart/customer → payment, with a usable minimum cart width and deliberate single-column tablet/mobile mode.
-- [ ] `UX-POS-02` Replace the six-column cart with compact line items exposing increment/decrement/direct quantity, discount, stock warning, remove, and total.
+- [x] `UX-POS-01` Redesign around select/scan → review cart/customer → payment, with a usable minimum cart width and deliberate single-column tablet/mobile mode. Completed 24 October 2026: mobile POS now has explicit Catalog and Cart/Payment steps with Review and Back actions; desktop retains side-by-side work areas with a 380 px minimum cart track. The authenticated E2E matrix passes without document overflow at 390, 768, 1024, and 1440 px.
+- [x] `UX-POS-02` Replace the six-column cart with compact line items exposing increment/decrement/direct quantity, discount, stock warning, remove, and total. Completed 24 October 2026: cart lines are product-first and wrap on narrow screens, quantity steppers and direct numeric edit are keyboard accessible, discount is numeric, shortages show requested/available quantities, and remove/line total remain visible. Cart accessibility/interaction tests pass within the 97/97 POS suite.
 - [ ] `UX-POS-03` Keep scanner/search and high-frequency product selection persistent; group shift/history/returns/settings as clearly labelled secondary actions.
 - [ ] `UX-POS-04` Make payment a focused step with tender presets, method, amount due, change, validation, progress, retry/recovery, explicit success, and duplicate prevention.
 - [ ] `UX-POS-05` Improve shift, history, receipt, return/refund, conflict, and customer dialogs for touch, keyboard, long content, and consequences.
@@ -626,7 +626,11 @@ Scope: Adjustments, Counts, Transfers, Receipts, Shipments, balances, and moveme
   - Authenticated POS Playwright validation passed within the combined suite (7/7 including setup) on 24 October 2026 against the local API: it provisions customer/product/warehouse/stock through the isolated tenant API, creates a POS sale, submits a real partial refund, drops the first committed response, verifies automatic same-key replay and persisted invoice/inventory balances, then cleans the tenant and passes the orphan check. Node received the locally exported development certificate only for this run; TLS validation remained enabled.
   - Migration upgrade rehearsal: owner-confirmed against the production-like local `vexorionerp` database on 24 October 2026; verified latest migration is `20261024053601_AddPosRefundWorkflow`. The clean-database application and isolated refund transaction proof also pass.
   - D7 approvals and D9 ledger posting are deferred; POS-02 retains the existing `pos.refund` authorization and current no-new-ledger-posting behavior.
-- [ ] `FEAT-POS-03` Decide whether pilot needs hold/resume, void reason, manager override, cash movement, end-of-day reconciliation, offline mode, or hardware integration before implementing them.
+- [x] `FEAT-POS-03` Decide the first-pilot POS scope before implementing optional capabilities. Decision recorded 24 October 2026 for a cash-capable pilot:
+  - Include shift cash-in/out movements and end-of-shift reconciliation. Expected cash is opening float + cash sales - cash refunds + cash-in - cash-out; compare with counted cash, record the variance, and require a reason when it is non-zero. Keep card/transfer totals separately visible. This is operational till tracking, not D9 general-ledger posting.
+  - Do not add a separate post-sale void/delete operation. Uncommitted cart edits can be discarded; completed sales are corrected through the POS return/refund flow. Preserve a reason and audit trail for any future persisted pre-completion void.
+  - Defer hold/resume, generic manager override, and offline mode until pilot evidence supports them. Initial hardware scope is keyboard-wedge scanning and browser printing; defer model-specific scanner/printer/cash-drawer integration until target devices are confirmed.
+- [ ] `FEAT-POS-04` Implement shift cash-in/out and end-of-shift reconciliation for the cash-capable pilot. Add audited shift-scoped movement records, expected-cash and tender summaries, counted-cash variance, required explanation for non-zero variance, POS UI and localization, and unit/API/E2E coverage. Do not create general-ledger entries; D9 remains deferred.
 
 ### 5.12 Review coverage and completion evidence
 
@@ -634,7 +638,7 @@ Scope: Adjustments, Counts, Transfers, Receipts, Shipments, balances, and moveme
 |---|---|---|---|
 | Main UI | Login, dashboard, 35 distinct protected routes, feature pages, grids, panels, dialogs, API actions, shell, responsive CSS | Source review plus authenticated 1440×900 and 390×844 rendering; no navigation/console/page errors; seven overflow routes identified across the two viewports | Interactive dialog/action states, dark mode, 768/1024 widths, zoom, and populated edge cases |
 | AdminUI | Login, dashboard, tenants, users, menu configuration, dialogs, shell | Source review plus authenticated 1440×900 and 390×844 rendering; no navigation/console/page errors | Interactive action states, dark mode, 768/1024 widths, metric-contract reconciliation, and populated edge cases |
-| POS | Login, sale workspace, product catalog, cart/payment, shifts, receipts/history, returns/refunds, conflicts, admin | Source review plus authenticated 1440×900 and 390×844 rendering; no navigation/console/page errors; both narrow routes overflow | Read-only dialog inspection, 1024×768 hardware-oriented pass, populated cart, scanner/keyboard, dark mode, receipt, and mutation recovery states |
+| POS | Login, sale workspace, product catalog, cart/payment, shifts, receipts/history, returns/refunds, conflicts, admin | Source review plus authenticated 1440×900 and 390×844 rendering; cashier workspace passes authenticated 390/768/1024/1440 browser overflow checks after UX-POS-01/02. Initial POS Admin narrow-table overflow remains. Checkout/refund browser flows pass; existing MUI tooltip/row-whitespace console warnings were observed during populated-cart acceptance. | POS Admin narrow-table treatment, 1024×768 hardware-oriented pass, populated edge cases, scanner/keyboard, dark mode, receipt printing, and wider recovery/accessibility acceptance |
 
 - [x] `E2E-FND-01` Provision one isolated automation tenant for every Playwright run and make it the default tenant for every E2E project and test:
   - Use environment-provided SystemAdmin/control-plane credentials only in global setup; never embed them in source, reports, traces, screenshots, or browser storage distributed to individual tests.
@@ -669,7 +673,7 @@ Exit criteria:
 
 ### Milestone UX-2 — POS safety and usability
 
-Scope: `UX-POS-*`, `FEAT-POS-01`, and `FEAT-POS-02`; decide `FEAT-POS-03` separately.
+Scope: `UX-POS-*`, `FEAT-POS-01`, `FEAT-POS-02`, and the approved cash-control scope in `FEAT-POS-04`; `FEAT-POS-03` is decided, with hold/resume, manager override, offline mode, and model-specific hardware deferred.
 
 Exit criteria:
 

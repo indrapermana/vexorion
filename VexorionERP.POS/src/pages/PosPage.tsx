@@ -1,4 +1,4 @@
-import { VxBox, VxPageFeedback, VxStack } from '@vexorion/ui'
+import { VxBox, VxButton, VxPageFeedback, VxStack, VxTab, VxTabs } from '@vexorion/ui'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTransactionHistory } from '../app/transactionHistoryStore'
@@ -59,6 +59,7 @@ export default function PosPage() {
 
   const [isCloseShiftOpen, setIsCloseShiftOpen] = useState(false)
   const [isReturnOpen, setIsReturnOpen] = useState(false)
+  const [mobileSaleStep, setMobileSaleStep] = useState<'catalog' | 'payment'>('catalog')
 
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>(GUEST_CUSTOMER_TAG)
   const [selectedWarehouseId, setSelectedWarehouseId] = useState('')
@@ -424,6 +425,7 @@ export default function PosPage() {
       })
 
       setCart([])
+      setMobileSaleStep('catalog')
       setNotes('')
       setPaymentAmount(0)
       setIsDelivery(false)
@@ -489,44 +491,69 @@ export default function PosPage() {
           }) : undefined}
       />
 
-      <VxBox sx={{ display: 'grid', gap: 2, minWidth: 0, gridTemplateColumns: { xs: 'minmax(0, 1fr)', lg: 'minmax(0, 3fr) minmax(0, 1fr)' } }}>
-        <ProductCatalogPanel
-          selectedCustomerId={selectedCustomerId}
-          selectedWarehouseId={selectedWarehouseId}
-          activeCustomerOptions={activeCustomerOptions}
-          warehouses={warehouses}
-          products={products}
-          stockByProduct={stockByProduct}
-          currencyCode={currencyCode}
-          notes={notes}
-          onCustomerChange={setSelectedCustomerId}
-          onWarehouseChange={setSelectedWarehouseId}
-          onOpenQuickCustomer={() => setIsQuickCreateOpen(true)}
-          onAddToCart={addToCart}
-          onNotesChange={setNotes}
-        />
+      <VxTabs
+        value={mobileSaleStep}
+        onChange={(_, value: 'catalog' | 'payment') => setMobileSaleStep(value)}
+        aria-label={t('cart.flowAria')}
+        variant="fullWidth"
+        sx={{ display: { xs: 'flex', lg: 'none' } }}
+      >
+        <VxTab value="catalog" label={t('catalog.title')} />
+        <VxTab value="payment" disabled={cart.length === 0} label={t('cart.items', { count: cart.length })} />
+      </VxTabs>
 
-        <CartSummaryPanel
-          cart={cart}
-          stockByProduct={stockByProduct}
-          subtotal={subtotal}
-          discountTotal={discountTotal}
-          grandTotal={grandTotal}
-          changeAmount={changeAmount}
-          currencyCode={currencyCode}
-          paymentAmount={paymentAmount}
-          paymentMethod={paymentMethod}
-          isDelivery={isDelivery}
-          isProcessing={isProcessing}
-          canCheckout={canCheckout}
-          onRemoveCartLine={removeCartLine}
-          onLineDiscountChange={updateLineDiscount}
-          onLineQtyChange={updateLineQuantity}
-          onPaymentAmountChange={setPaymentAmount}
-          onPaymentMethodChange={setPaymentMethod}
-          onDeliveryChange={setIsDelivery}
-          onCheckout={checkout}
-        />
+      <VxBox sx={{ display: 'grid', gap: 2, minWidth: 0, gridTemplateColumns: { xs: 'minmax(0, 1fr)', lg: 'minmax(0, 1.35fr) minmax(380px, 1fr)' } }}>
+        <VxBox sx={{ display: { xs: mobileSaleStep === 'catalog' ? 'block' : 'none', lg: 'block' }, minWidth: 0 }}>
+          <ProductCatalogPanel
+            selectedCustomerId={selectedCustomerId}
+            selectedWarehouseId={selectedWarehouseId}
+            activeCustomerOptions={activeCustomerOptions}
+            warehouses={warehouses}
+            products={products}
+            stockByProduct={stockByProduct}
+            currencyCode={currencyCode}
+            notes={notes}
+            onCustomerChange={setSelectedCustomerId}
+            onWarehouseChange={setSelectedWarehouseId}
+            onOpenQuickCustomer={() => setIsQuickCreateOpen(true)}
+            onAddToCart={addToCart}
+            onNotesChange={setNotes}
+          />
+          <VxButton
+            variant="contained"
+            fullWidth
+            disabled={cart.length === 0}
+            onClick={() => setMobileSaleStep('payment')}
+            sx={{ mt: 1.5, display: { xs: 'inline-flex', lg: 'none' } }}
+          >
+            {t('cart.reviewPayment', { count: cart.length })}
+          </VxButton>
+        </VxBox>
+
+        <VxBox sx={{ display: { xs: mobileSaleStep === 'payment' ? 'block' : 'none', lg: 'block' }, minWidth: 0 }}>
+          <CartSummaryPanel
+            cart={cart}
+            stockByProduct={stockByProduct}
+            subtotal={subtotal}
+            discountTotal={discountTotal}
+            grandTotal={grandTotal}
+            changeAmount={changeAmount}
+            currencyCode={currencyCode}
+            paymentAmount={paymentAmount}
+            paymentMethod={paymentMethod}
+            isDelivery={isDelivery}
+            isProcessing={isProcessing}
+            canCheckout={canCheckout}
+            onBackToCatalog={() => setMobileSaleStep('catalog')}
+            onRemoveCartLine={removeCartLine}
+            onLineDiscountChange={updateLineDiscount}
+            onLineQtyChange={updateLineQuantity}
+            onPaymentAmountChange={setPaymentAmount}
+            onPaymentMethodChange={setPaymentMethod}
+            onDeliveryChange={setIsDelivery}
+            onCheckout={checkout}
+          />
+        </VxBox>
       </VxBox>
 
       <TransactionHistoryPanel />

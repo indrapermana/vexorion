@@ -1,5 +1,5 @@
-import { DeliveryDiningRoundedIcon, WarningAmberRoundedIcon } from '@vexorion/ui'
-import { VxBox, VxButton, VxChip, VxDivider, VxMenuItem, VxPaper, VxStack, VxSwitch, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTextField, VxTooltip, VxTypography } from '@vexorion/ui'
+import { AddRoundedIcon, ArrowBackRoundedIcon, DeleteOutlineRoundedIcon, DeliveryDiningRoundedIcon, RemoveRoundedIcon } from '@vexorion/ui'
+import { VxBox, VxButton, VxChip, VxDivider, VxIconButton, VxMenuItem, VxPaper, VxStack, VxSwitch, VxTextField, VxTypography } from '@vexorion/ui'
 import { useState } from 'react'
 import { useI18n } from '../../app/I18nContext'
 import type { CartLine } from './types'
@@ -35,6 +35,7 @@ type CartSummaryPanelProps = {
   isProcessing: boolean
   canCheckout: boolean
   stockByProduct: Record<string, number>
+  onBackToCatalog: () => void
   onRemoveCartLine: (productId: string) => void
   onLineDiscountChange: (productId: string, discountAmount: number) => void
   onLineQtyChange: (productId: string, quantity: number) => void
@@ -57,6 +58,7 @@ export function CartSummaryPanel({
   isProcessing,
   canCheckout,
   stockByProduct,
+  onBackToCatalog,
   onRemoveCartLine,
   onLineDiscountChange,
   onLineQtyChange,
@@ -66,125 +68,137 @@ export function CartSummaryPanel({
   onCheckout,
 }: CartSummaryPanelProps) {
   const { t } = useI18n()
-  const [editingQty, setEditingQty] = useState<{ productId: string; value: string } | null>(null)
+  const [quantityDrafts, setQuantityDrafts] = useState<Record<string, string>>({})
 
-  const commitQtyEdit = (productId: string, rawValue: string) => {
-    const qty = Math.max(1, Number(rawValue) || 1)
-    onLineQtyChange(productId, qty)
-    setEditingQty(null)
+  const commitQuantity = (productId: string) => {
+    const rawValue = quantityDrafts[productId]
+    if (rawValue === undefined) return
+    onLineQtyChange(productId, Math.max(1, Math.floor(Number(rawValue) || 1)))
+    setQuantityDrafts((current) => {
+      const next = { ...current }
+      delete next[productId]
+      return next
+    })
   }
 
   return (
-    <VxPaper sx={{ p: 2, minWidth: 0, maxWidth: '100%', overflowX: 'auto' }}>
+    <VxPaper sx={{ p: { xs: 1.5, sm: 2 }, minWidth: 0, maxWidth: '100%' }}>
       <VxStack spacing={1.5}>
         <VxStack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
           <VxTypography component="h2" variant="h6">{t('cart.title')}</VxTypography>
           <VxChip label={t('cart.items', { count: cart.length })} />
         </VxStack>
 
-        <VxTable size="small" aria-label={t('cart.title')}>
-          <VxTableHead>
-            <VxTableRow>
-              <VxTableCell>{t('cart.product')}</VxTableCell>
-              <VxTableCell align="right">{t('cart.qty')}</VxTableCell>
-              <VxTableCell align="right">{t('cart.price')}</VxTableCell>
-              <VxTableCell align="right">{t('cart.discount')}</VxTableCell>
-              <VxTableCell align="right">{t('cart.total')}</VxTableCell>
-              <VxTableCell align="right">{t('cart.action')}</VxTableCell>
-            </VxTableRow>
-          </VxTableHead>
-          <VxTableBody>
+        {cart.length === 0 ? (
+          <VxTypography role="status" color="text.secondary" sx={{ py: 2 }}>
+            {t('cart.empty')}
+          </VxTypography>
+        ) : (
+          <VxStack component="ul" role="list" aria-label={t('cart.itemsAria')} spacing={0} sx={{ p: 0, m: 0, listStyle: 'none' }}>
             {cart.map((line) => {
-              const isLowStock = line.quantity > (stockByProduct[line.productId] ?? 0)
+              const available = stockByProduct[line.productId] ?? 0
+              const hasStockConflict = line.quantity > available
+              const lineTotal = Math.max(line.unitPrice * line.quantity - line.discountAmount, 0)
               return (
-                <VxTableRow key={line.productId}>
-                  <VxTableCell>
-                    <VxStack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
-                      {isLowStock ? (
-                        <VxTooltip title={t('cart.lowStock')}>
-                          <WarningAmberRoundedIcon fontSize="small" color="warning" />
-                        </VxTooltip>
-                      ) : null}
-                      {line.productName}
+                <VxBox
+                  component="li"
+                  role="listitem"
+                  key={line.productId}
+                  sx={{ py: 1.5, borderBottom: '1px solid', borderColor: 'divider', minWidth: 0 }}
+                >
+                  <VxStack spacing={1}>
+                    <VxStack direction="row" spacing={1} sx={{ justifyContent: 'space-between', alignItems: 'flex-start', minWidth: 0 }}>
+                      <VxBox sx={{ minWidth: 0 }}>
+                        <VxTypography variant="subtitle2" sx={{ overflowWrap: 'anywhere' }}>{line.productName}</VxTypography>
+                        <VxTypography variant="caption" color="text.secondary">
+                          {formatMoney(line.unitPrice, currencyCode)} {t('cart.each')}
+                        </VxTypography>
+                      </VxBox>
+                      <VxTypography variant="subtitle2" sx={{ whiteSpace: 'nowrap' }}>
+                        {formatMoney(lineTotal, currencyCode)}
+                      </VxTypography>
                     </VxStack>
-                  </VxTableCell>
-                <VxTableCell align="right">
-                  {editingQty?.productId === line.productId ? (
-                    <VxTextField
-                      type="number"
-                      size="small"
-                      value={editingQty.value}
-                      autoFocus
-                      onChange={(e) => setEditingQty({ productId: line.productId, value: e.target.value })}
-                      onBlur={() => commitQtyEdit(line.productId, editingQty.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') commitQtyEdit(line.productId, editingQty.value)
-                        if (e.key === 'Escape') setEditingQty(null)
-                      }}
-                      slotProps={{
-                        htmlInput: {
-                          min: 1,
-                          step: 1,
-                          'aria-label': `${t('cart.qty')}: ${line.productName}`,
-                          style: { textAlign: 'center', padding: '2px 4px' },
-                        },
-                      }}
-                      sx={{ width: 64 }}
-                    />
-                  ) : (
-                    <VxBox
-                      component="button"
-                      type="button"
-                      aria-label={`${t('cart.qty')}: ${line.productName}`}
-                      onClick={() => setEditingQty({ productId: line.productId, value: String(line.quantity) })}
-                      sx={{
-                        cursor: 'pointer',
-                        px: 0.75,
-                        border: 0,
-                        borderRadius: 0.5,
-                        color: 'inherit',
-                        backgroundColor: 'transparent',
-                        font: 'inherit',
-                        '&:hover': { bgcolor: 'action.hover' },
-                        '&:focus-visible': { outline: '3px solid', outlineColor: 'primary.main', outlineOffset: 2 },
-                      }}
-                    >
-                      {line.quantity}
-                    </VxBox>
-                  )}
-                </VxTableCell>
-                <VxTableCell align="right">{formatMoney(line.unitPrice, currencyCode)}</VxTableCell>
-                <VxTableCell align="right">
-                  <VxTextField
-                    type="text"
-                    size="small"
-                    value={line.discountAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    onChange={(event) => onLineDiscountChange(line.productId, parseMoneyInput(event.target.value))}
-                    slotProps={{
-                      htmlInput: {
-                        inputMode: 'decimal',
-                        'aria-label': `${t('cart.discount')}: ${line.productName}`,
-                      },
-                    }}
-                    sx={{ width: 96 }}
-                  />
-                </VxTableCell>
-                <VxTableCell align="right">{formatMoney(line.unitPrice * line.quantity - line.discountAmount, currencyCode)}</VxTableCell>
-                <VxTableCell align="right">
-                  <VxButton
-                    size="small"
-                    color="error"
-                    aria-label={`${t('cart.remove')}: ${line.productName}`}
-                    onClick={() => onRemoveCartLine(line.productId)}
-                  >
-                    {t('cart.remove')}
-                  </VxButton>
-                </VxTableCell>
-                </VxTableRow>
+
+                    {hasStockConflict ? (
+                      <VxChip
+                        color="warning"
+                        size="small"
+                        label={t('cart.stockWarning', { requested: line.quantity, available })}
+                        sx={{ alignSelf: 'flex-start', maxWidth: '100%' }}
+                      />
+                    ) : null}
+
+                    <VxStack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 1 }}>
+                      <VxStack direction="row" spacing={0.25} sx={{ alignItems: 'center' }}>
+                        <VxIconButton
+                          size="small"
+                          aria-label={`${t('catalog.decreaseQty')}: ${line.productName}`}
+                          disabled={line.quantity <= 1}
+                          onClick={() => onLineQtyChange(line.productId, line.quantity - 1)}
+                        >
+                          <RemoveRoundedIcon fontSize="small" />
+                        </VxIconButton>
+                        <VxTextField
+                          type="number"
+                          size="small"
+                          value={quantityDrafts[line.productId] ?? String(line.quantity)}
+                          onFocus={() => setQuantityDrafts((current) => ({ ...current, [line.productId]: String(line.quantity) }))}
+                          onChange={(event) => setQuantityDrafts((current) => ({ ...current, [line.productId]: event.target.value }))}
+                          onBlur={() => commitQuantity(line.productId)}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter') commitQuantity(line.productId)
+                            if (event.key === 'Escape') {
+                              setQuantityDrafts((current) => {
+                                const next = { ...current }
+                                delete next[line.productId]
+                                return next
+                              })
+                            }
+                          }}
+                          slotProps={{ htmlInput: { min: 1, step: 1, 'aria-label': `${t('cart.qty')}: ${line.productName}` } }}
+                          sx={{ width: 72 }}
+                        />
+                        <VxIconButton
+                          size="small"
+                          aria-label={`${t('catalog.increaseQty')}: ${line.productName}`}
+                          onClick={() => onLineQtyChange(line.productId, line.quantity + 1)}
+                        >
+                          <AddRoundedIcon fontSize="small" />
+                        </VxIconButton>
+                      </VxStack>
+
+                      <VxTextField
+                        type="number"
+                        size="small"
+                        label={t('cart.discount')}
+                        value={line.discountAmount}
+                        onChange={(event) => onLineDiscountChange(line.productId, parseMoneyInput(event.target.value))}
+                        slotProps={{
+                          htmlInput: {
+                            min: 0,
+                            max: line.unitPrice * line.quantity,
+                            step: 0.01,
+                            'aria-label': `${t('cart.discount')}: ${line.productName}`,
+                          },
+                        }}
+                        sx={{ width: 112 }}
+                      />
+
+                      <VxIconButton
+                        size="small"
+                        color="error"
+                        aria-label={`${t('cart.remove')}: ${line.productName}`}
+                        onClick={() => onRemoveCartLine(line.productId)}
+                      >
+                        <DeleteOutlineRoundedIcon fontSize="small" />
+                      </VxIconButton>
+                    </VxStack>
+                  </VxStack>
+                </VxBox>
               )
             })}
-          </VxTableBody>
-        </VxTable>
+          </VxStack>
+        )}
 
         <VxDivider />
 
@@ -232,6 +246,14 @@ export function CartSummaryPanel({
 
         <VxButton variant="contained" size="large" onClick={onCheckout} disabled={isProcessing || cart.length === 0 || !canCheckout}>
           {isProcessing ? t('cart.processing') : t('cart.checkout')}
+        </VxButton>
+        <VxButton
+          variant="text"
+          startIcon={<ArrowBackRoundedIcon />}
+          onClick={onBackToCatalog}
+          sx={{ display: { xs: 'inline-flex', lg: 'none' } }}
+        >
+          {t('cart.backToCatalog')}
         </VxButton>
       </VxStack>
     </VxPaper>

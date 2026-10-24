@@ -129,6 +129,12 @@ async function ensureOpenShift(page: import('@playwright/test').Page) {
   }
 }
 
+async function selectWarehouse(page: import('@playwright/test').Page, warehouseName: string) {
+  const warehouseSelector = page.getByRole('combobox', { name: /warehouse/i })
+  await warehouseSelector.click()
+  await page.getByRole('option', { name: new RegExp(warehouseName) }).click()
+}
+
 test.describe('POS Return & Refund', () => {
   // -------------------------------------------------------------------------
   // TC-2.4.1 — Open return dialog
@@ -287,12 +293,13 @@ test.describe('POS Return & Refund', () => {
   test('POS-01B: cashier checkout retries an unknown outcome and shows one receipt', async ({ page }) => {
     const { api, requestJson } = await createRunApiContext()
     const suffix = randomUUID().replaceAll('-', '').slice(0, 12).toUpperCase()
-    const { product } = await seedPosCatalog(requestJson, suffix)
+    const { warehouse, product } = await seedPosCatalog(requestJson, suffix)
     const checkoutRequests: JsonObject[] = []
     const checkoutResponses: Array<{ invoiceNumber: string; salesInvoiceId: string; replayed: boolean }> = []
     let dropFirstResponse = true
 
     await ensureOpenShift(page)
+    await selectWarehouse(page, warehouse.name)
     await page.route('**/api/pos/checkout', async (route) => {
       if (route.request().method() !== 'POST') return route.continue()
       checkoutRequests.push(route.request().postDataJSON() as JsonObject)
@@ -333,6 +340,46 @@ test.describe('POS Return & Refund', () => {
       expect(balances.find((balance) => balance.productId === product.id)?.quantityOnHand).toBe(4)
       await receipt.getByRole('button', { name: /close/i }).click()
       await expect(receipt).not.toBeVisible()
+    } finally {
+      await api.dispose()
+    }
+  })
+
+  test('UX-POS-01/02: mobile cashiers review compact cart and return to catalog without overflow', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    const { api, requestJson } = await createRunApiContext()
+    const suffix = randomUUID().replaceAll('-', '').slice(0, 12).toUpperCase()
+    const { warehouse, product } = await seedPosCatalog(requestJson, suffix)
+
+    try {
+      await ensureOpenShift(page)
+      await selectWarehouse(page, warehouse.name)
+      const catalogStep = page.getByRole('tab', { name: 'Catalog' })
+      await expect(catalogStep).toHaveAttribute('aria-selected', 'true')
+      await expect(page.getByText(product.name, { exact: true })).toBeVisible()
+      const productCard = page.locator('.MuiCard-root').filter({ hasText: product.name })
+      await productCard.getByRole('button', { name: /^add$/i }).click()
+
+      const reviewButton = page.getByRole('button', { name: /review cart and pay/i })
+      await expect(reviewButton).toBeEnabled()
+      await reviewButton.click()
+      const paymentStep = page.getByRole('tab', { name: /1 item/i })
+      await expect(paymentStep).toHaveAttribute('aria-selected', 'true')
+      await expect(page.getByRole('list', { name: 'Cart line items' })).toBeVisible()
+      await expect(page.getByRole('spinbutton', { name: `Qty: ${product.name}` })).toHaveValue('1')
+      await expect(page.getByRole('button', { name: `Increase quantity: ${product.name}` })).toBeVisible()
+      await expect(page.getByRole('button', { name: `Remove: ${product.name}` })).toBeVisible()
+      await expect(page.getByLabel('Payment amount')).toBeVisible()
+
+      for (const width of [390, 768, 1024, 1440]) {
+        await page.setViewportSize({ width, height: 900 })
+        await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+      }
+
+      await page.setViewportSize({ width: 390, height: 844 })
+      await page.getByRole('button', { name: /back to catalog/i }).click()
+      await expect(catalogStep).toHaveAttribute('aria-selected', 'true')
+      await expect(page.locator('.MuiCard-root').filter({ hasText: product.name })).toBeVisible()
     } finally {
       await api.dispose()
     }
