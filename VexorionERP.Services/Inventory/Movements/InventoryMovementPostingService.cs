@@ -522,8 +522,11 @@ public class InventoryMovementPostingService(AppDbContext dbContext) : IInventor
         Guid? salesShipmentLineId = null,
         CancellationToken cancellationToken = default)
     {
-        var balance = await dbContext.InventoryBalances
-            .FirstOrDefaultAsync(x => x.TenantId == tenantId && x.ProductId == productId && x.WarehouseId == warehouseId, cancellationToken);
+        // Balances created earlier in this unit of work are not saved yet, so check tracked entities first.
+        var balance = dbContext.InventoryBalances.Local
+            .FirstOrDefault(x => x.TenantId == tenantId && x.ProductId == productId && x.WarehouseId == warehouseId)
+            ?? await dbContext.InventoryBalances
+                .FirstOrDefaultAsync(x => x.TenantId == tenantId && x.ProductId == productId && x.WarehouseId == warehouseId, cancellationToken);
 
         if (balance is null)
         {

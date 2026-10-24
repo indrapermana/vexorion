@@ -8,6 +8,7 @@ import LookupSelectField from '../../../components/LookupSelectField'
 import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import { ApiError, createVendorPayment } from '../../../lib/api'
 import type { VendorPaymentEditorDialogProps, VendorPaymentFormValues } from '../../../types/ui'
+import { useCurrency } from '../../../app/CurrencyContext'
 
 const defaultValues: VendorPaymentFormValues = {
   supplierId: '',
@@ -37,6 +38,8 @@ function optionalText(value: string) {
 }
 
 export default function VendorPaymentEditorDialog({ open, suppliers, outstandingInvoices, initialValues, onClose, onSaved }: VendorPaymentEditorDialogProps) {
+  const { currencyCode: companyCurrency } = useCurrency()
+  const createDefaults = useMemo(() => ({ ...defaultValues, currencyCode: companyCurrency }), [companyCurrency])
   const { t } = useTranslation()
   const {
     control,
@@ -46,15 +49,15 @@ export default function VendorPaymentEditorDialog({ open, suppliers, outstanding
     setValue,
     setError,
     formState: { errors, isSubmitting, isDirty },
-  } = useForm<VendorPaymentFormValues>({ defaultValues, resolver: yupResolver(validationSchema) })
+  } = useForm<VendorPaymentFormValues>({ defaultValues: createDefaults, resolver: yupResolver(validationSchema) })
   const { requestClose, confirmationDialog } = useUnsavedChangesPrompt(open && isDirty, isSubmitting, onClose, () => reset())
 
   const selectedSupplierId = watch('supplierId')
   const selectedInvoiceId = watch('purchaseInvoiceId')
 
   useEffect(() => {
-    reset({ ...defaultValues, ...initialValues })
-  }, [initialValues, reset])
+    reset({ ...createDefaults, ...initialValues })
+  }, [createDefaults, initialValues, reset])
 
   useEffect(() => {
     if (!selectedSupplierId) {
@@ -112,7 +115,7 @@ export default function VendorPaymentEditorDialog({ open, suppliers, outstanding
       })
 
       onSaved(payment, 'create')
-      reset(defaultValues)
+      reset(createDefaults)
     } catch (error) {
       if (error instanceof ApiError && error.validation) {
         Object.entries(error.validation).forEach(([key, messages]) => {

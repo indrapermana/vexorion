@@ -45,7 +45,7 @@ const GUEST_CUSTOMER_TAG = '__guest__'
 
 export default function PosPage() {
   const { t } = useI18n()
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const pushHistory = useTransactionHistory((state) => state.push)
   const { currentShift, openShift, closeShift, fetchCurrentShift } = useShift()
   const canManageRoles = user?.permissions.includes(PosPermissions.roles.manage) ?? false
@@ -476,6 +476,7 @@ export default function PosPage() {
         onCloseShift={() => setIsCloseShiftOpen(true)}
         canRefund={canRefund}
         onOpenReturn={() => setIsReturnOpen(true)}
+        onSignOut={logout}
       />
 
       <VxPageFeedback

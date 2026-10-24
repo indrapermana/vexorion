@@ -1,5 +1,6 @@
-import { AdminPanelSettingsRoundedIcon, DarkModeRoundedIcon, LightModeRoundedIcon, LockRoundedIcon, LogoutRoundedIcon, PointOfSaleRoundedIcon, UndoRoundedIcon } from '@vexorion/ui'
-import { VxButton, VxChip, VxIconButton, VxMenuItem, VxPaper, VxStack, VxTextField, VxTooltip, VxTypography } from '@vexorion/ui'
+import { AdminPanelSettingsRoundedIcon, DarkModeRoundedIcon, LightModeRoundedIcon, LockRoundedIcon, LogoutRoundedIcon, PointOfSaleRoundedIcon, SwapHorizRoundedIcon, UndoRoundedIcon } from '@vexorion/ui'
+import { VxButton, VxChip, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxIconButton, VxMenuItem, VxPaper, VxStack, VxTextField, VxTooltip, VxTypography } from '@vexorion/ui'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useThemeMode } from '../../app/ThemeModeContext'
 import { useI18n } from '../../app/I18nContext'
@@ -14,10 +15,19 @@ type PosHeaderProps = {
   onCloseShift: () => void
   canRefund: boolean
   onOpenReturn: () => void
+  onSignOut: () => void | Promise<void>
 }
 
-export function PosHeader({ canManageRoles, currencyCode, isShiftOpen, canCloseShift, shiftOpenedAt, onCloseShift, canRefund, onOpenReturn }: PosHeaderProps) {
+export function PosHeader({ canManageRoles, currencyCode, isShiftOpen, canCloseShift, shiftOpenedAt, onCloseShift, canRefund, onOpenReturn, onSignOut }: PosHeaderProps) {
   const { themeMode, toggleThemeMode } = useThemeMode()
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false)
+  const requestSignOut = () => {
+    if (isShiftOpen) {
+      setIsConfirmOpen(true)
+      return
+    }
+    void onSignOut()
+  }
   const { locale, setLocale, t } = useI18n()
   const themeButtonLabel = `${t('header.theme')}: ${themeMode === 'dark' ? t('common.light') : t('common.dark')}`
 
@@ -76,11 +86,26 @@ export function PosHeader({ canManageRoles, currencyCode, isShiftOpen, canCloseS
               {t('header.posUsers')}
             </VxButton>
           ) : null}
-          <VxButton variant="outlined" startIcon={<LogoutRoundedIcon />} href="/login">
+          <VxButton variant="outlined" startIcon={<SwapHorizRoundedIcon />} onClick={requestSignOut}>
             {t('header.switchUser')}
+          </VxButton>
+          <VxButton variant="outlined" color="error" startIcon={<LogoutRoundedIcon />} onClick={requestSignOut}>
+            {t('header.signOut')}
           </VxButton>
         </VxStack>
       </VxStack>
+      <VxDialog open={isConfirmOpen} onClose={() => setIsConfirmOpen(false)} maxWidth="xs" fullWidth>
+        <VxDialogTitle>{t('header.signOutShiftOpen.title')}</VxDialogTitle>
+        <VxDialogContent>
+          <VxTypography>{t('header.signOutShiftOpen.body')}</VxTypography>
+        </VxDialogContent>
+        <VxDialogActions>
+          <VxButton onClick={() => setIsConfirmOpen(false)}>{t('common.cancel')}</VxButton>
+          <VxButton color="error" variant="contained" onClick={() => { setIsConfirmOpen(false); void onSignOut() }}>
+            {t('header.signOutShiftOpen.confirm')}
+          </VxButton>
+        </VxDialogActions>
+      </VxDialog>
     </VxPaper>
   )
 }

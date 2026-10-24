@@ -9,6 +9,7 @@ import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import { ApiError, createSalesOrder, getSalesOrder, updateSalesOrder } from '../../../lib/api'
 import type { ValidationProblem } from '../../../types/api'
 import { documentStatusOptions, type SalesOrderEditorDialogProps, type SalesOrderFormValues } from '../../../types/ui'
+import { useCurrency } from '../../../app/CurrencyContext'
 
 const defaultValues: SalesOrderFormValues = {
   orderNumber: '',
@@ -37,28 +38,30 @@ function optionalText(value: string) {
 }
 
 export default function SalesOrderEditorDialog({ open, mode, salesOrderId, customers, warehouses, onClose, onSaved }: SalesOrderEditorDialogProps) {
+  const { currencyCode: companyCurrency } = useCurrency()
+  const createDefaults = useMemo(() => ({ ...defaultValues, currencyCode: companyCurrency }), [companyCurrency])
   const { t } = useTranslation()
   const [isLoadingSalesOrder, setIsLoadingSalesOrder] = useState(mode === 'edit' && Boolean(salesOrderId))
   const [submitError, setSubmitError] = useState<string | null>(null)
 
-  const title = useMemo(() => t(mode === 'create' ? 'salesOrders.editor.createTitle' : 'salesOrders.editor.editTitle'), [mode, t])
+  const title = useMemo(() => t(mode === 'create' ? 'pages.salesOrders.editor.createTitle' : 'pages.salesOrders.editor.editTitle'), [mode, t])
   const validationSchema: yup.ObjectSchema<SalesOrderFormValues> = useMemo(() => yup.object({
     orderNumber: yup.string().trim()
-      .required(t('common.validation.required', { field: t('salesOrders.editor.fields.orderNumber') }))
-      .max(50, t('common.validation.maxLength', { field: t('salesOrders.editor.fields.orderNumber'), count: 50 })),
-    customerId: yup.string().trim().required(t('common.validation.required', { field: t('salesOrders.editor.fields.customer') })),
-    warehouseId: yup.string().trim().required(t('common.validation.required', { field: t('salesOrders.editor.fields.warehouse') })),
-    orderDate: yup.string().required(t('common.validation.required', { field: t('salesOrders.editor.fields.orderDate') })),
-    requiredDate: yup.string().required(t('common.validation.required', { field: t('salesOrders.editor.fields.requiredDate') })),
-    status: yup.number().oneOf(documentStatusOptions.map((option) => option.value)).required(t('common.validation.required', { field: t('salesOrders.editor.fields.status') })),
+      .required(t('common.validation.required', { field: t('pages.salesOrders.editor.fields.orderNumber') }))
+      .max(50, t('common.validation.maxLength', { field: t('pages.salesOrders.editor.fields.orderNumber'), count: 50 })),
+    customerId: yup.string().trim().required(t('common.validation.required', { field: t('pages.salesOrders.editor.fields.customer') })),
+    warehouseId: yup.string().trim().required(t('common.validation.required', { field: t('pages.salesOrders.editor.fields.warehouse') })),
+    orderDate: yup.string().required(t('common.validation.required', { field: t('pages.salesOrders.editor.fields.orderDate') })),
+    requiredDate: yup.string().required(t('common.validation.required', { field: t('pages.salesOrders.editor.fields.requiredDate') })),
+    status: yup.number().oneOf(documentStatusOptions.map((option) => option.value)).required(t('common.validation.required', { field: t('pages.salesOrders.editor.fields.status') })),
     currencyCode: yup.string().trim()
-      .required(t('common.validation.required', { field: t('salesOrders.editor.fields.currencyCode') }))
-      .length(3, t('common.validation.exactLength', { field: t('salesOrders.editor.fields.currencyCode'), count: 3 })),
+      .required(t('common.validation.required', { field: t('pages.salesOrders.editor.fields.currencyCode') }))
+      .length(3, t('common.validation.exactLength', { field: t('pages.salesOrders.editor.fields.currencyCode'), count: 3 })),
     notes: yup.string().max(1000, t('common.validation.notesMaxLength', { count: 1000 })).defined(),
     isActive: yup.boolean().required(),
   }), [t])
   const { control, handleSubmit, reset, setError, formState: { errors, isSubmitting, isDirty } } = useForm<SalesOrderFormValues>({
-    defaultValues,
+    defaultValues: createDefaults,
     resolver: yupResolver(validationSchema),
   })
   const { requestClose, confirmationDialog } = useUnsavedChangesPrompt(open && isDirty, isSubmitting, onClose, () => reset())
@@ -66,7 +69,7 @@ export default function SalesOrderEditorDialog({ open, mode, salesOrderId, custo
   useEffect(() => {
     if (mode === 'create' || !salesOrderId) {
       if (mode === 'create') {
-        reset(defaultValues)
+        reset(createDefaults)
       }
       return
     }
@@ -99,7 +102,7 @@ export default function SalesOrderEditorDialog({ open, mode, salesOrderId, custo
         if (error instanceof ApiError) {
           setSubmitError(error.message)
         } else {
-          setSubmitError(t('salesOrders.editor.loadError'))
+          setSubmitError(t('pages.salesOrders.editor.loadError'))
         }
       })
       .finally(() => {
@@ -111,7 +114,7 @@ export default function SalesOrderEditorDialog({ open, mode, salesOrderId, custo
     return () => {
       isMounted = false
     }
-  }, [mode, reset, salesOrderId, t])
+  }, [createDefaults, mode, reset, salesOrderId, t])
 
   const applyServerValidation = (validation?: ValidationProblem) => {
     if (!validation) {
@@ -149,13 +152,13 @@ export default function SalesOrderEditorDialog({ open, mode, salesOrderId, custo
         : await updateSalesOrder(salesOrderId!, { ...payload, isActive: values.isActive })
 
       onSaved(savedSalesOrder, mode)
-      reset(defaultValues)
+      reset(createDefaults)
     } catch (error) {
       if (error instanceof ApiError) {
         setSubmitError(error.message)
         applyServerValidation(error.validation)
       } else {
-        setSubmitError(t('salesOrders.editor.saveError'))
+        setSubmitError(t('pages.salesOrders.editor.saveError'))
       }
     }
   })
@@ -166,41 +169,41 @@ export default function SalesOrderEditorDialog({ open, mode, salesOrderId, custo
       <VxDialogTitle>{title}</VxDialogTitle>
       <VxDialogContent dividers>
         {isLoadingSalesOrder ? (
-          <VxBox sx={{ display: 'grid', placeItems: 'center', minHeight: 220 }}><VxStack spacing={1.5} sx={{ alignItems: 'center' }}><VxCircularProgress size={28} />          <VxTypography color="text.secondary">{t('salesOrders.editor.loading')}</VxTypography></VxStack></VxBox>
+          <VxBox sx={{ display: 'grid', placeItems: 'center', minHeight: 220 }}><VxStack spacing={1.5} sx={{ alignItems: 'center' }}><VxCircularProgress size={28} />          <VxTypography color="text.secondary">{t('pages.salesOrders.editor.loading')}</VxTypography></VxStack></VxBox>
         ) : (
           <VxStack spacing={2.5} sx={{ pt: 1 }}>
             {submitError ? <VxAlert severity="error">{submitError}</VxAlert> : null}
-            {!customers.length ? <VxAlert severity="warning">{t('salesOrders.createCustomerFirst')}</VxAlert> : null}
-            {!warehouses.length ? <VxAlert severity="warning">{t('salesOrders.createWarehouseFirst')}</VxAlert> : null}
+            {!customers.length ? <VxAlert severity="warning">{t('pages.salesOrders.createCustomerFirst')}</VxAlert> : null}
+            {!warehouses.length ? <VxAlert severity="warning">{t('pages.salesOrders.createWarehouseFirst')}</VxAlert> : null}
             <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-              <Controller name="orderNumber" control={control} render={({ field }) => <VxTextField {...field} fullWidth label={t('salesOrders.editor.fields.orderNumber')} error={Boolean(errors.orderNumber)} helperText={errors.orderNumber?.message} />} />
-              <Controller name="currencyCode" control={control} render={({ field }) => <VxTextField {...field} fullWidth label={t('salesOrders.editor.fields.currencyCode')} error={Boolean(errors.currencyCode)} helperText={errors.currencyCode?.message} slotProps={{ htmlInput: { maxLength: 3 } }} />} />
+              <Controller name="orderNumber" control={control} render={({ field }) => <VxTextField {...field} fullWidth label={t('pages.salesOrders.editor.fields.orderNumber')} error={Boolean(errors.orderNumber)} helperText={errors.orderNumber?.message} />} />
+              <Controller name="currencyCode" control={control} render={({ field }) => <VxTextField {...field} fullWidth label={t('pages.salesOrders.editor.fields.currencyCode')} error={Boolean(errors.currencyCode)} helperText={errors.currencyCode?.message} slotProps={{ htmlInput: { maxLength: 3 } }} />} />
             </VxStack>
-            <Controller name="customerId" control={control} render={({ field }) => <LookupSelectField label={t('salesOrders.editor.fields.customer')} value={field.value} onChange={field.onChange} options={customerOptions} error={Boolean(errors.customerId)} helperText={errors.customerId?.message} disabled={!customers.length} emptyText={t('salesOrders.createCustomerFirst')} requiredText={t('common.required')} />} />
-            <Controller name="warehouseId" control={control} render={({ field }) => <LookupSelectField label={t('salesOrders.editor.fields.warehouse')} value={field.value} onChange={field.onChange} options={warehouseOptions} error={Boolean(errors.warehouseId)} helperText={errors.warehouseId?.message} disabled={!warehouses.length} emptyText={t('salesOrders.createWarehouseFirst')} requiredText={t('common.required')} />} />
+            <Controller name="customerId" control={control} render={({ field }) => <LookupSelectField label={t('pages.salesOrders.editor.fields.customer')} value={field.value} onChange={field.onChange} options={customerOptions} error={Boolean(errors.customerId)} helperText={errors.customerId?.message} disabled={!customers.length} emptyText={t('pages.salesOrders.createCustomerFirst')} requiredText={t('common.required')} />} />
+            <Controller name="warehouseId" control={control} render={({ field }) => <LookupSelectField label={t('pages.salesOrders.editor.fields.warehouse')} value={field.value} onChange={field.onChange} options={warehouseOptions} error={Boolean(errors.warehouseId)} helperText={errors.warehouseId?.message} disabled={!warehouses.length} emptyText={t('pages.salesOrders.createWarehouseFirst')} requiredText={t('common.required')} />} />
             <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-              <Controller name="orderDate" control={control} render={({ field }) => <VxTextField {...field} fullWidth type="date" label={t('salesOrders.editor.fields.orderDate')} slotProps={{ inputLabel: { shrink: true } }} error={Boolean(errors.orderDate)} helperText={errors.orderDate?.message} />} />
-              <Controller name="requiredDate" control={control} render={({ field }) => <VxTextField {...field} fullWidth type="date" label={t('salesOrders.editor.fields.requiredDate')} slotProps={{ inputLabel: { shrink: true } }} error={Boolean(errors.requiredDate)} helperText={errors.requiredDate?.message} />} />
+              <Controller name="orderDate" control={control} render={({ field }) => <VxTextField {...field} fullWidth type="date" label={t('pages.salesOrders.editor.fields.orderDate')} slotProps={{ inputLabel: { shrink: true } }} error={Boolean(errors.orderDate)} helperText={errors.orderDate?.message} />} />
+              <Controller name="requiredDate" control={control} render={({ field }) => <VxTextField {...field} fullWidth type="date" label={t('pages.salesOrders.editor.fields.requiredDate')} slotProps={{ inputLabel: { shrink: true } }} error={Boolean(errors.requiredDate)} helperText={errors.requiredDate?.message} />} />
             </VxStack>
             <Controller
               name="status"
               control={control}
               render={({ field }) => (
-                <VxTextField {...field} fullWidth select label={t('salesOrders.editor.fields.status')} error={Boolean(errors.status)} helperText={errors.status?.message} onChange={(event) => field.onChange(Number(event.target.value))}>
+                <VxTextField {...field} fullWidth select label={t('pages.salesOrders.editor.fields.status')} error={Boolean(errors.status)} helperText={errors.status?.message} onChange={(event) => field.onChange(Number(event.target.value))}>
                   {documentStatusOptions.map((option) => <VxMenuItem key={option.value} value={option.value}>{t(`common.documentStatuses.${option.value}`)}</VxMenuItem>)}
                 </VxTextField>
               )}
             />
-            <Controller name="notes" control={control} render={({ field }) => <VxTextField {...field} fullWidth multiline minRows={3} label={t('salesOrders.editor.fields.notes')} error={Boolean(errors.notes)} helperText={errors.notes?.message ?? t('common.optional')} />} />
+            <Controller name="notes" control={control} render={({ field }) => <VxTextField {...field} fullWidth multiline minRows={3} label={t('pages.salesOrders.editor.fields.notes')} error={Boolean(errors.notes)} helperText={errors.notes?.message ?? t('common.optional')} />} />
             {mode === 'edit' ? (
-              <Controller name="isActive" control={control} render={({ field }) => <VxFormControlLabel control={<VxSwitch checked={field.value} onChange={(_, checked) => field.onChange(checked)} />} label={field.value ? t('salesOrders.editor.fields.active') : t('salesOrders.editor.fields.inactive')} />} />
+              <Controller name="isActive" control={control} render={({ field }) => <VxFormControlLabel control={<VxSwitch checked={field.value} onChange={(_, checked) => field.onChange(checked)} />} label={field.value ? t('pages.salesOrders.editor.fields.active') : t('pages.salesOrders.editor.fields.inactive')} />} />
             ) : null}
           </VxStack>
         )}
       </VxDialogContent>
       <VxDialogActions sx={{ px: 3, py: 2 }}>
         <VxButton onClick={requestClose} disabled={isSubmitting}>{t('common.cancel')}</VxButton>
-        <VxButton onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoadingSalesOrder || customers.length === 0 || warehouses.length === 0}>{isSubmitting ? t('common.saving') : mode === 'create' ? t('salesOrders.editor.createButton') : t('common.saveChanges')}</VxButton>
+        <VxButton onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoadingSalesOrder || customers.length === 0 || warehouses.length === 0}>{isSubmitting ? t('common.saving') : mode === 'create' ? t('pages.salesOrders.editor.createButton') : t('common.saveChanges')}</VxButton>
       </VxDialogActions>
     </VxDialog>
     {confirmationDialog}

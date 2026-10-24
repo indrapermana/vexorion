@@ -23,19 +23,19 @@ export default function SalesInvoiceLineEditorDialog({ open, mode, line, product
   const { t } = useTranslation()
   const { formatMoney } = useCurrency()
   const validationSchema: yup.ObjectSchema<SalesInvoiceLineFormValues> = useMemo(() => yup.object({
-    productId: yup.string().required(t('common.validation.required', { field: t('salesInvoices.lineEditor.product') })),
+    productId: yup.string().required(t('common.validation.required', { field: t('pages.salesInvoices.lineEditor.product') })),
     quantity: yup.number()
-      .moreThan(0, t('common.validation.greaterThanZero', { field: t('salesInvoices.lineEditor.quantity') }))
-      .required(t('common.validation.required', { field: t('salesInvoices.lineEditor.quantity') })),
+      .moreThan(0, t('common.validation.greaterThanZero', { field: t('pages.salesInvoices.lineEditor.quantity') }))
+      .required(t('common.validation.required', { field: t('pages.salesInvoices.lineEditor.quantity') })),
     unitPrice: yup.number()
-      .min(0, t('common.validation.cannotBeNegative', { field: t('salesInvoices.lineEditor.unitPrice') }))
-      .required(t('common.validation.required', { field: t('salesInvoices.lineEditor.unitPrice') })),
+      .min(0, t('common.validation.cannotBeNegative', { field: t('pages.salesInvoices.lineEditor.unitPrice') }))
+      .required(t('common.validation.required', { field: t('pages.salesInvoices.lineEditor.unitPrice') })),
     discountAmount: yup.number()
-      .min(0, t('common.validation.cannotBeNegative', { field: t('salesInvoices.lineEditor.discount') }))
-      .required(t('common.validation.required', { field: t('salesInvoices.lineEditor.discount') })),
+      .min(0, t('common.validation.cannotBeNegative', { field: t('pages.salesInvoices.lineEditor.discount') }))
+      .required(t('common.validation.required', { field: t('pages.salesInvoices.lineEditor.discount') })),
     taxAmount: yup.number()
-      .min(0, t('common.validation.cannotBeNegative', { field: t('salesInvoices.lineEditor.tax') }))
-      .required(t('common.validation.required', { field: t('salesInvoices.lineEditor.tax') })),
+      .min(0, t('common.validation.cannotBeNegative', { field: t('pages.salesInvoices.lineEditor.tax') }))
+      .required(t('common.validation.required', { field: t('pages.salesInvoices.lineEditor.tax') })),
     isActive: yup.boolean().required(),
   }), [t])
   const { control, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting, isDirty } } = useForm<SalesInvoiceLineFormValues>({ defaultValues, resolver: yupResolver(validationSchema) })
@@ -46,7 +46,7 @@ export default function SalesInvoiceLineEditorDialog({ open, mode, line, product
   useEffect(() => {
     reset(line ? { productId: line.productId, quantity: line.quantity, unitPrice: line.unitPrice, discountAmount: line.discountAmount, taxAmount: line.taxAmount, isActive: line.isActive } : defaultValues)
     setAutofillHint(null)
-  }, [line, reset])
+  }, [line, open, reset])
 
   useEffect(() => {
     if (!selectedProductId || line?.productId === selectedProductId) {
@@ -62,14 +62,14 @@ export default function SalesInvoiceLineEditorDialog({ open, mode, line, product
         }
 
         setValue('unitPrice', product.salesPrice)
-        setAutofillHint(t('salesInvoices.lineEditor.autoFilledPrice', { amount: formatMoney(product.salesPrice) }))
+        setAutofillHint(t('pages.salesInvoices.lineEditor.autoFilledPrice', { amount: formatMoney(product.salesPrice) }))
       })
       .catch((error) => {
         if (!isMounted) {
           return
         }
 
-        setAutofillHint(error instanceof ApiError ? error.message : t('salesInvoices.lineEditor.autoFillError'))
+        setAutofillHint(error instanceof ApiError ? error.message : t('pages.salesInvoices.lineEditor.autoFillError'))
       })
 
     return () => {
@@ -82,25 +82,25 @@ export default function SalesInvoiceLineEditorDialog({ open, mode, line, product
   return (
     <>
     <VxDialog open={open} onClose={requestClose} fullWidth maxWidth="sm">
-      <VxDialogTitle>{t(mode === 'create' ? 'salesInvoices.lineEditor.createTitle' : 'salesInvoices.lineEditor.editTitle')}</VxDialogTitle>
+      <VxDialogTitle>{t(mode === 'create' ? 'pages.salesInvoices.lineEditor.createTitle' : 'pages.salesInvoices.lineEditor.editTitle')}</VxDialogTitle>
       <VxDialogContent dividers>
-        {!products.length ? <VxAlert severity="warning">{t('salesInvoices.lineEditor.createProductsFirst')}</VxAlert> : null}
+        {!products.length ? <VxAlert severity="warning">{t('pages.salesInvoices.lineEditor.createProductsFirst')}</VxAlert> : null}
         <VxStack spacing={2.5} sx={{ pt: 1 }}>
-          <Controller name="productId" control={control} render={({ field }) => <LookupSelectField label={t('salesInvoices.lineEditor.product')} value={field.value} onChange={field.onChange} options={productOptions} error={Boolean(errors.productId)} helperText={errors.productId?.message} disabled={!products.length} emptyText={t('salesInvoices.lineEditor.noProducts')} requiredText={t('common.required')} />} />
+          <Controller name="productId" control={control} render={({ field }) => <LookupSelectField label={t('pages.salesInvoices.lineEditor.product')} value={field.value} onChange={field.onChange} options={productOptions} error={Boolean(errors.productId)} helperText={errors.productId?.message} disabled={!products.length} emptyText={t('pages.salesInvoices.lineEditor.noProducts')} requiredText={t('common.required')} />} />
           {autofillHint ? <VxTypography variant="body2" color="text.secondary">{autofillHint}</VxTypography> : null}
           <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-            <Controller name="quantity" control={control} render={({ field }) => <VxTextField {...field} fullWidth label={t('salesInvoices.lineEditor.quantity')} type="number" slotProps={{ htmlInput: { min: 0.01, step: '0.01' } }} error={Boolean(errors.quantity)} helperText={errors.quantity?.message} onChange={(event) => field.onChange(Number(event.target.value))} />} />
-            <Controller name="unitPrice" control={control} render={({ field }) => <VxTextField {...field} fullWidth label={t('salesInvoices.lineEditor.unitPrice')} type="number" slotProps={{ htmlInput: { min: 0, step: '0.01' } }} error={Boolean(errors.unitPrice)} helperText={errors.unitPrice?.message} onChange={(event) => field.onChange(Number(event.target.value))} />} />
+            <Controller name="quantity" control={control} render={({ field }) => <VxTextField {...field} fullWidth label={t('pages.salesInvoices.lineEditor.quantity')} type="number" slotProps={{ htmlInput: { min: 0.01, step: '0.01' } }} error={Boolean(errors.quantity)} helperText={errors.quantity?.message} onChange={(event) => field.onChange(Number(event.target.value))} />} />
+            <Controller name="unitPrice" control={control} render={({ field }) => <VxTextField {...field} fullWidth label={t('pages.salesInvoices.lineEditor.unitPrice')} type="number" slotProps={{ htmlInput: { min: 0, step: '0.01' } }} error={Boolean(errors.unitPrice)} helperText={errors.unitPrice?.message} onChange={(event) => field.onChange(Number(event.target.value))} />} />
           </VxStack>
           <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-            <Controller name="discountAmount" control={control} render={({ field }) => <VxTextField {...field} fullWidth label={t('salesInvoices.lineEditor.discount')} type="number" slotProps={{ htmlInput: { min: 0, step: '0.01' } }} error={Boolean(errors.discountAmount)} helperText={errors.discountAmount?.message} onChange={(event) => field.onChange(Number(event.target.value))} />} />
-            <Controller name="taxAmount" control={control} render={({ field }) => <VxTextField {...field} fullWidth label={t('salesInvoices.lineEditor.tax')} type="number" slotProps={{ htmlInput: { min: 0, step: '0.01' } }} error={Boolean(errors.taxAmount)} helperText={errors.taxAmount?.message} onChange={(event) => field.onChange(Number(event.target.value))} />} />
+            <Controller name="discountAmount" control={control} render={({ field }) => <VxTextField {...field} fullWidth label={t('pages.salesInvoices.lineEditor.discount')} type="number" slotProps={{ htmlInput: { min: 0, step: '0.01' } }} error={Boolean(errors.discountAmount)} helperText={errors.discountAmount?.message} onChange={(event) => field.onChange(Number(event.target.value))} />} />
+            <Controller name="taxAmount" control={control} render={({ field }) => <VxTextField {...field} fullWidth label={t('pages.salesInvoices.lineEditor.tax')} type="number" slotProps={{ htmlInput: { min: 0, step: '0.01' } }} error={Boolean(errors.taxAmount)} helperText={errors.taxAmount?.message} onChange={(event) => field.onChange(Number(event.target.value))} />} />
           </VxStack>
         </VxStack>
       </VxDialogContent>
       <VxDialogActions sx={{ px: 3, py: 2 }}>
         <VxButton onClick={requestClose} disabled={isSubmitting}>{t('common.cancel')}</VxButton>
-        <VxButton onClick={() => void handleSubmit(async (values) => { await onSaved(mode, values) })()} variant="contained" disabled={isSubmitting || !products.length}>{isSubmitting ? t('common.saving') : mode === 'create' ? t('salesInvoices.lineEditor.addButton') : t('salesInvoices.lineEditor.saveButton')}</VxButton>
+        <VxButton onClick={() => void handleSubmit(async (values) => { await onSaved(mode, values) })()} variant="contained" disabled={isSubmitting || !products.length}>{isSubmitting ? t('common.saving') : mode === 'create' ? t('pages.salesInvoices.lineEditor.addButton') : t('pages.salesInvoices.lineEditor.saveButton')}</VxButton>
       </VxDialogActions>
     </VxDialog>
     {confirmationDialog}

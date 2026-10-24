@@ -416,6 +416,38 @@ public class InventoryMovementPostingServiceTests
     }
 
     [Fact]
+    public async Task ApplyPurchaseReceipt_TwoLinesSameProduct_CreatesSingleBalance()
+    {
+        var tenantId = Guid.NewGuid();
+        var warehouseId = Guid.NewGuid();
+        var productId = Guid.NewGuid();
+
+        await using var dbContext = TestDbContextFactory.Create(tenantId, Guid.NewGuid().ToString());
+        var service = new InventoryMovementPostingService(dbContext);
+
+        var receipt = new PurchaseReceipt
+        {
+            TenantId = tenantId,
+            WarehouseId = warehouseId,
+            PurchaseOrderId = Guid.NewGuid(),
+            ReceiptNumber = "PR-2",
+            Lines =
+            [
+                new PurchaseReceiptLine { TenantId = tenantId, ProductId = productId, PurchaseOrderLineId = Guid.NewGuid(), ReceivedQuantity = 2m },
+                new PurchaseReceiptLine { TenantId = tenantId, ProductId = productId, PurchaseOrderLineId = Guid.NewGuid(), ReceivedQuantity = 3m },
+            ],
+        };
+
+        var result = await service.ApplyPurchaseReceiptAsync(receipt, "PO-REF-2");
+        Assert.True(result.Succeeded);
+        await dbContext.SaveChangesAsync();
+
+        var balance = await dbContext.InventoryBalances.SingleAsync();
+        Assert.Equal(5m, balance.QuantityOnHand);
+        Assert.Equal(2, await dbContext.InventoryMovements.CountAsync());
+    }
+
+    [Fact]
     public async Task ApplyInventoryAdjustmentStatusChange_CompletedAndCancelled_ApplyAndReverseDelta()
     {
         var tenantId = Guid.NewGuid();

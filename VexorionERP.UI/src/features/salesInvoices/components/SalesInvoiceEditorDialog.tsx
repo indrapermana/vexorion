@@ -9,6 +9,7 @@ import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import { ApiError, createSalesInvoice, getSalesInvoice, updateSalesInvoice } from '../../../lib/api'
 import type { ValidationProblem } from '../../../types/api'
 import { invoiceStatusOptions, type SalesInvoiceEditorDialogProps, type SalesInvoiceFormValues } from '../../../types/ui'
+import { useCurrency } from '../../../app/CurrencyContext'
 
 const defaultValues: SalesInvoiceFormValues = {
   invoiceNumber: '',
@@ -37,35 +38,37 @@ function optionalText(value: string) {
 }
 
 export default function SalesInvoiceEditorDialog({ open, mode, salesInvoiceId, customers, initialValues, onClose, onSaved }: SalesInvoiceEditorDialogProps) {
+  const { currencyCode: companyCurrency } = useCurrency()
+  const createDefaults = useMemo(() => ({ ...defaultValues, currencyCode: companyCurrency }), [companyCurrency])
   const { t } = useTranslation()
   const [isLoadingSalesInvoice, setIsLoadingSalesInvoice] = useState(mode === 'edit' && Boolean(salesInvoiceId))
   const [submitError, setSubmitError] = useState<string | null>(null)
 
-  const title = useMemo(() => t(mode === 'create' ? 'salesInvoices.editor.createTitle' : 'salesInvoices.editor.editTitle'), [mode, t])
+  const title = useMemo(() => t(mode === 'create' ? 'pages.salesInvoices.editor.createTitle' : 'pages.salesInvoices.editor.editTitle'), [mode, t])
   const validationSchema: yup.ObjectSchema<SalesInvoiceFormValues> = useMemo(() => yup.object({
     invoiceNumber: yup.string().trim()
-      .required(t('common.validation.required', { field: t('salesInvoices.editor.fields.invoiceNumber') }))
-      .max(50, t('common.validation.maxLength', { field: t('salesInvoices.editor.fields.invoiceNumber'), count: 50 })),
-    customerId: yup.string().trim().required(t('common.validation.required', { field: t('salesInvoices.editor.fields.customer') })),
-    invoiceDate: yup.string().required(t('common.validation.required', { field: t('salesInvoices.editor.fields.invoiceDate') })),
-    dueDate: yup.string().required(t('common.validation.required', { field: t('salesInvoices.editor.fields.dueDate') })),
-    status: yup.number().oneOf(invoiceStatusOptions.map((option) => option.value)).required(t('common.validation.required', { field: t('salesInvoices.editor.fields.status') })),
+      .required(t('common.validation.required', { field: t('pages.salesInvoices.editor.fields.invoiceNumber') }))
+      .max(50, t('common.validation.maxLength', { field: t('pages.salesInvoices.editor.fields.invoiceNumber'), count: 50 })),
+    customerId: yup.string().trim().required(t('common.validation.required', { field: t('pages.salesInvoices.editor.fields.customer') })),
+    invoiceDate: yup.string().required(t('common.validation.required', { field: t('pages.salesInvoices.editor.fields.invoiceDate') })),
+    dueDate: yup.string().required(t('common.validation.required', { field: t('pages.salesInvoices.editor.fields.dueDate') })),
+    status: yup.number().oneOf(invoiceStatusOptions.map((option) => option.value)).required(t('common.validation.required', { field: t('pages.salesInvoices.editor.fields.status') })),
     currencyCode: yup.string().trim()
-      .required(t('common.validation.required', { field: t('salesInvoices.editor.fields.currencyCode') }))
-      .length(3, t('common.validation.exactLength', { field: t('salesInvoices.editor.fields.currencyCode'), count: 3 })),
+      .required(t('common.validation.required', { field: t('pages.salesInvoices.editor.fields.currencyCode') }))
+      .length(3, t('common.validation.exactLength', { field: t('pages.salesInvoices.editor.fields.currencyCode'), count: 3 })),
     notes: yup.string().max(1000, t('common.validation.notesMaxLength', { count: 1000 })).defined(),
     isActive: yup.boolean().required(),
     sourceSalesOrderId: yup.string().nullable().optional().defined(),
   }), [t])
   const { control, handleSubmit, reset, setError, formState: { errors, isSubmitting, isDirty } } = useForm<SalesInvoiceFormValues>({
-    defaultValues,
+    defaultValues: createDefaults,
     resolver: yupResolver(validationSchema),
   })
   const { requestClose, confirmationDialog } = useUnsavedChangesPrompt(open && isDirty, isSubmitting, onClose, () => reset())
 
   useEffect(() => {
     if (mode === 'create') {
-      reset({ ...defaultValues, ...initialValues })
+      reset({ ...createDefaults, ...initialValues })
       setIsLoadingSalesInvoice(false)
       return
     }
@@ -103,7 +106,7 @@ export default function SalesInvoiceEditorDialog({ open, mode, salesInvoiceId, c
         if (error instanceof ApiError) {
           setSubmitError(error.message)
         } else {
-          setSubmitError(t('salesInvoices.editor.loadError'))
+          setSubmitError(t('pages.salesInvoices.editor.loadError'))
         }
       })
       .finally(() => {
@@ -115,7 +118,7 @@ export default function SalesInvoiceEditorDialog({ open, mode, salesInvoiceId, c
     return () => {
       isMounted = false
     }
-  }, [initialValues, mode, reset, salesInvoiceId, t])
+  }, [createDefaults, initialValues, mode, reset, salesInvoiceId, t])
 
   const applyServerValidation = (validation?: ValidationProblem) => {
     if (!validation) {
@@ -155,13 +158,13 @@ export default function SalesInvoiceEditorDialog({ open, mode, salesInvoiceId, c
         : await updateSalesInvoice(salesInvoiceId!, { ...payload, isActive: values.isActive })
 
       onSaved(savedSalesInvoice, mode)
-      reset(defaultValues)
+      reset(createDefaults)
     } catch (error) {
       if (error instanceof ApiError) {
         setSubmitError(error.message)
         applyServerValidation(error.validation)
       } else {
-        setSubmitError(t('salesInvoices.editor.saveError'))
+        setSubmitError(t('pages.salesInvoices.editor.saveError'))
       }
     }
   })
@@ -172,34 +175,34 @@ export default function SalesInvoiceEditorDialog({ open, mode, salesInvoiceId, c
       <VxDialogTitle>{title}</VxDialogTitle>
       <VxDialogContent dividers>
         {isLoadingSalesInvoice ? (
-          <VxBox sx={{ display: 'grid', placeItems: 'center', minHeight: 220 }}><VxStack spacing={1.5} sx={{ alignItems: 'center' }}><VxCircularProgress size={28} />          <VxTypography color="text.secondary">{t('salesInvoices.editor.loading')}</VxTypography></VxStack></VxBox>
+          <VxBox sx={{ display: 'grid', placeItems: 'center', minHeight: 220 }}><VxStack spacing={1.5} sx={{ alignItems: 'center' }}><VxCircularProgress size={28} />          <VxTypography color="text.secondary">{t('pages.salesInvoices.editor.loading')}</VxTypography></VxStack></VxBox>
         ) : (
           <VxStack spacing={2.5} sx={{ pt: 1 }}>
             {submitError ? <VxAlert severity="error">{submitError}</VxAlert> : null}
-            {sourceLocked ? <VxAlert severity="info">{t('salesInvoices.editor.sourceLocked')}</VxAlert> : null}
-            {!customers.length ? <VxAlert severity="warning">{t('salesInvoices.createCustomerFirst')}</VxAlert> : null}
+            {sourceLocked ? <VxAlert severity="info">{t('pages.salesInvoices.editor.sourceLocked')}</VxAlert> : null}
+            {!customers.length ? <VxAlert severity="warning">{t('pages.salesInvoices.createCustomerFirst')}</VxAlert> : null}
             <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-              <Controller name="invoiceNumber" control={control} render={({ field }) => <VxTextField {...field} fullWidth label={t('salesInvoices.editor.fields.invoiceNumber')} error={Boolean(errors.invoiceNumber)} helperText={errors.invoiceNumber?.message} />} />
-              <Controller name="currencyCode" control={control} render={({ field }) => <VxTextField {...field} fullWidth label={t('salesInvoices.editor.fields.currencyCode')} error={Boolean(errors.currencyCode)} helperText={errors.currencyCode?.message} slotProps={{ htmlInput: { maxLength: 3 } }} disabled={sourceLocked} />} />
+              <Controller name="invoiceNumber" control={control} render={({ field }) => <VxTextField {...field} fullWidth label={t('pages.salesInvoices.editor.fields.invoiceNumber')} error={Boolean(errors.invoiceNumber)} helperText={errors.invoiceNumber?.message} />} />
+              <Controller name="currencyCode" control={control} render={({ field }) => <VxTextField {...field} fullWidth label={t('pages.salesInvoices.editor.fields.currencyCode')} error={Boolean(errors.currencyCode)} helperText={errors.currencyCode?.message} slotProps={{ htmlInput: { maxLength: 3 } }} disabled={sourceLocked} />} />
             </VxStack>
-            <Controller name="customerId" control={control} render={({ field }) => <LookupSelectField label={t('salesInvoices.editor.fields.customer')} value={field.value} onChange={field.onChange} options={customerOptions} error={Boolean(errors.customerId)} helperText={errors.customerId?.message} disabled={!customers.length || sourceLocked} emptyText={t('salesInvoices.createCustomerFirst')} requiredText={t('common.required')} />} />
+            <Controller name="customerId" control={control} render={({ field }) => <LookupSelectField label={t('pages.salesInvoices.editor.fields.customer')} value={field.value} onChange={field.onChange} options={customerOptions} error={Boolean(errors.customerId)} helperText={errors.customerId?.message} disabled={!customers.length || sourceLocked} emptyText={t('pages.salesInvoices.createCustomerFirst')} requiredText={t('common.required')} />} />
             <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-              <Controller name="invoiceDate" control={control} render={({ field }) => <VxTextField {...field} fullWidth type="date" label={t('salesInvoices.editor.fields.invoiceDate')} slotProps={{ inputLabel: { shrink: true } }} error={Boolean(errors.invoiceDate)} helperText={errors.invoiceDate?.message} />} />
-              <Controller name="dueDate" control={control} render={({ field }) => <VxTextField {...field} fullWidth type="date" label={t('salesInvoices.editor.fields.dueDate')} slotProps={{ inputLabel: { shrink: true } }} error={Boolean(errors.dueDate)} helperText={errors.dueDate?.message} />} />
+              <Controller name="invoiceDate" control={control} render={({ field }) => <VxTextField {...field} fullWidth type="date" label={t('pages.salesInvoices.editor.fields.invoiceDate')} slotProps={{ inputLabel: { shrink: true } }} error={Boolean(errors.invoiceDate)} helperText={errors.invoiceDate?.message} />} />
+              <Controller name="dueDate" control={control} render={({ field }) => <VxTextField {...field} fullWidth type="date" label={t('pages.salesInvoices.editor.fields.dueDate')} slotProps={{ inputLabel: { shrink: true } }} error={Boolean(errors.dueDate)} helperText={errors.dueDate?.message} />} />
             </VxStack>
             <Controller name="status" control={control} render={({ field }) => (
-              <VxTextField {...field} fullWidth select label={t('salesInvoices.editor.fields.status')} error={Boolean(errors.status)} helperText={errors.status?.message} onChange={(event) => field.onChange(Number(event.target.value))}>
+              <VxTextField {...field} fullWidth select label={t('pages.salesInvoices.editor.fields.status')} error={Boolean(errors.status)} helperText={errors.status?.message} onChange={(event) => field.onChange(Number(event.target.value))}>
                 {invoiceStatusOptions.map((option) => <VxMenuItem key={option.value} value={option.value}>{t(`common.invoiceStatuses.${option.value}`)}</VxMenuItem>)}
               </VxTextField>
             )} />
-            <Controller name="notes" control={control} render={({ field }) => <VxTextField {...field} fullWidth multiline minRows={3} label={t('salesInvoices.editor.fields.notes')} error={Boolean(errors.notes)} helperText={errors.notes?.message ?? t('common.optional')} />} />
-            {mode === 'edit' ? <Controller name="isActive" control={control} render={({ field }) => <VxFormControlLabel control={<VxSwitch checked={field.value} onChange={(_, checked) => field.onChange(checked)} />} label={field.value ? t('salesInvoices.editor.fields.active') : t('salesInvoices.editor.fields.inactive')} />} /> : null}
+            <Controller name="notes" control={control} render={({ field }) => <VxTextField {...field} fullWidth multiline minRows={3} label={t('pages.salesInvoices.editor.fields.notes')} error={Boolean(errors.notes)} helperText={errors.notes?.message ?? t('common.optional')} />} />
+            {mode === 'edit' ? <Controller name="isActive" control={control} render={({ field }) => <VxFormControlLabel control={<VxSwitch checked={field.value} onChange={(_, checked) => field.onChange(checked)} />} label={field.value ? t('pages.salesInvoices.editor.fields.active') : t('pages.salesInvoices.editor.fields.inactive')} />} /> : null}
           </VxStack>
         )}
       </VxDialogContent>
       <VxDialogActions sx={{ px: 3, py: 2 }}>
         <VxButton onClick={requestClose} disabled={isSubmitting}>{t('common.cancel')}</VxButton>
-        <VxButton onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoadingSalesInvoice || customers.length === 0}>{isSubmitting ? t('common.saving') : mode === 'create' ? t('salesInvoices.editor.createButton') : t('common.saveChanges')}</VxButton>
+        <VxButton onClick={() => void onSubmit()} variant="contained" disabled={isSubmitting || isLoadingSalesInvoice || customers.length === 0}>{isSubmitting ? t('common.saving') : mode === 'create' ? t('pages.salesInvoices.editor.createButton') : t('common.saveChanges')}</VxButton>
       </VxDialogActions>
     </VxDialog>
     {confirmationDialog}

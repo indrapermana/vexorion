@@ -613,6 +613,12 @@ Scope: Adjustments, Counts, Transfers, Receipts, Shipments, balances, and moveme
   - Focused validation: authoritative-price and server-price discount-boundary coverage added; 11/11 service tests, POS typecheck, focused client test, lint (zero errors; five pre-existing hook warnings), and diff checks pass.
 - [ ] `FEAT-POS-01B` Prove checkout rollback and concurrent idempotency against PostgreSQL, then add an authenticated Playwright sale/retry/receipt path. Include injected failures after order, shipment, invoice, payment, checkout-record, and audit writes; verify no partial records, stock movements, or duplicate documents remain.
 - [ ] `FEAT-POS-02` Replace multi-call return/refund with an atomic idempotent workflow and reconcile inventory, credit note, refund/payment, source transaction, and audit.
+  - Draft design (depends on D3, D4; not started): `POST api/pos/refund` under `Pos.Refund`, one DB transaction, client idempotency key per attempt with replay and 409 on key reuse with a different payload (same pattern as `FEAT-POS-01`).
+  - Input: original sale (invoice), lines with quantities, per-line return-to-stock or write-off, refund method and amount, reason, open shift.
+  - Rules: quantity capped at sold minus earlier returns; refund capped at amount paid for credited lines; unpaid invoice gets credit against balance instead of cash refund; refund recorded against the shift.
+  - Effects: partial credit note, stock return movement (or write-off), refund payment, source invoice/order status update, audit entry; returns receipt data.
+  - Needs: new refund/credit-note link fields or a `PosRefundRecord`, EF migration, service and Web tests, POS dialog switched to one call (`ReturnRefundDialog`).
+  - Open: approval threshold (D7) and whether the refund posts to the ledger automatically (D9).
 - [ ] `FEAT-POS-03` Decide whether pilot needs hold/resume, void reason, manager override, cash movement, end-of-day reconciliation, offline mode, or hardware integration before implementing them.
 
 ### 5.12 Review coverage and completion evidence

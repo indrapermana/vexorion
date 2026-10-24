@@ -21,13 +21,13 @@ export default function PurchaseOrderLineEditorDialog({ open, mode, line, produc
   const { t } = useTranslation()
   const { formatMoney } = useCurrency()
   const validationSchema: yup.ObjectSchema<PurchaseOrderLineFormValues> = useMemo(() => yup.object({
-    productId: yup.string().required(t('common.validation.required', { field: t('purchaseOrders.lineEditor.product') })),
+    productId: yup.string().required(t('common.validation.required', { field: t('pages.purchaseOrders.lineEditor.product') })),
     quantity: yup.number()
-      .moreThan(0, t('common.validation.greaterThanZero', { field: t('purchaseOrders.lineEditor.quantity') }))
-      .required(t('common.validation.required', { field: t('purchaseOrders.lineEditor.quantity') })),
+      .moreThan(0, t('common.validation.greaterThanZero', { field: t('pages.purchaseOrders.lineEditor.quantity') }))
+      .required(t('common.validation.required', { field: t('pages.purchaseOrders.lineEditor.quantity') })),
     unitCost: yup.number()
-      .min(0, t('common.validation.cannotBeNegative', { field: t('purchaseOrders.lineEditor.unitCost') }))
-      .required(t('common.validation.required', { field: t('purchaseOrders.lineEditor.unitCost') })),
+      .min(0, t('common.validation.cannotBeNegative', { field: t('pages.purchaseOrders.lineEditor.unitCost') }))
+      .required(t('common.validation.required', { field: t('pages.purchaseOrders.lineEditor.unitCost') })),
     isActive: yup.boolean().required(),
   }), [t])
   const { control, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting, isDirty } } = useForm<PurchaseOrderLineFormValues>({ defaultValues, resolver: yupResolver(validationSchema) })
@@ -38,7 +38,7 @@ export default function PurchaseOrderLineEditorDialog({ open, mode, line, produc
   useEffect(() => {
     reset(line ? { productId: line.productId, quantity: line.quantity, unitCost: line.unitCost, isActive: line.isActive } : defaultValues)
     setAutofillHint(null)
-  }, [line, reset])
+  }, [line, open, reset])
 
   useEffect(() => {
     if (!selectedProductId) {
@@ -58,14 +58,14 @@ export default function PurchaseOrderLineEditorDialog({ open, mode, line, produc
         }
 
         setValue('unitCost', product.standardCost)
-        setAutofillHint(t('purchaseOrders.lineEditor.autoFilledCost', { amount: formatMoney(product.standardCost) }))
+        setAutofillHint(t('pages.purchaseOrders.lineEditor.autoFilledCost', { amount: formatMoney(product.standardCost) }))
       })
       .catch((error) => {
         if (!isMounted) {
           return
         }
 
-        setAutofillHint(error instanceof ApiError ? error.message : t('purchaseOrders.lineEditor.autoFillError'))
+        setAutofillHint(error instanceof ApiError ? error.message : t('pages.purchaseOrders.lineEditor.autoFillError'))
       })
 
     return () => {
@@ -78,21 +78,21 @@ export default function PurchaseOrderLineEditorDialog({ open, mode, line, produc
   return (
     <>
     <VxDialog open={open} onClose={requestClose} fullWidth maxWidth="sm">
-      <VxDialogTitle>{t(mode === 'create' ? 'purchaseOrders.lineEditor.createTitle' : 'purchaseOrders.lineEditor.editTitle')}</VxDialogTitle>
+      <VxDialogTitle>{t(mode === 'create' ? 'pages.purchaseOrders.lineEditor.createTitle' : 'pages.purchaseOrders.lineEditor.editTitle')}</VxDialogTitle>
       <VxDialogContent dividers>
-        {!products.length ? <VxAlert severity="warning">{t('purchaseOrders.lineEditor.createProductsFirst')}</VxAlert> : null}
+        {!products.length ? <VxAlert severity="warning">{t('pages.purchaseOrders.lineEditor.createProductsFirst')}</VxAlert> : null}
         <VxStack spacing={2.5} sx={{ pt: 1 }}>
-          <Controller name="productId" control={control} render={({ field }) => <LookupSelectField label={t('purchaseOrders.lineEditor.product')} value={field.value} onChange={field.onChange} options={productOptions} error={Boolean(errors.productId)} helperText={errors.productId?.message} disabled={!products.length} emptyText={t('purchaseOrders.lineEditor.noProducts')} requiredText={t('common.required')} />} />
+          <Controller name="productId" control={control} render={({ field }) => <LookupSelectField label={t('pages.purchaseOrders.lineEditor.product')} value={field.value} onChange={field.onChange} options={productOptions} error={Boolean(errors.productId)} helperText={errors.productId?.message} disabled={!products.length} emptyText={t('pages.purchaseOrders.lineEditor.noProducts')} requiredText={t('common.required')} />} />
           {autofillHint ? <VxTypography variant="body2" color="text.secondary">{autofillHint}</VxTypography> : null}
           <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-            <Controller name="quantity" control={control} render={({ field }) => <VxTextField {...field} fullWidth label={t('purchaseOrders.lineEditor.quantity')} type="number" slotProps={{ htmlInput: { min: 0.01, step: '0.01' } }} error={Boolean(errors.quantity)} helperText={errors.quantity?.message} onChange={(event) => field.onChange(Number(event.target.value))} />} />
-            <Controller name="unitCost" control={control} render={({ field }) => <VxTextField {...field} fullWidth label={t('purchaseOrders.lineEditor.unitCost')} type="number" slotProps={{ htmlInput: { min: 0, step: '0.01' } }} error={Boolean(errors.unitCost)} helperText={errors.unitCost?.message} onChange={(event) => field.onChange(Number(event.target.value))} />} />
+            <Controller name="quantity" control={control} render={({ field }) => <VxTextField {...field} fullWidth label={t('pages.purchaseOrders.lineEditor.quantity')} type="number" slotProps={{ htmlInput: { min: 0.01, step: '0.01' } }} error={Boolean(errors.quantity)} helperText={errors.quantity?.message} onChange={(event) => field.onChange(Number(event.target.value))} />} />
+            <Controller name="unitCost" control={control} render={({ field }) => <VxTextField {...field} fullWidth label={t('pages.purchaseOrders.lineEditor.unitCost')} type="number" slotProps={{ htmlInput: { min: 0, step: '0.01' } }} error={Boolean(errors.unitCost)} helperText={errors.unitCost?.message} onChange={(event) => field.onChange(Number(event.target.value))} />} />
           </VxStack>
         </VxStack>
       </VxDialogContent>
       <VxDialogActions sx={{ px: 3, py: 2 }}>
         <VxButton onClick={requestClose} disabled={isSubmitting}>{t('common.cancel')}</VxButton>
-        <VxButton onClick={() => void handleSubmit(async (values) => { await onSaved(mode, values) })()} variant="contained" disabled={isSubmitting || !products.length}>{isSubmitting ? t('common.saving') : mode === 'create' ? t('purchaseOrders.lineEditor.addButton') : t('purchaseOrders.lineEditor.saveButton')}</VxButton>
+        <VxButton onClick={() => void handleSubmit(async (values) => { await onSaved(mode, values) })()} variant="contained" disabled={isSubmitting || !products.length}>{isSubmitting ? t('common.saving') : mode === 'create' ? t('pages.purchaseOrders.lineEditor.addButton') : t('pages.purchaseOrders.lineEditor.saveButton')}</VxButton>
       </VxDialogActions>
     </VxDialog>
     {confirmationDialog}

@@ -214,13 +214,16 @@ jobs:
           EMAIL__MAINUIBASEURL: ${{ vars.EMAIL__MAINUIBASEURL }}
           EMAIL__FROMADDRESS: ${{ vars.EMAIL__FROMADDRESS }}
         run: |
+          env_vars="EMAIL__RESENDAPIKEY=${EMAIL__RESENDAPIKEY}"
+          env_vars+="|EMAIL__MAINUIBASEURL=${EMAIL__MAINUIBASEURL}"
+          env_vars+="|EMAIL__FROMADDRESS=${EMAIL__FROMADDRESS}"
+          env_vars+="|EMAIL__REDIRECTPLUSADDRESSING=false"
+
           gcloud run services update "$GCP_CLOUD_RUN_SERVICE" \
             --project="$GCP_PROJECT_ID" \
             --region="$GCP_REGION" \
             --image="$IMAGE_DIGEST_URI" \
-            --update-env-vars="^|^EMAIL__RESENDAPIKEY=${EMAIL__RESENDAPIKEY}|EMAIL__MAINUIBASEURL=${EMAIL__MAINUIBASEURL}|
-            EMAIL__FROMADDRESS=${EMAIL__FROMADDRESS}|
-            EMAIL__REDIRECTPLUSADDRESSING=false" \
+            --update-env-vars="^|^${env_vars}" \
             --no-invoker-iam-check \
             --quiet
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { renderWithProviders, screen } from '../testUtils'
+import { renderWithProviders, screen, userEvent, waitFor } from '../testUtils'
 import { PosHeader } from '../../components/pos/PosHeader'
 
 const BASE_PROPS = {
@@ -10,6 +10,7 @@ const BASE_PROPS = {
   canRefund: false,
   onCloseShift: vi.fn(),
   onOpenReturn: vi.fn(),
+  onSignOut: vi.fn(),
 }
 
 describe('PosHeader', () => {
@@ -96,5 +97,26 @@ describe('PosHeader', () => {
   it('shows no-shift chip when no shift is open', () => {
     renderWithProviders(<PosHeader {...BASE_PROPS} isShiftOpen={false} />)
     expect(screen.getByText(/no active shift|tidak ada giliran|sin turno/i)).toBeInTheDocument()
+  })
+
+  it('signs out immediately from both buttons when no shift is open', async () => {
+    const onSignOut = vi.fn()
+    renderWithProviders(<PosHeader {...BASE_PROPS} onSignOut={onSignOut} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Sign Out' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Switch User' }))
+    expect(onSignOut).toHaveBeenCalledTimes(2)
+  })
+
+  it('asks for confirmation before signing out with an open shift', async () => {
+    const onSignOut = vi.fn()
+    renderWithProviders(<PosHeader {...BASE_PROPS} isShiftOpen shiftOpenedAt={new Date().toISOString()} onSignOut={onSignOut} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Sign Out' }))
+    expect(onSignOut).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    expect(onSignOut).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole('button', { name: 'Sign Out' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Sign out anyway' }))
+    expect(onSignOut).toHaveBeenCalledOnce()
   })
 })
