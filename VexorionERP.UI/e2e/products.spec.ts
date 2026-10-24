@@ -6,6 +6,42 @@ import { test, expect, GenericCrudPage, uid } from './fixtures'
 const UNIQUE = () => uid('E2E-PROD')
 
 test.describe('Products', () => {
+  test('UX-MASTER-01: product list follows shared header metrics and searchable list pattern', async ({ page }) => {
+    const crud = new GenericCrudPage(page, '/products')
+    await crud.goto()
+
+    const firstName = UNIQUE()
+    const firstSku = uid('SKU')
+    const secondName = UNIQUE()
+    const secondSku = uid('SKU')
+
+    for (const [name, sku] of [[firstName, firstSku], [secondName, secondSku]]) {
+      await crud.clickAdd()
+      const dialog = page.getByRole('dialog')
+      await dialog.getByLabel('Product name').fill(name)
+      await dialog.getByLabel('SKU').fill(sku)
+      await crud.saveDialog()
+      await expect(dialog).not.toBeVisible({ timeout: 8_000 })
+    }
+
+    const search = page.getByLabel('Search or filter', { exact: true })
+    await expect(search).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Page metrics' })).toContainText(/Catalog rows/)
+    await expect(page.getByText(firstName, { exact: true })).toBeVisible()
+    await expect(page.getByText(secondName, { exact: true })).toBeVisible()
+
+    await search.fill(firstSku)
+    await expect(page.getByText(firstName, { exact: true })).toBeVisible()
+    await expect(page.getByText(secondName, { exact: true })).toHaveCount(0)
+    await expect(page.getByRole('region', { name: 'Page metrics' })).toContainText(/Catalog rows/)
+
+    for (const width of [390, 768, 1440]) {
+      await page.setViewportSize({ width, height: 900 })
+      await expect(search).toBeVisible()
+      await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1)
+    }
+  })
+
   test('TC-M-016: products list page loads', async ({ page }) => {
     await page.goto('/products')
     await page.waitForLoadState('networkidle')

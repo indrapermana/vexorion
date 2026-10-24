@@ -22,8 +22,9 @@ import {
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
-import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
-import { PageBody, PageFeedback, PageHeader, PageLoadingState, PageMetric } from '../../../components/PagePrimitives'
+import MasterDataListPage from '../../../components/MasterDataListPage'
+import MasterDataSearchField from '../../../components/MasterDataSearchField'
+import { PageLoadingState, PageMetric } from '../../../components/PagePrimitives'
 import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import {
   ApiError,
@@ -59,6 +60,7 @@ export default function ConsultantsPage() {
   const { isAuthenticated, user } = useAuth()
   const canManage = user?.permissions.includes(Permissions.organization.manage) ?? false
   const [rows, setRows] = useState<ConsultantListItemResponse[]>([])
+  const [searchTerm, setSearchTerm] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -100,6 +102,9 @@ export default function ConsultantsPage() {
   useEffect(() => {
     void loadData()
   }, [loadData])
+
+  const search = searchTerm.trim().toLowerCase()
+  const visibleRows = rows.filter((row) => [row.consultantNumber, row.fullName, row.email, row.organizationName ?? '', row.specialty ?? ''].some((value) => value.toLowerCase().includes(search)))
 
   const openCreate = () => {
     if (!canManage) return
@@ -191,18 +196,19 @@ export default function ConsultantsPage() {
   }
 
   return (
-    <VxStack spacing={3}>
-      <PageHeader
+    <>
+      <MasterDataListPage
         title={t('nav.routeTitles.consultants')}
         description={t('pages.consultants.description')}
         primaryAction={canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate}>{t('pages.consultants.newButton')}</VxButton> : null}
         metrics={<PageMetric icon={<Groups2RoundedIcon fontSize="small" />} label={t('pages.consultants.metrics.rows')} value={rows.length} />}
-      />
-
-      <PageFeedback error={error} success={feedback} onRetry={error ? () => void loadData() : undefined} />
-      {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.organization.manage} /> : null}
-
-      <PageBody>
+        filters={<MasterDataSearchField value={searchTerm} onChange={setSearchTerm} />}
+        error={error}
+        success={feedback}
+        onRetry={error ? () => void loadData() : undefined}
+        canManage={canManage}
+        requiredPermission={Permissions.organization.manage}
+      >
         {isLoading ? (
           <PageLoadingState label={t('common.labels.loading')} />
         ) : (
@@ -220,7 +226,7 @@ export default function ConsultantsPage() {
                 </VxTableRow>
               </VxTableHead>
               <VxTableBody>
-                {rows.map((row) => (
+                {visibleRows.map((row) => (
                   <VxTableRow key={row.id}>
                     <VxTableCell>{row.consultantNumber}</VxTableCell>
                     <VxTableCell>{row.fullName}</VxTableCell>
@@ -244,10 +250,10 @@ export default function ConsultantsPage() {
                     </VxTableCell>
                   </VxTableRow>
                 ))}
-                {rows.length === 0 ? (
+                {visibleRows.length === 0 ? (
                   <VxTableRow>
                     <VxTableCell colSpan={7}>
-                      <VxTypography color="text.secondary" variant="body2">{t('pages.consultants.noRows')}</VxTypography>
+                      <VxTypography color="text.secondary" variant="body2">{rows.length === 0 ? t('pages.consultants.noRows') : t('common.labels.noRecordsFound')}</VxTypography>
                     </VxTableCell>
                   </VxTableRow>
                 ) : null}
@@ -255,7 +261,7 @@ export default function ConsultantsPage() {
             </VxTable>
           </VxTableContainer>
         )}
-      </PageBody>
+      </MasterDataListPage>
 
       <VxDialog open={canManage && editorOpen} onClose={requestClose} maxWidth="md" fullWidth>
         <VxDialogTitle>{editingId ? t('pages.consultants.dialogs.edit') : t('pages.consultants.dialogs.create')}</VxDialogTitle>
@@ -287,6 +293,6 @@ export default function ConsultantsPage() {
         </VxDialogActions>
       </VxDialog>
       {confirmationDialog}
-    </VxStack>
+    </>
   )
 }

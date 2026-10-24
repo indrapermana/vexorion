@@ -1,11 +1,11 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
 import { AddRoundedIcon } from '@vexorion/ui'
-import { VxAlert, VxButton, VxConfirmActionDialog, VxStack } from '@vexorion/ui'
+import { VxAlert, VxButton, VxConfirmActionDialog } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
-import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
-import { PageBody, PageFeedback, PageHeader, PageLoadingState } from '../../../components/PagePrimitives'
+import MasterDataListPage from '../../../components/MasterDataListPage'
+import { PageLoadingState } from '../../../components/PagePrimitives'
 import { ApiError, deleteAccount, getAccounts } from '../../../lib/api'
 import type { AccountDetailsResponse, AccountListItemResponse } from '../../../types/api'
 
@@ -100,21 +100,21 @@ export default function AccountsPage() {
   }
 
   return (
-    <VxStack spacing={3}>
-      <PageHeader
+    <>
+      <MasterDataListPage
         title={t('nav.routeTitles.accounts')}
         description={t('pages.accounts.description')}
         primaryAction={canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate}>{t('pages.accounts.newButton')}</VxButton> : null}
-      />
-
-      <PageFeedback error={error} success={feedback} onRetry={error ? () => void loadData() : undefined} />
-      {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.billing.manage} /> : null}
-
-      <PageBody>
+        error={error}
+        success={feedback}
+        onRetry={error ? () => void loadData() : undefined}
+        canManage={canManage}
+        requiredPermission={Permissions.billing.manage}
+      >
         <Suspense fallback={<AccountSurfaceFallback />}>
           <AccountDataGrid rows={rows} isLoading={isLoading} onEdit={openEdit} onDelete={setDeleteTarget} canManage={canManage} />
         </Suspense>
-      </PageBody>
+      </MasterDataListPage>
 
       {canManage && isEditorOpen ? (
         <Suspense fallback={<AccountSurfaceFallback />}>
@@ -133,6 +133,6 @@ export default function AccountsPage() {
         onClose={() => setDeleteTarget(null)}
         onConfirm={() => void handleDelete()}
       />
-    </VxStack>
+    </>
   )
 }

@@ -10,6 +10,7 @@ import ProductPurchasePriceCell from './ProductPurchasePriceCell'
 
 type ProductDataGridProps = {
   rows: ProductGridRow[]
+  searchTerm?: string
   isLoading: boolean
   expandedProductIds: string[]
   onToggleExpanded: (productId: string) => void
@@ -43,17 +44,24 @@ function compareRows(left: ProductGridRow, right: ProductGridRow, sortField: Pro
   return left.name.localeCompare(right.name)
 }
 
-export default function ProductDataGrid({ rows, isLoading, expandedProductIds, onToggleExpanded, onEdit, onDelete, canManage = true }: ProductDataGridProps) {
+export default function ProductDataGrid({ rows, searchTerm = '', isLoading, expandedProductIds, onToggleExpanded, onEdit, onDelete, canManage = true }: ProductDataGridProps) {
   const { t } = useTranslation()
   const { formatMoney } = useCurrency()
   const [sortField, setSortField] = useState<ProductSortField>('name')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
 
+  const matchingRows = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase()
+    if (!normalizedSearch) return rows
+
+    return rows.filter((row) => [row.name, row.sku, row.unitOfMeasure].some((value) => value.toLowerCase().includes(normalizedSearch)))
+  }, [rows, searchTerm])
+
   const sortedRows = useMemo(() => {
     const directionMultiplier = sortDirection === 'asc' ? 1 : -1
 
-    return [...rows].sort((left, right) => directionMultiplier * compareRows(left, right, sortField))
-  }, [rows, sortDirection, sortField])
+    return [...matchingRows].sort((left, right) => directionMultiplier * compareRows(left, right, sortField))
+  }, [matchingRows, sortDirection, sortField])
 
   const handleSortRequest = (field: ProductSortField) => {
     if (sortField === field) {
@@ -76,7 +84,7 @@ export default function ProductDataGrid({ rows, isLoading, expandedProductIds, o
     )
   }
 
-  if (!rows.length) {
+  if (!sortedRows.length) {
     return (
       <VxBox sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}>
         <VxTypography color="text.secondary">{t('components.products.grid.empty')}</VxTypography>

@@ -10,6 +10,7 @@ vi.mock('react-i18next', () => ({
       'common.pageFilters': 'Page filters',
       'common.pageMetrics': 'Page metrics',
       'common.retry': 'Retry',
+      'common.labels.searchOrFilter': 'Search or filter',
     } as Record<string, string>)[key] ?? key,
   }),
 }))
@@ -22,8 +23,46 @@ import {
   PageLoadingState,
   PageMetric,
 } from './PagePrimitives'
+import MasterDataListPage from './MasterDataListPage'
+import MasterDataSearchField from './MasterDataSearchField'
 
 describe('page primitives', () => {
+  it('provides the same accessible search control for custom master-data lists', () => {
+    const onChange = vi.fn()
+    render(<MasterDataSearchField value="SKU-1" onChange={onChange} />)
+    const search = screen.getByRole('textbox', { name: 'Search or filter' })
+    expect(search).toHaveValue('SKU-1')
+    fireEvent.change(search, { target: { value: 'SKU-2' } })
+    expect(onChange).toHaveBeenCalledWith('SKU-2')
+  })
+
+  it('composes a consistent master-data list shell with shared feedback, permissions, filters, and body', () => {
+    const onRetry = vi.fn()
+    render(
+      <MasterDataListPage
+        title="Customers"
+        description="Customer records"
+        filters={<label>Search customers <input /></label>}
+        metrics={<PageMetric label="Active" value="4" />}
+        error="Could not load customers."
+        onRetry={onRetry}
+        canManage={false}
+        requiredPermission="customers.manage"
+      >
+        <div role="table">Customer rows</div>
+      </MasterDataListPage>,
+    )
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Customers' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Page filters' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Page metrics' })).toHaveTextContent('Active4')
+    expect(screen.getByRole('table')).toBeInTheDocument()
+    expect(screen.getByText('Could not load customers.')).toBeInTheDocument()
+    expect(screen.getByText('authorization.readOnly')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
+    expect(onRetry).toHaveBeenCalledOnce()
+  })
+
   it('provides a consistent heading, primary action, filters, and metrics structure', () => {
     render(
       <PageHeader

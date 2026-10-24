@@ -1,14 +1,14 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
 import { AddRoundedIcon, Groups2RoundedIcon, LocalAtmRoundedIcon, MailOutlineRoundedIcon } from '@vexorion/ui'
-import { VxAlert, VxButton, VxStack } from '@vexorion/ui'
+import { VxAlert, VxButton } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { ApiError, deleteSupplier, getSuppliers } from '../../../lib/api'
 import type { SupplierDetailsResponse, SupplierListItemResponse } from '../../../types/api'
 import type { SupplierDialogMode } from '../../../types/ui'
 import { Permissions } from '../../../app/authorization'
-import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
-import { PageBody, PageFeedback, PageHeader, PageLoadingState, PageMetric } from '../../../components/PagePrimitives'
+import MasterDataListPage from '../../../components/MasterDataListPage'
+import { PageLoadingState, PageMetric } from '../../../components/PagePrimitives'
 
 const SupplierEditorDialog = lazy(() => import('../components/SupplierEditorDialog'))
 const SupplierDataGrid = lazy(() => import('../components/SupplierDataGrid'))
@@ -117,8 +117,8 @@ export default function SuppliersPage() {
   }
 
   return (
-    <VxStack spacing={3}>
-      <PageHeader
+    <>
+    <MasterDataListPage
         title={t('nav.routeTitles.suppliers')}
         description={t('pages.suppliers.description')}
         primaryAction={canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog}>{t('pages.suppliers.newButton')}</VxButton> : null}
@@ -129,28 +129,28 @@ export default function SuppliersPage() {
             <PageMetric icon={<LocalAtmRoundedIcon fontSize="small" />} label={t('pages.suppliers.metrics.active')} value={suppliers.filter((supplier) => supplier.isActive).length} />
           </>
         )}
-      />
-
-      <PageFeedback error={error} success={feedback} onRetry={error ? () => void loadSuppliers() : undefined} />
-      {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.suppliers.manage} /> : null}
-
-      <PageBody>
+        error={error}
+        success={feedback}
+        onRetry={error ? () => void loadSuppliers() : undefined}
+        canManage={canManage}
+        requiredPermission={Permissions.suppliers.manage}
+    >
         <Suspense fallback={<SupplierSurfaceFallback />}>
           <SupplierDataGrid rows={suppliers} isLoading={isLoading} onEdit={openEditDialog} onDelete={setDeleteTarget} canManage={canManage} />
         </Suspense>
-      </PageBody>
+    </MasterDataListPage>
 
-      {canManage && isEditorOpen ? (
+    {canManage && isEditorOpen ? (
         <Suspense fallback={<SupplierSurfaceFallback />}>
           <SupplierEditorDialog key={`${dialogMode}:${selectedSupplierId ?? 'new'}`} open={isEditorOpen} mode={dialogMode} supplierId={selectedSupplierId} onClose={handleEditorClose} onSaved={(supplier, mode) => void handleSaved(supplier, mode)} />
         </Suspense>
       ) : null}
 
-      {canManage && deleteTarget ? (
+    {canManage && deleteTarget ? (
         <Suspense fallback={null}>
           <SupplierDeleteDialog target={deleteTarget} isDeleting={isDeleting} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} />
         </Suspense>
       ) : null}
-    </VxStack>
+    </>
   )
 }

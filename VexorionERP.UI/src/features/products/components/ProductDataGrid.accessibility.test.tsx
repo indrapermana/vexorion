@@ -35,6 +35,40 @@ const product: ProductGridRow = {
 }
 
 describe('ProductDataGrid accessibility', () => {
+  it.each(['Sample product', 'SKU-1', 'each'])('filters the product list by %s', (searchTerm) => {
+    render(
+      <ProductDataGrid
+        rows={[product, { ...product, id: 'product-2', sku: 'SKU-2', name: 'Another item', unitOfMeasure: 'case' }]}
+        searchTerm={searchTerm}
+        isLoading={false}
+        expandedProductIds={[]}
+        onToggleExpanded={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText('Sample product')).toBeInTheDocument()
+    expect(screen.queryByText('Another item')).not.toBeInTheDocument()
+  })
+
+  it('shows the established empty state when the search has no matches', () => {
+    render(
+      <ProductDataGrid
+        rows={[product]}
+        searchTerm="missing product"
+        isLoading={false}
+        expandedProductIds={[]}
+        onToggleExpanded={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText('components.products.grid.empty')).toBeInTheDocument()
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+  })
+
   it('identifies expand, edit, and delete controls by product name', () => {
     render(
       <ProductDataGrid

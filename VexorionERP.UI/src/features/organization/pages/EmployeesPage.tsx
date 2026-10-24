@@ -22,8 +22,9 @@ import {
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
-import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
-import { PageBody, PageFeedback, PageHeader, PageLoadingState, PageMetric } from '../../../components/PagePrimitives'
+import MasterDataListPage from '../../../components/MasterDataListPage'
+import MasterDataSearchField from '../../../components/MasterDataSearchField'
+import { PageLoadingState, PageMetric } from '../../../components/PagePrimitives'
 import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import {
   ApiError,
@@ -70,6 +71,7 @@ export default function EmployeesPage() {
   const { isAuthenticated, user } = useAuth()
   const canManage = user?.permissions.includes(Permissions.organization.manage) ?? false
   const [rows, setRows] = useState<EmployeeListItemResponse[]>([])
+  const [searchTerm, setSearchTerm] = useState('')
   const [companies, setCompanies] = useState<CompanyListItemResponse[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -122,6 +124,8 @@ export default function EmployeesPage() {
     () => new Map(companies.map((item) => [item.id, `${item.code} - ${item.name}`])),
     [companies],
   )
+  const search = searchTerm.trim().toLowerCase()
+  const visibleRows = rows.filter((row) => [row.employeeNumber, row.firstName, row.lastName, row.email, row.jobTitle, companyNameById.get(row.companyId) ?? ''].some((value) => value.toLowerCase().includes(search)))
 
   const openCreate = () => {
     if (!canManage) return
@@ -219,18 +223,19 @@ export default function EmployeesPage() {
   }
 
   return (
-    <VxStack spacing={3}>
-      <PageHeader
+    <>
+      <MasterDataListPage
         title={t('nav.routeTitles.employees')}
         description={t('pages.employees.description')}
         primaryAction={canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate}>{t('pages.employees.newButton')}</VxButton> : null}
         metrics={<PageMetric icon={<Groups2RoundedIcon fontSize="small" />} label={t('pages.employees.metrics.rows')} value={rows.length} />}
-      />
-
-      <PageFeedback error={error} success={feedback} onRetry={error ? () => void loadData() : undefined} />
-      {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.organization.manage} /> : null}
-
-      <PageBody>
+        filters={<MasterDataSearchField value={searchTerm} onChange={setSearchTerm} />}
+        error={error}
+        success={feedback}
+        onRetry={error ? () => void loadData() : undefined}
+        canManage={canManage}
+        requiredPermission={Permissions.organization.manage}
+      >
         {isLoading ? (
           <PageLoadingState label={t('common.labels.loading')} />
         ) : (
@@ -248,7 +253,7 @@ export default function EmployeesPage() {
                 </VxTableRow>
               </VxTableHead>
               <VxTableBody>
-                {rows.map((row) => (
+                {visibleRows.map((row) => (
                   <VxTableRow key={row.id}>
                     <VxTableCell>{row.employeeNumber}</VxTableCell>
                     <VxTableCell>{`${row.firstName} ${row.lastName}`.trim()}</VxTableCell>
@@ -272,10 +277,10 @@ export default function EmployeesPage() {
                     </VxTableCell>
                   </VxTableRow>
                 ))}
-                {rows.length === 0 ? (
+                {visibleRows.length === 0 ? (
                   <VxTableRow>
                     <VxTableCell colSpan={7}>
-                      <VxTypography color="text.secondary" variant="body2">{t('pages.employees.noRows')}</VxTypography>
+                      <VxTypography color="text.secondary" variant="body2">{rows.length === 0 ? t('pages.employees.noRows') : t('common.labels.noRecordsFound')}</VxTypography>
                     </VxTableCell>
                   </VxTableRow>
                 ) : null}
@@ -283,7 +288,7 @@ export default function EmployeesPage() {
             </VxTable>
           </VxTableContainer>
         )}
-      </PageBody>
+      </MasterDataListPage>
 
       <VxDialog open={canManage && editorOpen} onClose={requestClose} maxWidth="md" fullWidth>
         <VxDialogTitle>{editingId ? t('pages.employees.dialogs.edit') : t('pages.employees.dialogs.create')}</VxDialogTitle>
@@ -324,6 +329,6 @@ export default function EmployeesPage() {
         </VxDialogActions>
       </VxDialog>
       {confirmationDialog}
-    </VxStack>
+    </>
   )
 }

@@ -1,14 +1,14 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
 import { AddRoundedIcon, Groups2RoundedIcon, MailOutlineRoundedIcon, MonetizationOnRoundedIcon } from '@vexorion/ui'
-import { VxAlert, VxButton, VxStack } from '@vexorion/ui'
+import { VxAlert, VxButton } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { ApiError, deleteCustomer, getCustomers } from '../../../lib/api'
 import type { CustomerDetailsResponse, CustomerListItemResponse } from '../../../types/api'
 import type { CustomerDialogMode } from '../../../types/ui'
 import { Permissions } from '../../../app/authorization'
-import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
-import { PageBody, PageFeedback, PageHeader, PageLoadingState, PageMetric } from '../../../components/PagePrimitives'
+import MasterDataListPage from '../../../components/MasterDataListPage'
+import { PageLoadingState, PageMetric } from '../../../components/PagePrimitives'
 
 const CustomerEditorDialog = lazy(() => import('../components/CustomerEditorDialog'))
 const CustomerDataGrid = lazy(() => import('../components/CustomerDataGrid'))
@@ -120,8 +120,8 @@ export default function CustomersPage() {
   }
 
   return (
-    <VxStack spacing={3}>
-      <PageHeader
+    <>
+    <MasterDataListPage
         title={t('nav.routeTitles.customers')}
         description={t('pages.customers.description')}
         primaryAction={canManage ? (
@@ -136,12 +136,12 @@ export default function CustomersPage() {
             <PageMetric icon={<MonetizationOnRoundedIcon fontSize="small" />} label={t('pages.customers.metrics.active')} value={customers.filter((customer) => customer.isActive).length} />
           </>
         )}
-      />
-
-      <PageFeedback error={error} success={feedback} onRetry={error ? () => void loadCustomers() : undefined} />
-      {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.customers.manage} /> : null}
-
-      <PageBody>
+        error={error}
+        success={feedback}
+        onRetry={error ? () => void loadCustomers() : undefined}
+        canManage={canManage}
+        requiredPermission={Permissions.customers.manage}
+    >
         <Suspense fallback={<CustomerSurfaceFallback />}>
           <CustomerDataGrid
             rows={customers}
@@ -151,9 +151,9 @@ export default function CustomersPage() {
             canManage={canManage}
           />
         </Suspense>
-      </PageBody>
+    </MasterDataListPage>
 
-      {canManage && isEditorOpen ? (
+    {canManage && isEditorOpen ? (
         <Suspense fallback={<CustomerSurfaceFallback />}>
           <CustomerEditorDialog
             key={`${dialogMode}:${selectedCustomerId ?? 'new'}`}
@@ -166,7 +166,7 @@ export default function CustomersPage() {
         </Suspense>
       ) : null}
 
-      {canManage && deleteTarget ? (
+    {canManage && deleteTarget ? (
         <Suspense fallback={null}>
           <CustomerDeleteDialog
             target={deleteTarget}
@@ -176,6 +176,6 @@ export default function CustomersPage() {
           />
         </Suspense>
       ) : null}
-    </VxStack>
+    </>
   )
 }

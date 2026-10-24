@@ -413,12 +413,18 @@ Scope: Customers, Suppliers, Products, Categories/Identifiers, Warehouses, Accou
 
 **Findings**
 
-- Similar list/editor modules use different headings, metrics, grids/tables, delete patterns, validation feedback, and localization coverage.
+- Core master-data lists initially duplicated heading, metric, feedback, permission, and list-frame composition; UX-MASTER-01 now routes eight CRUD pages through one shared list shell.
 - Product image, identifiers, stock, and price history are split between expandable rows and dialogs, making the main view/edit path unpredictable.
 - Accounts use native delete confirmation. Role/configuration screens expose technical concepts with limited downstream-impact guidance.
 - Employee, consultant, project assignment, and relationship surfaces need a clearer record/engagement boundary.
 
 Open master-data and configuration work is consolidated in the final Main UI backlog.
+
+**Completed UX**
+
+- [x] `UX-MASTER-01` Apply shared list/editor patterns across master data. Locally completed 24 October 2026 for eight list pages: Customers, Suppliers, Products, Warehouses, Accounts, Product Categories, Employees, and Consultants share a page shell for title/description, primary action, optional filters and metrics, error/success/info feedback with retry, read-only permission notice, and list body. Existing editor/delete workflows remain page-specific. Products, Product Categories, Employees, and Consultants use the same labeled search field; their matching keys are product name/SKU/unit, category name, employee number/name/email/title/company, and consultant number/name/email/organization/specialty. Customers, Suppliers, Warehouses, and Accounts retain their existing grid quick filter. Metrics continue to describe the full result set while filters affect only displayed rows. Product search combines with the existing low-stock switch and has an explicit no-match state.
+  - Scope boundary: Config Users has distinct user/role permissions and remains specialized; company/tax/discount forms and transactional/approval workflows do not use the list shell. Product detail/editor and image/history coherence remain under `UX-MASTER-02`.
+  - Evidence: full frontend workspace tests pass (Main UI 218, AdminUI 52, POS 97), focused shell/search tests 11/11, and authenticated product-create/search E2E 2/2 including setup and isolated tenant cleanup/orphan check. Responsive E2E checks at 390/768/1440 px show no document overflow. Changed-file ESLint, Main UI TypeScript, and production build pass; the known large-chunk build warning remains. This is local acceptance, not the release gate.
 
 ### 5.5 Sales, procurement, billing, and payments
 
@@ -598,9 +604,6 @@ Complete application work in order: **Main UI → AdminUI → POS**. Finish the 
 
 ### Stage 1 — Main UI
 
-#### Master data and configuration
-
-- [ ] `UX-MASTER-01` Apply shared list/editor patterns across master data.
 - [ ] `UX-MASTER-02` Give Product a coherent detail/edit experience for core data, image, identifiers, stock, and price history.
 - [ ] `UX-MASTER-03` Standardize destructive actions with the shared confirmation pattern.
 - [ ] `UX-MASTER-04` Explain dependency/impact before deactivate/delete and distinguish reversible deactivation from permanent deletion.

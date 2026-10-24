@@ -1,6 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
 import { AddRoundedIcon, CheckCircleRoundedIcon, PlaceRoundedIcon, WarehouseRoundedIcon } from '@vexorion/ui'
-import { VxAlert, VxButton, VxStack } from '@vexorion/ui'
+import { VxAlert, VxButton } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
@@ -8,8 +8,8 @@ import { ApiError, deleteWarehouse, getWarehouses } from '../../../lib/api'
 import type { WarehouseDetailsResponse, WarehouseListItemResponse } from '../../../types/api'
 import type { WarehouseDialogMode } from '../../../types/ui'
 import { Permissions } from '../../../app/authorization'
-import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
-import { PageBody, PageFeedback, PageHeader, PageLoadingState, PageMetric } from '../../../components/PagePrimitives'
+import MasterDataListPage from '../../../components/MasterDataListPage'
+import { PageLoadingState, PageMetric } from '../../../components/PagePrimitives'
 
 const WarehouseEditorDialog = lazy(() => import('../components/WarehouseEditorDialog'))
 const WarehouseDataGrid = lazy(() => import('../components/WarehouseDataGrid'))
@@ -137,8 +137,8 @@ export default function WarehousesPage() {
   }
 
   return (
-    <VxStack spacing={3}>
-      <PageHeader
+    <>
+    <MasterDataListPage
         title={t('nav.routeTitles.warehouses')}
         description={t('pages.warehouses.description')}
         primaryAction={canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateDialog}>{t('pages.warehouses.newButton')}</VxButton> : null}
@@ -149,33 +149,29 @@ export default function WarehousesPage() {
             <PageMetric icon={<PlaceRoundedIcon fontSize="small" />} label={t('pages.warehouses.metrics.codesReady')} value={warehouses.filter((warehouse) => warehouse.code.length > 0).length} />
           </>
         )}
-      />
-
-      <PageFeedback
         error={error}
         success={feedback}
         info={highlightedWarehouseId ? t('pages.warehouses.focusedMovedTop') : null}
         onRetry={error ? () => void loadWarehouses() : undefined}
-      />
-      {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.inventory.manage} /> : null}
+        canManage={canManage}
+        requiredPermission={Permissions.inventory.manage}
+    >
+      <Suspense fallback={<WarehouseSurfaceFallback />}>
+        <WarehouseDataGrid rows={visibleWarehouses} isLoading={isLoading} highlightedWarehouseId={highlightedWarehouseId} onEdit={openEditDialog} onDelete={setDeleteTarget} canManage={canManage} />
+      </Suspense>
+    </MasterDataListPage>
 
-      <PageBody>
-        <Suspense fallback={<WarehouseSurfaceFallback />}>
-          <WarehouseDataGrid rows={visibleWarehouses} isLoading={isLoading} highlightedWarehouseId={highlightedWarehouseId} onEdit={openEditDialog} onDelete={setDeleteTarget} canManage={canManage} />
-        </Suspense>
-      </PageBody>
-
-      {canManage && isEditorOpen ? (
+    {canManage && isEditorOpen ? (
         <Suspense fallback={<WarehouseSurfaceFallback />}>
           <WarehouseEditorDialog key={`${dialogMode}:${selectedWarehouseId ?? 'new'}`} open={isEditorOpen} mode={dialogMode} warehouseId={selectedWarehouseId} onClose={handleEditorClose} onSaved={(warehouse, mode) => void handleSaved(warehouse, mode)} />
         </Suspense>
       ) : null}
 
-      {canManage && deleteTarget ? (
+    {canManage && deleteTarget ? (
         <Suspense fallback={null}>
           <WarehouseDeleteDialog target={deleteTarget} isDeleting={isDeleting} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} />
         </Suspense>
       ) : null}
-    </VxStack>
+    </>
   )
 }

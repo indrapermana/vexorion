@@ -4,8 +4,8 @@ import { AddIcon, DeleteIcon, EditIcon } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
-import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
-import { PageBody, PageFeedback, PageHeader } from '../../../components/PagePrimitives'
+import MasterDataListPage from '../../../components/MasterDataListPage'
+import MasterDataSearchField from '../../../components/MasterDataSearchField'
 import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import {
   ApiError,
@@ -21,6 +21,7 @@ export default function ConfigProductCategoriesPage() {
   const { isAuthenticated, user } = useAuth()
   const canManage = user?.permissions.includes(Permissions.products.manage) ?? false
   const [categories, setCategories] = useState<ProductCategoryListItemResponse[]>([])
+  const [searchTerm, setSearchTerm] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
 
@@ -74,6 +75,9 @@ export default function ConfigProductCategoriesPage() {
   useEffect(() => {
     void loadCategories()
   }, [loadCategories])
+
+  const search = searchTerm.trim().toLowerCase()
+  const visibleCategories = categories.filter((category) => category.name.toLowerCase().includes(search))
 
   const handleCreate = async () => {
     if (!canManage) return
@@ -135,10 +139,11 @@ export default function ConfigProductCategoriesPage() {
   }
 
   return (
-    <VxStack spacing={3}>
-      <PageHeader
+    <>
+      <MasterDataListPage
         title={t('config.productCategories.title')}
         description={t('config.productCategories.description')}
+        filters={<MasterDataSearchField value={searchTerm} onChange={setSearchTerm} />}
         primaryAction={canManage ? <VxButton
             variant="contained"
             startIcon={<AddIcon />}
@@ -146,12 +151,12 @@ export default function ConfigProductCategoriesPage() {
           >
             {t('config.productCategories.addButton')}
           </VxButton> : null}
-      />
-
-      <PageFeedback error={error} success={feedback} onRetry={error ? () => void loadCategories() : undefined} />
-      {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.products.manage} /> : null}
-
-      <PageBody>
+        error={error}
+        success={feedback}
+        onRetry={error ? () => void loadCategories() : undefined}
+        canManage={canManage}
+        requiredPermission={Permissions.products.manage}
+      >
         <VxTableContainer>
           <VxTable size="small">
             <VxTableHead>
@@ -162,16 +167,16 @@ export default function ConfigProductCategoriesPage() {
               </VxTableRow>
             </VxTableHead>
             <VxTableBody>
-              {categories.length === 0 ? (
+              {visibleCategories.length === 0 ? (
                 <VxTableRow>
                   <VxTableCell colSpan={3} align="center">
                     <VxTypography variant="body2" color="text.secondary" sx={{ py: 2 }}>
-                      {t('config.productCategories.noRecords')}
+                      {categories.length === 0 ? t('config.productCategories.noRecords') : t('common.labels.noRecordsFound')}
                     </VxTypography>
                   </VxTableCell>
                 </VxTableRow>
               ) : (
-                categories.map((cat) => (
+                visibleCategories.map((cat) => (
                   <VxTableRow key={cat.id}>
                     <VxTableCell>{cat.name}</VxTableCell>
                     <VxTableCell>{cat.isActive ? t('common.yes') : t('common.no')}</VxTableCell>
@@ -199,7 +204,7 @@ export default function ConfigProductCategoriesPage() {
             </VxTableBody>
           </VxTable>
         </VxTableContainer>
-      </PageBody>
+      </MasterDataListPage>
 
       {/* Create VxDialog */}
       <VxDialog open={canManage && createOpen} onClose={requestCreateClose} maxWidth="xs" fullWidth>
@@ -255,6 +260,6 @@ export default function ConfigProductCategoriesPage() {
       {editDiscardDialog}
 
       <VxConfirmActionDialog open={canManage && Boolean(deleteTarget)} title={t('config.productCategories.deleteDialog.title')} targetName={deleteTarget?.name ?? ''} consequence={t('config.productCategories.deleteDialog.message', { name: deleteTarget?.name })} confirmLabel={t('common.delete')} pendingLabel={t('dialogs.deleting')} pending={deleteLoading} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} />
-    </VxStack>
+    </>
   )
 }

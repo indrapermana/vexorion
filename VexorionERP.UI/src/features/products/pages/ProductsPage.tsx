@@ -14,8 +14,9 @@ import type {
 import type { ProductDialogMode } from '../../../types/ui'
 import type { ProductGridRow } from '../../../types/ui'
 import { Permissions } from '../../../app/authorization'
-import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
-import { PageBody, PageFeedback, PageHeader, PageLoadingState, PageMetric } from '../../../components/PagePrimitives'
+import MasterDataListPage from '../../../components/MasterDataListPage'
+import MasterDataSearchField from '../../../components/MasterDataSearchField'
+import { PageLoadingState, PageMetric } from '../../../components/PagePrimitives'
 
 const ProductEditorDialog = lazy(() => import('../components/ProductEditorDialog'))
 const ProductDataGrid = lazy(() => import('../components/ProductDataGrid'))
@@ -123,6 +124,7 @@ export default function ProductsPage() {
   const [deleteTarget, setDeleteTarget] = useState<ProductGridRow | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showOnlyLowStock, setShowOnlyLowStock] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
   const [expandedProductIds, setExpandedProductIds] = useState<string[]>([])
 
   const loadProducts = useCallback(async () => {
@@ -228,8 +230,8 @@ export default function ProductsPage() {
   const visibleProducts = showOnlyLowStock ? products.filter((product) => product.isLowStock) : products
 
   return (
-    <VxStack spacing={3}>
-      <PageHeader
+    <>
+    <MasterDataListPage
         title={t('nav.routeTitles.products')}
         description={t('pages.products.description')}
         primaryAction={canManage ? (
@@ -239,6 +241,7 @@ export default function ProductsPage() {
         ) : null}
         filters={(
           <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
+            <MasterDataSearchField value={searchTerm} onChange={setSearchTerm} />
             <VxFormControlLabel
               control={<VxSwitch checked={showOnlyLowStock} onChange={(_, checked) => setShowOnlyLowStock(checked)} color="warning" />}
               label={t('pages.products.onlyLowStock')}
@@ -260,15 +263,16 @@ export default function ProductsPage() {
             <PageMetric icon={<ReportRoundedIcon fontSize="small" />} label={t('pages.products.metrics.lowStockActiveItems')} value={lowStockProducts.length} />
           </>
         )}
-      />
-
-      <PageFeedback error={error} success={feedback} onRetry={error ? () => void loadProducts() : undefined} />
-      {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.products.manage} /> : null}
-
-      <PageBody>
+        error={error}
+        success={feedback}
+        onRetry={error ? () => void loadProducts() : undefined}
+        canManage={canManage}
+        requiredPermission={Permissions.products.manage}
+    >
         <Suspense fallback={<ProductSurfaceFallback />}>
           <ProductDataGrid
             rows={visibleProducts}
+            searchTerm={searchTerm}
             isLoading={isLoading}
             expandedProductIds={expandedProductIds}
             onToggleExpanded={toggleExpandedProduct}
@@ -277,9 +281,9 @@ export default function ProductsPage() {
             canManage={canManage}
           />
         </Suspense>
-      </PageBody>
+    </MasterDataListPage>
 
-      {canManage && isEditorOpen ? (
+    {canManage && isEditorOpen ? (
         <Suspense fallback={<ProductSurfaceFallback />}>
           <ProductEditorDialog
             key={`${dialogMode}:${selectedProductId ?? 'new'}`}
@@ -292,7 +296,7 @@ export default function ProductsPage() {
         </Suspense>
       ) : null}
 
-      {canManage && deleteTarget ? (
+    {canManage && deleteTarget ? (
         <Suspense fallback={null}>
           <ProductDeleteDialog
             target={deleteTarget}
@@ -302,6 +306,6 @@ export default function ProductsPage() {
           />
         </Suspense>
       ) : null}
-    </VxStack>
+    </>
   )
 }
