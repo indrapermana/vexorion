@@ -521,6 +521,38 @@ The frontend workflow builds, type-checks, lints, and unit-tests affected packag
 
 The authenticated frontends and public landing page deploy to Cloudflare Pages through explicit deployment gates. The production API runs on Google Cloud Run, PostgreSQL runs on Neon, and object storage uses Cloudflare R2.
 
+### Production deployment reminder: apply migrations first
+
+The backend deployment does **not** apply EF Core migrations automatically. Before pushing or rerunning a backend deployment that contains a new file under `VexorionERP.Database/Migrations`, apply the migration to production using the dedicated direct Neon migrator connection. Otherwise, the new Cloud Run revision will intentionally fail startup validation and the previous healthy revision will remain active.
+
+From the repository root, securely read the connection string without adding it to shell history:
+
+```bash
+read -s "VEXORION_MIGRATION_CONNECTION?Paste production migrator connection string: "
+echo
+```
+
+Apply all pending migrations:
+
+```bash
+ASPNETCORE_ENVIRONMENT=Development \
+ConnectionStrings__MigrationConnection="$VEXORION_MIGRATION_CONNECTION" \
+Jwt__SecretKey="$(openssl rand -hex 32)" \
+dotnet run \
+  --project VexorionERP/VexorionERP.csproj \
+  --no-launch-profile \
+  -- \
+  --vexorion-operation=migrate
+```
+
+The production migration connection must use the direct Neon endpoint, database `vexorionerp_production`, role `vexorion_migrator_production`, and `SSL Mode=VerifyFull`. Repeating the command is safe and should report that the database is current. Remove the connection from the shell immediately afterward:
+
+```bash
+unset VEXORION_MIGRATION_CONNECTION
+```
+
+After the migration succeeds, verify that `vexorion_runtime_production` has access to any newly created tables, then push the backend change or rerun the failed GitHub Actions deployment. Automatic execution through a restricted Cloud Run migration job is planned but is not implemented yet.
+
 ### Infrastructure setup guides
 
 - [Architecture and workflow diagrams](docs/VEXORIONERP_ARCHITECTURE_DIAGRAMS.md)
