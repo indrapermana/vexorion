@@ -25,7 +25,8 @@ public class PosCheckoutService(
     SalesShipmentCommandService shipmentService,
     SalesInvoiceCommandService invoiceService,
     CustomerPaymentCommandService paymentService,
-    IAuditLogger auditLogger) : IPosCheckoutService
+    IAuditLogger auditLogger,
+    IPosCheckoutTransactionObserver transactionObserver) : IPosCheckoutService
 {
     private const string PaymentMethodFallback = "CASH";
 
@@ -93,14 +94,31 @@ public class PosCheckoutService(
         }
 
         var productIds = request.Lines.Select(x => x.ProductId).Distinct().ToList();
-        var knownProductCount = await dbContext.Products.GetByTenant(tenantId)
-            .CountAsync(x => productIds.Contains(x.Id), cancellationToken);
-        if (knownProductCount != productIds.Count)
+        var productsById = await dbContext.Products.GetByTenant(tenantId)
+            .Where(x => productIds.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, cancellationToken);
+        if (productsById.Count != productIds.Count)
         {
             return ServiceResult<PosCheckoutResponse>.Failure(StatusCodes.Status400BadRequest, "One or more products were not found.", "pos.product_not_found");
         }
 
-        var grandTotal = request.Lines.Sum(x => (x.Quantity * x.UnitPrice) - x.DiscountAmount);
+        if (request.Lines.Any(x => x.DiscountAmount > x.Quantity * productsById[x.ProductId].SalesPrice))
+        {
+            return ServiceResult<PosCheckoutResponse>.ValidationFailure(new Dictionary<string, string[]>
+            {
+                [nameof(request.Lines)] = ["A discount cannot exceed the server-calculated line total."],
+            });
+        }
+
+        var resolvedLines = request.Lines.Select(x => new PosCheckoutLineResponse
+        {
+            ProductId = x.ProductId,
+            Quantity = x.Quantity,
+            UnitPrice = productsById[x.ProductId].SalesPrice,
+            DiscountAmount = x.DiscountAmount,
+            LineTotal = (x.Quantity * productsById[x.ProductId].SalesPrice) - x.DiscountAmount,
+        }).ToList();
+        var grandTotal = resolvedLines.Sum(x => x.LineTotal);
         if (!request.IsDelivery && request.PaymentAmount < grandTotal)
         {
             return ServiceResult<PosCheckoutResponse>.Failure(StatusCodes.Status400BadRequest, "Payment is lower than the amount due.", "pos.payment_insufficient");
@@ -126,7 +144,7 @@ public class PosCheckoutService(
             Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim(),
         };
 
-        foreach (var line in request.Lines)
+        foreach (var line in resolvedLines)
         {
             order.Lines.Add(new SalesOrderLine
             {
@@ -140,6 +158,7 @@ public class PosCheckoutService(
 
         dbContext.SalesOrders.Add(order);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await transactionObserver.ReachedAsync(PosCheckoutTransactionCheckpoint.OrderSaved, cancellationToken);
 
         var shipmentResult = await shipmentService.CreateAsync(new CreateSalesShipmentRequest
         {
@@ -170,6 +189,7 @@ public class PosCheckoutService(
                 return await RollbackAsync(transaction, postResult, cancellationToken);
             }
         }
+        await transactionObserver.ReachedAsync(PosCheckoutTransactionCheckpoint.ShipmentSaved, cancellationToken);
 
         var invoiceResult = await invoiceService.CreateAsync(new CreateSalesInvoiceRequest
         {
@@ -189,6 +209,7 @@ public class PosCheckoutService(
         }
 
         var invoice = invoiceResult.Value!;
+        await transactionObserver.ReachedAsync(PosCheckoutTransactionCheckpoint.InvoiceSaved, cancellationToken);
         var applied = Math.Min(request.PaymentAmount, invoice.GrandTotal);
         Guid? paymentId = null;
         if (applied > 0m)
@@ -210,6 +231,7 @@ public class PosCheckoutService(
 
             paymentId = paymentResult.Value!.Id;
         }
+        await transactionObserver.ReachedAsync(PosCheckoutTransactionCheckpoint.PaymentSaved, cancellationToken);
 
         var response = new PosCheckoutResponse
         {
@@ -227,6 +249,7 @@ public class PosCheckoutService(
             AmountApplied = applied,
             ChangeDue = Math.Max(0m, request.PaymentAmount - invoice.GrandTotal),
             CompletedAtUtc = DateTimeOffset.UtcNow,
+            Lines = resolvedLines,
         };
 
         dbContext.PosCheckoutRecords.Add(new PosCheckoutRecord
@@ -243,10 +266,12 @@ public class PosCheckoutService(
             ResponseJson = JsonSerializer.Serialize(response),
         });
         await dbContext.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
+        await transactionObserver.ReachedAsync(PosCheckoutTransactionCheckpoint.CheckoutRecordSaved, cancellationToken);
 
         await auditLogger.LogAsync("pos.checkout_completed", tenantId, cashierId, cashierId, nameof(SalesInvoice), invoice.Id.ToString(),
             $"POS checkout {invoice.InvoiceNumber} completed.", cancellationToken: cancellationToken);
+        await transactionObserver.ReachedAsync(PosCheckoutTransactionCheckpoint.AuditSaved, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         return ServiceResult<PosCheckoutResponse>.Success(response);
     }
@@ -305,10 +330,9 @@ public class PosCheckoutService(
         {
             errors[nameof(request.Lines)] = ["At least one line is required."];
         }
-        else if (request.Lines.Any(x => x.ProductId == Guid.Empty || x.Quantity <= 0m || x.UnitPrice < 0m
-                     || x.DiscountAmount < 0m || x.DiscountAmount > x.Quantity * x.UnitPrice))
+        else if (request.Lines.Any(x => x.ProductId == Guid.Empty || x.Quantity <= 0m || x.DiscountAmount < 0m))
         {
-            errors[nameof(request.Lines)] = ["Each line needs a product, a positive quantity, a valid price and a discount not above the line total."];
+            errors[nameof(request.Lines)] = ["Each line needs a product, a positive quantity, and a non-negative discount."];
         }
 
         return errors;
@@ -325,7 +349,7 @@ public class PosCheckoutService(
             Notes = request.Notes?.Trim(),
             PaymentMethod = request.PaymentMethod?.Trim(),
             request.PaymentAmount,
-            Lines = request.Lines.Select(x => new { x.ProductId, x.Quantity, x.UnitPrice, x.DiscountAmount }),
+            Lines = request.Lines.Select(x => new { x.ProductId, x.Quantity, x.DiscountAmount }),
         });
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(canonical)));
     }

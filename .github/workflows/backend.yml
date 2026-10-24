@@ -130,6 +130,7 @@ jobs:
           SIXLABORS_LICENSE_FILE_CONTENT: ${{ secrets.SIXLABORS_LICENSE_FILE }}
           EMAIL__RESENDAPIKEY: ${{ secrets.EMAIL__RESENDAPIKEY }}
           EMAIL__MAINUIBASEURL: ${{ vars.EMAIL__MAINUIBASEURL }}
+          EMAIL__FROMADDRESS: ${{ vars.EMAIL__FROMADDRESS }}
         run: |
           missing=0
           for variable_name in \
@@ -140,7 +141,8 @@ jobs:
             GCP_IMAGE_NAME \
             GCP_WORKLOAD_IDENTITY_PROVIDER \
             GCP_DEPLOY_SERVICE_ACCOUNT \
-            EMAIL__MAINUIBASEURL
+            EMAIL__MAINUIBASEURL \
+            EMAIL__FROMADDRESS
           do
             if [[ -z "${!variable_name}" ]]; then
               echo "Missing GitHub production environment variable: $variable_name"
@@ -210,12 +212,15 @@ jobs:
         env:
           EMAIL__RESENDAPIKEY: ${{ secrets.EMAIL__RESENDAPIKEY }}
           EMAIL__MAINUIBASEURL: ${{ vars.EMAIL__MAINUIBASEURL }}
+          EMAIL__FROMADDRESS: ${{ vars.EMAIL__FROMADDRESS }}
         run: |
           gcloud run services update "$GCP_CLOUD_RUN_SERVICE" \
             --project="$GCP_PROJECT_ID" \
             --region="$GCP_REGION" \
             --image="$IMAGE_DIGEST_URI" \
-            --update-env-vars="^|^EMAIL__RESENDAPIKEY=${EMAIL__RESENDAPIKEY}|EMAIL__MAINUIBASEURL=${EMAIL__MAINUIBASEURL}|EMAIL__REDIRECTPLUSADDRESSING=false" \
+            --update-env-vars="^|^EMAIL__RESENDAPIKEY=${EMAIL__RESENDAPIKEY}|EMAIL__MAINUIBASEURL=${EMAIL__MAINUIBASEURL}|
+            EMAIL__FROMADDRESS=${EMAIL__FROMADDRESS}|
+            EMAIL__REDIRECTPLUSADDRESSING=false" \
             --no-invoker-iam-check \
             --quiet
 

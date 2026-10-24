@@ -45,7 +45,8 @@ public class PosCheckoutServiceTests
             new SalesShipmentCommandService(f.Db, tenant, inventory),
             new SalesInvoiceCommandService(f.Db, tenant),
             new CustomerPaymentCommandService(f.Db, tenant),
-            new NoOpAuditLogger());
+            new NoOpAuditLogger(),
+            new NoOpPosCheckoutTransactionObserver());
         return f;
     }
 
@@ -58,7 +59,9 @@ public class PosCheckoutServiceTests
         IsDelivery = delivery,
         PaymentMethod = "CASH",
         PaymentAmount = payment,
+#pragma warning disable CS0618 // Compatibility price is deliberately populated to prove the server ignores it.
         Lines = [new PosCheckoutLine { ProductId = f.ProductId, Quantity = quantity, UnitPrice = 10m, DiscountAmount = 0m }],
+#pragma warning restore CS0618
     };
 
     [Fact]
@@ -82,6 +85,41 @@ public class PosCheckoutServiceTests
         Assert.Equal(DocumentStatus.Completed, (await f.Db.SalesOrders.SingleAsync()).Status);
         Assert.Equal(8m, (await f.Db.InventoryBalances.SingleAsync()).QuantityOnHand);
         Assert.Single(await f.Db.PosCheckoutRecords.ToListAsync());
+    }
+
+    [Fact]
+    public async Task Checkout_UsesCurrentServerPriceForDocumentsAndResponse()
+    {
+        var f = await CreateAsync();
+        var product = await f.Db.Products.SingleAsync();
+        product.SalesPrice = 12.50m;
+        await f.Db.SaveChangesAsync();
+        var request = Request(f, payment: 30m);
+#pragma warning disable CS0618 // Simulate a tampered/stale browser price.
+        request.Lines[0].UnitPrice = 0.01m;
+#pragma warning restore CS0618
+
+        var result = await f.Service.CheckoutAsync(f.CashierId, request);
+
+        Assert.True(result.Succeeded, result.ErrorMessage);
+        Assert.Equal(25m, result.Value!.GrandTotal);
+        Assert.Equal(12.50m, Assert.Single(result.Value.Lines).UnitPrice);
+        Assert.Equal(25m, (await f.Db.SalesOrders.SingleAsync()).TotalAmount);
+        Assert.Equal(12.50m, (await f.Db.SalesOrderLines.SingleAsync()).UnitPrice);
+    }
+
+    [Fact]
+    public async Task Checkout_DiscountAboveServerCalculatedLineTotal_IsRejected()
+    {
+        var f = await CreateAsync();
+        var request = Request(f);
+        request.Lines[0].DiscountAmount = 20.01m;
+
+        var result = await f.Service.CheckoutAsync(f.CashierId, request);
+
+        Assert.False(result.Succeeded);
+        Assert.NotNull(result.Validation);
+        Assert.Empty(await f.Db.SalesOrders.ToListAsync());
     }
 
     [Fact]

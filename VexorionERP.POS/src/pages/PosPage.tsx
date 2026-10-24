@@ -373,7 +373,18 @@ export default function PosPage() {
         invoiceId: invoice.id,
       })
 
-      const cartSnapshot = [...cart]
+      const authoritativeLines = new Map(sale.lines.map((line) => [line.productId, line]))
+      const cartSnapshot = cart.map((line) => {
+        const authoritative = authoritativeLines.get(line.productId)
+        return authoritative
+          ? {
+              ...line,
+              quantity: authoritative.quantity,
+              unitPrice: authoritative.unitPrice,
+              discountAmount: authoritative.discountAmount,
+            }
+          : line
+      })
       const customerLabel =
         selectedCustomerId === GUEST_CUSTOMER_TAG
           ? 'Guest'
@@ -381,11 +392,11 @@ export default function PosPage() {
 
       // Build receipt data before clearing the cart (Items 1–3)
       setReceiptData({
-        completedAt: new Date().toISOString(),
+        completedAt: sale.completedAtUtc,
         customerLabel,
-        currencyCode,
+        currencyCode: sale.currencyCode,
         lines: cartSnapshot,
-        paymentAmount,
+        paymentAmount: sale.amountTendered,
         paymentMethod,
         isDelivery,
         orderId: order.id,
@@ -397,11 +408,11 @@ export default function PosPage() {
       pushHistory({
         id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
         shiftId: currentShift?.id,
-        completedAt: new Date().toISOString(),
+        completedAt: sale.completedAtUtc,
         customerLabel,
-        currencyCode,
-        grandTotal,
-        paymentAmount,
+        currencyCode: sale.currencyCode,
+        grandTotal: sale.grandTotal,
+        paymentAmount: sale.amountTendered,
         paymentMethod,
         lineCount: cartSnapshot.length,
         isDelivery,

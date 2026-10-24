@@ -16,7 +16,17 @@ public class PosCheckoutResponse
     public decimal AmountApplied { get; set; }
     public decimal ChangeDue { get; set; }
     public DateTimeOffset CompletedAtUtc { get; set; }
+    public List<PosCheckoutLineResponse> Lines { get; set; } = [];
 
     /// <summary>True when this response replays a checkout that had already completed for the same idempotency key.</summary>
     public bool Replayed { get; set; }
+}
+
+public class PosCheckoutLineResponse
+{
+    public Guid ProductId { get; set; }
+    public decimal Quantity { get; set; }
+    public decimal UnitPrice { get; set; }
+    public decimal DiscountAmount { get; set; }
+    public decimal LineTotal { get; set; }
 }

@@ -18,6 +18,11 @@ public class PosCheckoutLine
 {
     public Guid ProductId { get; set; }
     public decimal Quantity { get; set; }
+    /// <summary>
+    /// Deprecated compatibility value for rolling deployments. Checkout pricing is always resolved
+    /// from the server-side product record; this value is never used for totals or persistence.
+    /// </summary>
+    [Obsolete("Checkout pricing is server-authoritative. This field will be removed after the compatibility window.")]
     public decimal UnitPrice { get; set; }
     public decimal DiscountAmount { get; set; }
 }

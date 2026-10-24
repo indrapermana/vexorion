@@ -245,13 +245,33 @@ Implementation evidence (2026-10-13):
 
 ### P1-3 — ERP business semantics and QA expectations need reconciliation
 
-- [ ] Audit immutable-posted/reversal-only behavior across every aggregate and endpoint, including line endpoints and direct balance mutation APIs.
-- [ ] Reconcile terminology: inventory documents use `Completed/Cancelled` while UI/test documents sometimes say `Post/Reverse`; define one user vocabulary and explicit state mapping.
+**Status: DRAFT decisions below, awaiting owner approval. No code is changed until approved. Items 7 and 9 need an explicit answer.**
+
+Verified current behavior: the sales credit note (`CreateCreditNoteAsync`) is full-invoice only, with no stock return, no refund payment and no POS link. A payment is allocated to exactly one invoice and cannot exceed its balance. Shipment post deducts stock and moves the order to Partially/Completed. A POS sale creates an issued invoice and payment but no journal entry.
+
+| # | Topic | Draft decision |
+|---|-------|----------------|
+| D1 | Vocabulary | **Post** makes a document final and applies its effects (stock, ledger). **Reverse** undoes a posted document with a new opposite entry. **Cancel** abandons a document that was never posted. UI shows inventory `Completed` as `Posted`; the stored enum is unchanged. |
+| D2 | Immutable posted records | After post/issue: no edits to header, lines, amounts, dates or party, and no delete. Only notes and attachments may change. Corrections go through reversal or credit note. Line endpoints and balance-mutation APIs must refuse posted parents. |
+| D3 | Cancel vs reverse | Draft or never-posted: cancel (no ledger or stock effect). Posted: reverse only; the original stays visible. A reversal needs a reason, a permission and an audit entry. A paid invoice cannot be reversed until its payments are reversed or refunded. |
+| D4 | Credit notes and refunds | A return is a credit note (partial allowed, per line, quantity capped at sold minus earlier returns) plus optional stock return plus optional refund. Per line: return to stock (default) or write off. Refund defaults to the original payment method and is capped at what was paid for the credited lines. An unpaid invoice gets a credit against its balance, not a cash refund. Replace the full-only credit note with the partial version; a full credit is "all lines". |
+| D5 | Partial fulfilment and concurrency | Quantities are re-checked at post time inside the transaction (exists). Add concurrency tokens to order lines and stock balances so two simultaneous posts cannot both pass. Over-shipment stays blocked. Back-orders stay on the open order; no automatic split. |
+| D6 | Payment allocation | One payment to one invoice. Overpayment is rejected, not stored. Customer credit balance and multi-invoice allocation are deferred. |
+| D7 | Approvals | **OPEN.** Proposed: only refunds and reversals above a per-tenant threshold need a second user with an approve permission. Threshold to choose (suggest reversals always, refunds above 100 in tenant currency), or "none". |
+| D8 | Manual journals | Implement balanced draft, post and reverse with fiscal-period lock checks (see `FEAT-FIN-01`). |
+| D9 | POS ledger posting | **OPEN.** Proposed: post automatically at checkout using tenant default accounts; if accounts are not configured, mark the sale "needs posting". Alternative: batch per shift close. |
+
+Proposed order if approved: `FEAT-POS-02`, then `FEAT-TRADE-01` rules/tests (D1, D2, D5), then `FEAT-FIN-01`, then POS ledger posting (D9) and approvals (D7).
+
+Checklist (tick when decided and implemented):
+
+- [ ] Audit immutable-posted/reversal-only behavior across every aggregate and endpoint, including line endpoints and direct balance mutation APIs. Draft: D2.
+- [ ] Reconcile terminology: inventory documents use `Completed/Cancelled` while UI/test documents sometimes say `Post/Reverse`; define one user vocabulary and explicit state mapping. Draft: D1.
 - [ ] Correct QA expectation that saving an inventory adjustment immediately updates balance if actual behavior requires completion/posting.
-- [ ] Confirm whether manual journal creation is supported. Current controller surface is read/reverse oriented while the QA plan expects create and post.
-- [ ] Confirm credit-note, return/refund, allocation, cancellation, and reversal accounting semantics end-to-end, including source status and inventory/GL effects.
-- [ ] Verify partial receipt/shipment cancellation correctly restores remaining quantities and prevents over-execution under concurrency.
-- [ ] Add approval rules by document type and amount beyond the current invoice workflow.
+- [ ] Confirm whether manual journal creation is supported. Current controller surface is read/reverse oriented while the QA plan expects create and post. Draft: D8.
+- [ ] Confirm credit-note, return/refund, allocation, cancellation, and reversal accounting semantics end-to-end, including source status and inventory/GL effects. Draft: D3, D4, D6, D9.
+- [ ] Verify partial receipt/shipment cancellation correctly restores remaining quantities and prevents over-execution under concurrency. Draft: D5.
+- [ ] Add approval rules by document type and amount beyond the current invoice workflow. Draft: D7 (open).
 
 ### P1-4 — Remaining reporting breadth
 
@@ -468,8 +488,8 @@ Scope: Sales Orders/Shipments/Invoices/Customer Payments and Purchase Orders/Rec
 - [ ] `UX-TRADE-03` Add a detail-first review view for header, parties, dates, terms, lines, totals, fulfillment/allocation, generated documents, audit, and state actions.
 - [ ] `UX-TRADE-04` Optimize receipt/shipment entry for keyboard/tablet, showing ordered, previously processed, remaining, entered, and resulting quantities.
 - [ ] `UX-TRADE-05` Standardize payment allocation summaries and pre-submit validation.
-- [ ] `FEAT-TRADE-01` Complete P1-3 semantics and encode agreed transitions/accounting/inventory effects in backend rules, API codes, UI, and tests.
-- [ ] `FEAT-TRADE-02` Decide and implement approval rules by document type/amount with approver visibility and history.
+- [ ] `FEAT-TRADE-01` Complete P1-3 semantics and encode agreed transitions/accounting/inventory effects in backend rules, API codes, UI, and tests. Draft decisions D1–D6 in P1-3; blocked until approved.
+- [ ] `FEAT-TRADE-02` Decide and implement approval rules by document type/amount with approver visibility and history. Draft D7 (refunds/reversals above a threshold) is open.
 
 ### 5.6 Inventory operations
 
@@ -505,7 +525,7 @@ Scope: Adjustments, Counts, Transfers, Receipts, Shipments, balances, and moveme
 - [ ] `UX-FIN-02` Provide a fiscal-period calendar/status view and warn about locks before users complete unpostable forms.
 - [ ] `UX-FIN-03` Standardize currency/date/sign formatting, totals, comparisons, drill-down, export progress, and no-data explanations.
 - [ ] `UX-FIN-04` Add an audit detail drawer with actor, tenant, action, entity, time, trace ID, safe before/after, copyable support context, pagination, and export.
-- [ ] `FEAT-FIN-01` Decide manual-journal support: implement balanced draft/create/post/reverse or remove that expectation from QA/UI.
+- [ ] `FEAT-FIN-01` Decide manual-journal support: implement balanced draft/create/post/reverse or remove that expectation from QA/UI. Draft D8: implement, with period-lock checks, after `FEAT-POS-02`.
 - [ ] `FEAT-FIN-02` Complete report reconciliation, tenant/date-boundary, non-empty, and CSV formula-injection tests.
 
 ### 5.8 Projects, documents, assignments, and tenant relationships
@@ -585,8 +605,13 @@ Scope: Adjustments, Counts, Transfers, Receipts, Shipments, balances, and moveme
   - Done: `POST api/pos/checkout` (`Pos.Checkout`) runs `PosCheckoutService` in one DB transaction: shift ownership/open check, customer/warehouse/product checks, order, shipment (posted unless delivery, so stock is checked and deducted), invoice from the order and shipment, payment, audit log.
   - Idempotency: client key per attempt (reused while the same sale is retried), unique `PosCheckoutRecord` per tenant and key, replay returns the original result, key reuse with a different payload returns 409 `pos.idempotency_key_reused`. Server generates document numbers and returns change due. New migration `AddPosCheckoutRecords`.
   - POS client now makes one call; the old per-document calls and the stock pre-check are gone from checkout.
-  - Tests: 9 service tests, 3 Web authorization tests, 1 client API test. The in-memory DB ignores transactions, so rollback on a mid-flow failure is not proven by tests; verify against PostgreSQL.
-  - Not yet done: unit prices are still taken from the client (validated only for sign and discount bounds); tax is still zero; the sale is linked to its shift through the checkout record only; no Playwright run.
+  - Tests: 11 service tests, 3 Web authorization tests, 1 client API test. The in-memory DB ignores transactions, so rollback on a mid-flow failure is not proven by tests; verify against PostgreSQL.
+  - Not yet done: tax is still zero; the sale is linked to its shift through the checkout record only; no Playwright run.
+- [x] `FEAT-POS-01A` Harden checkout pricing and commit boundaries before extending POS features.
+  - Server-authoritative pricing: the service ignores the deprecated client unit-price compatibility value, resolves the current product sales price, validates discounts against that amount, persists it across order/shipment/invoice, and returns resolved lines for receipt/history rendering. The deprecated field remains temporarily so a rolling frontend/backend deployment cannot create zero-price sales against an older API.
+  - Commit integrity: the audit row is now written inside the checkout transaction, before commit, so an audit-write failure cannot report checkout failure after the sale already committed.
+  - Focused validation: authoritative-price and server-price discount-boundary coverage added; 11/11 service tests, POS typecheck, focused client test, lint (zero errors; five pre-existing hook warnings), and diff checks pass.
+- [ ] `FEAT-POS-01B` Prove checkout rollback and concurrent idempotency against PostgreSQL, then add an authenticated Playwright sale/retry/receipt path. Include injected failures after order, shipment, invoice, payment, checkout-record, and audit writes; verify no partial records, stock movements, or duplicate documents remain.
 - [ ] `FEAT-POS-02` Replace multi-call return/refund with an atomic idempotent workflow and reconcile inventory, credit note, refund/payment, source transaction, and audit.
 - [ ] `FEAT-POS-03` Decide whether pilot needs hold/resume, void reason, manager override, cash movement, end-of-day reconciliation, offline mode, or hardware integration before implementing them.
 

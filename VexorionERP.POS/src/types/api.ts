@@ -26,6 +26,7 @@ export type PosStockInsufficientItem = {
 export type PosCheckoutLine = {
   productId: string
   quantity: number
+  /** Deprecated compatibility value. The API resolves and returns the authoritative price. */
   unitPrice: number
   discountAmount: number
 }
@@ -58,6 +59,13 @@ export type PosCheckoutResponse = {
   changeDue: number
   completedAtUtc: string
   replayed: boolean
+  lines: Array<{
+    productId: string
+    quantity: number
+    unitPrice: number
+    discountAmount: number
+    lineTotal: number
+  }>
 }
 
 export type PosStockValidationResponse = {
