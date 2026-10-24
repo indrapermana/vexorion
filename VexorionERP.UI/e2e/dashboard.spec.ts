@@ -70,6 +70,90 @@ test.describe('Dashboard', () => {
     }
   })
 
+  test('UX-DASH-03: isolated failures, targeted retry, and cached freshness recover safely', async ({ page }, testInfo) => {
+    test.setTimeout(90_000)
+    let financeFails = true
+    let agingFails = true
+    let holdRefresh = false
+    let financeAttempts = 0
+    let agingAttempts = 0
+    let releaseInitial = () => {}
+    let releaseRefresh = () => {}
+    const initialGate = new Promise<void>((resolve) => { releaseInitial = resolve })
+    const refreshGate = new Promise<void>((resolve) => { releaseRefresh = resolve })
+    const pageErrors: string[] = []
+    page.on('pageerror', (error) => pageErrors.push(error.message))
+
+    await page.route('**/api/reports/dashboard?*', async (route) => {
+      financeAttempts += 1
+      if (!financeFails) return route.continue()
+      await initialGate
+      if (holdRefresh) await refreshGate
+      await route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ detail: 'Internal failure details must not be shown' }) })
+    })
+    await page.route('**/api/reports/ar-aging?*', async (route) => {
+      agingAttempts += 1
+      if (!agingFails) return route.continue()
+      await route.fulfill({ status: 503, contentType: 'application/json', body: '{}' })
+    })
+
+    try {
+      await page.setViewportSize({ width: 390, height: 900 })
+      await page.goto('/')
+      const metrics = page.getByRole('region', { name: 'Financial metrics', exact: true })
+      const aging = page.getByRole('region', { name: 'Receivables Aging', exact: true })
+      await expect(metrics.getByRole('status', { name: 'Loading Financial metrics...' })).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Payables Aging', exact: true })).toBeVisible()
+      releaseInitial()
+      await expect(metrics.getByRole('alert')).toContainText('Unable to load Financial metrics.', { timeout: 15_000 })
+      await expect(aging.getByRole('alert')).toBeVisible({ timeout: 15_000 })
+      await expect(metrics.getByText('Outstanding receivables', { exact: true })).toHaveCount(0)
+      await expect(metrics.locator('time')).toHaveCount(0)
+      await expect(page.getByRole('heading', { name: 'Recent Orders', exact: true })).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Storage and Plan Limit', exact: true })).toBeVisible()
+      await expect(page.getByText('Internal failure details must not be shown', { exact: true })).toHaveCount(0)
+      await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1)
+      await page.screenshot({ path: testInfo.outputPath('dashboard-partial-failure-390.png'), fullPage: true, animations: 'disabled' })
+
+      const agingBeforeFinanceRetry = agingAttempts
+      financeFails = false
+      await metrics.getByRole('button', { name: 'Retry Financial metrics', exact: true }).click()
+      await expect(metrics.getByText('Outstanding receivables', { exact: true })).toBeVisible()
+      await expect(metrics.getByRole('alert')).toHaveCount(0)
+      expect(agingAttempts).toBe(agingBeforeFinanceRetry)
+      const lastFetched = await metrics.locator('time').getAttribute('datetime')
+      expect(lastFetched).toBeTruthy()
+
+      financeFails = true
+      holdRefresh = true
+      await metrics.getByRole('button', { name: 'Refresh Financial metrics', exact: true }).click()
+      await expect(metrics.getByRole('status')).toContainText('Updating Financial metrics...')
+      await expect(metrics.getByRole('button')).toBeDisabled()
+      await expect(metrics.getByText('Outstanding receivables', { exact: true })).toBeVisible()
+      releaseRefresh()
+      await expect(metrics.getByRole('alert')).toContainText('Showing previously fetched data.', { timeout: 15_000 })
+      await expect(metrics.locator('time')).toHaveAttribute('datetime', lastFetched!)
+      await expect(metrics.getByText('Outstanding receivables', { exact: true })).toBeVisible()
+      await page.screenshot({ path: testInfo.outputPath('dashboard-cached-refresh-failure-390.png'), fullPage: true, animations: 'disabled' })
+
+      financeFails = false
+      await metrics.getByRole('button', { name: 'Retry Financial metrics', exact: true }).click()
+      await expect(metrics.getByRole('alert')).toHaveCount(0)
+      await expect.poll(() => metrics.locator('time').getAttribute('datetime')).not.toBe(lastFetched)
+
+      const financeBeforeAgingRetry = financeAttempts
+      agingFails = false
+      await aging.getByRole('button', { name: 'Retry Receivables Aging', exact: true }).click()
+      await expect(aging.getByRole('heading', { name: 'Receivables Aging', exact: true })).toBeVisible()
+      await expect(aging.getByRole('alert')).toHaveCount(0)
+      expect(financeAttempts).toBe(financeBeforeAgingRetry)
+      expect(pageErrors).toEqual([])
+    } finally {
+      releaseInitial()
+      releaseRefresh()
+    }
+  })
+
   test('TC-M-006: dashboard loads after login', async ({ page, dashboardPage }) => {
     await dashboardPage.goto()
     await dashboardPage.waitForLoad()

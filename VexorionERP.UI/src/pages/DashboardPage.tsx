@@ -10,6 +10,7 @@ import DashboardSectionLoader from './dashboard/components/DashboardSectionLoade
 import { Permissions } from '../app/authorization'
 import { PageHeader } from '../components/PagePrimitives'
 import { getIntlLocale } from '../i18n/translationConstant'
+import DashboardQuerySection from './dashboard/components/DashboardQuerySection'
 
 const DashboardHeaderFilters = lazy(() => import('./dashboard/components/DashboardHeaderFilters'))
 const DashboardKpiCards = lazy(() => import('./dashboard/components/DashboardKpiCards'))
@@ -49,17 +50,6 @@ export default function DashboardPage() {
   const customers = useMemo(() => customersQuery.data ?? [], [customersQuery.data])
   const storageSummary = storageSummaryQuery.data ?? null
   const storageTopConsumers = storageTopConsumersQuery.data ?? null
-
-  const errorMessage = useMemo(() => {
-    if (financeQuery.error instanceof Error) return financeQuery.error.message
-    if (arAgingQuery.error instanceof Error) return arAgingQuery.error.message
-    if (apAgingQuery.error instanceof Error) return apAgingQuery.error.message
-    if (salesOrdersQuery.error instanceof Error) return salesOrdersQuery.error.message
-    if (customersQuery.error instanceof Error) return customersQuery.error.message
-    if (storageSummaryQuery.error instanceof Error) return storageSummaryQuery.error.message
-    if (storageTopConsumersQuery.error instanceof Error) return storageTopConsumersQuery.error.message
-    return null
-  }, [financeQuery.error, arAgingQuery.error, apAgingQuery.error, salesOrdersQuery.error, customersQuery.error, storageSummaryQuery.error, storageTopConsumersQuery.error])
 
   const cashRows = useMemo<CashRowView[]>(
     () => [
@@ -203,22 +193,22 @@ export default function DashboardPage() {
               periodDays={periodDays}
               periodOptions={periodOptions}
               snapshot={snapshot}
-              error={errorMessage ?? (financeQuery.isError ? t('dashboard.errors.loadMetrics') : null)}
+              error={null}
               onAsOfDateChange={setAsOfDate}
               onPeriodChange={setPeriodDays}
             />
           </Suspense>
-          <Suspense fallback={<DashboardSectionLoader minHeight={220} />}>
-            {financeQuery.isPending ? <DashboardSectionLoader minHeight={220} /> : <DashboardKpiCards t={t} snapshot={snapshot} periodDays={periodDays} />}
-          </Suspense>
+          <DashboardQuerySection label={t('dashboard.query.financeMetrics')} query={financeQuery} minHeight={220}>
+            <Suspense fallback={<DashboardSectionLoader minHeight={220} />}>
+              <DashboardKpiCards t={t} snapshot={snapshot} periodDays={periodDays} />
+            </Suspense>
+          </DashboardQuerySection>
         </VxStack>
 
         <VxStack component="section" aria-labelledby="dashboard-attention-title" spacing={2}>
           <VxTypography id="dashboard-attention-title" component="h2" variant="h6">{t('dashboard.sections.attention')}</VxTypography>
-          <Suspense fallback={<DashboardSectionLoader minHeight={220} />}>
-            {financeQuery.isPending ? (
-              <DashboardSectionLoader minHeight={220} />
-            ) : (
+          <DashboardQuerySection label={t('dashboard.query.healthMetrics')} query={financeQuery} minHeight={220}>
+            <Suspense fallback={<DashboardSectionLoader minHeight={220} />}>
               <DashboardHealthSection
                 t={t}
                 receivablesHealthPercent={receivablesHealthPercent}
@@ -226,62 +216,49 @@ export default function DashboardPage() {
                 totalReceivables={totalReceivables}
                 totalPayables={totalPayables}
               />
-            )}
-          </Suspense>
+            </Suspense>
+          </DashboardQuerySection>
           <Suspense fallback={<DashboardSectionLoader minHeight={340} />}>
-            {arAgingQuery.isPending || apAgingQuery.isPending ? (
-              <DashboardSectionLoader minHeight={340} />
-            ) : (
-              <DashboardAgingSection t={t} arAgingData={arAgingData} apAgingData={apAgingData} arTotals={arAging?.totals ?? null} apTotals={apAging?.totals ?? null} />
-            )}
+            <DashboardAgingSection t={t} arAgingData={arAgingData} apAgingData={apAgingData} arTotals={arAging?.totals ?? null} apTotals={apAging?.totals ?? null} arQuery={arAgingQuery} apQuery={apAgingQuery} />
           </Suspense>
         </VxStack>
 
         <VxStack component="section" aria-labelledby="dashboard-analysis-title" spacing={2}>
           <VxTypography id="dashboard-analysis-title" component="h2" variant="h6">{t('dashboard.sections.analysis')}</VxTypography>
-          <Suspense fallback={<DashboardSectionLoader minHeight={320} />}>
-            {financeQuery.isPending ? (
-              <DashboardSectionLoader minHeight={320} />
-            ) : (
+          <DashboardQuerySection label={t('dashboard.query.analysisMetrics')} query={financeQuery} minHeight={320}>
+            <Suspense fallback={<DashboardSectionLoader minHeight={320} />}>
               <DashboardChartsSection t={t} cashIn={snapshot?.cashInInPeriod ?? 0} cashOut={snapshot?.cashOutInPeriod ?? 0} periodDays={periodDays} receivablesVsPayablesData={receivablesVsPayablesData} />
-            )}
-          </Suspense>
-          <Suspense fallback={<DashboardSectionLoader minHeight={240} />}>
-            {financeQuery.isPending ? <DashboardSectionLoader minHeight={240} /> : <DashboardCashFlowTable t={t} periodDays={periodDays} cashRows={cashRows} />}
-          </Suspense>
-          <Suspense fallback={<DashboardSectionLoader minHeight={140} />}>
-            {financeQuery.isPending ? <DashboardSectionLoader minHeight={140} /> : <DashboardQuickStatsSection t={t} quickStats={quickStats} />}
-          </Suspense>
+            </Suspense>
+            <Suspense fallback={<DashboardSectionLoader minHeight={240} />}>
+              <DashboardCashFlowTable t={t} periodDays={periodDays} cashRows={cashRows} />
+            </Suspense>
+            <Suspense fallback={<DashboardSectionLoader minHeight={140} />}>
+              <DashboardQuickStatsSection t={t} quickStats={quickStats} />
+            </Suspense>
+          </DashboardQuerySection>
         </VxStack>
       </VxStack>
 
       {canViewSales ? (
         <VxStack component="section" aria-labelledby="dashboard-activity-title" spacing={2} sx={{ minWidth: 0 }}>
           <VxTypography id="dashboard-activity-title" component="h2" variant="h6">{t('dashboard.sections.activity')}</VxTypography>
-          <Suspense fallback={<DashboardSectionLoader minHeight={260} />}>
-            {salesOrdersQuery.isPending || (canViewCustomers && customersQuery.isPending) ? (
-              <DashboardSectionLoader minHeight={260} />
-            ) : (
+          <DashboardQuerySection label={t('dashboard.query.salesOrders')} query={salesOrdersQuery} minHeight={260}>
+            {canViewCustomers ? (
+              <DashboardQuerySection label={t('dashboard.query.customerNames')} query={customersQuery} minHeight={80}>{null}</DashboardQuerySection>
+            ) : null}
+            <Suspense fallback={<DashboardSectionLoader minHeight={260} />}>
               <DashboardRecentOrdersSection t={t} recentOrders={recentOrders} />
-            )}
-          </Suspense>
-          <Suspense fallback={<DashboardSectionLoader minHeight={260} />}>
-            {salesOrdersQuery.isPending || (canViewCustomers && customersQuery.isPending) ? (
-              <DashboardSectionLoader minHeight={260} />
-            ) : (
+            </Suspense>
+            <Suspense fallback={<DashboardSectionLoader minHeight={260} />}>
               <DashboardTopCustomersSection t={t} topCustomers={topCustomers} />
-            )}
-          </Suspense>
+            </Suspense>
+          </DashboardQuerySection>
         </VxStack>
       ) : null}
 
       {canViewStorage ? (
         <Suspense fallback={<DashboardSectionLoader minHeight={240} />}>
-          {storageSummaryQuery.isPending || storageTopConsumersQuery.isPending ? (
-            <DashboardSectionLoader minHeight={240} />
-          ) : (
-            <DashboardStorageSection t={t} summary={storageSummary} topConsumers={storageTopConsumers} />
-          )}
+          <DashboardStorageSection t={t} summary={storageSummary} topConsumers={storageTopConsumers} summaryQuery={storageSummaryQuery} topConsumersQuery={storageTopConsumersQuery} />
         </Suspense>
       ) : null}
     </VxStack>

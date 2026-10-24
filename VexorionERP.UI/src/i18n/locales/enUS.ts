@@ -313,6 +313,15 @@ const enUS = {
         description: 'The frontend can evolve page by page without collapsing service boundaries.',
       },
     },
+    query: {
+      loading: 'Loading {{section}}...', failed: 'Unable to load {{section}}.',
+      stale: 'Unable to refresh {{section}}. Showing previously fetched data.',
+      retry: 'Retry {{section}}', refresh: 'Refresh {{section}}',
+      updating: 'Updating {{section}}...', lastUpdated: '{{section}} · Last fetched:',
+      financeMetrics: 'Financial metrics', healthMetrics: 'Outstanding balance summary',
+      analysisMetrics: 'Cash and balance indicators', salesOrders: 'Sales orders',
+      customerNames: 'Customer names', storageSummary: 'Storage usage',
+    },
     storage: {
       title: 'Storage and Plan Limit', subtitle: 'Storage used by this workspace and its plan allowance.',
       used: 'used', usageLine: '{{used}} of {{max}}', unlimited: 'Unlimited',

@@ -1,11 +1,14 @@
 import { VxChip, VxGrid, VxPaper, VxStack, VxTypography } from '@vexorion/ui'
 import type { TFunction } from 'i18next'
 import type { StorageTopConsumersResponse, StorageUsageSummaryResponse } from '../../../types/api'
+import DashboardQuerySection, { type DashboardQueryState } from './DashboardQuerySection'
 
 type DashboardStorageSectionProps = {
   t: TFunction
   summary: StorageUsageSummaryResponse | null
   topConsumers: StorageTopConsumersResponse | null
+  summaryQuery?: DashboardQueryState
+  topConsumersQuery?: DashboardQueryState
 }
 
 function formatBytes(bytes: number) {
@@ -30,14 +33,12 @@ function getThresholdColor(thresholdStatus: StorageUsageSummaryResponse['thresho
   return 'success' as const
 }
 
-export default function DashboardStorageSection({ t, summary, topConsumers }: DashboardStorageSectionProps) {
+export default function DashboardStorageSection({ t, summary, topConsumers, summaryQuery, topConsumersQuery }: DashboardStorageSectionProps) {
   const usedBytes = summary?.usedBytes ?? 0
   const maxBytes = summary?.maxStorageBytes ?? 0
   const usedPercent = summary?.usedPercent ?? 0
 
-  return (
-    <VxGrid container spacing={2}>
-      <VxGrid size={{ xs: 12, lg: 5 }}>
+  const summaryCard = (
         <VxPaper elevation={0} sx={{ p: 2.5, borderRadius: 2 }}>
           <VxStack spacing={1.5}>
             <VxTypography component="h2" variant="h6">{t('dashboard.storage.title', { defaultValue: 'Storage & quota' })}</VxTypography>
@@ -83,9 +84,8 @@ export default function DashboardStorageSection({ t, summary, topConsumers }: Da
 
           </VxStack>
         </VxPaper>
-      </VxGrid>
-
-      <VxGrid size={{ xs: 12, lg: 7 }}>
+  )
+  const consumersCard = (
         <VxPaper elevation={0} sx={{ p: 2.5, borderRadius: 2 }}>
           <VxStack spacing={2}>
             <VxTypography component="h3" variant="h6">{t('dashboard.storage.topConsumers', { defaultValue: 'Top consumers' })}</VxTypography>
@@ -121,6 +121,14 @@ export default function DashboardStorageSection({ t, summary, topConsumers }: Da
             </VxStack>
           </VxStack>
         </VxPaper>
+  )
+  return (
+    <VxGrid container spacing={2}>
+      <VxGrid size={{ xs: 12, lg: 5 }}>
+        {summaryQuery ? <DashboardQuerySection label={t('dashboard.query.storageSummary')} query={summaryQuery} minHeight={240}>{summaryCard}</DashboardQuerySection> : summaryCard}
+      </VxGrid>
+      <VxGrid size={{ xs: 12, lg: 7 }}>
+        {topConsumersQuery ? <DashboardQuerySection label={t('dashboard.storage.topConsumers')} query={topConsumersQuery} minHeight={240}>{consumersCard}</DashboardQuerySection> : consumersCard}
       </VxGrid>
     </VxGrid>
   )

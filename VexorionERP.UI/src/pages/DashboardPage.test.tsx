@@ -6,7 +6,7 @@ import type { FinanceDashboardSnapshotResponse } from '../types/api'
 import DashboardPage from './DashboardPage'
 import { useApAgingQuery, useArAgingQuery, useFinanceSnapshotQuery, useSalesOrdersQuery } from './dashboard/queries'
 
-const state = vi.hoisted(() => ({ permissions: [] as string[], customersPending: false, snapshot: null as FinanceDashboardSnapshotResponse | null }))
+const state = vi.hoisted(() => ({ permissions: [] as string[], customersPending: false, snapshot: null as FinanceDashboardSnapshotResponse | null, financeError: false, arPending: false, storageConsumersError: false }))
 
 vi.mock('../app/AuthContext', () => ({
   useAuth: () => ({ user: { tenantId: 'test-tenant', permissions: state.permissions } }),
@@ -25,15 +25,19 @@ vi.mock('@vexorion/ui', async (importOriginal) => {
   return { ...actual, VxBarChart: ({ dataset }: { dataset?: unknown }) => <div data-testid="chart">{JSON.stringify(dataset)}</div> }
 })
 
-vi.mock('./dashboard/queries', () => ({
-  useFinanceSnapshotQuery: vi.fn(() => ({ data: state.snapshot, isPending: false })),
-  useArAgingQuery: vi.fn(() => ({ data: null, isPending: false })),
-  useApAgingQuery: vi.fn(() => ({ data: null, isPending: false })),
-  useSalesOrdersQuery: vi.fn(() => ({ data: [], isPending: false })),
-  useCustomersQuery: vi.fn(() => ({ data: [], isPending: state.customersPending })),
-  useTenantStorageSummaryQuery: vi.fn(() => ({ data: null, isPending: false })),
-  useTenantStorageTopConsumersQuery: vi.fn(() => ({ data: null, isPending: false })),
-}))
+vi.mock('./dashboard/queries', () => {
+  const result = (data: unknown) => ({ data, isPending: false, isFetching: false, isError: false, dataUpdatedAt: 1792832400000, refetch: vi.fn().mockResolvedValue({}) })
+  const totals = { current: 0, due1To30: 0, due31To60: 0, due61To90: 0, dueOver90: 0, total: 0 }
+  return {
+    useFinanceSnapshotQuery: vi.fn(() => ({ ...result(state.snapshot), isError: state.financeError })),
+    useArAgingQuery: vi.fn(() => ({ ...result(state.arPending ? undefined : { totals, items: [] }), isPending: state.arPending })),
+    useApAgingQuery: vi.fn(() => result({ totals, items: [] })),
+    useSalesOrdersQuery: vi.fn(() => result([])),
+    useCustomersQuery: vi.fn(() => ({ ...result(state.customersPending ? undefined : []), isPending: state.customersPending })),
+    useTenantStorageSummaryQuery: vi.fn(() => result({ usedBytes: 0, usedPercent: 0, maxStorageBytes: 0 })),
+    useTenantStorageTopConsumersQuery: vi.fn(() => ({ ...result(state.storageConsumersError ? undefined : { topProjects: [], topDocuments: [] }), isError: state.storageConsumersError })),
+  }
+})
 
 describe('Dashboard hierarchy and filter scope', () => {
   beforeAll(async () => {
@@ -44,7 +48,51 @@ describe('Dashboard hierarchy and filter scope', () => {
     vi.clearAllMocks()
     state.permissions = [Permissions.sales.view, Permissions.customers.view, Permissions.storageUsage.view]
     state.customersPending = false
+    state.financeError = false
+    state.arPending = false
+    state.storageConsumersError = false
+    state.snapshot = {
+      asOfDate: '2026-10-24', periodStartDate: '2026-09-25', periodDays: 30,
+      receivablesOpen: 0, receivablesOverdue: 0, payablesOpen: 0, payablesOverdue: 0,
+      revenueInPeriod: 0, cashInInPeriod: 0, cashOutInPeriod: 0, netCashInPeriod: 0,
+    }
+  })
+
+  it('keeps healthy sections visible and does not render zero finance cards after an initial finance failure', async () => {
     state.snapshot = null
+    state.financeError = true
+    render(<DashboardPage />)
+    const metrics = screen.getByRole('region', { name: 'dashboard.query.financeMetrics' })
+    expect(within(metrics).getByRole('alert')).toHaveTextContent('dashboard.query.failed')
+    expect(within(metrics).queryByText('dashboard.summary.openReceivables')).not.toBeInTheDocument()
+    expect(await screen.findByText('dashboard.aging.apTitle')).toBeInTheDocument()
+    expect(await screen.findByText('dashboard.recentOrders.title')).toBeInTheDocument()
+    expect(await screen.findByText('dashboard.storage.title')).toBeInTheDocument()
+  })
+
+  it('keeps payables aging visible while receivables aging loads', async () => {
+    state.arPending = true
+    render(<DashboardPage />)
+    const receivables = await screen.findByRole('region', { name: 'dashboard.aging.arTitle' })
+    expect(within(receivables).getByRole('status')).toBeInTheDocument()
+    expect(within(receivables).queryByText('dashboard.aging.emptyAr')).not.toBeInTheDocument()
+    expect(await screen.findByText('dashboard.aging.emptyAp')).toBeInTheDocument()
+  })
+
+  it('keeps storage usage visible when its top-consumer query fails', async () => {
+    state.storageConsumersError = true
+    render(<DashboardPage />)
+    expect(await screen.findByText('dashboard.storage.title')).toBeInTheDocument()
+    const consumers = await screen.findByRole('region', { name: 'dashboard.storage.topConsumers' })
+    expect(within(consumers).getByRole('alert')).toBeInTheDocument()
+    expect(within(consumers).queryByText('dashboard.storage.noDocumentData')).not.toBeInTheDocument()
+  })
+
+  it('keeps sales visible while permitted customer names are still loading', async () => {
+    state.customersPending = true
+    render(<DashboardPage />)
+    expect(await screen.findByText('dashboard.recentOrders.empty')).toBeInTheDocument()
+    expect(within(screen.getByRole('region', { name: 'dashboard.query.customerNames' })).getByRole('status')).toBeInTheDocument()
   })
 
   it('does not add overdue amounts twice when calculating outstanding totals and current shares', async () => {

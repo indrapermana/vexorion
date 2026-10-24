@@ -4,6 +4,7 @@ import type { TFunction } from 'i18next'
 import { useCurrency } from '../../../app/CurrencyContext'
 import type { AgingBucketTotalsResponse } from '../../../types/api'
 import type { AgingPoint } from '../types'
+import DashboardQuerySection, { type DashboardQueryState } from './DashboardQuerySection'
 
 type AgingCardProps = {
   t: TFunction
@@ -53,6 +54,8 @@ type DashboardAgingSectionProps = {
   apAgingData: AgingPoint[]
   arTotals: AgingBucketTotalsResponse | null
   apTotals: AgingBucketTotalsResponse | null
+  arQuery?: DashboardQueryState
+  apQuery?: DashboardQueryState
 }
 
 export default function DashboardAgingSection({
@@ -61,26 +64,18 @@ export default function DashboardAgingSection({
   apAgingData,
   arTotals,
   apTotals,
+  arQuery,
+  apQuery,
 }: DashboardAgingSectionProps) {
+  const arCard = <AgingCard t={t} title={t('dashboard.aging.arTitle')} data={arAgingData} totals={arTotals} emptyText={t('dashboard.aging.emptyAr')} />
+  const apCard = <AgingCard t={t} title={t('dashboard.aging.apTitle')} data={apAgingData} totals={apTotals} emptyText={t('dashboard.aging.emptyAp')} />
   return (
     <VxGrid container spacing={2}>
       <VxGrid size={{ xs: 12, md: 6 }}>
-        <AgingCard
-          t={t}
-          title={t('dashboard.aging.arTitle')}
-          data={arAgingData}
-          totals={arTotals}
-          emptyText={t('dashboard.aging.emptyAr')}
-        />
+        {arQuery ? <DashboardQuerySection label={t('dashboard.aging.arTitle')} query={arQuery} minHeight={300}>{arCard}</DashboardQuerySection> : arCard}
       </VxGrid>
       <VxGrid size={{ xs: 12, md: 6 }}>
-        <AgingCard
-          t={t}
-          title={t('dashboard.aging.apTitle')}
-          data={apAgingData}
-          totals={apTotals}
-          emptyText={t('dashboard.aging.emptyAp')}
-        />
+        {apQuery ? <DashboardQuerySection label={t('dashboard.aging.apTitle')} query={apQuery} minHeight={300}>{apCard}</DashboardQuerySection> : apCard}
       </VxGrid>
     </VxGrid>
   )

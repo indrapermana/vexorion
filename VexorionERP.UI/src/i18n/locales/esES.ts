@@ -260,6 +260,15 @@ const esES = {
       catalogInventory: { title: 'Catálogo e inventario', description: 'Productos, almacenes y saldos están listos para soportar flujos operativos.' },
       cqrsModules: { title: 'Módulos con CQRS', description: 'El frontend puede evolucionar página por página sin colapsar los límites de servicio.' },
     },
+    query: {
+      loading: 'Cargando {{section}}...', failed: 'No se pudo cargar {{section}}.',
+      stale: 'No se pudo actualizar {{section}}. Se muestran los datos obtenidos anteriormente.',
+      retry: 'Reintentar {{section}}', refresh: 'Actualizar {{section}}',
+      updating: 'Actualizando {{section}}...', lastUpdated: '{{section}} · Última consulta:',
+      financeMetrics: 'Indicadores financieros', healthMetrics: 'Resumen de saldos pendientes',
+      analysisMetrics: 'Indicadores de caja y saldos', salesOrders: 'Pedidos de venta',
+      customerNames: 'Nombres de clientes', storageSummary: 'Uso de almacenamiento',
+    },
     storage: {
       title: 'Almacenamiento y Límite del Plan', subtitle: 'Almacenamiento utilizado por este espacio y su cuota del plan.',
       used: 'utilizado', usageLine: '{{used}} de {{max}}', unlimited: 'Sin límite',

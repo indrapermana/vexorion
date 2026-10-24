@@ -286,6 +286,15 @@ const idID = {
       catalogInventory: { title: 'Katalog dan persediaan', description: 'Produk, gudang, dan saldo siap mendukung alur operasional.' },
       cqrsModules: { title: 'Modul berbasis CQRS', description: 'Frontend dapat berkembang per halaman tanpa meruntuhkan batas layanan.' },
     },
+    query: {
+      loading: 'Memuat {{section}}...', failed: 'Tidak dapat memuat {{section}}.',
+      stale: 'Tidak dapat memperbarui {{section}}. Menampilkan data yang diambil sebelumnya.',
+      retry: 'Coba lagi {{section}}', refresh: 'Perbarui {{section}}',
+      updating: 'Memperbarui {{section}}...', lastUpdated: '{{section}} · Terakhir diambil:',
+      financeMetrics: 'Metrik keuangan', healthMetrics: 'Ringkasan saldo belum lunas',
+      analysisMetrics: 'Indikator kas dan saldo', salesOrders: 'Pesanan penjualan',
+      customerNames: 'Nama pelanggan', storageSummary: 'Pemakaian penyimpanan',
+    },
     storage: {
       title: 'Penyimpanan dan Batas Paket', subtitle: 'Penyimpanan yang digunakan workspace ini dan kuota paketnya.',
       used: 'terpakai', usageLine: '{{used}} dari {{max}}', unlimited: 'Tanpa batas',
