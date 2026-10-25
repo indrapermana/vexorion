@@ -8,6 +8,7 @@ export type VxConfirmActionDialogProps = {
   targetName: ReactNode
   consequence: ReactNode
   confirmLabel: ReactNode
+  cancelLabel?: ReactNode
   confirmColor?: ButtonProps['color']
   pendingLabel?: ReactNode
   pending?: boolean
@@ -22,6 +23,7 @@ export function VxConfirmActionDialog({
   targetName,
   consequence,
   confirmLabel,
+  cancelLabel = 'Cancel',
   confirmColor = 'error',
   pendingLabel = 'Working...',
   pending = false,
@@ -51,7 +53,7 @@ export function VxConfirmActionDialog({
         </VxStack>
       </VxDialogContent>
       <VxDialogActions>
-        <VxButton autoFocus onClick={onClose} disabled={pending}>Cancel</VxButton>
+        <VxButton autoFocus onClick={onClose} disabled={pending}>{cancelLabel}</VxButton>
         <VxButton color={confirmColor} variant="contained" onClick={onConfirm} disabled={pending}>
           {pending ? pendingLabel : confirmLabel}
         </VxButton>
@@ -66,6 +68,7 @@ type VxConfirmActionButtonProps = {
   targetName: ReactNode
   consequence: ReactNode
   confirmLabel: ReactNode
+  cancelLabel?: ReactNode
   confirmColor?: ButtonProps['color']
   pendingLabel?: ReactNode
   onConfirm: () => Promise<void> | void
@@ -78,6 +81,7 @@ export function VxConfirmActionButton({
   targetName,
   consequence,
   confirmLabel,
+  cancelLabel,
   confirmColor,
   pendingLabel,
   onConfirm,
@@ -109,6 +113,7 @@ export function VxConfirmActionButton({
         targetName={targetName}
         consequence={consequence}
         confirmLabel={confirmLabel}
+        cancelLabel={cancelLabel}
         confirmColor={confirmColor}
         pendingLabel={pendingLabel}
         pending={pending}

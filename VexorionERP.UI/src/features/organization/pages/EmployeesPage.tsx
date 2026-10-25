@@ -203,19 +203,10 @@ export default function EmployeesPage() {
 
   const remove = async (employeeId: string) => {
     if (!canManage) return
-    setIsSaving(true)
-    setError(null)
     setFeedback(null)
-
-    try {
-      await deleteEmployee(employeeId)
-      setFeedback(t('pages.employees.feedback.deleted'))
-      await loadData()
-    } catch (deleteError) {
-      setError(deleteError instanceof ApiError ? deleteError.message : t('pages.employees.errors.delete'))
-    } finally {
-      setIsSaving(false)
-    }
+    await deleteEmployee(employeeId)
+    setFeedback(t('pages.employees.feedback.deleted'))
+    await loadData()
   }
 
   if (!isAuthenticated) {
@@ -269,6 +260,7 @@ export default function EmployeesPage() {
                           targetName={`${row.firstName} ${row.lastName} (${row.employeeNumber})`.trim()}
                           consequence={t('pages.deleteConfirmations.employee.consequence')}
                           confirmLabel={t('common.delete')}
+                          cancelLabel={t('common.cancel')}
                           pendingLabel={t('dialogs.deleting')}
                           onConfirm={() => remove(row.id)}
                           buttonProps={{ size: 'small', color: 'error', variant: 'text', disabled: isSaving }}

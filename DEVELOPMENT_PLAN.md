@@ -430,6 +430,10 @@ Open master-data and configuration work is consolidated in the final Main UI bac
   - Data boundary: the available history contract is purchase-invoice unit-cost history, not sales-price revision history; no sales-price audit endpoint was added. History rows retain their invoice currency and are not compared as a converted series. The API request is limited to the last 12 months; the UI displays up to ten recent entries.
   - Evidence: full Main UI tests 223/223, product details/history/editor-image/locale tests 17/17, scoped ESLint with zero errors/warnings, TypeScript and production build pass. Authenticated product-list and detail/history E2E passes 3/3 including setup, product create/search, core detail/edit values, image control availability, stock/identifier/history tabs, responsive overflow checks, isolated tenant deletion, and orphan check. The build retains the known large-chunk warning. No backend or database changes were required; this is local acceptance, not the release gate.
 
+- [x] `UX-MASTER-03` Standardize destructive actions with the shared confirmation pattern. Locally completed 25 October 2026: Customers, Suppliers, Products, Warehouses, Accounts, Product Categories, Employees, and Consultants use the shared accessible confirmation contract with an explicit target, consequence, safe initial focus, localized cancel action, destructive confirm action, and locked controls while pending. Employee and Consultant failures now remain in the confirmation dialog for retry instead of being swallowed by the page and closing the dialog.
+  - Scope boundary: dependency-aware impact wording and the distinction between reversible deactivation and permanent deletion remain `UX-MASTER-04`. Specialized configuration and transactional actions retain their own module tickets.
+  - Evidence: shared confirmation component tests pass 3/3, changed-file ESLint, Main UI TypeScript, and `git diff --check` pass. Full Main UI lint remains blocked by 20 pre-existing `react-hooks/refs` errors in `features/projects/components/DocumentsPanel.tsx`, outside this ticket. This is local acceptance, not the release gate.
+
 ### 5.5 Sales, procurement, billing, and payments
 
 Scope: Sales Orders/Shipments/Invoices/Customer Payments and Purchase Orders/Receipts/Invoices/Vendor Payments.
@@ -608,7 +612,6 @@ Complete application work in order: **Main UI → AdminUI → POS**. Finish the 
 
 ### Stage 1 — Main UI
 
-- [ ] `UX-MASTER-03` Standardize destructive actions with the shared confirmation pattern.
 - [ ] `UX-MASTER-04` Explain dependency/impact before deactivate/delete and distinguish reversible deactivation from permanent deletion.
 - [ ] `UX-MASTER-05` Explain role, menu, tax/discount, numbering, and module effects; preview effective access.
 - [ ] `UX-MASTER-06` Reconcile employee, consultant, assignment, and tenant-relationship vocabulary.

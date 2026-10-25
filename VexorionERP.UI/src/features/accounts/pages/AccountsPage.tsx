@@ -128,6 +128,7 @@ export default function AccountsPage() {
         targetName={deleteTarget ? `${deleteTarget.code} — ${deleteTarget.name}` : ''}
         consequence={t('pages.accounts.delete.consequence')}
         confirmLabel={t('pages.accounts.delete.confirm')}
+        cancelLabel={t('common.cancel')}
         pendingLabel={t('dialogs.deleting')}
         pending={isDeleting}
         onClose={() => setDeleteTarget(null)}

@@ -14,6 +14,7 @@ describe('VxConfirmAction', () => {
         targetName="1000 — Cash"
         consequence="This permanently removes the account."
         confirmLabel="Delete account"
+        cancelLabel="Keep account"
         onClose={vi.fn()}
         onConfirm={vi.fn()}
       />,
@@ -24,7 +25,7 @@ describe('VxConfirmAction', () => {
     )
     expect(screen.getByText('1000 — Cash')).toBeInTheDocument()
     expect(screen.getByText('This permanently removes the account.')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus()
+    expect(screen.getByRole('button', { name: 'Keep account' })).toHaveFocus()
   })
 
   it('closes with Escape and restores focus to the trigger', async () => {

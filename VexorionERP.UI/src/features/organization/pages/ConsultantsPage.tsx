@@ -176,19 +176,10 @@ export default function ConsultantsPage() {
 
   const remove = async (consultantId: string) => {
     if (!canManage) return
-    setIsSaving(true)
-    setError(null)
     setFeedback(null)
-
-    try {
-      await deleteConsultant(consultantId)
-      setFeedback(t('pages.consultants.feedback.deleted'))
-      await loadData()
-    } catch (deleteError) {
-      setError(deleteError instanceof ApiError ? deleteError.message : t('pages.consultants.errors.delete'))
-    } finally {
-      setIsSaving(false)
-    }
+    await deleteConsultant(consultantId)
+    setFeedback(t('pages.consultants.feedback.deleted'))
+    await loadData()
   }
 
   if (!isAuthenticated) {
@@ -242,6 +233,7 @@ export default function ConsultantsPage() {
                           targetName={`${row.fullName} (${row.consultantNumber})`}
                           consequence={t('pages.deleteConfirmations.consultant.consequence')}
                           confirmLabel={t('common.delete')}
+                          cancelLabel={t('common.cancel')}
                           pendingLabel={t('dialogs.deleting')}
                           onConfirm={() => remove(row.id)}
                           buttonProps={{ size: 'small', color: 'error', variant: 'text', disabled: isSaving }}
