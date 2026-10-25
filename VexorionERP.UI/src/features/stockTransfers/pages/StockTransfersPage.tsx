@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { AddRoundedIcon, AutoGraphRoundedIcon, CheckCircleRoundedIcon, DeleteOutlineRoundedIcon, EditRoundedIcon, FormatListBulletedRoundedIcon, WarehouseRoundedIcon } from '@vexorion/ui'
-import { VxAlert, VxBox, VxButton, VxChip, VxCircularProgress, VxConfirmActionButton, VxConfirmActionDialog, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxMenuItem, VxPaper, VxStack, VxTable, VxTableBody, VxTableCell, VxTableContainer, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
+import { AutoGraphRoundedIcon, CheckCircleRoundedIcon, WarehouseRoundedIcon } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxCircularProgress, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxMenuItem, VxStack, VxTextField } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
@@ -9,6 +9,10 @@ import LookupSelectField from '../../../components/LookupSelectField'
 import OrderWorkspace from '../../../components/OrderWorkspace'
 import { useInventoryBalancesLookup, useProductsLookup, useWarehousesLookup } from '../../../hooks/useLookups'
 import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
+import StockTransferDetail from '../components/StockTransferDetail'
+import StockTransferLineEditor, { type TransferLineForm } from '../components/StockTransferLineEditor'
+import StockTransferList, { type StockTransferListRow } from '../components/StockTransferList'
+import StockTransferStateActions from '../components/StockTransferStateActions'
 import {
   ApiError,
   createStockTransfer,
@@ -29,11 +33,6 @@ import type {
 
 type DialogMode = 'create' | 'edit'
 
-type TransferGridRow = StockTransferListItemResponse & {
-  sourceWarehouseName?: string
-  destinationWarehouseName?: string
-}
-
 type TransferFormState = {
   transferNumber: string
   sourceWarehouseId: string
@@ -41,12 +40,6 @@ type TransferFormState = {
   transferDate: string
   status: number
   notes: string
-}
-
-type TransferLineFormState = {
-  productId: string
-  quantity: string
-  unitCost: string
 }
 
 const today = new Date().toISOString().slice(0, 10)
@@ -60,7 +53,7 @@ const defaultTransferForm: TransferFormState = {
   notes: '',
 }
 
-const defaultLineForm: TransferLineFormState = {
+const defaultLineForm: TransferLineForm = {
   productId: '',
   quantity: '1',
   unitCost: '0',
@@ -71,7 +64,7 @@ function optionalText(value: string) {
   return trimmed ? trimmed : null
 }
 
-function buildLineForm(line: StockTransferLineDetailsResponse | null): TransferLineFormState {
+function buildLineForm(line: StockTransferLineDetailsResponse | null): TransferLineForm {
   if (!line) {
     return defaultLineForm
   }
@@ -107,14 +100,14 @@ export default function StockTransfersPage() {
   const [editorForm, setEditorForm] = useState<TransferFormState>(defaultTransferForm)
   const [initialEditorForm, setInitialEditorForm] = useState<TransferFormState | null>(null)
   const [editorSaving, setEditorSaving] = useState(false)
-  const [deleteTarget, setDeleteTarget] = useState<TransferGridRow | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<StockTransferListRow | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [lineMode, setLineMode] = useState<DialogMode>('create')
   const [lineOpen, setLineOpen] = useState(false)
   const [lineSaving, setLineSaving] = useState(false)
   const [lineError, setLineError] = useState<string | null>(null)
-  const [lineForm, setLineForm] = useState<TransferLineFormState>(defaultLineForm)
-  const [initialLineForm, setInitialLineForm] = useState<TransferLineFormState | null>(null)
+  const [lineForm, setLineForm] = useState<TransferLineForm>(defaultLineForm)
+  const [initialLineForm, setInitialLineForm] = useState<TransferLineForm | null>(null)
   const [selectedLine, setSelectedLine] = useState<StockTransferLineDetailsResponse | null>(null)
   const [lineAutofillHint, setLineAutofillHint] = useState<string | null>(null)
   const { requestClose: requestEditorClose, confirmationDialog: editorDiscardDialog } = useUnsavedChangesPrompt(
@@ -165,7 +158,6 @@ export default function StockTransfersPage() {
   }, [loadRows])
 
   const warehouseNameById = useMemo(() => new Map(warehouses.map((warehouse) => [warehouse.id, warehouse.name])), [warehouses])
-  const productById = useMemo(() => new Map(products.map((product) => [product.id, product])), [products])
   const sourceBalanceByProductId = useMemo(() => {
     if (!selectedTransfer) {
       return new Map<string, number>()
@@ -177,7 +169,7 @@ export default function StockTransfersPage() {
         .map((balance) => [balance.productId, balance.quantityOnHand]),
     )
   }, [balances, selectedTransfer])
-  const gridRows = useMemo<TransferGridRow[]>(() => rows.map((row) => ({
+  const gridRows = useMemo<StockTransferListRow[]>(() => rows.map((row) => ({
     ...row,
     sourceWarehouseName: warehouseNameById.get(row.sourceWarehouseId),
     destinationWarehouseName: warehouseNameById.get(row.destinationWarehouseId),
@@ -197,7 +189,7 @@ export default function StockTransfersPage() {
     setEditorOpen(true)
   }
 
-  const openEditDialog = async (row: TransferGridRow) => {
+  const openEditDialog = async (row: StockTransferListRow) => {
     if (!canManage) return
     setFeedback(null)
     setEditorMode('edit')
@@ -427,127 +419,8 @@ export default function StockTransfersPage() {
         ...(error ? [{ severity: 'error' as const, message: error }] : []),
         ...(feedback ? [{ severity: 'success' as const, message: feedback }] : []),
       ]}
-      grid={
-        <VxTableContainer>
-          <VxTable size="small">
-            <VxTableHead>
-              <VxTableRow>
-                <VxTableCell>{t('pages.stockTransfers.table.number')}</VxTableCell>
-                <VxTableCell>{t('pages.stockTransfers.table.source')}</VxTableCell>
-                <VxTableCell>{t('pages.stockTransfers.table.destination')}</VxTableCell>
-                <VxTableCell>{t('pages.stockTransfers.table.date')}</VxTableCell>
-                <VxTableCell>{t('pages.stockTransfers.table.status')}</VxTableCell>
-                <VxTableCell align="right">{t('pages.stockTransfers.table.actions')}</VxTableCell>
-              </VxTableRow>
-            </VxTableHead>
-            <VxTableBody>
-              {isLoading ? (
-                <VxTableRow>
-                  <VxTableCell colSpan={6}>
-                    <VxBox sx={{ display: 'grid', placeItems: 'center', minHeight: 160 }}>
-                      <VxCircularProgress size={28} />
-                    </VxBox>
-                  </VxTableCell>
-                </VxTableRow>
-              ) : null}
-              {!isLoading && gridRows.map((row) => (
-                <VxTableRow key={row.id} hover selected={selectedTransfer?.id === row.id}>
-                  <VxTableCell>{row.transferNumber}</VxTableCell>
-                  <VxTableCell>{row.sourceWarehouseName ?? row.sourceWarehouseId}</VxTableCell>
-                  <VxTableCell>{row.destinationWarehouseName ?? row.destinationWarehouseId}</VxTableCell>
-                  <VxTableCell>{row.transferDate}</VxTableCell>
-                  <VxTableCell>{getDocumentStatusLabel(row.status)}</VxTableCell>
-                  <VxTableCell align="right">
-                    <VxButton size="small" startIcon={<FormatListBulletedRoundedIcon />} onClick={() => void loadDetails(row.id)}>{t('pages.stockTransfers.table.lines')}</VxButton>
-                      {canManage ? <><VxButton size="small" startIcon={<EditRoundedIcon />} onClick={() => void openEditDialog(row)}>{t('pages.stockTransfers.table.edit')}</VxButton>
-                      <VxButton size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => setDeleteTarget(row)}>{t('pages.stockTransfers.table.delete')}</VxButton></> : null}
-                  </VxTableCell>
-                </VxTableRow>
-              ))}
-              {!isLoading && gridRows.length === 0 ? (
-                <VxTableRow>
-                  <VxTableCell colSpan={6}>
-                    <VxTypography color="text.secondary">{t('pages.stockTransfers.table.empty')}</VxTypography>
-                  </VxTableCell>
-                </VxTableRow>
-              ) : null}
-            </VxTableBody>
-          </VxTable>
-        </VxTableContainer>
-      }
-      linesPanel={
-        <VxPaper elevation={0} className="panel-card">
-          {!selectedTransfer ? (
-            <>
-              <VxTypography component="h2" variant="h6" sx={{ mb: 1 }}>{t('pages.stockTransfers.linePanel.title')}</VxTypography>
-              <VxTypography color="text.secondary">{t('pages.stockTransfers.linePanel.selectPrompt')}</VxTypography>
-            </>
-          ) : (
-            <>
-              <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ justifyContent: 'space-between', mb: 2 }}>
-                <VxBox>
-                  <VxTypography component="h2" variant="h6">{t('pages.stockTransfers.linePanel.titleFor', { number: selectedTransfer.transferNumber })}</VxTypography>
-                  <VxTypography color="text.secondary">{t('pages.stockTransfers.linePanel.completionHint')}</VxTypography>
-                </VxBox>
-                {canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreateLine} disabled={selectedTransfer.status !== 1 || products.length === 0}>{t('pages.stockTransfers.linePanel.add')}</VxButton> : null}
-              </VxStack>
-              <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 2 }}>
-                <VxChip icon={<WarehouseRoundedIcon />} label={t('pages.stockTransfers.linePanel.source', { warehouse: warehouseNameById.get(selectedTransfer.sourceWarehouseId) ?? selectedTransfer.sourceWarehouseId })} variant="outlined" color="primary" />
-                <VxChip icon={<WarehouseRoundedIcon />} label={t('pages.stockTransfers.linePanel.destination', { warehouse: warehouseNameById.get(selectedTransfer.destinationWarehouseId) ?? selectedTransfer.destinationWarehouseId })} variant="outlined" color="primary" />
-              </VxStack>
-              {selectedTransfer.status !== 1 ? <VxAlert severity="info" sx={{ mb: 2 }}>{t('pages.stockTransfers.linePanel.locked')}</VxAlert> : null}
-              {lineError ? <VxAlert severity="error" sx={{ mb: 2 }}>{lineError}</VxAlert> : null}
-              <VxTableContainer>
-                <VxTable size="small">
-                  <VxTableHead>
-                    <VxTableRow>
-                      <VxTableCell>{t('pages.stockTransfers.linePanel.product')}</VxTableCell>
-                      <VxTableCell align="right">{t('pages.stockTransfers.linePanel.sourceOnHand')}</VxTableCell>
-                      <VxTableCell align="right">{t('pages.stockTransfers.linePanel.quantity')}</VxTableCell>
-                      <VxTableCell align="right">{t('pages.stockTransfers.linePanel.unitCost')}</VxTableCell>
-                      <VxTableCell align="right">{t('pages.stockTransfers.linePanel.extended')}</VxTableCell>
-                      <VxTableCell align="right">{t('pages.stockTransfers.linePanel.actions')}</VxTableCell>
-                    </VxTableRow>
-                  </VxTableHead>
-                  <VxTableBody>
-                    {selectedTransfer.lines.map((line) => {
-                      const product = productById.get(line.productId)
-                      return (
-                        <VxTableRow key={line.id} hover>
-                          <VxTableCell>{product ? `${product.name} (${product.sku})` : line.productId}</VxTableCell>
-                          <VxTableCell align="right">{(sourceBalanceByProductId.get(line.productId) ?? 0).toFixed(2)}</VxTableCell>
-                          <VxTableCell align="right">{line.quantity.toFixed(2)}</VxTableCell>
-                          <VxTableCell align="right">{formatMoney(line.unitCost)}</VxTableCell>
-                          <VxTableCell align="right">{formatMoney(line.quantity * line.unitCost)}</VxTableCell>
-                          <VxTableCell align="right">
-                            {canManage ? <><VxButton size="small" startIcon={<EditRoundedIcon />} onClick={() => openEditLine(line)} disabled={selectedTransfer.status !== 1}>{t('pages.stockTransfers.table.edit')}</VxButton>
-                            <VxConfirmActionButton
-                              title={t('pages.stockTransfers.linePanel.deleteTitle')}
-                              targetName={product ? `${product.name} (${product.sku})` : line.productId}
-                              consequence={t('pages.stockTransfers.linePanel.deleteConsequence', { number: selectedTransfer.transferNumber })}
-                              confirmLabel={t('pages.stockTransfers.linePanel.deleteConfirm')}
-                              pendingLabel={t('pages.stockTransfers.linePanel.deleting')}
-                              onConfirm={() => deleteLine(line.id)}
-                              buttonProps={{ size: 'small', color: 'error', startIcon: <DeleteOutlineRoundedIcon />, disabled: selectedTransfer.status !== 1 }}
-                            >{t('pages.stockTransfers.table.delete')}</VxConfirmActionButton></> : null}
-                          </VxTableCell>
-                        </VxTableRow>
-                      )
-                    })}
-                    {selectedTransfer.lines.length === 0 ? (
-                      <VxTableRow>
-                        <VxTableCell colSpan={6}>
-                          <VxTypography color="text.secondary">{t('pages.stockTransfers.linePanel.empty')}</VxTypography>
-                        </VxTableCell>
-                      </VxTableRow>
-                    ) : null}
-                  </VxTableBody>
-                </VxTable>
-              </VxTableContainer>
-            </>
-          )}
-        </VxPaper>
-      }
+      grid={<StockTransferList rows={gridRows} loading={isLoading} selectedId={selectedTransfer?.id} canManage={canManage} getStatusLabel={getDocumentStatusLabel} onSelect={(id) => void loadDetails(id)} onEdit={(row) => void openEditDialog(row)} onDelete={setDeleteTarget} />}
+      linesPanel={<StockTransferDetail transfer={selectedTransfer} canManage={canManage} productsAvailable={products.length > 0} sourceWarehouseName={selectedTransfer ? warehouseNameById.get(selectedTransfer.sourceWarehouseId) : undefined} destinationWarehouseName={selectedTransfer ? warehouseNameById.get(selectedTransfer.destinationWarehouseId) : undefined} productLabels={new Map(products.map((product) => [product.id, `${product.name} (${product.sku})`]))} balances={sourceBalanceByProductId} lineError={lineError} formatMoney={formatMoney} onAddLine={openCreateLine} onEditLine={openEditLine} onDeleteLine={deleteLine} />}
       editor={
         <>
         <VxDialog open={canManage && editorOpen} onClose={requestEditorClose} fullWidth maxWidth="md">
@@ -586,26 +459,8 @@ export default function StockTransfersPage() {
       }
       deleteDialog={
         <>
-          <VxConfirmActionDialog open={canManage && Boolean(deleteTarget)} title={t('pages.stockTransfers.delete.title')} targetName={deleteTarget?.transferNumber ?? ''} consequence={t('pages.stockTransfers.delete.consequence')} confirmLabel={t('pages.stockTransfers.delete.confirm')} pendingLabel={t('pages.stockTransfers.delete.deleting')} pending={isDeleting} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} />
-          <VxDialog open={canManage && lineOpen} onClose={requestLineClose} fullWidth maxWidth="sm">
-            <VxDialogTitle>{t(lineMode === 'create' ? 'pages.stockTransfers.lineEditor.createTitle' : 'pages.stockTransfers.lineEditor.editTitle')}</VxDialogTitle>
-            <VxDialogContent dividers>
-              <VxStack spacing={2.5} sx={{ pt: 1 }}>
-                {!products.length ? <VxAlert severity="warning">{t('pages.stockTransfers.lineEditor.createProductsFirst')}</VxAlert> : null}
-                {lineError ? <VxAlert severity="error">{lineError}</VxAlert> : null}
-                <LookupSelectField label={t('pages.stockTransfers.lineEditor.product')} value={lineForm.productId} onChange={(value) => void handleLineProductChange(value)} options={products.map((product) => ({ value: product.id, label: `${product.name} (${product.sku})` }))} disabled={!products.length} emptyText={t('pages.stockTransfers.lineEditor.noProducts')} requiredText={t('pages.stockTransfers.editor.required')} />
-                {lineAutofillHint ? <VxTypography variant="body2" color="text.secondary">{lineAutofillHint}</VxTypography> : null}
-                <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-                  <VxTextField label={t('pages.stockTransfers.lineEditor.quantity')} type="number" value={lineForm.quantity} onChange={(event) => setLineForm((current) => ({ ...current, quantity: event.target.value }))} fullWidth />
-                  <VxTextField label={t('pages.stockTransfers.lineEditor.unitCost')} type="number" value={lineForm.unitCost} onChange={(event) => setLineForm((current) => ({ ...current, unitCost: event.target.value }))} fullWidth />
-                </VxStack>
-              </VxStack>
-            </VxDialogContent>
-            <VxDialogActions sx={{ px: 3, py: 2 }}>
-              <VxButton onClick={requestLineClose} disabled={lineSaving}>{t('pages.stockTransfers.lineEditor.cancel')}</VxButton>
-              <VxButton variant="contained" onClick={() => void saveLine()} disabled={lineSaving || !products.length}>{lineSaving ? t('pages.stockTransfers.lineEditor.saving') : t(lineMode === 'create' ? 'pages.stockTransfers.lineEditor.add' : 'pages.stockTransfers.lineEditor.save')}</VxButton>
-            </VxDialogActions>
-          </VxDialog>
+          <StockTransferStateActions open={canManage && Boolean(deleteTarget)} targetName={deleteTarget?.transferNumber ?? ''} pending={isDeleting} onClose={() => setDeleteTarget(null)} onConfirm={() => void handleDelete()} />
+          <StockTransferLineEditor open={canManage && lineOpen} mode={lineMode} saving={lineSaving} error={lineError} form={lineForm} productOptions={products.map((product) => ({ value: product.id, label: `${product.name} (${product.sku})` }))} autofillHint={lineAutofillHint} onChange={setLineForm} onProductChange={(value) => void handleLineProductChange(value)} onClose={requestLineClose} onSave={() => void saveLine()} />
           {lineDiscardDialog}
         </>
       }

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { AddRoundedIcon, AutoGraphRoundedIcon, CheckCircleRoundedIcon, DeleteOutlineRoundedIcon, EditRoundedIcon, FormatListBulletedRoundedIcon } from '@vexorion/ui'
-import { VxAlert, VxBox, VxButton, VxChip, VxCircularProgress, VxConfirmActionButton, VxConfirmActionDialog, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxMenuItem, VxPaper, VxStack, VxTable, VxTableBody, VxTableCell, VxTableContainer, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
+import { AutoGraphRoundedIcon, CheckCircleRoundedIcon, FormatListBulletedRoundedIcon } from '@vexorion/ui'
+import { VxAlert, VxButton, VxConfirmActionDialog, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxMenuItem, VxStack, VxTextField } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
@@ -8,6 +8,9 @@ import LookupSelectField from '../../../components/LookupSelectField'
 import OrderWorkspace from '../../../components/OrderWorkspace'
 import { useInventoryBalancesLookup, useProductsLookup, useWarehousesLookup } from '../../../hooks/useLookups'
 import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
+import StockCountDetail from '../components/StockCountDetail'
+import StockCountLineEditor, { type CountLineForm } from '../components/StockCountLineEditor'
+import StockCountList, { type StockCountListRow } from '../components/StockCountList'
 import {
   ApiError,
   createStockCount,
@@ -27,22 +30,12 @@ import type {
 
 type DialogMode = 'create' | 'edit'
 
-type CountGridRow = StockCountListItemResponse & {
-  warehouseName?: string
-}
-
 type CountFormState = {
   countNumber: string
   warehouseId: string
   countDate: string
   status: number
   notes: string
-}
-
-type CountLineFormState = {
-  productId: string
-  systemQuantity: string
-  countedQuantity: string
 }
 
 const today = new Date().toISOString().slice(0, 10)
@@ -55,7 +48,7 @@ const defaultCountForm: CountFormState = {
   notes: '',
 }
 
-const defaultLineForm: CountLineFormState = {
+const defaultLineForm: CountLineForm = {
   productId: '',
   systemQuantity: '0',
   countedQuantity: '0',
@@ -66,7 +59,7 @@ function optionalText(value: string) {
   return trimmed ? trimmed : null
 }
 
-function buildLineForm(line: StockCountLineDetailsResponse | null): CountLineFormState {
+function buildLineForm(line: StockCountLineDetailsResponse | null): CountLineForm {
   if (!line) {
     return defaultLineForm
   }
@@ -100,14 +93,14 @@ export default function StockCountsPage() {
   const [editorError, setEditorError] = useState<string | null>(null)
   const [editorForm, setEditorForm] = useState<CountFormState>(defaultCountForm)
   const [initialEditorForm, setInitialEditorForm] = useState<CountFormState | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<CountGridRow | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<StockCountListRow | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [lineMode, setLineMode] = useState<DialogMode>('create')
   const [lineOpen, setLineOpen] = useState(false)
   const [lineSaving, setLineSaving] = useState(false)
   const [lineError, setLineError] = useState<string | null>(null)
-  const [lineForm, setLineForm] = useState<CountLineFormState>(defaultLineForm)
-  const [initialLineForm, setInitialLineForm] = useState<CountLineFormState | null>(null)
+  const [lineForm, setLineForm] = useState<CountLineForm>(defaultLineForm)
+  const [initialLineForm, setInitialLineForm] = useState<CountLineForm | null>(null)
   const [selectedLine, setSelectedLine] = useState<StockCountLineDetailsResponse | null>(null)
   const [postDialogOpen, setPostDialogOpen] = useState(false)
   const [reverseDialogOpen, setReverseDialogOpen] = useState(false)
@@ -170,7 +163,6 @@ export default function StockCountsPage() {
   }, [loadRows])
 
   const warehouseNameById = useMemo(() => new Map(warehouses.map((warehouse) => [warehouse.id, warehouse.name])), [warehouses])
-  const productById = useMemo(() => new Map(products.map((product) => [product.id, product])), [products])
   const balanceByProductId = useMemo(() => {
     if (!selectedCount) {
       return new Map<string, number>()
@@ -183,7 +175,7 @@ export default function StockCountsPage() {
     )
   }, [balances, selectedCount])
 
-  const gridRows = useMemo<CountGridRow[]>(() => rows.map((row) => ({
+  const gridRows = useMemo<StockCountListRow[]>(() => rows.map((row) => ({
     ...row,
     warehouseName: warehouseNameById.get(row.warehouseId),
   })), [rows, warehouseNameById])
@@ -202,7 +194,7 @@ export default function StockCountsPage() {
     setEditorOpen(true)
   }
 
-  const openEditDialog = async (row: CountGridRow) => {
+  const openEditDialog = async (row: StockCountListRow) => {
     if (!canManage) return
     setFeedback(null)
     setEditorMode('edit')
@@ -272,7 +264,7 @@ export default function StockCountsPage() {
     }
   }
 
-  const openDeleteDialog = (row: CountGridRow) => {
+  const openDeleteDialog = (row: StockCountListRow) => {
     if (!canManage) return
     setFeedback(null)
     setDeleteTarget(row)
@@ -466,9 +458,6 @@ export default function StockCountsPage() {
     ]
   }, [rows, t])
 
-  const canPost = Boolean(selectedCount && selectedCount.status === 1 && selectedCount.lines.length > 0)
-  const canReverse = Boolean(selectedCount && selectedCount.status === 4)
-
   return (
     <OrderWorkspace
       title={t('nav.routeTitles.stockCounts')}
@@ -478,151 +467,8 @@ export default function StockCountsPage() {
       showCreate={canManage}
       metrics={metrics}
       alerts={alerts}
-      grid={(
-        <VxTableContainer component={VxPaper} elevation={0}>
-          <VxTable size="small">
-            <VxTableHead>
-              <VxTableRow>
-                <VxTableCell>{t('pages.stockCounts.table.number')}</VxTableCell>
-                <VxTableCell>{t('pages.stockCounts.table.warehouse')}</VxTableCell>
-                <VxTableCell>{t('pages.stockCounts.table.date')}</VxTableCell>
-                <VxTableCell>{t('pages.stockCounts.table.status')}</VxTableCell>
-                <VxTableCell align="right">{t('pages.stockCounts.table.actions')}</VxTableCell>
-              </VxTableRow>
-            </VxTableHead>
-            <VxTableBody>
-              {isLoading ? (
-                <VxTableRow>
-                  <VxTableCell colSpan={5}>
-                    <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                      <VxCircularProgress size={18} />
-                      <VxTypography variant="body2">{t('pages.stockCounts.table.loading')}</VxTypography>
-                    </VxStack>
-                  </VxTableCell>
-                </VxTableRow>
-              ) : gridRows.length === 0 ? (
-                <VxTableRow>
-                  <VxTableCell colSpan={5}>
-                    <VxTypography variant="body2" color="text.secondary">{t('pages.stockCounts.table.empty')}</VxTypography>
-                  </VxTableCell>
-                </VxTableRow>
-              ) : (
-                gridRows.map((row) => (
-                  <VxTableRow
-                    key={row.id}
-                    hover
-                    selected={selectedCount?.id === row.id}
-                    sx={{ cursor: 'pointer' }}
-                    onClick={() => {
-                      setFeedback(null)
-                      void loadDetails(row.id)
-                    }}
-                  >
-                    <VxTableCell>{row.countNumber}</VxTableCell>
-                    <VxTableCell>{row.warehouseName ?? row.warehouseId}</VxTableCell>
-                    <VxTableCell>{row.countDate}</VxTableCell>
-                    <VxTableCell>
-                      <VxChip size="small" label={getDocumentStatusLabel(row.status)} color={row.status === 4 ? 'success' : row.status === 5 ? 'default' : 'primary'} />
-                    </VxTableCell>
-                    <VxTableCell align="right">
-                      {canManage ? <VxStack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
-                        <VxButton size="small" startIcon={<EditRoundedIcon />} onClick={(event) => { event.stopPropagation(); void openEditDialog(row) }}>
-                          {t('pages.stockCounts.table.edit')}
-                        </VxButton>
-                        <VxButton size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={(event) => { event.stopPropagation(); openDeleteDialog(row) }}>
-                          {t('pages.stockCounts.table.delete')}
-                        </VxButton>
-                      </VxStack> : null}
-                    </VxTableCell>
-                  </VxTableRow>
-                ))
-              )}
-            </VxTableBody>
-          </VxTable>
-        </VxTableContainer>
-      )}
-      linesPanel={(
-        <VxPaper elevation={0} className="panel-card">
-          <VxStack direction={{ xs: 'column', lg: 'row' }} sx={{ justifyContent: 'space-between', mb: 2 }} spacing={1.5}>
-            <VxBox>
-              <VxTypography component="h2" variant="h6">{t('pages.stockCounts.linePanel.title')}</VxTypography>
-              <VxTypography variant="body2" color="text.secondary">
-                {selectedCount
-                  ? t('pages.stockCounts.linePanel.forCount', { number: selectedCount.countNumber, status: getDocumentStatusLabel(selectedCount.status) })
-                  : t('pages.stockCounts.linePanel.selectPrompt')}
-              </VxTypography>
-            </VxBox>
-            {canManage ? <VxStack direction={{ xs: 'column', lg: 'row' }} spacing={1}>
-              <VxButton variant="contained" color="success" onClick={() => setPostDialogOpen(true)} disabled={!canPost || statusActionLoading}>
-                {t('pages.stockCounts.linePanel.post')}
-              </VxButton>
-              <VxButton variant="outlined" color="warning" onClick={() => setReverseDialogOpen(true)} disabled={!canReverse || statusActionLoading}>
-                {t('pages.stockCounts.linePanel.reverse')}
-              </VxButton>
-              <VxButton
-                variant="outlined"
-                startIcon={<AddRoundedIcon />}
-                onClick={openCreateLineDialog}
-                disabled={!selectedCount || selectedCount.status !== 1}
-              >
-                {t('pages.stockCounts.linePanel.add')}
-              </VxButton>
-            </VxStack> : null}
-          </VxStack>
-
-          {!selectedCount ? (
-            <VxAlert severity="info">{t('pages.stockCounts.linePanel.choosePrompt')}</VxAlert>
-          ) : selectedCount.lines.length === 0 ? (
-            <VxAlert severity="warning">{t('pages.stockCounts.linePanel.empty')}</VxAlert>
-          ) : (
-            <VxTableContainer>
-              <VxTable size="small">
-                <VxTableHead>
-                  <VxTableRow>
-                    <VxTableCell>{t('pages.stockCounts.linePanel.product')}</VxTableCell>
-                    <VxTableCell align="right">{t('pages.stockCounts.linePanel.systemQuantity')}</VxTableCell>
-                    <VxTableCell align="right">{t('pages.stockCounts.linePanel.countedQuantity')}</VxTableCell>
-                    <VxTableCell align="right">{t('pages.stockCounts.linePanel.variance')}</VxTableCell>
-                    <VxTableCell align="right">{t('pages.stockCounts.linePanel.actions')}</VxTableCell>
-                  </VxTableRow>
-                </VxTableHead>
-                <VxTableBody>
-                  {selectedCount.lines.map((line) => {
-                    const product = productById.get(line.productId)
-                    const variance = line.countedQuantity - line.systemQuantity
-                    return (
-                      <VxTableRow key={line.id}>
-                        <VxTableCell>{product ? `${product.sku} · ${product.name}` : line.productId}</VxTableCell>
-                        <VxTableCell align="right">{line.systemQuantity.toFixed(2)}</VxTableCell>
-                        <VxTableCell align="right">{line.countedQuantity.toFixed(2)}</VxTableCell>
-                        <VxTableCell align="right" sx={{ color: variance === 0 ? 'text.secondary' : variance > 0 ? 'success.main' : 'error.main' }}>
-                          {variance.toFixed(2)}
-                        </VxTableCell>
-                        <VxTableCell align="right">
-                          {canManage ? <VxStack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
-                            <VxButton size="small" startIcon={<EditRoundedIcon />} disabled={selectedCount.status !== 1} onClick={() => openEditLineDialog(line)}>
-                              {t('pages.stockCounts.table.edit')}
-                            </VxButton>
-                            <VxConfirmActionButton
-                              title={t('pages.stockCounts.linePanel.deleteTitle')}
-                              targetName={product ? `${product.name} (${product.sku})` : line.productId}
-                              consequence={t('pages.stockCounts.linePanel.deleteConsequence', { number: selectedCount.countNumber })}
-                              confirmLabel={t('pages.stockCounts.linePanel.deleteConfirm')}
-                              pendingLabel={t('pages.stockCounts.linePanel.deleting')}
-                              onConfirm={() => deleteLine(line)}
-                              buttonProps={{ size: 'small', color: 'error', startIcon: <DeleteOutlineRoundedIcon />, disabled: selectedCount.status !== 1 }}
-                            >{t('pages.stockCounts.table.delete')}</VxConfirmActionButton>
-                          </VxStack> : null}
-                        </VxTableCell>
-                      </VxTableRow>
-                    )
-                  })}
-                </VxTableBody>
-              </VxTable>
-            </VxTableContainer>
-          )}
-        </VxPaper>
-      )}
+      grid={<StockCountList rows={gridRows} loading={isLoading} selectedId={selectedCount?.id} canManage={canManage} getStatusLabel={getDocumentStatusLabel} onSelect={(id) => { setFeedback(null); void loadDetails(id) }} onEdit={(row) => void openEditDialog(row)} onDelete={openDeleteDialog} />}
+      linesPanel={<StockCountDetail count={selectedCount} canManage={canManage} loading={statusActionLoading} productLabels={new Map(products.map((product) => [product.id, `${product.sku} · ${product.name}`]))} getStatusLabel={getDocumentStatusLabel} onPost={() => setPostDialogOpen(true)} onReverse={() => setReverseDialogOpen(true)} onAddLine={openCreateLineDialog} onEditLine={openEditLineDialog} onDeleteLine={deleteLine} />}
       editor={(
         <>
           <VxDialog open={canManage && editorOpen} onClose={requestEditorClose} fullWidth maxWidth="sm">
@@ -691,60 +537,7 @@ export default function StockCountsPage() {
           </VxDialog>
           {editorDiscardDialog}
 
-          <VxDialog open={canManage && lineOpen} onClose={requestLineClose} fullWidth maxWidth="sm">
-            <VxDialogTitle>{t(lineMode === 'create' ? 'pages.stockCounts.lineEditor.createTitle' : 'pages.stockCounts.lineEditor.editTitle')}</VxDialogTitle>
-            <VxDialogContent>
-              <VxStack spacing={2} sx={{ mt: 1 }}>
-                {lineError ? <VxAlert severity="error">{lineError}</VxAlert> : null}
-                <LookupSelectField
-                  label={t('pages.stockCounts.lineEditor.product')}
-                  options={products.map((product) => ({ value: product.id, label: `${product.sku} · ${product.name}` }))}
-                  value={lineForm.productId}
-                  onChange={(value) => {
-                    const suggestedSystem = balanceByProductId.get(value)
-                    setLineForm((current) => ({
-                      ...current,
-                      productId: value,
-                      systemQuantity: suggestedSystem !== undefined ? suggestedSystem.toString() : current.systemQuantity,
-                    }))
-                  }}
-                  disabled={lineSaving}
-                  emptyText={t('pages.stockCounts.lineEditor.noProducts')}
-                  requiredText={t('common.required')}
-                />
-                <VxTextField
-                  label={t('pages.stockCounts.lineEditor.systemQuantity')}
-                  type="number"
-                  value={lineForm.systemQuantity}
-                  onChange={(event) => setLineForm((current) => ({ ...current, systemQuantity: event.target.value }))}
-                  disabled={lineSaving}
-                  slotProps={{ htmlInput: { min: 0, step: '0.01' } }}
-                  fullWidth
-                />
-                <VxTextField
-                  label={t('pages.stockCounts.lineEditor.countedQuantity')}
-                  type="number"
-                  value={lineForm.countedQuantity}
-                  onChange={(event) => setLineForm((current) => ({ ...current, countedQuantity: event.target.value }))}
-                  disabled={lineSaving}
-                  slotProps={{ htmlInput: { min: 0, step: '0.01' } }}
-                  fullWidth
-                />
-                <VxTextField
-                  label={t('pages.stockCounts.lineEditor.variance')}
-                  value={(Number(lineForm.countedQuantity || 0) - Number(lineForm.systemQuantity || 0)).toFixed(2)}
-                  slotProps={{ htmlInput: { readOnly: true } }}
-                  fullWidth
-                />
-              </VxStack>
-            </VxDialogContent>
-            <VxDialogActions>
-              <VxButton onClick={requestLineClose} disabled={lineSaving}>{t('pages.stockCounts.lineEditor.cancel')}</VxButton>
-              <VxButton onClick={() => void saveLine()} disabled={lineSaving} variant="contained">
-                {lineSaving ? t('pages.stockCounts.lineEditor.saving') : t('pages.stockCounts.lineEditor.save')}
-              </VxButton>
-            </VxDialogActions>
-          </VxDialog>
+          <StockCountLineEditor open={canManage && lineOpen} mode={lineMode} saving={lineSaving} error={lineError} form={lineForm} productOptions={products.map((product) => ({ value: product.id, label: `${product.sku} · ${product.name}` }))} suggestedBalances={balanceByProductId} onChange={setLineForm} onClose={requestLineClose} onSave={() => void saveLine()} />
           {lineDiscardDialog}
 
           <VxConfirmActionDialog open={canManage && postDialogOpen} title={t('pages.stockCounts.actions.postTitle')} targetName={selectedCount?.countNumber ?? ''} consequence={t('pages.stockCounts.actions.postConsequence')} confirmLabel={t('pages.stockCounts.actions.postConfirm')} confirmColor="success" pendingLabel={t('pages.stockCounts.actions.posting')} pending={statusActionLoading} onClose={() => setPostDialogOpen(false)} onConfirm={() => void confirmPost()} />

@@ -493,10 +493,13 @@ Scope: Adjustments, Counts, Transfers, Receipts, Shipments, balances, and moveme
 
 **Findings**
 
-- Adjustment, count, and transfer pages are 580–770 line components with nested header, line, status, and delete dialogs plus hard-coded strings.
+- Adjustment, count, and transfer pages previously mixed list, detail/lines, line-editor, and lifecycle-action rendering into 600–760 line components. `UX-INV-01` now keeps API/state orchestration in each page while delegating those visual responsibilities to module-owned components.
 - Line deletion can be immediate while document delete/post/reverse is confirmed; risk handling is inconsistent.
 - Lifecycle terminology alternates between complete/cancel and post/reverse.
 - Balance/movement behavior exists, but there is no focused movement/audit workspace and the valuation/reorder reports remain pending.
+
+- [x] `UX-INV-01` Split adjustment, count, and transfer operations into list, detail, line-editor, and state-action components. Locally completed 25 October 2026: each operation has module-owned list, selected-document detail/lines, and line-editor components. Stock Count post/reverse/add-line controls are isolated in `StockCountStateActions`; Adjustment and Transfer delete confirmations are isolated in dedicated state-action components. Pages retain authentication, lookup, API mutation, feedback, unsaved-change, and dialog orchestration, preserving behavior and leaving quantity-effect previews and lifecycle semantics to `UX-INV-02`/`UX-INV-03`.
+  - Evidence: Main UI tests pass 270/270, including component-boundary regression coverage for all three operations and dedicated state-action components for each. TypeScript, scoped inventory ESLint, production build, and `git diff --check` pass. Full-project ESLint remains blocked by 20 pre-existing `react-hooks/refs` findings in `Projects/DocumentsPanel.tsx`; no inventory files report lint errors. The existing large-chunk build warning remains. This is local acceptance, not the release gate.
 
 Open inventory workspace and reporting work is consolidated in the final Main UI backlog.
 
@@ -653,7 +656,6 @@ Complete application work in order: **Main UI → AdminUI → POS**. Finish the 
 
 #### Sales, procurement, inventory, and finance
 
-- [ ] `UX-INV-01` Split adjustment/count/transfer operations into list, detail, line editor, and state-action components.
 - [ ] `UX-INV-02` Show expected versus counted/resulting quantities, variance, warehouses, and posting effects before confirmation.
 - [ ] `UX-INV-03` Standardize line/document confirmations and prevent or explain immutable-state edits.
 - [ ] `FEAT-INV-01` Finalize inventory lifecycle vocabulary and reversal behavior across API, UI, tests, and QA documentation.

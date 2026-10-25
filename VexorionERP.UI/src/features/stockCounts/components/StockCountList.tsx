@@ -1,0 +1,14 @@
+import { DeleteOutlineRoundedIcon, EditRoundedIcon } from '@vexorion/ui'
+import { VxButton, VxChip, VxCircularProgress, VxPaper, VxStack, VxTable, VxTableBody, VxTableCell, VxTableContainer, VxTableHead, VxTableRow, VxTypography } from '@vexorion/ui'
+import { useTranslation } from 'react-i18next'
+import type { StockCountListItemResponse } from '../../../types/api'
+
+export type StockCountListRow = StockCountListItemResponse & { warehouseName?: string }
+type Props = { rows: StockCountListRow[]; loading: boolean; selectedId?: string; canManage: boolean; getStatusLabel: (status: number) => string; onSelect: (id: string) => void; onEdit: (row: StockCountListRow) => void; onDelete: (row: StockCountListRow) => void }
+
+export default function StockCountList({ rows, loading, selectedId, canManage, getStatusLabel, onSelect, onEdit, onDelete }: Props) {
+  const { t } = useTranslation()
+  return <VxTableContainer component={VxPaper} elevation={0}><VxTable size="small"><VxTableHead><VxTableRow><VxTableCell>{t('pages.stockCounts.table.number')}</VxTableCell><VxTableCell>{t('pages.stockCounts.table.warehouse')}</VxTableCell><VxTableCell>{t('pages.stockCounts.table.date')}</VxTableCell><VxTableCell>{t('pages.stockCounts.table.status')}</VxTableCell><VxTableCell align="right">{t('pages.stockCounts.table.actions')}</VxTableCell></VxTableRow></VxTableHead><VxTableBody>
+    {loading ? <VxTableRow><VxTableCell colSpan={5}><VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}><VxCircularProgress size={18} /><VxTypography variant="body2">{t('pages.stockCounts.table.loading')}</VxTypography></VxStack></VxTableCell></VxTableRow> : rows.length === 0 ? <VxTableRow><VxTableCell colSpan={5}><VxTypography variant="body2" color="text.secondary">{t('pages.stockCounts.table.empty')}</VxTypography></VxTableCell></VxTableRow> : rows.map((row) => <VxTableRow key={row.id} hover selected={selectedId === row.id} sx={{ cursor: 'pointer' }} onClick={() => onSelect(row.id)}><VxTableCell>{row.countNumber}</VxTableCell><VxTableCell>{row.warehouseName ?? row.warehouseId}</VxTableCell><VxTableCell>{row.countDate}</VxTableCell><VxTableCell><VxChip size="small" label={getStatusLabel(row.status)} color={row.status === 4 ? 'success' : row.status === 5 ? 'default' : 'primary'} /></VxTableCell><VxTableCell align="right">{canManage ? <VxStack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}><VxButton size="small" startIcon={<EditRoundedIcon />} onClick={(event) => { event.stopPropagation(); onEdit(row) }}>{t('pages.stockCounts.table.edit')}</VxButton><VxButton size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={(event) => { event.stopPropagation(); onDelete(row) }}>{t('pages.stockCounts.table.delete')}</VxButton></VxStack> : null}</VxTableCell></VxTableRow>)}
+  </VxTableBody></VxTable></VxTableContainer>
+}
