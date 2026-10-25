@@ -933,7 +933,7 @@ const enUS = {
     },
     employees: {
       signInRequired: 'Sign in first. Employee APIs require authenticated access.',
-      description: 'Employee master data from `/api/employees` for assignment and project staffing workflows.',
+      description: 'Maintain internal staff records owned by your tenant and linked to a company. An employee record does not staff a project until you create a project assignment.',
       newButton: 'New employee',
       noRows: 'No employees found.',
       metrics: {
@@ -976,7 +976,7 @@ const enUS = {
     },
     consultants: {
       signInRequired: 'Sign in first. Consultant APIs require authenticated access.',
-      description: 'Consultant master data from `/api/consultants` for project collaboration and assignment workflows.',
+      description: 'Maintain non-employee professional records owned by your tenant. A consultant record does not create a project engagement; assign the consultant from the project workspace.',
       newButton: 'New consultant',
       noRows: 'No consultants found.',
       metrics: {
@@ -1017,7 +1017,8 @@ const enUS = {
     tenantRelationships: {
       signInRequired: 'Sign in first. Tenant relationship APIs require authenticated access.',
       noAccess: 'You do not have permission to view tenant relationships.',
-      description: 'Manage cross-tenant relationship records from `/api/tenant-relationships`, including scope JSON and lifecycle status.',
+      description: 'Manage organization-level business relationships between your tenant and another tenant.',
+      boundary: 'A tenant relationship authorizes cross-tenant collaboration at the organization level. It does not add the organization to a project or assign a person; add a project partner and then create a project assignment for those actions.',
       newButton: 'New relationship',
       activateButton: 'Activate',
       activeOnly: 'Active only',
@@ -1040,6 +1041,7 @@ const enUS = {
       },
       fields: {
         relatedTenantId: 'Related tenant ID',
+        relatedTenantHelp: 'The organization tenant you have a business relationship with; this is not an employee or consultant ID.',
         relationshipType: 'Relationship type',
         status: 'Status',
         effectiveFrom: 'Effective from',
@@ -1047,6 +1049,7 @@ const enUS = {
         contractReference: 'Contract reference',
         scopeJson: 'Scope JSON',
         scopeJsonPlaceholder: '{"canAssignPeople": true, "canViewDocuments": true}',
+        scopeJsonHelp: 'Optional organization-level limits. Project-partner permissions must stay within this scope; an empty scope keeps the legacy unrestricted behavior.',
       },
       relationshipType: {
         primeContractor: 'Prime contractor',
@@ -1557,7 +1560,7 @@ const enUS = {
       },
       tabs: {
         overview: 'Overview',
-        parties: 'Parties',
+        parties: 'Partners',
         assignments: 'Assignments',
         documents: 'Documents',
         history: 'History',
@@ -1569,11 +1572,12 @@ const enUS = {
       assignmentsPanel: {
         noAccess: 'You do not have permission to view project assignments.',
         title: 'Project assignments',
+        description: 'An assignment engages one employee or eligible consultant on this project for a role and period. It does not change the person\'s master record. Consultants from another tenant are available only when an active tenant relationship and this project\'s partner access both allow consultant assignment.',
         add: 'Add assignment',
         noItems: 'No assignments found.',
         noHistory: 'No assignment history yet.',
         assigneeType: {
-          employee: 'Employee',
+          employee: 'Internal employee',
           consultant: 'Consultant',
         },
         columns: {
@@ -1597,8 +1601,11 @@ const enUS = {
         },
         fields: {
           assigneeType: 'Assignee type',
-          assigneeId: 'Assignee ID',
-          assigneeIdPlaceholder: 'Employee or consultant GUID',
+          assigneeId: 'Assignee',
+          assigneeIdPlaceholder: 'Select an employee or consultant',
+          employee: 'Employee',
+          consultant: 'Consultant',
+          assigneeHelp: 'Employees are internal staff. Consultants may belong to your tenant or an eligible partner tenant.',
           roleTitle: 'Role title',
           startDate: 'Start date',
           endDate: 'End date',
@@ -1693,11 +1700,13 @@ const enUS = {
         isActive: 'Active',
       },
       parties: {
-        title: 'Project parties',
-        addButton: 'Add party',
-        noRecords: 'No related tenants added.',
+        title: 'Project partners',
+        description: 'A project partner links one related tenant organization to this project and narrows what it may do here. It does not assign any employee or consultant.',
+        dialogGuidance: 'The related tenant must already have an active tenant relationship of the same type. Dates and permissions cannot exceed that organization-level relationship.',
+        addButton: 'Add project partner',
+        noRecords: 'No partner organizations added.',
         columns: {
-          relatedTenant: 'Related tenant',
+          relatedTenant: 'Partner tenant',
           relationship: 'Relationship',
           scope: 'Scope',
           effective: 'Effective',
@@ -1707,25 +1716,26 @@ const enUS = {
         scopeLabels: {
           viewDocuments: 'View docs',
           uploadDocuments: 'Upload docs',
-          assignPeople: 'Assign',
+          assignPeople: 'Consultants',
         },
         fields: {
-          relatedTenantId: 'Related tenant ID',
+          relatedTenantId: 'Partner tenant ID',
           tenantIdPlaceholder: 'Tenant GUID',
+          relatedTenantHelp: 'Select the organization tenant covered by the active tenant relationship.',
           relationshipType: 'Relationship type',
           canViewDocuments: 'Can view documents',
           canUploadDocuments: 'Can upload documents',
-          canAssignPeople: 'Can assign people',
+          canAssignPeople: 'Allow consultants from this tenant',
           effectiveFrom: 'Effective from',
           effectiveTo: 'Effective to',
           isActive: 'Active',
         },
         dialogs: {
-          add: 'Add project party',
-          edit: 'Edit project party',
+          add: 'Add project partner',
+          edit: 'Edit project partner',
           delete: {
-            title: 'Remove project party',
-            message: 'Are you sure you want to remove this tenant relationship from the project?',
+            title: 'Remove project partner',
+            message: 'Remove this organization from the project? The tenant relationship remains in place, but this project-specific access is deleted.',
           },
         },
       },

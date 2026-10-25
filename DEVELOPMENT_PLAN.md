@@ -442,6 +442,10 @@ Open master-data and configuration work is consolidated in the final Main UI bac
   - Semantics boundary: menu visibility never grants route permission or enables a tenant module. The access preview is for the signed-in account, while User Management previews another user's role-derived permission union without claiming module/menu visibility. Numbering changes affect future generated numbers and reuse the existing API; no database or backend changes were required.
   - Evidence: full Main UI tests pass 229/229. Focused configuration, authorization, accessibility, numbering, and locale tests pass 35/35. Main UI TypeScript, changed-file ESLint, and `git diff --check` pass. This is local acceptance, not the release gate.
 
+- [x] `UX-MASTER-06` Reconcile employee, consultant, assignment, and tenant-relationship vocabulary. Locally completed 25 October 2026: Employees are consistently described as internal staff master records owned by the current tenant, while Consultants are non-employee professional master records. Both pages state that creating the record does not staff a project. Project Assignments now describe the project-specific role and period engagement, use explicit Employee/Consultant selectors instead of an assignee-ID label, and explain that cross-tenant consultants require both an active organization relationship and project-partner permission. Tenant Relationships are identified as organization-level authorization; Project Parties are presented to users as Project Partners, the project-specific organization link that narrows dates and collaboration permissions without assigning a person. All guidance is localized in English, Indonesian, and Spanish.
+  - Semantics boundary: backend models, endpoints, persisted values, and the `ProjectParty` domain name are unchanged. A local consultant and a consultant from an eligible partner tenant remain the same assignment type; the tenant code continues to identify external options. Empty tenant-relationship scope retains the backend's legacy unrestricted behavior, while explicit project-partner permissions must remain inside the active matching relationship.
+  - Evidence: full Main UI tests pass 234/234, including the GitHub-equivalent affected-package run with V8 coverage and JUnit output. Focused assignment, vocabulary, translation-parity, and localization-boundary tests pass 24/24. Main UI TypeScript, changed-file ESLint, production build, and `git diff --check` pass; the known large-chunk build warning remains. This is local acceptance, not the release gate.
+
 ### 5.5 Sales, procurement, billing, and payments
 
 Scope: Sales Orders/Shipments/Invoices/Customer Payments and Purchase Orders/Receipts/Invoices/Vendor Payments.
@@ -619,8 +623,6 @@ Historical milestone/checklist/roadmap documents were removed after consolidatio
 Complete application work in order: **Main UI → AdminUI → POS**. Finish the active application's module queue before moving to the next. Shared/release gates follow the application queues. This section is the source of truth for all remaining actionable work; earlier sections contain findings, decisions, and completed evidence only.
 
 ### Stage 1 — Main UI
-
-- [ ] `UX-MASTER-06` Reconcile employee, consultant, assignment, and tenant-relationship vocabulary.
 
 #### Sales, procurement, inventory, and finance
 

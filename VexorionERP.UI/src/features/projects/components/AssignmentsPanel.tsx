@@ -283,6 +283,8 @@ export default function AssignmentsPanel({ projectId }: AssignmentsPanelProps) {
             ) : null}
           </VxStack>
 
+          <VxAlert severity="info">{t('pages.projectDetails.assignmentsPanel.description')}</VxAlert>
+
           {isLoading ? (
             <VxBox sx={{ display: 'grid', placeItems: 'center', py: 4 }}><VxCircularProgress size={24} /></VxBox>
           ) : (
@@ -415,9 +417,12 @@ export default function AssignmentsPanel({ projectId }: AssignmentsPanelProps) {
             <VxTextField
               select
               size="small"
-              label={t('pages.projectDetails.assignmentsPanel.fields.assigneeId')}
+              label={t(formState.assigneeType === 'employee'
+                ? 'pages.projectDetails.assignmentsPanel.fields.employee'
+                : 'pages.projectDetails.assignmentsPanel.fields.consultant')}
               value={formState.assigneeId}
               onChange={(event) => setFormState((previous) => ({ ...previous, assigneeId: event.target.value }))}
+              helperText={t('pages.projectDetails.assignmentsPanel.fields.assigneeHelp')}
               fullWidth
             >
               {assigneeOptions.map((option) => (

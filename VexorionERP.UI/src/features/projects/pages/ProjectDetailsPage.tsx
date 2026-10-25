@@ -637,9 +637,12 @@ export default function ProjectDetailsPage() {
 
       {activeTab === 'parties' ? (
         <VxPaper elevation={0} className="panel-card" sx={{ p: 0 }}>
-          <VxStack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', px: 2.5, pt: 2.5 }}>
-            <VxTypography component="h2" variant="h6">{t('pages.projectDetails.parties.title')}</VxTypography>
-            {canManage ? <VxButton variant="contained" onClick={openCreatePartyDialog}>{t('pages.projectDetails.parties.addButton')}</VxButton> : null}
+          <VxStack spacing={2} sx={{ px: 2.5, pt: 2.5 }}>
+            <VxStack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+              <VxTypography component="h2" variant="h6">{t('pages.projectDetails.parties.title')}</VxTypography>
+              {canManage ? <VxButton variant="contained" onClick={openCreatePartyDialog}>{t('pages.projectDetails.parties.addButton')}</VxButton> : null}
+            </VxStack>
+            <VxAlert severity="info">{t('pages.projectDetails.parties.description')}</VxAlert>
           </VxStack>
           <PartyDataGrid
             rows={parties}
@@ -759,12 +762,14 @@ export default function ProjectDetailsPage() {
         <VxDialogTitle>{editingParty ? t('pages.projectDetails.parties.dialogs.edit') : t('pages.projectDetails.parties.dialogs.add')}</VxDialogTitle>
         <VxDialogContent>
           <VxStack spacing={2} sx={{ mt: 1 }}>
+            <VxAlert severity="info">{t('pages.projectDetails.parties.dialogGuidance')}</VxAlert>
             <VxTextField
               size="small"
               label={t('pages.projectDetails.parties.fields.relatedTenantId')}
               value={partyFormState.relatedTenantId}
               onChange={(event) => setPartyFormState((previous) => ({ ...previous, relatedTenantId: event.target.value }))}
               placeholder={t('pages.projectDetails.parties.fields.tenantIdPlaceholder')}
+              helperText={t('pages.projectDetails.parties.fields.relatedTenantHelp')}
               fullWidth
             />
 

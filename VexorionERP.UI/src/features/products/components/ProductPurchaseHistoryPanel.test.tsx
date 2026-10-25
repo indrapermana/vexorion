@@ -30,7 +30,9 @@ describe('ProductPurchaseHistoryPanel', () => {
   it('shows an honest empty state when there is no recent purchase history', async () => {
     api.getProductPurchasePriceHistoryEntries.mockResolvedValueOnce([])
     render(<ProductPurchaseHistoryPanel productId="product-1" />)
-    expect(await screen.findByText('components.products.purchaseHistory.empty')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText('components.products.purchaseHistory.empty')).toBeInTheDocument()
+    })
   })
 
   it('retries after a history load failure', async () => {

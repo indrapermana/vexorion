@@ -386,6 +386,7 @@ export default function TenantRelationshipsPage() {
       />
 
       <PageFeedback error={error} success={feedback} onRetry={error ? () => void loadData() : undefined} />
+      <VxAlert severity="info">{t('pages.tenantRelationships.boundary')}</VxAlert>
       {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.tenants.manage} /> : null}
 
       <PageBody>
@@ -458,6 +459,7 @@ export default function TenantRelationshipsPage() {
               size="small"
               label={t('pages.tenantRelationships.fields.relatedTenantId')}
               value={formState.relatedTenantId}
+              helperText={t('pages.tenantRelationships.fields.relatedTenantHelp')}
               onChange={(event) => setFormState((previous) => ({ ...previous, relatedTenantId: event.target.value }))}
               fullWidth
             />
@@ -520,6 +522,7 @@ export default function TenantRelationshipsPage() {
               value={formState.scopeJson}
               onChange={(event) => setFormState((previous) => ({ ...previous, scopeJson: event.target.value }))}
               placeholder={t('pages.tenantRelationships.fields.scopeJsonPlaceholder')}
+              helperText={t('pages.tenantRelationships.fields.scopeJsonHelp')}
               fullWidth
               multiline
               minRows={4}

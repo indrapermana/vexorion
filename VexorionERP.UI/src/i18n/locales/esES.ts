@@ -685,7 +685,7 @@ const esES = {
     },
     employees: {
       signInRequired: 'Inicia sesión primero. Las API de empleados requieren acceso autenticado.',
-      description: 'Datos maestros de empleados de `/api/employees` para asignaciones y dotación de proyectos.',
+      description: 'Mantén los registros del personal interno propiedad de tu inquilino y vinculados a una empresa. Un registro de empleado no incorpora a la persona a un proyecto hasta crear una asignación.',
       newButton: 'Nuevo empleado',
       noRows: 'No se encontraron empleados.',
       metrics: { rows: 'Filas de empleados' },
@@ -701,7 +701,7 @@ const esES = {
     },
     consultants: {
       signInRequired: 'Inicia sesión primero. Las API de consultores requieren acceso autenticado.',
-      description: 'Datos maestros de consultores de `/api/consultants` para colaboración y asignaciones de proyectos.',
+      description: 'Mantén los registros de profesionales no empleados propiedad de tu inquilino. Un registro de consultor no crea una participación en el proyecto; asígnalo desde el espacio del proyecto.',
       newButton: 'Nuevo consultor',
       noRows: 'No se encontraron consultores.',
       metrics: { rows: 'Filas de consultores' },
@@ -717,7 +717,8 @@ const esES = {
     tenantRelationships: {
       signInRequired: 'Inicia sesión primero. Las API de relaciones de inquilinos requieren acceso autenticado.',
       noAccess: 'No tienes permiso para ver relaciones de inquilinos.',
-      description: 'Administra relaciones entre inquilinos desde `/api/tenant-relationships`, incluyendo scope JSON y estado del ciclo de vida.',
+      description: 'Administra relaciones comerciales a nivel de organización entre tu inquilino y otro inquilino.',
+      boundary: 'Una relación entre inquilinos autoriza la colaboración entre organizaciones. No añade la organización a un proyecto ni asigna a una persona; para ello, añade un socio del proyecto y luego crea una asignación.',
       newButton: 'Nueva relación',
       activateButton: 'Activar',
       activeOnly: 'Solo activas',
@@ -740,6 +741,7 @@ const esES = {
       },
       fields: {
         relatedTenantId: 'ID de inquilino relacionado',
+        relatedTenantHelp: 'El inquilino de la organización con la que tienes una relación comercial; no es un ID de empleado o consultor.',
         relationshipType: 'Tipo de relación',
         status: 'Estado',
         effectiveFrom: 'Vigente desde',
@@ -747,6 +749,7 @@ const esES = {
         contractReference: 'Referencia de contrato',
         scopeJson: 'Scope JSON',
         scopeJsonPlaceholder: '{"canAssignPeople": true, "canViewDocuments": true}',
+        scopeJsonHelp: 'Límites opcionales a nivel de organización. Los permisos del socio del proyecto deben respetar este alcance; un alcance vacío conserva el comportamiento heredado sin restricciones.',
       },
       relationshipType: {
         primeContractor: 'Contratista principal',
@@ -892,7 +895,7 @@ const esES = {
       },
       tabs: {
         overview: 'Descripción general',
-        parties: 'Partes',
+        parties: 'Socios',
         assignments: 'Asignaciones',
         documents: 'Documentos',
         history: 'Historial',
@@ -904,11 +907,12 @@ const esES = {
       assignmentsPanel: {
         noAccess: 'No tienes permiso para ver las asignaciones del proyecto.',
         title: 'Asignaciones del proyecto',
+        description: 'Una asignación incorpora a un empleado o consultor elegible a este proyecto para un rol y período. No modifica el registro maestro de la persona. Los consultores de otro inquilino solo están disponibles si una relación activa y el acceso del socio de este proyecto permiten asignarlos.',
         add: 'Agregar asignación',
         noItems: 'No se encontraron asignaciones.',
         noHistory: 'Aún no hay historial de asignaciones.',
         assigneeType: {
-          employee: 'Empleado',
+          employee: 'Empleado interno',
           consultant: 'Consultor',
         },
         columns: {
@@ -932,8 +936,11 @@ const esES = {
         },
         fields: {
           assigneeType: 'Tipo de asignado',
-          assigneeId: 'ID del asignado',
-          assigneeIdPlaceholder: 'GUID de empleado o consultor',
+          assigneeId: 'Asignado',
+          assigneeIdPlaceholder: 'Selecciona un empleado o consultor',
+          employee: 'Empleado',
+          consultant: 'Consultor',
+          assigneeHelp: 'Los empleados son personal interno. Los consultores pueden pertenecer a tu inquilino o a un inquilino socio elegible.',
           roleTitle: 'Título del rol',
           startDate: 'Fecha de inicio',
           endDate: 'Fecha de fin',
@@ -1028,11 +1035,13 @@ const esES = {
         isActive: 'Activo',
       },
       parties: {
-        title: 'Partes del proyecto',
-        addButton: 'Agregar parte',
-        noRecords: 'Sin inquilinos relacionados añadidos.',
+        title: 'Socios del proyecto',
+        description: 'Un socio del proyecto vincula una organización inquilina relacionada con este proyecto y limita lo que puede hacer aquí. No asigna a ningún empleado o consultor.',
+        dialogGuidance: 'El inquilino relacionado debe tener una relación activa del mismo tipo. Las fechas y los permisos no pueden exceder esa relación a nivel de organización.',
+        addButton: 'Agregar socio del proyecto',
+        noRecords: 'No se han añadido organizaciones socias.',
         columns: {
-          relatedTenant: 'Inquilino relacionado',
+          relatedTenant: 'Inquilino socio',
           relationship: 'Relación',
           scope: 'Alcance',
           effective: 'Efectivo',
@@ -1042,25 +1051,26 @@ const esES = {
         scopeLabels: {
           viewDocuments: 'Ver docs',
           uploadDocuments: 'Subir docs',
-          assignPeople: 'Asignar',
+          assignPeople: 'Consultores',
         },
         fields: {
-          relatedTenantId: 'ID de inquilino relacionado',
+          relatedTenantId: 'ID de inquilino socio',
           tenantIdPlaceholder: 'GUID de inquilino',
+          relatedTenantHelp: 'Selecciona el inquilino de la organización cubierto por la relación activa.',
           relationshipType: 'Tipo de relación',
           canViewDocuments: 'Puede ver documentos',
           canUploadDocuments: 'Puede subir documentos',
-          canAssignPeople: 'Puede asignar personas',
+          canAssignPeople: 'Permitir consultores de este inquilino',
           effectiveFrom: 'Efectivo desde',
           effectiveTo: 'Efectivo hasta',
           isActive: 'Activo',
         },
         dialogs: {
-          add: 'Agregar parte del proyecto',
-          edit: 'Editar parte del proyecto',
+          add: 'Agregar socio del proyecto',
+          edit: 'Editar socio del proyecto',
           delete: {
-            title: 'Eliminar parte del proyecto',
-            message: '¿Estás seguro de que deseas eliminar esta relación de inquilino del proyecto?',
+            title: 'Eliminar socio del proyecto',
+            message: '¿Eliminar esta organización del proyecto? La relación entre inquilinos se mantiene, pero se elimina este acceso específico del proyecto.',
           },
         },
       },

@@ -712,7 +712,7 @@ const idID = {
     },
     employees: {
       signInRequired: 'Masuk terlebih dahulu. API karyawan memerlukan akses terautentikasi.',
-      description: 'Data induk karyawan dari `/api/employees` untuk penugasan dan pengelolaan staf proyek.',
+      description: 'Kelola data staf internal milik tenant Anda yang terhubung ke perusahaan. Data karyawan belum menempatkan orang pada proyek sampai Anda membuat penugasan proyek.',
       newButton: 'Karyawan baru',
       noRows: 'Tidak ada karyawan.',
       metrics: { rows: 'Baris karyawan' },
@@ -728,7 +728,7 @@ const idID = {
     },
     consultants: {
       signInRequired: 'Masuk terlebih dahulu. API konsultan memerlukan akses terautentikasi.',
-      description: 'Data induk konsultan dari `/api/consultants` untuk kolaborasi dan penugasan proyek.',
+      description: 'Kelola data profesional non-karyawan milik tenant Anda. Data konsultan tidak otomatis membuat keterlibatan proyek; tugaskan konsultan dari ruang kerja proyek.',
       newButton: 'Konsultan baru',
       noRows: 'Tidak ada konsultan.',
       metrics: { rows: 'Baris konsultan' },
@@ -744,7 +744,8 @@ const idID = {
     tenantRelationships: {
       signInRequired: 'Masuk dulu. API relasi tenant membutuhkan akses terautentikasi.',
       noAccess: 'Anda tidak memiliki izin untuk melihat relasi tenant.',
-      description: 'Kelola relasi lintas-tenant dari `/api/tenant-relationships`, termasuk scope JSON dan status siklus hidup.',
+      description: 'Kelola hubungan bisnis tingkat organisasi antara tenant Anda dan tenant lain.',
+      boundary: 'Relasi tenant mengizinkan kolaborasi lintas-tenant pada tingkat organisasi. Relasi ini tidak menambahkan organisasi ke proyek atau menugaskan seseorang; tambahkan mitra proyek lalu buat penugasan proyek untuk tindakan tersebut.',
       newButton: 'Relasi baru',
       activateButton: 'Aktifkan',
       activeOnly: 'Hanya aktif',
@@ -767,6 +768,7 @@ const idID = {
       },
       fields: {
         relatedTenantId: 'ID tenant terkait',
+        relatedTenantHelp: 'Tenant organisasi yang memiliki hubungan bisnis dengan Anda; ini bukan ID karyawan atau konsultan.',
         relationshipType: 'Jenis relasi',
         status: 'Status',
         effectiveFrom: 'Berlaku dari',
@@ -774,6 +776,7 @@ const idID = {
         contractReference: 'Referensi kontrak',
         scopeJson: 'Scope JSON',
         scopeJsonPlaceholder: '{"canAssignPeople": true, "canViewDocuments": true}',
+        scopeJsonHelp: 'Batas tingkat organisasi opsional. Izin mitra proyek harus berada dalam cakupan ini; cakupan kosong mempertahankan perilaku lama tanpa pembatasan.',
       },
       relationshipType: {
         primeContractor: 'Kontraktor utama',
@@ -919,7 +922,7 @@ const idID = {
       },
       tabs: {
         overview: 'Ringkasan',
-        parties: 'Pihak',
+        parties: 'Mitra',
         assignments: 'Penugasan',
         documents: 'Dokumen',
         history: 'Riwayat',
@@ -931,11 +934,12 @@ const idID = {
       assignmentsPanel: {
         noAccess: 'Anda tidak memiliki izin untuk melihat penugasan proyek.',
         title: 'Penugasan proyek',
+        description: 'Penugasan menempatkan satu karyawan atau konsultan yang memenuhi syarat pada proyek ini untuk peran dan periode tertentu. Penugasan tidak mengubah data induk orang tersebut. Konsultan dari tenant lain hanya tersedia jika relasi tenant aktif dan akses mitra proyek ini sama-sama mengizinkan penugasan konsultan.',
         add: 'Tambah penugasan',
         noItems: 'Tidak ada penugasan.',
         noHistory: 'Belum ada riwayat penugasan.',
         assigneeType: {
-          employee: 'Karyawan',
+          employee: 'Karyawan internal',
           consultant: 'Konsultan',
         },
         columns: {
@@ -959,8 +963,11 @@ const idID = {
         },
         fields: {
           assigneeType: 'Tipe pelaksana',
-          assigneeId: 'ID pelaksana',
-          assigneeIdPlaceholder: 'GUID karyawan atau konsultan',
+          assigneeId: 'Pelaksana',
+          assigneeIdPlaceholder: 'Pilih karyawan atau konsultan',
+          employee: 'Karyawan',
+          consultant: 'Konsultan',
+          assigneeHelp: 'Karyawan adalah staf internal. Konsultan dapat berasal dari tenant Anda atau tenant mitra yang memenuhi syarat.',
           roleTitle: 'Jabatan',
           startDate: 'Tanggal mulai',
           endDate: 'Tanggal selesai',
@@ -1055,11 +1062,13 @@ const idID = {
         isActive: 'Aktif',
       },
       parties: {
-        title: 'Pihak-pihak proyek',
-        addButton: 'Tambah pihak',
-        noRecords: 'Tidak ada tenant terkait yang ditambahkan.',
+        title: 'Mitra proyek',
+        description: 'Mitra proyek menghubungkan satu organisasi tenant terkait ke proyek ini dan membatasi kegiatannya di sini. Hal ini tidak menugaskan karyawan atau konsultan apa pun.',
+        dialogGuidance: 'Tenant terkait harus sudah memiliki relasi tenant aktif dengan jenis yang sama. Tanggal dan izin tidak boleh melebihi relasi tingkat organisasi tersebut.',
+        addButton: 'Tambah mitra proyek',
+        noRecords: 'Belum ada organisasi mitra yang ditambahkan.',
         columns: {
-          relatedTenant: 'Tenant terkait',
+          relatedTenant: 'Tenant mitra',
           relationship: 'Hubungan',
           scope: 'Ruang lingkup',
           effective: 'Efektif',
@@ -1069,25 +1078,26 @@ const idID = {
         scopeLabels: {
           viewDocuments: 'Lihat dok',
           uploadDocuments: 'Unggah dok',
-          assignPeople: 'Penugasan',
+          assignPeople: 'Konsultan',
         },
         fields: {
-          relatedTenantId: 'ID tenant terkait',
+          relatedTenantId: 'ID tenant mitra',
           tenantIdPlaceholder: 'GUID tenant',
+          relatedTenantHelp: 'Pilih tenant organisasi yang tercakup oleh relasi tenant aktif.',
           relationshipType: 'Tipe hubungan',
           canViewDocuments: 'Dapat melihat dokumen',
           canUploadDocuments: 'Dapat mengunggah dokumen',
-          canAssignPeople: 'Dapat menugaskan orang',
+          canAssignPeople: 'Izinkan konsultan dari tenant ini',
           effectiveFrom: 'Efektif dari',
           effectiveTo: 'Efektif hingga',
           isActive: 'Aktif',
         },
         dialogs: {
-          add: 'Tambah pihak proyek',
-          edit: 'Ubah pihak proyek',
+          add: 'Tambah mitra proyek',
+          edit: 'Ubah mitra proyek',
           delete: {
-            title: 'Hapus pihak proyek',
-            message: 'Apakah Anda yakin ingin menghapus hubungan tenant ini dari proyek?',
+            title: 'Hapus mitra proyek',
+            message: 'Hapus organisasi ini dari proyek? Relasi tenant tetap ada, tetapi akses khusus proyek ini akan dihapus.',
           },
         },
       },

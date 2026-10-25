@@ -190,7 +190,7 @@ describe('AssignmentsPanel assignment and relationship UI logic', () => {
 
     await user.click(screen.getByRole('button', { name: 'pages.projectDetails.assignmentsPanel.add' }))
 
-    await user.selectOptions(screen.getByLabelText('pages.projectDetails.assignmentsPanel.fields.assigneeId'), 'emp-1')
+    await user.selectOptions(screen.getByLabelText('pages.projectDetails.assignmentsPanel.fields.employee'), 'emp-1')
     await user.type(screen.getByLabelText('pages.projectDetails.assignmentsPanel.fields.roleTitle'), '  Planner  ')
     await user.type(screen.getByLabelText('pages.projectDetails.assignmentsPanel.fields.startDate'), '2026-05-13')
 
@@ -245,7 +245,7 @@ describe('AssignmentsPanel assignment and relationship UI logic', () => {
     await user.click(screen.getByRole('button', { name: 'pages.projectDetails.assignmentsPanel.add' }))
 
     await user.selectOptions(screen.getByLabelText('pages.projectDetails.assignmentsPanel.fields.assigneeType'), 'consultant')
-    await user.selectOptions(screen.getByLabelText('pages.projectDetails.assignmentsPanel.fields.assigneeId'), 'con-1')
+    await user.selectOptions(screen.getByLabelText('pages.projectDetails.assignmentsPanel.fields.consultant'), 'con-1')
     await user.type(screen.getByLabelText('pages.projectDetails.assignmentsPanel.fields.roleTitle'), 'Consultant Reviewer')
     await user.type(screen.getByLabelText('pages.projectDetails.assignmentsPanel.fields.startDate'), '2026-05-13')
 
@@ -271,12 +271,12 @@ describe('AssignmentsPanel assignment and relationship UI logic', () => {
     render(<AssignmentsPanel projectId="project-1" />)
     await waitFor(() => expect(apiMocks.mockGetProjectAssignments).toHaveBeenCalled())
     await user.click(screen.getByRole('button', { name: 'pages.projectDetails.assignmentsPanel.add' }))
-    await user.selectOptions(screen.getByLabelText('pages.projectDetails.assignmentsPanel.fields.assigneeId'), 'emp-1')
+    await user.selectOptions(screen.getByLabelText('pages.projectDetails.assignmentsPanel.fields.employee'), 'emp-1')
     await user.type(screen.getByLabelText('pages.projectDetails.assignmentsPanel.fields.roleTitle'), 'Planner')
     await user.type(screen.getByLabelText('pages.projectDetails.assignmentsPanel.fields.startDate'), '2026-05-13')
     await user.type(screen.getByLabelText('pages.projectDetails.assignmentsPanel.fields.endDate'), '2026-05-12')
 
-    expect(screen.getByRole('alert')).toHaveTextContent('pages.projectDetails.assignmentsPanel.errors.invalidPeriod')
+    expect(screen.getByText('pages.projectDetails.assignmentsPanel.errors.invalidPeriod')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'common.create' })).toBeDisabled()
     expect(apiMocks.mockCreateProjectAssignment).not.toHaveBeenCalled()
   })
@@ -305,7 +305,7 @@ describe('AssignmentsPanel assignment and relationship UI logic', () => {
     await user.click(await screen.findByRole('button', { name: 'common.edit' }))
 
     expect(screen.getByLabelText('pages.projectDetails.assignmentsPanel.fields.assigneeType')).toHaveValue('consultant')
-    expect(screen.getByLabelText('pages.projectDetails.assignmentsPanel.fields.assigneeId')).toHaveValue('con-1')
+    expect(screen.getByLabelText('pages.projectDetails.assignmentsPanel.fields.consultant')).toHaveValue('con-1')
     expect(screen.getByLabelText('pages.projectDetails.assignmentsPanel.fields.notes')).toHaveValue('Original note')
     expect(screen.getByLabelText('pages.projectDetails.assignmentsPanel.fields.isActive')).toHaveValue('false')
 
