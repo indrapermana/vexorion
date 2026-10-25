@@ -434,6 +434,10 @@ Open master-data and configuration work is consolidated in the final Main UI bac
   - Scope boundary: dependency-aware impact wording and the distinction between reversible deactivation and permanent deletion remain `UX-MASTER-04`. Specialized configuration and transactional actions retain their own module tickets.
   - Evidence: shared confirmation component tests pass 3/3, changed-file ESLint, Main UI TypeScript, and `git diff --check` pass. Full Main UI lint remains blocked by 20 pre-existing `react-hooks/refs` errors in `features/projects/components/DocumentsPanel.tsx`, outside this ticket. This is local acceptance, not the release gate.
 
+- [x] `UX-MASTER-04` Explain dependency/impact before deactivate/delete and distinguish reversible deactivation from permanent deletion. Locally completed 25 October 2026: destructive confirmations for Customers, Suppliers, Products, Warehouses, Accounts, Product Categories, Product Identifiers, Employees, and Consultants now name permanent effects, known blocking references, and relevant cascading cleanup. Each confirmation identifies deactivation as the reversible alternative for retaining the record and its history. Category deletion explicitly preserves products while removing category assignments; identifier deletion explicitly preserves the product.
+  - Semantics boundary: the copy does not claim that inactive records are universally excluded from every selector because that enforcement is not consistent across all current workflows. User deactivation was already explicit and reversible. Configuration semantics beyond product categories and identifiers remain `UX-MASTER-05`; project assignment vocabulary remains `UX-MASTER-06`.
+  - Evidence: destructive-copy and locale-parity tests pass 15/15; the previously failing Product Purchase History test passes when rerun with the ticket tests (18/18 total). Main UI TypeScript, changed-file ESLint, and `git diff --check` pass. The full Main UI run reached 226/227 before the isolated, unrelated empty-history timing failure; this is local acceptance, not the release gate.
+
 ### 5.5 Sales, procurement, billing, and payments
 
 Scope: Sales Orders/Shipments/Invoices/Customer Payments and Purchase Orders/Receipts/Invoices/Vendor Payments.
@@ -612,7 +616,6 @@ Complete application work in order: **Main UI → AdminUI → POS**. Finish the 
 
 ### Stage 1 — Main UI
 
-- [ ] `UX-MASTER-04` Explain dependency/impact before deactivate/delete and distinguish reversible deactivation from permanent deletion.
 - [ ] `UX-MASTER-05` Explain role, menu, tax/discount, numbering, and module effects; preview effective access.
 - [ ] `UX-MASTER-06` Reconcile employee, consultant, assignment, and tenant-relationship vocabulary.
 
