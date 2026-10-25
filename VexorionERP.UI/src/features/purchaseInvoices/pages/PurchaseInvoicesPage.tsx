@@ -198,6 +198,7 @@ export default function PurchaseInvoicesPage() {
       onCreate={openCreateDialog}
       showCreate={canManage}
       disableCreate={suppliers.length === 0}
+      filters={<VxFormControlLabel control={<VxSwitch checked={outstandingOnly} onChange={(_, checked) => setOutstandingOnly(checked)} />} label={t('pages.purchaseInvoices.outstandingOnly')} />}
       metrics={[
         { icon: <DescriptionRoundedIcon fontSize="small" />, label: t('pages.purchaseInvoices.metrics.invoices'), value: purchaseInvoices.length },
         { icon: <ScheduleRoundedIcon fontSize="small" />, label: t('pages.purchaseInvoices.metrics.openBalance'), value: formatMoney(purchaseInvoices.reduce((sum, purchaseInvoice) => sum + purchaseInvoice.balanceDue, 0)) },
@@ -209,9 +210,8 @@ export default function PurchaseInvoicesPage() {
         ...(error ? [{ severity: 'error' as const, message: error }] : []),
         ...(feedback ? [{ severity: 'success' as const, message: feedback }] : []),
         ...(!canManage ? [{ severity: 'info' as const, message: t('authorization.readOnly', { requiredPermission: Permissions.purchasing.manage }) }] : []),
-        { severity: 'info' as const, message: outstandingOnly ? t('pages.purchaseInvoices.showingOutstandingOnly') : t('pages.purchaseInvoices.showingAll') },
       ]}
-      grid={<Suspense fallback={<PurchaseInvoiceSurfaceFallback />}><VxStack spacing={1.5}><VxFormControlLabel control={<VxSwitch checked={outstandingOnly} onChange={(_, checked) => setOutstandingOnly(checked)} />} label={t('pages.purchaseInvoices.outstandingOnly')} /><PurchaseInvoiceDataGrid rows={rows} isLoading={isLoading} onEdit={openEditDialog} onDelete={setDeleteTarget} onManageLines={(row) => void handleManageLines(row)} onRecordPayment={handleRecordPayment} canManage={canManage} /></VxStack></Suspense>}
+      grid={<Suspense fallback={<PurchaseInvoiceSurfaceFallback />}><PurchaseInvoiceDataGrid rows={rows} isLoading={isLoading} onEdit={openEditDialog} onDelete={setDeleteTarget} onManageLines={(row) => void handleManageLines(row)} onRecordPayment={handleRecordPayment} canManage={canManage} /></Suspense>}
       linesPanel={<Suspense fallback={<PurchaseInvoiceSurfaceFallback />}><PurchaseInvoiceLinesPanel invoice={activeLinesInvoice} lines={lines} isLoading={linesLoading} error={linesError} onRefresh={() => activeLinesInvoice ? loadLines(activeLinesInvoice.id) : Promise.resolve()} canManage={canManage} canViewProducts={canViewProducts} /></Suspense>}
       documentsPanel={<DocumentsPanel sourceType="PurchaseInvoice" sourceEntityId={activeLinesInvoice?.id ?? null} />}
       editor={canManage && isEditorOpen ? <Suspense fallback={<PurchaseInvoiceSurfaceFallback />}><PurchaseInvoiceEditorDialog key={`${dialogMode}:${selectedPurchaseInvoiceId ?? 'new'}:${editorDefaults?.sourcePurchaseOrderId ?? 'manual'}`} open={isEditorOpen} mode={dialogMode} purchaseInvoiceId={selectedPurchaseInvoiceId} suppliers={suppliers} initialValues={editorDefaults} onClose={handleEditorClose} onSaved={(purchaseInvoice, mode) => void handleSaved(purchaseInvoice, mode)} /></Suspense> : null}

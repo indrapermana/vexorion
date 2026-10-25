@@ -27,6 +27,18 @@ async function submitDialog(page: Parameters<typeof fillField>[0], buttonLabel: 
   await expect(dialog).not.toBeVisible({ timeout: 10_000 })
 }
 
+test('UX-TRADE-01: invoice filters use the shared document-workspace header', async ({ page }) => {
+  for (const route of ['/sales-invoices', '/purchase-invoices']) {
+    await page.goto(route)
+    await page.waitForLoadState('networkidle')
+
+    const filters = page.getByRole('region', { name: 'Page filters', exact: true })
+    await expect(filters.getByRole('switch', { name: 'Outstanding only', exact: true })).toBeVisible()
+    await expect(filters.getByRole('switch')).toHaveCount(1)
+    await expect(page.getByRole('grid').getByRole('switch')).toHaveCount(0)
+  }
+})
+
 // ---------------------------------------------------------------------------
 // 1. Setup: ensure a customer, warehouse, and product exist
 // ---------------------------------------------------------------------------

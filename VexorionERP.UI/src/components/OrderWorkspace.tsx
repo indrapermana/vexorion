@@ -15,6 +15,7 @@ type OrderWorkspaceProps = {
   onCreate: () => void
   disableCreate?: boolean
   showCreate?: boolean
+  filters?: ReactNode
   metrics: MetricCard[]
   alerts?: Array<{ severity: 'warning' | 'error' | 'success' | 'info', message: string }>
   grid: ReactNode
@@ -31,6 +32,7 @@ export default function OrderWorkspace({
   onCreate,
   disableCreate,
   showCreate = true,
+  filters,
   metrics,
   alerts = [],
   grid,
@@ -45,6 +47,7 @@ export default function OrderWorkspace({
         title={title}
         description={description}
         primaryAction={showCreate ? <VxButton variant="contained" onClick={onCreate} disabled={disableCreate}>{createLabel}</VxButton> : null}
+        filters={filters}
         metrics={metrics.map((metric) => (
           <PageMetric key={metric.label} icon={metric.icon} label={metric.label} value={metric.value} />
         ))}

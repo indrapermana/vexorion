@@ -452,11 +452,14 @@ Scope: Sales Orders/Shipments/Invoices/Customer Payments and Purchase Orders/Rec
 
 **Findings**
 
-- Order/invoice pages share a useful workspace idea but duplicate grids, editors, line panels, status maps, hard-coded copy, and mutations.
+- Order/invoice pages share an `OrderWorkspace` shell for header, metrics, alerts, grid, lines, related documents, editor, and delete-dialog slots. UX-TRADE-01 adds a shared page-filter slot and moves invoice-level filters into it; document-specific grids, line panels, lifecycle maps, and mutations remain page-owned.
 - Numeric statuses are mapped client-side; allowed next actions and disabled-action reasons are not consistently presented.
 - Receipt/shipment line entry uses dense dialog tables without explicit narrow-screen/keyboard acceptance.
 - Payment allocation lacks one consistent balance/allocation/unapplied/over-allocation summary.
 - P1-3 semantic questions remain open: immutable posted records, cancel/reverse vocabulary, partial fulfillment under concurrency, credit notes/refunds, allocations, and approvals.
+
+- [x] `UX-TRADE-01` Create a shared document-workspace contract for filters, status, metrics, lines, totals, and confirmations. Locally completed 25 October 2026: `OrderWorkspace` now formalizes header filters alongside metrics, alerts, document grid, line panel, related-document panel, editor, and delete-dialog slots. Sales and purchase invoice “Outstanding only” switches now occupy the shared page-filter region rather than being nested inside the grid; the duplicate state explanation alert is removed. All four order/invoice pages continue to use consistent grid quick-search toolbars and shared metrics/alert placement. The contract leaves lifecycle/status interpretation and line/totals behavior to each page’s typed grid and line panel rather than imposing false cross-document semantics.
+  - Evidence: full Main UI tests 234/234; `OrderWorkspace` accessibility contract test passes; authenticated Playwright check passes 2/2 including setup, visiting sales and purchase invoices and verifying exactly one outstanding filter in the shared header and none inside the grid. Isolated tenant cleanup and orphan check pass. Scoped ESLint, TypeScript, and production build pass; known bundle-size warning remains. This is local acceptance, not the release gate.
 
 Open sales, procurement, billing, and payment work is consolidated in the final Main UI backlog.
 
@@ -626,7 +629,6 @@ Complete application work in order: **Main UI → AdminUI → POS**. Finish the 
 
 #### Sales, procurement, inventory, and finance
 
-- [ ] `UX-TRADE-01` Create a shared document-workspace contract for filters, status, metrics, lines, totals, and confirmations.
 - [ ] `UX-TRADE-02` Show lifecycle, permitted next actions, and reasons for disabled actions on every document.
 - [ ] `UX-TRADE-03` Add detail-first review for parties, dates, terms, lines, fulfillment/allocation, generated documents, audit, and state actions.
 - [ ] `UX-TRADE-04` Optimize receipt/shipment entry for keyboard/tablet with ordered, processed, remaining, entered, and resulting quantities.
