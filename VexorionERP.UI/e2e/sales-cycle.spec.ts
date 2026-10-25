@@ -39,6 +39,39 @@ test('UX-TRADE-01: invoice filters use the shared document-workspace header', as
   }
 })
 
+test('UX-TRADE-02: document statuses explain next steps and disabled invoice payments explain why', async ({ page }) => {
+  await page.route('**/api/sales-orders', (route) => route.fulfill({ json: [{
+    id: '11111111-1111-4111-8111-111111111111', orderNumber: 'SO-UX-02', customerId: 'customer-1',
+    warehouseId: 'warehouse-1', orderDate: '2026-10-25', status: 3, currencyCode: 'USD', totalAmount: 100, isActive: true,
+  }] }))
+  await page.goto('/sales-orders')
+  const orderStatus = page.getByText('Partially processed', { exact: true })
+  await expect(orderStatus).toBeVisible()
+  await orderStatus.hover()
+  await expect(page.getByRole('tooltip')).toContainText('Create another shipment or receipt for remaining quantities.')
+
+  await page.route('**/api/sales-invoices*', (route) => route.fulfill({ json: [
+    {
+      id: '22222222-2222-4222-8222-222222222222', tenantId: 'tenant-1', invoiceNumber: 'SI-DRAFT', customerId: 'customer-1',
+      invoiceDate: '2026-10-25', dueDate: '2026-11-24', status: 1, currencyCode: 'USD', subtotal: 100, taxTotal: 0,
+      grandTotal: 100, paidTotal: 0, balanceDue: 100, isActive: true,
+    },
+    {
+      id: '33333333-3333-4333-8333-333333333333', tenantId: 'tenant-1', invoiceNumber: 'SI-PAID', customerId: 'customer-1',
+      invoiceDate: '2026-10-25', dueDate: '2026-11-24', status: 4, currencyCode: 'USD', subtotal: 100, taxTotal: 0,
+      grandTotal: 100, paidTotal: 100, balanceDue: 0, isActive: true,
+    },
+  ] }))
+  await page.goto('/sales-invoices')
+  const invoiceGrid = page.getByRole('grid')
+  const draftPayment = invoiceGrid.getByRole('menuitem', { name: /Record payment.*Draft invoices cannot accept payments/ })
+  const settledPayment = invoiceGrid.getByRole('menuitem', { name: /Record payment.*No outstanding balance remains/ })
+  await expect(draftPayment).toBeDisabled()
+  await expect(settledPayment).toBeDisabled()
+  await expect(invoiceGrid.getByText('Draft', { exact: true })).toBeVisible()
+  await expect(invoiceGrid.getByText('Paid', { exact: true })).toBeVisible()
+})
+
 // ---------------------------------------------------------------------------
 // 1. Setup: ensure a customer, warehouse, and product exist
 // ---------------------------------------------------------------------------

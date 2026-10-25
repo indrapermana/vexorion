@@ -112,6 +112,33 @@ const esES = {
   },
   orderWorkflow: {
     order: 'Pedido', orderDate: 'Fecha del pedido', invoice: 'Factura', invoiceDate: 'Fecha de factura', dueDate: 'Fecha de vencimiento', total: 'Total', balance: 'Saldo', lines: 'Líneas', createInvoice: 'Crear factura', viewShipments: 'Ver envíos', viewReceipts: 'Ver recepciones', recordPayment: 'Registrar pago',
+    lifecycle: {
+      unknown: 'Los detalles del estado no están disponibles.',
+      orderStatusLabels: { 1: 'Borrador', 2: 'Confirmado', 3: 'Procesado parcialmente', 4: 'Completado', 5: 'Cancelado' },
+      invoiceStatusLabels: { 1: 'Borrador', 2: 'Emitida', 3: 'Pagada parcialmente', 4: 'Pagada', 5: 'Vencida', 6: 'Cancelada' },
+      shipmentStatusLabels: { 1: 'Borrador', 4: 'Enviado' },
+      receiptStatusLabels: { 1: 'Borrador', 4: 'Contabilizado' },
+      order: {
+        1: 'Borrador. Edita el encabezado y las líneas antes de la entrega.',
+        2: 'Confirmado. Continúa la entrega con un despacho o una recepción.',
+        3: 'Procesado parcialmente. Crea otro despacho o recepción para las cantidades restantes.',
+        4: 'Completado. La entrega finalizó; revisa las facturas o recepciones relacionadas.',
+        5: 'Cancelado. No se espera más entrega; crea un documento nuevo para continuar.',
+      },
+      invoice: {
+        1: 'Borrador. Se pueden editar las líneas; los pagos no están disponibles hasta emitir la factura.',
+        2: 'Emitida. Registra un pago si queda saldo pendiente.',
+        3: 'Pagada parcialmente. Registra otro pago por el saldo restante.',
+        4: 'Pagada. El saldo está liquidado; no hay acciones de pago disponibles.',
+        5: 'Vencida. Registra un pago por el saldo pendiente.',
+        6: 'Cancelada. Los pagos y la edición de líneas no están disponibles.',
+      },
+      shipment: { 1: 'Despacho en borrador. Contabilízalo para actualizar el inventario o elimina el borrador.', 4: 'Enviado. El inventario se actualizó; revisa el despacho y su pedido de origen.' },
+      receipt: { 1: 'Recepción en borrador. Contabilízala para actualizar el inventario o elimina el borrador.', 4: 'Contabilizada. El inventario se actualizó; revisa la recepción y su pedido de origen.' },
+      orderLinesDraftOnly: 'Las líneas del pedido solo se pueden modificar mientras esté en Borrador.',
+      invoiceLinesDraftOnly: 'Las líneas de la factura solo se pueden modificar mientras esté en Borrador.',
+    },
+    disabledReasons: { invoicePayment: { draft: 'Las facturas en borrador no pueden recibir pagos.', cancelled: 'Las facturas canceladas no pueden recibir pagos.', noBalance: 'No queda saldo pendiente.' }, shipment: { postDraftOnly: 'Solo se pueden contabilizar los despachos en borrador.', deleteDraftOnly: 'Solo se pueden eliminar los despachos en borrador.' }, receipt: { postDraftOnly: 'Solo se pueden contabilizar las recepciones en borrador.', deleteDraftOnly: 'Solo se pueden eliminar las recepciones en borrador.' } },
     line: { orderLines: 'Líneas del pedido', invoiceLines: 'Líneas de la factura', orderLinesFor: 'Líneas del pedido {{number}}', invoiceLinesFor: 'Líneas de la factura {{number}}', add: 'Agregar línea', product: 'Producto', available: 'Disponible', onHand: 'Existencias', quantityShort: 'Cant.', unitPrice: 'Precio unitario', unitCost: 'Costo unitario', discount: 'Descuento', tax: 'Impuesto', total: 'Total de línea', delete: 'Eliminar línea', empty: 'Aún no hay líneas.' },
   },
   authorization: {

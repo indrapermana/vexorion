@@ -64,3 +64,12 @@ export const invoiceStatusOptions = [
 export function getInvoiceStatusLabel(status: number) {
   return invoiceStatusOptions.find((option) => option.value === status)?.label ?? `Status ${status}`
 }
+
+export type InvoicePaymentBlockReason = 'draft' | 'cancelled' | 'noBalance'
+
+export function getInvoicePaymentBlockReason(status: number, balanceDue: number): InvoicePaymentBlockReason | null {
+  if (status === 1) return 'draft'
+  if (status === 6) return 'cancelled'
+  if (balanceDue <= 0) return 'noBalance'
+  return null
+}

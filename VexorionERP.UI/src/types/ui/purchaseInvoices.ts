@@ -5,9 +5,9 @@ import type {
   PurchaseInvoiceListItemResponse,
   SupplierListItemResponse,
 } from '../api'
-import { invoiceStatusOptions, getInvoiceStatusLabel } from './salesInvoices'
+import { getInvoicePaymentBlockReason, invoiceStatusOptions, getInvoiceStatusLabel } from './salesInvoices'
 
-export { invoiceStatusOptions, getInvoiceStatusLabel }
+export { getInvoicePaymentBlockReason, invoiceStatusOptions, getInvoiceStatusLabel }
 
 export type PurchaseInvoiceDialogMode = 'create' | 'edit'
 

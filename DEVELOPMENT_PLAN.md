@@ -461,6 +461,9 @@ Scope: Sales Orders/Shipments/Invoices/Customer Payments and Purchase Orders/Rec
 - [x] `UX-TRADE-01` Create a shared document-workspace contract for filters, status, metrics, lines, totals, and confirmations. Locally completed 25 October 2026: `OrderWorkspace` now formalizes header filters alongside metrics, alerts, document grid, line panel, related-document panel, editor, and delete-dialog slots. Sales and purchase invoice “Outstanding only” switches now occupy the shared page-filter region rather than being nested inside the grid; the duplicate state explanation alert is removed. All four order/invoice pages continue to use consistent grid quick-search toolbars and shared metrics/alert placement. The contract leaves lifecycle/status interpretation and line/totals behavior to each page’s typed grid and line panel rather than imposing false cross-document semantics.
   - Evidence: full Main UI tests 234/234; `OrderWorkspace` accessibility contract test passes; authenticated Playwright check passes 2/2 including setup, visiting sales and purchase invoices and verifying exactly one outstanding filter in the shared header and none inside the grid. Isolated tenant cleanup and orphan check pass. Scoped ESLint, TypeScript, and production build pass; known bundle-size warning remains. This is local acceptance, not the release gate.
 
+- [x] `UX-TRADE-02` Show lifecycle, permitted next actions, and reasons for disabled actions on every document. Locally completed: sales/purchase orders and invoices explain their status and next steps; line mutations are Draft-only with a visible reason; invoice payment actions explain Draft, Cancelled, and zero-balance restrictions. Sales Shipments and Purchase Receipts now have lifecycle explanations and localized Draft-only reasons on disabled Post/Delete actions. All guidance is translated in English, Indonesian, and Spanish.
+  - Evidence: Main UI suite passes 252/252; lifecycle and disabled-action component tests cover all four document types. Authenticated Playwright UX-TRADE-02 passes 2/2 for order/invoice status and invoice payment guidance, including isolated tenant cleanup/orphan check. TypeScript and scoped ESLint pass; production build succeeds with the existing large-chunk warning. This is local acceptance, not the release gate.
+
 Open sales, procurement, billing, and payment work is consolidated in the final Main UI backlog.
 
 ### 5.6 Inventory operations
@@ -629,7 +632,6 @@ Complete application work in order: **Main UI → AdminUI → POS**. Finish the 
 
 #### Sales, procurement, inventory, and finance
 
-- [ ] `UX-TRADE-02` Show lifecycle, permitted next actions, and reasons for disabled actions on every document.
 - [ ] `UX-TRADE-03` Add detail-first review for parties, dates, terms, lines, fulfillment/allocation, generated documents, audit, and state actions.
 - [ ] `UX-TRADE-04` Optimize receipt/shipment entry for keyboard/tablet with ordered, processed, remaining, entered, and resulting quantities.
 - [ ] `UX-TRADE-05` Standardize payment allocation summaries and pre-submit validation.

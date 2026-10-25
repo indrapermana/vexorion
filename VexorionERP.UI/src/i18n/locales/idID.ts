@@ -112,6 +112,33 @@ const idID = {
   },
   orderWorkflow: {
     order: 'Pesanan', orderDate: 'Tanggal pesanan', invoice: 'Faktur', invoiceDate: 'Tanggal faktur', dueDate: 'Tanggal jatuh tempo', total: 'Total', balance: 'Saldo', lines: 'Baris', createInvoice: 'Buat faktur', viewShipments: 'Lihat pengiriman', viewReceipts: 'Lihat penerimaan', recordPayment: 'Catat pembayaran',
+    lifecycle: {
+      unknown: 'Detail status tidak tersedia.',
+      orderStatusLabels: { 1: 'Draf', 2: 'Dikonfirmasi', 3: 'Diproses sebagian', 4: 'Selesai', 5: 'Dibatalkan' },
+      invoiceStatusLabels: { 1: 'Draf', 2: 'Diterbitkan', 3: 'Dibayar sebagian', 4: 'Lunas', 5: 'Jatuh tempo', 6: 'Dibatalkan' },
+      shipmentStatusLabels: { 1: 'Draf', 4: 'Dikirim' },
+      receiptStatusLabels: { 1: 'Draf', 4: 'Diposkan' },
+      order: {
+        1: 'Draf. Ubah header dan baris sebelum pemenuhan.',
+        2: 'Dikonfirmasi. Lanjutkan pemenuhan dengan pengiriman atau penerimaan.',
+        3: 'Diproses sebagian. Buat pengiriman atau penerimaan berikutnya untuk sisa jumlah.',
+        4: 'Selesai. Pemenuhan selesai; periksa faktur atau penerimaan terkait.',
+        5: 'Dibatalkan. Pemenuhan tidak dapat dilanjutkan; buat dokumen baru.',
+      },
+      invoice: {
+        1: 'Draf. Baris dapat diubah; pembayaran belum tersedia sampai faktur diterbitkan.',
+        2: 'Diterbitkan. Catat pembayaran jika masih ada saldo.',
+        3: 'Dibayar sebagian. Catat pembayaran berikutnya untuk sisa saldo.',
+        4: 'Lunas. Saldo sudah diselesaikan; pembayaran tidak tersedia.',
+        5: 'Jatuh tempo. Catat pembayaran untuk saldo yang masih terutang.',
+        6: 'Dibatalkan. Pembayaran dan perubahan baris tidak tersedia.',
+      },
+      shipment: { 1: 'Draf pengiriman. Posting untuk memperbarui persediaan, atau hapus draf.', 4: 'Dikirim. Persediaan telah diperbarui; periksa pengiriman dan pesanan sumber.' },
+      receipt: { 1: 'Draf penerimaan. Posting untuk memperbarui persediaan, atau hapus draf.', 4: 'Diposkan. Persediaan telah diperbarui; periksa penerimaan dan pesanan sumber.' },
+      orderLinesDraftOnly: 'Baris pesanan hanya dapat diubah saat status pesanan Draf.',
+      invoiceLinesDraftOnly: 'Baris faktur hanya dapat diubah saat status faktur Draf.',
+    },
+    disabledReasons: { invoicePayment: { draft: 'Faktur Draf tidak dapat menerima pembayaran.', cancelled: 'Faktur yang dibatalkan tidak dapat menerima pembayaran.', noBalance: 'Tidak ada saldo terutang.' }, shipment: { postDraftOnly: 'Hanya draf pengiriman yang dapat diposting.', deleteDraftOnly: 'Hanya draf pengiriman yang dapat dihapus.' }, receipt: { postDraftOnly: 'Hanya draf penerimaan yang dapat diposting.', deleteDraftOnly: 'Hanya draf penerimaan yang dapat dihapus.' } },
     line: { orderLines: 'Baris pesanan', invoiceLines: 'Baris faktur', orderLinesFor: 'Baris pesanan untuk {{number}}', invoiceLinesFor: 'Baris faktur untuk {{number}}', add: 'Tambah baris', product: 'Produk', available: 'Tersedia', onHand: 'Stok tersedia', quantityShort: 'Jml', unitPrice: 'Harga satuan', unitCost: 'Biaya satuan', discount: 'Diskon', tax: 'Pajak', total: 'Total baris', delete: 'Hapus baris', empty: 'Belum ada baris.' },
   },
   authorization: {

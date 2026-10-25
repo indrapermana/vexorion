@@ -1,8 +1,9 @@
-import { VxBox, VxChip, VxTypography } from '@vexorion/ui'
+import { VxBox, VxTypography } from '@vexorion/ui'
 import { DeleteOutlineRoundedIcon, EditRoundedIcon, FormatListBulletedRoundedIcon, LocalShippingRoundedIcon, PostAddRoundedIcon, VxDataGrid, VxGridActionsCellItem, type VxGridColDef } from '@vexorion/ui'
 import { getDocumentStatusLabel, type PurchaseOrderGridRow } from '../../../types/ui'
 import { useTranslation } from 'react-i18next'
 import { useCurrency } from '../../../app/CurrencyContext'
+import DocumentLifecycleChip from '../../../components/DocumentLifecycleChip'
 
 type PurchaseOrderDataGridProps = {
   rows: PurchaseOrderGridRow[]
@@ -44,7 +45,7 @@ export default function PurchaseOrderDataGrid({ rows, isLoading, onEdit, onDelet
       headerName: t('common.labels.status'),
       minWidth: 160,
       flex: 0.8,
-      renderCell: ({ value }) => <VxChip size="small" color={getStatusColor(Number(value))} label={getDocumentStatusLabel(Number(value))} variant="outlined" />,
+      renderCell: ({ value }) => <DocumentLifecycleChip kind="order" status={Number(value)} color={getStatusColor(Number(value))} label={getDocumentStatusLabel(Number(value))} />,
     },
     {
       field: 'totalAmount',

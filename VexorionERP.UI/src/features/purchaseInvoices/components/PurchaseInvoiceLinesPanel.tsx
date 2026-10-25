@@ -26,6 +26,8 @@ export default function PurchaseInvoiceLinesPanel({ invoice, lines, isLoading, e
   const [isEditorOpen, setIsEditorOpen] = useState(false)
   const [feedback, setFeedback] = useState<string | null>(null)
   const [mutationError, setMutationError] = useState<string | null>(null)
+  const canEditLines = Boolean(canManage && invoice?.status === 1)
+  const linesUnavailableReason = t('orderWorkflow.lifecycle.invoiceLinesDraftOnly')
 
   const productById = useMemo(() => new Map(products.map((product) => [product.id, product])), [products])
 
@@ -39,6 +41,7 @@ export default function PurchaseInvoiceLinesPanel({ invoice, lines, isLoading, e
   }
 
   const openCreate = () => {
+    if (!canEditLines) return
     setMutationError(null)
     setDialogMode('create')
     setSelectedLine(null)
@@ -46,6 +49,7 @@ export default function PurchaseInvoiceLinesPanel({ invoice, lines, isLoading, e
   }
 
   const openEdit = (line: PurchaseInvoiceLineListItemResponse) => {
+    if (!canEditLines) return
     setMutationError(null)
     setDialogMode('edit')
     setSelectedLine(line)
@@ -53,6 +57,7 @@ export default function PurchaseInvoiceLinesPanel({ invoice, lines, isLoading, e
   }
 
   const handleSave = async (mode: 'create' | 'edit', values: PurchaseInvoiceLineFormValues) => {
+    if (!canEditLines) return
     setMutationError(null)
     setFeedback(null)
 
@@ -79,6 +84,7 @@ export default function PurchaseInvoiceLinesPanel({ invoice, lines, isLoading, e
   }
 
   const handleDelete = async (lineId: string) => {
+    if (!canEditLines) return
     try {
       setMutationError(null)
       setFeedback(null)
@@ -97,9 +103,10 @@ export default function PurchaseInvoiceLinesPanel({ invoice, lines, isLoading, e
           <VxTypography component="h2" variant="h6">{t('orderWorkflow.line.invoiceLinesFor', { number: invoice.invoiceNumber })}</VxTypography>
           <VxTypography color="text.secondary">{t('pages.purchaseInvoices.lines.description')}</VxTypography>
         </VxBox>
-        {canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate} disabled={!products.length}>{t('orderWorkflow.line.add')}</VxButton> : null}
+        {canManage ? <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate} disabled={!canEditLines || !products.length} aria-label={!canEditLines ? `${t('orderWorkflow.line.add')}. ${linesUnavailableReason}` : undefined}>{t('orderWorkflow.line.add')}</VxButton> : null}
       </VxStack>
       {error ? <VxAlert severity="error" sx={{ mb: 2 }}>{error}</VxAlert> : null}
+      {canManage && !canEditLines ? <VxAlert severity="info" sx={{ mb: 2 }}>{linesUnavailableReason}</VxAlert> : null}
       {productsError ? <VxAlert severity="warning" sx={{ mb: 2 }}>{productsError}</VxAlert> : null}
       {mutationError ? <VxAlert severity="error" sx={{ mb: 2 }}>{mutationError}</VxAlert> : null}
       {feedback ? <VxAlert severity="success" sx={{ mb: 2 }}>{feedback}</VxAlert> : null}
@@ -128,7 +135,7 @@ export default function PurchaseInvoiceLinesPanel({ invoice, lines, isLoading, e
                   <VxTableCell align="right">${line.taxAmount.toFixed(2)}</VxTableCell>
                   <VxTableCell align="right">${line.lineTotal.toFixed(2)}</VxTableCell>
                   <VxTableCell align="right">
-                    {canManage ? <><VxButton size="small" startIcon={<EditRoundedIcon />} onClick={() => openEdit(line)}>{t('common.edit')}</VxButton>
+                    {canEditLines ? <><VxButton size="small" startIcon={<EditRoundedIcon />} onClick={() => openEdit(line)}>{t('common.edit')}</VxButton>
                     <VxConfirmActionButton
                       title={t('pages.purchaseInvoices.lines.deleteTitle')}
                       targetName={productById.get(line.productId)?.name ?? line.productId}
@@ -137,7 +144,7 @@ export default function PurchaseInvoiceLinesPanel({ invoice, lines, isLoading, e
                       pendingLabel={t('dialogs.deleting')}
                       onConfirm={() => handleDelete(line.id)}
                       buttonProps={{ size: 'small', color: 'error', startIcon: <DeleteOutlineRoundedIcon /> }}
-                    >{t('common.delete')}</VxConfirmActionButton></> : null}
+                    >{t('common.delete')}</VxConfirmActionButton></> : canManage ? <VxTypography variant="caption" color="text.secondary">{linesUnavailableReason}</VxTypography> : null}
                   </VxTableCell>
                 </VxTableRow>
               )
@@ -146,7 +153,7 @@ export default function PurchaseInvoiceLinesPanel({ invoice, lines, isLoading, e
           </VxTableBody>
         </VxTable>
       </VxTableContainer>
-      <PurchaseInvoiceLineEditorDialog open={canManage && isEditorOpen} mode={dialogMode} line={selectedLine} products={products} onClose={() => setIsEditorOpen(false)} onSaved={handleSave} />
+      <PurchaseInvoiceLineEditorDialog open={canEditLines && isEditorOpen} mode={dialogMode} line={selectedLine} products={products} onClose={() => setIsEditorOpen(false)} onSaved={handleSave} />
     </VxPaper>
   )
 }

@@ -1,8 +1,10 @@
 import { DeleteOutlineRoundedIcon, DescriptionRoundedIcon, EditRoundedIcon, FormatListBulletedRoundedIcon, PaidRoundedIcon, VxDataGrid, VxGridActionsCellItem, type VxGridColDef } from '@vexorion/ui'
-import { VxBox, VxChip, VxTypography } from '@vexorion/ui'
+import { VxBox, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useCurrency } from '../../../app/CurrencyContext'
 import { getInvoiceStatusLabel, type SalesInvoiceGridRow } from '../../../types/ui'
+import { getInvoicePaymentBlockReason } from '../../../types/ui/salesInvoices'
+import DocumentLifecycleChip from '../../../components/DocumentLifecycleChip'
 
 type SalesInvoiceDataGridProps = {
   rows: SalesInvoiceGridRow[]
@@ -45,7 +47,7 @@ export default function SalesInvoiceDataGrid({ rows, isLoading, onEdit, onDelete
       headerName: t('common.labels.status'),
       minWidth: 150,
       flex: 0.8,
-      renderCell: ({ value }) => <VxChip size="small" color={getStatusColor(Number(value))} label={getInvoiceStatusLabel(Number(value))} variant="outlined" />,
+      renderCell: ({ value }) => <DocumentLifecycleChip kind="invoice" status={Number(value)} color={getStatusColor(Number(value))} label={getInvoiceStatusLabel(Number(value))} />,
     },
     {
       field: 'grandTotal',
@@ -68,15 +70,18 @@ export default function SalesInvoiceDataGrid({ rows, isLoading, onEdit, onDelete
       type: 'actions',
       headerName: t('common.actions'),
       minWidth: 220,
-      getActions: ({ row }) => [
+      getActions: ({ row }) => {
+        const paymentBlockReason = getInvoicePaymentBlockReason(row.status, row.balanceDue)
+        return [
         <VxGridActionsCellItem key={`lines-${row.id}`} icon={<FormatListBulletedRoundedIcon />} label={t('orderWorkflow.lines')} onClick={() => onManageLines(row)} showInMenu={false} />,
         ...(canManage ? [
-          <VxGridActionsCellItem key={`pay-${row.id}`} icon={<PaidRoundedIcon />} label={t('orderWorkflow.recordPayment')} onClick={() => onRecordPayment(row)} showInMenu={false} disabled={row.balanceDue <= 0} />,
+          <VxGridActionsCellItem key={`pay-${row.id}`} icon={<PaidRoundedIcon />} label={paymentBlockReason ? `${t('orderWorkflow.recordPayment')} — ${t(`orderWorkflow.disabledReasons.invoicePayment.${paymentBlockReason}`)}` : t('orderWorkflow.recordPayment')} onClick={() => onRecordPayment(row)} showInMenu={false} disabled={Boolean(paymentBlockReason)} />,
           <VxGridActionsCellItem key={`edit-${row.id}`} icon={<EditRoundedIcon />} label={t('common.edit')} onClick={() => onEdit(row.id)} showInMenu={false} />,
           <VxGridActionsCellItem key={`delete-${row.id}`} icon={<DeleteOutlineRoundedIcon />} label={t('common.delete')} onClick={() => onDelete(row)} showInMenu={false} />,
         ] : []),
         <VxGridActionsCellItem key={`doc-${row.id}`} icon={<DescriptionRoundedIcon />} label={t('orderWorkflow.invoice')} onClick={() => onManageLines(row)} showInMenu />,
-      ],
+        ]
+      },
     },
   ]
 

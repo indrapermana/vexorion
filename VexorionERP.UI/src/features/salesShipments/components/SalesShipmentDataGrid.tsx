@@ -1,6 +1,6 @@
 import { DeleteOutlineRoundedIcon, PublishRoundedIcon, VxDataGrid, VxGridActionsCellItem, type VxGridColDef } from '@vexorion/ui'
-import { VxChip } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
+import DocumentLifecycleChip from '../../../components/DocumentLifecycleChip'
 import type { SalesShipmentGridRow } from '../../../types/ui'
 
 function getStatusColor(status: number): 'default' | 'warning' | 'success' {
@@ -29,9 +29,7 @@ export default function SalesShipmentDataGrid({ rows, isLoading, onPost, onDelet
       headerName: t('pages.salesShipments.grid.status'),
       minWidth: 120,
       flex: 0.7,
-      renderCell: ({ value }) => (
-        <VxChip size="small" label={Number(value) === 1 ? t('pages.salesShipments.grid.draft') : Number(value) === 4 ? t('pages.salesShipments.grid.shipped') : t('pages.salesShipments.grid.unknown')} color={getStatusColor(Number(value))} variant="outlined" />
-      ),
+      renderCell: ({ value }) => <DocumentLifecycleChip kind="shipment" status={Number(value)} label={Number(value) === 1 ? t('pages.salesShipments.grid.draft') : Number(value) === 4 ? t('pages.salesShipments.grid.shipped') : t('pages.salesShipments.grid.unknown')} color={getStatusColor(Number(value))} />,
     },
     {
       field: 'actions',
@@ -42,7 +40,7 @@ export default function SalesShipmentDataGrid({ rows, isLoading, onPost, onDelet
         <VxGridActionsCellItem
           key={`post-${row.id}`}
           icon={<PublishRoundedIcon />}
-          label={t('pages.salesShipments.grid.ship')}
+          label={row.status !== 1 ? `${t('pages.salesShipments.grid.ship')} — ${t('orderWorkflow.disabledReasons.shipment.postDraftOnly')}` : t('pages.salesShipments.grid.ship')}
           disabled={row.status !== 1}
           onClick={() => onPost(row)}
           showInMenu={false}
@@ -50,7 +48,7 @@ export default function SalesShipmentDataGrid({ rows, isLoading, onPost, onDelet
         <VxGridActionsCellItem
           key={`delete-${row.id}`}
           icon={<DeleteOutlineRoundedIcon />}
-          label={t('pages.salesShipments.grid.delete')}
+          label={row.status !== 1 ? `${t('pages.salesShipments.grid.delete')} — ${t('orderWorkflow.disabledReasons.shipment.deleteDraftOnly')}` : t('pages.salesShipments.grid.delete')}
           disabled={row.status !== 1}
           onClick={() => onDelete(row)}
           showInMenu={false}

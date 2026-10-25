@@ -112,6 +112,33 @@ const enUS = {
   },
   orderWorkflow: {
     order: 'Order', orderDate: 'Order date', invoice: 'Invoice', invoiceDate: 'Invoice date', dueDate: 'Due date', total: 'Total', balance: 'Balance', lines: 'Lines', createInvoice: 'Create invoice', viewShipments: 'View shipments', viewReceipts: 'View receipts', recordPayment: 'Record payment',
+    lifecycle: {
+      unknown: 'Status details are unavailable.',
+      orderStatusLabels: { 1: 'Draft', 2: 'Confirmed', 3: 'Partially processed', 4: 'Completed', 5: 'Cancelled' },
+      invoiceStatusLabels: { 1: 'Draft', 2: 'Issued', 3: 'Partially paid', 4: 'Paid', 5: 'Overdue', 6: 'Cancelled' },
+      shipmentStatusLabels: { 1: 'Draft', 4: 'Shipped' },
+      receiptStatusLabels: { 1: 'Draft', 4: 'Posted' },
+      order: {
+        1: 'Draft. Edit the header and lines before fulfillment.',
+        2: 'Confirmed. Continue fulfillment with a shipment or receipt.',
+        3: 'Partially processed. Create another shipment or receipt for remaining quantities.',
+        4: 'Completed. Fulfillment is complete; review related invoices or receipts.',
+        5: 'Cancelled. No further fulfillment is expected; use a new document to continue.',
+      },
+      invoice: {
+        1: 'Draft. Lines can be edited; payments are unavailable until the invoice is issued.',
+        2: 'Issued. Record a payment while a balance remains.',
+        3: 'Partially paid. Record another payment for the remaining balance.',
+        4: 'Paid. The balance is settled; no payment action is available.',
+        5: 'Overdue. Record a payment for the outstanding balance.',
+        6: 'Cancelled. Payments and line edits are unavailable.',
+      },
+      shipment: { 1: 'Draft shipment. Post it to update inventory, or delete the draft.', 4: 'Shipped. Inventory was updated; review the shipment and its source order.' },
+      receipt: { 1: 'Draft receipt. Post it to update inventory, or delete the draft.', 4: 'Posted. Inventory was updated; review the receipt and its source order.' },
+      orderLinesDraftOnly: 'Order lines can only be changed while the order is Draft.',
+      invoiceLinesDraftOnly: 'Invoice lines can only be changed while the invoice is Draft.',
+    },
+    disabledReasons: { invoicePayment: { draft: 'Draft invoices cannot accept payments.', cancelled: 'Cancelled invoices cannot accept payments.', noBalance: 'No outstanding balance remains.' }, shipment: { postDraftOnly: 'Only draft shipments can be posted.', deleteDraftOnly: 'Only draft shipments can be deleted.' }, receipt: { postDraftOnly: 'Only draft receipts can be posted.', deleteDraftOnly: 'Only draft receipts can be deleted.' } },
     line: { orderLines: 'Order lines', invoiceLines: 'Invoice lines', orderLinesFor: 'Order lines for {{number}}', invoiceLinesFor: 'Invoice lines for {{number}}', add: 'Add line', product: 'Product', available: 'Available', onHand: 'On hand', quantityShort: 'Qty', unitPrice: 'Unit price', unitCost: 'Unit cost', discount: 'Discount', tax: 'Tax', total: 'Line total', delete: 'Delete line', empty: 'No lines yet.' },
   },
   authorization: {

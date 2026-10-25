@@ -1,6 +1,6 @@
 import { DeleteOutlineRoundedIcon, PublishRoundedIcon, VxDataGrid, VxGridActionsCellItem, type VxGridColDef } from '@vexorion/ui'
-import { VxChip } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
+import DocumentLifecycleChip from '../../../components/DocumentLifecycleChip'
 import type { PurchaseReceiptGridRow } from '../../../types/ui'
 
 function getStatusColor(status: number): 'default' | 'warning' | 'success' {
@@ -29,9 +29,7 @@ export default function PurchaseReceiptDataGrid({ rows, isLoading, onPost, onDel
       headerName: t('pages.purchaseReceipts.grid.status'),
       minWidth: 120,
       flex: 0.7,
-      renderCell: ({ value }) => (
-        <VxChip size="small" label={Number(value) === 1 ? t('pages.purchaseReceipts.grid.draft') : Number(value) === 4 ? t('pages.purchaseReceipts.grid.posted') : t('pages.purchaseReceipts.grid.unknown')} color={getStatusColor(Number(value))} variant="outlined" />
-      ),
+      renderCell: ({ value }) => <DocumentLifecycleChip kind="receipt" status={Number(value)} label={Number(value) === 1 ? t('pages.purchaseReceipts.grid.draft') : Number(value) === 4 ? t('pages.purchaseReceipts.grid.posted') : t('pages.purchaseReceipts.grid.unknown')} color={getStatusColor(Number(value))} />,
     },
     {
       field: 'actions',
@@ -42,7 +40,7 @@ export default function PurchaseReceiptDataGrid({ rows, isLoading, onPost, onDel
         <VxGridActionsCellItem
           key={`post-${row.id}`}
           icon={<PublishRoundedIcon />}
-          label={t('pages.purchaseReceipts.grid.post')}
+          label={row.status !== 1 ? `${t('pages.purchaseReceipts.grid.post')} — ${t('orderWorkflow.disabledReasons.receipt.postDraftOnly')}` : t('pages.purchaseReceipts.grid.post')}
           disabled={row.status !== 1}
           onClick={() => onPost(row)}
           showInMenu={false}
@@ -50,7 +48,7 @@ export default function PurchaseReceiptDataGrid({ rows, isLoading, onPost, onDel
         <VxGridActionsCellItem
           key={`delete-${row.id}`}
           icon={<DeleteOutlineRoundedIcon />}
-          label={t('pages.purchaseReceipts.grid.delete')}
+          label={row.status !== 1 ? `${t('pages.purchaseReceipts.grid.delete')} — ${t('orderWorkflow.disabledReasons.receipt.deleteDraftOnly')}` : t('pages.purchaseReceipts.grid.delete')}
           disabled={row.status !== 1}
           onClick={() => onDelete(row)}
           showInMenu={false}
