@@ -6,8 +6,10 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
 import { useCurrency } from '../../../app/CurrencyContext'
 import DocumentsPanel from '../../../components/DocumentsPanel'
+import DocumentFulfillmentPanel from '../../../components/DocumentFulfillmentPanel'
+import DocumentReviewPanel from '../../../components/DocumentReviewPanel'
 import OrderWorkspace from '../../../components/OrderWorkspace'
-import { ApiError, deletePurchaseOrder, getPurchaseOrderLines, getPurchaseOrders } from '../../../lib/api'
+import { ApiError, deletePurchaseOrder, getPurchaseOrder, getPurchaseOrderLines, getPurchaseOrders } from '../../../lib/api'
 import { useSuppliersLookup, useWarehousesLookup } from '../../../hooks/useLookups'
 import type { PurchaseOrderDetailsResponse, PurchaseOrderLineListItemResponse, PurchaseOrderListItemResponse } from '../../../types/api'
 import type { PurchaseOrderDialogMode, PurchaseOrderGridRow } from '../../../types/ui'
@@ -39,6 +41,7 @@ export default function PurchaseOrdersPage() {
   const canViewSuppliers = user?.permissions.includes(Permissions.suppliers.view) ?? false
   const canViewProducts = user?.permissions.includes(Permissions.products.view) ?? false
   const canViewInventory = user?.permissions.includes(Permissions.inventory.view) ?? false
+  const canViewAudit = user?.permissions.includes(Permissions.accounting.view) ?? false
   const navigate = useNavigate()
   const { items: suppliers, error: suppliersError, reload: reloadSuppliers } = useSuppliersLookup(isAuthenticated && canViewSuppliers)
   const { items: warehouses, error: warehousesError, reload: reloadWarehouses } = useWarehousesLookup(isAuthenticated && canViewInventory)
@@ -207,6 +210,18 @@ export default function PurchaseOrdersPage() {
         ...(!canManage ? [{ severity: 'info' as const, message: t('authorization.readOnly', { requiredPermission: Permissions.purchasing.manage }) }] : []),
       ]}
       grid={<Suspense fallback={<PurchaseOrderSurfaceFallback />}><PurchaseOrderDataGrid rows={rows} isLoading={isLoading} onEdit={openEditDialog} onDelete={setDeleteTarget} onManageLines={(row) => void handleManageLines(row)} onCreateInvoice={handleCreateInvoice} onViewReceipts={handleViewReceipts} canManage={canManage} /></Suspense>}
+      reviewOpen={Boolean(activeLinesOrder)}
+      reviewPanel={<DocumentReviewPanel entityId={activeLinesOrder?.id ?? null} entityName="PurchaseOrder" documentNumber={activeLinesOrder?.orderNumber} canViewAudit={canViewAudit} loadDetails={getPurchaseOrder} getFields={(details) => [
+        { label: t('orderWorkflow.review.partner'), value: supplierNameById.get(details.supplierId) ?? details.supplierId },
+        { label: t('orderWorkflow.review.warehouse'), value: warehouseNameById.get(details.warehouseId) ?? details.warehouseId },
+        { label: t('orderWorkflow.review.documentDate'), value: details.orderDate },
+        { label: t('orderWorkflow.review.requiredDate'), value: details.expectedReceiptDate },
+        { label: t('orderWorkflow.review.currency'), value: details.currencyCode },
+        { label: t('orderWorkflow.review.total'), value: formatMoney(details.totalAmount) },
+        { label: t('orderWorkflow.review.status'), value: t(`orderWorkflow.lifecycle.orderStatusLabels.${details.status}`) },
+        { label: t('orderWorkflow.review.notes'), value: details.notes },
+      ]} />}
+      relatedPanel={<DocumentFulfillmentPanel kind="receipt" sourceOrderId={activeLinesOrder?.id ?? null} />}
       linesPanel={<Suspense fallback={<PurchaseOrderSurfaceFallback />}><PurchaseOrderLinesPanel order={activeLinesOrder} lines={lines} isLoading={linesLoading} error={linesError} onRefresh={() => activeLinesOrder ? loadLines(activeLinesOrder.id) : Promise.resolve()} canManage={canManage} canViewProducts={canViewProducts} canViewInventory={canViewInventory} /></Suspense>}
       documentsPanel={<DocumentsPanel sourceType="PurchaseOrder" sourceEntityId={activeLinesOrder?.id ?? null} />}
       editor={canManage && isEditorOpen ? <Suspense fallback={<PurchaseOrderSurfaceFallback />}><PurchaseOrderEditorDialog key={`${dialogMode}:${selectedPurchaseOrderId ?? 'new'}`} open={isEditorOpen} mode={dialogMode} purchaseOrderId={selectedPurchaseOrderId} suppliers={suppliers} warehouses={warehouses} onClose={handleEditorClose} onSaved={(purchaseOrder, mode) => void handleSaved(purchaseOrder, mode)} /></Suspense> : null}

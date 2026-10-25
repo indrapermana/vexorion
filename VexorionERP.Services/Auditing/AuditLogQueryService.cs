@@ -13,6 +13,7 @@ public class AuditLogQueryService(
     public async Task<ServiceResult<AuditLogListResponse>> GetAsync(
         string? eventType,
         string? entityName,
+        string? entityId,
         DateTime? fromUtc,
         DateTime? toUtc,
         int page,
@@ -40,6 +41,12 @@ public class AuditLogQueryService(
         {
             var entityFilter = entityName.Trim();
             query = query.Where(x => x.EntityName != null && x.EntityName.Contains(entityFilter));
+        }
+
+        if (!string.IsNullOrWhiteSpace(entityId))
+        {
+            var entityIdFilter = entityId.Trim();
+            query = query.Where(x => x.EntityId == entityIdFilter);
         }
 
         if (fromUtc.HasValue)

@@ -40,15 +40,28 @@ test('UX-TRADE-01: invoice filters use the shared document-workspace header', as
 })
 
 test('UX-TRADE-02: document statuses explain next steps and disabled invoice payments explain why', async ({ page }) => {
+  const orderId = '11111111-1111-4111-8111-111111111111'
   await page.route('**/api/sales-orders', (route) => route.fulfill({ json: [{
-    id: '11111111-1111-4111-8111-111111111111', orderNumber: 'SO-UX-02', customerId: 'customer-1',
+    id: orderId, orderNumber: 'SO-UX-02', customerId: 'customer-1',
     warehouseId: 'warehouse-1', orderDate: '2026-10-25', status: 3, currencyCode: 'USD', totalAmount: 100, isActive: true,
   }] }))
-  await page.goto('/sales-orders')
+  await page.route(`**/api/sales-orders/${orderId}`, (route) => route.fulfill({ json: {
+    id: orderId, tenantId: 'tenant-1', orderNumber: 'SO-UX-02', customerId: 'customer-1', warehouseId: 'warehouse-1',
+    orderDate: '2026-10-25', requiredDate: '2026-10-31', status: 3, currencyCode: 'USD', totalAmount: 100, isActive: true,
+  } }))
+  await page.route(`**/api/sales-orders/${orderId}/lines`, (route) => route.fulfill({ json: [] }))
+  await page.route(`**/api/sales-shipments/by-order/${orderId}`, (route) => route.fulfill({ json: [] }))
+  await page.route(`**/api/documents/source/SalesOrder/${orderId}`, (route) => route.fulfill({ json: [] }))
+  await page.route('**/api/audit-logs**', (route) => route.fulfill({ json: { page: 1, pageSize: 10, totalCount: 0, items: [] } }))
+  await page.goto('/sales-orders', { waitUntil: 'domcontentloaded' })
   const orderStatus = page.getByText('Partially processed', { exact: true })
   await expect(orderStatus).toBeVisible()
   await orderStatus.hover()
   await expect(page.getByRole('tooltip')).toContainText('Create another shipment or receipt for remaining quantities.')
+  await page.getByRole('grid').getByRole('menuitem', { name: 'Review' }).click()
+  await expect(page.getByRole('heading', { name: 'Document review: SO-UX-02' })).toBeVisible()
+  await expect(page.getByText('2026-10-31')).toBeVisible()
+  await expect(page.getByText('No shipments have been created for this order.')).toBeVisible()
 
   await page.route('**/api/sales-invoices*', (route) => route.fulfill({ json: [
     {
@@ -62,8 +75,9 @@ test('UX-TRADE-02: document statuses explain next steps and disabled invoice pay
       grandTotal: 100, paidTotal: 100, balanceDue: 0, isActive: true,
     },
   ] }))
-  await page.goto('/sales-invoices')
+  await page.goto('/sales-invoices', { waitUntil: 'domcontentloaded' })
   const invoiceGrid = page.getByRole('grid')
+  await expect(invoiceGrid.getByText('SI-DRAFT', { exact: true })).toBeVisible()
   const draftPayment = invoiceGrid.getByRole('menuitem', { name: /Record payment.*Draft invoices cannot accept payments/ })
   const settledPayment = invoiceGrid.getByRole('menuitem', { name: /Record payment.*No outstanding balance remains/ })
   await expect(draftPayment).toBeDisabled()
@@ -162,7 +176,7 @@ test.describe('Sales Order Workflow', () => {
     await page.waitForLoadState('networkidle')
 
     // Pick first row
-    const manageBtn = page.getByRole('button', { name: /manage lines|lines/i }).first()
+    const manageBtn = page.getByRole('button', { name: /review|manage lines|lines/i }).first()
     if (!(await manageBtn.isVisible())) {
       test.skip(true, 'No sales orders available — run create test first')
     }

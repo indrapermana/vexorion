@@ -31,6 +31,7 @@ vi.mock('../../../hooks/useLookups', () => ({
 }))
 
 vi.mock('../../../lib/api', () => ({
+  getSalesOrder: vi.fn(),
   getSalesOrders: testState.getSalesOrders,
   getSalesOrderLines: vi.fn(),
   deleteSalesOrder: vi.fn(),

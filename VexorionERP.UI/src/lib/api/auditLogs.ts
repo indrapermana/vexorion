@@ -4,6 +4,7 @@ import { requestJson } from './core'
 export type AuditLogQuery = {
   eventType?: string
   entityName?: string
+  entityId?: string
   fromUtc?: string
   toUtc?: string
   page?: number
@@ -14,6 +15,7 @@ export function getAuditLogs(query: AuditLogQuery = {}) {
   const params = new URLSearchParams()
   if (query.eventType) params.set('eventType', query.eventType)
   if (query.entityName) params.set('entityName', query.entityName)
+  if (query.entityId) params.set('entityId', query.entityId)
   if (query.fromUtc) params.set('fromUtc', query.fromUtc)
   if (query.toUtc) params.set('toUtc', query.toUtc)
   params.set('page', String(query.page ?? 1))

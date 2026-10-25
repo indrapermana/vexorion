@@ -9,7 +9,7 @@ using VexorionERP.Services;
 namespace VexorionERP.Services;
 
 public class VendorPaymentQueryService(
-    ICurrentTenantProvider currentTenantProvider) : BaseService(currentTenantProvider), IQueryService<VendorPayment>
+    ICurrentTenantProvider currentTenantProvider) : BaseService(currentTenantProvider), IQueryService<VendorPayment>, IInvoicePaymentQueryService<VendorPayment>
 {
     public async Task<ServiceResult<IReadOnlyCollection<IEntityListResponse<VendorPayment>>>> GetAllAsync(AppDbContext context, CancellationToken cancellationToken = default)
     {
@@ -20,6 +20,26 @@ public class VendorPaymentQueryService(
             return ServiceResult<IReadOnlyCollection<IEntityListResponse<VendorPayment>>>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
 
         var payments = await context.VendorPayments.GetByTenant(tenantId.Value).AsNoTracking()
+            .OrderByDescending(x => x.PaymentDate)
+            .ThenByDescending(x => x.CreatedAtUtc)
+            .ToListAsync(cancellationToken);
+
+        return ServiceResult<IReadOnlyCollection<IEntityListResponse<VendorPayment>>>.Success(AdaptEntityListResponses(payments));
+    }
+
+    public async Task<ServiceResult<IReadOnlyCollection<IEntityListResponse<VendorPayment>>>> GetForInvoiceAsync(
+        Guid invoiceId,
+        AppDbContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        var tenantId = TryGetTenantId();
+        if (!tenantId.HasValue)
+            return ServiceResult<IReadOnlyCollection<IEntityListResponse<VendorPayment>>>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+
+        var payments = await context.VendorPayments.GetByTenant(tenantId.Value).AsNoTracking()
+            .Where(x => x.PurchaseInvoiceId == invoiceId)
             .OrderByDescending(x => x.PaymentDate)
             .ThenByDescending(x => x.CreatedAtUtc)
             .ToListAsync(cancellationToken);

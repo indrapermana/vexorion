@@ -58,6 +58,11 @@ export function getVendorPayments() {
   return requestJson<VendorPaymentListItemResponse[]>('/vendor-payments')
 }
 
+export function getVendorPaymentsForInvoice(purchaseInvoiceId: string) {
+  const searchParams = new URLSearchParams({ purchaseInvoiceId })
+  return requestJson<VendorPaymentListItemResponse[]>(`/vendor-payments?${searchParams.toString()}`)
+}
+
 export function getVendorPayment(vendorPaymentId: string) {
   return requestJson<VendorPaymentDetailsResponse>(`/vendor-payments/${vendorPaymentId}`)
 }

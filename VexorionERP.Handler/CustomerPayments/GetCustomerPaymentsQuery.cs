@@ -4,4 +4,4 @@ using VexorionERP.Services;
 
 namespace VexorionERP.Handler;
 
-public sealed record GetCustomerPaymentsQuery() : IRequest<ServiceResult<IReadOnlyCollection<CustomerPaymentListItemResponse>>>;
+public sealed record GetCustomerPaymentsQuery(Guid? SalesInvoiceId = null) : IRequest<ServiceResult<IReadOnlyCollection<CustomerPaymentListItemResponse>>>;

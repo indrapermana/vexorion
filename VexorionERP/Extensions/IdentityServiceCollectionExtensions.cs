@@ -46,6 +46,7 @@ public static class IdentityServiceCollectionExtensions
                     (interfaceType.GetGenericTypeDefinition() == typeof(ICommandService<>)
                     || interfaceType.GetGenericTypeDefinition() == typeof(ILineCommandService<,>)
                     || interfaceType.GetGenericTypeDefinition() == typeof(IQueryService<>)
+                    || interfaceType.GetGenericTypeDefinition() == typeof(IInvoicePaymentQueryService<>)
                     || interfaceType.GetGenericTypeDefinition() == typeof(IFilteredQueryService<,>)
                     || interfaceType.GetGenericTypeDefinition() == typeof(IChildQueryService<,>)
                     || interfaceType.GetGenericTypeDefinition() == typeof(ILineQueryService<,>)

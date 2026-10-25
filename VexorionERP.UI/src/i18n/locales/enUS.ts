@@ -138,6 +138,13 @@ const enUS = {
       orderLinesDraftOnly: 'Order lines can only be changed while the order is Draft.',
       invoiceLinesDraftOnly: 'Invoice lines can only be changed while the invoice is Draft.',
     },
+    review: {
+      title: 'Document review', open: 'Review', selectPrompt: 'Choose a document to review its party, dates, terms, totals, and source details.', loading: 'Loading document details...', loadError: 'Unable to load document details.',
+      partner: 'Customer / supplier', warehouse: 'Warehouse', documentDate: 'Document date', requiredDate: 'Required / expected date', dueDate: 'Due date', paymentTerm: 'Payment term', sourceOrder: 'Source order', sourceFulfillment: 'Source shipment / receipt', currency: 'Currency', subtotal: 'Subtotal', tax: 'Tax', total: 'Total', paid: 'Paid / allocated', balance: 'Balance due', notes: 'Notes', status: 'Status',
+      auditTitle: 'Audit history', auditDate: 'Date', auditEvent: 'Event', auditDescription: 'Description', noAudit: 'No audit events are recorded for this document.', auditLoadError: 'Unable to load document audit history.',
+      shipments: 'Shipments', receipts: 'Receipts', noShipments: 'No shipments have been created for this order.', noReceipts: 'No receipts have been created for this order.', fulfillmentLoadError: 'Unable to load fulfillment records.', documentNumber: 'Document', lineCount: 'Lines',
+      allocationsTitle: 'Payment allocations', noAllocations: 'No payments are allocated to this invoice.', allocationsLoadError: 'Unable to load invoice allocations.', paymentDate: 'Payment date', referenceNumber: 'Reference', paymentMethod: 'Method', amount: 'Amount',
+    },
     disabledReasons: { invoicePayment: { draft: 'Draft invoices cannot accept payments.', cancelled: 'Cancelled invoices cannot accept payments.', noBalance: 'No outstanding balance remains.' }, shipment: { postDraftOnly: 'Only draft shipments can be posted.', deleteDraftOnly: 'Only draft shipments can be deleted.' }, receipt: { postDraftOnly: 'Only draft receipts can be posted.', deleteDraftOnly: 'Only draft receipts can be deleted.' } },
     line: { orderLines: 'Order lines', invoiceLines: 'Invoice lines', orderLinesFor: 'Order lines for {{number}}', invoiceLinesFor: 'Invoice lines for {{number}}', add: 'Add line', product: 'Product', available: 'Available', onHand: 'On hand', quantityShort: 'Qty', unitPrice: 'Unit price', unitCost: 'Unit cost', discount: 'Discount', tax: 'Tax', total: 'Line total', delete: 'Delete line', empty: 'No lines yet.' },
   },

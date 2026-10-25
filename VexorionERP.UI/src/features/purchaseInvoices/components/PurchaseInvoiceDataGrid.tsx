@@ -73,7 +73,7 @@ export default function PurchaseInvoiceDataGrid({ rows, isLoading, onEdit, onDel
       getActions: ({ row }) => {
         const paymentBlockReason = getInvoicePaymentBlockReason(row.status, row.balanceDue)
         return [
-        <VxGridActionsCellItem key={`lines-${row.id}`} icon={<FormatListBulletedRoundedIcon />} label={t('orderWorkflow.lines')} onClick={() => onManageLines(row)} showInMenu={false} />,
+        <VxGridActionsCellItem key={`lines-${row.id}`} icon={<FormatListBulletedRoundedIcon />} label={t('orderWorkflow.review.open')} onClick={() => onManageLines(row)} showInMenu={false} />,
         ...(canManage ? [
           <VxGridActionsCellItem key={`pay-${row.id}`} icon={<PaidRoundedIcon />} label={paymentBlockReason ? `${t('orderWorkflow.recordPayment')} — ${t(`orderWorkflow.disabledReasons.invoicePayment.${paymentBlockReason}`)}` : t('orderWorkflow.recordPayment')} onClick={() => onRecordPayment(row)} showInMenu={false} disabled={Boolean(paymentBlockReason)} />,
           <VxGridActionsCellItem key={`edit-${row.id}`} icon={<EditRoundedIcon />} label={t('common.edit')} onClick={() => onEdit(row.id)} showInMenu={false} />,

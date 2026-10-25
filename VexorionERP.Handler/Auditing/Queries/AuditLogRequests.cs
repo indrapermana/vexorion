@@ -8,6 +8,7 @@ namespace VexorionERP.Handler;
 public sealed record GetAuditLogsQuery(
     string? EventType,
     string? EntityName,
+    string? EntityId,
     DateTime? FromUtc,
     DateTime? ToUtc,
     int Page,
@@ -22,6 +23,7 @@ public sealed class GetAuditLogsQueryHandler(IServiceProvider serviceProvider)
         return new ValueTask<ServiceResult<AuditLogListResponse>>(auditLogQueryService.GetAsync(
             request.EventType,
             request.EntityName,
+            request.EntityId,
             request.FromUtc,
             request.ToUtc,
             request.Page,

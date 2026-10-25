@@ -61,7 +61,7 @@ export default function PurchaseOrderDataGrid({ rows, isLoading, onEdit, onDelet
       headerName: t('common.actions'),
       minWidth: 200,
       getActions: ({ row }) => [
-        <VxGridActionsCellItem key={`lines-${row.id}`} icon={<FormatListBulletedRoundedIcon />} label={t('orderWorkflow.lines')} onClick={() => onManageLines(row)} showInMenu={false} />,
+        <VxGridActionsCellItem key={`lines-${row.id}`} icon={<FormatListBulletedRoundedIcon />} label={t('orderWorkflow.review.open')} onClick={() => onManageLines(row)} showInMenu={false} />,
         <VxGridActionsCellItem key={`receipts-${row.id}`} icon={<LocalShippingRoundedIcon />} label={t('orderWorkflow.viewReceipts')} onClick={() => onViewReceipts(row)} showInMenu={false} />,
         ...(canManage ? [
           <VxGridActionsCellItem key={`invoice-${row.id}`} icon={<PostAddRoundedIcon />} label={t('orderWorkflow.createInvoice')} onClick={() => onCreateInvoice(row)} showInMenu={false} />,

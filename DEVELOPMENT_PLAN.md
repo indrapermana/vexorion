@@ -464,6 +464,9 @@ Scope: Sales Orders/Shipments/Invoices/Customer Payments and Purchase Orders/Rec
 - [x] `UX-TRADE-02` Show lifecycle, permitted next actions, and reasons for disabled actions on every document. Locally completed: sales/purchase orders and invoices explain their status and next steps; line mutations are Draft-only with a visible reason; invoice payment actions explain Draft, Cancelled, and zero-balance restrictions. Sales Shipments and Purchase Receipts now have lifecycle explanations and localized Draft-only reasons on disabled Post/Delete actions. All guidance is translated in English, Indonesian, and Spanish.
   - Evidence: Main UI suite passes 252/252; lifecycle and disabled-action component tests cover all four document types. Authenticated Playwright UX-TRADE-02 passes 2/2 for order/invoice status and invoice payment guidance, including isolated tenant cleanup/orphan check. TypeScript and scoped ESLint pass; production build succeeds with the existing large-chunk warning. This is local acceptance, not the release gate.
 
+- [x] `UX-TRADE-03` Locally and browser validated 25 October 2026: the four order/invoice workspaces open a responsive detail-first inspector with party, dates, payment term/source, totals, balance, status, and notes; order reviews include linked shipment/receipt summaries, and invoice reviews include payment allocation rows from invoice-scoped customer/vendor payment queries. Existing line review, generated documents, payment/fulfillment actions, and state actions remain available. A permission-gated audit timeline uses exact entity-ID filtering in the tenant-scoped audit API. Review copy is localized in English, Indonesian, and Spanish.
+  - Evidence: Main UI suite 257/257; focused review/audit/fulfillment/workspace tests 7/7 plus allocation-panel coverage; scoped audit/payment query service tests 3/3; solution build, Main UI typecheck, scoped ESLint, and production build pass. Authenticated Playwright UX-TRADE-03 review/payment scenario passes; isolated tenant cleanup and orphan check pass. The full UI lint command still reports unrelated existing React-ref errors in Projects DocumentsPanel. The production build retains its existing large-chunk warning. This is local and browser validation, not the release gate.
+
 Open sales, procurement, billing, and payment work is consolidated in the final Main UI backlog.
 
 ### 5.6 Inventory operations
@@ -632,7 +635,6 @@ Complete application work in order: **Main UI → AdminUI → POS**. Finish the 
 
 #### Sales, procurement, inventory, and finance
 
-- [ ] `UX-TRADE-03` Add detail-first review for parties, dates, terms, lines, fulfillment/allocation, generated documents, audit, and state actions.
 - [ ] `UX-TRADE-04` Optimize receipt/shipment entry for keyboard/tablet with ordered, processed, remaining, entered, and resulting quantities.
 - [ ] `UX-TRADE-05` Standardize payment allocation summaries and pre-submit validation.
 - [ ] `FEAT-TRADE-01` Resolve and implement general ERP semantics: D1 vocabulary, D2 posted-record immutability, D5 fulfillment concurrency, D6 payment allocation, and D8 manual journals. D3/D4 POS return rules are approved; broader aggregate behavior still needs audit.

@@ -58,6 +58,11 @@ export function getCustomerPayments() {
   return requestJson<CustomerPaymentListItemResponse[]>('/customer-payments')
 }
 
+export function getCustomerPaymentsForInvoice(salesInvoiceId: string) {
+  const searchParams = new URLSearchParams({ salesInvoiceId })
+  return requestJson<CustomerPaymentListItemResponse[]>(`/customer-payments?${searchParams.toString()}`)
+}
+
 export function getCustomerPayment(customerPaymentId: string) {
   return requestJson<CustomerPaymentDetailsResponse>(`/customer-payments/${customerPaymentId}`)
 }

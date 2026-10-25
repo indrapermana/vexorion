@@ -6,8 +6,10 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
 import { useCurrency } from '../../../app/CurrencyContext'
 import DocumentsPanel from '../../../components/DocumentsPanel'
+import DocumentFulfillmentPanel from '../../../components/DocumentFulfillmentPanel'
+import DocumentReviewPanel from '../../../components/DocumentReviewPanel'
 import OrderWorkspace from '../../../components/OrderWorkspace'
-import { ApiError, deleteSalesOrder, getSalesOrderLines, getSalesOrders } from '../../../lib/api'
+import { ApiError, deleteSalesOrder, getSalesOrder, getSalesOrderLines, getSalesOrders } from '../../../lib/api'
 import { useCustomersLookup, useWarehousesLookup } from '../../../hooks/useLookups'
 import type { SalesOrderDetailsResponse, SalesOrderLineListItemResponse, SalesOrderListItemResponse } from '../../../types/api'
 import type { SalesOrderDialogMode, SalesOrderGridRow } from '../../../types/ui'
@@ -39,6 +41,7 @@ export default function SalesOrdersPage() {
   const canViewCustomers = user?.permissions.includes(Permissions.customers.view) ?? false
   const canViewProducts = user?.permissions.includes(Permissions.products.view) ?? false
   const canViewInventory = user?.permissions.includes(Permissions.inventory.view) ?? false
+  const canViewAudit = user?.permissions.includes(Permissions.accounting.view) ?? false
   const navigate = useNavigate()
   const { items: customers, error: customersError, reload: reloadCustomers } = useCustomersLookup(isAuthenticated && canViewCustomers)
   const { items: warehouses, error: warehousesError, reload: reloadWarehouses } = useWarehousesLookup(isAuthenticated && canViewInventory)
@@ -220,6 +223,18 @@ export default function SalesOrdersPage() {
         ...(!canManage ? [{ severity: 'info' as const, message: t('authorization.readOnly', { requiredPermission: Permissions.sales.manage }) }] : []),
       ]}
       grid={<Suspense fallback={<SalesOrderSurfaceFallback />}><SalesOrderDataGrid rows={rows} isLoading={isLoading} onEdit={openEditDialog} onDelete={setDeleteTarget} onManageLines={(row) => void handleManageLines(row)} onCreateInvoice={handleCreateInvoice} onViewShipments={handleViewShipments} canManage={canManage} /></Suspense>}
+      reviewOpen={Boolean(activeLinesOrder)}
+      reviewPanel={<DocumentReviewPanel entityId={activeLinesOrder?.id ?? null} entityName="SalesOrder" documentNumber={activeLinesOrder?.orderNumber} canViewAudit={canViewAudit} loadDetails={getSalesOrder} getFields={(details) => [
+        { label: t('orderWorkflow.review.partner'), value: customerNameById.get(details.customerId) ?? details.customerId },
+        { label: t('orderWorkflow.review.warehouse'), value: warehouseNameById.get(details.warehouseId) ?? details.warehouseId },
+        { label: t('orderWorkflow.review.documentDate'), value: details.orderDate },
+        { label: t('orderWorkflow.review.requiredDate'), value: details.requiredDate },
+        { label: t('orderWorkflow.review.currency'), value: details.currencyCode },
+        { label: t('orderWorkflow.review.total'), value: formatMoney(details.totalAmount) },
+        { label: t('orderWorkflow.review.status'), value: t(`orderWorkflow.lifecycle.orderStatusLabels.${details.status}`) },
+        { label: t('orderWorkflow.review.notes'), value: details.notes },
+      ]} />}
+      relatedPanel={<DocumentFulfillmentPanel kind="shipment" sourceOrderId={activeLinesOrder?.id ?? null} />}
       linesPanel={<Suspense fallback={<SalesOrderSurfaceFallback />}><SalesOrderLinesPanel order={activeLinesOrder} lines={lines} isLoading={linesLoading} error={linesError} onRefresh={() => activeLinesOrder ? loadLines(activeLinesOrder.id) : Promise.resolve()} canManage={canManage} canViewProducts={canViewProducts} canViewInventory={canViewInventory} /></Suspense>}
       documentsPanel={<DocumentsPanel sourceType="SalesOrder" sourceEntityId={activeLinesOrder?.id ?? null} />}
       editor={canManage && isEditorOpen ? <Suspense fallback={<SalesOrderSurfaceFallback />}><SalesOrderEditorDialog key={`${dialogMode}:${selectedSalesOrderId ?? 'new'}`} open={isEditorOpen} mode={dialogMode} salesOrderId={selectedSalesOrderId} customers={customers} warehouses={warehouses} onClose={handleEditorClose} onSaved={(salesOrder, mode) => void handleSaved(salesOrder, mode)} /></Suspense> : null}

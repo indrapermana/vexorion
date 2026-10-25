@@ -6,8 +6,10 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
 import { useCurrency } from '../../../app/CurrencyContext'
 import DocumentsPanel from '../../../components/DocumentsPanel'
+import DocumentPaymentAllocationsPanel from '../../../components/DocumentPaymentAllocationsPanel'
+import DocumentReviewPanel from '../../../components/DocumentReviewPanel'
 import OrderWorkspace from '../../../components/OrderWorkspace'
-import { ApiError, deleteSalesInvoice, getSalesInvoiceLines, getSalesInvoices } from '../../../lib/api'
+import { ApiError, deleteSalesInvoice, getSalesInvoice, getSalesInvoiceLines, getSalesInvoices } from '../../../lib/api'
 import { useCustomersLookup } from '../../../hooks/useLookups'
 import type { SalesInvoiceDetailsResponse, SalesInvoiceLineListItemResponse, SalesInvoiceListItemResponse } from '../../../types/api'
 import type { SalesInvoiceDialogMode, SalesInvoiceFormValues, SalesInvoiceGridRow } from '../../../types/ui'
@@ -40,6 +42,7 @@ export default function SalesInvoicesPage() {
   const canManage = user?.permissions.includes(Permissions.sales.manage) ?? false
   const canViewCustomers = user?.permissions.includes(Permissions.customers.view) ?? false
   const canViewProducts = user?.permissions.includes(Permissions.products.view) ?? false
+  const canViewAudit = user?.permissions.includes(Permissions.accounting.view) ?? false
   const { items: customers, error: customersError, reload: reloadCustomers } = useCustomersLookup(isAuthenticated && canViewCustomers)
   const navigate = useNavigate()
   const location = useLocation()
@@ -212,6 +215,24 @@ export default function SalesInvoicesPage() {
         ...(!canManage ? [{ severity: 'info' as const, message: t('authorization.readOnly', { requiredPermission: Permissions.sales.manage }) }] : []),
       ]}
       grid={<Suspense fallback={<SalesInvoiceSurfaceFallback />}><SalesInvoiceDataGrid rows={rows} isLoading={isLoading} onEdit={openEditDialog} onDelete={setDeleteTarget} onManageLines={(row) => void handleManageLines(row)} onRecordPayment={handleRecordPayment} canManage={canManage} /></Suspense>}
+      reviewOpen={Boolean(activeLinesInvoice)}
+      reviewPanel={<DocumentReviewPanel entityId={activeLinesInvoice?.id ?? null} entityName="SalesInvoice" documentNumber={activeLinesInvoice?.invoiceNumber} canViewAudit={canViewAudit} loadDetails={getSalesInvoice} getFields={(details) => [
+        { label: t('orderWorkflow.review.partner'), value: customerNameById.get(details.customerId) ?? details.customerId },
+        { label: t('orderWorkflow.review.documentDate'), value: details.invoiceDate },
+        { label: t('orderWorkflow.review.dueDate'), value: details.dueDate },
+        { label: t('orderWorkflow.review.paymentTerm'), value: details.paymentTermId },
+        { label: t('orderWorkflow.review.sourceOrder'), value: details.sourceSalesOrderId },
+        { label: t('orderWorkflow.review.sourceFulfillment'), value: details.sourceSalesShipmentId },
+        { label: t('orderWorkflow.review.currency'), value: details.currencyCode },
+        { label: t('orderWorkflow.review.subtotal'), value: formatMoney(details.subtotal) },
+        { label: t('orderWorkflow.review.tax'), value: formatMoney(details.taxTotal) },
+        { label: t('orderWorkflow.review.total'), value: formatMoney(details.grandTotal) },
+        { label: t('orderWorkflow.review.paid'), value: formatMoney(details.paidTotal) },
+        { label: t('orderWorkflow.review.balance'), value: formatMoney(details.balanceDue) },
+        { label: t('orderWorkflow.review.status'), value: t(`orderWorkflow.lifecycle.invoiceStatusLabels.${details.status}`) },
+        { label: t('orderWorkflow.review.notes'), value: details.notes },
+      ]} />}
+      relatedPanel={<DocumentPaymentAllocationsPanel kind="customer" invoiceId={activeLinesInvoice?.id ?? null} />}
       linesPanel={<Suspense fallback={<SalesInvoiceSurfaceFallback />}><SalesInvoiceLinesPanel invoice={activeLinesInvoice} lines={lines} isLoading={linesLoading} error={linesError} onRefresh={() => activeLinesInvoice ? loadLines(activeLinesInvoice.id) : Promise.resolve()} canManage={canManage} canViewProducts={canViewProducts} /></Suspense>}
       documentsPanel={<DocumentsPanel sourceType="SalesInvoice" sourceEntityId={activeLinesInvoice?.id ?? null} />}
       editor={canManage && isEditorOpen ? <Suspense fallback={<SalesInvoiceSurfaceFallback />}><SalesInvoiceEditorDialog key={`${dialogMode}:${selectedSalesInvoiceId ?? 'new'}:${editorDefaults?.sourceSalesOrderId ?? 'manual'}`} open={isEditorOpen} mode={dialogMode} salesInvoiceId={selectedSalesInvoiceId} customers={customers} initialValues={editorDefaults} onClose={handleEditorClose} onSaved={(salesInvoice, mode) => void handleSaved(salesInvoice, mode)} /></Suspense> : null}

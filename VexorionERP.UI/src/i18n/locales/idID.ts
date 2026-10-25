@@ -138,6 +138,13 @@ const idID = {
       orderLinesDraftOnly: 'Baris pesanan hanya dapat diubah saat status pesanan Draf.',
       invoiceLinesDraftOnly: 'Baris faktur hanya dapat diubah saat status faktur Draf.',
     },
+    review: {
+      title: 'Tinjauan dokumen', open: 'Tinjau', selectPrompt: 'Pilih dokumen untuk meninjau pihak, tanggal, ketentuan, total, dan sumbernya.', loading: 'Memuat detail dokumen...', loadError: 'Detail dokumen tidak dapat dimuat.',
+      partner: 'Pelanggan / pemasok', warehouse: 'Gudang', documentDate: 'Tanggal dokumen', requiredDate: 'Tanggal diperlukan / perkiraan', dueDate: 'Tanggal jatuh tempo', paymentTerm: 'Syarat pembayaran', sourceOrder: 'Pesanan sumber', sourceFulfillment: 'Pengiriman / penerimaan sumber', currency: 'Mata uang', subtotal: 'Subtotal', tax: 'Pajak', total: 'Total', paid: 'Dibayar / dialokasikan', balance: 'Saldo terutang', notes: 'Catatan', status: 'Status',
+      auditTitle: 'Riwayat audit', auditDate: 'Tanggal', auditEvent: 'Peristiwa', auditDescription: 'Deskripsi', noAudit: 'Tidak ada peristiwa audit untuk dokumen ini.', auditLoadError: 'Riwayat audit dokumen tidak dapat dimuat.',
+      shipments: 'Pengiriman', receipts: 'Penerimaan', noShipments: 'Belum ada pengiriman untuk pesanan ini.', noReceipts: 'Belum ada penerimaan untuk pesanan ini.', fulfillmentLoadError: 'Data pemenuhan tidak dapat dimuat.', documentNumber: 'Dokumen', lineCount: 'Baris',
+      allocationsTitle: 'Alokasi pembayaran', noAllocations: 'Tidak ada pembayaran yang dialokasikan ke faktur ini.', allocationsLoadError: 'Alokasi faktur tidak dapat dimuat.', paymentDate: 'Tanggal pembayaran', referenceNumber: 'Referensi', paymentMethod: 'Metode', amount: 'Jumlah',
+    },
     disabledReasons: { invoicePayment: { draft: 'Faktur Draf tidak dapat menerima pembayaran.', cancelled: 'Faktur yang dibatalkan tidak dapat menerima pembayaran.', noBalance: 'Tidak ada saldo terutang.' }, shipment: { postDraftOnly: 'Hanya draf pengiriman yang dapat diposting.', deleteDraftOnly: 'Hanya draf pengiriman yang dapat dihapus.' }, receipt: { postDraftOnly: 'Hanya draf penerimaan yang dapat diposting.', deleteDraftOnly: 'Hanya draf penerimaan yang dapat dihapus.' } },
     line: { orderLines: 'Baris pesanan', invoiceLines: 'Baris faktur', orderLinesFor: 'Baris pesanan untuk {{number}}', invoiceLinesFor: 'Baris faktur untuk {{number}}', add: 'Tambah baris', product: 'Produk', available: 'Tersedia', onHand: 'Stok tersedia', quantityShort: 'Jml', unitPrice: 'Harga satuan', unitCost: 'Biaya satuan', discount: 'Diskon', tax: 'Pajak', total: 'Total baris', delete: 'Hapus baris', empty: 'Belum ada baris.' },
   },

@@ -14,9 +14,9 @@ public class CustomerPaymentsController(IMediator mediator) : ServiceResultContr
 {
     [HttpGet]
     [Authorize(Policy = AppPermissions.Sales.View)]
-    public async Task<ActionResult<IReadOnlyCollection<CustomerPaymentListItemResponse>>> GetAll()
+    public async Task<ActionResult<IReadOnlyCollection<CustomerPaymentListItemResponse>>> GetAll([FromQuery] Guid? salesInvoiceId)
     {
-        var result = await mediator.Send(new GetCustomerPaymentsQuery(), HttpContext.RequestAborted);
+        var result = await mediator.Send(new GetCustomerPaymentsQuery(salesInvoiceId), HttpContext.RequestAborted);
         return ToActionResult(result);
     }
 

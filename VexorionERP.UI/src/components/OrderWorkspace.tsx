@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { VxAlert, VxButton, VxStack } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxStack } from '@vexorion/ui'
 import { PageBody, PageHeader, PageMetric } from './PagePrimitives'
 
 type MetricCard = {
@@ -19,6 +19,9 @@ type OrderWorkspaceProps = {
   metrics: MetricCard[]
   alerts?: Array<{ severity: 'warning' | 'error' | 'success' | 'info', message: string }>
   grid: ReactNode
+  reviewOpen?: boolean
+  reviewPanel?: ReactNode
+  relatedPanel?: ReactNode
   linesPanel: ReactNode
   documentsPanel?: ReactNode
   editor?: ReactNode
@@ -36,6 +39,9 @@ export default function OrderWorkspace({
   metrics,
   alerts = [],
   grid,
+  reviewOpen = false,
+  reviewPanel,
+  relatedPanel,
   linesPanel,
   documentsPanel,
   editor,
@@ -63,12 +69,28 @@ export default function OrderWorkspace({
         </VxAlert>
       ))}
 
-      <PageBody>
-        {grid}
-      </PageBody>
+      {reviewOpen ? (
+        <VxBox sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', xl: 'minmax(0, 1.25fr) minmax(380px, 0.85fr)' }, gap: 2, alignItems: 'start', minWidth: 0 }}>
+          <PageBody>{grid}</PageBody>
+          <VxStack spacing={2} sx={{ minWidth: 0 }}>
+            {reviewPanel}
+            {relatedPanel}
+            {linesPanel}
+            {documentsPanel}
+          </VxStack>
+        </VxBox>
+      ) : (
+        <>
+          <PageBody>{grid}</PageBody>
+          <VxStack spacing={2}>
+            {reviewPanel}
+            {relatedPanel}
+            {linesPanel}
+            {documentsPanel}
+          </VxStack>
+        </>
+      )}
 
-      {linesPanel}
-      {documentsPanel}
       {editor}
       {deleteDialog}
     </VxStack>

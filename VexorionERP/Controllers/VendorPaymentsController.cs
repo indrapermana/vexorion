@@ -14,9 +14,9 @@ public class VendorPaymentsController(IMediator mediator) : ServiceResultControl
 {
     [HttpGet]
     [Authorize(Policy = AppPermissions.Purchasing.View)]
-    public async Task<ActionResult<IReadOnlyCollection<VendorPaymentListItemResponse>>> GetAll()
+    public async Task<ActionResult<IReadOnlyCollection<VendorPaymentListItemResponse>>> GetAll([FromQuery] Guid? purchaseInvoiceId)
     {
-        var result = await mediator.Send(new GetVendorPaymentsQuery(), HttpContext.RequestAborted);
+        var result = await mediator.Send(new GetVendorPaymentsQuery(purchaseInvoiceId), HttpContext.RequestAborted);
         return ToActionResult(result);
     }
 

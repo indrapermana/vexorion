@@ -19,6 +19,8 @@ describe('OrderWorkspace accessibility', () => {
           { severity: 'error', message: 'Could not load sales orders.' },
         ]}
         grid={<div role="grid">Invoice rows</div>}
+        reviewOpen
+        reviewPanel={<section aria-label="Document review">Invoice summary</section>}
         linesPanel={<div>Invoice lines</div>}
         documentsPanel={<div>Related documents</div>}
         editor={<div>Invoice editor</div>}
@@ -34,6 +36,7 @@ describe('OrderWorkspace accessibility', () => {
     expect(screen.getByText('Open invoices')).toBeInTheDocument()
     expect(screen.getByText('2')).toBeInTheDocument()
     expect(screen.getByRole('grid')).toHaveTextContent('Invoice rows')
+    expect(screen.getByRole('region', { name: 'Document review' })).toHaveTextContent('Invoice summary')
     expect(screen.getByText('Invoice lines')).toBeInTheDocument()
     expect(screen.getByText('Related documents')).toBeInTheDocument()
     expect(screen.getByText('Invoice editor')).toBeInTheDocument()

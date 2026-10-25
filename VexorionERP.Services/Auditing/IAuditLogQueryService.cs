@@ -8,6 +8,7 @@ public interface IAuditLogQueryService
     Task<ServiceResult<AuditLogListResponse>> GetAsync(
         string? eventType,
         string? entityName,
+        string? entityId,
         DateTime? fromUtc,
         DateTime? toUtc,
         int page,
