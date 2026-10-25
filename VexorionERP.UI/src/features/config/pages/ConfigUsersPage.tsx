@@ -66,6 +66,8 @@ export default function ConfigUsersPage() {
   )
 
   const roleOptions = useMemo(() => roles.map((item) => item.role), [roles])
+  const permissionsByRole = useMemo(() => new Map(roles.map((item) => [item.role, item.permissions])), [roles])
+  const effectivePermissions = (roleNames: string[]) => [...new Set(roleNames.flatMap((role) => permissionsByRole.get(role) ?? []))].sort()
 
   const loadData = useCallback(async () => {
     if (!isAuthenticated) {
@@ -202,6 +204,7 @@ export default function ConfigUsersPage() {
       {!canManageUsers ? <PermissionReadOnlyAlert requiredPermission={Permissions.users.manage} /> : null}
       {!canManageRoles ? <PermissionReadOnlyAlert requiredPermission={Permissions.roles.manage} /> : null}
       {canManageRoles && !canViewRoles ? <PermissionReadOnlyAlert requiredPermission={Permissions.roles.view} /> : null}
+      {canViewRoles ? <VxAlert severity="info">{t('config.users.roleEffectPolicy')}</VxAlert> : null}
 
       {canManageUsers ? <VxPaper elevation={0} className="panel-card">
         <VxTypography component="h2" variant="h6" sx={{ mb: 2 }}>{t('config.users.createSection')}</VxTypography>
@@ -290,6 +293,7 @@ export default function ConfigUsersPage() {
                 </VxTableCell>
                 <VxTableCell>{user.email}</VxTableCell>
                 <VxTableCell>
+                  <VxStack spacing={1}>
                   <VxTextField
                     size="small"
                     select
@@ -308,6 +312,13 @@ export default function ConfigUsersPage() {
                       <VxMenuItem key={role} value={role}>{role}</VxMenuItem>
                     ))}
                   </VxTextField>
+                  <VxTypography variant="caption" color="text.secondary">
+                    {t('config.users.effectivePermissionCount', { count: effectivePermissions(roleDraftByUserId[user.id] ?? user.roles).length })}
+                  </VxTypography>
+                  <VxStack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap', rowGap: 0.5 }}>
+                    {effectivePermissions(roleDraftByUserId[user.id] ?? user.roles).map((permission) => <VxChip key={`${user.id}:effective:${permission}`} size="small" label={permission} />)}
+                  </VxStack>
+                  </VxStack>
                 </VxTableCell>
                 <VxTableCell>
                   <VxSwitch

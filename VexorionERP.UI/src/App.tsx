@@ -17,6 +17,7 @@ const ConfigCompanyPage = lazy(() => import('./pages/ConfigCompanyPage'))
 const ConfigImportDataPage = lazy(() => import('./pages/ConfigImportDataPage'))
 const ConfigProductCategoriesPage = lazy(() => import('./pages/ConfigProductCategoriesPage'))
 const ConfigMenuPage = lazy(() => import('./pages/ConfigMenuPage'))
+const ConfigNumberingPage = lazy(() => import('./pages/ConfigNumberingPage'))
 const ConfigPage = lazy(() => import('./pages/ConfigPage'))
 const ConfigRolesPage = lazy(() => import('./pages/ConfigRolesPage'))
 const ConfigTaxDiscountPage = lazy(() => import('./pages/ConfigTaxDiscountPage'))
@@ -86,6 +87,7 @@ function AppRoutes() {
                   <Route path="/accounts" element={<AccountsPage />} />
                   <Route path="/fiscal-periods" element={<FiscalPeriodsPage />} />
                   <Route path="/journals" element={<JournalsPage />} />
+                  <Route path="/config/numbering" element={<ConfigNumberingPage />} />
                 </Route>
                 <Route element={<PermissionRoute requirement={{ allOf: [Permissions.accounting.view, Permissions.organization.view] }} />}>
                   <Route path="/config/tax-discount" element={<ConfigTaxDiscountPage />} />

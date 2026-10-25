@@ -64,3 +64,13 @@ export type TenantPreferencesResponse = {
   maxManualDiscountPercent: number
   allowNegativeDiscount: boolean
 }
+
+export type NumberingSequenceResponse = {
+  id: string
+  documentType: string
+  prefixTemplate: string
+  nextNumber: number
+  numberPadding: number
+  resetPeriod: 0 | 1 | 2 | 3
+  currentPeriodKey?: string | null
+}

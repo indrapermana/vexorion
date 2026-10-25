@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { VxAlert, VxChip, VxStack, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow } from '@vexorion/ui'
+import { VxAlert, VxChip, VxStack, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { PageBody, PageFeedback, PageHeader } from '../../../components/PagePrimitives'
@@ -44,6 +44,7 @@ export default function ConfigRolesPage() {
       <PageHeader title={t('config.roles.title')} description={t('config.roles.description')} />
 
       <PageFeedback error={error} onRetry={error ? () => void loadRoles() : undefined} />
+      <VxAlert severity="info">{t('config.roles.effectPolicy')}</VxAlert>
 
       <PageBody>
         <VxTable size="small">
@@ -51,6 +52,7 @@ export default function ConfigRolesPage() {
             <VxTableRow>
               <VxTableCell sx={{ width: 180 }}>{t('config.roles.columns.role')}</VxTableCell>
               <VxTableCell>{t('config.roles.columns.permissions')}</VxTableCell>
+              <VxTableCell sx={{ minWidth: 240 }}>{t('config.roles.columns.effect')}</VxTableCell>
             </VxTableRow>
           </VxTableHead>
           <VxTableBody>
@@ -63,6 +65,12 @@ export default function ConfigRolesPage() {
                       <VxChip key={permission} size="small" label={permission} variant="outlined" />
                     ))}
                   </VxStack>
+                </VxTableCell>
+                <VxTableCell>
+                  <VxTypography variant="body2">{t('config.roles.effectSummary', {
+                    count: item.permissions.length,
+                    areas: [...new Set(item.permissions.map((permission) => permission.split('.')[0]))].join(', '),
+                  })}</VxTypography>
                 </VxTableCell>
               </VxTableRow>
             ))}

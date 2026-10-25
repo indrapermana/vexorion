@@ -268,6 +268,7 @@ const routeTitleKeys: Record<string, string> = {
   "/config": "nav.routeTitles.config",
   "/config/company": "nav.routeTitles.configCompany",
   "/config/menu": "nav.routeTitles.configMenu",
+  "/config/numbering": "nav.routeTitles.configNumbering",
   "/config/roles": "nav.routeTitles.configRoles",
   "/config/tax-discount": "nav.routeTitles.configTaxDiscount",
   "/config/import-data": "nav.routeTitles.configImportData",

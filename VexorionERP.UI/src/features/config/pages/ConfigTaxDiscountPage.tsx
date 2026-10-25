@@ -220,6 +220,8 @@ export default function ConfigTaxDiscountPage() {
       {!canManageTax ? <PermissionReadOnlyAlert requiredPermission={Permissions.accounting.manage} /> : null}
       {!canManageDiscount ? <PermissionReadOnlyAlert requiredPermission={Permissions.organization.manage} /> : null}
 
+      <VxAlert severity="info">{t('config.taxDiscount.effectPolicy')}</VxAlert>
+
       {canManageTax ? <VxPaper elevation={0} className="panel-card">
         <VxTypography component="h2" variant="h6" sx={{ mb: 2 }}>{editTargetId ? t('config.taxDiscount.editTaxCode') : t('config.taxDiscount.newTaxCode')}</VxTypography>
         <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ alignItems: { md: 'center' } }}>
@@ -283,6 +285,7 @@ export default function ConfigTaxDiscountPage() {
 
       <VxPaper elevation={0} className="panel-card">
         <VxTypography component="h2" variant="h6" sx={{ mb: 2 }}>{t('config.taxDiscount.discountSection')}</VxTypography>
+        <VxTypography variant="body2" color="text.secondary" sx={{ mb: 2 }}>{t('config.taxDiscount.discountEffect')}</VxTypography>
         <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ alignItems: { md: 'center' } }}>
           <VxTextField
             size="small"

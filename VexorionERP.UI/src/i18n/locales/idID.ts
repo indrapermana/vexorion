@@ -323,7 +323,7 @@ const idID = {
       deleteDialog: { title: 'Hapus kategori secara permanen', message: 'Tindakan ini menghapus "{{name}}" secara permanen dan menghapus penetapannya dari produk; produknya tetap ada. Nonaktifkan kategori jika perlu mempertahankannya sebagai referensi riwayat.' },
     },
     users: {
-      title: 'Manajemen Pengguna', description: 'Tambah pengguna, kelola status aktif, dan tetapkan bundel peran.', signInRequired: 'Masuk terlebih dahulu. Konfigurasi pengguna memerlukan autentikasi.', createSection: 'Buat Pengguna', createButton: 'Buat pengguna', listSection: 'Pengguna', saveRolesButton: 'Simpan peran',
+      title: 'Manajemen Pengguna', description: 'Tambah pengguna, kelola status aktif, dan tetapkan bundel peran.', roleEffectPolicy: 'Perubahan peran mengganti kumpulan peran pengguna ini. Pratinjau di bawah adalah gabungan izin dari pilihan yang belum disimpan; akses berubah hanya setelah Simpan peran.', effectivePermissionCount: '{{count}} izin efektif', signInRequired: 'Masuk terlebih dahulu. Konfigurasi pengguna memerlukan autentikasi.', createSection: 'Buat Pengguna', createButton: 'Buat pengguna', listSection: 'Pengguna', saveRolesButton: 'Simpan peran',
       states: { enabled: 'diaktifkan', disabled: 'dinonaktifkan' },
       feedback: { rolesUpdated: 'Peran pengguna diperbarui.', userCreated: 'Pengguna {{userName}} dibuat.', userStatus: 'Pengguna {{userName}} {{state}}.' },
       errors: { load: 'Tidak dapat memuat data manajemen pengguna.', updateRoles: 'Tidak dapat memperbarui peran pengguna.', updateStatus: 'Tidak dapat memperbarui status pengguna.', create: 'Tidak dapat membuat pengguna.' },
@@ -332,7 +332,7 @@ const idID = {
       columns: { user: 'Pengguna', email: 'Email', roles: 'Peran', active: 'Aktif', actions: 'Aksi' },
     },
     roles: {
-      title: 'Izin Peran', description: 'Tampilan referensi pemetaan peran ke izin pada matriks backend saat ini.', signInRequired: 'Masuk terlebih dahulu. Konfigurasi peran memerlukan autentikasi.', errors: { load: 'Tidak dapat memuat izin peran.' }, columns: { role: 'Peran', permissions: 'Izin' },
+      title: 'Izin Peran', description: 'Tampilan referensi pemetaan peran ke izin pada matriks backend saat ini.', effectPolicy: 'Peran adalah kumpulan izin. Pengguna menerima gabungan izin dari semua peran yang ditetapkan; visibilitas menu tidak menambah atau menghapus akses.', effectSummary: '{{count}} izin pada area: {{areas}}', signInRequired: 'Masuk terlebih dahulu. Konfigurasi peran memerlukan autentikasi.', errors: { load: 'Tidak dapat memuat izin peran.' }, columns: { role: 'Peran', permissions: 'Izin', effect: 'Cakupan efektif' },
     },
     menu: {
       title: 'Konfigurasi Menu', description: 'Preferensi navigasi tenant dan akses efektif untuk akun Anda.', signInRequired: 'Masuk terlebih dahulu. Konfigurasi menu memerlukan autentikasi.', saveChanges: 'Simpan perubahan', resetDefaults: 'Reset bawaan',
@@ -348,12 +348,15 @@ const idID = {
       errors: { load: 'Tidak dapat memuat konfigurasi menu.', save: 'Tidak dapat menyimpan konfigurasi menu.', reset: 'Tidak dapat mereset konfigurasi menu.' },
     },
     taxDiscount: {
-      title: 'Konfigurasi Pajak dan Diskon', description: 'Kelola definisi kode pajak dan aturan dasar diskon.', signInRequired: 'Masuk terlebih dahulu. Konfigurasi pajak dan diskon memerlukan autentikasi.', newTaxCode: 'Kode pajak baru', editTaxCode: 'Ubah kode pajak', saveTaxButton: 'Simpan', cancelEdit: 'Batal ubah', taxCodesSection: 'Kode pajak', discountSection: 'Default kebijakan diskon', saveDiscountButton: 'Simpan konfigurasi diskon',
+      title: 'Konfigurasi Pajak dan Diskon', description: 'Kelola definisi kode pajak dan aturan dasar diskon.', effectPolicy: 'Kode pajak disimpan sebagai definisi referensi. Editor baris faktur saat ini masih mencatat jumlah pajak secara manual dan belum menghitungnya otomatis dari tarif atau penanda inklusif ini. Dokumen yang ada mempertahankan nilai tercatatnya.', discountEffect: 'Nilai ini disimpan sebagai bawaan kebijakan tenant, tetapi editor dan layanan transaksi saat ini belum menerapkan atau memberlakukannya secara otomatis. Menyimpan di sini tidak menghitung ulang dokumen yang ada.', signInRequired: 'Masuk terlebih dahulu. Konfigurasi pajak dan diskon memerlukan autentikasi.', newTaxCode: 'Kode pajak baru', editTaxCode: 'Ubah kode pajak', saveTaxButton: 'Simpan', cancelEdit: 'Batal ubah', taxCodesSection: 'Kode pajak', discountSection: 'Default kebijakan diskon', saveDiscountButton: 'Simpan konfigurasi diskon',
       feedback: { taxCreated: 'Kode pajak dibuat.', taxUpdated: 'Kode pajak diperbarui.', taxDeleted: 'Kode pajak dihapus.', discountSaved: 'Konfigurasi diskon disimpan.' },
       errors: { load: 'Tidak dapat memuat konfigurasi pajak dan diskon.', saveTax: 'Tidak dapat menyimpan kode pajak.', deleteTax: 'Tidak dapat menghapus kode pajak.', saveDiscount: 'Tidak dapat menyimpan konfigurasi diskon.' },
       deleteTaxConsequence: 'Kode pajak akan dihapus permanen. Transaksi yang telah menggunakannya dapat mencegah penghapusan.',
       fields: { code: 'Kode', name: 'Nama', ratePercent: 'Tarif %', inclusive: 'Inklusif', defaultDiscountPercent: 'Diskon default %', maxManualDiscountPercent: 'Diskon manual maks %', allowNegativeDiscount: 'Izinkan diskon negatif' },
       columns: { code: 'Kode', name: 'Nama', ratePercent: 'Tarif %', inclusive: 'Inklusif', actions: 'Aksi' },
+    },
+    numbering: {
+      title: 'Penomoran dokumen', description: 'Konfigurasikan nomor yang dibuat untuk faktur dan jurnal.', signInRequired: 'Masuk terlebih dahulu. Konfigurasi penomoran memerlukan akses penagihan.', loading: 'Memuat urutan nomor...', impact: 'Perubahan hanya berlaku untuk nomor yang dibuat setelahnya. Menurunkan nomor berikutnya atau mengubah aturan reset dapat membuat duplikat; periksa pratinjau dan dokumen yang ada sebelum menyimpan.', prefixHelp: 'Token: {yyyy}, {yyyyMM}, {yyyyMMdd}, {MM}, {dd}', preview: 'Pratinjau nomor berikutnya untuk hari ini: {{value}}', fields: { prefixTemplate: 'Template prefiks', nextNumber: 'Nomor berikutnya', padding: 'Panjang nomor', resetPeriod: 'Periode reset' }, resetPeriods: { 0: 'Tidak pernah', 1: 'Tahunan', 2: 'Bulanan', 3: 'Harian' }, documentTypes: { SALES_INVOICE: 'Faktur penjualan', PURCHASE_INVOICE: 'Faktur pembelian', JOURNAL_ENTRY: 'Entri jurnal' }, effects: { SALES_INVOICE: 'Digunakan saat faktur penjualan menerima nomor faktur yang dibuat.', PURCHASE_INVOICE: 'Digunakan saat faktur pembelian menerima nomor faktur yang dibuat.', JOURNAL_ENTRY: 'Digunakan saat posting membuat nomor entri jurnal.', other: 'Digunakan saat tipe dokumen ini meminta nomor berikutnya.' }, feedback: { saved: 'Penomoran {{type}} disimpan.' }, errors: { load: 'Tidak dapat memuat urutan nomor.', save: 'Tidak dapat menyimpan urutan nomor.' },
     },
   },
   components: {
@@ -656,6 +659,7 @@ const idID = {
       config: 'Konfigurasi',
       configCompany: 'Profil Perusahaan',
       configMenu: 'Konfigurasi Menu',
+      configNumbering: 'Penomoran Dokumen',
       configRoles: 'Izin Peran',
       configTaxDiscount: 'Pajak & Diskon',
       configImportData: 'Impor Data',
@@ -1583,6 +1587,10 @@ const idID = {
       taxDiscount: {
         title: 'Pajak dan diskon',
         description: 'Kelola kode pajak tenant dan kebijakan diskon bawaan.',
+      },
+      numbering: {
+        title: 'Penomoran dokumen',
+        description: 'Pratinjau dan atur nomor faktur penjualan, faktur pembelian, dan jurnal berikutnya.',
       },
       company: {
         title: 'Profil perusahaan',

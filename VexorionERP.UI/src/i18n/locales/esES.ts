@@ -297,7 +297,7 @@ const esES = {
       deleteDialog: { title: 'Eliminar categoría permanentemente', message: 'Esto elimina permanentemente "{{name}}" y quita sus asignaciones de los productos; los productos permanecen. Desactiva la categoría si necesitas conservarla como referencia histórica.' },
     },
     users: {
-      title: 'Gestión de Usuarios', description: 'Agrega usuarios, gestiona estado activo y asigna paquetes de roles.', signInRequired: 'Inicia sesión primero. La configuración de usuarios requiere autenticación.', createSection: 'Crear Usuario', createButton: 'Crear usuario', listSection: 'Usuarios', saveRolesButton: 'Guardar roles',
+      title: 'Gestión de Usuarios', description: 'Agrega usuarios, gestiona estado activo y asigna paquetes de roles.', roleEffectPolicy: 'Los cambios reemplazan el conjunto de roles del usuario. La vista previa muestra la unión de permisos de la selección sin guardar; el acceso cambia solo después de Guardar roles.', effectivePermissionCount: '{{count}} permisos efectivos', signInRequired: 'Inicia sesión primero. La configuración de usuarios requiere autenticación.', createSection: 'Crear Usuario', createButton: 'Crear usuario', listSection: 'Usuarios', saveRolesButton: 'Guardar roles',
       states: { enabled: 'habilitado', disabled: 'deshabilitado' },
       feedback: { rolesUpdated: 'Roles de usuario actualizados.', userCreated: 'Usuario {{userName}} creado.', userStatus: 'Usuario {{userName}} {{state}}.' },
       errors: { load: 'No se pudieron cargar los datos de gestión de usuarios.', updateRoles: 'No se pudieron actualizar los roles del usuario.', updateStatus: 'No se pudo actualizar el estado del usuario.', create: 'No se pudo crear el usuario.' },
@@ -305,7 +305,7 @@ const esES = {
       fields: { userName: 'Nombre de usuario', email: 'Correo', password: 'Contraseña', firstName: 'Nombre', lastName: 'Apellido', roles: 'Roles' },
       columns: { user: 'Usuario', email: 'Correo', roles: 'Roles', active: 'Activo', actions: 'Acciones' },
     },
-    roles: { title: 'Permisos de Rol', description: 'Vista de referencia del mapeo rol-permisos configurado en backend.', signInRequired: 'Inicia sesión primero. La configuración de roles requiere autenticación.', errors: { load: 'No se pudieron cargar los permisos de rol.' }, columns: { role: 'Rol', permissions: 'Permisos' } },
+    roles: { title: 'Permisos de Rol', description: 'Vista de referencia del mapeo rol-permisos configurado en backend.', effectPolicy: 'Los roles son conjuntos de permisos. Un usuario recibe la unión de los permisos de todos sus roles; la visibilidad del menú no agrega ni elimina acceso.', effectSummary: '{{count}} permisos en: {{areas}}', signInRequired: 'Inicia sesión primero. La configuración de roles requiere autenticación.', errors: { load: 'No se pudieron cargar los permisos de rol.' }, columns: { role: 'Rol', permissions: 'Permisos', effect: 'Alcance efectivo' } },
     menu: {
       title: 'Configuración de Menú', description: 'Preferencias de navegación del inquilino y acceso efectivo de tu cuenta.',
       previewTitle: 'Vista previa de acceso efectivo',
@@ -321,12 +321,15 @@ const esES = {
       errors: { load: 'No se pudo cargar la configuración de menú.', save: 'No se pudo guardar la configuración de menú.', reset: 'No se pudo restablecer la configuración de menú.' },
     },
     taxDiscount: {
-      title: 'Configuración de Impuestos y Descuentos', description: 'Gestiona definiciones de códigos fiscales y reglas base de descuento.', signInRequired: 'Inicia sesión primero. La configuración de impuestos y descuentos requiere autenticación.', newTaxCode: 'Nuevo código fiscal', editTaxCode: 'Editar código fiscal', saveTaxButton: 'Guardar', cancelEdit: 'Cancelar edición', taxCodesSection: 'Códigos fiscales', discountSection: 'Política de descuentos por defecto', saveDiscountButton: 'Guardar configuración de descuento',
+      title: 'Configuración de Impuestos y Descuentos', description: 'Gestiona definiciones de códigos fiscales y reglas base de descuento.', effectPolicy: 'Los códigos fiscales se guardan como definiciones de referencia. Los editores de líneas de factura actuales aún capturan el impuesto manualmente y no lo calculan automáticamente desde estas tasas ni desde el indicador inclusivo. Los documentos existentes conservan sus valores registrados.', discountEffect: 'Estos valores se almacenan como política predeterminada del inquilino, pero los editores y servicios de transacciones actuales aún no los aplican ni los imponen automáticamente. Guardar aquí no recalcula documentos existentes.', signInRequired: 'Inicia sesión primero. La configuración de impuestos y descuentos requiere autenticación.', newTaxCode: 'Nuevo código fiscal', editTaxCode: 'Editar código fiscal', saveTaxButton: 'Guardar', cancelEdit: 'Cancelar edición', taxCodesSection: 'Códigos fiscales', discountSection: 'Política de descuentos por defecto', saveDiscountButton: 'Guardar configuración de descuento',
       feedback: { taxCreated: 'Código fiscal creado.', taxUpdated: 'Código fiscal actualizado.', taxDeleted: 'Código fiscal eliminado.', discountSaved: 'Configuración de descuento guardada.' },
       errors: { load: 'No se pudo cargar la configuración de impuestos y descuentos.', saveTax: 'No se pudo guardar el código fiscal.', deleteTax: 'No se pudo eliminar el código fiscal.', saveDiscount: 'No se pudo guardar la configuración de descuento.' },
       deleteTaxConsequence: 'Esto elimina permanentemente el código fiscal. Las transacciones que ya lo utilizan pueden impedir su eliminación.',
       fields: { code: 'Código', name: 'Nombre', ratePercent: 'Tasa %', inclusive: 'Incluido', defaultDiscountPercent: 'Descuento por defecto %', maxManualDiscountPercent: 'Descuento manual máx %', allowNegativeDiscount: 'Permitir descuento negativo' },
       columns: { code: 'Código', name: 'Nombre', ratePercent: 'Tasa %', inclusive: 'Incluido', actions: 'Acciones' },
+    },
+    numbering: {
+      title: 'Numeración de documentos', description: 'Configura los números generados para facturas y diarios.', signInRequired: 'Inicia sesión primero. La configuración de numeración requiere acceso de facturación.', loading: 'Cargando secuencias de numeración...', impact: 'Los cambios solo se aplican a números futuros. Reducir el siguiente número o cambiar la regla de reinicio puede crear duplicados; revisa la vista previa y los documentos existentes antes de guardar.', prefixHelp: 'Tokens: {yyyy}, {yyyyMM}, {yyyyMMdd}, {MM}, {dd}', preview: 'Vista previa del siguiente número para hoy: {{value}}', fields: { prefixTemplate: 'Plantilla de prefijo', nextNumber: 'Siguiente número', padding: 'Longitud numérica', resetPeriod: 'Período de reinicio' }, resetPeriods: { 0: 'Nunca', 1: 'Anual', 2: 'Mensual', 3: 'Diario' }, documentTypes: { SALES_INVOICE: 'Facturas de venta', PURCHASE_INVOICE: 'Facturas de compra', JOURNAL_ENTRY: 'Asientos de diario' }, effects: { SALES_INVOICE: 'Se usa cuando una factura de venta recibe su número generado.', PURCHASE_INVOICE: 'Se usa cuando una factura de compra recibe su número generado.', JOURNAL_ENTRY: 'Se usa cuando la contabilización crea un número de asiento.', other: 'Se usa cuando este tipo de documento solicita su siguiente número.' }, feedback: { saved: 'Numeración de {{type}} guardada.' }, errors: { load: 'No se pudieron cargar las secuencias de numeración.', save: 'No se pudo guardar la secuencia de numeración.' },
     },
   },
   components: {
@@ -629,6 +632,7 @@ const esES = {
       config: 'Configuración',
       configCompany: 'Perfil de la Empresa',
       configMenu: 'Configuración de Menú',
+      configNumbering: 'Numeración de Documentos',
       configRoles: 'Permisos de Rol',
       configTaxDiscount: 'Impuestos y Descuentos',
       configImportData: 'Importar Datos',
@@ -1577,6 +1581,10 @@ const esES = {
       taxDiscount: {
         title: 'Impuestos y descuentos',
         description: 'Gestiona códigos de impuestos del inquilino y políticas de descuento predeterminadas.',
+      },
+      numbering: {
+        title: 'Numeración de documentos',
+        description: 'Previsualiza y controla los próximos números de facturas de venta, compra y diarios.',
       },
       company: {
         title: 'Perfil de la empresa',

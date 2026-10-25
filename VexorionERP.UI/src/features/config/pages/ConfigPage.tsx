@@ -32,6 +32,12 @@ const configCards = [
     accent: '#b45309',
   },
   {
+    titleKey: 'configCenter.cards.numbering.title',
+    descriptionKey: 'configCenter.cards.numbering.description',
+    to: '/config/numbering',
+    accent: '#047857',
+  },
+  {
     titleKey: 'configCenter.cards.company.title',
     descriptionKey: 'configCenter.cards.company.description',
     to: '/config/company',

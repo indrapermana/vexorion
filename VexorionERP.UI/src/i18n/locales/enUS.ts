@@ -404,6 +404,8 @@ const enUS = {
       createButton: 'Create user',
       listSection: 'Users',
       saveRolesButton: 'Save roles',
+      roleEffectPolicy: 'Role changes replace this user\'s assigned role set. The preview below is the union of permissions from the unsaved selection; access changes only after Save roles.',
+      effectivePermissionCount: '{{count}} effective permissions',
       states: { enabled: 'enabled', disabled: 'disabled' },
       feedback: {
         rolesUpdated: 'User roles updated.',
@@ -443,7 +445,9 @@ const enUS = {
       description: 'Reference view of role-to-permission mapping currently configured in the backend matrix.',
       signInRequired: 'Sign in first. Role configuration requires authentication.',
       errors: { load: 'Unable to load role permissions.' },
-      columns: { role: 'Role', permissions: 'Permissions' },
+      effectPolicy: 'Roles are permission bundles. A user receives the union of permissions from every assigned role; menu visibility does not add or remove access.',
+      effectSummary: '{{count}} permissions across: {{areas}}',
+      columns: { role: 'Role', permissions: 'Permissions', effect: 'Effective scope' },
     },
     menu: {
       title: 'Menu Configuration',
@@ -472,6 +476,8 @@ const enUS = {
     taxDiscount: {
       title: 'Tax and Discount Configuration',
       description: 'Manage tax code definitions and baseline discount rules.',
+      effectPolicy: 'Tax codes are stored reference definitions. Current invoice line editors still capture tax amounts manually and do not automatically calculate them from these rates or the inclusive flag. Existing documents retain their recorded values.',
+      discountEffect: 'These values are stored as tenant policy defaults, but current transaction editors and services do not yet automatically apply or enforce them. Saving here does not recalculate existing documents.',
       signInRequired: 'Sign in first. Tax and discount configuration requires authentication.',
       newTaxCode: 'New tax code',
       editTaxCode: 'Edit tax code',
@@ -509,6 +515,9 @@ const enUS = {
         inclusive: 'Inclusive',
         actions: 'Actions',
       },
+    },
+    numbering: {
+      title: 'Document numbering', description: 'Configure generated numbers for invoices and journals.', signInRequired: 'Sign in first. Numbering configuration requires billing access.', loading: 'Loading numbering sequences...', impact: 'Changes apply to future generated numbers only. Lowering the next number or changing a reset rule can create duplicates; verify the preview and existing documents before saving.', prefixHelp: 'Tokens: {yyyy}, {yyyyMM}, {yyyyMMdd}, {MM}, {dd}', preview: 'Next-number preview for today: {{value}}', fields: { prefixTemplate: 'Prefix template', nextNumber: 'Next number', padding: 'Number padding', resetPeriod: 'Reset period' }, resetPeriods: { 0: 'Never', 1: 'Yearly', 2: 'Monthly', 3: 'Daily' }, documentTypes: { SALES_INVOICE: 'Sales invoices', PURCHASE_INVOICE: 'Purchase invoices', JOURNAL_ENTRY: 'Journal entries' }, effects: { SALES_INVOICE: 'Used when a sales invoice receives its generated invoice number.', PURCHASE_INVOICE: 'Used when a purchase invoice receives its generated invoice number.', JOURNAL_ENTRY: 'Used when posting creates a journal entry number.', other: 'Used when this document type requests its next generated number.' }, feedback: { saved: '{{type}} numbering saved.' }, errors: { load: 'Unable to load numbering sequences.', save: 'Unable to save the numbering sequence.' },
     },
   },
   components: {
@@ -851,6 +860,7 @@ const enUS = {
       config: 'Configuration',
       configCompany: 'Company Profile',
       configMenu: 'Menu Configuration',
+      configNumbering: 'Document Numbering',
       configRoles: 'Role Permissions',
       configTaxDiscount: 'Tax & Discount',
       configImportData: 'Import Data',
@@ -1889,6 +1899,10 @@ const enUS = {
       taxDiscount: {
         title: 'Tax and discount',
         description: 'Manage tenant tax codes and discount policy defaults.',
+      },
+      numbering: {
+        title: 'Document numbering',
+        description: 'Preview and control future sales invoice, purchase invoice, and journal numbers.',
       },
       company: {
         title: 'Company profile',

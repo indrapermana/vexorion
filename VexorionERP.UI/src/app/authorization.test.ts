@@ -52,6 +52,8 @@ describe('main authorization matrix', () => {
     expect(canPerformMainRouteActions([Permissions.accounting.manage], '/config/tax-discount')).toBe(true)
     expect(canPerformMainRouteActions([Permissions.organization.manage], '/config/tax-discount')).toBe(true)
     expect(canPerformMainRouteActions([Permissions.accounting.view, Permissions.organization.view], '/config/tax-discount')).toBe(false)
+    expect(canAccessMainRoute([Permissions.billing.view], '/config/numbering')).toBe(true)
+    expect(canPerformMainRouteActions([Permissions.billing.manage], '/config/numbering')).toBe(true)
   })
 
   it('recognizes user-lifecycle and role-assignment actions independently', () => {

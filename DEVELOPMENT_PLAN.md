@@ -438,6 +438,10 @@ Open master-data and configuration work is consolidated in the final Main UI bac
   - Semantics boundary: the copy does not claim that inactive records are universally excluded from every selector because that enforcement is not consistent across all current workflows. User deactivation was already explicit and reversible. Configuration semantics beyond product categories and identifiers remain `UX-MASTER-05`; project assignment vocabulary remains `UX-MASTER-06`.
   - Evidence: destructive-copy and locale-parity tests pass 15/15; the previously failing Product Purchase History test passes when rerun with the ticket tests (18/18 total). Main UI TypeScript, changed-file ESLint, and `git diff --check` pass. The full Main UI run reached 226/227 before the isolated, unrelated empty-history timing failure; this is local acceptance, not the release gate.
 
+- [x] `UX-MASTER-05` Explain role, menu, tax/discount, numbering, and module effects; preview effective access. Locally completed 25 October 2026: Role Permissions explains that assigned roles contribute a permission union and summarizes each role's effective domains; User Management previews the effective permission union for unsaved role selections before Save roles. Menu Configuration separates tenant visibility preference, module availability, account permission, and final sidebar visibility for the signed-in account. Tax/Discount explains its actual downstream behavior: tax codes and discount policy values are currently reference/stored configuration, while invoice tax and discount amounts remain manually entered and are not automatically calculated or enforced. A new billing-authorized Document Numbering workspace exposes the existing numbering API for sales invoices, purchase invoices, and journal entries, with date-token previews, reset periods, next-number controls, future-only impact guidance, and duplicate-number warnings.
+  - Semantics boundary: menu visibility never grants route permission or enables a tenant module. The access preview is for the signed-in account, while User Management previews another user's role-derived permission union without claiming module/menu visibility. Numbering changes affect future generated numbers and reuse the existing API; no database or backend changes were required.
+  - Evidence: full Main UI tests pass 229/229. Focused configuration, authorization, accessibility, numbering, and locale tests pass 35/35. Main UI TypeScript, changed-file ESLint, and `git diff --check` pass. This is local acceptance, not the release gate.
+
 ### 5.5 Sales, procurement, billing, and payments
 
 Scope: Sales Orders/Shipments/Invoices/Customer Payments and Purchase Orders/Receipts/Invoices/Vendor Payments.
@@ -616,7 +620,6 @@ Complete application work in order: **Main UI → AdminUI → POS**. Finish the 
 
 ### Stage 1 — Main UI
 
-- [ ] `UX-MASTER-05` Explain role, menu, tax/discount, numbering, and module effects; preview effective access.
 - [ ] `UX-MASTER-06` Reconcile employee, consultant, assignment, and tenant-relationship vocabulary.
 
 #### Sales, procurement, inventory, and finance
