@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AutoGraphRoundedIcon, CheckCircleRoundedIcon, FormatListBulletedRoundedIcon } from '@vexorion/ui'
-import { VxAlert, VxButton, VxConfirmActionDialog, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxMenuItem, VxStack, VxTextField } from '@vexorion/ui'
+import { VxAlert, VxButton, VxConfirmActionDialog, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxStack, VxTextField } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
@@ -29,6 +29,7 @@ import type {
   StockCountListItemResponse,
 } from '../../../types/api'
 import { getStockCountEffect, type InventoryEffectRow } from '../../../types/ui/inventoryEffects'
+import { inventoryDocumentStatus } from '../../../types/ui/inventoryDocumentStatuses'
 
 type DialogMode = 'create' | 'edit'
 
@@ -193,6 +194,7 @@ export default function StockCountsPage() {
     ...row,
     warehouseName: warehouseNameById.get(row.warehouseId),
   })), [rows, warehouseNameById])
+  const headerLocked = editorMode === 'edit' && selectedCount?.status !== inventoryDocumentStatus.draft
 
   const resetEditor = () => {
     setEditorError(null)
@@ -293,7 +295,7 @@ export default function StockCountsPage() {
   }
 
   const confirmDelete = async () => {
-    if (!deleteTarget) {
+    if (!deleteTarget || deleteTarget.status !== inventoryDocumentStatus.draft) {
       return
     }
 
@@ -397,7 +399,7 @@ export default function StockCountsPage() {
   }
 
   const deleteLine = async (line: StockCountLineDetailsResponse) => {
-    if (!selectedCount) {
+    if (!selectedCount || selectedCount.status !== inventoryDocumentStatus.draft) {
       return
     }
 
@@ -481,7 +483,7 @@ export default function StockCountsPage() {
       showCreate={canManage}
       metrics={metrics}
       alerts={alerts}
-      grid={<StockCountList rows={gridRows} loading={isLoading} selectedId={selectedCount?.id} canManage={canManage} getStatusLabel={getDocumentStatusLabel} onSelect={(id) => { setFeedback(null); void loadDetails(id) }} onEdit={(row) => void openEditDialog(row)} onDelete={openDeleteDialog} />}
+      grid={<StockCountList rows={gridRows} loading={isLoading} selectedId={selectedCount?.id} canManage={canManage} getStatusLabel={getDocumentStatusLabel} onSelect={(id) => { setFeedback(null); void loadDetails(id) }} onEdit={(row) => void openEditDialog(row)} onDelete={(row) => { if (row.status === inventoryDocumentStatus.draft) openDeleteDialog(row) }} />}
       linesPanel={<StockCountDetail count={selectedCount} canManage={canManage} loading={statusActionLoading} productLabels={new Map(products.map((product) => [product.id, `${product.sku} · ${product.name}`]))} getStatusLabel={getDocumentStatusLabel} onPost={() => setPostDialogOpen(true)} onReverse={() => setReverseDialogOpen(true)} onAddLine={openCreateLineDialog} onEditLine={openEditLineDialog} onDeleteLine={deleteLine} />}
       editor={(
         <>
@@ -490,6 +492,7 @@ export default function StockCountsPage() {
             <VxDialogContent>
               <VxStack spacing={2} sx={{ mt: 1 }}>
                 {editorError ? <VxAlert severity="error">{editorError}</VxAlert> : null}
+                {headerLocked ? <VxAlert severity="info">{t('pages.stockCounts.editor.lockedFields')}</VxAlert> : null}
                 <VxTextField
                   label={t('pages.stockCounts.editor.number')}
                   value={editorForm.countNumber}
@@ -503,7 +506,7 @@ export default function StockCountsPage() {
                   options={warehouses.map((warehouse) => ({ value: warehouse.id, label: warehouse.name }))}
                   value={editorForm.warehouseId}
                   onChange={(value) => setEditorForm((current) => ({ ...current, warehouseId: value }))}
-                  disabled={editorLoading}
+                  disabled={editorLoading || headerLocked}
                   emptyText={t('pages.stockCounts.editor.noWarehouses')}
                   requiredText={t('common.required')}
                 />
@@ -517,20 +520,6 @@ export default function StockCountsPage() {
                   required
                   fullWidth
                 />
-                <VxTextField
-                  select
-                  label={t('pages.stockCounts.editor.status')}
-                  value={editorForm.status}
-                  onChange={(event) => setEditorForm((current) => ({ ...current, status: Number(event.target.value) }))}
-                  disabled={editorLoading}
-                  fullWidth
-                >
-                  {[1, 2, 3, 4, 5].map((status) => (
-                    <VxMenuItem key={status} value={status}>
-                      {getDocumentStatusLabel(status)}
-                    </VxMenuItem>
-                  ))}
-                </VxTextField>
                 <VxTextField
                   label={t('pages.stockCounts.editor.notes')}
                   value={editorForm.notes}

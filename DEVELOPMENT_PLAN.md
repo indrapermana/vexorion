@@ -659,7 +659,8 @@ Complete application work in order: **Main UI → AdminUI → POS**. Finish the 
 
 #### Sales, procurement, inventory, and finance
 
-- [ ] `UX-INV-03` Standardize line/document confirmations and prevent or explain immutable-state edits.
+- [x] `UX-INV-03` Locally and manually browser validated 25 October 2026: line/document confirmations are consistent; immutable-state edits and deletes are prevented or explained.
+  - Evidence: Main UI suite 285/285; inventory lifecycle, component-boundary, and locale tests pass. UI typecheck, scoped ESLint, and `git diff --check` pass. Draft-only delete actions are disabled; warehouse/line locks are explained; adjustment/transfer lifecycle changes use valid transitions and effect-aware confirmation; stock-count transitions remain in the dedicated Post/Reverse confirmations. User confirmed the manual browser check is green. This is local and manual browser validation, not the release gate.
 - [ ] `FEAT-INV-01` Finalize inventory lifecycle vocabulary and reversal behavior across API, UI, tests, and QA documentation.
 - [ ] `FEAT-INV-02` Implement inventory valuation, movement audit, and reorder reports with reconciliation tests.
 - [ ] `UX-FIN-01` Replace raw-ID journal actions with searchable contextual document selection.

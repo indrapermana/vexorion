@@ -50,4 +50,33 @@ describe('inventory operation component boundaries', () => {
     expect(page).toContain("getCountEffectRows(4)")
     expect(page).toContain("getCountEffectRows(5)")
   })
+
+  it.each([
+    ['inventoryAdjustments/components/InventoryAdjustmentList.tsx', 'pages.inventoryAdjustments.table.deleteLocked'],
+    ['stockTransfers/components/StockTransferList.tsx', 'pages.stockTransfers.table.deleteLocked'],
+    ['stockCounts/components/StockCountList.tsx', 'pages.stockCounts.table.deleteLocked'],
+  ])('disables deletion outside Draft in %s', (path, explanationKey) => {
+    const list = source(path)
+    expect(list).toContain('disabled={row.status !== inventoryDocumentStatus.draft}')
+    expect(list).toContain(explanationKey)
+  })
+
+  it.each([
+    ['inventoryAdjustments/pages/InventoryAdjustmentsPage.tsx', 'pages.inventoryAdjustments.statusActions'],
+    ['stockTransfers/pages/StockTransfersPage.tsx', 'pages.stockTransfers.statusActions'],
+  ])('confirms status changes and shows their effects in %s', (path, actionCopyKey) => {
+    const page = source(path)
+    expect(page).toContain('getAllowedInventoryDocumentStatuses')
+    expect(page).toContain('<VxConfirmActionDialog open={statusConfirmationOpen}')
+    expect(page).toContain(actionCopyKey)
+    expect(page).toContain('details={')
+  })
+
+  it('keeps stock-count status changes in confirmed lifecycle actions', () => {
+    const page = source('stockCounts/pages/StockCountsPage.tsx')
+    expect(page).not.toContain("label={t('pages.stockCounts.editor.status')}")
+    expect(page).toContain('disabled={editorLoading || headerLocked}')
+    expect(page).toContain("t('pages.stockCounts.actions.postTitle')")
+    expect(page).toContain("t('pages.stockCounts.actions.reverseTitle')")
+  })
 })

@@ -2,6 +2,7 @@ import { DeleteOutlineRoundedIcon, EditRoundedIcon, FormatListBulletedRoundedIco
 import { VxBox, VxButton, VxCircularProgress, VxTable, VxTableBody, VxTableCell, VxTableContainer, VxTableHead, VxTableRow, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import type { InventoryAdjustmentListItemResponse } from '../../../types/api'
+import { inventoryDocumentStatus } from '../../../types/ui/inventoryDocumentStatuses'
 
 export type InventoryAdjustmentListRow = InventoryAdjustmentListItemResponse & { warehouseName?: string }
 
@@ -41,7 +42,7 @@ export default function InventoryAdjustmentList({ rows, loading, selectedId, can
               <VxTableCell>{row.reason}</VxTableCell>
               <VxTableCell align="right">
                 <VxButton size="small" startIcon={<FormatListBulletedRoundedIcon />} onClick={() => onSelect(row.id)}>{t('pages.inventoryAdjustments.table.lines')}</VxButton>
-                {canManage ? <><VxButton size="small" startIcon={<EditRoundedIcon />} onClick={() => onEdit(row)}>{t('pages.inventoryAdjustments.table.edit')}</VxButton><VxButton size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => onDelete(row)}>{t('pages.inventoryAdjustments.table.delete')}</VxButton></> : null}
+                {canManage ? <><VxButton size="small" startIcon={<EditRoundedIcon />} onClick={() => onEdit(row)}>{t('pages.inventoryAdjustments.table.edit')}</VxButton><VxButton size="small" color="error" startIcon={<DeleteOutlineRoundedIcon />} disabled={row.status !== inventoryDocumentStatus.draft} title={row.status !== inventoryDocumentStatus.draft ? t('pages.inventoryAdjustments.table.deleteLocked') : undefined} onClick={() => onDelete(row)}>{t('pages.inventoryAdjustments.table.delete')}</VxButton></> : null}
               </VxTableCell>
             </VxTableRow>
           ))}

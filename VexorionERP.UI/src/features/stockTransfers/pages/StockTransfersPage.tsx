@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AutoGraphRoundedIcon, CheckCircleRoundedIcon, WarehouseRoundedIcon } from '@vexorion/ui'
-import { VxAlert, VxBox, VxButton, VxCircularProgress, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxMenuItem, VxStack, VxTextField } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxCircularProgress, VxConfirmActionDialog, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxMenuItem, VxStack, VxTextField } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
@@ -32,6 +32,7 @@ import type {
   StockTransferListItemResponse,
 } from '../../../types/api'
 import { getStockTransferEffect, type InventoryEffectRow } from '../../../types/ui/inventoryEffects'
+import { getAllowedInventoryDocumentStatuses, inventoryDocumentStatus } from '../../../types/ui/inventoryDocumentStatuses'
 
 type DialogMode = 'create' | 'edit'
 
@@ -104,6 +105,7 @@ export default function StockTransfersPage() {
   const [editorSaving, setEditorSaving] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<StockTransferListRow | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [statusConfirmationOpen, setStatusConfirmationOpen] = useState(false)
   const [lineMode, setLineMode] = useState<DialogMode>('create')
   const [lineOpen, setLineOpen] = useState(false)
   const [lineSaving, setLineSaving] = useState(false)
@@ -205,6 +207,10 @@ export default function StockTransfersPage() {
     sourceWarehouseName: warehouseNameById.get(row.sourceWarehouseId),
     destinationWarehouseName: warehouseNameById.get(row.destinationWarehouseId),
   })), [rows, warehouseNameById])
+  const headerLocked = editorMode === 'edit' && selectedTransfer?.status !== inventoryDocumentStatus.draft
+  const statusTransitionAction = editorForm.status === inventoryDocumentStatus.cancelled
+    ? selectedTransfer?.status === inventoryDocumentStatus.completed ? 'reverse' : 'cancel'
+    : 'complete'
 
   const resetEditor = () => {
     setEditorError(null)
@@ -285,11 +291,20 @@ export default function StockTransfersPage() {
       setEditorError(saveError instanceof ApiError ? saveError.message : t('pages.stockTransfers.errors.save'))
     } finally {
       setEditorSaving(false)
+      setStatusConfirmationOpen(false)
     }
   }
 
+  const requestSaveEditor = () => {
+    if (editorMode === 'edit' && selectedTransfer && editorForm.status !== selectedTransfer.status) {
+      setStatusConfirmationOpen(true)
+      return
+    }
+    void saveEditor()
+  }
+
   const handleDelete = async () => {
-    if (!deleteTarget) {
+    if (!deleteTarget || deleteTarget.status !== inventoryDocumentStatus.draft) {
       return
     }
 
@@ -313,7 +328,7 @@ export default function StockTransfersPage() {
   }
 
   const openCreateLine = () => {
-    if (!canManage) return
+    if (!canManage || !selectedTransfer || selectedTransfer.status !== inventoryDocumentStatus.draft) return
     setLineMode('create')
     setSelectedLine(null)
     setLineForm(defaultLineForm)
@@ -324,7 +339,7 @@ export default function StockTransfersPage() {
   }
 
   const openEditLine = (line: StockTransferLineDetailsResponse) => {
-    if (!canManage) return
+    if (!canManage || !selectedTransfer || selectedTransfer.status !== inventoryDocumentStatus.draft) return
     setLineMode('edit')
     setSelectedLine(line)
     const nextForm = buildLineForm(line)
@@ -397,7 +412,7 @@ export default function StockTransfersPage() {
   }
 
   const deleteLine = async (lineId: string) => {
-    if (!selectedTransfer) {
+    if (!selectedTransfer || selectedTransfer.status !== inventoryDocumentStatus.draft) {
       return
     }
 
@@ -450,7 +465,7 @@ export default function StockTransfersPage() {
         ...(error ? [{ severity: 'error' as const, message: error }] : []),
         ...(feedback ? [{ severity: 'success' as const, message: feedback }] : []),
       ]}
-      grid={<StockTransferList rows={gridRows} loading={isLoading} selectedId={selectedTransfer?.id} canManage={canManage} getStatusLabel={getDocumentStatusLabel} onSelect={(id) => void loadDetails(id)} onEdit={(row) => void openEditDialog(row)} onDelete={setDeleteTarget} />}
+      grid={<StockTransferList rows={gridRows} loading={isLoading} selectedId={selectedTransfer?.id} canManage={canManage} getStatusLabel={getDocumentStatusLabel} onSelect={(id) => void loadDetails(id)} onEdit={(row) => void openEditDialog(row)} onDelete={(row) => { if (row.status === inventoryDocumentStatus.draft) setDeleteTarget(row) }} />}
       linesPanel={<StockTransferDetail transfer={selectedTransfer} canManage={canManage} productsAvailable={products.length > 0} sourceWarehouseName={selectedTransfer ? warehouseNameById.get(selectedTransfer.sourceWarehouseId) : undefined} destinationWarehouseName={selectedTransfer ? warehouseNameById.get(selectedTransfer.destinationWarehouseId) : undefined} productLabels={new Map(products.map((product) => [product.id, `${product.name} (${product.sku})`]))} balances={sourceBalanceByProductId} lineError={lineError} formatMoney={formatMoney} onAddLine={openCreateLine} onEditLine={openEditLine} onDeleteLine={deleteLine} />}
       editor={
         <>
@@ -465,15 +480,16 @@ export default function StockTransfersPage() {
               <VxStack spacing={2.5} sx={{ pt: 1 }}>
                 {editorError ? <VxAlert severity="error">{editorError}</VxAlert> : null}
                 {editorMode === 'create' ? <VxAlert severity="info">{t('pages.stockTransfers.editor.draftHint')}</VxAlert> : null}
+                {headerLocked ? <VxAlert severity="info">{t('pages.stockTransfers.editor.lockedFields')}</VxAlert> : null}
                 <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
                   <VxTextField label={t('pages.stockTransfers.editor.number')} value={editorForm.transferNumber} onChange={(event) => setEditorForm((current) => ({ ...current, transferNumber: event.target.value }))} fullWidth />
                   <VxTextField label={t('pages.stockTransfers.editor.date')} type="date" value={editorForm.transferDate} onChange={(event) => setEditorForm((current) => ({ ...current, transferDate: event.target.value }))} slotProps={{ inputLabel: { shrink: true } }} fullWidth />
                 </VxStack>
-                <LookupSelectField label={t('pages.stockTransfers.editor.source')} value={editorForm.sourceWarehouseId} onChange={(value) => setEditorForm((current) => ({ ...current, sourceWarehouseId: value }))} options={warehouses.map((warehouse) => ({ value: warehouse.id, label: `${warehouse.name} (${warehouse.code})` }))} disabled={!warehouses.length} emptyText={t('pages.stockTransfers.editor.noWarehouses')} requiredText={t('pages.stockTransfers.editor.required')} />
-                <LookupSelectField label={t('pages.stockTransfers.editor.destination')} value={editorForm.destinationWarehouseId} onChange={(value) => setEditorForm((current) => ({ ...current, destinationWarehouseId: value }))} options={warehouses.map((warehouse) => ({ value: warehouse.id, label: `${warehouse.name} (${warehouse.code})` }))} disabled={!warehouses.length} emptyText={t('pages.stockTransfers.editor.noWarehouses')} requiredText={t('pages.stockTransfers.editor.required')} />
+                <LookupSelectField label={t('pages.stockTransfers.editor.source')} value={editorForm.sourceWarehouseId} onChange={(value) => setEditorForm((current) => ({ ...current, sourceWarehouseId: value }))} options={warehouses.map((warehouse) => ({ value: warehouse.id, label: `${warehouse.name} (${warehouse.code})` }))} disabled={!warehouses.length || headerLocked} emptyText={t('pages.stockTransfers.editor.noWarehouses')} requiredText={t('pages.stockTransfers.editor.required')} />
+                <LookupSelectField label={t('pages.stockTransfers.editor.destination')} value={editorForm.destinationWarehouseId} onChange={(value) => setEditorForm((current) => ({ ...current, destinationWarehouseId: value }))} options={warehouses.map((warehouse) => ({ value: warehouse.id, label: `${warehouse.name} (${warehouse.code})` }))} disabled={!warehouses.length || headerLocked} emptyText={t('pages.stockTransfers.editor.noWarehouses')} requiredText={t('pages.stockTransfers.editor.required')} />
                 {editorMode === 'edit' ? (
                   <VxTextField select label={t('pages.stockTransfers.editor.status')} value={editorForm.status} onChange={(event) => setEditorForm((current) => ({ ...current, status: Number(event.target.value) }))} fullWidth>
-                    {[1, 2, 3, 4, 5].map((status) => <VxMenuItem key={status} value={status}>{getDocumentStatusLabel(status)}</VxMenuItem>)}
+                    {getAllowedInventoryDocumentStatuses(selectedTransfer?.status ?? inventoryDocumentStatus.draft).map((status) => <VxMenuItem key={status} value={status}>{getDocumentStatusLabel(status)}</VxMenuItem>)}
                   </VxTextField>
                 ) : null}
                 {transferEffectRows.length > 0 ? <InventoryEffectPreview title={t(transferEffectTitle)} productLabel={t('inventoryEffects.product')} warehouseLabel={t('inventoryEffects.warehouse')} currentLabel={t('inventoryEffects.current')} changeLabel={t('inventoryEffects.change')} resultingLabel={t('inventoryEffects.resulting')} rows={transferEffectRows} /> : null}
@@ -483,10 +499,11 @@ export default function StockTransfersPage() {
           </VxDialogContent>
           <VxDialogActions sx={{ px: 3, py: 2 }}>
             <VxButton onClick={requestEditorClose} disabled={editorLoading || editorSaving}>{t('pages.stockTransfers.editor.cancel')}</VxButton>
-            <VxButton variant="contained" onClick={() => void saveEditor()} disabled={editorLoading || editorSaving || warehouses.length < 2}>{t(editorMode === 'create' ? 'pages.stockTransfers.editor.create' : 'pages.stockTransfers.editor.save')}</VxButton>
+            <VxButton variant="contained" onClick={requestSaveEditor} disabled={editorLoading || editorSaving || warehouses.length < 2}>{t(editorMode === 'create' ? 'pages.stockTransfers.editor.create' : 'pages.stockTransfers.editor.save')}</VxButton>
           </VxDialogActions>
         </VxDialog>
         {editorDiscardDialog}
+        <VxConfirmActionDialog open={statusConfirmationOpen} title={t(`pages.stockTransfers.statusActions.${statusTransitionAction}Title`)} targetName={selectedTransfer?.transferNumber ?? ''} consequence={t(`pages.stockTransfers.statusActions.${statusTransitionAction}Consequence`)} details={transferEffectRows.length ? <InventoryEffectPreview title={t(transferEffectTitle)} productLabel={t('inventoryEffects.product')} warehouseLabel={t('inventoryEffects.warehouse')} currentLabel={t('inventoryEffects.current')} changeLabel={t('inventoryEffects.change')} resultingLabel={t('inventoryEffects.resulting')} rows={transferEffectRows} /> : null} confirmLabel={t(`pages.stockTransfers.statusActions.${statusTransitionAction}Confirm`)} pendingLabel={t(`pages.stockTransfers.statusActions.${statusTransitionAction}Pending`)} pending={editorSaving} onClose={() => setStatusConfirmationOpen(false)} onConfirm={() => void saveEditor()} />
         </>
       }
       deleteDialog={

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AutoGraphRoundedIcon, CheckCircleRoundedIcon, Inventory2RoundedIcon } from '@vexorion/ui'
-import { VxAlert, VxBox, VxButton, VxCircularProgress, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxMenuItem, VxStack, VxTextField } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxCircularProgress, VxConfirmActionDialog, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxMenuItem, VxStack, VxTextField } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
@@ -32,6 +32,7 @@ import type {
   InventoryAdjustmentListItemResponse,
 } from '../../../types/api'
 import { getInventoryAdjustmentEffect, type InventoryEffectRow } from '../../../types/ui/inventoryEffects'
+import { getAllowedInventoryDocumentStatuses, inventoryDocumentStatus } from '../../../types/ui/inventoryDocumentStatuses'
 
 type DialogMode = 'create' | 'edit'
 
@@ -106,6 +107,7 @@ export default function InventoryAdjustmentsPage() {
   const [initialEditorForm, setInitialEditorForm] = useState<AdjustmentFormState | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<InventoryAdjustmentListRow | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [statusConfirmationOpen, setStatusConfirmationOpen] = useState(false)
   const [lineMode, setLineMode] = useState<DialogMode>('create')
   const [lineOpen, setLineOpen] = useState(false)
   const [lineSaving, setLineSaving] = useState(false)
@@ -195,6 +197,10 @@ export default function InventoryAdjustmentsPage() {
     ...row,
     warehouseName: warehouseNameById.get(row.warehouseId),
   })), [rows, warehouseNameById])
+  const headerLocked = editorMode === 'edit' && selectedAdjustment?.status !== inventoryDocumentStatus.draft
+  const statusTransitionAction = editorForm.status === inventoryDocumentStatus.cancelled
+    ? selectedAdjustment?.status === inventoryDocumentStatus.completed ? 'reverse' : 'cancel'
+    : 'complete'
 
   const resetEditor = () => {
     setEditorError(null)
@@ -270,11 +276,20 @@ export default function InventoryAdjustmentsPage() {
       setEditorError(saveError instanceof ApiError ? saveError.message : t('pages.inventoryAdjustments.errors.save'))
     } finally {
       setEditorSaving(false)
+      setStatusConfirmationOpen(false)
     }
   }
 
+  const requestSaveEditor = () => {
+    if (editorMode === 'edit' && selectedAdjustment && editorForm.status !== selectedAdjustment.status) {
+      setStatusConfirmationOpen(true)
+      return
+    }
+    void saveEditor()
+  }
+
   const handleDelete = async () => {
-    if (!deleteTarget) {
+    if (!deleteTarget || deleteTarget.status !== inventoryDocumentStatus.draft) {
       return
     }
 
@@ -298,6 +313,7 @@ export default function InventoryAdjustmentsPage() {
   }
 
   const openCreateLine = () => {
+    if (!canManage || !selectedAdjustment || selectedAdjustment.status !== inventoryDocumentStatus.draft) return
     setLineMode('create')
     setSelectedLine(null)
     setLineForm(defaultLineForm)
@@ -308,6 +324,7 @@ export default function InventoryAdjustmentsPage() {
   }
 
   const openEditLine = (line: InventoryAdjustmentLineDetailsResponse) => {
+    if (!canManage || !selectedAdjustment || selectedAdjustment.status !== inventoryDocumentStatus.draft) return
     setLineMode('edit')
     setSelectedLine(line)
     const nextForm = buildLineForm(line)
@@ -381,7 +398,7 @@ export default function InventoryAdjustmentsPage() {
   }
 
   const deleteLine = async (lineId: string) => {
-    if (!selectedAdjustment) {
+    if (!selectedAdjustment || selectedAdjustment.status !== inventoryDocumentStatus.draft) {
       return
     }
 
@@ -434,7 +451,7 @@ export default function InventoryAdjustmentsPage() {
         ...(error ? [{ severity: 'error' as const, message: error }] : []),
         ...(feedback ? [{ severity: 'success' as const, message: feedback }] : []),
       ]}
-      grid={<InventoryAdjustmentList rows={gridRows} loading={isLoading} selectedId={selectedAdjustment?.id} canManage={canManage} getStatusLabel={getDocumentStatusLabel} onSelect={(id) => void loadDetails(id)} onEdit={(row) => void openEditDialog(row)} onDelete={setDeleteTarget} />}
+      grid={<InventoryAdjustmentList rows={gridRows} loading={isLoading} selectedId={selectedAdjustment?.id} canManage={canManage} getStatusLabel={getDocumentStatusLabel} onSelect={(id) => void loadDetails(id)} onEdit={(row) => void openEditDialog(row)} onDelete={(row) => { if (row.status === inventoryDocumentStatus.draft) setDeleteTarget(row) }} />}
       linesPanel={<InventoryAdjustmentDetail adjustment={selectedAdjustment} canManage={canManage} productsAvailable={products.length > 0} warehouseName={selectedAdjustment ? warehouseNameById.get(selectedAdjustment.warehouseId) : undefined} productLabels={new Map(products.map((product) => [product.id, `${product.name} (${product.sku})`]))} balances={balanceByProductId} lineError={lineError} getStatusLabel={getDocumentStatusLabel} onAddLine={openCreateLine} onEditLine={openEditLine} onDeleteLine={deleteLine} />}
       editor={
         <>
@@ -449,15 +466,16 @@ export default function InventoryAdjustmentsPage() {
               <VxStack spacing={2.5} sx={{ pt: 1 }}>
                 {editorError ? <VxAlert severity="error">{editorError}</VxAlert> : null}
                 {editorMode === 'create' ? <VxAlert severity="info">{t('pages.inventoryAdjustments.editor.draftHint')}</VxAlert> : null}
+                {headerLocked ? <VxAlert severity="info">{t('pages.inventoryAdjustments.editor.lockedFields')}</VxAlert> : null}
                 <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
                   <VxTextField label={t('pages.inventoryAdjustments.editor.adjustmentNumber')} value={editorForm.adjustmentNumber} onChange={(event) => setEditorForm((current) => ({ ...current, adjustmentNumber: event.target.value }))} fullWidth />
                   <VxTextField label={t('pages.inventoryAdjustments.editor.adjustmentDate')} type="date" value={editorForm.adjustmentDate} onChange={(event) => setEditorForm((current) => ({ ...current, adjustmentDate: event.target.value }))} slotProps={{ inputLabel: { shrink: true } }} fullWidth />
                 </VxStack>
-                <LookupSelectField label={t('pages.inventoryAdjustments.editor.warehouse')} value={editorForm.warehouseId} onChange={(value) => setEditorForm((current) => ({ ...current, warehouseId: value }))} options={warehouses.map((warehouse) => ({ value: warehouse.id, label: `${warehouse.name} (${warehouse.code})` }))} disabled={!warehouses.length} emptyText={t('pages.inventoryAdjustments.editor.noWarehouses')} requiredText={t('common.required')} />
+                <LookupSelectField label={t('pages.inventoryAdjustments.editor.warehouse')} value={editorForm.warehouseId} onChange={(value) => setEditorForm((current) => ({ ...current, warehouseId: value }))} options={warehouses.map((warehouse) => ({ value: warehouse.id, label: `${warehouse.name} (${warehouse.code})` }))} disabled={!warehouses.length || headerLocked} emptyText={t('pages.inventoryAdjustments.editor.noWarehouses')} requiredText={t('common.required')} />
                 <VxTextField label={t('pages.inventoryAdjustments.editor.reason')} value={editorForm.reason} onChange={(event) => setEditorForm((current) => ({ ...current, reason: event.target.value }))} fullWidth />
                 {editorMode === 'edit' ? (
                   <VxTextField select label={t('pages.inventoryAdjustments.editor.status')} value={editorForm.status} onChange={(event) => setEditorForm((current) => ({ ...current, status: Number(event.target.value) }))} fullWidth>
-                    {[1, 2, 3, 4, 5].map((status) => <VxMenuItem key={status} value={status}>{getDocumentStatusLabel(status)}</VxMenuItem>)}
+                    {getAllowedInventoryDocumentStatuses(selectedAdjustment?.status ?? inventoryDocumentStatus.draft).map((status) => <VxMenuItem key={status} value={status}>{getDocumentStatusLabel(status)}</VxMenuItem>)}
                   </VxTextField>
                 ) : null}
                 {adjustmentEffectRows.length > 0 ? <InventoryEffectPreview title={t(adjustmentEffectTitle)} productLabel={t('inventoryEffects.product')} warehouseLabel={t('inventoryEffects.warehouse')} currentLabel={t('inventoryEffects.current')} changeLabel={t('inventoryEffects.change')} resultingLabel={t('inventoryEffects.resulting')} rows={adjustmentEffectRows} /> : null}
@@ -467,10 +485,11 @@ export default function InventoryAdjustmentsPage() {
           </VxDialogContent>
           <VxDialogActions sx={{ px: 3, py: 2 }}>
             <VxButton onClick={requestEditorClose} disabled={editorLoading || editorSaving}>{t('pages.inventoryAdjustments.editor.cancel')}</VxButton>
-            <VxButton variant="contained" onClick={() => void saveEditor()} disabled={editorLoading || editorSaving || warehouses.length === 0}>{editorMode === 'create' ? t('pages.inventoryAdjustments.editor.create') : t('pages.inventoryAdjustments.editor.save')}</VxButton>
+            <VxButton variant="contained" onClick={requestSaveEditor} disabled={editorLoading || editorSaving || warehouses.length === 0}>{editorMode === 'create' ? t('pages.inventoryAdjustments.editor.create') : t('pages.inventoryAdjustments.editor.save')}</VxButton>
           </VxDialogActions>
         </VxDialog>
         {editorDiscardDialog}
+        <VxConfirmActionDialog open={statusConfirmationOpen} title={t(`pages.inventoryAdjustments.statusActions.${statusTransitionAction}Title`)} targetName={selectedAdjustment?.adjustmentNumber ?? ''} consequence={t(`pages.inventoryAdjustments.statusActions.${statusTransitionAction}Consequence`)} details={adjustmentEffectRows.length ? <InventoryEffectPreview title={t(adjustmentEffectTitle)} productLabel={t('inventoryEffects.product')} warehouseLabel={t('inventoryEffects.warehouse')} currentLabel={t('inventoryEffects.current')} changeLabel={t('inventoryEffects.change')} resultingLabel={t('inventoryEffects.resulting')} rows={adjustmentEffectRows} /> : null} confirmLabel={t(`pages.inventoryAdjustments.statusActions.${statusTransitionAction}Confirm`)} pendingLabel={t(`pages.inventoryAdjustments.statusActions.${statusTransitionAction}Pending`)} pending={editorSaving} onClose={() => setStatusConfirmationOpen(false)} onConfirm={() => void saveEditor()} />
         </>
       }
       deleteDialog={
