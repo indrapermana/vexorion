@@ -20,6 +20,19 @@ export type ProductSupplierLatestPurchasePriceResponse = {
   currencyCode: string
 }
 
+export type ProductPurchasePriceHistoryEntryResponse = {
+  purchaseInvoiceLineId: string
+  purchaseInvoiceId: string
+  supplierId: string
+  supplierNumber: string
+  supplierName: string
+  unitCost: number
+  quantity: number
+  invoiceDate: string
+  invoiceNumber: string
+  currencyCode: string
+}
+
 export type ProductDetailsResponse = {
   id: string
   tenantId: string

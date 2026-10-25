@@ -623,8 +623,8 @@ const enUS = {
       grid: {
         loading: 'Loading product inventory...',
         empty: 'No products match the current filters.',
-        expand: 'Expand stock details',
-        collapse: 'Collapse stock details',
+        expand: 'Expand product details',
+        collapse: 'Collapse product details',
         skuPrefix: 'SKU',
         active: 'Active',
         inactive: 'Inactive',
@@ -659,9 +659,27 @@ const enUS = {
           noWarehouseBalances: 'No warehouse balances are posted for this product yet.',
         },
         tabs: {
+          details: 'Details',
           stock: 'Stock',
           identifiers: 'Identifiers',
+          purchaseHistory: 'Purchase history',
         },
+      },
+      details: {
+        loading: 'Loading product details...',
+        loadError: 'Unable to load product details.',
+        noDescription: 'No description provided.',
+        imageAlt: '{{name}} product image',
+        pricingNote: 'Prices use the product settings currency. Purchase history shows each invoice currency; values are not converted.',
+        fields: { sku: 'SKU', unitOfMeasure: 'Unit of measure', salesPrice: 'Sales price', standardCost: 'Standard cost', reorderLevel: 'Reorder level', status: 'Status' },
+      },
+      purchaseHistory: {
+        loading: 'Loading purchase history...',
+        loadError: 'Unable to load purchase history.',
+        empty: 'No posted purchase invoice history in the last 12 months.',
+        scope: 'Posted purchase invoices in the last 12 months. Prices remain in the invoice currency.',
+        showingRecent: 'Showing the {{count}} most recent entries.',
+        columns: { date: 'Invoice date', supplier: 'Supplier', invoice: 'Invoice', quantity: 'Quantity', unitCost: 'Unit cost' },
       },
       identifiers: {
         title: 'Product Identifiers',

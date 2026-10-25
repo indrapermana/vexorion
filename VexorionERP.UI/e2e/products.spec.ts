@@ -34,12 +34,49 @@ test.describe('Products', () => {
     await expect(page.getByText(firstName, { exact: true })).toBeVisible()
     await expect(page.getByText(secondName, { exact: true })).toHaveCount(0)
     await expect(page.getByRole('region', { name: 'Page metrics' })).toContainText(/Catalog rows/)
+    const expandProduct = page.getByRole('button', { name: `Expand product details: ${firstName}` })
+    await expandProduct.click()
+    await expect(page.getByText('No description provided.', { exact: true })).toBeVisible()
+    await page.getByRole('tab', { name: 'Purchase history' }).click()
+    await expect(page.getByText('No posted purchase invoice history in the last 12 months.', { exact: true })).toBeVisible()
 
     for (const width of [390, 768, 1440]) {
       await page.setViewportSize({ width, height: 900 })
       await expect(search).toBeVisible()
       await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1)
     }
+  })
+
+  test('UX-MASTER-02: product details, editing, stock, identifiers, and purchase history share one workspace', async ({ page }) => {
+    const crud = new GenericCrudPage(page, '/products')
+    await crud.goto()
+    await crud.clickAdd()
+    const dialog = page.getByRole('dialog')
+    const productName = UNIQUE()
+    const sku = uid('SKU')
+    await dialog.getByLabel('Product name').fill(productName)
+    await dialog.getByLabel('SKU').fill(sku)
+    await crud.saveDialog()
+    await expect(dialog).not.toBeVisible({ timeout: 8_000 })
+
+    await page.getByRole('button', { name: `Expand product details: ${productName}` }).click()
+    await expect(page.getByRole('heading', { name: productName, exact: true })).toBeVisible()
+    await expect(page.getByText('No description provided.', { exact: true })).toBeVisible()
+
+    await page.getByRole('button', { name: 'Edit', exact: true }).click()
+    const editor = page.getByRole('dialog')
+    await expect(editor.getByLabel('Product name')).toHaveValue(productName)
+    await expect(editor.getByLabel('SKU')).toHaveValue(sku)
+    await expect(editor.getByLabel('Choose product image')).toBeVisible()
+    await editor.getByRole('button', { name: 'Cancel', exact: true }).click()
+    await expect(editor).not.toBeVisible()
+
+    await page.getByRole('tab', { name: 'Stock', exact: true }).click()
+    await expect(page.getByText('No warehouse balances are posted for this product yet.', { exact: true })).toBeVisible()
+    await page.getByRole('tab', { name: 'Identifiers', exact: true }).click()
+    await expect(page.getByText('No identifiers assigned to this product yet.', { exact: true })).toBeVisible()
+    await page.getByRole('tab', { name: 'Purchase history', exact: true }).click()
+    await expect(page.getByText('No posted purchase invoice history in the last 12 months.', { exact: true })).toBeVisible()
   })
 
   test('TC-M-016: products list page loads', async ({ page }) => {

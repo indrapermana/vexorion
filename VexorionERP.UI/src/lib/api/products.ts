@@ -9,6 +9,7 @@ import type {
   ProductIdentifierListItemResponse,
   ProductImageUploadResponse,
   ProductListItemResponse,
+  ProductPurchasePriceHistoryEntryResponse,
   ProductSupplierLatestPurchasePriceResponse,
   UpdateProductCategoryRequest,
   UpdateProductIdentifierRequest,
@@ -46,6 +47,11 @@ export function deleteProduct(productId: string) {
 
 export function getProductPurchasePriceHistory(productId: string) {
   return requestJson<ProductSupplierLatestPurchasePriceResponse[]>(`/products/${productId}/purchase-price-history`)
+}
+
+export function getProductPurchasePriceHistoryEntries(productId: string, fromDate: string) {
+  const params = new URLSearchParams({ fromDate })
+  return requestJson<ProductPurchasePriceHistoryEntryResponse[]>(`/products/${productId}/purchase-price-history/entries?${params}`)
 }
 
 // Product Categories

@@ -449,8 +449,8 @@ const idID = {
       grid: {
         loading: 'Memuat inventori produk...',
         empty: 'Tidak ada produk yang sesuai filter saat ini.',
-        expand: 'Buka detail stok',
-        collapse: 'Tutup detail stok',
+        expand: 'Buka detail produk',
+        collapse: 'Tutup detail produk',
         skuPrefix: 'SKU',
         active: 'Aktif',
         inactive: 'Tidak aktif',
@@ -484,7 +484,20 @@ const idID = {
           available: 'Tersedia {{quantity}}',
           noWarehouseBalances: 'Belum ada saldo gudang untuk produk ini.',
         },
-        tabs: { stock: 'Stok', identifiers: 'Identifikator' },
+        tabs: { details: 'Detail', stock: 'Stok', identifiers: 'Identifikator', purchaseHistory: 'Riwayat Pembelian' },
+      },
+      details: {
+        loading: 'Memuat detail produk...', loadError: 'Tidak dapat memuat detail produk.',
+        noDescription: 'Tidak ada deskripsi.', imageAlt: 'Gambar produk {{name}}',
+        pricingNote: 'Harga mengikuti mata uang pengaturan produk. Riwayat pembelian menggunakan mata uang setiap faktur dan tidak dikonversi.',
+        fields: { sku: 'SKU', unitOfMeasure: 'Satuan', salesPrice: 'Harga jual', standardCost: 'Biaya standar', reorderLevel: 'Level pemesanan ulang', status: 'Status' },
+      },
+      purchaseHistory: {
+        loading: 'Memuat riwayat pembelian...', loadError: 'Tidak dapat memuat riwayat pembelian.',
+        empty: 'Tidak ada riwayat faktur pembelian yang diposting dalam 12 bulan terakhir.',
+        scope: 'Faktur pembelian yang diposting dalam 12 bulan terakhir. Harga tetap menggunakan mata uang faktur.',
+        showingRecent: 'Menampilkan {{count}} entri terbaru.',
+        columns: { date: 'Tanggal faktur', supplier: 'Pemasok', invoice: 'Faktur', quantity: 'Jumlah', unitCost: 'Biaya satuan' },
       },
       identifiers: {
         title: 'Identifikator Produk', addButton: 'Tambah identifikator', empty: 'Belum ada identifikator yang ditetapkan untuk produk ini.', primary: 'Utama',

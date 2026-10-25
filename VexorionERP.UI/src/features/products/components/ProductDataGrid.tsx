@@ -212,7 +212,7 @@ export default function ProductDataGrid({ rows, searchTerm = '', isLoading, expa
                 <VxTableRow>
                   <VxTableCell colSpan={11} sx={{ py: 0, borderBottom: '1px solid rgba(108, 92, 231, 0.06)' }}>
                     <VxCollapse in={isExpanded} timeout="auto" unmountOnExit>
-                      <ProductExpandedPanel row={row} canManage={canManage} />
+                      <ProductExpandedPanel row={row} canManage={canManage} onEdit={onEdit} />
                     </VxCollapse>
                   </VxTableCell>
                 </VxTableRow>

@@ -422,8 +422,8 @@ const esES = {
       grid: {
         loading: 'Cargando inventario de productos...',
         empty: 'Ningún producto coincide con los filtros actuales.',
-        expand: 'Expandir detalle de stock',
-        collapse: 'Colapsar detalle de stock',
+        expand: 'Expandir detalles del producto',
+        collapse: 'Contraer detalles del producto',
         skuPrefix: 'SKU',
         active: 'Activo',
         inactive: 'Inactivo',
@@ -457,7 +457,20 @@ const esES = {
           available: 'Disponible {{quantity}}',
           noWarehouseBalances: 'Aún no hay saldos de almacén para este producto.',
         },
-        tabs: { stock: 'Stock', identifiers: 'Identificadores' },
+        tabs: { details: 'Detalles', stock: 'Stock', identifiers: 'Identificadores', purchaseHistory: 'Historial de compras' },
+      },
+      details: {
+        loading: 'Cargando detalles del producto...', loadError: 'No se pudieron cargar los detalles del producto.',
+        noDescription: 'No hay descripción.', imageAlt: 'Imagen del producto {{name}}',
+        pricingNote: 'Los precios usan la moneda configurada para el producto. El historial de compras conserva la moneda de cada factura; no se convierten los importes.',
+        fields: { sku: 'SKU', unitOfMeasure: 'Unidad de medida', salesPrice: 'Precio de venta', standardCost: 'Costo estándar', reorderLevel: 'Nivel de reposición', status: 'Estado' },
+      },
+      purchaseHistory: {
+        loading: 'Cargando historial de compras...', loadError: 'No se pudo cargar el historial de compras.',
+        empty: 'No hay historial de facturas de compra contabilizadas en los últimos 12 meses.',
+        scope: 'Facturas de compra contabilizadas en los últimos 12 meses. Los precios conservan la moneda de la factura.',
+        showingRecent: 'Se muestran las {{count}} entradas más recientes.',
+        columns: { date: 'Fecha de factura', supplier: 'Proveedor', invoice: 'Factura', quantity: 'Cantidad', unitCost: 'Costo unitario' },
       },
       identifiers: {
         title: 'Identificadores de producto', addButton: 'Agregar identificador', empty: 'Aún no hay identificadores asignados a este producto.', primary: 'Primario',
