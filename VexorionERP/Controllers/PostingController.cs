@@ -13,6 +13,22 @@ namespace VexorionERP;
 public class PostingController(
     IMediator mediator) : ServiceResultControllerBase
 {
+    [HttpPost("journals")]
+    [Authorize(Policy = AppPermissions.Billing.Manage)]
+    public async Task<ActionResult<JournalEntryDetailsResponse>> CreateManualJournal([FromBody] CreateManualJournalRequest request)
+    {
+        var result = await mediator.Send(new CreateManualJournalCommand(request), HttpContext.RequestAborted);
+        return ToActionResult(result);
+    }
+
+    [HttpPost("journals/{journalEntryId:guid}/post")]
+    [Authorize(Policy = AppPermissions.Billing.Manage)]
+    public async Task<ActionResult<JournalEntryDetailsResponse>> PostManualJournal(Guid journalEntryId)
+    {
+        var result = await mediator.Send(new PostManualJournalCommand(journalEntryId), HttpContext.RequestAborted);
+        return ToActionResult(result);
+    }
+
     [HttpPost("sales-invoices/{salesInvoiceId:guid}")]
     [Authorize(Policy = AppPermissions.Billing.Manage)]
     public async Task<ActionResult<JournalEntryDetailsResponse>> PostSalesInvoice(Guid salesInvoiceId, [FromBody] PostSalesInvoiceRequest request)

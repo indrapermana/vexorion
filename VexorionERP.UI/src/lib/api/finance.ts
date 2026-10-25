@@ -3,6 +3,7 @@ import type {
   AccountListItemResponse,
   CreateAccountRequest,
   CreateFiscalPeriodRequest,
+  CreateManualJournalRequest,
   FiscalPeriodDetailsResponse,
   FiscalPeriodListItemResponse,
   JournalEntryDetailsResponse,
@@ -77,4 +78,12 @@ export function postPurchaseInvoice(purchaseInvoiceId: string, request: PostPurc
 
 export function reverseJournal(journalEntryId: string, request: ReverseJournalRequest) {
   return requestJson<JournalEntryDetailsResponse>(`/posting/journals/${journalEntryId}/reverse`, 'POST', request)
+}
+
+export function createManualJournal(request: CreateManualJournalRequest) {
+  return requestJson<JournalEntryDetailsResponse>('/posting/journals', 'POST', request)
+}
+
+export function postManualJournal(journalEntryId: string) {
+  return requestJson<JournalEntryDetailsResponse>(`/posting/journals/${journalEntryId}/post`, 'POST')
 }

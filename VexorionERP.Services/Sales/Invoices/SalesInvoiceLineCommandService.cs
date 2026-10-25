@@ -22,7 +22,7 @@ public class SalesInvoiceLineCommandService(
             return ServiceResult<ILineResponse<SalesInvoiceLine>>.Failure(StatusCodes.Status404NotFound, "Sales invoice not found.");
 
         if (invoice.Status != InvoiceStatus.Draft)
-            return ServiceResult<ILineResponse<SalesInvoiceLine>>.Failure(StatusCodes.Status400BadRequest, "Lines can only be added to draft invoices.");
+            return ServiceResult<ILineResponse<SalesInvoiceLine>>.Failure(StatusCodes.Status409Conflict, "Lines can only be added to draft invoices.");
 
         if (!await dbContext.Products.AnyAsync(x => x.Id == request.ProductId, cancellationToken))
             return ServiceResult<ILineResponse<SalesInvoiceLine>>.Failure(StatusCodes.Status400BadRequest, "Product not found.");
@@ -48,7 +48,7 @@ public class SalesInvoiceLineCommandService(
             return ServiceResult<ILineResponse<SalesInvoiceLine>>.Failure(StatusCodes.Status404NotFound, "Sales invoice not found.");
 
         if (invoice.Status != InvoiceStatus.Draft)
-            return ServiceResult<ILineResponse<SalesInvoiceLine>>.Failure(StatusCodes.Status400BadRequest, "Lines can only be modified on draft invoices.");
+            return ServiceResult<ILineResponse<SalesInvoiceLine>>.Failure(StatusCodes.Status409Conflict, "Lines can only be modified on draft invoices.");
 
         var line = invoice.Lines.FirstOrDefault(x => x.Id == salesInvoiceLineId);
         if (line is null)
@@ -74,7 +74,7 @@ public class SalesInvoiceLineCommandService(
             return ServiceResult<bool>.Failure(StatusCodes.Status404NotFound, "Sales invoice not found.");
 
         if (invoice.Status != InvoiceStatus.Draft)
-            return ServiceResult<bool>.Failure(StatusCodes.Status400BadRequest, "Lines can only be deleted from draft invoices.");
+            return ServiceResult<bool>.Failure(StatusCodes.Status409Conflict, "Lines can only be deleted from draft invoices.");
 
         var line = invoice.Lines.FirstOrDefault(x => x.Id == salesInvoiceLineId);
         if (line is null)

@@ -15,3 +15,16 @@ export type PostPurchaseInvoiceRequest = {
 export type ReverseJournalRequest = {
   reversalDate: string
 }
+
+export type CreateManualJournalLineRequest = {
+  accountId: string
+  description?: string | null
+  debitAmount: number
+  creditAmount: number
+}
+
+export type CreateManualJournalRequest = {
+  postingDate: string
+  description: string
+  lines: CreateManualJournalLineRequest[]
+}

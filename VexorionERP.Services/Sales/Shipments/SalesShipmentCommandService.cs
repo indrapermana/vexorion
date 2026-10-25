@@ -146,7 +146,7 @@ public class SalesShipmentCommandService(
 
         if (shipment.Status != DocumentStatus.Draft)
         {
-            return ServiceResult<SalesShipmentDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Only draft shipments can be posted.");
+            return ServiceResult<SalesShipmentDetailsResponse>.Failure(StatusCodes.Status409Conflict, "Only draft shipments can be posted.");
         }
 
         var order = await dbContext.SalesOrders.GetByTenant(tenantId.Value)
@@ -209,7 +209,16 @@ public class SalesShipmentCommandService(
         shipment.Status = DocumentStatus.Completed;
         shipment.PostedAtUtc = DateTimeOffset.UtcNow;
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return ServiceResult<SalesShipmentDetailsResponse>.Failure(
+                StatusCodes.Status409Conflict,
+                "The sales order fulfillment changed while this shipment was being posted. Reload the order and try again.");
+        }
 
         var response = await BuildDetailsResponseAsync(shipment.Id, cancellationToken);
         return ServiceResult<SalesShipmentDetailsResponse>.Success(response!);
@@ -233,7 +242,7 @@ public class SalesShipmentCommandService(
 
         if (shipment.Status != DocumentStatus.Draft)
         {
-            return ServiceResult<bool>.Failure(StatusCodes.Status400BadRequest, "Only draft shipments can be deleted.");
+            return ServiceResult<bool>.Failure(StatusCodes.Status409Conflict, "Only draft shipments can be deleted.");
         }
 
         shipment.IsActive = false;

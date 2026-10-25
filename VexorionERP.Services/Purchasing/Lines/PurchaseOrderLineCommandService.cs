@@ -28,7 +28,7 @@ public class PurchaseOrderLineCommandService(
 
         if (order.Status != DocumentStatus.Draft)
         {
-            return ServiceResult<ILineResponse<PurchaseOrderLine>>.Failure(StatusCodes.Status400BadRequest, "Purchase order lines can only be modified while the order is in Draft status.");
+            return ServiceResult<ILineResponse<PurchaseOrderLine>>.Failure(StatusCodes.Status409Conflict, "Purchase order lines can only be modified while the order is in Draft status.");
         }
 
         if (!await dbContext.Products.AnyAsync(x => x.Id == request.ProductId, cancellationToken))
@@ -62,7 +62,7 @@ public class PurchaseOrderLineCommandService(
 
         if (order.Status != DocumentStatus.Draft)
         {
-            return ServiceResult<ILineResponse<PurchaseOrderLine>>.Failure(StatusCodes.Status400BadRequest, "Purchase order lines can only be modified while the order is in Draft status.");
+            return ServiceResult<ILineResponse<PurchaseOrderLine>>.Failure(StatusCodes.Status409Conflict, "Purchase order lines can only be modified while the order is in Draft status.");
         }
 
         var line = order.Lines.FirstOrDefault(x => x.Id == purchaseOrderLineId);
@@ -92,7 +92,7 @@ public class PurchaseOrderLineCommandService(
 
         if (order.Status != DocumentStatus.Draft)
         {
-            return ServiceResult<bool>.Failure(StatusCodes.Status400BadRequest, "Purchase order lines can only be modified while the order is in Draft status.");
+            return ServiceResult<bool>.Failure(StatusCodes.Status409Conflict, "Purchase order lines can only be modified while the order is in Draft status.");
         }
 
         var line = order.Lines.FirstOrDefault(x => x.Id == purchaseOrderLineId);

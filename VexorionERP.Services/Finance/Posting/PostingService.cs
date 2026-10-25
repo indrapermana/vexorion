@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using VexorionERP.Contracts;
 using VexorionERP.Database;
 using VexorionERP.Models;
 using VexorionERP.Services;
@@ -12,6 +13,102 @@ public class PostingService(
     INumberingService? numberingService = null) : IPostingService
 {
     private readonly INumberingService _numberingService = numberingService ?? new NumberingService(dbContext, currentTenantProvider);
+
+    public async Task<ServiceResult<JournalEntry>> CreateManualJournalAsync(
+        DateOnly postingDate,
+        string description,
+        IReadOnlyCollection<CreateManualJournalLineRequest> lines,
+        CancellationToken cancellationToken = default)
+    {
+        if (!currentTenantProvider.TenantId.HasValue)
+            return ServiceResult<JournalEntry>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+
+        if (string.IsNullOrWhiteSpace(description))
+            return ServiceResult<JournalEntry>.ValidationFailure(new Dictionary<string, string[]> { [nameof(description)] = ["Description is required."] });
+
+        if (lines.Count < 2)
+            return ServiceResult<JournalEntry>.ValidationFailure(new Dictionary<string, string[]> { [nameof(lines)] = ["A manual journal requires at least two lines."] });
+
+        if (lines.Any(x => x.AccountId == Guid.Empty || x.DebitAmount < 0m || x.CreditAmount < 0m || (x.DebitAmount > 0m) == (x.CreditAmount > 0m)))
+            return ServiceResult<JournalEntry>.ValidationFailure(new Dictionary<string, string[]> { [nameof(lines)] = ["Each line requires an account and exactly one positive debit or credit amount."] });
+
+        var totalDebit = lines.Sum(x => x.DebitAmount);
+        var totalCredit = lines.Sum(x => x.CreditAmount);
+        if (totalDebit <= 0m || totalDebit != totalCredit)
+            return ServiceResult<JournalEntry>.Failure(StatusCodes.Status400BadRequest, "Manual journal debits and credits must be equal and greater than zero.");
+
+        var tenantId = currentTenantProvider.TenantId.Value;
+        var fiscalPeriod = await dbContext.FiscalPeriods.FirstOrDefaultAsync(
+            x => x.TenantId == tenantId && x.StartDate <= postingDate && x.EndDate >= postingDate,
+            cancellationToken);
+        if (fiscalPeriod is null)
+            return ServiceResult<JournalEntry>.Failure(StatusCodes.Status400BadRequest, "No fiscal period found for posting date.");
+
+        var accountIds = lines.Select(x => x.AccountId).Distinct().ToList();
+        var accounts = await dbContext.Accounts
+            .Where(x => x.TenantId == tenantId && accountIds.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, cancellationToken);
+        if (accounts.Count != accountIds.Count)
+            return ServiceResult<JournalEntry>.Failure(StatusCodes.Status400BadRequest, "One or more journal accounts were not found.");
+        if (accounts.Values.Any(x => !x.IsActive || !x.IsPostingAllowed))
+            return ServiceResult<JournalEntry>.Failure(StatusCodes.Status400BadRequest, "Every manual journal account must be active and eligible for posting.");
+
+        var journalNumberResult = await _numberingService.GenerateNextAsync("JOURNAL_ENTRY", postingDate, cancellationToken);
+        if (!journalNumberResult.Succeeded)
+            return ServiceResult<JournalEntry>.Failure(journalNumberResult.StatusCode ?? StatusCodes.Status400BadRequest, journalNumberResult.ErrorMessage ?? "Failed to generate journal number.");
+
+        var journal = new JournalEntry
+        {
+            TenantId = tenantId,
+            JournalNumber = journalNumberResult.Value!,
+            SourceDocumentType = "ManualJournal",
+            PostingDate = postingDate,
+            FiscalPeriodId = fiscalPeriod.Id,
+            Status = JournalEntryStatus.Draft,
+            TotalDebit = totalDebit,
+            TotalCredit = totalCredit,
+            Description = description.Trim(),
+            Lines = lines.Select((line, index) =>
+            {
+                var entryLine = CreateLine(tenantId, line.AccountId, index + 1, NormalizeOptional(line.Description), line.DebitAmount, line.CreditAmount);
+                entryLine.Account = accounts[line.AccountId];
+                return entryLine;
+            }).ToList(),
+        };
+
+        dbContext.JournalEntries.Add(journal);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return ServiceResult<JournalEntry>.Success(journal);
+    }
+
+    public async Task<ServiceResult<JournalEntry>> PostManualJournalAsync(Guid journalEntryId, CancellationToken cancellationToken = default)
+    {
+        if (!currentTenantProvider.TenantId.HasValue)
+            return ServiceResult<JournalEntry>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+
+        var tenantId = currentTenantProvider.TenantId.Value;
+        var journal = await dbContext.JournalEntries
+            .Include(x => x.Lines).ThenInclude(x => x.Account)
+            .FirstOrDefaultAsync(x => x.Id == journalEntryId && x.TenantId == tenantId, cancellationToken);
+        if (journal is null)
+            return ServiceResult<JournalEntry>.Failure(StatusCodes.Status404NotFound, "Journal entry not found.");
+        if (journal.SourceDocumentType != "ManualJournal")
+            return ServiceResult<JournalEntry>.Failure(StatusCodes.Status409Conflict, "Only manual journals can be posted through this action.");
+        if (journal.Status != JournalEntryStatus.Draft)
+            return ServiceResult<JournalEntry>.Failure(StatusCodes.Status409Conflict, "Only draft manual journals can be posted.");
+        if (journal.TotalDebit <= 0m || journal.TotalDebit != journal.TotalCredit || journal.Lines.Count < 2)
+            return ServiceResult<JournalEntry>.Failure(StatusCodes.Status409Conflict, "The manual journal is not balanced.");
+        if (journal.Lines.Any(x => x.Account is null || !x.Account.IsActive || !x.Account.IsPostingAllowed))
+            return ServiceResult<JournalEntry>.Failure(StatusCodes.Status409Conflict, "Every manual journal account must still be active and eligible for posting.");
+
+        var fiscalPeriod = await GetOpenFiscalPeriodAsync(tenantId, journal.PostingDate, cancellationToken);
+        if (fiscalPeriod is null || fiscalPeriod.Id != journal.FiscalPeriodId)
+            return ServiceResult<JournalEntry>.Failure(StatusCodes.Status409Conflict, "The fiscal period for this manual journal is closed or unavailable.");
+
+        journal.Status = JournalEntryStatus.Posted;
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return ServiceResult<JournalEntry>.Success(journal);
+    }
 
     public async Task<ServiceResult<JournalEntry>> PostSalesInvoiceAsync(
         Guid salesInvoiceId,
@@ -419,5 +516,7 @@ public class PostingService(
             CreditAmount = creditAmount,
         };
     }
+
+    private static string? NormalizeOptional(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
 }

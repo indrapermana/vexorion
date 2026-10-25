@@ -10,6 +10,7 @@ public class SalesOrderLine : TenantEntityBase
     public decimal UnitPrice { get; set; }
     public decimal DiscountAmount { get; set; }
     public decimal ShippedQuantity { get; set; }
+    public uint Version { get; set; }
     public decimal RemainingQuantity => Quantity - ShippedQuantity;
     public decimal LineTotal => (Quantity * UnitPrice) - DiscountAmount;
 

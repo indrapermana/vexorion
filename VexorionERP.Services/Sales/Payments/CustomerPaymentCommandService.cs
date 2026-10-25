@@ -73,7 +73,16 @@ public class CustomerPaymentCommandService(
         salesInvoice.Status = nextPaidTotal == salesInvoice.GrandTotal ? InvoiceStatus.Paid : InvoiceStatus.PartiallyPaid;
 
         context.CustomerPayments.Add(payment);
-        await context.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return ServiceResult<IEntityResponse<CustomerPayment>>.Failure(
+                StatusCodes.Status409Conflict,
+                "The invoice balance changed while this payment was being allocated. Reload the invoice and try again.");
+        }
 
         return ServiceResult<IEntityResponse<CustomerPayment>>.Success(payment.Adapt<CustomerPaymentDetailsResponse>());
     }

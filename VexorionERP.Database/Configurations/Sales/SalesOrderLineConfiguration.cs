@@ -12,6 +12,7 @@ public class SalesOrderLineConfiguration : TenantEntityConfiguration<SalesOrderL
         builder.Property(x => x.UnitPrice).HasPrecision(18, 2);
         builder.Property(x => x.DiscountAmount).HasPrecision(18, 2);
         builder.Property(x => x.ShippedQuantity).HasPrecision(18, 2);
+        builder.Property(x => x.Version).IsRowVersion();
         builder.Ignore(x => x.RemainingQuantity);
         builder.Ignore(x => x.LineTotal);
 

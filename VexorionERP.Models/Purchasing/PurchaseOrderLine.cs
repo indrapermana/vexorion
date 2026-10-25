@@ -9,6 +9,7 @@ public class PurchaseOrderLine : TenantEntityBase
     public decimal Quantity { get; set; }
     public decimal UnitCost { get; set; }
     public decimal ReceivedQuantity { get; set; }
+    public uint Version { get; set; }
     public decimal RemainingQuantity => Quantity - ReceivedQuantity;
     public decimal LineTotal => Quantity * UnitCost;
 

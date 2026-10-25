@@ -101,6 +101,13 @@ public class SalesOrderCommandService(
             return ServiceResult<IEntityResponse<SalesOrder>>.Failure(StatusCodes.Status404NotFound, "Sales order not found.");
         }
 
+        if (order.Status != DocumentStatus.Draft && HasHeaderChanges(order, updateRequest))
+        {
+            return ServiceResult<IEntityResponse<SalesOrder>>.Failure(
+                StatusCodes.Status409Conflict,
+                "Only draft sales orders can be modified. Confirmed or fulfilled orders must remain immutable.");
+        }
+
         if (!await context.Customers.GetByTenant(tenantId.Value)
                 .AnyAsync(x => x.Id == updateRequest.CustomerId, cancellationToken))
         {
@@ -159,6 +166,13 @@ public class SalesOrderCommandService(
             return ServiceResult<bool>.Failure(StatusCodes.Status404NotFound, "Sales order not found.");
         }
 
+        if (order.Status != DocumentStatus.Draft)
+        {
+            return ServiceResult<bool>.Failure(
+                StatusCodes.Status409Conflict,
+                "Only draft sales orders can be deleted. Confirmed or fulfilled orders must remain visible.");
+        }
+
         context.SalesOrders.Remove(order);
         await context.SaveChangesAsync(cancellationToken);
         return ServiceResult<bool>.Success(true);
@@ -203,6 +217,16 @@ public class SalesOrderCommandService(
 
         return true;
     }
+
+    private static bool HasHeaderChanges(SalesOrder order, UpdateSalesOrderRequest request) =>
+        !string.Equals(order.OrderNumber, request.OrderNumber.Trim(), StringComparison.OrdinalIgnoreCase)
+        || order.CustomerId != request.CustomerId
+        || order.WarehouseId != request.WarehouseId
+        || order.OrderDate != request.OrderDate
+        || order.RequiredDate != request.RequiredDate
+        || !string.Equals(order.CurrencyCode, request.CurrencyCode.Trim(), StringComparison.OrdinalIgnoreCase)
+        || !string.Equals(NormalizeOptional(order.Notes), NormalizeOptional(request.Notes), StringComparison.Ordinal)
+        || order.IsActive != request.IsActive;
 
     private static string? NormalizeOptional(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 

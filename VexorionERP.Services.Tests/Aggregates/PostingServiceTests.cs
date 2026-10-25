@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using VexorionERP.Contracts;
 using VexorionERP.Database;
 using VexorionERP.Models;
 using VexorionERP.Services;
@@ -349,6 +350,63 @@ public class PostingServiceTests
         Assert.Equal(2, journal.Lines.Count);
         Assert.Equal(journal.TotalDebit, journal.Lines.Sum(x => x.DebitAmount));
         Assert.Equal(journal.TotalCredit, journal.Lines.Sum(x => x.CreditAmount));
+    }
+
+    [Fact]
+    public async Task ManualJournal_CreateDraftThenPost_CreatesBalancedImmutableEntry()
+    {
+        var tenantId = Guid.NewGuid();
+        var debitAccountId = Guid.NewGuid();
+        var creditAccountId = Guid.NewGuid();
+        var postingDate = new DateOnly(2026, 4, 26);
+        await using var dbContext = TestDbContextFactory.Create(tenantId, Guid.NewGuid().ToString());
+
+        SeedFiscalPeriod(dbContext, Guid.NewGuid(), tenantId, new DateOnly(2026, 4, 1), new DateOnly(2026, 4, 30), false);
+        SeedAccount(dbContext, debitAccountId, tenantId, "6100", "Office expense", AccountType.Expense, NormalBalanceType.Debit);
+        SeedAccount(dbContext, creditAccountId, tenantId, "1000", "Cash", AccountType.Asset, NormalBalanceType.Debit);
+        await dbContext.SaveChangesAsync();
+
+        var service = new PostingService(dbContext, new FixedTenantProvider(tenantId));
+        var created = await service.CreateManualJournalAsync(postingDate, "Office supplies", [
+            new CreateManualJournalLineRequest { AccountId = debitAccountId, DebitAmount = 25m },
+            new CreateManualJournalLineRequest { AccountId = creditAccountId, CreditAmount = 25m },
+        ]);
+
+        Assert.True(created.Succeeded);
+        Assert.Equal(JournalEntryStatus.Draft, created.Value!.Status);
+        Assert.Equal("ManualJournal", created.Value.SourceDocumentType);
+
+        var posted = await service.PostManualJournalAsync(created.Value.Id);
+
+        Assert.True(posted.Succeeded);
+        Assert.Equal(JournalEntryStatus.Posted, posted.Value!.Status);
+        Assert.Equal(25m, posted.Value.TotalDebit);
+        Assert.Equal(25m, posted.Value.TotalCredit);
+    }
+
+    [Fact]
+    public async Task ManualJournal_UnbalancedLines_AreRejectedWithoutPersistence()
+    {
+        var tenantId = Guid.NewGuid();
+        var debitAccountId = Guid.NewGuid();
+        var creditAccountId = Guid.NewGuid();
+        var postingDate = new DateOnly(2026, 4, 26);
+        await using var dbContext = TestDbContextFactory.Create(tenantId, Guid.NewGuid().ToString());
+
+        SeedFiscalPeriod(dbContext, Guid.NewGuid(), tenantId, new DateOnly(2026, 4, 1), new DateOnly(2026, 4, 30), false);
+        SeedAccount(dbContext, debitAccountId, tenantId, "6100", "Office expense", AccountType.Expense, NormalBalanceType.Debit);
+        SeedAccount(dbContext, creditAccountId, tenantId, "1000", "Cash", AccountType.Asset, NormalBalanceType.Debit);
+        await dbContext.SaveChangesAsync();
+
+        var service = new PostingService(dbContext, new FixedTenantProvider(tenantId));
+        var result = await service.CreateManualJournalAsync(postingDate, "Unbalanced", [
+            new CreateManualJournalLineRequest { AccountId = debitAccountId, DebitAmount = 25m },
+            new CreateManualJournalLineRequest { AccountId = creditAccountId, CreditAmount = 20m },
+        ]);
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(400, result.StatusCode);
+        Assert.Empty(dbContext.JournalEntries);
     }
 
     private static void SeedFiscalPeriod(

@@ -227,15 +227,20 @@ Import and generated-document hardening work is consolidated in the final Main U
 
 ### P1-3 — ERP business semantics and QA expectations need reconciliation
 
-**Decision record: D3 and D4 were approved on 24 October 2026. D7 and D9 are deferred for POS. Remaining general ERP decisions are consolidated in the final Main UI and shared-work backlog.**
+**Decision record: D3 and D4 were approved on 24 October 2026. D1, D2, D5, D6, and D8 were approved and implemented by FEAT-TRADE-01 on 25 October 2026. D7 and D9 remain deferred.**
 
 Before POS-02, general sales credit notes were full-invoice only and a POS sale had no journal entry. POS-02 now implements partial per-line POS returns, stock disposition, capped refunds/credits, and audit without changing general credit-note or ledger behavior. A payment is allocated to one invoice and shipment posting updates stock as before.
 
 | # | Topic | Draft decision |
 |---|-------|----------------|
+| D1 | Trade vocabulary | **APPROVED 25 Oct 2026.** Draft is editable. Confirmed/Issued is the operational commitment. Partially Processed describes a partially shipped/received order. Completed describes a fully fulfilled order and the final state of a posted shipment/receipt. Posted is the accounting action/state for journals; posting a fulfillment document makes that document Completed. Cancelled is for never-posted work, while Reversed means a posted effect was compensated and retained. |
+| D2 | Posted-record immutability | **APPROVED 25 Oct 2026.** Order lines and business fields become immutable after Draft; permitted lifecycle-only transitions remain available. Invoice headers and lines become immutable after Draft. Non-draft documents stay visible and cannot be deleted. Conflicting mutations return HTTP 409 with a reload/correction path. |
 | D3 | Cancel vs reverse | **APPROVED 24 Oct 2026.** Draft or never-posted: cancel (no ledger or stock effect). Posted: reverse only; the original stays visible. A reversal needs a reason, a permission and an audit entry. A paid invoice cannot be reversed until its payments are reversed or refunded. POS-02 creates an auditable credit note/refund against the immutable original sale; broader reversal endpoints remain out of scope. |
 | D4 | Credit notes and refunds | **APPROVED 24 Oct 2026.** A return is a credit note (partial allowed, per line, quantity capped at sold minus earlier returns) plus optional stock return plus optional refund. Per line: return to stock (default) or write off. Refund defaults to the original payment method and is capped at what was paid for the credited lines. An unpaid invoice gets a credit against its balance, not a cash refund. Replace the full-only credit note with the partial version; a full credit is "all lines". |
+| D5 | Fulfillment concurrency | **APPROVED 25 Oct 2026.** Draft shipments/receipts may coexist, but posting revalidates remaining quantity and updates the order line under PostgreSQL optimistic concurrency. The first valid post wins; a stale simultaneous post returns 409 and must be reloaded. Over-shipment/receipt is never silently accepted. |
+| D6 | Payment allocation | **APPROVED 25 Oct 2026.** Each payment is one positive allocation to one active issued invoice for the same party and currency. It cannot exceed the current balance; unapplied/on-account cash and multi-invoice allocation are not supported in this stage. Invoice balance/status updates use optimistic concurrency, so a stale simultaneous allocation returns 409. |
 | D7 | Approvals | **DEFERRED for POS-02 (24 Oct 2026).** No second-approver workflow is added. POS refunds require the existing `pos.refund` permission and are audited. Decide thresholds separately before implementing approvals. |
+| D8 | Manual journals | **APPROVED 25 Oct 2026.** Authorized billing managers can save a balanced manual journal draft with at least two lines using active posting accounts. Posting requires the journal's fiscal period to remain open and makes the entry immutable; correction uses the existing reversing-entry workflow. |
 | D9 | POS ledger posting | **DEFERRED for POS-02 (24 Oct 2026).** Preserve current behavior; POS sales/refunds do not gain new ledger postings. Decide automatic posting versus shift-close batching as separate finance work. |
 
 The approved/deferred POS decisions are recorded above; unresolved lifecycle, allocation, concurrency, journal, and approval decisions are tasks in the final Main UI and shared-work backlog.
@@ -473,6 +478,10 @@ Scope: Sales Orders/Shipments/Invoices/Customer Payments and Purchase Orders/Rec
 - [x] `UX-TRADE-05` Locally and browser validated 25 October 2026: customer and vendor payment dialogs share an allocation summary showing invoice balance, payment amount, allocated amount, unapplied amount, and balance after payment in the invoice currency. Amounts above the current balance and currency mismatches are shown inline and blocked before submission; changing invoices resets those field errors. Customer/vendor E2E workflows use invoice fixtures and dialog-scoped selectors, covering over-balance rejection without a POST and successful exact-balance submission.
   - Evidence: Main UI suite 264/264; allocation math/summary tests 5/5; Main UI typecheck, scoped ESLint, and production build pass; authenticated `npm --prefix VexorionERP.UI run e2e -- --grep UX-TRADE-05` passes, including isolated tenant cleanup/orphan check. The production build retains its existing large-chunk warning. This is local and browser validation, not the release gate.
 
+- [x] `FEAT-TRADE-01` Resolve and implement general ERP semantics. Locally completed 25 October 2026: D1/D2 make Draft the editable state, preserve lifecycle-only order transitions, reject non-draft header/line mutation and deletion as conflicts, and distinguish operational completion from accounting posting/reversal. D5/D6 add PostgreSQL `xmin` concurrency tokens to fulfillment quantities and invoice allocation totals; stale simultaneous shipment, receipt, customer-payment, or vendor-payment writes return a reloadable 409. D6 retains the intentionally narrow one-payment-to-one-invoice, same-party, same-currency, balance-capped model. D8 adds an authorized balanced manual-journal workflow: localized Main UI entry, dynamic debit/credit lines, Draft creation, open-period posting, account eligibility checks, immutable Posted state, and existing reversal support.
+  - Migration: `20261025140935_AddTradeConcurrencyTokens` records the four PostgreSQL system-column concurrency mappings; it intentionally performs no physical `xmin` DDL because PostgreSQL supplies that column.
+  - Evidence: solution build passes; focused trade/posting service tests pass 80/80, including concurrency metadata, non-draft immutability, balanced Draft-to-Posted manual journals, and invalid-balance rejection. Main UI typecheck, translation parity, focused finance copy, and production build pass. Database-level simultaneous-request verification remains part of the release/integration gate rather than local in-memory acceptance.
+
 Open sales, procurement, billing, and payment work is consolidated in the final Main UI backlog.
 
 ### 5.6 Inventory operations
@@ -641,7 +650,6 @@ Complete application work in order: **Main UI → AdminUI → POS**. Finish the 
 
 #### Sales, procurement, inventory, and finance
 
-- [ ] `FEAT-TRADE-01` Resolve and implement general ERP semantics: D1 vocabulary, D2 posted-record immutability, D5 fulfillment concurrency, D6 payment allocation, and D8 manual journals. D3/D4 POS return rules are approved; broader aggregate behavior still needs audit.
 - [ ] `FEAT-TRADE-02` Decide future approval rules by document type/amount with approver visibility and history. D7 is deferred from POS-02, not approved globally.
 - [ ] `UX-INV-01` Split adjustment/count/transfer operations into list, detail, line editor, and state-action components.
 - [ ] `UX-INV-02` Show expected versus counted/resulting quantities, variance, warehouses, and posting effects before confirmation.
@@ -652,7 +660,6 @@ Complete application work in order: **Main UI → AdminUI → POS**. Finish the 
 - [ ] `UX-FIN-02` Provide a fiscal-period status/calendar view and warn about locked periods before entry.
 - [ ] `UX-FIN-03` Standardize currency/date/sign formatting, totals, comparisons, drill-down, exports, and no-data explanations.
 - [ ] `UX-FIN-04` Add an audit detail view with actor, entity, trace ID, safe before/after, support context, pagination, and export.
-- [ ] `FEAT-FIN-01` Decide manual-journal support; implement balanced draft/post/reverse with period locks or remove that expectation from QA/UI.
 - [ ] `FEAT-FIN-02` Complete report reconciliation, tenant/date-boundary, non-empty, and CSV formula-injection tests.
 
 #### Projects, documents, imports, and generated documents

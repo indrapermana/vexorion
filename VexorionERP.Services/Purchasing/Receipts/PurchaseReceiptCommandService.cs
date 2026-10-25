@@ -146,7 +146,7 @@ public class PurchaseReceiptCommandService(
 
         if (receipt.Status != DocumentStatus.Draft)
         {
-            return ServiceResult<PurchaseReceiptDetailsResponse>.Failure(StatusCodes.Status400BadRequest, "Only draft receipts can be posted.");
+            return ServiceResult<PurchaseReceiptDetailsResponse>.Failure(StatusCodes.Status409Conflict, "Only draft receipts can be posted.");
         }
 
         var order = await dbContext.PurchaseOrders.GetByTenant(tenantId.Value)
@@ -206,7 +206,16 @@ public class PurchaseReceiptCommandService(
         receipt.Status = DocumentStatus.Completed;
         receipt.PostedAtUtc = DateTimeOffset.UtcNow;
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return ServiceResult<PurchaseReceiptDetailsResponse>.Failure(
+                StatusCodes.Status409Conflict,
+                "The purchase order fulfillment changed while this receipt was being posted. Reload the order and try again.");
+        }
 
         var response = await BuildDetailsResponseAsync(receipt.Id, cancellationToken);
         return ServiceResult<PurchaseReceiptDetailsResponse>.Success(response!);
@@ -230,7 +239,7 @@ public class PurchaseReceiptCommandService(
 
         if (receipt.Status != DocumentStatus.Draft)
         {
-            return ServiceResult<bool>.Failure(StatusCodes.Status400BadRequest, "Only draft receipts can be deleted.");
+            return ServiceResult<bool>.Failure(StatusCodes.Status409Conflict, "Only draft receipts can be deleted.");
         }
 
         receipt.IsActive = false;

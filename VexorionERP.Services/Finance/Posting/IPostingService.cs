@@ -1,3 +1,4 @@
+using VexorionERP.Contracts;
 using VexorionERP.Models;
 using VexorionERP.Services;
 
@@ -5,6 +6,16 @@ namespace VexorionERP.Services;
 
 public interface IPostingService
 {
+    Task<ServiceResult<JournalEntry>> CreateManualJournalAsync(
+        DateOnly postingDate,
+        string description,
+        IReadOnlyCollection<CreateManualJournalLineRequest> lines,
+        CancellationToken cancellationToken = default);
+
+    Task<ServiceResult<JournalEntry>> PostManualJournalAsync(
+        Guid journalEntryId,
+        CancellationToken cancellationToken = default);
+
     Task<ServiceResult<JournalEntry>> PostSalesInvoiceAsync(
         Guid salesInvoiceId,
         Guid receivableAccountId,

@@ -73,7 +73,16 @@ public class VendorPaymentCommandService(
         purchaseInvoice.Status = nextPaidTotal == purchaseInvoice.GrandTotal ? InvoiceStatus.Paid : InvoiceStatus.PartiallyPaid;
 
         context.VendorPayments.Add(payment);
-        await context.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return ServiceResult<IEntityResponse<VendorPayment>>.Failure(
+                StatusCodes.Status409Conflict,
+                "The invoice balance changed while this payment was being allocated. Reload the invoice and try again.");
+        }
 
         return ServiceResult<IEntityResponse<VendorPayment>>.Success(payment.Adapt<VendorPaymentDetailsResponse>());
     }

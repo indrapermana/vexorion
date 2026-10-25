@@ -140,8 +140,8 @@ public class SalesInvoiceCommandService : BaseCommandService<SalesInvoice>
         if (invoice is null)
             return ServiceResult<IEntityResponse<SalesInvoice>>.Failure(StatusCodes.Status404NotFound, "Sales invoice not found.");
 
-        if (invoice.PostedAtUtc.HasValue || invoice.ReversedAtUtc.HasValue)
-            return ServiceResult<IEntityResponse<SalesInvoice>>.Failure(StatusCodes.Status400BadRequest, "A posted or reversed invoice cannot be modified.");
+        if (invoice.Status != InvoiceStatus.Draft || invoice.PostedAtUtc.HasValue || invoice.ReversedAtUtc.HasValue)
+            return ServiceResult<IEntityResponse<SalesInvoice>>.Failure(StatusCodes.Status409Conflict, "Only draft sales invoices can be modified. Issued, paid, posted, or reversed invoices must remain immutable.");
 
         if (!await context.Customers.GetByTenant(tenantId.Value)
                 .AnyAsync(x => x.Id == updateRequest.CustomerId, cancellationToken))
@@ -183,8 +183,8 @@ public class SalesInvoiceCommandService : BaseCommandService<SalesInvoice>
         if (invoice is null)
             return ServiceResult<bool>.Failure(StatusCodes.Status404NotFound, "Sales invoice not found.");
 
-        if (invoice.Status == InvoiceStatus.Cancelled || invoice.PostedAtUtc.HasValue || invoice.ReversedAtUtc.HasValue)
-            return ServiceResult<bool>.Failure(StatusCodes.Status400BadRequest, "Only draft or unposted invoices can be deleted.");
+        if (invoice.Status != InvoiceStatus.Draft || invoice.PostedAtUtc.HasValue || invoice.ReversedAtUtc.HasValue)
+            return ServiceResult<bool>.Failure(StatusCodes.Status409Conflict, "Only draft sales invoices can be deleted. Issued, paid, posted, or reversed invoices must remain visible.");
 
         context.SalesInvoices.Remove(invoice);
         await context.SaveChangesAsync(cancellationToken);

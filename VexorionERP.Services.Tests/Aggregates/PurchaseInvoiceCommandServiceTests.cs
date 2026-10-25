@@ -223,7 +223,7 @@ public class PurchaseInvoiceCommandServiceTests
         });
 
         Assert.False(result.Succeeded);
-        Assert.Equal(400, result.StatusCode);
+        Assert.Equal(409, result.StatusCode);
     }
 
     [Fact]
@@ -247,7 +247,7 @@ public class PurchaseInvoiceCommandServiceTests
             InvoiceDate = new DateOnly(2026, 4, 1),
             DueDate = new DateOnly(2026, 4, 5),
             CurrencyCode = "USD",
-            Status = InvoiceStatus.Issued,
+            Status = InvoiceStatus.Draft,
         });
         await dbContext.SaveChangesAsync();
 
@@ -293,7 +293,7 @@ public class PurchaseInvoiceCommandServiceTests
         var result = await service.DeleteAsync(invoiceId);
 
         Assert.False(result.Succeeded);
-        Assert.Equal(400, result.StatusCode);
+        Assert.Equal(409, result.StatusCode);
     }
 
     [Fact]
@@ -374,7 +374,7 @@ public class PurchaseInvoiceCommandServiceTests
         });
 
         Assert.False(result.Succeeded);
-        Assert.Equal(400, result.StatusCode);
+        Assert.Equal(409, result.StatusCode);
     }
 
     [Fact]

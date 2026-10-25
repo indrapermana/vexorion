@@ -1,5 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
-import { VxAlert, VxBox, VxConfirmActionButton, VxDivider, VxMenuItem, VxPaper, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxConfirmActionButton, VxDivider, VxMenuItem, VxPaper, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
@@ -7,16 +7,21 @@ import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert
 import { PageBody, PageFeedback, PageHeader, PageLoadingState } from '../../../components/PagePrimitives'
 import {
   ApiError,
+  createManualJournal,
   getAccounts,
   getJournal,
   getJournals,
   postPurchaseInvoice,
+  postManualJournal,
   postSalesInvoice,
   reverseJournal,
 } from '../../../lib/api'
 import type { AccountListItemResponse, JournalEntryDetailsResponse, JournalEntryListItemResponse } from '../../../types/api'
 
 const JournalDataGrid = lazy(() => import('../components/JournalDataGrid'))
+
+type ManualLine = { accountId: string; description: string; debitAmount: string; creditAmount: string }
+const emptyManualLine = (): ManualLine => ({ accountId: '', description: '', debitAmount: '', creditAmount: '' })
 
 function JournalSurfaceFallback() {
   const { t } = useTranslation()
@@ -49,6 +54,8 @@ export default function JournalsPage() {
   const [purchaseTaxAccountId, setPurchaseTaxAccountId] = useState('')
 
   const [reverseJournalId, setReverseJournalId] = useState('')
+  const [manualDescription, setManualDescription] = useState('')
+  const [manualLines, setManualLines] = useState<ManualLine[]>([emptyManualLine(), emptyManualLine()])
 
   const loadData = useCallback(async () => {
     if (!isAuthenticated) {
@@ -159,6 +166,61 @@ export default function JournalsPage() {
     }
   }
 
+  const manualTotals = manualLines.reduce(
+    (totals, line) => ({ debit: totals.debit + (Number(line.debitAmount) || 0), credit: totals.credit + (Number(line.creditAmount) || 0) }),
+    { debit: 0, credit: 0 },
+  )
+  const manualIsValid = manualDescription.trim().length > 0
+    && manualLines.length >= 2
+    && manualLines.every((line) => line.accountId && ((Number(line.debitAmount) > 0) !== (Number(line.creditAmount) > 0)))
+    && manualTotals.debit > 0
+    && manualTotals.debit === manualTotals.credit
+
+  const updateManualLine = (index: number, field: keyof ManualLine, value: string) => {
+    setManualLines((current) => current.map((line, lineIndex) => lineIndex === index ? { ...line, [field]: value } : line))
+  }
+
+  const handleCreateManualJournal = async () => {
+    if (!canManage || !manualIsValid) return
+    setError(null)
+    setFeedback(null)
+    try {
+      const journal = await createManualJournal({
+        postingDate,
+        description: manualDescription.trim(),
+        lines: manualLines.map((line) => ({
+          accountId: line.accountId,
+          description: line.description.trim() || null,
+          debitAmount: Number(line.debitAmount) || 0,
+          creditAmount: Number(line.creditAmount) || 0,
+        })),
+      })
+      setFeedback(t('pages.journals.feedback.createdManual', { journalNumber: journal.journalNumber }))
+      setManualDescription('')
+      setManualLines([emptyManualLine(), emptyManualLine()])
+      await loadData()
+      setSelectedJournal(journal)
+    } catch (createError) {
+      if (createError instanceof ApiError) setError(createError.message)
+      else setError(t('pages.journals.errors.createManual'))
+    }
+  }
+
+  const handlePostManualJournal = async () => {
+    if (!canManage || !selectedJournal) return
+    setError(null)
+    setFeedback(null)
+    try {
+      const journal = await postManualJournal(selectedJournal.id)
+      setFeedback(t('pages.journals.feedback.postedManual', { journalNumber: journal.journalNumber }))
+      await loadData()
+      setSelectedJournal(journal)
+    } catch (postError) {
+      if (postError instanceof ApiError) setError(postError.message)
+      else setError(t('pages.journals.errors.postManual'))
+    }
+  }
+
   if (!isAuthenticated) {
     return <VxAlert severity="info">{t('pages.journals.signInRequired')}</VxAlert>
   }
@@ -172,6 +234,32 @@ export default function JournalsPage() {
 
       {canManage ? <VxPaper elevation={0} className="panel-card">
         <VxStack spacing={2.5}>
+          <VxTypography component="h2" variant="h6">{t('pages.journals.actions.createManual')}</VxTypography>
+          <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+            <VxTextField fullWidth label={t('pages.journals.fields.description')} value={manualDescription} onChange={(e) => setManualDescription(e.target.value)} />
+            <VxTextField fullWidth type="date" label={t('pages.journals.fields.postingDate')} value={postingDate} onChange={(e) => setPostingDate(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
+          </VxStack>
+          {manualLines.map((line, index) => (
+            <VxStack key={index} direction={{ xs: 'column', md: 'row' }} spacing={2}>
+              <VxTextField select fullWidth label={t('pages.journals.fields.lineAccount', { number: index + 1 })} value={line.accountId} onChange={(e) => updateManualLine(index, 'accountId', e.target.value)}>
+                {accountOptions.map((option) => <VxMenuItem key={option.value} value={option.value}>{option.label}</VxMenuItem>)}
+              </VxTextField>
+              <VxTextField fullWidth label={t('pages.journals.fields.lineDescription')} value={line.description} onChange={(e) => updateManualLine(index, 'description', e.target.value)} />
+              <VxTextField type="number" label={t('pages.journals.details.debit')} value={line.debitAmount} onChange={(e) => updateManualLine(index, 'debitAmount', e.target.value)} slotProps={{ htmlInput: { min: 0, step: '0.01' } }} />
+              <VxTextField type="number" label={t('pages.journals.details.credit')} value={line.creditAmount} onChange={(e) => updateManualLine(index, 'creditAmount', e.target.value)} slotProps={{ htmlInput: { min: 0, step: '0.01' } }} />
+              <VxButton disabled={manualLines.length <= 2} onClick={() => setManualLines((current) => current.filter((_, lineIndex) => lineIndex !== index))}>{t('common.delete')}</VxButton>
+            </VxStack>
+          ))}
+          <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+            <VxButton variant="outlined" onClick={() => setManualLines((current) => [...current, emptyManualLine()])}>{t('pages.journals.actions.addLine')}</VxButton>
+            <VxTypography color={manualTotals.debit === manualTotals.credit && manualTotals.debit > 0 ? 'success.main' : 'error.main'}>
+              {t('pages.journals.manualTotals', { debit: manualTotals.debit.toFixed(2), credit: manualTotals.credit.toFixed(2) })}
+            </VxTypography>
+            <VxButton variant="contained" disabled={!manualIsValid} onClick={() => void handleCreateManualJournal()}>{t('pages.journals.actions.saveDraft')}</VxButton>
+          </VxStack>
+
+          <VxDivider />
+
           <VxTypography component="h2" variant="h6">{t('pages.journals.actions.postSales')}</VxTypography>
           <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
             <VxTextField fullWidth label={t('pages.journals.fields.salesInvoiceId')} value={salesInvoiceId} onChange={(e) => setSalesInvoiceId(e.target.value)} />
@@ -266,6 +354,17 @@ export default function JournalsPage() {
               </VxBox>
             ))}
           </VxStack>
+          {canManage && selectedJournal.status === 1 && selectedJournal.sourceDocumentType === 'ManualJournal' ? (
+            <VxConfirmActionButton
+              title={t('pages.journals.actions.postManual')}
+              targetName={selectedJournal.journalNumber}
+              consequence={t('pages.journals.confirmation.manualPosting', { date: selectedJournal.postingDate })}
+              confirmLabel={t('pages.journals.actions.postManual')}
+              pendingLabel={t('pages.journals.actions.confirmingPost')}
+              onConfirm={handlePostManualJournal}
+              buttonProps={{ variant: 'contained', sx: { mt: 2 } }}
+            >{t('pages.journals.actions.postManual')}</VxConfirmActionButton>
+          ) : null}
         </VxPaper>
       ) : null}
     </VxStack>

@@ -17,6 +17,7 @@ public class SalesInvoiceConfiguration : TenantEntityConfiguration<SalesInvoice>
         builder.Property(x => x.GrandTotal).HasPrecision(18, 2);
         builder.Property(x => x.PaidTotal).HasPrecision(18, 2);
         builder.Property(x => x.AppliedCreditTotal).HasPrecision(18, 2);
+        builder.Property(x => x.Version).IsRowVersion();
         builder.Property(x => x.Notes).HasMaxLength(1000);
         builder.Ignore(x => x.BalanceDue);
 
