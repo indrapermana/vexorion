@@ -332,17 +332,50 @@ test.describe('Sales Shipment Workflow', () => {
 // ---------------------------------------------------------------------------
 
 test.describe('Customer Payment Workflow', () => {
-  test('TC-1.5.4.1: record customer payment', async ({ page }) => {
-    await page.goto('/customer-payments')
-    await page.waitForLoadState('networkidle')
+  test('UX-TRADE-05: customer allocation preview blocks overpayment before submit', async ({ page }) => {
+    const customerId = '66666666-6666-4666-8666-666666666666'
+    const invoiceId = '77777777-7777-4777-8777-777777777777'
+    let paymentRequests = 0
+    await page.route('**/api/customers', (route) => route.fulfill({ json: [{
+      id: customerId, customerNumber: 'C-UX-05', name: 'Allocation Customer', isActive: true,
+    }] }))
+    await page.route('**/api/sales-invoices*', (route) => route.fulfill({ json: [{
+      id: invoiceId, tenantId: 'tenant-1', invoiceNumber: 'SI-UX-05', customerId,
+      invoiceDate: '2026-10-25', dueDate: '2026-11-24', status: 2, currencyCode: 'USD',
+      subtotal: 100, taxTotal: 0, grandTotal: 100, paidTotal: 0, balanceDue: 100, isActive: true,
+    }] }))
+    await page.route('**/api/customer-payments', async (route) => {
+      if (route.request().method() === 'GET') return route.fulfill({ json: [] })
+      paymentRequests += 1
+      return route.fulfill({ status: 201, json: {
+        id: 'payment-ux-05', tenantId: 'tenant-1', customerId, salesInvoiceId: invoiceId,
+        paymentDate: '2026-10-25', amount: 100, currencyCode: 'USD', referenceNumber: 'PAY-UX-05', isActive: true,
+      } })
+    })
 
+    await page.goto('/customer-payments')
     const dialog = await openAddDialog(page, /record payment/i)
 
-    await selectFirstOption(page, /customer/i)
-    await fillField(page, /amount/i, '100')
+    await dialog.getByRole('combobox', { name: /customer/i }).click()
+    await page.getByRole('option', { name: /C-UX-05/ }).click()
+    await dialog.getByRole('combobox', { name: /outstanding invoice/i }).click()
+    await page.getByRole('option', { name: /SI-UX-05/ }).click()
+    await expect(dialog.getByText('Allocation summary')).toBeVisible()
+    const amount = dialog.getByLabel(/amount/i)
+    const invoiceBalance = Number(await amount.getAttribute('max'))
+    expect(invoiceBalance).toBeGreaterThan(0)
+    await amount.fill((invoiceBalance + 1).toFixed(2))
+    await expect(dialog.getByRole('alert').getByText('Payment exceeds the invoice balance. Reduce the amount before submitting.')).toBeVisible()
+    await dialog.getByRole('button', { name: /record payment/i }).click()
+    await expect(dialog).toBeVisible()
+    expect(paymentRequests).toBe(0)
+
+    await amount.fill(invoiceBalance.toFixed(2))
+    await expect(dialog.getByText('Unapplied')).toBeVisible()
 
     await dialog.getByRole('button', { name: /record payment/i }).click()
     await expect(dialog).not.toBeVisible({ timeout: 10_000 })
+    expect(paymentRequests).toBe(1)
   })
 
   test('TC-1.5.4.2: payment list visible', async ({ page }) => {

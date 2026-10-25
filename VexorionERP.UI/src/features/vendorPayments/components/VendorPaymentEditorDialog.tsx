@@ -5,9 +5,11 @@ import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { useTranslation } from 'react-i18next'
 import LookupSelectField from '../../../components/LookupSelectField'
+import PaymentAllocationSummary from '../../../components/PaymentAllocationSummary'
 import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import { ApiError, createVendorPayment } from '../../../lib/api'
 import type { VendorPaymentEditorDialogProps, VendorPaymentFormValues } from '../../../types/ui'
+import { getPaymentAllocationError } from '../../../types/ui/paymentAllocations'
 import { useCurrency } from '../../../app/CurrencyContext'
 
 const defaultValues: VendorPaymentFormValues = {
@@ -48,12 +50,21 @@ export default function VendorPaymentEditorDialog({ open, suppliers, outstanding
     watch,
     setValue,
     setError,
+    clearErrors,
     formState: { errors, isSubmitting, isDirty },
   } = useForm<VendorPaymentFormValues>({ defaultValues: createDefaults, resolver: yupResolver(validationSchema) })
   const { requestClose, confirmationDialog } = useUnsavedChangesPrompt(open && isDirty, isSubmitting, onClose, () => reset())
 
   const selectedSupplierId = watch('supplierId')
   const selectedInvoiceId = watch('purchaseInvoiceId')
+  const paymentAmount = watch('amount')
+  const selectedInvoice = outstandingInvoices.find((invoice) => invoice.id === selectedInvoiceId)
+  const currencyCodeForInvoice = watch('currencyCode')
+  const allocationError = selectedInvoice
+    ? getPaymentAllocationError(selectedInvoice.balanceDue, paymentAmount, selectedInvoice.currencyCode, currencyCodeForInvoice)
+    : null
+  const exceedsInvoiceBalance = allocationError === 'exceedsBalance'
+  const currencyMismatch = allocationError === 'currencyMismatch'
 
   useEffect(() => {
     reset({ ...createDefaults, ...initialValues })
@@ -84,7 +95,8 @@ export default function VendorPaymentEditorDialog({ open, suppliers, outstanding
 
     setValue('currencyCode', selectedInvoice.currencyCode)
     setValue('amount', selectedInvoice.balanceDue)
-  }, [outstandingInvoices, selectedInvoiceId, setValue])
+    clearErrors(['amount', 'currencyCode'])
+  }, [clearErrors, outstandingInvoices, selectedInvoiceId, setValue])
 
   const supplierOptions = suppliers.map((supplier) => ({
     value: supplier.id,
@@ -102,6 +114,16 @@ export default function VendorPaymentEditorDialog({ open, suppliers, outstanding
   )
 
   const onSubmit = handleSubmit(async (values) => {
+    const invoice = outstandingInvoices.find((item) => item.id === values.purchaseInvoiceId)
+    const allocationError = invoice
+      ? getPaymentAllocationError(invoice.balanceDue, values.amount, invoice.currencyCode, values.currencyCode)
+      : null
+    if (allocationError) {
+      const field = allocationError === 'exceedsBalance' ? 'amount' : 'currencyCode'
+      setError(field, { type: 'validate', message: t(`orderWorkflow.paymentAllocation.${allocationError}`) })
+      return
+    }
+
     try {
       const payment = await createVendorPayment({
         supplierId: values.supplierId,
@@ -193,10 +215,14 @@ export default function VendorPaymentEditorDialog({ open, suppliers, outstanding
                   fullWidth
                   label={t('components.vendorPayments.editor.fields.amount')}
                   type="number"
-                  slotProps={{ htmlInput: { min: 0.01, step: '0.01' } }}
-                  error={Boolean(errors.amount)}
-                  helperText={errors.amount?.message}
-                  onChange={(event) => field.onChange(Number(event.target.value))}
+                  slotProps={{ htmlInput: { min: 0.01, max: selectedInvoice?.balanceDue, step: '0.01' } }}
+                  error={Boolean(errors.amount) || exceedsInvoiceBalance}
+                  helperText={errors.amount?.message ?? (exceedsInvoiceBalance ? t('orderWorkflow.paymentAllocation.exceedsBalance') : undefined)}
+                  onChange={(event) => {
+                    const nextAmount = Number(event.target.value)
+                    field.onChange(nextAmount)
+                    if (!selectedInvoice || nextAmount <= selectedInvoice.balanceDue) clearErrors('amount')
+                  }}
                 />
               )}
             />
@@ -208,12 +234,20 @@ export default function VendorPaymentEditorDialog({ open, suppliers, outstanding
                   {...field}
                   fullWidth
                   label={t('components.vendorPayments.editor.fields.currency')}
-                  error={Boolean(errors.currencyCode)}
-                  helperText={errors.currencyCode?.message}
+                  error={Boolean(errors.currencyCode) || currencyMismatch}
+                  helperText={errors.currencyCode?.message ?? (currencyMismatch ? t('orderWorkflow.paymentAllocation.currencyMismatch') : undefined)}
+                  onChange={(event) => {
+                    field.onChange(event)
+                    if (!selectedInvoice || event.target.value.trim().toUpperCase() === selectedInvoice.currencyCode.toUpperCase()) clearErrors('currencyCode')
+                  }}
                 />
               )}
             />
           </VxStack>
+
+          {selectedInvoice ? (
+            <PaymentAllocationSummary invoiceBalance={selectedInvoice.balanceDue} paymentAmount={paymentAmount} currencyCode={selectedInvoice.currencyCode} />
+          ) : null}
 
           <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
             <Controller

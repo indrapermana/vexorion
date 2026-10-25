@@ -470,6 +470,9 @@ Scope: Sales Orders/Shipments/Invoices/Customer Payments and Purchase Orders/Rec
 - [x] `UX-TRADE-04` Locally and browser validated 25 October 2026: Sales Shipment and Purchase Receipt entry show ordered, already shipped/received, remaining, entered, and projected resulting quantities. Entry is capped and disabled when nothing remains; overages show inline field state and are blocked before submit. Product/quantity labels distinguish repeated product lines for keyboard navigation. Narrow dialogs stack header fields and place the wide quantity table in a horizontal scroll container.
   - Evidence: Main UI suite 259/259; focused fulfillment dialog tests 2/2; sales/purchase order-line response tests 2/2; Main UI typecheck, scoped ESLint, .NET solution build, and production build pass. Authenticated `npm --prefix VexorionERP.UI run e2e -- --grep UX-TRADE-04` passes, including isolated tenant cleanup/orphan check. The production build retains its existing large-chunk warning. This is local and browser validation, not the release gate.
 
+- [x] `UX-TRADE-05` Locally and browser validated 25 October 2026: customer and vendor payment dialogs share an allocation summary showing invoice balance, payment amount, allocated amount, unapplied amount, and balance after payment in the invoice currency. Amounts above the current balance and currency mismatches are shown inline and blocked before submission; changing invoices resets those field errors. Customer/vendor E2E workflows use invoice fixtures and dialog-scoped selectors, covering over-balance rejection without a POST and successful exact-balance submission.
+  - Evidence: Main UI suite 264/264; allocation math/summary tests 5/5; Main UI typecheck, scoped ESLint, and production build pass; authenticated `npm --prefix VexorionERP.UI run e2e -- --grep UX-TRADE-05` passes, including isolated tenant cleanup/orphan check. The production build retains its existing large-chunk warning. This is local and browser validation, not the release gate.
+
 Open sales, procurement, billing, and payment work is consolidated in the final Main UI backlog.
 
 ### 5.6 Inventory operations
@@ -638,7 +641,6 @@ Complete application work in order: **Main UI → AdminUI → POS**. Finish the 
 
 #### Sales, procurement, inventory, and finance
 
-- [ ] `UX-TRADE-05` Standardize payment allocation summaries and pre-submit validation.
 - [ ] `FEAT-TRADE-01` Resolve and implement general ERP semantics: D1 vocabulary, D2 posted-record immutability, D5 fulfillment concurrency, D6 payment allocation, and D8 manual journals. D3/D4 POS return rules are approved; broader aggregate behavior still needs audit.
 - [ ] `FEAT-TRADE-02` Decide future approval rules by document type/amount with approver visibility and history. D7 is deferred from POS-02, not approved globally.
 - [ ] `UX-INV-01` Split adjustment/count/transfer operations into list, detail, line editor, and state-action components.
