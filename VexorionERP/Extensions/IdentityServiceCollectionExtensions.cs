@@ -118,7 +118,6 @@ public static class IdentityServiceCollectionExtensions
         services.AddScoped<IProductPurchasePriceHistoryQueryService, ProductPurchasePriceHistoryQueryService>();
         services.AddScoped<IPostingService, PostingService>();
         services.AddScoped<INumberingService, NumberingService>();
-        services.AddScoped<IInvoiceApprovalService, InvoiceApprovalService>();
         services.AddScoped<IReportingService, ReportingService>();
         services.AddScoped<IInvoiceCommandService, InvoiceCommandService>();
         services.AddScoped<IProductImageCommandService, ProductImageCommandService>();

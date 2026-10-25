@@ -482,7 +482,7 @@ public class PurchaseReceiptCommandServiceBranchTests
     }
 
     [Fact]
-    public async Task Post_NotDraft_Returns400()
+    public async Task Post_NotDraft_Returns409()
     {
         var tenantId = Guid.NewGuid();
         var receiptId = Guid.NewGuid();
@@ -508,7 +508,7 @@ public class PurchaseReceiptCommandServiceBranchTests
         var result = await service.PostAsync(receiptId);
 
         Assert.False(result.Succeeded);
-        Assert.Equal(400, result.StatusCode);
+        Assert.Equal(409, result.StatusCode);
     }
 
     [Fact]
@@ -669,7 +669,7 @@ public class PurchaseReceiptCommandServiceBranchTests
     }
 
     [Fact]
-    public async Task Delete_NotDraft_Returns400()
+    public async Task Delete_NotDraft_Returns409()
     {
         var tenantId = Guid.NewGuid();
         var receiptId = Guid.NewGuid();
@@ -695,7 +695,7 @@ public class PurchaseReceiptCommandServiceBranchTests
         var result = await service.DeleteAsync(receiptId);
 
         Assert.False(result.Succeeded);
-        Assert.Equal(400, result.StatusCode);
+        Assert.Equal(409, result.StatusCode);
     }
 
     [Fact]

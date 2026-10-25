@@ -489,7 +489,7 @@ public class SalesShipmentCommandServiceBranchTests
     }
 
     [Fact]
-    public async Task Post_NotDraft_Returns400()
+    public async Task Post_NotDraft_Returns409()
     {
         var tenantId = Guid.NewGuid();
         var shipmentId = Guid.NewGuid();
@@ -514,7 +514,7 @@ public class SalesShipmentCommandServiceBranchTests
         var result = await service.PostAsync(shipmentId);
 
         Assert.False(result.Succeeded);
-        Assert.Equal(400, result.StatusCode);
+        Assert.Equal(409, result.StatusCode);
     }
 
     [Fact]
@@ -674,7 +674,7 @@ public class SalesShipmentCommandServiceBranchTests
     }
 
     [Fact]
-    public async Task Delete_NotDraft_Returns400()
+    public async Task Delete_NotDraft_Returns409()
     {
         var tenantId = Guid.NewGuid();
         var shipmentId = Guid.NewGuid();
@@ -699,7 +699,7 @@ public class SalesShipmentCommandServiceBranchTests
         var result = await service.DeleteAsync(shipmentId);
 
         Assert.False(result.Succeeded);
-        Assert.Equal(400, result.StatusCode);
+        Assert.Equal(409, result.StatusCode);
     }
 
     [Fact]
