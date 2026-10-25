@@ -8,6 +8,8 @@ public class SalesOrderLineListItemResponse : IEntityListResponse<SalesOrderLine
     public Guid SalesOrderId { get; set; }
     public Guid ProductId { get; set; }
     public decimal Quantity { get; set; }
+    public decimal ShippedQuantity { get; set; }
+    public decimal RemainingQuantity { get; set; }
     public decimal UnitPrice { get; set; }
     public decimal DiscountAmount { get; set; }
     public decimal LineTotal { get; set; }

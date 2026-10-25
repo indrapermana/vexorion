@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { VxAlert, VxBox, VxButton, VxCircularProgress, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxDivider, VxStack, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxCircularProgress, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxDivider, VxStack, VxTable, VxTableBody, VxTableCell, VxTableContainer, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useCurrency } from '../../../app/CurrencyContext'
 import { ApiError, createSalesShipment, getSalesOrderLines } from '../../../lib/api'
@@ -11,8 +11,9 @@ import type { SalesShipmentEditorDialogProps } from '../../../types/ui'
 type LineEntry = {
   salesOrderLineId: string
   productId: string
-  productName: string
   orderedQty: number
+  processedQty: number
+  remainingQty: number
   unitPrice: number
   shippedQuantity: string
 }
@@ -66,8 +67,9 @@ export default function CreateSalesShipmentDialog({ open, salesOrderId, warehous
         const nextOrderLines = lines.filter(l => l.isActive).map(l => ({
             salesOrderLineId: l.id,
             productId: l.productId,
-            productName: '',
             orderedQty: l.quantity,
+            processedQty: l.shippedQuantity ?? 0,
+            remainingQty: Math.max(l.remainingQuantity ?? l.quantity - (l.shippedQuantity ?? 0), 0),
             unitPrice: l.unitPrice,
             shippedQuantity: '',
           }))
@@ -94,20 +96,20 @@ export default function CreateSalesShipmentDialog({ open, salesOrderId, warehous
     })()
   }, [open, salesOrderId, warehouses])
 
-  useEffect(() => {
-    if (!products.length) return
-    setOrderLines(prev => prev.map(l => ({
-      ...l,
-      productName: products.find(p => p.id === l.productId)?.name ?? l.productId,
-    })))
-  }, [products])
-
   const handleQtyChange = (lineId: string, value: string) => {
     setOrderLines(prev => prev.map(l => l.salesOrderLineId === lineId ? { ...l, shippedQuantity: value } : l))
   }
 
+  const hasQuantityExceedingRemaining = orderLines.some(line => (
+    line.shippedQuantity.trim() !== '' && Number(line.shippedQuantity) > line.remainingQty
+  ))
+
   const handleSubmit = async () => {
     setSubmitError(null)
+    if (hasQuantityExceedingRemaining) {
+      setSubmitError(t('pages.salesShipments.editor.quantityExceedsRemaining'))
+      return
+    }
     const linesToSubmit = orderLines.filter(l => l.shippedQuantity.trim() !== '' && Number(l.shippedQuantity) > 0)
     if (linesToSubmit.length === 0) {
       setSubmitError('Enter shipped quantity for at least one line.')
@@ -154,7 +156,7 @@ export default function CreateSalesShipmentDialog({ open, salesOrderId, warehous
         <VxStack spacing={2}>
           {submitError && <VxAlert severity="error">{submitError}</VxAlert>}
 
-          <VxStack direction="row" spacing={2}>
+          <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
             <VxTextField
               label={t('pages.salesShipments.editor.number')}
               value={shipmentNumber}
@@ -203,35 +205,48 @@ export default function CreateSalesShipmentDialog({ open, salesOrderId, warehous
               <VxCircularProgress size={24} />
             </VxBox>
           ) : (
-            <VxTable size="small">
+            <VxTableContainer sx={{ maxWidth: '100%' }}>
+            <VxTable size="small" sx={{ minWidth: 760 }}>
               <VxTableHead>
                 <VxTableRow>
                   <VxTableCell>{t('pages.salesShipments.editor.product')}</VxTableCell>
                   <VxTableCell align="right">{t('pages.salesShipments.editor.ordered')}</VxTableCell>
+                  <VxTableCell align="right">{t('pages.salesShipments.editor.processed')}</VxTableCell>
+                  <VxTableCell align="right">{t('pages.salesShipments.editor.remaining')}</VxTableCell>
                   <VxTableCell align="right">{t('pages.salesShipments.editor.unitPrice')}</VxTableCell>
                   <VxTableCell align="right" sx={{ minWidth: 130 }}>{t('pages.salesShipments.editor.shipQuantity')}</VxTableCell>
+                  <VxTableCell align="right">{t('pages.salesShipments.editor.resulting')}</VxTableCell>
                 </VxTableRow>
               </VxTableHead>
               <VxTableBody>
-                {orderLines.map(line => (
+                {orderLines.map((line, index) => {
+                  const productName = products.find(product => product.id === line.productId)?.name ?? line.productId
+                  return (
                   <VxTableRow key={line.salesOrderLineId}>
-                    <VxTableCell>{line.productName || line.productId}</VxTableCell>
+                    <VxTableCell>{productName}</VxTableCell>
                     <VxTableCell align="right">{line.orderedQty}</VxTableCell>
+                    <VxTableCell align="right">{line.processedQty}</VxTableCell>
+                    <VxTableCell align="right">{line.remainingQty}</VxTableCell>
                     <VxTableCell align="right">{formatMoney(line.unitPrice)}</VxTableCell>
                     <VxTableCell align="right">
                       <VxTextField
                         size="small"
                         type="number"
-                        slotProps={{ htmlInput: { min: 0, step: 0.01 } }}
+                        slotProps={{ htmlInput: { min: 0, max: line.remainingQty, step: 0.01, inputMode: 'decimal', 'aria-label': t('pages.salesShipments.editor.enterQuantityFor', { product: productName, line: index + 1 }) } }}
                         value={line.shippedQuantity}
                         onChange={e => handleQtyChange(line.salesOrderLineId, e.target.value)}
+                        error={line.shippedQuantity.trim() !== '' && Number(line.shippedQuantity) > line.remainingQty}
+                        disabled={line.remainingQty <= 0}
                         sx={{ width: 110 }}
                       />
                     </VxTableCell>
+                    <VxTableCell align="right">{line.processedQty + (Number(line.shippedQuantity) || 0)}</VxTableCell>
                   </VxTableRow>
-                ))}
+                  )
+                })}
               </VxTableBody>
             </VxTable>
+            </VxTableContainer>
           )}
         </VxStack>
       </VxDialogContent>

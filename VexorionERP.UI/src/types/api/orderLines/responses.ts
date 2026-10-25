@@ -3,6 +3,8 @@ export type SalesOrderLineListItemResponse = {
   salesOrderId: string
   productId: string
   quantity: number
+  shippedQuantity: number
+  remainingQuantity: number
   unitPrice: number
   discountAmount: number
   lineTotal: number
@@ -14,6 +16,8 @@ export type PurchaseOrderLineListItemResponse = {
   purchaseOrderId: string
   productId: string
   quantity: number
+  receivedQuantity: number
+  remainingQuantity: number
   unitCost: number
   lineTotal: number
   isActive: boolean

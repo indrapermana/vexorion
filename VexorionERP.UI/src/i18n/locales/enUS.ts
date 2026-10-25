@@ -1227,7 +1227,7 @@ const enUS = {
       filterByOrder: 'Sales order',
       selectOrderPrompt: 'Select a sales order above to view its shipments.',
       grid: { number: 'Shipment #', date: 'Date', warehouse: 'Warehouse', lines: 'Lines', status: 'Status', draft: 'Draft', shipped: 'Shipped', unknown: 'Unknown', ship: 'Ship', delete: 'Delete' },
-      editor: { title: 'Create Sales Shipment', number: 'Shipment number', date: 'Shipment date', warehouse: 'Warehouse', noWarehouses: 'No warehouses available', notes: 'Notes', lines: 'Lines', product: 'Product', ordered: 'Ordered', unitPrice: 'Unit Price', shipQuantity: 'Ship Qty', cancel: 'Cancel', create: 'Create Shipment', error: 'Failed to create shipment.' },
+      editor: { title: 'Create Sales Shipment', number: 'Shipment number', date: 'Shipment date', warehouse: 'Warehouse', noWarehouses: 'No warehouses available', notes: 'Notes', lines: 'Lines', product: 'Product', ordered: 'Ordered', processed: 'Already shipped', remaining: 'Remaining', unitPrice: 'Unit price', shipQuantity: 'Enter quantity', resulting: 'After shipment', enterQuantityFor: 'Line {{line}}, {{product}}', quantityExceedsRemaining: 'A shipped quantity exceeds the remaining order quantity.', cancel: 'Cancel', create: 'Create Shipment', error: 'Failed to create shipment.' },
       actions: { postTitle: 'Post shipment', deleteTitle: 'Delete shipment', postConsequence: 'Posting updates inventory and makes the shipment operationally final. Corrections require a separate reversal workflow.', deleteConsequence: 'This permanently removes the draft shipment. This action cannot be undone.', postConfirm: 'Post shipment', deleteConfirm: 'Delete shipment', posting: 'Posting...', deleting: 'Deleting...' },
     },
     purchaseOrders: {
@@ -1317,7 +1317,7 @@ const enUS = {
       filterByOrder: 'Purchase order',
       selectOrderPrompt: 'Select a purchase order above to view its receipts.',
       grid: { number: 'Receipt #', date: 'Date', warehouse: 'Warehouse', lines: 'Lines', status: 'Status', draft: 'Draft', posted: 'Posted', unknown: 'Unknown', post: 'Post', delete: 'Delete' },
-      editor: { title: 'Create Purchase Receipt', number: 'Receipt number', date: 'Receipt date', warehouse: 'Warehouse', noWarehouses: 'No warehouses available', notes: 'Notes', lines: 'Lines', product: 'Product', ordered: 'Ordered', unitCost: 'Unit Cost', receiveQuantity: 'Receive Qty', cancel: 'Cancel', create: 'Create Receipt', error: 'Failed to create receipt.' },
+      editor: { title: 'Create Purchase Receipt', number: 'Receipt number', date: 'Receipt date', warehouse: 'Warehouse', noWarehouses: 'No warehouses available', notes: 'Notes', lines: 'Lines', product: 'Product', ordered: 'Ordered', processed: 'Already received', remaining: 'Remaining', unitCost: 'Unit cost', receiveQuantity: 'Enter quantity', resulting: 'After receipt', enterQuantityFor: 'Line {{line}}, {{product}}', quantityExceedsRemaining: 'A received quantity exceeds the remaining order quantity.', cancel: 'Cancel', create: 'Create Receipt', error: 'Failed to create receipt.' },
       actions: { postTitle: 'Post receipt', deleteTitle: 'Delete receipt', postConsequence: 'Posting updates received inventory and makes the receipt operationally final. Corrections require a separate reversal workflow.', deleteConsequence: 'This permanently removes the draft receipt. This action cannot be undone.', postConfirm: 'Post receipt', deleteConfirm: 'Delete receipt', posting: 'Posting...', deleting: 'Deleting...' },
     },
     inventoryAdjustments: {

@@ -86,6 +86,62 @@ test('UX-TRADE-02: document statuses explain next steps and disabled invoice pay
   await expect(invoiceGrid.getByText('Paid', { exact: true })).toBeVisible()
 })
 
+test('UX-TRADE-04: shipment and receipt entry show progress and support tablet keyboard input', async ({ page }) => {
+  const salesOrderId = '44444444-4444-4444-8444-444444444444'
+  const purchaseOrderId = '55555555-5555-4555-8555-555555555555'
+  await page.setViewportSize({ width: 768, height: 1024 })
+  await page.route('**/api/sales-orders', (route) => route.fulfill({ json: [{
+    id: salesOrderId, orderNumber: 'SO-UX-04', customerId: 'customer-1', warehouseId: 'warehouse-1',
+    orderDate: '2026-10-25', status: 2, currencyCode: 'USD', totalAmount: 100, isActive: true,
+  }] }))
+  await page.route('**/api/purchase-orders', (route) => route.fulfill({ json: [{
+    id: purchaseOrderId, orderNumber: 'PO-UX-04', supplierId: 'supplier-1', warehouseId: 'warehouse-1',
+    orderDate: '2026-10-25', status: 2, currencyCode: 'USD', totalAmount: 100, isActive: true,
+  }] }))
+  await page.route(`**/api/sales-orders/${salesOrderId}/lines`, (route) => route.fulfill({ json: [{
+    id: 'sales-line-1', salesOrderId, productId: 'product-1', quantity: 10, shippedQuantity: 6,
+    remainingQuantity: 4, unitPrice: 5, lineTotal: 50, isActive: true,
+  }] }))
+  await page.route(`**/api/purchase-orders/${purchaseOrderId}/lines`, (route) => route.fulfill({ json: [{
+    id: 'purchase-line-1', purchaseOrderId, productId: 'product-1', quantity: 10, receivedQuantity: 6,
+    remainingQuantity: 4, unitCost: 5, lineTotal: 50, isActive: true,
+  }] }))
+  await page.route(`**/api/sales-shipments/by-order/${salesOrderId}`, (route) => route.fulfill({ json: [] }))
+  await page.route(`**/api/purchase-receipts/by-order/${purchaseOrderId}`, (route) => route.fulfill({ json: [] }))
+  await page.route('**/api/products', (route) => route.fulfill({ json: [] }))
+  await page.route('**/api/warehouses', (route) => route.fulfill({ json: [] }))
+
+  await page.goto('/sales-shipments', { waitUntil: 'domcontentloaded' })
+  await page.getByRole('combobox', { name: 'Sales order' }).click()
+  await page.getByRole('option', { name: 'SO-UX-04' }).click()
+  await page.getByRole('button', { name: 'New shipment' }).click()
+
+  const shipmentDialog = page.getByRole('dialog')
+  await expect(shipmentDialog.getByText('Already shipped')).toBeVisible()
+  await expect(shipmentDialog.getByText('Remaining')).toBeVisible()
+  await expect(shipmentDialog.getByText('After shipment')).toBeVisible()
+  const shipmentTable = shipmentDialog.locator('table')
+  await expect(shipmentTable).toHaveCSS('min-width', '760px')
+  const shippedQuantity = shipmentDialog.getByRole('spinbutton', { name: 'Line 1, product-1' })
+  await expect(shippedQuantity).toHaveAttribute('max', '4')
+  await shippedQuantity.fill('2')
+  await expect(shipmentDialog.getByRole('row').filter({ hasText: 'product-1' })).toContainText('8')
+
+  await page.goto('/purchase-receipts', { waitUntil: 'domcontentloaded' })
+  await page.getByRole('combobox', { name: 'Purchase order' }).click()
+  await page.getByRole('option', { name: 'PO-UX-04' }).click()
+  await page.getByRole('button', { name: 'New receipt' }).click()
+
+  const receiptDialog = page.getByRole('dialog')
+  await expect(receiptDialog.getByText('Already received')).toBeVisible()
+  await expect(receiptDialog.getByText('Remaining')).toBeVisible()
+  await expect(receiptDialog.getByText('After receipt')).toBeVisible()
+  const receivedQuantity = receiptDialog.getByRole('spinbutton', { name: 'Line 1, product-1' })
+  await expect(receivedQuantity).toHaveAttribute('max', '4')
+  await receivedQuantity.fill('2')
+  await expect(receiptDialog.getByRole('row').filter({ hasText: 'product-1' })).toContainText('8')
+})
+
 // ---------------------------------------------------------------------------
 // 1. Setup: ensure a customer, warehouse, and product exist
 // ---------------------------------------------------------------------------

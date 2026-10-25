@@ -467,6 +467,9 @@ Scope: Sales Orders/Shipments/Invoices/Customer Payments and Purchase Orders/Rec
 - [x] `UX-TRADE-03` Locally and browser validated 25 October 2026: the four order/invoice workspaces open a responsive detail-first inspector with party, dates, payment term/source, totals, balance, status, and notes; order reviews include linked shipment/receipt summaries, and invoice reviews include payment allocation rows from invoice-scoped customer/vendor payment queries. Existing line review, generated documents, payment/fulfillment actions, and state actions remain available. A permission-gated audit timeline uses exact entity-ID filtering in the tenant-scoped audit API. Review copy is localized in English, Indonesian, and Spanish.
   - Evidence: Main UI suite 257/257; focused review/audit/fulfillment/workspace tests 7/7 plus allocation-panel coverage; scoped audit/payment query service tests 3/3; solution build, Main UI typecheck, scoped ESLint, and production build pass. Authenticated Playwright UX-TRADE-03 review/payment scenario passes; isolated tenant cleanup and orphan check pass. The full UI lint command still reports unrelated existing React-ref errors in Projects DocumentsPanel. The production build retains its existing large-chunk warning. This is local and browser validation, not the release gate.
 
+- [x] `UX-TRADE-04` Locally and browser validated 25 October 2026: Sales Shipment and Purchase Receipt entry show ordered, already shipped/received, remaining, entered, and projected resulting quantities. Entry is capped and disabled when nothing remains; overages show inline field state and are blocked before submit. Product/quantity labels distinguish repeated product lines for keyboard navigation. Narrow dialogs stack header fields and place the wide quantity table in a horizontal scroll container.
+  - Evidence: Main UI suite 259/259; focused fulfillment dialog tests 2/2; sales/purchase order-line response tests 2/2; Main UI typecheck, scoped ESLint, .NET solution build, and production build pass. Authenticated `npm --prefix VexorionERP.UI run e2e -- --grep UX-TRADE-04` passes, including isolated tenant cleanup/orphan check. The production build retains its existing large-chunk warning. This is local and browser validation, not the release gate.
+
 Open sales, procurement, billing, and payment work is consolidated in the final Main UI backlog.
 
 ### 5.6 Inventory operations
@@ -635,7 +638,6 @@ Complete application work in order: **Main UI → AdminUI → POS**. Finish the 
 
 #### Sales, procurement, inventory, and finance
 
-- [ ] `UX-TRADE-04` Optimize receipt/shipment entry for keyboard/tablet with ordered, processed, remaining, entered, and resulting quantities.
 - [ ] `UX-TRADE-05` Standardize payment allocation summaries and pre-submit validation.
 - [ ] `FEAT-TRADE-01` Resolve and implement general ERP semantics: D1 vocabulary, D2 posted-record immutability, D5 fulfillment concurrency, D6 payment allocation, and D8 manual journals. D3/D4 POS return rules are approved; broader aggregate behavior still needs audit.
 - [ ] `FEAT-TRADE-02` Decide future approval rules by document type/amount with approver visibility and history. D7 is deferred from POS-02, not approved globally.
