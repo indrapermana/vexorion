@@ -149,6 +149,12 @@ const enUS = {
     disabledReasons: { invoicePayment: { draft: 'Draft invoices cannot accept payments.', cancelled: 'Cancelled invoices cannot accept payments.', noBalance: 'No outstanding balance remains.' }, shipment: { postDraftOnly: 'Only draft shipments can be posted.', deleteDraftOnly: 'Only draft shipments can be deleted.' }, receipt: { postDraftOnly: 'Only draft receipts can be posted.', deleteDraftOnly: 'Only draft receipts can be deleted.' } },
     line: { orderLines: 'Order lines', invoiceLines: 'Invoice lines', orderLinesFor: 'Order lines for {{number}}', invoiceLinesFor: 'Invoice lines for {{number}}', add: 'Add line', product: 'Product', available: 'Available', onHand: 'On hand', quantityShort: 'Qty', unitPrice: 'Unit price', unitCost: 'Unit cost', discount: 'Discount', tax: 'Tax', total: 'Line total', delete: 'Delete line', empty: 'No lines yet.' },
   },
+  inventoryEffects: {
+    product: 'Product', warehouse: 'Warehouse', current: 'On hand before', change: 'Quantity change', resulting: 'On hand after',
+    adjustmentPostTitle: 'Adjustment posting preview', adjustmentReverseTitle: 'Adjustment reversal preview',
+    transferPostTitle: 'Transfer posting preview', transferReverseTitle: 'Transfer reversal preview',
+    countPostTitle: 'Count posting preview', countReverseTitle: 'Count reversal preview',
+  },
   authorization: {
     readOnly: 'You have view-only access. Changes require the {{requiredPermission}} permission.',
   },

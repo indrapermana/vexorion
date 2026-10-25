@@ -13,6 +13,7 @@ export type VxConfirmActionDialogProps = {
   pendingLabel?: ReactNode
   pending?: boolean
   error?: ReactNode
+  details?: ReactNode
   onClose: () => void
   onConfirm: () => void
 }
@@ -28,6 +29,7 @@ export function VxConfirmActionDialog({
   pendingLabel = 'Working...',
   pending = false,
   error,
+  details,
   onClose,
   onConfirm,
 }: VxConfirmActionDialogProps) {
@@ -49,6 +51,7 @@ export function VxConfirmActionDialog({
         <VxStack spacing={1.5}>
           <VxTypography sx={{ fontWeight: 700, overflowWrap: 'anywhere' }}>{targetName}</VxTypography>
           <VxTypography color="text.secondary">{consequence}</VxTypography>
+          {details}
           {error ? <VxAlert severity="error">{error}</VxAlert> : null}
         </VxStack>
       </VxDialogContent>

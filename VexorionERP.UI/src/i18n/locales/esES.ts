@@ -149,6 +149,12 @@ const esES = {
     disabledReasons: { invoicePayment: { draft: 'Las facturas en borrador no pueden recibir pagos.', cancelled: 'Las facturas canceladas no pueden recibir pagos.', noBalance: 'No queda saldo pendiente.' }, shipment: { postDraftOnly: 'Solo se pueden contabilizar los despachos en borrador.', deleteDraftOnly: 'Solo se pueden eliminar los despachos en borrador.' }, receipt: { postDraftOnly: 'Solo se pueden contabilizar las recepciones en borrador.', deleteDraftOnly: 'Solo se pueden eliminar las recepciones en borrador.' } },
     line: { orderLines: 'Líneas del pedido', invoiceLines: 'Líneas de la factura', orderLinesFor: 'Líneas del pedido {{number}}', invoiceLinesFor: 'Líneas de la factura {{number}}', add: 'Agregar línea', product: 'Producto', available: 'Disponible', onHand: 'Existencias', quantityShort: 'Cant.', unitPrice: 'Precio unitario', unitCost: 'Costo unitario', discount: 'Descuento', tax: 'Impuesto', total: 'Total de línea', delete: 'Eliminar línea', empty: 'Aún no hay líneas.' },
   },
+  inventoryEffects: {
+    product: 'Producto', warehouse: 'Almacén', current: 'Existencias antes', change: 'Cambio de cantidad', resulting: 'Existencias después',
+    adjustmentPostTitle: 'Vista previa de contabilización del ajuste', adjustmentReverseTitle: 'Vista previa de reversión del ajuste',
+    transferPostTitle: 'Vista previa de contabilización del traslado', transferReverseTitle: 'Vista previa de reversión del traslado',
+    countPostTitle: 'Vista previa de contabilización del conteo', countReverseTitle: 'Vista previa de reversión del conteo',
+  },
   authorization: {
     readOnly: 'Tienes acceso de solo lectura. Los cambios requieren el permiso {{requiredPermission}}.',
   },

@@ -4,6 +4,7 @@ import { VxAlert, VxButton, VxConfirmActionDialog, VxDialog, VxDialogActions, Vx
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
+import InventoryEffectPreview from '../../../components/InventoryEffectPreview'
 import LookupSelectField from '../../../components/LookupSelectField'
 import OrderWorkspace from '../../../components/OrderWorkspace'
 import { useInventoryBalancesLookup, useProductsLookup, useWarehousesLookup } from '../../../hooks/useLookups'
@@ -27,6 +28,7 @@ import type {
   StockCountLineDetailsResponse,
   StockCountListItemResponse,
 } from '../../../types/api'
+import { getStockCountEffect, type InventoryEffectRow } from '../../../types/ui/inventoryEffects'
 
 type DialogMode = 'create' | 'edit'
 
@@ -174,6 +176,18 @@ export default function StockCountsPage() {
         .map((balance) => [balance.productId, balance.quantityOnHand]),
     )
   }, [balances, selectedCount])
+  const productLabelById = useMemo(() => new Map(products.map((product) => [product.id, `${product.sku} · ${product.name}`])), [products])
+  const getCountEffectRows = (nextStatus: number): InventoryEffectRow[] => {
+    if (!selectedCount) return []
+    const warehouseName = warehouses.find((warehouse) => warehouse.id === selectedCount.warehouseId)?.name ?? selectedCount.warehouseId
+    return selectedCount.lines.filter((line) => line.isActive).map((line) => ({
+      id: line.id,
+      product: productLabelById.get(line.productId) ?? line.productId,
+      warehouse: warehouseName,
+      currentQuantity: balanceByProductId.get(line.productId) ?? 0,
+      quantityChange: getStockCountEffect(selectedCount.status, nextStatus, line.systemQuantity, line.countedQuantity),
+    }))
+  }
 
   const gridRows = useMemo<StockCountListRow[]>(() => rows.map((row) => ({
     ...row,
@@ -540,9 +554,9 @@ export default function StockCountsPage() {
           <StockCountLineEditor open={canManage && lineOpen} mode={lineMode} saving={lineSaving} error={lineError} form={lineForm} productOptions={products.map((product) => ({ value: product.id, label: `${product.sku} · ${product.name}` }))} suggestedBalances={balanceByProductId} onChange={setLineForm} onClose={requestLineClose} onSave={() => void saveLine()} />
           {lineDiscardDialog}
 
-          <VxConfirmActionDialog open={canManage && postDialogOpen} title={t('pages.stockCounts.actions.postTitle')} targetName={selectedCount?.countNumber ?? ''} consequence={t('pages.stockCounts.actions.postConsequence')} confirmLabel={t('pages.stockCounts.actions.postConfirm')} confirmColor="success" pendingLabel={t('pages.stockCounts.actions.posting')} pending={statusActionLoading} onClose={() => setPostDialogOpen(false)} onConfirm={() => void confirmPost()} />
+          <VxConfirmActionDialog open={canManage && postDialogOpen} title={t('pages.stockCounts.actions.postTitle')} targetName={selectedCount?.countNumber ?? ''} consequence={t('pages.stockCounts.actions.postConsequence')} details={<InventoryEffectPreview title={t('inventoryEffects.countPostTitle')} productLabel={t('inventoryEffects.product')} warehouseLabel={t('inventoryEffects.warehouse')} currentLabel={t('inventoryEffects.current')} changeLabel={t('inventoryEffects.change')} resultingLabel={t('inventoryEffects.resulting')} rows={getCountEffectRows(4)} />} confirmLabel={t('pages.stockCounts.actions.postConfirm')} confirmColor="success" pendingLabel={t('pages.stockCounts.actions.posting')} pending={statusActionLoading} onClose={() => setPostDialogOpen(false)} onConfirm={() => void confirmPost()} />
 
-          <VxConfirmActionDialog open={canManage && reverseDialogOpen} title={t('pages.stockCounts.actions.reverseTitle')} targetName={selectedCount?.countNumber ?? ''} consequence={t('pages.stockCounts.actions.reverseConsequence')} confirmLabel={t('pages.stockCounts.actions.reverseConfirm')} confirmColor="warning" pendingLabel={t('pages.stockCounts.actions.reversing')} pending={statusActionLoading} onClose={() => setReverseDialogOpen(false)} onConfirm={() => void confirmReverse()} />
+          <VxConfirmActionDialog open={canManage && reverseDialogOpen} title={t('pages.stockCounts.actions.reverseTitle')} targetName={selectedCount?.countNumber ?? ''} consequence={t('pages.stockCounts.actions.reverseConsequence')} details={<InventoryEffectPreview title={t('inventoryEffects.countReverseTitle')} productLabel={t('inventoryEffects.product')} warehouseLabel={t('inventoryEffects.warehouse')} currentLabel={t('inventoryEffects.current')} changeLabel={t('inventoryEffects.change')} resultingLabel={t('inventoryEffects.resulting')} rows={getCountEffectRows(5)} />} confirmLabel={t('pages.stockCounts.actions.reverseConfirm')} confirmColor="warning" pendingLabel={t('pages.stockCounts.actions.reversing')} pending={statusActionLoading} onClose={() => setReverseDialogOpen(false)} onConfirm={() => void confirmReverse()} />
         </>
       )}
       deleteDialog={(

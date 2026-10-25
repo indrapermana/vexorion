@@ -38,4 +38,16 @@ describe('inventory operation component boundaries', () => {
     expect(page).toContain(`<${componentName}`)
     expect(actions).toContain('<VxConfirmActionDialog')
   })
+
+  it('shows posting effects before adjustment and transfer status changes', () => {
+    expect(source('inventoryAdjustments/pages/InventoryAdjustmentsPage.tsx')).toContain('<InventoryEffectPreview')
+    expect(source('stockTransfers/pages/StockTransfersPage.tsx')).toContain('<InventoryEffectPreview')
+  })
+
+  it('includes stock effects in count post and reverse confirmations', () => {
+    const page = source('stockCounts/pages/StockCountsPage.tsx')
+    expect(page).toContain('details={<InventoryEffectPreview')
+    expect(page).toContain("getCountEffectRows(4)")
+    expect(page).toContain("getCountEffectRows(5)")
+  })
 })

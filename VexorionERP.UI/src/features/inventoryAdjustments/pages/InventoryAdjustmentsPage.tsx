@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
 import { useCurrency } from '../../../app/CurrencyContext'
+import InventoryEffectPreview from '../../../components/InventoryEffectPreview'
 import LookupSelectField from '../../../components/LookupSelectField'
 import OrderWorkspace from '../../../components/OrderWorkspace'
 import { useInventoryBalancesLookup, useProductsLookup, useWarehousesLookup } from '../../../hooks/useLookups'
@@ -30,6 +31,7 @@ import type {
   InventoryAdjustmentLineDetailsResponse,
   InventoryAdjustmentListItemResponse,
 } from '../../../types/api'
+import { getInventoryAdjustmentEffect, type InventoryEffectRow } from '../../../types/ui/inventoryEffects'
 
 type DialogMode = 'create' | 'edit'
 
@@ -160,6 +162,7 @@ export default function InventoryAdjustmentsPage() {
   }, [loadRows])
 
   const warehouseNameById = useMemo(() => new Map(warehouses.map((warehouse) => [warehouse.id, warehouse.name])), [warehouses])
+  const productLabelById = useMemo(() => new Map(products.map((product) => [product.id, `${product.name} (${product.sku})`])), [products])
   const balanceByProductId = useMemo(() => {
     if (!selectedAdjustment) {
       return new Map<string, number>()
@@ -171,6 +174,23 @@ export default function InventoryAdjustmentsPage() {
         .map((balance) => [balance.productId, balance.quantityOnHand]),
     )
   }, [balances, selectedAdjustment])
+  const adjustmentEffectRows = useMemo<InventoryEffectRow[]>(() => {
+    if (editorMode !== 'edit' || !selectedAdjustment) return []
+    return selectedAdjustment.lines.filter((line) => line.isActive).flatMap((line) => {
+      const quantityChange = getInventoryAdjustmentEffect(selectedAdjustment.status, editorForm.status, line.quantityDelta)
+      if (quantityChange === 0) return []
+      return [{
+        id: line.id,
+        product: productLabelById.get(line.productId) ?? line.productId,
+        warehouse: warehouseNameById.get(selectedAdjustment.warehouseId) ?? selectedAdjustment.warehouseId,
+        currentQuantity: balanceByProductId.get(line.productId) ?? 0,
+        quantityChange,
+      }]
+    })
+  }, [balanceByProductId, editorForm.status, editorMode, productLabelById, selectedAdjustment, warehouseNameById])
+  const adjustmentEffectTitle = selectedAdjustment?.status === 4 && editorForm.status === 5
+    ? 'inventoryEffects.adjustmentReverseTitle'
+    : 'inventoryEffects.adjustmentPostTitle'
   const gridRows = useMemo<InventoryAdjustmentListRow[]>(() => rows.map((row) => ({
     ...row,
     warehouseName: warehouseNameById.get(row.warehouseId),
@@ -440,6 +460,7 @@ export default function InventoryAdjustmentsPage() {
                     {[1, 2, 3, 4, 5].map((status) => <VxMenuItem key={status} value={status}>{getDocumentStatusLabel(status)}</VxMenuItem>)}
                   </VxTextField>
                 ) : null}
+                {adjustmentEffectRows.length > 0 ? <InventoryEffectPreview title={t(adjustmentEffectTitle)} productLabel={t('inventoryEffects.product')} warehouseLabel={t('inventoryEffects.warehouse')} currentLabel={t('inventoryEffects.current')} changeLabel={t('inventoryEffects.change')} resultingLabel={t('inventoryEffects.resulting')} rows={adjustmentEffectRows} /> : null}
                 <VxTextField label={t('pages.inventoryAdjustments.editor.notes')} value={editorForm.notes} onChange={(event) => setEditorForm((current) => ({ ...current, notes: event.target.value }))} multiline minRows={3} fullWidth />
               </VxStack>
             )}

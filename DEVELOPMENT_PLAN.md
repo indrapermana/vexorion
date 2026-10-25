@@ -501,6 +501,9 @@ Scope: Adjustments, Counts, Transfers, Receipts, Shipments, balances, and moveme
 - [x] `UX-INV-01` Split adjustment, count, and transfer operations into list, detail, line-editor, and state-action components. Locally completed 25 October 2026: each operation has module-owned list, selected-document detail/lines, and line-editor components. Stock Count post/reverse/add-line controls are isolated in `StockCountStateActions`; Adjustment and Transfer delete confirmations are isolated in dedicated state-action components. Pages retain authentication, lookup, API mutation, feedback, unsaved-change, and dialog orchestration, preserving behavior and leaving quantity-effect previews and lifecycle semantics to `UX-INV-02`/`UX-INV-03`.
   - Evidence: Main UI tests pass 270/270, including component-boundary regression coverage for all three operations and dedicated state-action components for each. TypeScript, scoped inventory ESLint, production build, and `git diff --check` pass. Full-project ESLint remains blocked by 20 pre-existing `react-hooks/refs` findings in `Projects/DocumentsPanel.tsx`; no inventory files report lint errors. The existing large-chunk build warning remains. This is local acceptance, not the release gate.
 
+- [x] `UX-INV-02` Locally and manually browser validated 25 October 2026: adjustment status edits preview signed quantity changes and resulting on-hand at the selected warehouse before save. Transfer status edits preview source and destination warehouse changes. Stock Count Post and Reverse confirmations show current on-hand, variance/reversal, and projected on-hand; the detail table shows system quantity, counted quantity, and variance.
+  - Evidence: Main UI suite 276/276; inventory effect calculation, preview rendering, and component-boundary tests pass. Main UI typecheck, scoped inventory ESLint, shared UI package typecheck, and production build pass; `git diff --check` passes. User-confirmed manual browser check is green. The production build retains the existing large-chunk warning. This is local and manual browser validation, not the release gate.
+
 Open inventory workspace and reporting work is consolidated in the final Main UI backlog.
 
 ### 5.7 Finance, fiscal periods, journals, reports, and audit
@@ -656,7 +659,6 @@ Complete application work in order: **Main UI → AdminUI → POS**. Finish the 
 
 #### Sales, procurement, inventory, and finance
 
-- [ ] `UX-INV-02` Show expected versus counted/resulting quantities, variance, warehouses, and posting effects before confirmation.
 - [ ] `UX-INV-03` Standardize line/document confirmations and prevent or explain immutable-state edits.
 - [ ] `FEAT-INV-01` Finalize inventory lifecycle vocabulary and reversal behavior across API, UI, tests, and QA documentation.
 - [ ] `FEAT-INV-02` Implement inventory valuation, movement audit, and reorder reports with reconciliation tests.

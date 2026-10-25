@@ -149,6 +149,12 @@ const idID = {
     disabledReasons: { invoicePayment: { draft: 'Faktur Draf tidak dapat menerima pembayaran.', cancelled: 'Faktur yang dibatalkan tidak dapat menerima pembayaran.', noBalance: 'Tidak ada saldo terutang.' }, shipment: { postDraftOnly: 'Hanya draf pengiriman yang dapat diposting.', deleteDraftOnly: 'Hanya draf pengiriman yang dapat dihapus.' }, receipt: { postDraftOnly: 'Hanya draf penerimaan yang dapat diposting.', deleteDraftOnly: 'Hanya draf penerimaan yang dapat dihapus.' } },
     line: { orderLines: 'Baris pesanan', invoiceLines: 'Baris faktur', orderLinesFor: 'Baris pesanan untuk {{number}}', invoiceLinesFor: 'Baris faktur untuk {{number}}', add: 'Tambah baris', product: 'Produk', available: 'Tersedia', onHand: 'Stok tersedia', quantityShort: 'Jml', unitPrice: 'Harga satuan', unitCost: 'Biaya satuan', discount: 'Diskon', tax: 'Pajak', total: 'Total baris', delete: 'Hapus baris', empty: 'Belum ada baris.' },
   },
+  inventoryEffects: {
+    product: 'Produk', warehouse: 'Gudang', current: 'Stok sebelum', change: 'Perubahan kuantitas', resulting: 'Stok setelah',
+    adjustmentPostTitle: 'Pratinjau posting penyesuaian', adjustmentReverseTitle: 'Pratinjau pembalikan penyesuaian',
+    transferPostTitle: 'Pratinjau posting transfer', transferReverseTitle: 'Pratinjau pembalikan transfer',
+    countPostTitle: 'Pratinjau posting stok opname', countReverseTitle: 'Pratinjau pembalikan stok opname',
+  },
   authorization: {
     readOnly: 'Anda memiliki akses hanya-lihat. Perubahan memerlukan izin {{requiredPermission}}.',
   },

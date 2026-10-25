@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
 import { useCurrency } from '../../../app/CurrencyContext'
+import InventoryEffectPreview from '../../../components/InventoryEffectPreview'
 import LookupSelectField from '../../../components/LookupSelectField'
 import OrderWorkspace from '../../../components/OrderWorkspace'
 import { useInventoryBalancesLookup, useProductsLookup, useWarehousesLookup } from '../../../hooks/useLookups'
@@ -30,6 +31,7 @@ import type {
   StockTransferLineDetailsResponse,
   StockTransferListItemResponse,
 } from '../../../types/api'
+import { getStockTransferEffect, type InventoryEffectRow } from '../../../types/ui/inventoryEffects'
 
 type DialogMode = 'create' | 'edit'
 
@@ -158,6 +160,7 @@ export default function StockTransfersPage() {
   }, [loadRows])
 
   const warehouseNameById = useMemo(() => new Map(warehouses.map((warehouse) => [warehouse.id, warehouse.name])), [warehouses])
+  const productLabelById = useMemo(() => new Map(products.map((product) => [product.id, `${product.name} (${product.sku})`])), [products])
   const sourceBalanceByProductId = useMemo(() => {
     if (!selectedTransfer) {
       return new Map<string, number>()
@@ -169,6 +172,34 @@ export default function StockTransfersPage() {
         .map((balance) => [balance.productId, balance.quantityOnHand]),
     )
   }, [balances, selectedTransfer])
+  const destinationBalanceByProductId = useMemo(() => {
+    if (!selectedTransfer) return new Map<string, number>()
+    return new Map(balances.filter((balance) => balance.warehouseId === selectedTransfer.destinationWarehouseId).map((balance) => [balance.productId, balance.quantityOnHand]))
+  }, [balances, selectedTransfer])
+  const transferEffectRows = useMemo<InventoryEffectRow[]>(() => {
+    if (editorMode !== 'edit' || !selectedTransfer) return []
+    return selectedTransfer.lines.filter((line) => line.isActive).flatMap((line) => {
+      const effect = getStockTransferEffect(selectedTransfer.status, editorForm.status, line.quantity)
+      const product = productLabelById.get(line.productId) ?? line.productId
+      const rows: InventoryEffectRow[] = []
+      if (effect.sourceDelta !== 0) rows.push({
+        id: `${line.id}-source`, product,
+        warehouse: warehouseNameById.get(selectedTransfer.sourceWarehouseId) ?? selectedTransfer.sourceWarehouseId,
+        currentQuantity: sourceBalanceByProductId.get(line.productId) ?? 0,
+        quantityChange: effect.sourceDelta,
+      })
+      if (effect.destinationDelta !== 0) rows.push({
+        id: `${line.id}-destination`, product,
+        warehouse: warehouseNameById.get(selectedTransfer.destinationWarehouseId) ?? selectedTransfer.destinationWarehouseId,
+        currentQuantity: destinationBalanceByProductId.get(line.productId) ?? 0,
+        quantityChange: effect.destinationDelta,
+      })
+      return rows
+    })
+  }, [destinationBalanceByProductId, editorForm.status, editorMode, productLabelById, selectedTransfer, sourceBalanceByProductId, warehouseNameById])
+  const transferEffectTitle = selectedTransfer?.status === 4 && editorForm.status === 5
+    ? 'inventoryEffects.transferReverseTitle'
+    : 'inventoryEffects.transferPostTitle'
   const gridRows = useMemo<StockTransferListRow[]>(() => rows.map((row) => ({
     ...row,
     sourceWarehouseName: warehouseNameById.get(row.sourceWarehouseId),
@@ -445,6 +476,7 @@ export default function StockTransfersPage() {
                     {[1, 2, 3, 4, 5].map((status) => <VxMenuItem key={status} value={status}>{getDocumentStatusLabel(status)}</VxMenuItem>)}
                   </VxTextField>
                 ) : null}
+                {transferEffectRows.length > 0 ? <InventoryEffectPreview title={t(transferEffectTitle)} productLabel={t('inventoryEffects.product')} warehouseLabel={t('inventoryEffects.warehouse')} currentLabel={t('inventoryEffects.current')} changeLabel={t('inventoryEffects.change')} resultingLabel={t('inventoryEffects.resulting')} rows={transferEffectRows} /> : null}
                 <VxTextField label={t('pages.stockTransfers.editor.notes')} value={editorForm.notes} onChange={(event) => setEditorForm((current) => ({ ...current, notes: event.target.value }))} multiline minRows={3} fullWidth />
               </VxStack>
             )}
