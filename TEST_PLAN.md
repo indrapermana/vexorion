@@ -281,6 +281,11 @@
 | 1.7.4.2 | View P&L | Reports → Profit & Loss | Revenue, expenses, and net income shown |
 | 1.7.4.3 | View Cash Flow | Reports → Cash Flow | Cash flow categories shown |
 | 1.7.4.4 | View AR Aging | Reports → AR Aging | Aging buckets match dashboard values |
+| 1.7.4.5 | Review multi-currency aging | Seed/open balances in at least two currencies → open A/R or A/P aging | Totals remain separate by currency; no unlike currencies are added together |
+| 1.7.4.6 | Compare periods | Enable Comparative prior period on P&L and Balance Sheet | Current, prior, and variance amounts are formatted consistently; date boundaries are visible |
+| 1.7.4.7 | Export comparative reports | With comparison enabled, export P&L and Balance Sheet CSV | Each export includes its prior-period summary and variance rows |
+| 1.7.4.8 | Drill into report lines | Select a P&L or Balance Sheet account, filter/sort entries, and export | Dates and signed amounts are locale-formatted; empty drill-down and statement sections explain that no data matched |
+| 1.7.4.9 | Empty report state | Use a date with no posted activity | Aging, trial balance, P&L, Balance Sheet, and drill-down show explicit no-data explanations rather than unexplained zeros or blank tables |
 
 ---
 

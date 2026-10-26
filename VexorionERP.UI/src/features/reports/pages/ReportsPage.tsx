@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
-import { VxAlert, VxBox, VxButton, VxFormControlLabel, VxLink, VxMenuItem, VxPaper, VxStack, VxSwitch, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxFormControlLabel, VxLink, VxMenuItem, VxPaper, VxStack, VxSwitch, VxTable, VxTableBody, VxTableCell, VxTableContainer, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
+import { useCurrency } from '../../../app/CurrencyContext'
 import { PageFeedback, PageHeader } from '../../../components/PagePrimitives'
+import { getIntlLocale } from '../../../i18n/translationConstant'
 import {
   ApiError,
   buildAccountDrillDownExportUrl,
@@ -18,6 +20,7 @@ import {
   getTrialBalanceReport,
 } from '../../../lib/api'
 import type {
+  AgingBucketTotalsResponse,
   AccountDrillDownResponse,
   ApAgingReportResponse,
   ArAgingReportResponse,
@@ -26,6 +29,7 @@ import type {
   ProfitAndLossReportResponse,
   TrialBalanceReportResponse,
 } from '../../../types/api'
+import { formatReportCurrency, formatReportDate, getAgingTotalsByCurrency } from '../reportFormatting'
 
 function toPeriodStart(asOfDate: string) {
   const parsed = new Date(asOfDate)
@@ -34,9 +38,14 @@ function toPeriodStart(asOfDate: string) {
 }
 
 export default function ReportsPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { isAuthenticated } = useAuth()
+  const { currencyCode } = useCurrency()
+  const locale = getIntlLocale(i18n.language)
+  const formatMoney = (value: number) => formatReportCurrency(value, currencyCode, locale)
+  const formatDate = (value: string) => formatReportDate(value, locale)
   const [asOfDate, setAsOfDate] = useState(new Date().toISOString().slice(0, 10))
+  const [isLoading, setIsLoading] = useState(false)
   const [showComparative, setShowComparative] = useState(false)
   const [arAging, setArAging] = useState<ArAgingReportResponse | null>(null)
   const [apAging, setApAging] = useState<ApAgingReportResponse | null>(null)
@@ -50,6 +59,8 @@ export default function ReportsPage() {
   const [drillDownFilter, setDrillDownFilter] = useState('')
   const [drillDownSort, setDrillDownSort] = useState<'date-desc' | 'date-asc'>('date-desc')
   const [error, setError] = useState<string | null>(null)
+  const priorEndDate = previousMonthDate(asOfDate)
+  const priorStartDate = toPeriodStart(priorEndDate)
 
   const loadReports = useCallback(async () => {
     if (!isAuthenticated) {
@@ -61,10 +72,9 @@ export default function ReportsPage() {
       return
     }
 
+    setIsLoading(true)
     setError(null)
     try {
-      const priorEndDate = previousMonthDate(asOfDate)
-      const priorStartDate = toPeriodStart(priorEndDate)
       const [ar, ap, tb, pnl, bs, priorPnl, priorBs] = await Promise.all([
         getArAgingReport(asOfDate),
         getApAgingReport(asOfDate),
@@ -87,8 +97,13 @@ export default function ReportsPage() {
     } catch (loadError) {
       if (loadError instanceof ApiError) setError(loadError.message)
       else setError(t('pages.reports.errors.load'))
+    } finally {
+      setIsLoading(false)
     }
-  }, [asOfDate, isAuthenticated, showComparative, t])
+  }, [asOfDate, isAuthenticated, priorEndDate, priorStartDate, showComparative, t])
+
+  const arCurrencyTotals = arAging ? getAgingTotalsByCurrency(arAging.items) : []
+  const apCurrencyTotals = apAging ? getAgingTotalsByCurrency(apAging.items) : []
 
   const openAccountDrillDown = useCallback(async (line: FinancialStatementLineResponse) => {
     try {
@@ -136,21 +151,46 @@ export default function ReportsPage() {
 
       <VxPaper elevation={0} className="panel-card">
         <VxTypography component="h2" variant="h6" sx={{ mb: 1 }}>{t('pages.reports.sections.arAging')}</VxTypography>
-        <VxTypography color="text.secondary">{t('pages.reports.summary.total')}: {arAging ? arAging.totals.total.toFixed(2) : '0.00'}</VxTypography>
-        <VxTypography color="text.secondary">{t('pages.reports.summary.customers')}: {arAging ? arAging.items.length : 0}</VxTypography>
+        {arAging?.items.length ? (
+          <VxStack spacing={0.5}>
+            <VxTypography color="text.secondary">{t('pages.reports.asOfDate')}: {formatDate(arAging.asOfDate)}</VxTypography>
+            {arCurrencyTotals.map(([currency, total]) => <VxTypography key={currency} color="text.secondary">{t('pages.reports.summary.totalByCurrency', { currency })}: {formatReportCurrency(total, currency, locale)}</VxTypography>)}
+            <VxTypography color="text.secondary">{t('pages.reports.summary.customers')}: {arAging.items.length}</VxTypography>
+            <AgingItemsTable
+              rows={arAging.items.map((item) => ({ id: item.customerId, number: item.customerNumber, name: item.customerName, currencyCode: item.currencyCode, buckets: item.buckets }))}
+              partyLabel={t('pages.reports.agingTable.customer')}
+              formatMoney={(amount, currency) => formatReportCurrency(amount, currency, locale)}
+              emptyText={t('pages.reports.empty.arAging')}
+            />
+          </VxStack>
+        ) : isLoading ? <VxTypography color="text.secondary">{t('common.labels.loading')}</VxTypography> : <VxAlert severity="info">{t('pages.reports.empty.arAging')}</VxAlert>}
       </VxPaper>
 
       <VxPaper elevation={0} className="panel-card">
         <VxTypography component="h2" variant="h6" sx={{ mb: 1 }}>{t('pages.reports.sections.apAging')}</VxTypography>
-        <VxTypography color="text.secondary">{t('pages.reports.summary.total')}: {apAging ? apAging.totals.total.toFixed(2) : '0.00'}</VxTypography>
-        <VxTypography color="text.secondary">{t('pages.reports.summary.suppliers')}: {apAging ? apAging.items.length : 0}</VxTypography>
+        {apAging?.items.length ? (
+          <VxStack spacing={0.5}>
+            <VxTypography color="text.secondary">{t('pages.reports.asOfDate')}: {formatDate(apAging.asOfDate)}</VxTypography>
+            {apCurrencyTotals.map(([currency, total]) => <VxTypography key={currency} color="text.secondary">{t('pages.reports.summary.totalByCurrency', { currency })}: {formatReportCurrency(total, currency, locale)}</VxTypography>)}
+            <VxTypography color="text.secondary">{t('pages.reports.summary.suppliers')}: {apAging.items.length}</VxTypography>
+            <AgingItemsTable
+              rows={apAging.items.map((item) => ({ id: item.supplierId, number: item.supplierNumber, name: item.supplierName, currencyCode: item.currencyCode, buckets: item.buckets }))}
+              partyLabel={t('pages.reports.agingTable.supplier')}
+              formatMoney={(amount, currency) => formatReportCurrency(amount, currency, locale)}
+              emptyText={t('pages.reports.empty.apAging')}
+            />
+          </VxStack>
+        ) : isLoading ? <VxTypography color="text.secondary">{t('common.labels.loading')}</VxTypography> : <VxAlert severity="info">{t('pages.reports.empty.apAging')}</VxAlert>}
       </VxPaper>
 
       <VxPaper elevation={0} className="panel-card">
         <VxTypography component="h2" variant="h6" sx={{ mb: 1 }}>{t('pages.reports.sections.trialBalance')}</VxTypography>
-        <VxTypography color="text.secondary">{t('pages.reports.summary.totalDebit')}: {trialBalance ? trialBalance.totalDebit.toFixed(2) : '0.00'}</VxTypography>
-        <VxTypography color="text.secondary">{t('pages.reports.summary.totalCredit')}: {trialBalance ? trialBalance.totalCredit.toFixed(2) : '0.00'}</VxTypography>
-        <VxTypography color="text.secondary">{t('pages.reports.summary.accounts')}: {trialBalance ? trialBalance.lines.length : 0}</VxTypography>
+        {trialBalance?.lines.length ? <>
+          <VxTypography color="text.secondary">{t('pages.reports.asOfDate')}: {formatDate(trialBalance.asOfDate)}</VxTypography>
+          <VxTypography color="text.secondary">{t('pages.reports.summary.totalDebit')}: {formatMoney(trialBalance.totalDebit)}</VxTypography>
+          <VxTypography color="text.secondary">{t('pages.reports.summary.totalCredit')}: {formatMoney(trialBalance.totalCredit)}</VxTypography>
+          <VxTypography color="text.secondary">{t('pages.reports.summary.accounts')}: {trialBalance.lines.length}</VxTypography>
+        </> : !isLoading ? <VxAlert severity="info">{t('pages.reports.empty.trialBalance')}</VxAlert> : null}
         <VxButton
           variant="outlined"
           size="small"
@@ -163,19 +203,23 @@ export default function ReportsPage() {
 
       <VxPaper elevation={0} className="panel-card">
         <VxTypography component="h2" variant="h6" sx={{ mb: 1 }}>{t('pages.reports.sections.profitAndLoss')}</VxTypography>
-        <VxTypography color="text.secondary">{t('pages.reports.summary.revenue')}: {profitAndLoss ? profitAndLoss.totalRevenue.toFixed(2) : '0.00'}</VxTypography>
-        <VxTypography color="text.secondary">{t('pages.reports.summary.expenses')}: {profitAndLoss ? profitAndLoss.totalExpenses.toFixed(2) : '0.00'}</VxTypography>
-        <VxTypography color="text.secondary">{t('pages.reports.summary.netIncome')}: {profitAndLoss ? profitAndLoss.netIncome.toFixed(2) : '0.00'}</VxTypography>
+        {profitAndLoss ? <VxTypography color="text.secondary">{formatDate(profitAndLoss.periodStartDate)} – {formatDate(profitAndLoss.periodEndDate)}</VxTypography> : null}
+        <VxTypography color="text.secondary">{t('pages.reports.summary.revenue')}: {formatMoney(profitAndLoss?.totalRevenue ?? 0)}</VxTypography>
+        <VxTypography color="text.secondary">{t('pages.reports.summary.expenses')}: {formatMoney(profitAndLoss?.totalExpenses ?? 0)}</VxTypography>
+        <VxTypography color="text.secondary" sx={{ color: (profitAndLoss?.netIncome ?? 0) < 0 ? 'error.main' : undefined }}>{t('pages.reports.summary.netIncome')}: {formatMoney(profitAndLoss?.netIncome ?? 0)}</VxTypography>
         {showComparative && priorProfitAndLoss ? (
-          <VxTypography color="text.secondary" sx={{ mt: 1 }}>
-            {t('pages.reports.summary.priorNetIncome')}: {priorProfitAndLoss.netIncome.toFixed(2)}
-          </VxTypography>
+          <VxStack spacing={0.25} sx={{ mt: 1 }}>
+            <VxTypography color="text.secondary">{t('pages.reports.summary.priorRevenue')}: {formatMoney(priorProfitAndLoss.totalRevenue)} · {t('pages.reports.summary.variance')}: {formatMoney((profitAndLoss?.totalRevenue ?? 0) - priorProfitAndLoss.totalRevenue)}</VxTypography>
+            <VxTypography color="text.secondary">{t('pages.reports.summary.priorExpenses')}: {formatMoney(priorProfitAndLoss.totalExpenses)} · {t('pages.reports.summary.variance')}: {formatMoney((profitAndLoss?.totalExpenses ?? 0) - priorProfitAndLoss.totalExpenses)}</VxTypography>
+            <VxTypography color="text.secondary">{t('pages.reports.summary.priorNetIncome')}: {formatMoney(priorProfitAndLoss.netIncome)} · {t('pages.reports.summary.netIncomeVariance')}: {formatMoney((profitAndLoss?.netIncome ?? 0) - priorProfitAndLoss.netIncome)}</VxTypography>
+          </VxStack>
         ) : null}
+        {profitAndLoss && !profitAndLoss.revenueLines.length && !profitAndLoss.expenseLines.length && !isLoading ? <VxAlert severity="info">{t('pages.reports.empty.profitAndLoss')}</VxAlert> : null}
         <VxButton
           variant="outlined"
           size="small"
           sx={{ mt: 2, mr: 1 }}
-          onClick={() => downloadReportCsv(buildProfitAndLossExportUrl(toPeriodStart(asOfDate), asOfDate), `profit-and-loss-${asOfDate}.csv`)}
+          onClick={() => downloadReportCsv(buildProfitAndLossExportUrl(toPeriodStart(asOfDate), asOfDate, showComparative ? priorStartDate : undefined, showComparative ? priorEndDate : undefined), `profit-and-loss-${asOfDate}.csv`)}
         >
           {t('pages.reports.actions.exportCsv')}
         </VxButton>
@@ -185,6 +229,8 @@ export default function ReportsPage() {
           priorLines={priorProfitAndLoss?.revenueLines ?? []}
           showComparative={showComparative}
           onLineSelect={openAccountDrillDown}
+          formatMoney={formatMoney}
+          emptyText={t('pages.reports.empty.revenueLines')}
         />
         <VxTypography sx={{ mt: 2, mb: 1, fontWeight: 600 }}>{t('pages.reports.sections.expenseLines')}</VxTypography>
         <StatementLinesTable
@@ -192,29 +238,29 @@ export default function ReportsPage() {
           priorLines={priorProfitAndLoss?.expenseLines ?? []}
           showComparative={showComparative}
           onLineSelect={openAccountDrillDown}
+          formatMoney={formatMoney}
+          emptyText={t('pages.reports.empty.expenseLines')}
         />
       </VxPaper>
 
       <VxPaper elevation={0} className="panel-card">
         <VxTypography component="h2" variant="h6" sx={{ mb: 1 }}>{t('pages.reports.sections.balanceSheet')}</VxTypography>
-        <VxTypography color="text.secondary">{t('pages.reports.summary.assets')}: {balanceSheet ? balanceSheet.totalAssets.toFixed(2) : '0.00'}</VxTypography>
-        <VxTypography color="text.secondary">{t('pages.reports.summary.liabilitiesEquity')}: {balanceSheet ? balanceSheet.totalLiabilitiesAndEquity.toFixed(2) : '0.00'}</VxTypography>
-        <VxTypography color="text.secondary">{t('pages.reports.summary.currentEarnings')}: {balanceSheet ? balanceSheet.currentEarnings.toFixed(2) : '0.00'}</VxTypography>
+        {balanceSheet ? <VxTypography color="text.secondary">{t('pages.reports.asOfDate')}: {formatDate(balanceSheet.asOfDate)}</VxTypography> : null}
+        <VxTypography color="text.secondary">{t('pages.reports.summary.assets')}: {formatMoney(balanceSheet?.totalAssets ?? 0)}</VxTypography>
+        <VxTypography color="text.secondary">{t('pages.reports.summary.liabilitiesEquity')}: {formatMoney(balanceSheet?.totalLiabilitiesAndEquity ?? 0)}</VxTypography>
+        <VxTypography color="text.secondary" sx={{ color: (balanceSheet?.currentEarnings ?? 0) < 0 ? 'error.main' : undefined }}>{t('pages.reports.summary.currentEarnings')}: {formatMoney(balanceSheet?.currentEarnings ?? 0)}</VxTypography>
         {showComparative && priorBalanceSheet && balanceSheet ? (
-          <>
-            <VxTypography color="text.secondary" sx={{ mt: 1 }}>
-              {t('pages.reports.summary.priorAssets')}: {priorBalanceSheet.totalAssets.toFixed(2)}
-            </VxTypography>
-            <VxTypography color="text.secondary">
-              {t('pages.reports.summary.assetVariance')}: {(balanceSheet.totalAssets - priorBalanceSheet.totalAssets).toFixed(2)}
-            </VxTypography>
-          </>
+          <VxStack spacing={0.25} sx={{ mt: 1 }}>
+            <VxTypography color="text.secondary">{t('pages.reports.summary.priorAssets')}: {formatMoney(priorBalanceSheet.totalAssets)} · {t('pages.reports.summary.variance')}: {formatMoney(balanceSheet.totalAssets - priorBalanceSheet.totalAssets)}</VxTypography>
+            <VxTypography color="text.secondary">{t('pages.reports.summary.priorLiabilitiesEquity')}: {formatMoney(priorBalanceSheet.totalLiabilitiesAndEquity)} · {t('pages.reports.summary.variance')}: {formatMoney(balanceSheet.totalLiabilitiesAndEquity - priorBalanceSheet.totalLiabilitiesAndEquity)}</VxTypography>
+          </VxStack>
         ) : null}
+        {balanceSheet && !balanceSheet.assetLines.length && !balanceSheet.liabilityLines.length && !balanceSheet.equityLines.length && !isLoading ? <VxAlert severity="info">{t('pages.reports.empty.balanceSheet')}</VxAlert> : null}
         <VxButton
           variant="outlined"
           size="small"
           sx={{ mt: 2 }}
-          onClick={() => downloadReportCsv(buildBalanceSheetExportUrl(asOfDate), `balance-sheet-${asOfDate}.csv`)}
+          onClick={() => downloadReportCsv(buildBalanceSheetExportUrl(asOfDate, showComparative ? priorEndDate : undefined), `balance-sheet-${asOfDate}.csv`)}
         >
           {t('pages.reports.actions.exportCsv')}
         </VxButton>
@@ -224,6 +270,8 @@ export default function ReportsPage() {
           priorLines={priorBalanceSheet?.assetLines ?? []}
           showComparative={showComparative}
           onLineSelect={openAccountDrillDown}
+          formatMoney={formatMoney}
+          emptyText={t('pages.reports.empty.assets')}
         />
         <VxTypography sx={{ mt: 2, mb: 1, fontWeight: 600 }}>{t('pages.reports.sections.liabilities')}</VxTypography>
         <StatementLinesTable
@@ -231,6 +279,8 @@ export default function ReportsPage() {
           priorLines={priorBalanceSheet?.liabilityLines ?? []}
           showComparative={showComparative}
           onLineSelect={openAccountDrillDown}
+          formatMoney={formatMoney}
+          emptyText={t('pages.reports.empty.liabilities')}
         />
         <VxTypography sx={{ mt: 2, mb: 1, fontWeight: 600 }}>{t('pages.reports.sections.equity')}</VxTypography>
         <StatementLinesTable
@@ -238,6 +288,8 @@ export default function ReportsPage() {
           priorLines={priorBalanceSheet?.equityLines ?? []}
           showComparative={showComparative}
           onLineSelect={openAccountDrillDown}
+          formatMoney={formatMoney}
+          emptyText={t('pages.reports.empty.equity')}
         />
       </VxPaper>
 
@@ -245,8 +297,9 @@ export default function ReportsPage() {
         <VxTypography component="h2" variant="h6" sx={{ mb: 1 }}>{t('pages.reports.sections.accountDrillDown')}</VxTypography>
         <VxTypography color="text.secondary">{drillDownAccountLabel ?? t('pages.reports.drillDown.selectPrompt')}</VxTypography>
         <VxTypography color="text.secondary">{t('pages.reports.summary.entries')}: {drillDown?.lines.length ?? 0}</VxTypography>
-        <VxTypography color="text.secondary">{t('pages.reports.summary.totalDebit')}: {drillDown ? drillDown.totalDebit.toFixed(2) : '0.00'}</VxTypography>
-        <VxTypography color="text.secondary">{t('pages.reports.summary.totalCredit')}: {drillDown ? drillDown.totalCredit.toFixed(2) : '0.00'}</VxTypography>
+        <VxTypography color="text.secondary">{t('pages.reports.summary.totalDebit')}: {formatMoney(drillDown?.totalDebit ?? 0)}</VxTypography>
+        <VxTypography color="text.secondary">{t('pages.reports.summary.totalCredit')}: {formatMoney(drillDown?.totalCredit ?? 0)}</VxTypography>
+        {drillDown && !drillDown.lines.length ? <VxAlert severity="info">{t('pages.reports.empty.drillDown')}</VxAlert> : null}
         <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mt: 1, mb: 1 }}>
           <VxTextField
             size="small"
@@ -295,11 +348,11 @@ export default function ReportsPage() {
             <VxTableBody>
               {getFilteredDrillDownLines(drillDown?.lines ?? [], drillDownFilter, drillDownSort).map((line) => (
                 <VxTableRow key={line.journalEntryId}>
-                  <VxTableCell>{line.postingDate}</VxTableCell>
+                  <VxTableCell>{formatDate(line.postingDate)}</VxTableCell>
                   <VxTableCell>{line.journalNumber}</VxTableCell>
                   <VxTableCell>{line.description}</VxTableCell>
-                  <VxTableCell align="right">{line.debitAmount.toFixed(2)}</VxTableCell>
-                  <VxTableCell align="right">{line.creditAmount.toFixed(2)}</VxTableCell>
+                  <VxTableCell align="right">{formatMoney(line.debitAmount)}</VxTableCell>
+                  <VxTableCell align="right">{formatMoney(line.creditAmount)}</VxTableCell>
                 </VxTableRow>
               ))}
             </VxTableBody>
@@ -310,14 +363,66 @@ export default function ReportsPage() {
   )
 }
 
+type AgingTableRow = {
+  id: string
+  number: string
+  name: string
+  currencyCode: string
+  buckets: AgingBucketTotalsResponse
+}
+
+type AgingItemsTableProps = {
+  rows: AgingTableRow[]
+  partyLabel: string
+  formatMoney: (amount: number, currencyCode: string) => string
+  emptyText: string
+}
+
+function AgingItemsTable({ rows, partyLabel, formatMoney, emptyText }: AgingItemsTableProps) {
+  const { t } = useTranslation()
+  return (
+    <VxTableContainer sx={{ mt: 1, maxWidth: '100%', overflowX: 'auto' }}>
+      <VxTable size="small" sx={{ minWidth: 760 }}>
+        <VxTableHead><VxTableRow>
+          <VxTableCell>{partyLabel}</VxTableCell>
+          <VxTableCell>{t('pages.reports.agingTable.currency')}</VxTableCell>
+          <VxTableCell align="right">{t('pages.reports.agingTable.current')}</VxTableCell>
+          <VxTableCell align="right">{t('pages.reports.agingTable.due1To30')}</VxTableCell>
+          <VxTableCell align="right">{t('pages.reports.agingTable.due31To60')}</VxTableCell>
+          <VxTableCell align="right">{t('pages.reports.agingTable.due61To90')}</VxTableCell>
+          <VxTableCell align="right">{t('pages.reports.agingTable.dueOver90')}</VxTableCell>
+          <VxTableCell align="right">{t('pages.reports.summary.total')}</VxTableCell>
+        </VxTableRow></VxTableHead>
+        <VxTableBody>
+          {rows.map((row) => (
+            <VxTableRow key={row.id}>
+              <VxTableCell>{row.number} · {row.name}</VxTableCell>
+              <VxTableCell>{row.currencyCode}</VxTableCell>
+              <VxTableCell align="right">{formatMoney(row.buckets.current, row.currencyCode)}</VxTableCell>
+              <VxTableCell align="right">{formatMoney(row.buckets.due1To30, row.currencyCode)}</VxTableCell>
+              <VxTableCell align="right">{formatMoney(row.buckets.due31To60, row.currencyCode)}</VxTableCell>
+              <VxTableCell align="right">{formatMoney(row.buckets.due61To90, row.currencyCode)}</VxTableCell>
+              <VxTableCell align="right">{formatMoney(row.buckets.dueOver90, row.currencyCode)}</VxTableCell>
+              <VxTableCell align="right">{formatMoney(row.buckets.total, row.currencyCode)}</VxTableCell>
+            </VxTableRow>
+          ))}
+          {!rows.length ? <VxTableRow><VxTableCell colSpan={8}><VxTypography color="text.secondary">{emptyText}</VxTypography></VxTableCell></VxTableRow> : null}
+        </VxTableBody>
+      </VxTable>
+    </VxTableContainer>
+  )
+}
+
 type StatementLinesTableProps = {
   lines: FinancialStatementLineResponse[]
   priorLines: FinancialStatementLineResponse[]
   showComparative: boolean
   onLineSelect: (line: FinancialStatementLineResponse) => Promise<void>
+  formatMoney: (value: number) => string
+  emptyText: string
 }
 
-function StatementLinesTable({ lines, priorLines, showComparative, onLineSelect }: StatementLinesTableProps) {
+function StatementLinesTable({ lines, priorLines, showComparative, onLineSelect, formatMoney, emptyText }: StatementLinesTableProps) {
   const { t } = useTranslation()
   const [filterText, setFilterText] = useState('')
   const [sortBy, setSortBy] = useState<'code' | 'name' | 'amount' | 'variance'>('code')
@@ -402,12 +507,13 @@ function StatementLinesTable({ lines, priorLines, showComparative, onLineSelect 
                       {line.accountCode} - {line.accountName}
                     </VxLink>
                   </VxTableCell>
-                  <VxTableCell align="right">{line.amount.toFixed(2)}</VxTableCell>
-                  {showComparative ? <VxTableCell align="right">{priorAmount.toFixed(2)}</VxTableCell> : null}
-                  {showComparative ? <VxTableCell align="right">{(line.amount - priorAmount).toFixed(2)}</VxTableCell> : null}
+                  <VxTableCell align="right" sx={{ color: line.amount < 0 ? 'error.main' : undefined }}>{formatMoney(line.amount)}</VxTableCell>
+                  {showComparative ? <VxTableCell align="right">{formatMoney(priorAmount)}</VxTableCell> : null}
+                  {showComparative ? <VxTableCell align="right" sx={{ color: line.amount - priorAmount < 0 ? 'error.main' : undefined }}>{formatMoney(line.amount - priorAmount)}</VxTableCell> : null}
                 </VxTableRow>
               )
             })}
+            {!sortedLines.length ? <VxTableRow><VxTableCell colSpan={showComparative ? 4 : 2}><VxTypography color="text.secondary">{emptyText}</VxTypography></VxTableCell></VxTableRow> : null}
           </VxTableBody>
         </VxTable>
       </VxBox>

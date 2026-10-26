@@ -52,12 +52,18 @@ export function getAccountDrillDown(accountId: string, endDate: string, startDat
   return requestJson<AccountDrillDownResponse>(url)
 }
 
-export function buildProfitAndLossExportUrl(startDate: string, endDate: string) {
-  return `/api/reports/profit-and-loss/export?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`
+export function buildProfitAndLossExportUrl(startDate: string, endDate: string, priorStartDate?: string, priorEndDate?: string) {
+  let url = `/api/reports/profit-and-loss/export?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`
+  if (priorStartDate && priorEndDate) {
+    url += `&priorStartDate=${encodeURIComponent(priorStartDate)}&priorEndDate=${encodeURIComponent(priorEndDate)}`
+  }
+  return url
 }
 
-export function buildBalanceSheetExportUrl(asOfDate: string) {
-  return `/api/reports/balance-sheet/export?asOfDate=${encodeURIComponent(asOfDate)}`
+export function buildBalanceSheetExportUrl(asOfDate: string, priorAsOfDate?: string) {
+  let url = `/api/reports/balance-sheet/export?asOfDate=${encodeURIComponent(asOfDate)}`
+  if (priorAsOfDate) url += `&priorAsOfDate=${encodeURIComponent(priorAsOfDate)}`
+  return url
 }
 
 export function buildTrialBalanceExportUrl(asOfDate: string) {

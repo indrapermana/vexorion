@@ -31,11 +31,15 @@ public class ReportsController(IMediator mediator) : ServiceResultControllerBase
 
     [HttpGet("profit-and-loss/export")]
     [Authorize(Policy = AppPermissions.Reports.View)]
-    public async Task<IActionResult> ExportProfitAndLoss([FromQuery] DateOnly? startDate, [FromQuery] DateOnly? endDate)
+    public async Task<IActionResult> ExportProfitAndLoss(
+        [FromQuery] DateOnly? startDate,
+        [FromQuery] DateOnly? endDate,
+        [FromQuery] DateOnly? priorStartDate,
+        [FromQuery] DateOnly? priorEndDate)
     {
         var effectiveEndDate = endDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
         var effectiveStartDate = startDate ?? new DateOnly(effectiveEndDate.Year, effectiveEndDate.Month, 1);
-        var result = await mediator.Send(new GetProfitAndLossQuery(effectiveStartDate, effectiveEndDate));
+        var result = await mediator.Send(new GetProfitAndLossQuery(effectiveStartDate, effectiveEndDate, priorStartDate, priorEndDate));
 
         if (!result.Succeeded)
         {
@@ -53,6 +57,15 @@ public class ReportsController(IMediator mediator) : ServiceResultControllerBase
             sb.AppendLine($"Expense,{CsvEscape(line.AccountCode)},{CsvEscape(line.AccountName)},{line.Amount}");
         sb.AppendLine($"Expense Total,,,{r.TotalExpenses}");
         sb.AppendLine($"Net Income,,,{r.NetIncome}");
+        if (r.PriorPeriod is { } prior)
+        {
+            sb.AppendLine($"Prior Revenue Total,,,{prior.TotalRevenue}");
+            sb.AppendLine($"Revenue Variance,,,{r.TotalRevenue - prior.TotalRevenue}");
+            sb.AppendLine($"Prior Expense Total,,,{prior.TotalExpenses}");
+            sb.AppendLine($"Expense Variance,,,{r.TotalExpenses - prior.TotalExpenses}");
+            sb.AppendLine($"Prior Net Income,,,{prior.NetIncome}");
+            sb.AppendLine($"Net Income Variance,,,{r.NetIncome - prior.NetIncome}");
+        }
 
         var fileName = $"profit-and-loss-{effectiveStartDate:yyyy-MM-dd}-to-{effectiveEndDate:yyyy-MM-dd}.csv";
         return File(Encoding.UTF8.GetBytes(sb.ToString()), "text/csv", fileName);
@@ -70,10 +83,10 @@ public class ReportsController(IMediator mediator) : ServiceResultControllerBase
 
     [HttpGet("balance-sheet/export")]
     [Authorize(Policy = AppPermissions.Reports.View)]
-    public async Task<IActionResult> ExportBalanceSheet([FromQuery] DateOnly? asOfDate)
+    public async Task<IActionResult> ExportBalanceSheet([FromQuery] DateOnly? asOfDate, [FromQuery] DateOnly? priorAsOfDate)
     {
         var effectiveDate = asOfDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
-        var result = await mediator.Send(new GetBalanceSheetQuery(effectiveDate));
+        var result = await mediator.Send(new GetBalanceSheetQuery(effectiveDate, priorAsOfDate));
 
         if (!result.Succeeded)
         {
@@ -94,6 +107,15 @@ public class ReportsController(IMediator mediator) : ServiceResultControllerBase
             sb.AppendLine($"Equity,{CsvEscape(line.AccountCode)},{CsvEscape(line.AccountName)},{line.Amount}");
         sb.AppendLine($"Current Earnings,,,{r.CurrentEarnings}");
         sb.AppendLine($"Total Equity & Liabilities,,,{r.TotalLiabilitiesAndEquity}");
+        if (r.PriorPeriod is { } prior)
+        {
+            sb.AppendLine($"Prior Total Assets,,,{prior.TotalAssets}");
+            sb.AppendLine($"Assets Variance,,,{r.TotalAssets - prior.TotalAssets}");
+            sb.AppendLine($"Prior Total Liabilities,,,{prior.TotalLiabilities}");
+            sb.AppendLine($"Liabilities Variance,,,{r.TotalLiabilities - prior.TotalLiabilities}");
+            sb.AppendLine($"Prior Total Equity,,,{prior.TotalEquity}");
+            sb.AppendLine($"Equity Variance,,,{r.TotalEquity - prior.TotalEquity}");
+        }
 
         var fileName = $"balance-sheet-{effectiveDate:yyyy-MM-dd}.csv";
         return File(Encoding.UTF8.GetBytes(sb.ToString()), "text/csv", fileName);
