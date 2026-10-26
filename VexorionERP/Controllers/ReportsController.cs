@@ -227,7 +227,12 @@ public class ReportsController(IMediator mediator) : ServiceResultControllerBase
 
     private static string CsvEscape(string value)
     {
-        if (value.Contains(',') || value.Contains('"') || value.Contains('\n'))
+        var trimmed = value.AsSpan().TrimStart();
+        if ((!trimmed.IsEmpty && trimmed[0] is '=' or '+' or '-' or '@')
+            || (value.Length > 0 && value[0] is '\t' or '\r' or '\n'))
+            value = "'" + value;
+
+        if (value.Contains(',') || value.Contains('"') || value.Contains('\r') || value.Contains('\n'))
             return $"\"{value.Replace("\"", "\"\"")}\"";
         return value;
     }

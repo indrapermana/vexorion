@@ -292,6 +292,247 @@ public class ReportingControllerIntegrationTests : IClassFixture<TestWebApplicat
         Assert.Contains("JRN-DRILL-1", csv);
     }
 
+    [Fact]
+    public async Task Reports_PopulatedStatements_ReconcileAcrossInclusiveDatesAndTenantBoundaries()
+    {
+        await using var factory = new ReportingSeededWebApplicationFactory();
+        var tenantId = Guid.NewGuid();
+        var otherTenantId = Guid.NewGuid();
+        var start = new DateOnly(2026, 4, 1);
+        var end = new DateOnly(2026, 4, 30);
+        var cashId = Guid.NewGuid();
+        var equityId = Guid.NewGuid();
+        var revenueId = Guid.NewGuid();
+        var expenseId = Guid.NewGuid();
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            db.Accounts.AddRange(
+                new Account { Id = cashId, TenantId = tenantId, Code = "1000", Name = "Cash", AccountType = AccountType.Asset, NormalBalance = NormalBalanceType.Debit },
+                new Account { Id = equityId, TenantId = tenantId, Code = "3000", Name = "Capital", AccountType = AccountType.Equity, NormalBalance = NormalBalanceType.Credit },
+                new Account { Id = revenueId, TenantId = tenantId, Code = "4000", Name = "Revenue", AccountType = AccountType.Revenue, NormalBalance = NormalBalanceType.Credit },
+                new Account { Id = expenseId, TenantId = tenantId, Code = "5000", Name = "Expense", AccountType = AccountType.Expense, NormalBalance = NormalBalanceType.Debit });
+
+            void AddJournal(Guid owner, DateOnly date, JournalEntryStatus status, Guid debitAccount, Guid creditAccount, decimal amount)
+            {
+                db.JournalEntries.Add(new JournalEntry
+                {
+                    Id = Guid.NewGuid(), TenantId = owner, JournalNumber = $"JRN-{Guid.NewGuid():N}",
+                    PostingDate = date, Status = status, TotalDebit = amount, TotalCredit = amount,
+                    Lines = new List<JournalEntryLine>
+                    {
+                        new() { Id = Guid.NewGuid(), TenantId = owner, AccountId = debitAccount, LineNumber = 1, DebitAmount = amount },
+                        new() { Id = Guid.NewGuid(), TenantId = owner, AccountId = creditAccount, LineNumber = 2, CreditAmount = amount },
+                    },
+                });
+            }
+
+            AddJournal(tenantId, start.AddDays(-1), JournalEntryStatus.Posted, cashId, equityId, 500m);
+            AddJournal(tenantId, start, JournalEntryStatus.Posted, cashId, revenueId, 1000m);
+            AddJournal(tenantId, end, JournalEntryStatus.Posted, expenseId, cashId, 300m);
+            AddJournal(tenantId, end.AddDays(1), JournalEntryStatus.Posted, cashId, revenueId, 9000m);
+            AddJournal(tenantId, start, JournalEntryStatus.Draft, cashId, revenueId, 8000m);
+            AddJournal(otherTenantId, start, JournalEntryStatus.Posted, cashId, revenueId, 7000m);
+            await db.SaveChangesAsync();
+        }
+
+        var client = factory.CreateClient();
+        client.SetBearerToken(tenantId, AppPermissions.Reports.View);
+        var profit = await client.GetFromJsonAsync<ProfitAndLossReportResponse>("/api/reports/profit-and-loss?startDate=2026-04-01&endDate=2026-04-30&priorStartDate=2026-03-01&priorEndDate=2026-03-31");
+        var balance = await client.GetFromJsonAsync<BalanceSheetReportResponse>("/api/reports/balance-sheet?asOfDate=2026-04-30&priorAsOfDate=2026-03-31");
+        var trial = await client.GetFromJsonAsync<TrialBalanceReportResponse>("/api/reports/trial-balance?asOfDate=2026-04-30");
+        var drill = await client.GetFromJsonAsync<AccountDrillDownResponse>($"/api/reports/account-drill-down/{cashId}?startDate=2026-04-01&endDate=2026-04-30");
+
+        Assert.NotNull(profit);
+        Assert.NotNull(balance);
+        Assert.NotNull(trial);
+        Assert.NotNull(drill);
+        Assert.Equal(1000m, profit.TotalRevenue);
+        Assert.Equal(300m, profit.TotalExpenses);
+        Assert.Equal(700m, profit.NetIncome);
+        Assert.Equal(profit.TotalRevenue, Assert.Single(profit.RevenueLines).Amount);
+        Assert.Equal(profit.TotalExpenses, Assert.Single(profit.ExpenseLines).Amount);
+        Assert.Equal(1200m, balance.TotalAssets);
+        Assert.Equal(500m, balance.TotalEquity);
+        Assert.Equal(profit.NetIncome, balance.CurrentEarnings);
+        Assert.Equal(balance.TotalAssets, balance.TotalLiabilitiesAndEquity);
+        Assert.Equal(balance.TotalAssets, Assert.Single(balance.AssetLines).Amount);
+        Assert.Equal(2, drill.Lines.Count);
+        Assert.Equal(profit.TotalRevenue, drill.TotalDebit);
+        Assert.Equal(profit.TotalExpenses, drill.TotalCredit);
+        Assert.Equal(1800m, trial.TotalDebit);
+        Assert.Equal(trial.TotalDebit, trial.TotalCredit);
+        Assert.Equal(trial.EndingDebitTotal, trial.EndingCreditTotal);
+        Assert.Equal(4, trial.Lines.Count);
+        Assert.Equal(balance.TotalAssets, trial.Lines.Single(line => line.AccountId == cashId).EndingDebit);
+        Assert.Equal(profit.TotalRevenue, trial.Lines.Single(line => line.AccountId == revenueId).EndingCredit);
+        Assert.Equal(profit.TotalExpenses, trial.Lines.Single(line => line.AccountId == expenseId).EndingDebit);
+        Assert.NotNull(profit.PriorPeriod);
+        Assert.Equal(0m, profit.PriorPeriod.NetIncome);
+        Assert.NotNull(balance.PriorPeriod);
+        Assert.Equal(500m, balance.PriorPeriod.TotalAssets);
+        Assert.Equal(500m, balance.PriorPeriod.TotalEquity);
+
+        var profitCsv = await client.GetStringAsync("/api/reports/profit-and-loss/export?startDate=2026-04-01&endDate=2026-04-30&priorStartDate=2026-03-01&priorEndDate=2026-03-31");
+        Assert.Contains("Revenue,4000,Revenue,1000", profitCsv);
+        Assert.Contains("Expense,5000,Expense,300", profitCsv);
+        Assert.Contains("Net Income,,,700", profitCsv);
+        Assert.Contains("Net Income Variance,,,700", profitCsv);
+        var balanceCsv = await client.GetStringAsync("/api/reports/balance-sheet/export?asOfDate=2026-04-30&priorAsOfDate=2026-03-31");
+        Assert.Contains("Total Assets,,,1200", balanceCsv);
+        Assert.Contains("Prior Total Assets,,,500", balanceCsv);
+        Assert.Contains("Assets Variance,,,700", balanceCsv);
+        var trialCsv = await client.GetStringAsync("/api/reports/trial-balance/export?asOfDate=2026-04-30");
+        Assert.Contains("1000,Cash,1500,300,1200,0", trialCsv);
+        Assert.Contains("TOTAL,,1800,1800,1500,1500", trialCsv);
+        var drillCsv = await client.GetStringAsync($"/api/reports/account-drill-down/{cashId}/export?startDate=2026-04-01&endDate=2026-04-30");
+        Assert.Contains("TOTAL,,,1000,300", drillCsv);
+
+        client.SetBearerToken(otherTenantId, AppPermissions.Reports.View);
+        Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync($"/api/reports/account-drill-down/{cashId}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync($"/api/reports/account-drill-down/{cashId}/export")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Reports_PopulatedAging_ReconcilesBucketsCurrenciesAndDashboardWithoutTenantLeakage()
+    {
+        await using var factory = new ReportingSeededWebApplicationFactory();
+        var tenantId = Guid.NewGuid();
+        var otherTenantId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var supplierId = Guid.NewGuid();
+        var asOf = new DateOnly(2026, 4, 30);
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            db.Customers.Add(new Customer { Id = customerId, TenantId = tenantId, CustomerNumber = "C-AGING", Name = "Aging Customer" });
+            db.Suppliers.Add(new Supplier { Id = supplierId, TenantId = tenantId, SupplierNumber = "S-AGING", Name = "Aging Supplier" });
+
+            void AddInvoices(Guid owner, int age, decimal outstanding, string currency, InvoiceStatus status)
+            {
+                db.SalesInvoices.Add(new SalesInvoice
+                {
+                    Id = Guid.NewGuid(), TenantId = owner, InvoiceNumber = $"SI-{Guid.NewGuid():N}", CustomerId = customerId,
+                    InvoiceDate = asOf.AddDays(-100), DueDate = asOf.AddDays(-age), CurrencyCode = currency, Status = status,
+                    GrandTotal = outstanding + 30m, PaidTotal = 10m, AppliedCreditTotal = 20m,
+                });
+                db.PurchaseInvoices.Add(new PurchaseInvoice
+                {
+                    Id = Guid.NewGuid(), TenantId = owner, InvoiceNumber = $"PI-{Guid.NewGuid():N}", SupplierId = supplierId,
+                    InvoiceDate = asOf.AddDays(-100), DueDate = asOf.AddDays(-age), CurrencyCode = currency, Status = status,
+                    GrandTotal = outstanding + 10m, PaidTotal = 10m,
+                });
+            }
+
+            var ages = new[] { -1, 0, 1, 30, 31, 60, 61, 90, 91 };
+            for (var index = 0; index < ages.Length; index++)
+                AddInvoices(tenantId, ages[index], (index + 1) * 10m, "USD", InvoiceStatus.PartiallyPaid);
+
+            AddInvoices(tenantId, -1, 17m, "EUR", InvoiceStatus.PartiallyPaid);
+            AddInvoices(tenantId, 1, 9000m, "USD", InvoiceStatus.Draft);
+            AddInvoices(tenantId, 1, 8000m, "USD", InvoiceStatus.Cancelled);
+            AddInvoices(tenantId, 1, 0m, "USD", InvoiceStatus.Paid);
+            AddInvoices(otherTenantId, 1, 7000m, "USD", InvoiceStatus.PartiallyPaid);
+            await db.SaveChangesAsync();
+        }
+
+        var client = factory.CreateClient();
+        client.SetBearerToken(tenantId, AppPermissions.Reports.View);
+        var receivables = await client.GetFromJsonAsync<ArAgingReportResponse>("/api/reports/ar-aging?asOfDate=2026-04-30");
+        var payables = await client.GetFromJsonAsync<ApAgingReportResponse>("/api/reports/ap-aging?asOfDate=2026-04-30");
+        var dashboard = await client.GetFromJsonAsync<FinanceDashboardSnapshotResponse>("/api/reports/dashboard?asOfDate=2026-04-30&periodDays=30");
+        Assert.NotNull(receivables);
+        Assert.NotNull(payables);
+        Assert.NotNull(dashboard);
+        Assert.Equal(2, receivables.Items.Count);
+        Assert.Equal(2, payables.Items.Count);
+
+        foreach (var buckets in new[]
+        {
+            receivables.Items.Single(item => item.CurrencyCode == "USD").Buckets,
+            payables.Items.Single(item => item.CurrencyCode == "USD").Buckets,
+        })
+        {
+            Assert.Equal(30m, buckets.Current);
+            Assert.Equal(70m, buckets.Due1To30);
+            Assert.Equal(110m, buckets.Due31To60);
+            Assert.Equal(150m, buckets.Due61To90);
+            Assert.Equal(90m, buckets.DueOver90);
+            Assert.Equal(450m, buckets.Total);
+            Assert.Equal(buckets.Total, buckets.Current + buckets.Due1To30 + buckets.Due31To60 + buckets.Due61To90 + buckets.DueOver90);
+        }
+
+        Assert.Equal(17m, receivables.Items.Single(item => item.CurrencyCode == "EUR").Buckets.Current);
+        Assert.Equal(17m, payables.Items.Single(item => item.CurrencyCode == "EUR").Buckets.Current);
+        Assert.Equal(receivables.Items.Sum(item => item.Buckets.Total), receivables.Totals.Total);
+        Assert.Equal(payables.Items.Sum(item => item.Buckets.Total), payables.Totals.Total);
+        Assert.Equal(467m, receivables.Totals.Total);
+        Assert.Equal(467m, payables.Totals.Total);
+        Assert.Equal(receivables.Totals.Total, dashboard.ReceivablesOpen);
+        Assert.Equal(payables.Totals.Total, dashboard.PayablesOpen);
+        Assert.Equal(420m, dashboard.ReceivablesOverdue);
+        Assert.Equal(420m, dashboard.PayablesOverdue);
+    }
+
+    [Theory]
+    [InlineData("=1+1")]
+    [InlineData("+1+1")]
+    [InlineData("-1+1")]
+    [InlineData("@SUM(1)")]
+    [InlineData("\t=1+1")]
+    [InlineData("\r=1+1")]
+    [InlineData("\n=1+1")]
+    [InlineData("  =1+1")]
+    [InlineData("=SUM(\"1\",2)")]
+    public async Task Reports_Exports_NeutralizeFormulaText(string unsafeText)
+    {
+        await using var factory = new ReportingSeededWebApplicationFactory();
+        var tenantId = Guid.NewGuid();
+        var cashId = Guid.NewGuid();
+        var revenueId = Guid.NewGuid();
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            db.Accounts.AddRange(
+                new Account { Id = cashId, TenantId = tenantId, Code = unsafeText, Name = unsafeText, AccountType = AccountType.Asset },
+                new Account { Id = revenueId, TenantId = tenantId, Code = unsafeText, Name = unsafeText, AccountType = AccountType.Revenue });
+            db.JournalEntries.Add(new JournalEntry
+            {
+                Id = Guid.NewGuid(), TenantId = tenantId, JournalNumber = unsafeText, Description = unsafeText,
+                PostingDate = new DateOnly(2026, 4, 15), Status = JournalEntryStatus.Posted, TotalDebit = 125m, TotalCredit = 125m,
+                Lines = new List<JournalEntryLine>
+                {
+                    new() { Id = Guid.NewGuid(), TenantId = tenantId, AccountId = cashId, LineNumber = 1, DebitAmount = 125m },
+                    new() { Id = Guid.NewGuid(), TenantId = tenantId, AccountId = revenueId, LineNumber = 2, CreditAmount = 125m },
+                },
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var client = factory.CreateClient();
+        client.SetBearerToken(tenantId, AppPermissions.Reports.View);
+        var escapedText = "'" + unsafeText;
+        if (escapedText.IndexOfAny(new[] { ',', '"', '\r', '\n' }) >= 0)
+            escapedText = "\"" + escapedText.Replace("\"", "\"\"") + "\"";
+
+        foreach (var route in new[]
+        {
+            "profit-and-loss/export?startDate=2026-04-01&endDate=2026-04-30",
+            "balance-sheet/export?asOfDate=2026-04-30",
+            "trial-balance/export?asOfDate=2026-04-30",
+            $"account-drill-down/{cashId}/export?startDate=2026-04-01&endDate=2026-04-30",
+        })
+        {
+            var response = await client.GetAsync("/api/reports/" + route);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal("text/csv", response.Content.Headers.ContentType?.MediaType);
+            var csv = await response.Content.ReadAsStringAsync();
+            Assert.Contains($"{escapedText},{escapedText},125", csv);
+        }
+    }
+
     private sealed class ReportingSeededWebApplicationFactory : TestWebApplicationFactoryBase
     {
         private readonly string _databaseName = $"vexorion-reporting-seeded-{Guid.NewGuid()}";

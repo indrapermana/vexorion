@@ -518,10 +518,14 @@ Open inventory workspace and reporting work is consolidated in the final Main UI
 
 - Finance pages mix localized shells with hard-coded English columns, actions, statuses, filters, and feedback.
 - Audit browsing now provides actor/entity detail, safe before/after/context metadata, trace filtering, and current-page CSV export; UX-FIN-04 is locally and manually browser validated 26 October 2026, including the responsive filter layout and translated reset action.
-- Report reconciliation/export coverage and inventory report breadth remain incomplete.
+- Finance report reconciliation, tenant/date boundaries, populated responses, and CSV formula safety now have focused automated coverage; broader inventory report coverage remains separate.
 
 - [x] `UX-FIN-04` Add an audit detail view with actor, entity, trace ID, safe before/after, support context, pagination, and export. Locally and manually browser validated 26 October 2026; the user confirmed acceptance after the responsive filter layout and translated reset action fixes.
   - Evidence: Main UI suite 305/305; audit detail, correlation-filter, sensitive-key redaction, CSV formula-injection, and locale tests pass. Audit service correlation filter and controller tests pass; UI typecheck, scoped ESLint, and production build pass. Production build retains the existing chunk-size warning. Manual QA scenarios are recorded in `TEST_PLAN.md`. This is local and manual browser validation, not the release gate.
+
+- [x] `FEAT-FIN-02` Complete report reconciliation, tenant/date-boundary, non-empty, and CSV formula-injection tests. Locally completed 26 October 2026: populated trial balance, P&L, balance sheet, account drill-down, and CSV totals reconcile against balanced journal fixtures; period endpoints are inclusive, while future, Draft, and other-tenant journal activity is excluded. Prior-period summaries and exported variances are checked. A/R and A/P aging cover due-date boundaries at 0/1/30/31/60/61/90/91 days, separate currency groups, invoice-state exclusions, payments, A/R applied credits, and agreement with current-open-balance dashboard totals. Foreign-account drill-down and export return 404.
+  - CSV hardening: all four financial report exports neutralize formula-like text, including whitespace/control-prefixed formulas, and escape embedded quotes, commas, CR, and LF without changing numeric amounts. Nine hostile-text cases exercise every export endpoint.
+  - Evidence: report endpoint integration/authorization tests pass 39/39, reporting service tests 37/37, and report handler tests 8/8 (84/84 total); test builds pass. Endpoint fixtures use the existing EF InMemory test host. No new browser or PostgreSQL-backed validation was run; this is focused local validation, not the release gate.
 
 Open finance, journal, reporting, and audit work is consolidated in the final Main UI backlog.
 
@@ -664,10 +668,6 @@ Historical milestone/checklist/roadmap documents were removed after consolidatio
 Complete application work in order: **Main UI → AdminUI → POS**. Finish the active application's module queue before moving to the next. Shared/release gates follow the application queues. This section is the source of truth for all remaining actionable work; earlier sections contain findings, decisions, and completed evidence only.
 
 ### Stage 1 — Main UI
-
-#### Sales, procurement, inventory, and finance
-
-- [ ] `FEAT-FIN-02` Complete report reconciliation, tenant/date-boundary, non-empty, and CSV formula-injection tests.
 
 #### Projects, documents, imports, and generated documents
 
