@@ -9,6 +9,7 @@ public interface IAuditLogQueryService
         string? eventType,
         string? entityName,
         string? entityId,
+        string? correlationId,
         DateTime? fromUtc,
         DateTime? toUtc,
         int page,

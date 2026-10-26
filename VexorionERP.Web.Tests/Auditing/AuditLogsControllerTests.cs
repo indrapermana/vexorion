@@ -52,4 +52,15 @@ public class AuditLogsControllerTests : IClassFixture<TestWebApplicationFactory>
         Assert.Equal(1, payload.Page);
         Assert.Equal(20, payload.PageSize);
     }
+
+    [Fact]
+    public async Task AuditLogs_WithCorrelationFilter_ReturnsOk()
+    {
+        var client = _factory.CreateClient();
+        client.SetBearerToken(Guid.NewGuid(), AppPermissions.Accounting.View);
+
+        var response = await client.GetAsync("/api/audit-logs?correlationId=trace-123&page=1&pageSize=20");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
 }

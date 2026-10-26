@@ -19,12 +19,13 @@ public class AuditLogsController(
         [FromQuery] string? eventType,
         [FromQuery] string? entityName,
         [FromQuery] string? entityId,
+        [FromQuery] string? correlationId,
         [FromQuery] DateTime? fromUtc,
         [FromQuery] DateTime? toUtc,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50)
     {
-        var result = await mediator.Send(new GetAuditLogsQuery(eventType, entityName, entityId, fromUtc, toUtc, page, pageSize), HttpContext.RequestAborted);
+        var result = await mediator.Send(new GetAuditLogsQuery(eventType, entityName, entityId, correlationId, fromUtc, toUtc, page, pageSize), HttpContext.RequestAborted);
         return ToActionResult(result);
     }
 }

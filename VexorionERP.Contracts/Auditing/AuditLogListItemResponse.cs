@@ -8,6 +8,7 @@ public class AuditLogListItemResponse : IEntityListResponse<AuditLog>
     public DateTime CreatedAtUtc { get; set; }
     public string EventType { get; set; } = string.Empty;
     public Guid? ActorUserId { get; set; }
+    public string? ActorUserName { get; set; }
     public Guid? TargetUserId { get; set; }
     public string? EntityName { get; set; }
     public string? EntityId { get; set; }

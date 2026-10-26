@@ -517,8 +517,11 @@ Open inventory workspace and reporting work is consolidated in the final Main UI
 **Findings**
 
 - Finance pages mix localized shells with hard-coded English columns, actions, statuses, filters, and feedback.
-- Audit browsing is a basic table/filter scaffold without readable event detail, before/after presentation, trace navigation, or export/support flow.
+- Audit browsing now provides actor/entity detail, safe before/after/context metadata, trace filtering, and current-page CSV export; UX-FIN-04 is locally and manually browser validated 26 October 2026, including the responsive filter layout and translated reset action.
 - Report reconciliation/export coverage and inventory report breadth remain incomplete.
+
+- [x] `UX-FIN-04` Add an audit detail view with actor, entity, trace ID, safe before/after, support context, pagination, and export. Locally and manually browser validated 26 October 2026; the user confirmed acceptance after the responsive filter layout and translated reset action fixes.
+  - Evidence: Main UI suite 305/305; audit detail, correlation-filter, sensitive-key redaction, CSV formula-injection, and locale tests pass. Audit service correlation filter and controller tests pass; UI typecheck, scoped ESLint, and production build pass. Production build retains the existing chunk-size warning. Manual QA scenarios are recorded in `TEST_PLAN.md`. This is local and manual browser validation, not the release gate.
 
 Open finance, journal, reporting, and audit work is consolidated in the final Main UI backlog.
 
@@ -664,7 +667,6 @@ Complete application work in order: **Main UI → AdminUI → POS**. Finish the 
 
 #### Sales, procurement, inventory, and finance
 
-- [ ] `UX-FIN-04` Add an audit detail view with actor, entity, trace ID, safe before/after, support context, pagination, and export.
 - [ ] `FEAT-FIN-02` Complete report reconciliation, tenant/date-boundary, non-empty, and CSV formula-injection tests.
 
 #### Projects, documents, imports, and generated documents

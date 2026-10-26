@@ -3,11 +3,13 @@ export type AuditLogListItemResponse = {
   createdAtUtc: string
   eventType: string
   actorUserId?: string
+  actorUserName?: string | null
   targetUserId?: string
   entityName?: string
   entityId?: string
   description?: string
   metadataJson?: string
+  correlationId?: string | null
   ipAddress?: string
   userAgent?: string
 }

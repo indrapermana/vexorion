@@ -14,6 +14,7 @@ public class AuditLogQueryService(
         string? eventType,
         string? entityName,
         string? entityId,
+        string? correlationId,
         DateTime? fromUtc,
         DateTime? toUtc,
         int page,
@@ -49,6 +50,12 @@ public class AuditLogQueryService(
             query = query.Where(x => x.EntityId == entityIdFilter);
         }
 
+        if (!string.IsNullOrWhiteSpace(correlationId))
+        {
+            var correlationFilter = correlationId.Trim();
+            query = query.Where(x => x.CorrelationId == correlationFilter);
+        }
+
         if (fromUtc.HasValue)
             query = query.Where(x => x.CreatedAtUtc >= fromUtc.Value);
 
@@ -67,6 +74,7 @@ public class AuditLogQueryService(
                 CreatedAtUtc = x.CreatedAtUtc,
                 EventType = x.EventType,
                 ActorUserId = x.ActorUserId,
+                ActorUserName = x.ActorUser != null ? x.ActorUser.UserName : null,
                 TargetUserId = x.TargetUserId,
                 EntityName = x.EntityName,
                 EntityId = x.EntityId,

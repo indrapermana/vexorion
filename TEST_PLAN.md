@@ -295,6 +295,12 @@
 |---|----------|-------|-----------------|
 | 1.8.1 | View audit log | Audit Logs page | Log entries with user, action, timestamp |
 | 1.8.2 | Create/edit action is logged | Perform any create/update → check audit log | Entry recorded with correct user and action |
+| 1.8.3 | Inspect audit event details | Open Details on a row | Actor, entity, event description, and correlation ID are readable; metadata is grouped into safe before/after/context; sensitive keys are redacted |
+| 1.8.4 | Find related events by trace | Open an event → Filter this trace | List reloads with the correlation ID filter and only matching tenant events |
+| 1.8.5 | Filter and paginate audit history | Set date/event/entity filters; move between pages | Filtered result count, ordered page, and visible entries stay consistent |
+| 1.8.6 | Export audit page | Apply filters and Export this page CSV | CSV contains the visible page and safe metadata; formula-like values are neutralized |
+
+Acceptance (26 October 2026): the user confirmed the Audit Logs browser check passes after the responsive filter layout and translated Reset Filters fixes. UX-FIN-04 is complete. Focused automated checks passed (3 files, 4 tests), along with TypeScript, scoped ESLint, and `git diff --check`. This records local and manual browser validation, not the release gate.
 
 ---
 
