@@ -36,6 +36,11 @@ describe('main authorization matrix', () => {
     expect(canAccessMainRoute([Permissions.customers.view], '/products')).toBe(false)
   })
 
+  it('allows inventory viewers to open reports without granting mutation access', () => {
+    expect(canAccessMainRoute([Permissions.inventory.view], '/inventory-reports')).toBe(true)
+    expect(canPerformMainRouteActions([Permissions.inventory.view], '/inventory-reports')).toBe(false)
+  })
+
   it('matches payment workspaces to their backend sales and purchasing policies', () => {
     expect(canAccessMainRoute([Permissions.sales.view], '/customer-payments')).toBe(true)
     expect(canAccessMainRoute([Permissions.payments.view], '/customer-payments')).toBe(false)

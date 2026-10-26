@@ -166,6 +166,11 @@ const navigationSections = [
         icon: <TuneRoundedIcon />,
       },
       {
+        to: "/inventory-reports",
+        labelKey: "nav.links.inventoryReports",
+        icon: <InsightsRoundedIcon />,
+      },
+      {
         to: "/stock-counts",
         labelKey: "nav.links.stockCounts",
         icon: <RuleRoundedIcon />,
@@ -284,6 +289,7 @@ const routeTitleKeys: Record<string, string> = {
   "/consultants": "nav.routeTitles.consultants",
   "/tenant-relationships": "nav.routeTitles.tenantRelationships",
   "/inventory-adjustments": "nav.routeTitles.inventoryAdjustments",
+  "/inventory-reports": "nav.routeTitles.inventoryReports",
   "/purchase-invoices": "nav.routeTitles.purchaseInvoices",
   "/purchase-orders": "nav.routeTitles.purchaseOrders",
   "/purchase-receipts": "nav.routeTitles.purchaseReceipts",

@@ -45,6 +45,7 @@ export const mainRouteAccess: ReadonlyArray<MainRouteAccess> = [
   { match: (path) => ['/purchase-orders', '/purchase-receipts', '/purchase-invoices'].includes(path), requirement: { allOf: [Permissions.purchasing.view] }, actionRequirement: { allOf: [Permissions.purchasing.manage] } },
   { match: (path) => path === '/vendor-payments', requirement: { allOf: [Permissions.purchasing.view] }, actionRequirement: { allOf: [Permissions.purchasing.manage] } },
   { match: (path) => path === '/products' || path === '/config/product-categories', requirement: { allOf: [Permissions.products.view] }, actionRequirement: { allOf: [Permissions.products.manage] } },
+  { match: (path) => path === '/inventory-reports', requirement: { allOf: [Permissions.inventory.view] } },
   { match: (path) => ['/inventory-adjustments', '/stock-counts', '/stock-transfers', '/warehouses'].includes(path), requirement: { allOf: [Permissions.inventory.view] }, actionRequirement: { allOf: [Permissions.inventory.manage] } },
   { match: (path) => ['/accounts', '/fiscal-periods', '/journals', '/config/numbering'].includes(path), requirement: { allOf: [Permissions.billing.view] }, actionRequirement: { allOf: [Permissions.billing.manage] } },
   { match: (path) => path === '/config/tax-discount', requirement: { allOf: [Permissions.accounting.view, Permissions.organization.view] }, actionRequirement: { anyOf: [Permissions.accounting.manage, Permissions.organization.manage] } },

@@ -75,6 +75,9 @@ Any capability requiring pending release evidence remains **implemented**, **loc
 - [x] Tenant onboarding, users, roles, permissions, companies, menu configuration, tax/discount configuration, and numbering sequences.
 - [x] Products, categories, identifiers/barcodes, warehouses, and inventory balances.
 - [x] Inventory adjustments, stock transfers, and stock counts share a finalized lifecycle contract: Draft → Completed posts inventory movements; Draft → Cancelled creates no movements; Completed → Cancelled records compensating movements while preserving the original movement history. The API and UI enforce the supported transitions, with movement and lifecycle test coverage.
+- [x] Inventory lifecycle actions use effect-aware confirmation; line and warehouse edits lock after Draft, and non-Draft deletes are disabled with an explanation. Locally and manually browser validated 25 October 2026; Main UI suite passed 285/285 and focused inventory typecheck, lint, and lifecycle tests passed.
+- [x] Inventory reports provide current-standard-cost valuation with balance-to-ledger quantity variance, tenant-scoped movement audit, and active-warehouse reorder gaps. Locally and manually browser validated 26 October 2026.
+  - Evidence: Main UI suite 289/289; Services suite 588 passed with 2 existing opt-in PostgreSQL tests skipped; Web/API suite 220/220. Focused valuation reconciliation, PostgreSQL query translation, movement-filter/paging, reorder-availability, query-bound, controller authorization, rendered-tab, and locale tests pass. Full .NET solution build and Main UI typecheck/scoped ESLint/production build pass; `git diff --check` passes. Production build retains the existing chunk-size warning. User confirmed the manual browser check is green; this is local and manual browser validation, not the release gate.
 - [x] Sales orders and purchase orders with line management.
 - [x] Partial purchase receipts and sales shipments with remaining-quantity controls and inventory posting.
 - [x] Sales invoices and purchase invoices, lines, totals, payment terms, source-document creation, approval/posting support, and balance tracking.
@@ -250,7 +253,7 @@ The approved/deferred trade and POS decisions are recorded above. D9 remains the
 
 ### P1-4 — Remaining reporting breadth
 
-Inventory valuation, movement audit, reorder recommendations, and report reconciliation are in the final Main UI backlog.
+Finance report reconciliation and export coverage remains in the final Main UI backlog.
 
 ### P1-5 — Release operations and observability
 
@@ -496,7 +499,7 @@ Scope: Adjustments, Counts, Transfers, Receipts, Shipments, balances, and moveme
 - Adjustment, count, and transfer pages previously mixed list, detail/lines, line-editor, and lifecycle-action rendering into 600–760 line components. `UX-INV-01` now keeps API/state orchestration in each page while delegating those visual responsibilities to module-owned components.
 - Line deletion can be immediate while document delete/post/reverse is confirmed; risk handling is inconsistent.
 - Lifecycle terminology alternates between complete/cancel and post/reverse.
-- Balance/movement behavior exists, but there is no focused movement/audit workspace and the valuation/reorder reports remain pending.
+- Balance/movement behavior is now exposed in a focused Inventory Reports workspace with valuation and reorder views; ledger-to-balance variance is visible for reconciliation.
 
 - [x] `UX-INV-01` Split adjustment, count, and transfer operations into list, detail, line-editor, and state-action components. Locally completed 25 October 2026: each operation has module-owned list, selected-document detail/lines, and line-editor components. Stock Count post/reverse/add-line controls are isolated in `StockCountStateActions`; Adjustment and Transfer delete confirmations are isolated in dedicated state-action components. Pages retain authentication, lookup, API mutation, feedback, unsaved-change, and dialog orchestration, preserving behavior and leaving quantity-effect previews and lifecycle semantics to `UX-INV-02`/`UX-INV-03`.
   - Evidence: Main UI tests pass 270/270, including component-boundary regression coverage for all three operations and dedicated state-action components for each. TypeScript, scoped inventory ESLint, production build, and `git diff --check` pass. Full-project ESLint remains blocked by 20 pre-existing `react-hooks/refs` findings in `Projects/DocumentsPanel.tsx`; no inventory files report lint errors. The existing large-chunk build warning remains. This is local acceptance, not the release gate.
@@ -659,9 +662,6 @@ Complete application work in order: **Main UI → AdminUI → POS**. Finish the 
 
 #### Sales, procurement, inventory, and finance
 
-- [x] `UX-INV-03` Locally and manually browser validated 25 October 2026: line/document confirmations are consistent; immutable-state edits and deletes are prevented or explained.
-  - Evidence: Main UI suite 285/285; inventory lifecycle, component-boundary, and locale tests pass. UI typecheck, scoped ESLint, and `git diff --check` pass. Draft-only delete actions are disabled; warehouse/line locks are explained; adjustment/transfer lifecycle changes use valid transitions and effect-aware confirmation; stock-count transitions remain in the dedicated Post/Reverse confirmations. User confirmed the manual browser check is green. This is local and manual browser validation, not the release gate.
-- [ ] `FEAT-INV-02` Implement inventory valuation, movement audit, and reorder reports with reconciliation tests.
 - [ ] `UX-FIN-01` Replace raw-ID journal actions with searchable contextual document selection.
 - [ ] `UX-FIN-02` Provide a fiscal-period status/calendar view and warn about locked periods before entry.
 - [ ] `UX-FIN-03` Standardize currency/date/sign formatting, totals, comparisons, drill-down, exports, and no-data explanations.

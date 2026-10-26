@@ -34,6 +34,7 @@ const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'))
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'))
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'))
 const InventoryAdjustmentsPage = lazy(() => import('./pages/InventoryAdjustmentsPage'))
+const InventoryReportsPage = lazy(() => import('./pages/InventoryReportsPage'))
 const PurchaseInvoicesPage = lazy(() => import('./pages/PurchaseInvoicesPage'))
 const PurchaseOrdersPage = lazy(() => import('./pages/PurchaseOrdersPage'))
 const PurchaseReceiptsPage = lazy(() => import('./pages/PurchaseReceiptsPage'))
@@ -136,6 +137,7 @@ function AppRoutes() {
                 </Route>
                 <Route element={<PermissionRoute requirement={{ allOf: [Permissions.inventory.view] }} />}>
                   <Route path="/inventory-adjustments" element={<InventoryAdjustmentsPage />} />
+                  <Route path="/inventory-reports" element={<InventoryReportsPage />} />
                   <Route path="/stock-counts" element={<StockCountsPage />} />
                   <Route path="/stock-transfers" element={<StockTransfersPage />} />
                   <Route path="/warehouses" element={<WarehousesPage />} />

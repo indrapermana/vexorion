@@ -161,6 +161,15 @@
 | 1.4.5.5 | Complete with insufficient source stock | Enter a line quantity exceeding source on-hand, then complete | Completion is rejected with insufficient-stock feedback; no movements are posted |
 | 1.4.5.6 | Edit locked transfer | Open a Completed or Cancelled transfer | Lines and warehouses are read-only; editable header metadata remains available; deleting is disabled |
 
+#### 1.4.6 Inventory Reports
+
+| # | Scenario | Steps | Expected Result |
+|---|----------|-------|-----------------|
+| 1.4.6.1 | Current inventory valuation | Open Inventory Reports → Valuation; compare a product with known on-hand and standard cost | Estimated value equals current on-hand multiplied by current standard cost; the report clearly identifies this as an estimate, not historical/FIFO valuation |
+| 1.4.6.2 | Balance-to-ledger reconciliation | Compare a product/warehouse row with posted inventory movements and an opening/manual balance | Ledger net equals the sum of on-hand movement deltas; variance equals current balance minus ledger net, exposing opening/manual balance differences |
+| 1.4.6.3 | Movement audit filters | Select a date range and warehouse; navigate pages | Entries are newest first, within the inclusive date range and selected warehouse, with movement type, signed on-hand/reserved deltas, and source reference |
+| 1.4.6.4 | Reorder recommendations | Compare active products with reorder levels against available stock in active warehouses | Products at or below reorder level appear; available quantity excludes reservations and inactive warehouses; suggested quantity is the gap to reorder level, not a demand forecast |
+
 ---
 
 ### 1.5 Sales

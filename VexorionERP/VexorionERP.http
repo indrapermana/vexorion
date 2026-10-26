@@ -38,3 +38,15 @@ Content-Type: application/json
 ### Inventory balances
 GET {{VexorionERP_HostAddress}}/api/inventory-balances
 Authorization: Bearer {{AccessToken}}
+
+### Inventory valuation (current standard cost)
+GET {{VexorionERP_HostAddress}}/api/inventory-reports/valuation
+Authorization: Bearer {{AccessToken}}
+
+### Inventory movement audit
+GET {{VexorionERP_HostAddress}}/api/inventory-reports/movement-audit?startDate=2026-10-01&endDate=2026-10-31&skip=0&take=100
+Authorization: Bearer {{AccessToken}}
+
+### Inventory reorder recommendations
+GET {{VexorionERP_HostAddress}}/api/inventory-reports/reorder-recommendations
+Authorization: Bearer {{AccessToken}}
