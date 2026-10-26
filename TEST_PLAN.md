@@ -357,7 +357,9 @@ UX-PROJ-02 acceptance (26 October 2026): the user confirmed manual browser valid
 
 ---
 
-UX-PROJ-04 acceptance (26 October 2026): the user confirmed manual browser testing is green; UX-PROJ-04 is complete. Main UI coverage/JUnit tests pass 352/352, including 18 document regressions; typecheck, scoped lint with the known ref-rule baseline excluded, and production build pass with the existing chunk-size warning. Document lifecycle E2E discovery passes only; the storage workflow was not executed. Read-only authenticated browser checks covered metadata targeting, delete cancellation, ancestor navigation, action grouping, and no page overflow at observed wide/narrow widths. Browser zoom limited the scripted fixed-viewport checks. No business records were changed by those checks. This records local and user-confirmed manual browser validation, not the release gate; real-storage E2E remains pending.
+UX-PROJ-04 acceptance (26 October 2026): the user confirmed manual browser testing is green; UX-PROJ-04 is complete. Main UI coverage/JUnit tests pass 352/352, including 18 document regressions; typecheck, scoped lint with the known ref-rule baseline excluded, and production build pass with the existing chunk-size warning. At this UI acceptance stage, document lifecycle E2E had passed discovery only. Read-only authenticated browser checks covered metadata targeting, delete cancellation, ancestor navigation, action grouping, and no page overflow at observed wide/narrow widths. Browser zoom limited the scripted fixed-viewport checks. No business records were changed by those checks. This records local and user-confirmed manual browser validation, not the release gate; subsequent real-storage E2E acceptance is recorded below.
+
+Authenticated document lifecycle E2E acceptance (26 October 2026): `e2e/project-documents.spec.ts` passes against the local Development API and configured R2 storage, including authentication (2/2 tests, 25.1 seconds). Browser actions upload v1, add v2, preview, and download; assertions distinguish current-file rows from version history, prove the complete v1 history record is unchanged after v2, require distinct version checksums, and compare preview/download bytes with the exact v2 payload. Global teardown deleted the isolated automation tenant and passed the orphan check. Seven lifecycle safety tests and scoped lint also pass. The run used ignored local SystemAdmin settings inside the process and an exported public development CA with TLS validation enabled; no credentials were printed and no production or manually maintained tenant was modified. Run the focused scenario through `npm run e2e -- e2e/project-documents.spec.ts` from Main UI with the guarded E2E environment configured as documented in the README. Production storage, retention/recovery, and malware-scanning gates remain separate.
 
 ### 1.11 Tenant Relationships
 
@@ -369,6 +371,19 @@ UX-PROJ-04 acceptance (26 October 2026): the user confirmed manual browser testi
 | 1.11.4 | Read-only relationship access | Open the relationship page with tenant-view permission only | Tenant code/name remains readable; create/edit/activate/delete controls are unavailable; Active only has an accessible switch name |
 
 UX-PROJ-03 acceptance (26 October 2026): the user confirmed manual browser verification is green; UX-PROJ-03 is complete. Main UI suite passes 342/342 with coverage/JUnit; project/relationship endpoint tests pass 37/37 and service tests 8/8. Typecheck, scoped lint, API build, and frontend production build pass with the existing chunk-size warning. Updated cross-tenant E2E scenarios pass discovery only, not execution. Read-only live checks confirmed the new relationship controls and the project lookup's 200/empty state; no business records were changed by those checks and no migration was added. This records local and user-confirmed manual browser validation, not the release gate.
+
+### 1.12 Upload Validation Without Malware Scanning
+
+Owner decision (26 October 2026): malware scanning is removed from initial and version uploads and deferred until all other unfinished project work is complete. Do not expect malware verdicts or describe a successful upload as scanned/clean. The future design and pricing decision are recorded in `docs/CLAMAV_COST_ANALYSIS.md`.
+
+| # | Scenario | Steps | Expected Result |
+|---|----------|-------|-----------------|
+| 1.12.1 | Upload with no scanner | Upload a valid permitted file and add a valid version while ClamAV is stopped | Existing upload/version workflows do not resolve, contact, or wait for a malware scanner |
+| 1.12.2 | Retained content validation | Try empty, unsupported, or extension/content-mismatched files | Existing validation rejects the file before storage; allowed content uses detected canonical MIME type |
+| 1.12.3 | Retained size/access/quota limits | Exceed file size or tenant quota, or upload without the required permission | Existing size, permission, tenant-isolation, and quota enforcement remain unchanged |
+| 1.12.4 | Legacy scanner settings | Supply former required/enabled scanner settings with an invalid scanner host/port in an isolated test | Valid permitted content still passes upload validation without a scanner dependency; obsolete settings do not re-enable scanning |
+
+Post-removal validation (26 October 2026): upload/version handler tests pass 14/14, document/runtime API tests 11/11, and content/size/storage-quota service tests 14/14 (39/39 total). The runtime-host regression confirms no scanner registration and successful PDF validation; a legacy scanner-settings regression confirms required/enabled settings no longer activate scanning. The real local API/R2 document lifecycle passes with the ClamAV container confirmed stopped (2/2 including authentication, 35.6 seconds); isolated tenant deletion and orphan check pass. Separately, scanner-free validator and dormant prototype checks pass 26 tests with the opt-in live scanner test skipped. No malware-protection, production-deployment, or migration claim is made.
 
 ---
 

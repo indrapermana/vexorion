@@ -6,8 +6,7 @@ using Microsoft.Extensions.Options;
 namespace VexorionERP.Services;
 
 public sealed class DocumentUploadSecurityService(
-    IOptions<DocumentSecurityOptions> options,
-    IDocumentMalwareScanner malwareScanner) : IDocumentUploadSecurityService
+    IOptions<DocumentSecurityOptions> options) : IDocumentUploadSecurityService
 {
     private static readonly IReadOnlyDictionary<string, string> SimpleContentTypes =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -61,25 +60,6 @@ public sealed class DocumentUploadSecurityService(
                 StatusCodes.Status400BadRequest,
                 "The file type is unsupported or its contents do not match its extension.",
                 "document.file_signature_invalid");
-        }
-
-        await using var scanContent = file.OpenReadStream();
-        var scan = await malwareScanner.ScanAsync(scanContent, cancellationToken);
-        if (scan.Status == DocumentMalwareScanStatus.Infected)
-        {
-            return ServiceResult<DocumentUploadSecurityResult>.Failure(
-                StatusCodes.Status422UnprocessableEntity,
-                "The file was rejected because malware was detected.",
-                "document.malware_detected");
-        }
-
-        if (scan.Status == DocumentMalwareScanStatus.Unavailable
-            || (scan.Status == DocumentMalwareScanStatus.NotConfigured && options.Value.RequireMalwareScan))
-        {
-            return ServiceResult<DocumentUploadSecurityResult>.Failure(
-                StatusCodes.Status503ServiceUnavailable,
-                "The file could not be scanned for malware. Try again later or contact an administrator.",
-                "document.malware_scan_unavailable");
         }
 
         return ServiceResult<DocumentUploadSecurityResult>.Success(new DocumentUploadSecurityResult(contentType));

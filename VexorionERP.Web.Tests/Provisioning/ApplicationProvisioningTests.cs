@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -7,12 +8,26 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using VexorionERP.Database;
 using VexorionERP.Models;
+using VexorionERP.Services;
 using Xunit;
 
 namespace VexorionERP.Web.Tests;
 
 public sealed class ApplicationProvisioningTests
 {
+    [Fact]
+    public async Task RuntimeUploadValidation_DoesNotRegisterOrRequireAMalwareScanner()
+    {
+        await using var factory = new ProvisioningTestWebApplicationFactory();
+        await using var scope = factory.Services.CreateAsyncScope();
+        Assert.Null(scope.ServiceProvider.GetService<IDocumentMalwareScanner>());
+        var validator = scope.ServiceProvider.GetRequiredService<IDocumentUploadSecurityService>();
+        using var content = new MemoryStream("%PDF-1.7\n"u8.ToArray());
+        var result = await validator.ValidateAsync(new FormFile(content, 0, content.Length, "file", "contract.pdf"));
+        Assert.True(result.Succeeded);
+        Assert.Equal("application/pdf", result.Value!.ContentType);
+    }
+
     [Fact]
     public async Task ConcurrentRuntimeValidation_DoesNotCreateSchemaOrSeedData()
     {

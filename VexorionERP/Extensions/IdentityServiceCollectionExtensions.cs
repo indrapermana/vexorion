@@ -127,7 +127,6 @@ public static class IdentityServiceCollectionExtensions
         services.AddScoped<ISalesShipmentPostingService, SalesShipmentCommandService>();
         AddStorageServices(services, configuration);
         services.AddScoped<IStorageAccountingService, StorageAccountingService>();
-        services.AddScoped<IDocumentMalwareScanner, ClamAvDocumentMalwareScanner>();
         services.AddScoped<IDocumentUploadSecurityService, DocumentUploadSecurityService>();
         services.AddScoped<ProjectDocumentCommandService>();
         services.AddScoped<DocumentDataLoader>();

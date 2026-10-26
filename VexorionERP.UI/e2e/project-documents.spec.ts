@@ -72,6 +72,8 @@ test('P1-1: upload, version, preview, download, and preserve document history', 
     await page.goto(`/projects/${projectId}`)
     await expect(page.getByText(projectName, { exact: true })).toBeVisible()
     await page.getByRole('tab', { name: /^documents$/i }).click()
+    const documentsTable = page.getByRole('table').filter({ has: page.getByRole('columnheader', { name: /^title$/i }) })
+    const historyTable = page.getByRole('table').filter({ has: page.getByRole('columnheader', { name: /^uploaded at$/i }) })
     await page.getByRole('button', { name: /upload document/i }).click()
 
     const uploadDialog = page.getByRole('dialog')
@@ -96,8 +98,16 @@ test('P1-1: upload, version, preview, download, and preserve document history', 
     expect(uploadedDocument.fileName).toBe(firstFileName)
 
     await expect(page.getByText(/document uploaded/i)).toBeVisible()
-    await expect(page.getByRole('cell', { name: firstFileName })).toBeVisible()
-    await expect(page.getByRole('cell', { name: 'v1', exact: true })).toBeVisible()
+    await expect(documentsTable.getByRole('cell', { name: firstFileName, exact: true })).toBeVisible()
+    await expect(documentsTable.getByRole('cell', { name: 'v1', exact: true })).toBeVisible()
+    await expect(historyTable.getByRole('cell', { name: firstFileName, exact: true })).toBeVisible()
+    const originalVersions = expectSuccessfulFixture(
+      await authenticatedApi<ProjectDocumentVersion[]>(page, `/projects/${projectId}/documents/${documentId}/versions`, 'GET'),
+      'Original document history verification',
+    )
+    expect(originalVersions).toHaveLength(1)
+    expect(originalVersions[0]).toMatchObject({ versionNumber: 1, fileName: firstFileName })
+    expect(originalVersions[0].checksum).toBeTruthy()
 
     await page.getByRole('button', { name: /add version/i }).click()
     const versionDialog = page.getByRole('dialog')
@@ -121,10 +131,13 @@ test('P1-1: upload, version, preview, download, and preserve document history', 
     expect(uploadedVersion).toMatchObject({ versionNumber: 2, fileName: secondFileName })
 
     await expect(page.getByText(/new version uploaded/i)).toBeVisible()
-    await expect(page.getByRole('cell', { name: firstFileName })).toBeVisible()
-    await expect(page.getByRole('cell', { name: secondFileName })).toBeVisible()
-    await expect(page.getByRole('cell', { name: 'v1', exact: true })).toBeVisible()
-    await expect(page.getByRole('cell', { name: 'v2', exact: true }).first()).toBeVisible()
+    await expect(documentsTable.getByRole('cell', { name: secondFileName, exact: true })).toBeVisible()
+    await expect(documentsTable.getByRole('cell', { name: firstFileName, exact: true })).toHaveCount(0)
+    await expect(documentsTable.getByRole('cell', { name: 'v2', exact: true })).toBeVisible()
+    await expect(historyTable.getByRole('cell', { name: firstFileName, exact: true })).toBeVisible()
+    await expect(historyTable.getByRole('cell', { name: secondFileName, exact: true })).toBeVisible()
+    await expect(historyTable.getByRole('cell', { name: 'v1', exact: true })).toBeVisible()
+    await expect(historyTable.getByRole('cell', { name: 'v2', exact: true })).toBeVisible()
 
     const versions = expectSuccessfulFixture(
       await authenticatedApi<ProjectDocumentVersion[]>(page, `/projects/${projectId}/documents/${documentId}/versions`, 'GET'),
@@ -137,6 +150,8 @@ test('P1-1: upload, version, preview, download, and preserve document history', 
     ]))
     expect(versions.find((version) => version.versionNumber === 1)?.checksum).toBeTruthy()
     expect(versions.find((version) => version.versionNumber === 2)?.checksum).toBeTruthy()
+    expect(versions.find((version) => version.versionNumber === 1)).toEqual(originalVersions[0])
+    expect(versions.find((version) => version.versionNumber === 2)?.checksum).not.toBe(originalVersions[0].checksum)
 
     const previewLinkPromise = page.waitForResponse((response) => (
       response.request().method() === 'GET'
@@ -162,6 +177,9 @@ test('P1-1: upload, version, preview, download, and preserve document history', 
     const downloadLink = (await downloadLinkResponse.json()) as ProjectDocumentDownload
     expect(downloadLink.fileName).toBe(secondFileName)
     expect(downloadLink.fileSizeBytes).toBe(Buffer.byteLength(secondContent))
+    const downloadedBlob = await page.request.get(downloadLink.downloadUrl)
+    expect(downloadedBlob.ok()).toBeTruthy()
+    expect((await downloadedBlob.body()).toString()).toBe(secondContent)
   } finally {
     if (!page.isClosed()) {
       if (documentId && projectId) {

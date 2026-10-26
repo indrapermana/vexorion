@@ -473,6 +473,12 @@ Do not commit these credentials or add them to tracked environment files.
 
 ---
 
+## Document Upload Validation
+
+Malware scanning was removed from document uploads and version uploads by owner decision on 26 October 2026. It will be redesigned from scratch only after all other unfinished project work is complete. Do not deploy the dormant ClamAV prototype or enable legacy scanner settings expecting upload protection; the upload pipeline does not resolve or call a scanner.
+
+Empty-file rejection, file-type/content-signature validation, size limits, canonical MIME detection, tenant permissions, and storage quotas remain active. They are not malware detection, and a successful upload must not be presented as scanned or malware-free. See [the saved ClamAV cost analysis and decision](docs/CLAMAV_COST_ANALYSIS.md) and the final-project item in [the development plan](DEVELOPMENT_PLAN.md).
+
 ## Running everything locally
 
 ```bash

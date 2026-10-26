@@ -1,0 +1,28 @@
+name: vexorion-document-scanner
+
+services:
+  clamav:
+    image: clamav/clamav@sha256:bda39705e291105049c3936e2803ac90b955172af8030f94f05dce1252df6c6d
+    ports:
+      - "127.0.0.1:${CLAMAV_LOCAL_PORT:-3310}:3310"
+    volumes:
+      - signatures:/var/lib/clamav
+      - ./clamd.conf:/etc/clamav/clamd.conf:ro
+    environment:
+      CLAMD_STARTUP_TIMEOUT: "300"
+      FRESHCLAM_CHECKS: "12"
+    mem_limit: 4g
+    cpus: 2
+    pids_limit: 128
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "clamdscan", "--ping=1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 180s
+
+volumes:
+  signatures:

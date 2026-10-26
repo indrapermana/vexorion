@@ -132,13 +132,11 @@ Storage__R2__ProductImagePublicBaseUrl=https://images.vexorionerp.com
 Storage__R2__SignedUrlLifetimeMinutes=5
 Security__UseHttpsRedirection=false
 Logging__File__Enabled=false
-DocumentSecurity__RequireMalwareScan=false
-DocumentSecurity__ClamAv__Enabled=false
 GrafanaLoki__Url=<grafana-loki-url>
 GrafanaLoki__User=<grafana-loki-user>
 ```
 
-HTTPS redirection is disabled inside the container because Cloud Run terminates TLS. Malware scanning remains explicitly disabled until a private scanner is deployed and validated.
+HTTPS redirection is disabled inside the container because Cloud Run terminates TLS. Malware scanning was removed from the upload pipeline by owner decision on 26 October 2026 and is deferred until all other unfinished project work is complete. Do not enable legacy scanner settings or deploy a scanner as part of this runbook. File-type/signature, empty-file, size, permission, and tenant quota checks remain, but they are not malware protection. The cost analysis and deferred design considerations are in [CLAMAV_COST_ANALYSIS.md](CLAMAV_COST_ANALYSIS.md).
 
 Map the five Secret Manager values from the previous step to their corresponding settings.
 
