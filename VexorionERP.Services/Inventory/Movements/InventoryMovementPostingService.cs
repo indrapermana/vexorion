@@ -154,7 +154,7 @@ public class InventoryMovementPostingService(AppDbContext dbContext) : IInventor
 
     public async Task<ServiceResult<bool>> ApplyInventoryAdjustmentStatusChangeAsync(InventoryAdjustment adjustment, DocumentStatus previousStatus, DocumentStatus newStatus, CancellationToken cancellationToken = default)
     {
-        if (ShouldPostInventoryAdjustment(previousStatus, newStatus))
+        if (InventoryDocumentLifecycle.ShouldPost(previousStatus, newStatus))
         {
             foreach (var line in adjustment.Lines.Where(x => x.IsActive))
             {
@@ -184,7 +184,7 @@ public class InventoryMovementPostingService(AppDbContext dbContext) : IInventor
             }
         }
 
-        if (ShouldReverseInventoryAdjustment(previousStatus, newStatus))
+        if (InventoryDocumentLifecycle.ShouldReverse(previousStatus, newStatus))
         {
             foreach (var line in adjustment.Lines.Where(x => x.IsActive))
             {
@@ -220,7 +220,7 @@ public class InventoryMovementPostingService(AppDbContext dbContext) : IInventor
 
     public async Task<ServiceResult<bool>> ApplyStockTransferStatusChangeAsync(StockTransfer transfer, DocumentStatus previousStatus, DocumentStatus newStatus, CancellationToken cancellationToken = default)
     {
-        if (ShouldPostStockTransfer(previousStatus, newStatus))
+        if (InventoryDocumentLifecycle.ShouldPost(previousStatus, newStatus))
         {
             foreach (var line in transfer.Lines.Where(x => x.IsActive))
             {
@@ -280,7 +280,7 @@ public class InventoryMovementPostingService(AppDbContext dbContext) : IInventor
             }
         }
 
-        if (ShouldReverseStockTransfer(previousStatus, newStatus))
+        if (InventoryDocumentLifecycle.ShouldReverse(previousStatus, newStatus))
         {
             foreach (var line in transfer.Lines.Where(x => x.IsActive))
             {
@@ -345,7 +345,7 @@ public class InventoryMovementPostingService(AppDbContext dbContext) : IInventor
 
     public async Task<ServiceResult<bool>> ApplyStockCountStatusChangeAsync(StockCount stockCount, DocumentStatus previousStatus, DocumentStatus newStatus, CancellationToken cancellationToken = default)
     {
-        if (ShouldPostStockCount(previousStatus, newStatus))
+        if (InventoryDocumentLifecycle.ShouldPost(previousStatus, newStatus))
         {
             foreach (var line in stockCount.Lines.Where(x => x.IsActive))
             {
@@ -390,7 +390,7 @@ public class InventoryMovementPostingService(AppDbContext dbContext) : IInventor
             }
         }
 
-        if (ShouldReverseStockCount(previousStatus, newStatus))
+        if (InventoryDocumentLifecycle.ShouldReverse(previousStatus, newStatus))
         {
             foreach (var line in stockCount.Lines.Where(x => x.IsActive))
             {
@@ -603,24 +603,6 @@ public class InventoryMovementPostingService(AppDbContext dbContext) : IInventor
     private static bool ShouldShipSalesOrder(DocumentStatus previousStatus, DocumentStatus newStatus)
         => previousStatus is DocumentStatus.Draft or DocumentStatus.Confirmed
             && newStatus is DocumentStatus.PartiallyProcessed or DocumentStatus.Completed;
-
-    private static bool ShouldPostInventoryAdjustment(DocumentStatus previousStatus, DocumentStatus newStatus)
-        => previousStatus != DocumentStatus.Completed && newStatus == DocumentStatus.Completed;
-
-    private static bool ShouldReverseInventoryAdjustment(DocumentStatus previousStatus, DocumentStatus newStatus)
-        => previousStatus == DocumentStatus.Completed && newStatus == DocumentStatus.Cancelled;
-
-    private static bool ShouldPostStockTransfer(DocumentStatus previousStatus, DocumentStatus newStatus)
-        => previousStatus != DocumentStatus.Completed && newStatus == DocumentStatus.Completed;
-
-    private static bool ShouldReverseStockTransfer(DocumentStatus previousStatus, DocumentStatus newStatus)
-        => previousStatus == DocumentStatus.Completed && newStatus == DocumentStatus.Cancelled;
-
-    private static bool ShouldPostStockCount(DocumentStatus previousStatus, DocumentStatus newStatus)
-        => previousStatus != DocumentStatus.Completed && newStatus == DocumentStatus.Completed;
-
-    private static bool ShouldReverseStockCount(DocumentStatus previousStatus, DocumentStatus newStatus)
-        => previousStatus == DocumentStatus.Completed && newStatus == DocumentStatus.Cancelled;
 
     public async Task<ServiceResult<bool>> ApplyPurchaseReceiptAsync(PurchaseReceipt receipt, string purchaseOrderNumber, CancellationToken cancellationToken = default)
     {

@@ -89,7 +89,7 @@ public class StockCountCommandService(
         if (IsCompletingWithoutActiveLines(stockCount, updateRequest.Status))
             return ServiceResult<IEntityResponse<StockCount>>.Failure(StatusCodes.Status400BadRequest, "At least one active line is required before completing a stock count.");
 
-        if (!CanTransition(stockCount.Status, updateRequest.Status))
+        if (!InventoryDocumentLifecycle.CanTransition(stockCount.Status, updateRequest.Status))
             return ServiceResult<IEntityResponse<StockCount>>.Failure(StatusCodes.Status400BadRequest, "The requested stock count status transition is not allowed.");
 
         var previousStatus = stockCount.Status;
@@ -146,19 +146,6 @@ public class StockCountCommandService(
         if (string.IsNullOrWhiteSpace(countNumber)) errors[nameof(CreateStockCountRequest.CountNumber)] = ["Count number is required."];
         if (warehouseId == Guid.Empty) errors[nameof(CreateStockCountRequest.WarehouseId)] = ["Warehouse is required."];
         return errors;
-    }
-
-    private static bool CanTransition(DocumentStatus previousStatus, DocumentStatus newStatus)
-    {
-        if (previousStatus == newStatus)
-            return true;
-
-        return previousStatus switch
-        {
-            DocumentStatus.Draft => newStatus is DocumentStatus.Completed or DocumentStatus.Cancelled,
-            DocumentStatus.Completed => newStatus == DocumentStatus.Cancelled,
-            _ => false,
-        };
     }
 
     private static bool HasPostedWarehouseChange(StockCount stockCount, Guid requestedWarehouseId)

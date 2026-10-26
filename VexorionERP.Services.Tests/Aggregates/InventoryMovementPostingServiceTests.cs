@@ -244,7 +244,7 @@ public class InventoryMovementPostingServiceTests
             ],
         };
 
-        var result = await service.ApplyStockTransferStatusChangeAsync(transfer, DocumentStatus.Confirmed, DocumentStatus.Completed);
+        var result = await service.ApplyStockTransferStatusChangeAsync(transfer, DocumentStatus.Draft, DocumentStatus.Completed);
 
         Assert.False(result.Succeeded);
         Assert.Equal(409, result.StatusCode);
@@ -325,7 +325,7 @@ public class InventoryMovementPostingServiceTests
             ],
         };
 
-        var result = await service.ApplyStockCountStatusChangeAsync(stockCount, DocumentStatus.Confirmed, DocumentStatus.Completed);
+        var result = await service.ApplyStockCountStatusChangeAsync(stockCount, DocumentStatus.Draft, DocumentStatus.Completed);
 
         Assert.True(result.Succeeded);
 
@@ -470,7 +470,7 @@ public class InventoryMovementPostingServiceTests
             ],
         };
 
-        var postResult = await service.ApplyInventoryAdjustmentStatusChangeAsync(adjustment, DocumentStatus.Confirmed, DocumentStatus.Completed);
+        var postResult = await service.ApplyInventoryAdjustmentStatusChangeAsync(adjustment, DocumentStatus.Draft, DocumentStatus.Completed);
         Assert.True(postResult.Succeeded);
 
         var reverseResult = await service.ApplyInventoryAdjustmentStatusChangeAsync(adjustment, DocumentStatus.Completed, DocumentStatus.Cancelled);
@@ -489,6 +489,45 @@ public class InventoryMovementPostingServiceTests
         var deltas = await dbContext.InventoryMovements.Select(x => x.QuantityOnHandDelta).ToListAsync();
         Assert.Contains(3m, deltas);
         Assert.Contains(-3m, deltas);
+    }
+
+    [Fact]
+    public async Task CancellingDraftInventoryDocuments_DoesNotPostMovements()
+    {
+        var tenantId = Guid.NewGuid();
+        await using var dbContext = TestDbContextFactory.Create(tenantId, Guid.NewGuid().ToString());
+        var service = new InventoryMovementPostingService(dbContext);
+        var productId = Guid.NewGuid();
+
+        var adjustmentResult = await service.ApplyInventoryAdjustmentStatusChangeAsync(new InventoryAdjustment
+        {
+            TenantId = tenantId,
+            WarehouseId = Guid.NewGuid(),
+            AdjustmentNumber = "ADJ-DRAFT-CANCEL",
+            Lines = [new InventoryAdjustmentLine { TenantId = tenantId, ProductId = productId, QuantityDelta = 4m, IsActive = true }],
+        }, DocumentStatus.Draft, DocumentStatus.Cancelled);
+
+        var transferResult = await service.ApplyStockTransferStatusChangeAsync(new StockTransfer
+        {
+            TenantId = tenantId,
+            SourceWarehouseId = Guid.NewGuid(),
+            DestinationWarehouseId = Guid.NewGuid(),
+            TransferNumber = "TR-DRAFT-CANCEL",
+            Lines = [new StockTransferLine { TenantId = tenantId, ProductId = productId, Quantity = 4m, IsActive = true }],
+        }, DocumentStatus.Draft, DocumentStatus.Cancelled);
+
+        var countResult = await service.ApplyStockCountStatusChangeAsync(new StockCount
+        {
+            TenantId = tenantId,
+            WarehouseId = Guid.NewGuid(),
+            CountNumber = "SC-DRAFT-CANCEL",
+            Lines = [new StockCountLine { TenantId = tenantId, ProductId = productId, SystemQuantity = 1m, CountedQuantity = 4m, IsActive = true }],
+        }, DocumentStatus.Draft, DocumentStatus.Cancelled);
+
+        Assert.True(adjustmentResult.Succeeded);
+        Assert.True(transferResult.Succeeded);
+        Assert.True(countResult.Succeeded);
+        Assert.Empty(dbContext.InventoryMovements);
     }
 
     [Fact]

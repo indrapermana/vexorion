@@ -139,7 +139,7 @@ public class InventoryAdjustmentCommandService(
             return ServiceResult<IEntityResponse<InventoryAdjustment>>.Failure(StatusCodes.Status400BadRequest, "At least one active line is required before completing an inventory adjustment.");
         }
 
-        if (!CanTransition(adjustment.Status, request.Status))
+        if (!InventoryDocumentLifecycle.CanTransition(adjustment.Status, request.Status))
         {
             return ServiceResult<IEntityResponse<InventoryAdjustment>>.Failure(StatusCodes.Status400BadRequest, "The requested inventory adjustment status transition is not allowed.");
         }
@@ -265,21 +265,6 @@ public class InventoryAdjustmentCommandService(
         if (warehouseId == Guid.Empty) errors[nameof(CreateInventoryAdjustmentRequest.WarehouseId)] = ["Warehouse is required."];
         if (string.IsNullOrWhiteSpace(reason)) errors[nameof(CreateInventoryAdjustmentRequest.Reason)] = ["Reason is required."];
         return errors;
-    }
-
-    private static bool CanTransition(DocumentStatus previousStatus, DocumentStatus newStatus)
-    {
-        if (previousStatus == newStatus)
-        {
-            return true;
-        }
-
-        return previousStatus switch
-        {
-            DocumentStatus.Draft => newStatus is DocumentStatus.Completed or DocumentStatus.Cancelled,
-            DocumentStatus.Completed => newStatus == DocumentStatus.Cancelled,
-            _ => false,
-        };
     }
 
     private static bool HasPostedWarehouseChange(InventoryAdjustment adjustment, Guid requestedWarehouseId)

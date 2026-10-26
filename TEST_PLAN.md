@@ -134,23 +134,32 @@
 
 | # | Scenario | Steps | Expected Result |
 |---|----------|-------|-----------------|
-| 1.4.3.1 | Create adjustment | Add → select warehouse + product → enter quantity → Save | Inventory balance updated |
-| 1.4.3.2 | View adjustment history | List page | All adjustments shown with date, user, quantity |
+| 1.4.3.1 | Create adjustment | Add → select warehouse → Save as Draft; add one positive or negative line | Document and line are saved; inventory balance is unchanged while Draft |
+| 1.4.3.2 | Complete adjustment | Edit Draft → choose Completed → Save → confirm the displayed effect | Status becomes Completed and the signed quantity delta is posted once |
+| 1.4.3.3 | Cancel Draft adjustment | Edit Draft → choose Cancelled → Save → confirm cancellation | Status becomes Cancelled; no inventory movement is posted |
+| 1.4.3.4 | Reverse completed adjustment | Edit Completed → choose Cancelled → review the reversal preview → confirm | Status becomes Cancelled; a compensating movement restores the prior balance; original movement remains in history |
+| 1.4.3.5 | Edit locked adjustment | Open a Completed or Cancelled adjustment | Lines and warehouse are read-only; editable header metadata remains available; deleting is disabled |
 
 #### 1.4.4 Stock Counts
 
 | # | Scenario | Steps | Expected Result |
 |---|----------|-------|-----------------|
-| 1.4.4.1 | Create stock count | Add → select warehouse → add lines → Save | Count saved |
-| 1.4.4.2 | Post stock count | Open count → Post | Inventory balances updated to counted quantities |
+| 1.4.4.1 | Create stock count | Add → select warehouse → add lines → Save | Count is Draft; inventory balance is unchanged |
+| 1.4.4.2 | Post stock count | Open Draft count → Post → review variance and resulting balances → confirm | Status becomes Completed and each counted variance is posted once |
+| 1.4.4.3 | Reverse stock count | Open Completed count → Reverse → review compensating effects → confirm | Status becomes Cancelled; compensating movements restore prior balances; original count remains in history |
+| 1.4.4.4 | Reverse with insufficient stock | Consume stock added by the count, then attempt Reverse | Reversal is rejected; status and balances remain unchanged |
+| 1.4.4.5 | Edit locked stock count | Open a Completed or Cancelled count | Lines and warehouse are read-only; editable header metadata remains available; deleting is disabled |
 
 #### 1.4.5 Stock Transfers
 
 | # | Scenario | Steps | Expected Result |
 |---|----------|-------|-----------------|
-| 1.4.5.1 | Create transfer | Add → select From/To warehouse + products + qty → Save | Transfer created |
-| 1.4.5.2 | Post transfer | Open transfer → Post | From warehouse decremented, To warehouse incremented |
-| 1.4.5.3 | Transfer with insufficient stock | Enter qty exceeding source balance | Error: insufficient stock |
+| 1.4.5.1 | Create transfer | Add → select source/destination warehouses → add lines → Save | Transfer is Draft; both warehouse balances are unchanged |
+| 1.4.5.2 | Complete transfer | Edit Draft → choose Completed → Save → review source/destination effects → confirm | Status becomes Completed; source is decremented and destination incremented once |
+| 1.4.5.3 | Reverse completed transfer | Edit Completed → choose Cancelled → review reversal preview → confirm | Status becomes Cancelled; compensating movements restore both balances; original movements remain in history |
+| 1.4.5.4 | Reverse with insufficient destination stock | Consume transferred stock at destination, then attempt reversal | Reversal is rejected; status and balances remain unchanged |
+| 1.4.5.5 | Complete with insufficient source stock | Enter a line quantity exceeding source on-hand, then complete | Completion is rejected with insufficient-stock feedback; no movements are posted |
+| 1.4.5.6 | Edit locked transfer | Open a Completed or Cancelled transfer | Lines and warehouses are read-only; editable header metadata remains available; deleting is disabled |
 
 ---
 

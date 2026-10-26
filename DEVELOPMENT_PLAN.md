@@ -74,7 +74,7 @@ Any capability requiring pending release evidence remains **implemented**, **loc
 
 - [x] Tenant onboarding, users, roles, permissions, companies, menu configuration, tax/discount configuration, and numbering sequences.
 - [x] Products, categories, identifiers/barcodes, warehouses, and inventory balances.
-- [x] Inventory adjustments, warehouse transfers, stock counts, posting/reversal behavior, and movement records.
+- [x] Inventory adjustments, stock transfers, and stock counts share a finalized lifecycle contract: Draft → Completed posts inventory movements; Draft → Cancelled creates no movements; Completed → Cancelled records compensating movements while preserving the original movement history. The API and UI enforce the supported transitions, with movement and lifecycle test coverage.
 - [x] Sales orders and purchase orders with line management.
 - [x] Partial purchase receipts and sales shipments with remaining-quantity controls and inventory posting.
 - [x] Sales invoices and purchase invoices, lines, totals, payment terms, source-document creation, approval/posting support, and balance tracking.
@@ -661,7 +661,6 @@ Complete application work in order: **Main UI → AdminUI → POS**. Finish the 
 
 - [x] `UX-INV-03` Locally and manually browser validated 25 October 2026: line/document confirmations are consistent; immutable-state edits and deletes are prevented or explained.
   - Evidence: Main UI suite 285/285; inventory lifecycle, component-boundary, and locale tests pass. UI typecheck, scoped ESLint, and `git diff --check` pass. Draft-only delete actions are disabled; warehouse/line locks are explained; adjustment/transfer lifecycle changes use valid transitions and effect-aware confirmation; stock-count transitions remain in the dedicated Post/Reverse confirmations. User confirmed the manual browser check is green. This is local and manual browser validation, not the release gate.
-- [ ] `FEAT-INV-01` Finalize inventory lifecycle vocabulary and reversal behavior across API, UI, tests, and QA documentation.
 - [ ] `FEAT-INV-02` Implement inventory valuation, movement audit, and reorder reports with reconciliation tests.
 - [ ] `UX-FIN-01` Replace raw-ID journal actions with searchable contextual document selection.
 - [ ] `UX-FIN-02` Provide a fiscal-period status/calendar view and warn about locked periods before entry.

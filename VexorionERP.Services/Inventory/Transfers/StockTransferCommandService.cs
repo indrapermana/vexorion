@@ -147,7 +147,7 @@ public class StockTransferCommandService(
             return ServiceResult<IEntityResponse<StockTransfer>>.Failure(StatusCodes.Status400BadRequest, "At least one active line is required before completing a stock transfer.");
         }
 
-        if (!CanTransition(transfer.Status, request.Status))
+        if (!InventoryDocumentLifecycle.CanTransition(transfer.Status, request.Status))
         {
             return ServiceResult<IEntityResponse<StockTransfer>>.Failure(StatusCodes.Status400BadRequest, "The requested stock transfer status transition is not allowed.");
         }
@@ -273,21 +273,6 @@ public class StockTransferCommandService(
         if (destinationWarehouseId == Guid.Empty) errors[nameof(CreateStockTransferRequest.DestinationWarehouseId)] = ["Destination warehouse is required."];
         if (sourceWarehouseId == destinationWarehouseId && sourceWarehouseId != Guid.Empty) errors[nameof(CreateStockTransferRequest.DestinationWarehouseId)] = ["Destination warehouse must differ from the source warehouse."];
         return errors;
-    }
-
-    private static bool CanTransition(DocumentStatus previousStatus, DocumentStatus newStatus)
-    {
-        if (previousStatus == newStatus)
-        {
-            return true;
-        }
-
-        return previousStatus switch
-        {
-            DocumentStatus.Draft => newStatus is DocumentStatus.Completed or DocumentStatus.Cancelled,
-            DocumentStatus.Completed => newStatus == DocumentStatus.Cancelled,
-            _ => false,
-        };
     }
 
     private static bool HasPostedWarehouseChange(StockTransfer transfer, Guid requestedSourceWarehouseId, Guid requestedDestinationWarehouseId)
