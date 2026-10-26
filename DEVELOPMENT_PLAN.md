@@ -84,6 +84,7 @@ Any capability requiring pending release evidence remains **implemented**, **loc
 - [x] Customer and vendor payments with allocation/over-allocation rules.
 - [x] Chart of accounts, fiscal periods, journals, posting, reversal, dashboard metrics, AR/AP aging, trial balance, P&L, balance sheet, comparisons, drill-down, and CSV exports.
 - [x] Journal invoice posting uses searchable eligible-invoice selection; reversals start from the selected Posted journal and show readable source context instead of raw GUIDs. Locally and manually browser validated 26 October 2026.
+- [x] Fiscal Periods provides List and Calendar views with open/closed period coverage; Journals warns on closed, uncovered, or overlapping posting dates and blocks invalid post/reversal actions. Locally and manually browser validated 26 October 2026.
 - [x] Audit-log browsing scaffold.
 
 ### 3.3 POS
@@ -662,7 +663,6 @@ Complete application work in order: **Main UI → AdminUI → POS**. Finish the 
 
 #### Sales, procurement, inventory, and finance
 
-- [ ] `UX-FIN-02` Provide a fiscal-period status/calendar view and warn about locked periods before entry.
 - [ ] `UX-FIN-03` Standardize currency/date/sign formatting, totals, comparisons, drill-down, exports, and no-data explanations.
 - [ ] `UX-FIN-04` Add an audit detail view with actor, entity, trace ID, safe before/after, support context, pagination, and export.
 - [ ] `FEAT-FIN-02` Complete report reconciliation, tenant/date-boundary, non-empty, and CSV formula-injection tests.

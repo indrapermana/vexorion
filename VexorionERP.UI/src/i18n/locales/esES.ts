@@ -1435,6 +1435,9 @@ const esES = {
       signInRequired: 'Inicia sesión primero. Los períodos fiscales requieren permisos de facturación.', description: 'Períodos contables desde /api/fiscal-periods.', newButton: 'Nuevo período',
       fields: { period: 'Período', periodCode: 'Código del período', startDate: 'Fecha de inicio', endDate: 'Fecha de fin' },
       grid: { closed: 'Cerrado', reopen: 'Reabrir', close: 'Cerrar' },
+      views: { label: 'Vista de períodos fiscales', list: 'Lista', calendar: 'Calendario' },
+      calendar: { title: 'Calendario de períodos fiscales', previousMonth: 'Mes anterior', nextMonth: 'Mes siguiente', empty: 'Crea períodos fiscales para ver aquí su cobertura.', weekdays: { 0: 'Lun', 1: 'Mar', 2: 'Mié', 3: 'Jue', 4: 'Vie', 5: 'Sáb', 6: 'Dom' } },
+      dateStatus: { open: 'La fecha pertenece al período fiscal abierto {{periodCode}}.', closed: 'El período fiscal {{periodCode}} está cerrado. Se bloquea la contabilización en esta fecha.', uncovered: 'Ningún período fiscal cubre {{date}}. Se bloquea la contabilización en esta fecha.', overlap: 'Más de un período fiscal cubre {{date}}. Resuelve el solapamiento antes de contabilizar.', unset: 'Selecciona una fecha de contabilización para comprobar su período fiscal.' },
       editor: { createTitle: 'Crear período fiscal', editTitle: 'Editar período fiscal', saveChanges: 'Guardar cambios', saving: 'Guardando...' },
       closeDialog: { title: 'Cerrar período fiscal', consequence: 'El cierre impide nuevas contabilizaciones en este período hasta que un usuario autorizado lo reabra.', confirm: 'Cerrar período', pending: 'Cerrando...' },
       validation: { codeRequired: 'El código del período es obligatorio.', codeMax: 'El código del período debe tener como máximo 30 caracteres.', startRequired: 'La fecha de inicio es obligatoria.', endRequired: 'La fecha de fin es obligatoria.', endAfterStart: 'La fecha de fin debe ser igual o posterior a la fecha de inicio.' },
@@ -1446,6 +1449,7 @@ const esES = {
       description: 'Publica facturas y gestiona reversiones de diarios mediante /api/posting y /api/journals.',
       errors: { load: 'No se pudieron cargar los diarios.', open: 'No se pudieron abrir los detalles del diario.', createManual: 'No se pudo crear el diario manual.', postManual: 'No se pudo contabilizar el diario manual.', postSales: 'No se pudo contabilizar la factura de venta.', postPurchase: 'No se pudo contabilizar la factura de compra.', reverse: 'No se pudo revertir el diario.' },
       feedback: { createdManual: 'El diario manual {{journalNumber}} se guardó como borrador.', postedManual: 'El diario manual {{journalNumber}} fue contabilizado.', postedSales: 'Factura de venta contabilizada en el diario {{journalNumber}}.', postedPurchase: 'Factura de compra contabilizada en el diario {{journalNumber}}.', reversed: 'Diario revertido con el asiento {{journalNumber}}.' },
+      fiscalPeriodWarning: 'La fecha seleccionada debe estar dentro de exactamente un período fiscal abierto antes de contabilizar.',
       actions: {
         postSales: 'Contabilizar factura de venta',
         createManual: 'Crear diario manual',

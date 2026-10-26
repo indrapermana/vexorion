@@ -5,6 +5,7 @@ import JournalsPage from './JournalsPage'
 const api = vi.hoisted(() => ({
   createManualJournal: vi.fn(),
   getAccounts: vi.fn(),
+  getFiscalPeriods: vi.fn(),
   getJournal: vi.fn(),
   getJournals: vi.fn(),
   getPurchaseInvoices: vi.fn(),
@@ -52,6 +53,10 @@ describe('JournalsPage source selection', () => {
       lines: [],
     })
     api.getAccounts.mockResolvedValue([])
+    api.getFiscalPeriods.mockResolvedValue([
+      { id: 'period-open', periodCode: 'FY26-10', startDate: '2026-10-01', endDate: '2026-10-31', isClosed: false },
+      { id: 'period-closed', periodCode: 'FY26-09', startDate: '2026-09-01', endDate: '2026-09-30', isClosed: true },
+    ])
     api.getSalesInvoices.mockResolvedValue([
       { id: 'sales-ready', invoiceNumber: 'SI-READY', invoiceDate: '2026-10-02', status: 2, currencyCode: 'USD', grandTotal: 75, isActive: true },
       { id: 'sales-draft', invoiceNumber: 'SI-DRAFT', invoiceDate: '2026-10-03', status: 1, currencyCode: 'USD', grandTotal: 50, isActive: true },
@@ -104,5 +109,16 @@ describe('JournalsPage source selection', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'pages.journals.actions.confirmReverse' }))
 
     await waitFor(() => expect(api.reverseJournal).toHaveBeenCalledWith('journal-posted', expect.objectContaining({ reversalDate: expect.any(String) })))
+  })
+
+  it('warns and disables posting when the chosen date falls in a closed fiscal period', async () => {
+    render(<JournalsPage />)
+    await waitFor(() => expect(api.getFiscalPeriods).toHaveBeenCalled())
+    expect(await screen.findAllByText('pages.fiscalPeriods.dateStatus.open: FY26-10')).not.toHaveLength(0)
+    const postingDateFields = screen.getAllByLabelText('pages.journals.fields.postingDate')
+    fireEvent.change(postingDateFields[1], { target: { value: '2026-09-15' } })
+
+    expect(await screen.findAllByText('pages.fiscalPeriods.dateStatus.closed: FY26-09')).not.toHaveLength(0)
+    expect(screen.getByRole('button', { name: 'pages.journals.actions.postSales' })).toBeDisabled()
   })
 })

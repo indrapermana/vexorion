@@ -268,6 +268,10 @@
 | 1.7.3.1 | Create fiscal period | Fiscal Periods → Add → enter name + start/end date → Save | Period created |
 | 1.7.3.2 | Overlap detection | Create period overlapping existing dates | Error: overlapping period |
 | 1.7.3.3 | Close period | Open period → Close | Status changes to Closed |
+| 1.7.3.4 | Calendar status view | Fiscal Periods → Calendar → navigate between months | Every covered date shows the fiscal-period code and Open/Closed status; List view remains available for management actions |
+| 1.7.3.5 | Warn before posting in a closed period | Journals → set manual, invoice-posting, or reversal date inside a closed period | Warning names the closed period and the corresponding post/reverse action is disabled |
+| 1.7.3.6 | Warn when posting date has no period | Journals → set posting or reversal date outside configured periods | Warning explains no period covers the date and the corresponding action is disabled |
+| 1.7.3.7 | Overlapping-period date guard | Configure overlapping periods and choose a date in the overlap | Warning identifies ambiguous coverage and blocks posting until the overlap is resolved |
 
 #### 1.7.4 Reports
 

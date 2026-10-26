@@ -1,6 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
 import { AddRoundedIcon } from '@vexorion/ui'
-import { VxAlert, VxButton, VxConfirmActionDialog, VxStack } from '@vexorion/ui'
+import { VxAlert, VxButton, VxConfirmActionDialog, VxStack, VxTab, VxTabs } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
@@ -8,6 +8,7 @@ import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert
 import { PageBody, PageFeedback, PageHeader, PageLoadingState } from '../../../components/PagePrimitives'
 import { ApiError, closeFiscalPeriod, getFiscalPeriods, reopenFiscalPeriod } from '../../../lib/api'
 import type { FiscalPeriodDetailsResponse, FiscalPeriodListItemResponse } from '../../../types/api'
+import FiscalPeriodCalendar from '../components/FiscalPeriodCalendar'
 
 const FiscalPeriodDataGrid = lazy(() => import('../components/FiscalPeriodDataGrid'))
 const FiscalPeriodEditorDialog = lazy(() => import('../components/FiscalPeriodEditorDialog'))
@@ -30,6 +31,7 @@ export default function FiscalPeriodsPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [closeTarget, setCloseTarget] = useState<FiscalPeriodListItemResponse | null>(null)
   const [isClosing, setIsClosing] = useState(false)
+  const [view, setView] = useState<'list' | 'calendar'>('list')
 
   const loadData = useCallback(async () => {
     if (!isAuthenticated) {
@@ -123,17 +125,24 @@ export default function FiscalPeriodsPage() {
       <PageFeedback error={error} success={feedback} onRetry={error ? () => void loadData() : undefined} />
       {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.billing.manage} /> : null}
 
+      <VxTabs value={view} onChange={(_, nextView: 'list' | 'calendar') => setView(nextView)} aria-label={t('pages.fiscalPeriods.views.label')}>
+        <VxTab value="list" label={t('pages.fiscalPeriods.views.list')} />
+        <VxTab value="calendar" label={t('pages.fiscalPeriods.views.calendar')} />
+      </VxTabs>
+
       <PageBody>
-        <Suspense fallback={<FiscalPeriodSurfaceFallback />}>
-          <FiscalPeriodDataGrid
-            rows={rows}
-            isLoading={isLoading}
-            onEdit={openEdit}
-            onClosePeriod={setCloseTarget}
-            onReopenPeriod={(row) => void handleReopenPeriod(row)}
-            canManage={canManage}
-          />
-        </Suspense>
+        {view === 'list' ? (
+          <Suspense fallback={<FiscalPeriodSurfaceFallback />}>
+            <FiscalPeriodDataGrid
+              rows={rows}
+              isLoading={isLoading}
+              onEdit={openEdit}
+              onClosePeriod={setCloseTarget}
+              onReopenPeriod={(row) => void handleReopenPeriod(row)}
+              canManage={canManage}
+            />
+          </Suspense>
+        ) : <FiscalPeriodCalendar periods={rows} />}
       </PageBody>
 
       {canManage && isEditorOpen ? (

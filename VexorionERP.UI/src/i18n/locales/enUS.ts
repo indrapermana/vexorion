@@ -1449,6 +1449,9 @@ const enUS = {
       newButton: 'New period',
       fields: { period: 'Period', periodCode: 'Period code', startDate: 'Start date', endDate: 'End date' },
       grid: { closed: 'Closed', reopen: 'Reopen', close: 'Close' },
+      views: { label: 'Fiscal period view', list: 'List', calendar: 'Calendar' },
+      calendar: { title: 'Fiscal period calendar', previousMonth: 'Previous month', nextMonth: 'Next month', empty: 'Create fiscal periods to see their coverage here.', weekdays: { 0: 'Mon', 1: 'Tue', 2: 'Wed', 3: 'Thu', 4: 'Fri', 5: 'Sat', 6: 'Sun' } },
+      dateStatus: { open: 'Date is in open fiscal period {{periodCode}}.', closed: 'Fiscal period {{periodCode}} is closed. Posting on this date is blocked.', uncovered: 'No fiscal period covers {{date}}. Posting on this date is blocked.', overlap: 'More than one fiscal period covers {{date}}. Resolve the overlap before posting.', unset: 'Choose a posting date to check its fiscal period.' },
       editor: { createTitle: 'Create fiscal period', editTitle: 'Edit fiscal period', saveChanges: 'Save changes', saving: 'Saving...' },
       closeDialog: { title: 'Close fiscal period', consequence: 'Closing prevents new postings in this period until an authorized user reopens it.', confirm: 'Close period', pending: 'Closing...' },
       validation: { codeRequired: 'Period code is required.', codeMax: 'Period code must be at most 30 characters.', startRequired: 'Start date is required.', endRequired: 'End date is required.', endAfterStart: 'End date must be greater than or equal to start date.' },
@@ -1460,6 +1463,7 @@ const enUS = {
       description: 'Post invoices and manage journal reversals through /api/posting and /api/journals.',
       errors: { load: 'Unable to load journals.', open: 'Unable to open journal details.', createManual: 'Unable to create manual journal.', postManual: 'Unable to post manual journal.', postSales: 'Unable to post sales invoice.', postPurchase: 'Unable to post purchase invoice.', reverse: 'Unable to reverse journal.' },
       feedback: { createdManual: 'Manual journal {{journalNumber}} saved as a draft.', postedManual: 'Manual journal {{journalNumber}} posted.', postedSales: 'Sales invoice posted to journal {{journalNumber}}.', postedPurchase: 'Purchase invoice posted to journal {{journalNumber}}.', reversed: 'Journal reversed with entry {{journalNumber}}.' },
+      fiscalPeriodWarning: 'The selected date must be covered by exactly one open fiscal period before posting.',
       actions: {
         postSales: 'Post sales invoice',
         createManual: 'Create manual journal',

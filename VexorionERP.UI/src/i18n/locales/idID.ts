@@ -1462,6 +1462,9 @@ const idID = {
       signInRequired: 'Masuk terlebih dahulu. Periode fiskal memerlukan izin penagihan.', description: 'Periode akuntansi dari /api/fiscal-periods.', newButton: 'Periode baru',
       fields: { period: 'Periode', periodCode: 'Kode periode', startDate: 'Tanggal mulai', endDate: 'Tanggal akhir' },
       grid: { closed: 'Ditutup', reopen: 'Buka kembali', close: 'Tutup' },
+      views: { label: 'Tampilan periode fiskal', list: 'Daftar', calendar: 'Kalender' },
+      calendar: { title: 'Kalender periode fiskal', previousMonth: 'Bulan sebelumnya', nextMonth: 'Bulan berikutnya', empty: 'Buat periode fiskal untuk melihat cakupannya di sini.', weekdays: { 0: 'Sen', 1: 'Sel', 2: 'Rab', 3: 'Kam', 4: 'Jum', 5: 'Sab', 6: 'Min' } },
+      dateStatus: { open: 'Tanggal berada dalam periode fiskal terbuka {{periodCode}}.', closed: 'Periode fiskal {{periodCode}} ditutup. Posting pada tanggal ini diblokir.', uncovered: 'Tidak ada periode fiskal yang mencakup {{date}}. Posting pada tanggal ini diblokir.', overlap: 'Lebih dari satu periode fiskal mencakup {{date}}. Selesaikan tumpang tindih sebelum posting.', unset: 'Pilih tanggal posting untuk memeriksa periode fiskalnya.' },
       editor: { createTitle: 'Buat periode fiskal', editTitle: 'Edit periode fiskal', saveChanges: 'Simpan perubahan', saving: 'Menyimpan...' },
       closeDialog: { title: 'Tutup periode fiskal', consequence: 'Penutupan mencegah posting baru pada periode ini sampai pengguna berwenang membukanya kembali.', confirm: 'Tutup periode', pending: 'Menutup...' },
       validation: { codeRequired: 'Kode periode wajib diisi.', codeMax: 'Kode periode maksimal 30 karakter.', startRequired: 'Tanggal mulai wajib diisi.', endRequired: 'Tanggal akhir wajib diisi.', endAfterStart: 'Tanggal akhir harus sama dengan atau setelah tanggal mulai.' },
@@ -1473,6 +1476,7 @@ const idID = {
       description: 'Posting faktur dan kelola pembalikan jurnal melalui /api/posting dan /api/journals.',
       errors: { load: 'Tidak dapat memuat jurnal.', open: 'Tidak dapat membuka detail jurnal.', createManual: 'Tidak dapat membuat jurnal manual.', postManual: 'Tidak dapat memposting jurnal manual.', postSales: 'Tidak dapat memposting faktur penjualan.', postPurchase: 'Tidak dapat memposting faktur pembelian.', reverse: 'Tidak dapat membalik jurnal.' },
       feedback: { createdManual: 'Jurnal manual {{journalNumber}} disimpan sebagai draf.', postedManual: 'Jurnal manual {{journalNumber}} telah diposting.', postedSales: 'Faktur penjualan diposting ke jurnal {{journalNumber}}.', postedPurchase: 'Faktur pembelian diposting ke jurnal {{journalNumber}}.', reversed: 'Jurnal dibalik dengan entri {{journalNumber}}.' },
+      fiscalPeriodWarning: 'Tanggal yang dipilih harus berada dalam tepat satu periode fiskal terbuka sebelum posting.',
       actions: {
         postSales: 'Posting faktur penjualan',
         createManual: 'Buat jurnal manual',
