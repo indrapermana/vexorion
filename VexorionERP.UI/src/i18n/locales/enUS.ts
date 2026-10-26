@@ -1060,6 +1060,9 @@ const enUS = {
       },
     },
     tenantRelationships: {
+      scopeInvalid: 'Invalid relationship permissions.',
+      unavailableTenant: 'Unavailable tenant',
+      noEligibleTenants: 'No eligible tenants found.',
       signInRequired: 'Sign in first. Tenant relationship APIs require authenticated access.',
       noAccess: 'You do not have permission to view tenant relationships.',
       description: 'Manage organization-level business relationships between your tenant and another tenant.',
@@ -1086,6 +1089,7 @@ const enUS = {
       },
       fields: {
         relatedTenantId: 'Related tenant ID',
+        relatedTenant: 'Related tenant',
         relatedTenantHelp: 'The organization tenant you have a business relationship with; this is not an employee or consultant ID.',
         relationshipType: 'Relationship type',
         status: 'Status',
@@ -1802,6 +1806,11 @@ const enUS = {
         isActive: 'Active',
       },
       parties: {
+        optionsError: 'Unable to load eligible partner relationships.',
+        noEligiblePartners: 'No eligible partner relationships available.',
+        unavailableRelationship: 'This relationship is no longer eligible.',
+        periodInvalid: 'Dates must be within the selected relationship period.',
+        scopeUnavailable: 'Selected permissions exceed the relationship scope.',
         title: 'Project partners',
         description: 'A project partner links one related tenant organization to this project and narrows what it may do here. It does not assign any employee or consultant.',
         dialogGuidance: 'The related tenant must already have an active tenant relationship of the same type. Dates and permissions cannot exceed that organization-level relationship.',
@@ -1822,6 +1831,7 @@ const enUS = {
         },
         fields: {
           relatedTenantId: 'Partner tenant ID',
+          partnerRelationship: 'Partner relationship',
           tenantIdPlaceholder: 'Tenant GUID',
           relatedTenantHelp: 'Select the organization tenant covered by the active tenant relationship.',
           relationshipType: 'Relationship type',

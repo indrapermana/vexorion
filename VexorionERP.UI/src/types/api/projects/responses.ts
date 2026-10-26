@@ -56,6 +56,8 @@ export type ProjectPartyListItemResponse = {
   id: string
   projectId: string
   relatedTenantId: string
+  relatedTenantCode?: string | null
+  relatedTenantName?: string | null
   relationshipType: TenantRelationshipType
   canViewDocuments: boolean
   canUploadDocuments: boolean
@@ -63,6 +65,18 @@ export type ProjectPartyListItemResponse = {
   effectiveFrom?: string | null
   effectiveTo?: string | null
   isActive: boolean
+}
+
+export type ProjectPartyOptionResponse = {
+  relatedTenantId: string
+  relatedTenantCode: string
+  relatedTenantName: string
+  relationshipType: TenantRelationshipType
+  effectiveFrom?: string | null
+  effectiveTo?: string | null
+  canViewDocuments: boolean
+  canUploadDocuments: boolean
+  canAssignPeople: boolean
 }
 
 export type ProjectPartyDetailsResponse = {

@@ -32,6 +32,7 @@ import type {
   ProjectListItemResponse,
   ProjectPartyDetailsResponse,
   ProjectPartyListItemResponse,
+  ProjectPartyOptionResponse,
   ProjectTimelineItemResponse,
   UpdateDocumentFolderRequest,
   UpdateConsultantRequest,
@@ -100,6 +101,10 @@ export function getProjectTimeline(projectId: string) {
 
 export function getProjectParties(projectId: string) {
   return requestJson<ProjectPartyListItemResponse[]>(`/projects/${projectId}/parties`)
+}
+
+export function getProjectPartyOptions(projectId: string) {
+  return requestJson<ProjectPartyOptionResponse[]>(`/projects/${projectId}/parties/options`)
 }
 
 export function getProjectParty(projectId: string, projectPartyId: string) {

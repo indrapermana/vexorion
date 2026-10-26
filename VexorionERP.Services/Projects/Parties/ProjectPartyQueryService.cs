@@ -26,6 +26,7 @@ public class ProjectPartyQueryService(ICurrentTenantProvider currentTenantProvid
         var items = await context.ProjectParties
             .GetByTenant(TenantId)
             .AsNoTracking()
+            .Include(party => party.RelatedTenant)
             .Where(x => x.ProjectId == parentId)
             .OrderBy(x => x.RelatedTenantId)
             .ThenBy(x => x.RelationshipType)

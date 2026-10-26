@@ -4,6 +4,7 @@ import type {
   OnboardTenantRequest,
   OnboardTenantResponse,
   TenantModuleConfigResponse,
+  TenantLookupResponse,
   StorageTopConsumersResponse,
   StorageUsageSummaryResponse,
   TenantRelationshipDetailsResponse,
@@ -18,6 +19,10 @@ export function onboardTenant(request: OnboardTenantRequest) {
 
 export function getTenantRelationships() {
   return requestJson<TenantRelationshipListItemResponse[]>('/tenant-relationships')
+}
+
+export function getTenants() {
+  return requestJson<TenantLookupResponse[]>('/tenants')
 }
 
 export function getActiveTenantRelationships() {

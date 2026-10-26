@@ -112,37 +112,26 @@ test('P1-1: relationship scope and validity dates allow and deny project-party a
     await page.goto(`/projects/${projectId}`)
     await expect(page.getByText(projectName, { exact: true })).toBeVisible()
     await page.getByRole('tab', { name: /^(partners|parties)$/i }).click()
-    await page.getByRole('button', { name: /add (project )?party/i }).click()
+    const partyRequest = {
+      relatedTenantId: tenantBId, relationshipType: 2, canViewDocuments: true,
+      canUploadDocuments: false, canAssignPeople: false, effectiveFrom: relationshipFrom, effectiveTo: relationshipTo,
+    }
+    const scopeDenied = await authenticatedApi(page, `/projects/${projectId}/parties`, 'POST', { ...partyRequest, canUploadDocuments: true })
+    expect(scopeDenied.status).toBe(403)
+    const dateDenied = await authenticatedApi(page, `/projects/${projectId}/parties`, 'POST', { ...partyRequest, effectiveTo: outsideRelationshipTo })
+    expect(dateDenied.status).toBe(400)
+
+    await page.getByRole('button', { name: /add (project )?(party|partner)/i }).click()
 
     const partyDialog = page.getByRole('dialog')
-    await partyDialog.getByLabel(/related tenant id/i).fill(tenantBId)
-    await partyDialog.getByLabel(/effective from/i).fill(relationshipFrom)
-    await partyDialog.getByLabel(/effective to/i).fill(relationshipTo)
-
-    await partyDialog.getByLabel(/can upload documents/i).click()
-    await page.getByRole('option', { name: /^active$/i }).click()
-
-    const scopeDeniedResponsePromise = page.waitForResponse((response) => (
-      response.request().method() === 'POST'
-      && response.url().endsWith(`/api/projects/${projectId}/parties`)
-    ))
-    await partyDialog.getByRole('button', { name: /^create$/i }).click()
-    const scopeDeniedResponse = await scopeDeniedResponsePromise
-    expect(scopeDeniedResponse.status()).toBe(403)
-    await expect(page.getByText('Tenant relationship scope does not allow one or more requested project party permissions.')).toBeVisible()
-
-    await partyDialog.getByLabel(/can upload documents/i).click()
-    await page.getByRole('option', { name: /^inactive$/i }).click()
+    await partyDialog.getByRole('combobox', { name: /partner relationship/i }).fill(tenantCode)
+    await page.getByRole('option', { name: new RegExp(tenantCode, 'i') }).click()
+    await expect(partyDialog.getByRole('checkbox', { name: /can upload documents/i })).toBeDisabled()
+    await expect(partyDialog.getByRole('checkbox', { name: /can assign people|allow consultants from this tenant/i })).toBeDisabled()
+    await expect(partyDialog.getByLabel(/effective from/i)).toHaveValue(relationshipFrom)
+    await expect(partyDialog.getByLabel(/effective to/i)).toHaveValue(relationshipTo)
     await partyDialog.getByLabel(/effective to/i).fill(outsideRelationshipTo)
-
-    const dateDeniedResponsePromise = page.waitForResponse((response) => (
-      response.request().method() === 'POST'
-      && response.url().endsWith(`/api/projects/${projectId}/parties`)
-    ))
-    await partyDialog.getByRole('button', { name: /^create$/i }).click()
-    const dateDeniedResponse = await dateDeniedResponsePromise
-    expect(dateDeniedResponse.status()).toBe(400)
-    await expect(page.getByText('Project party effective period must be within the active tenant relationship period.')).toBeVisible()
+    await expect(partyDialog.getByRole('button', { name: /^create$/i })).toBeDisabled()
 
     await partyDialog.getByLabel(/effective to/i).fill(relationshipTo)
 
@@ -156,7 +145,7 @@ test('P1-1: relationship scope and validity dates allow and deny project-party a
     projectPartyId = ((await allowedResponse.json()) as CreatedEntity).id
 
     await expect(page.getByText(/project party added/i)).toBeVisible()
-    await expect(page.getByText(tenantBId, { exact: true })).toBeVisible()
+    await expect(page.getByText(new RegExp(tenantCode, 'i'))).toBeVisible()
 
     const persistedParties = expectSuccessfulFixture(
       await authenticatedApi<Array<{

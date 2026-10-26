@@ -787,6 +787,9 @@ const idID = {
       errors: { load: 'Tidak dapat memuat konsultan.', save: 'Tidak dapat menyimpan konsultan.', delete: 'Tidak dapat menghapus konsultan.' },
     },
     tenantRelationships: {
+      scopeInvalid: 'Izin hubungan tidak valid.',
+      unavailableTenant: 'Tenant tidak tersedia',
+      noEligibleTenants: 'Tidak ada tenant yang memenuhi syarat.',
       signInRequired: 'Masuk dulu. API relasi tenant membutuhkan akses terautentikasi.',
       noAccess: 'Anda tidak memiliki izin untuk melihat relasi tenant.',
       description: 'Kelola hubungan bisnis tingkat organisasi antara tenant Anda dan tenant lain.',
@@ -812,6 +815,7 @@ const idID = {
         activate: 'Aktifkan relasi',
       },
       fields: {
+        relatedTenant: 'Tenant terkait',
         relatedTenantId: 'ID tenant terkait',
         relatedTenantHelp: 'Tenant organisasi yang memiliki hubungan bisnis dengan Anda; ini bukan ID karyawan atau konsultan.',
         relationshipType: 'Jenis relasi',
@@ -1115,6 +1119,11 @@ const idID = {
         isActive: 'Aktif',
       },
       parties: {
+        optionsError: 'Gagal memuat hubungan mitra yang memenuhi syarat.',
+        noEligiblePartners: 'Tidak ada hubungan mitra yang memenuhi syarat.',
+        unavailableRelationship: 'Hubungan ini tidak lagi memenuhi syarat.',
+        periodInvalid: 'Tanggal harus berada dalam periode hubungan yang dipilih.',
+        scopeUnavailable: 'Izin yang dipilih melebihi cakupan hubungan.',
         title: 'Mitra proyek',
         description: 'Mitra proyek menghubungkan satu organisasi tenant terkait ke proyek ini dan membatasi kegiatannya di sini. Hal ini tidak menugaskan karyawan atau konsultan apa pun.',
         dialogGuidance: 'Tenant terkait harus sudah memiliki relasi tenant aktif dengan jenis yang sama. Tanggal dan izin tidak boleh melebihi relasi tingkat organisasi tersebut.',
@@ -1134,6 +1143,7 @@ const idID = {
           assignPeople: 'Konsultan',
         },
         fields: {
+          partnerRelationship: 'Hubungan mitra',
           relatedTenantId: 'ID tenant mitra',
           tenantIdPlaceholder: 'GUID tenant',
           relatedTenantHelp: 'Pilih tenant organisasi yang tercakup oleh relasi tenant aktif.',

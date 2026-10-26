@@ -7,6 +7,8 @@ public class ProjectPartyListItemResponse : IEntityListResponse<ProjectParty>
     public Guid Id { get; set; }
     public Guid ProjectId { get; set; }
     public Guid RelatedTenantId { get; set; }
+    public string? RelatedTenantCode { get; set; }
+    public string? RelatedTenantName { get; set; }
     public TenantRelationshipType RelationshipType { get; set; }
     public bool CanViewDocuments { get; set; }
     public bool CanUploadDocuments { get; set; }

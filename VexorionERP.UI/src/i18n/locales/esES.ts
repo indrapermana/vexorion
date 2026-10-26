@@ -760,6 +760,9 @@ const esES = {
       errors: { load: 'No se pudieron cargar los consultores.', save: 'No se pudo guardar el consultor.', delete: 'No se pudo eliminar el consultor.' },
     },
     tenantRelationships: {
+      scopeInvalid: 'Permisos de relación no válidos.',
+      unavailableTenant: 'Tenant no disponible',
+      noEligibleTenants: 'No se encontraron tenants elegibles.',
       signInRequired: 'Inicia sesión primero. Las API de relaciones de inquilinos requieren acceso autenticado.',
       noAccess: 'No tienes permiso para ver relaciones de inquilinos.',
       description: 'Administra relaciones comerciales a nivel de organización entre tu inquilino y otro inquilino.',
@@ -785,6 +788,7 @@ const esES = {
         activate: 'Activar relación',
       },
       fields: {
+        relatedTenant: 'Tenant relacionado',
         relatedTenantId: 'ID de inquilino relacionado',
         relatedTenantHelp: 'El inquilino de la organización con la que tienes una relación comercial; no es un ID de empleado o consultor.',
         relationshipType: 'Tipo de relación',
@@ -1088,6 +1092,11 @@ const esES = {
         isActive: 'Activo',
       },
       parties: {
+        optionsError: 'No se pudieron cargar las relaciones elegibles.',
+        noEligiblePartners: 'No hay relaciones elegibles disponibles.',
+        unavailableRelationship: 'Esta relación ya no es elegible.',
+        periodInvalid: 'Las fechas deben estar dentro del periodo de la relación.',
+        scopeUnavailable: 'Los permisos seleccionados exceden el alcance de la relación.',
         title: 'Socios del proyecto',
         description: 'Un socio del proyecto vincula una organización inquilina relacionada con este proyecto y limita lo que puede hacer aquí. No asigna a ningún empleado o consultor.',
         dialogGuidance: 'El inquilino relacionado debe tener una relación activa del mismo tipo. Las fechas y los permisos no pueden exceder esa relación a nivel de organización.',
@@ -1107,6 +1116,7 @@ const esES = {
           assignPeople: 'Consultores',
         },
         fields: {
+          partnerRelationship: 'Relación de socio',
           relatedTenantId: 'ID de inquilino socio',
           tenantIdPlaceholder: 'GUID de inquilino',
           relatedTenantHelp: 'Selecciona el inquilino de la organización cubierto por la relación activa.',

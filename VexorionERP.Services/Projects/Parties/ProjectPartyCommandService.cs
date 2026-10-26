@@ -294,6 +294,7 @@ public class ProjectPartyCommandService(
         {
             using var doc = JsonDocument.Parse(scopeJson);
             var root = doc.RootElement;
+            if (root.ValueKind != JsonValueKind.Object) return false;
 
             bool Can(string key, params string[] aliases)
             {

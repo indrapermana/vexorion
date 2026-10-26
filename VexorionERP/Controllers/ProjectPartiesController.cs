@@ -12,6 +12,16 @@ namespace VexorionERP;
 [Authorize]
 public class ProjectPartiesController(IMediator mediator) : ServiceResultControllerBase
 {
+    [HttpGet("options")]
+    [Authorize(Policy = AppPermissions.Projects.Manage)]
+    [ProducesResponseType<IReadOnlyCollection<ProjectPartyOptionResponse>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<IReadOnlyCollection<ProjectPartyOptionResponse>>> GetOptions(Guid projectId)
+    {
+        var result = await mediator.Send(new GetProjectPartyOptionsQuery(projectId), HttpContext.RequestAborted);
+        return ToActionResult(result);
+    }
+
     [HttpGet]
     [Authorize(Policy = AppPermissions.Projects.View)]
     public async Task<ActionResult<IReadOnlyCollection<ProjectPartyListItemResponse>>> GetAll(Guid projectId)

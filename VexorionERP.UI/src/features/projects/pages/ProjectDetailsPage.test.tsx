@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   getProject: vi.fn(),
   getProjectCategories: vi.fn(),
   getProjectParties: vi.fn(),
+  getProjectPartyOptions: vi.fn(),
   getProjectTimeline: vi.fn(),
   createProjectParty: vi.fn(),
   deleteProjectParty: vi.fn(),
@@ -71,6 +72,7 @@ describe('ProjectDetailsPage tabs', () => {
     }))
     mocks.getProjectCategories.mockResolvedValue([{ id: 'category-1', code: 'CAT', name: 'Contracts' }])
     mocks.getProjectParties.mockResolvedValue([])
+    mocks.getProjectPartyOptions.mockResolvedValue([])
     mocks.getProjectTimeline.mockResolvedValue([])
   })
 
@@ -141,6 +143,55 @@ describe('ProjectDetailsPage tabs', () => {
     fireEvent.click(tab('parties'))
     expect(screen.queryByRole('button', { name: 'pages.projectDetails.parties.addButton' })).not.toBeInTheDocument()
     expect(screen.getByRole('tabpanel', { name: 'pages.projectDetails.tabs.parties' })).toBeVisible()
+    expect(mocks.getProjectPartyOptions).not.toHaveBeenCalled()
+  })
+
+  it('selects an eligible tenant relationship, bounds permissions and dates, and submits IDs only in the payload', async () => {
+    mocks.getProjectPartyOptions.mockResolvedValue([{
+      relatedTenantId: 'partner', relatedTenantCode: 'PARTNER', relatedTenantName: 'Eligible Partner', relationshipType: 4,
+      effectiveFrom: '2026-01-01', effectiveTo: '2026-12-31', canViewDocuments: true, canUploadDocuments: false, canAssignPeople: true,
+    }])
+    mocks.createProjectParty.mockResolvedValue({ id: 'party-1' })
+    const user = userEvent.setup()
+    renderProject({ pathname: '/projects/project-1', search: '?tab=parties' })
+    const add = await screen.findByRole('button', { name: 'pages.projectDetails.parties.addButton' })
+    await waitFor(() => expect(add).toBeEnabled())
+    await user.click(add)
+    await user.click(screen.getByRole('combobox', { name: 'pages.projectDetails.parties.fields.partnerRelationship' }))
+    await user.click(screen.getByRole('option', { name: /PARTNER - Eligible Partner/ }))
+    expect(screen.queryByLabelText('pages.projectDetails.parties.fields.relatedTenantId')).not.toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'pages.projectDetails.parties.fields.canUploadDocuments' })).toBeDisabled()
+    await user.click(screen.getByRole('checkbox', { name: 'pages.projectDetails.parties.fields.canAssignPeople' }))
+    const create = screen.getByRole('button', { name: 'common.create' })
+    fireEvent.change(screen.getByLabelText('pages.projectDetails.parties.fields.effectiveFrom'), { target: { value: '2025-12-31' } })
+    expect(create).toBeDisabled()
+    fireEvent.change(screen.getByLabelText('pages.projectDetails.parties.fields.effectiveFrom'), { target: { value: '2026-01-01' } })
+    await user.click(create)
+    await waitFor(() => expect(mocks.createProjectParty).toHaveBeenCalledWith('project-1', {
+      relatedTenantId: 'partner', relationshipType: 4, canViewDocuments: true, canUploadDocuments: false,
+      canAssignPeople: true, effectiveFrom: '2026-01-01', effectiveTo: '2026-12-31',
+    }))
+  })
+
+  it('fails closed when eligible relationships cannot load without breaking the project overview', async () => {
+    mocks.getProjectPartyOptions.mockRejectedValue(new Error('Lookup unavailable'))
+    renderProject()
+    await screen.findByRole('heading', { name: 'Project project-1', level: 1 })
+    fireEvent.click(tab('parties'))
+    expect(await screen.findByText('pages.projectDetails.parties.optionsError')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'pages.projectDetails.parties.addButton' })).toBeDisabled()
+  })
+
+  it('does not offer a relationship already linked to the project', async () => {
+    mocks.getProjectParties.mockResolvedValue([{ id: 'party-1', relatedTenantId: 'partner', relationshipType: 4 }])
+    mocks.getProjectPartyOptions.mockResolvedValue([{
+      relatedTenantId: 'partner', relatedTenantCode: 'PARTNER', relatedTenantName: 'Eligible Partner', relationshipType: 4,
+      canViewDocuments: true, canUploadDocuments: true, canAssignPeople: true,
+    }])
+    renderProject({ pathname: '/projects/project-1', search: '?tab=parties' })
+    await screen.findByRole('heading', { name: 'Project project-1', level: 1 })
+    await waitFor(() => expect(screen.getByRole('button', { name: 'pages.projectDetails.parties.addButton' })).toBeDisabled())
+    expect(screen.getByText('pages.projectDetails.parties.noEligiblePartners')).toBeInTheDocument()
   })
 
   it('opens the URL-selected Documents tab and preserves both return destinations', async () => {

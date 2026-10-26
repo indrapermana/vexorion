@@ -1,3 +1,10 @@
+export type TenantLookupResponse = {
+  id: string
+  code: string
+  name: string
+  isActive: boolean
+}
+
 import type { TenantRelationshipStatusValue, TenantRelationshipTypeValue } from './requests'
 
 export type OnboardTenantResponse = {

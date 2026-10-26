@@ -3,15 +3,18 @@ import {
   DeleteOutlineRoundedIcon,
   EditRoundedIcon,
   VxAlert,
+  VxAutocomplete,
   VxBox,
   VxButton,
   VxConfirmActionDialog,
   VxChip,
+  VxCheckbox,
   VxDataGrid,
   VxDialog,
   VxDialogActions,
   VxDialogContent,
   VxDialogTitle,
+  VxFormControlLabel,
   VxGridActionsCellItem,
   type VxGridColDef,
   VxMenuItem,
@@ -36,6 +39,7 @@ import {
   getProject,
   getProjectCategories,
   getProjectParties,
+  getProjectPartyOptions,
   getProjectTimeline,
   updateProject,
   updateProjectParty,
@@ -45,6 +49,7 @@ import type {
   ProjectDetailsResponse,
   ProjectLifecycleStatus,
   ProjectPartyListItemResponse,
+  ProjectPartyOptionResponse,
   ProjectTimelineItemResponse,
   TenantRelationshipType,
 } from '../../../types/api'
@@ -161,12 +166,12 @@ function PartyDataGrid({ rows, onEdit, onDelete, canManage = true }: PartyDataGr
 
   const columns: VxGridColDef<ProjectPartyListItemResponse>[] = [
     {
-      field: 'relatedTenantId',
+      field: 'relatedTenantName',
       headerName: t('pages.projectDetails.parties.columns.relatedTenant'),
       minWidth: 230,
       flex: 1,
-      renderCell: ({ value }) => (
-        <VxTypography sx={{ fontFamily: 'monospace', fontSize: '0.78rem' }}>{value}</VxTypography>
+      renderCell: ({ row }) => (
+        <VxTypography variant="body2">{[row.relatedTenantCode, row.relatedTenantName].filter(Boolean).join(' - ') || t('pages.tenantRelationships.unavailableTenant')}</VxTypography>
       ),
     },
     {
@@ -243,7 +248,7 @@ function PartyDataGrid({ rows, onEdit, onDelete, canManage = true }: PartyDataGr
           paginationModel: { pageSize: 10, page: 0 },
         },
         sorting: {
-          sortModel: [{ field: 'relatedTenantId', sort: 'asc' }],
+          sortModel: [{ field: 'relatedTenantName', sort: 'asc' }],
         },
       }}
       showToolbar
@@ -364,6 +369,9 @@ function ProjectDetailsContent() {
   const [project, setProject] = useState<ProjectDetailsResponse | null>(null)
   const [categories, setCategories] = useState<ProjectCategoryListItemResponse[]>([])
   const [parties, setParties] = useState<ProjectPartyListItemResponse[]>([])
+  const [partyOptions, setPartyOptions] = useState<ProjectPartyOptionResponse[]>([])
+  const [partyOptionsLoading, setPartyOptionsLoading] = useState(false)
+  const [partyOptionsError, setPartyOptionsError] = useState<string | null>(null)
   const [timeline, setTimeline] = useState<ProjectTimelineItemResponse[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -466,6 +474,22 @@ function ProjectDetailsContent() {
     void loadProjectContext()
   }, [loadProjectContext])
 
+  const loadPartyOptions = useCallback(async () => {
+    if (!isAuthenticated || !canManage || !projectId) return
+    setPartyOptionsLoading(true)
+    setPartyOptionsError(null)
+    try {
+      setPartyOptions(await getProjectPartyOptions(projectId))
+    } catch {
+      setPartyOptions([])
+      setPartyOptionsError(t('pages.projectDetails.parties.optionsError'))
+    } finally {
+      setPartyOptionsLoading(false)
+    }
+  }, [canManage, isAuthenticated, projectId, t])
+
+  useEffect(() => { void loadPartyOptions() }, [loadPartyOptions])
+
   const categoryLabelById = useMemo(() => new Map(categories.map((item) => [item.id, `${item.code} - ${item.name}`])), [categories])
 
   const statusOptions: Array<{ value: ProjectLifecycleStatus, label: string }> = [
@@ -477,15 +501,19 @@ function ProjectDetailsContent() {
     { value: 6, label: t('common.statusLabels.cancelled') },
   ]
 
-  const relationshipOptions: Array<{ value: TenantRelationshipType, label: string }> = [
-    { value: 1, label: t('common.relationshipTypes.primeContractor') },
-    { value: 2, label: t('common.relationshipTypes.subcontractor') },
-    { value: 3, label: t('common.relationshipTypes.legalSponsor') },
-    { value: 4, label: t('common.relationshipTypes.deliveryPartner') },
-    { value: 5, label: t('common.relationshipTypes.customer') },
-    { value: 6, label: t('common.relationshipTypes.vendor') },
-    { value: 7, label: t('common.relationshipTypes.consortiumMember') },
-  ]
+  const newPartyOptions = partyOptions.filter((option) => !parties.some((party) => party.relatedTenantId === option.relatedTenantId && party.relationshipType === option.relationshipType))
+  const availablePartyOptions = editingParty ? partyOptions.filter((option) => !parties.some((party) => party.id !== editingParty.id && party.relatedTenantId === option.relatedTenantId && party.relationshipType === option.relationshipType)) : newPartyOptions
+  const selectedPartyOption = availablePartyOptions.find((option) => option.relatedTenantId === partyFormState.relatedTenantId && option.relationshipType === partyFormState.relationshipType)
+  const partyPeriodInvalid = Boolean(
+    (partyFormState.effectiveFrom && partyFormState.effectiveTo && partyFormState.effectiveFrom > partyFormState.effectiveTo)
+    || (selectedPartyOption?.effectiveFrom && ((partyFormState.effectiveFrom && partyFormState.effectiveFrom < selectedPartyOption.effectiveFrom) || (partyFormState.effectiveTo && partyFormState.effectiveTo < selectedPartyOption.effectiveFrom)))
+    || (selectedPartyOption?.effectiveTo && ((partyFormState.effectiveFrom && partyFormState.effectiveFrom > selectedPartyOption.effectiveTo) || (partyFormState.effectiveTo && partyFormState.effectiveTo > selectedPartyOption.effectiveTo))),
+  )
+  const partyScopeInvalid = selectedPartyOption && (
+    (partyFormState.canViewDocuments && !selectedPartyOption.canViewDocuments)
+    || (partyFormState.canUploadDocuments && !selectedPartyOption.canUploadDocuments)
+    || (partyFormState.canAssignPeople && !selectedPartyOption.canAssignPeople)
+  )
 
   const handleProjectSave = async () => {
     if (!canManage || !projectId || !projectFormState) {
@@ -546,7 +574,7 @@ function ProjectDetailsContent() {
   }
 
   const handlePartySave = async () => {
-    if (!canManage || !projectId || !partyFormState.relatedTenantId.trim()) {
+    if (!canManage || !projectId || !selectedPartyOption || partyPeriodInvalid || partyScopeInvalid || partyOptionsLoading || partyOptionsError) {
       return
     }
 
@@ -684,9 +712,11 @@ function ProjectDetailsContent() {
           <VxStack spacing={2} sx={{ px: 2.5, pt: 2.5 }}>
             <VxStack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
               <VxTypography component="h2" variant="h6">{t('pages.projectDetails.parties.title')}</VxTypography>
-              {canManage ? <VxButton variant="contained" onClick={openCreatePartyDialog}>{t('pages.projectDetails.parties.addButton')}</VxButton> : null}
+              {canManage ? <VxButton variant="contained" disabled={partyOptionsLoading || Boolean(partyOptionsError) || newPartyOptions.length === 0} onClick={openCreatePartyDialog}>{t('pages.projectDetails.parties.addButton')}</VxButton> : null}
             </VxStack>
             <VxAlert severity="info">{t('pages.projectDetails.parties.description')}</VxAlert>
+            {partyOptionsError ? <VxAlert severity="error" action={<VxButton disabled={partyOptionsLoading} onClick={() => void loadPartyOptions()}>{t('common.refresh')}</VxButton>}>{partyOptionsError}</VxAlert> : null}
+            {canManage && !partyOptionsLoading && !partyOptionsError && newPartyOptions.length === 0 ? <VxAlert severity="info">{t('pages.projectDetails.parties.noEligiblePartners')}</VxAlert> : null}
           </VxStack>
           <PartyDataGrid
             rows={parties}
@@ -821,79 +851,27 @@ function ProjectDetailsContent() {
         <VxDialogTitle>{editingParty ? t('pages.projectDetails.parties.dialogs.edit') : t('pages.projectDetails.parties.dialogs.add')}</VxDialogTitle>
         <VxDialogContent>
           <VxStack spacing={2} sx={{ mt: 1 }}>
-            <VxAlert severity="info">{t('pages.projectDetails.parties.dialogGuidance')}</VxAlert>
-            <VxTextField
-              size="small"
-              label={t('pages.projectDetails.parties.fields.relatedTenantId')}
-              value={partyFormState.relatedTenantId}
-              onChange={(event) => setPartyFormState((previous) => ({ ...previous, relatedTenantId: event.target.value }))}
-              placeholder={t('pages.projectDetails.parties.fields.tenantIdPlaceholder')}
-              helperText={t('pages.projectDetails.parties.fields.relatedTenantHelp')}
-              fullWidth
+            <VxAutocomplete
+              options={availablePartyOptions}
+              value={selectedPartyOption ?? null}
+              loading={partyOptionsLoading}
+              noOptionsText={t('pages.projectDetails.parties.noEligiblePartners')}
+              disabled={isSavingParty || partyOptionsLoading || Boolean(partyOptionsError)}
+              getOptionKey={(option) => `${option.relatedTenantId}:${option.relationshipType}`}
+              getOptionLabel={(option) => `${option.relatedTenantCode} - ${option.relatedTenantName} - ${t(getRelationshipTypeKey(option.relationshipType))}`}
+              isOptionEqualToValue={(option, value) => option.relatedTenantId === value.relatedTenantId && option.relationshipType === value.relationshipType}
+              onChange={(_, option) => setPartyFormState((previous) => ({
+                ...previous, relatedTenantId: option?.relatedTenantId ?? '', relationshipType: option?.relationshipType ?? 2,
+                canViewDocuments: option?.canViewDocuments ?? false, canUploadDocuments: false, canAssignPeople: false,
+                effectiveFrom: option?.effectiveFrom ?? '', effectiveTo: option?.effectiveTo ?? '',
+              }))}
+              renderInput={(params) => <VxTextField {...params} size="small" label={t('pages.projectDetails.parties.fields.partnerRelationship')} helperText={editingParty && !selectedPartyOption ? t('pages.projectDetails.parties.unavailableRelationship') : undefined} />}
             />
-
-            <VxTextField
-              select
-              size="small"
-              label={t('pages.projectDetails.parties.fields.relationshipType')}
-              value={partyFormState.relationshipType}
-              onChange={(event) => setPartyFormState((previous) => ({ ...previous, relationshipType: Number(event.target.value) as TenantRelationshipType }))}
-              fullWidth
-            >
-              {relationshipOptions.map((option) => (
-                <VxMenuItem key={option.value} value={option.value}>{option.label}</VxMenuItem>
-              ))}
-            </VxTextField>
-
-            <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-              <VxTextField
-                select
-                size="small"
-                label={t('pages.projectDetails.parties.fields.canViewDocuments')}
-                value={partyFormState.canViewDocuments ? 'true' : 'false'}
-                onChange={(event) => setPartyFormState((previous) => ({ ...previous, canViewDocuments: event.target.value === 'true' }))}
-                fullWidth
-              >
-                <VxMenuItem value="true">{t('common.labels.active')}</VxMenuItem>
-                <VxMenuItem value="false">{t('common.labels.inactive')}</VxMenuItem>
-              </VxTextField>
-              <VxTextField
-                select
-                size="small"
-                label={t('pages.projectDetails.parties.fields.canUploadDocuments')}
-                value={partyFormState.canUploadDocuments ? 'true' : 'false'}
-                onChange={(event) => setPartyFormState((previous) => ({ ...previous, canUploadDocuments: event.target.value === 'true' }))}
-                fullWidth
-              >
-                <VxMenuItem value="true">{t('common.labels.active')}</VxMenuItem>
-                <VxMenuItem value="false">{t('common.labels.inactive')}</VxMenuItem>
-              </VxTextField>
-            </VxStack>
-
-            <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-              <VxTextField
-                select
-                size="small"
-                label={t('pages.projectDetails.parties.fields.canAssignPeople')}
-                value={partyFormState.canAssignPeople ? 'true' : 'false'}
-                onChange={(event) => setPartyFormState((previous) => ({ ...previous, canAssignPeople: event.target.value === 'true' }))}
-                fullWidth
-              >
-                <VxMenuItem value="true">{t('common.labels.active')}</VxMenuItem>
-                <VxMenuItem value="false">{t('common.labels.inactive')}</VxMenuItem>
-              </VxTextField>
-              <VxTextField
-                select
-                size="small"
-                label={t('pages.projectDetails.parties.fields.isActive')}
-                value={partyFormState.isActive ? 'true' : 'false'}
-                onChange={(event) => setPartyFormState((previous) => ({ ...previous, isActive: event.target.value === 'true' }))}
-                fullWidth
-              >
-                <VxMenuItem value="true">{t('common.labels.active')}</VxMenuItem>
-                <VxMenuItem value="false">{t('common.labels.inactive')}</VxMenuItem>
-              </VxTextField>
-            </VxStack>
+            {partyScopeInvalid ? <VxAlert severity="error">{t('pages.projectDetails.parties.scopeUnavailable')}</VxAlert> : null}
+            {(['canViewDocuments', 'canUploadDocuments', 'canAssignPeople'] as const).map((permission) => (
+              <VxFormControlLabel key={permission} label={t(`pages.projectDetails.parties.fields.${permission}`)} control={<VxCheckbox checked={partyFormState[permission]} disabled={isSavingParty || !selectedPartyOption || (!selectedPartyOption[permission] && !partyFormState[permission])} onChange={(_, checked) => setPartyFormState((previous) => ({ ...previous, [permission]: checked }))} />} />
+            ))}
+            <VxFormControlLabel label={t('pages.projectDetails.parties.fields.isActive')} control={<VxCheckbox checked={partyFormState.isActive} disabled={isSavingParty} onChange={(_, checked) => setPartyFormState((previous) => ({ ...previous, isActive: checked }))} />} />
 
             <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
               <VxTextField
@@ -901,6 +879,9 @@ function ProjectDetailsContent() {
                 label={t('pages.projectDetails.parties.fields.effectiveFrom')}
                 type="date"
                 value={partyFormState.effectiveFrom}
+                error={partyPeriodInvalid}
+                helperText={partyPeriodInvalid ? t('pages.projectDetails.parties.periodInvalid') : undefined}
+                slotProps={{ inputLabel: { shrink: true }, htmlInput: { min: selectedPartyOption?.effectiveFrom ?? undefined, max: selectedPartyOption?.effectiveTo ?? undefined } }}
                 onChange={(event) => setPartyFormState((previous) => ({ ...previous, effectiveFrom: event.target.value }))}
                 fullWidth
               />
@@ -909,6 +890,8 @@ function ProjectDetailsContent() {
                 label={t('pages.projectDetails.parties.fields.effectiveTo')}
                 type="date"
                 value={partyFormState.effectiveTo}
+                error={partyPeriodInvalid}
+                slotProps={{ inputLabel: { shrink: true }, htmlInput: { min: partyFormState.effectiveFrom || selectedPartyOption?.effectiveFrom || undefined, max: selectedPartyOption?.effectiveTo ?? undefined } }}
                 onChange={(event) => setPartyFormState((previous) => ({ ...previous, effectiveTo: event.target.value }))}
                 fullWidth
               />
@@ -917,14 +900,14 @@ function ProjectDetailsContent() {
         </VxDialogContent>
         <VxDialogActions>
           <VxButton onClick={requestPartyEditorClose}>{t('common.cancel')}</VxButton>
-          <VxButton variant="contained" onClick={() => void handlePartySave()} disabled={isSavingParty || !partyFormState.relatedTenantId.trim()}>
+          <VxButton variant="contained" onClick={() => void handlePartySave()} disabled={isSavingParty || !selectedPartyOption || partyPeriodInvalid || Boolean(partyScopeInvalid) || partyOptionsLoading || Boolean(partyOptionsError)}>
             {editingParty ? t('common.save') : t('common.create')}
           </VxButton>
         </VxDialogActions>
       </VxDialog>
       {partyDiscardDialog}
 
-      <VxConfirmActionDialog open={canManage && Boolean(deletePartyId)} title={t('pages.projectDetails.parties.dialogs.delete.title')} targetName={parties.find((party) => party.id === deletePartyId)?.relatedTenantId ?? ''} consequence={t('pages.projectDetails.parties.dialogs.delete.message')} confirmLabel={t('common.delete')} pendingLabel={t('dialogs.deleting')} pending={isDeletingParty} onClose={() => setDeletePartyId(null)} onConfirm={() => void handlePartyDelete()} />
+      <VxConfirmActionDialog open={canManage && Boolean(deletePartyId)} title={t('pages.projectDetails.parties.dialogs.delete.title')} targetName={parties.find((party) => party.id === deletePartyId)?.relatedTenantName ?? t('pages.tenantRelationships.unavailableTenant')} consequence={t('pages.projectDetails.parties.dialogs.delete.message')} confirmLabel={t('common.delete')} pendingLabel={t('dialogs.deleting')} pending={isDeletingParty} onClose={() => setDeletePartyId(null)} onConfirm={() => void handlePartyDelete()} />
     </VxStack>
   )
 }

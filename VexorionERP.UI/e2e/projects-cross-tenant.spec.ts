@@ -99,10 +99,11 @@ test('P1-1: tenant A creates a project and links tenant B', async ({ page }) => 
     await expect(page.getByText(projectName, { exact: true })).toBeVisible()
 
     await page.getByRole('tab', { name: /^(partners|parties)$/i }).click()
-    await page.getByRole('button', { name: /add (project )?party/i }).click()
+    await page.getByRole('button', { name: /add (project )?(party|partner)/i }).click()
 
     const partyDialog = page.getByRole('dialog')
-    await partyDialog.getByLabel(/related tenant id/i).fill(tenantBId)
+    await partyDialog.getByRole('combobox', { name: /partner relationship/i }).fill(tenantCode)
+    await page.getByRole('option', { name: new RegExp(tenantCode, 'i') }).click()
 
     const createPartyResponse = page.waitForResponse((response) => (
       response.request().method() === 'POST'
@@ -113,7 +114,7 @@ test('P1-1: tenant A creates a project and links tenant B', async ({ page }) => 
     expect(partyResponse.ok(), `Project party creation returned HTTP ${partyResponse.status()}.`).toBeTruthy()
 
     await expect(page.getByText(/project party added/i)).toBeVisible()
-    await expect(page.getByText(tenantBId, { exact: true })).toBeVisible()
+    await expect(page.getByText(new RegExp(tenantCode, 'i'))).toBeVisible()
 
     const persistedParties = expectSuccessfulFixture(
       await authenticatedApi<Array<{ relatedTenantId: string }>>(page, `/projects/${projectId}/parties`, 'GET'),

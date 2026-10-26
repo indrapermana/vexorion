@@ -3,13 +3,16 @@ import {
   AddRoundedIcon,
   Groups2RoundedIcon,
   VxAlert,
+  VxAutocomplete,
   VxButton,
   VxChip,
+  VxCheckbox,
   VxConfirmActionButton,
   VxDialog,
   VxDialogActions,
   VxDialogContent,
   VxDialogTitle,
+  VxFormControlLabel,
   VxMenuItem,
   VxStack,
   VxSwitch,
@@ -28,6 +31,7 @@ import { Permissions } from '../../../app/authorization'
 import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
 import { PageBody, PageFeedback, PageHeader, PageLoadingState, PageMetric } from '../../../components/PagePrimitives'
 import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
+import { readRelationshipScope, restrictedRelationshipScope, updateRelationshipScope, type RelationshipScope } from '../relationshipScope'
 import {
   activateTenantRelationship,
   ApiError,
@@ -35,6 +39,7 @@ import {
   deleteTenantRelationship,
   getActiveTenantRelationships,
   getTenantRelationships,
+  getTenants,
   updateTenantRelationship,
 } from '../../../lib/api'
 import type {
@@ -43,6 +48,7 @@ import type {
   TenantRelationshipListItemResponse,
   TenantRelationshipStatusValue,
   TenantRelationshipTypeValue,
+  TenantLookupResponse,
   UpdateTenantRelationshipRequest,
 } from '../../../types/api'
 
@@ -69,13 +75,13 @@ const defaultFormState: RelationshipFormState = {
   effectiveFrom: '',
   effectiveTo: '',
   contractReference: '',
-  scopeJson: '',
+  scopeJson: restrictedRelationshipScope,
 }
 
 const defaultActivationState: ActivationFormState = {
   effectiveFrom: '',
   effectiveTo: '',
-  scopeJson: '',
+  scopeJson: restrictedRelationshipScope,
 }
 
 const relationshipTypes: TenantRelationshipTypeValue[] = [1, 2, 3, 4, 5, 6, 7]
@@ -109,11 +115,29 @@ function parseScopeJson(value: string, invalidMessage: string) {
   }
 
   try {
-    JSON.parse(trimmed)
+    const parsed: unknown = JSON.parse(trimmed)
+    if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) return { value: null as string | null, error: invalidMessage }
     return { value: trimmed, error: null as string | null }
   } catch {
     return { value: null as string | null, error: invalidMessage }
   }
+}
+
+function RelationshipScopeFields({ value, onChange, disabled }: { value: string, onChange: (value: string) => void, disabled: boolean }) {
+  const { t } = useTranslation()
+  const scope = readRelationshipScope(value)
+  const keys: Array<keyof RelationshipScope> = ['canViewDocuments', 'canUploadDocuments', 'canAssignPeople']
+  return (
+    <VxStack spacing={0.5}>
+      {keys.map((key) => (
+        <VxFormControlLabel
+          key={key}
+          label={t(`pages.projectDetails.parties.fields.${key}`)}
+          control={<VxCheckbox checked={scope[key]} disabled={disabled} onChange={(_, checked) => onChange(updateRelationshipScope(value, key, checked))} />}
+        />
+      ))}
+    </VxStack>
+  )
 }
 
 export default function TenantRelationshipsPage() {
@@ -124,6 +148,7 @@ export default function TenantRelationshipsPage() {
   const canManage = user?.permissions.includes(Permissions.tenants.manage) ?? false
 
   const [rows, setRows] = useState<TenantRelationshipListItemResponse[]>([])
+  const [tenants, setTenants] = useState<TenantLookupResponse[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [showActiveOnly, setShowActiveOnly] = useState(false)
@@ -178,6 +203,12 @@ export default function TenantRelationshipsPage() {
     7: t('pages.tenantRelationships.relationshipType.consortiumMember'),
   }), [t])
 
+  const tenantOptions = tenants.filter((tenant) => tenant.id !== user?.tenantId)
+  const tenantLabel = (tenantId: string) => {
+    const tenant = tenants.find((item) => item.id === tenantId)
+    return tenant ? `${tenant.code} - ${tenant.name}` : t('pages.tenantRelationships.unavailableTenant')
+  }
+
   const loadData = useCallback(async () => {
     if (!isAuthenticated || !canView) {
       setRows([])
@@ -188,10 +219,12 @@ export default function TenantRelationshipsPage() {
     setError(null)
 
     try {
-      const result = showActiveOnly
-        ? await getActiveTenantRelationships()
-        : await getTenantRelationships()
+      const [result, tenantResult] = await Promise.all([
+        showActiveOnly ? getActiveTenantRelationships() : getTenantRelationships(),
+        getTenants(),
+      ])
       setRows(result)
+      setTenants(tenantResult)
     } catch (loadError) {
       setError(extractApiError(loadError, t('pages.tenantRelationships.errors.load')))
     } finally {
@@ -259,11 +292,11 @@ export default function TenantRelationshipsPage() {
 
   const saveRelationship = async () => {
     if (!canManage) return
-    if (!formState.relatedTenantId.trim()) {
+    if (!tenantOptions.some((tenant) => tenant.id === formState.relatedTenantId && tenant.isActive)) {
       return
     }
 
-    const scope = parseScopeJson(formState.scopeJson, t('pages.tenantRelationships.errors.scopeJsonInvalid'))
+    const scope = parseScopeJson(formState.scopeJson, t('pages.tenantRelationships.scopeInvalid'))
     if (scope.error) {
       setError(scope.error)
       return
@@ -314,7 +347,7 @@ export default function TenantRelationshipsPage() {
       return
     }
 
-    const scope = parseScopeJson(activationState.scopeJson, t('pages.tenantRelationships.errors.scopeJsonInvalid'))
+    const scope = parseScopeJson(activationState.scopeJson, t('pages.tenantRelationships.scopeInvalid'))
     if (scope.error) {
       setError(scope.error)
       return
@@ -379,7 +412,7 @@ export default function TenantRelationshipsPage() {
         filters={(
             <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
               <VxTypography variant="body2">{t('pages.tenantRelationships.activeOnly')}</VxTypography>
-              <VxSwitch checked={showActiveOnly} onChange={(event) => setShowActiveOnly(event.target.checked)} />
+              <VxSwitch checked={showActiveOnly} slotProps={{ input: { 'aria-label': t('pages.tenantRelationships.activeOnly') } }} onChange={(event) => setShowActiveOnly(event.target.checked)} />
             </VxStack>
         )}
         metrics={<PageMetric icon={<Groups2RoundedIcon fontSize="small" />} label={t('pages.tenantRelationships.metrics.rows')} value={rows.length} />}
@@ -397,7 +430,7 @@ export default function TenantRelationshipsPage() {
             <VxTable size="small">
               <VxTableHead>
                 <VxTableRow>
-                  <VxTableCell>{t('pages.tenantRelationships.columns.relatedTenantId')}</VxTableCell>
+                  <VxTableCell>{t('pages.tenantRelationships.fields.relatedTenant')}</VxTableCell>
                   <VxTableCell>{t('pages.tenantRelationships.columns.relationshipType')}</VxTableCell>
                   <VxTableCell>{t('pages.tenantRelationships.columns.status')}</VxTableCell>
                   <VxTableCell>{t('pages.tenantRelationships.columns.effective')}</VxTableCell>
@@ -409,7 +442,7 @@ export default function TenantRelationshipsPage() {
               <VxTableBody>
                 {rows.map((row) => (
                   <VxTableRow key={row.id}>
-                    <VxTableCell sx={{ fontFamily: 'monospace', fontSize: '0.78rem' }}>{row.relatedTenantId}</VxTableCell>
+                    <VxTableCell>{tenantLabel(row.relatedTenantId)}</VxTableCell>
                     <VxTableCell>{relationshipTypeLabelMap[row.relationshipType]}</VxTableCell>
                     <VxTableCell>
                       <VxChip size="small" variant="outlined" label={statusLabelMap[row.status]} />
@@ -426,7 +459,7 @@ export default function TenantRelationshipsPage() {
                           ) : null}
                           <VxConfirmActionButton
                             title={t('common.delete')}
-                            targetName={`${row.relatedTenantId} — ${relationshipTypeLabelMap[row.relationshipType]}`}
+                            targetName={`${tenantLabel(row.relatedTenantId)} - ${relationshipTypeLabelMap[row.relationshipType]}`}
                             consequence={t('pages.deleteConfirmations.tenantRelationship.consequence')}
                             confirmLabel={t('common.delete')}
                             pendingLabel={t('dialogs.deleting')}
@@ -455,13 +488,16 @@ export default function TenantRelationshipsPage() {
         <VxDialogTitle>{editingItem ? t('pages.tenantRelationships.dialogs.edit') : t('pages.tenantRelationships.dialogs.create')}</VxDialogTitle>
         <VxDialogContent dividers>
           <VxStack spacing={2} sx={{ mt: 1 }}>
-            <VxTextField
-              size="small"
-              label={t('pages.tenantRelationships.fields.relatedTenantId')}
-              value={formState.relatedTenantId}
-              helperText={t('pages.tenantRelationships.fields.relatedTenantHelp')}
-              onChange={(event) => setFormState((previous) => ({ ...previous, relatedTenantId: event.target.value }))}
-              fullWidth
+            <VxAutocomplete
+              options={tenantOptions}
+              noOptionsText={t('pages.tenantRelationships.noEligibleTenants')}
+              value={tenantOptions.find((tenant) => tenant.id === formState.relatedTenantId) ?? null}
+              getOptionLabel={(tenant) => `${tenant.code} - ${tenant.name}`}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              getOptionDisabled={(tenant) => !tenant.isActive}
+              disabled={isSaving}
+              onChange={(_, tenant) => setFormState((previous) => ({ ...previous, relatedTenantId: tenant?.id ?? '' }))}
+              renderInput={(params) => <VxTextField {...params} size="small" label={t('pages.tenantRelationships.fields.relatedTenant')} />}
             />
             <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
               <VxTextField
@@ -516,24 +552,14 @@ export default function TenantRelationshipsPage() {
               onChange={(event) => setFormState((previous) => ({ ...previous, contractReference: event.target.value }))}
               fullWidth
             />
-            <VxTextField
-              size="small"
-              label={t('pages.tenantRelationships.fields.scopeJson')}
-              value={formState.scopeJson}
-              onChange={(event) => setFormState((previous) => ({ ...previous, scopeJson: event.target.value }))}
-              placeholder={t('pages.tenantRelationships.fields.scopeJsonPlaceholder')}
-              helperText={t('pages.tenantRelationships.fields.scopeJsonHelp')}
-              fullWidth
-              multiline
-              minRows={4}
-            />
+            <RelationshipScopeFields value={formState.scopeJson} disabled={isSaving} onChange={(scopeJson) => setFormState((previous) => ({ ...previous, scopeJson }))} />
           </VxStack>
         </VxDialogContent>
         <VxDialogActions>
           <VxButton onClick={requestEditorClose} disabled={isSaving}>{t('common.cancel')}</VxButton>
           <VxButton
             variant="contained"
-            disabled={isSaving || !formState.relatedTenantId.trim()}
+            disabled={isSaving || !tenantOptions.some((tenant) => tenant.id === formState.relatedTenantId && tenant.isActive)}
             onClick={() => void saveRelationship()}
           >
             {editingItem ? t('common.save') : t('common.create')}
@@ -564,16 +590,7 @@ export default function TenantRelationshipsPage() {
                 fullWidth
               />
             </VxStack>
-            <VxTextField
-              size="small"
-              label={t('pages.tenantRelationships.fields.scopeJson')}
-              value={activationState.scopeJson}
-              onChange={(event) => setActivationState((previous) => ({ ...previous, scopeJson: event.target.value }))}
-              placeholder={t('pages.tenantRelationships.fields.scopeJsonPlaceholder')}
-              fullWidth
-              multiline
-              minRows={4}
-            />
+            <RelationshipScopeFields value={activationState.scopeJson} disabled={isSaving} onChange={(scopeJson) => setActivationState((previous) => ({ ...previous, scopeJson }))} />
           </VxStack>
         </VxDialogContent>
         <VxDialogActions>
