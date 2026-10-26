@@ -257,6 +257,9 @@
 | 1.7.2.1 | View journal entries | Journals page | All journal entries listed |
 | 1.7.2.2 | Create manual journal | Add → add debit/credit lines → Save | Entry saved; debits = credits |
 | 1.7.2.3 | Unbalanced journal | Save with debit ≠ credit total | Validation error shown |
+| 1.7.2.4 | Post sales invoice to journal | Search by invoice number in Post sales invoice → choose an eligible result showing date, currency, total, and status → choose accounts/date → confirm | Selected invoice posts and the resulting journal opens; Draft, Cancelled, and already-posted invoices are not selectable |
+| 1.7.2.5 | Post purchase invoice to journal | Search by invoice number in Post purchase invoice → choose an eligible contextual result → choose accounts/date → confirm | Selected invoice posts and the resulting journal opens; Draft, Cancelled, and already-posted invoices are not selectable |
+| 1.7.2.6 | Reverse a posted journal | Open a Posted row → review journal number and source context → set reversal date → Reverse → confirm | A reversal is created for the selected journal; no journal GUID is entered or displayed |
 
 #### 1.7.3 Fiscal Periods
 

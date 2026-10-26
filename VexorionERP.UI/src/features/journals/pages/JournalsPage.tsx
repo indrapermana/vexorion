@@ -1,5 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
-import { VxAlert, VxBox, VxButton, VxConfirmActionButton, VxDivider, VxMenuItem, VxPaper, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxAutocomplete, VxBox, VxButton, VxConfirmActionButton, VxDivider, VxMenuItem, VxPaper, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
@@ -11,12 +11,14 @@ import {
   getAccounts,
   getJournal,
   getJournals,
+  getPurchaseInvoices,
+  getSalesInvoices,
   postPurchaseInvoice,
   postManualJournal,
   postSalesInvoice,
   reverseJournal,
 } from '../../../lib/api'
-import type { AccountListItemResponse, JournalEntryDetailsResponse, JournalEntryListItemResponse } from '../../../types/api'
+import type { AccountListItemResponse, JournalEntryDetailsResponse, JournalEntryListItemResponse, PurchaseInvoiceListItemResponse, SalesInvoiceListItemResponse } from '../../../types/api'
 
 const JournalDataGrid = lazy(() => import('../components/JournalDataGrid'))
 
@@ -32,9 +34,13 @@ export default function JournalsPage() {
   const { t } = useTranslation()
   const { isAuthenticated, user } = useAuth()
   const canManage = user?.permissions.includes(Permissions.billing.manage) ?? false
+  const canViewSales = user?.permissions.includes(Permissions.sales.view) ?? false
+  const canViewPurchasing = user?.permissions.includes(Permissions.purchasing.view) ?? false
 
   const [journals, setJournals] = useState<JournalEntryListItemResponse[]>([])
   const [accounts, setAccounts] = useState<AccountListItemResponse[]>([])
+  const [salesInvoices, setSalesInvoices] = useState<SalesInvoiceListItemResponse[]>([])
+  const [purchaseInvoices, setPurchaseInvoices] = useState<PurchaseInvoiceListItemResponse[]>([])
   const [selectedJournal, setSelectedJournal] = useState<JournalEntryDetailsResponse | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -53,7 +59,6 @@ export default function JournalsPage() {
   const [expenseAccountId, setExpenseAccountId] = useState('')
   const [purchaseTaxAccountId, setPurchaseTaxAccountId] = useState('')
 
-  const [reverseJournalId, setReverseJournalId] = useState('')
   const [manualDescription, setManualDescription] = useState('')
   const [manualLines, setManualLines] = useState<ManualLine[]>([emptyManualLine(), emptyManualLine()])
 
@@ -61,25 +66,31 @@ export default function JournalsPage() {
     if (!isAuthenticated) {
       setJournals([])
       setAccounts([])
+      setSalesInvoices([])
+      setPurchaseInvoices([])
       return
     }
 
     setIsLoading(true)
     setError(null)
     try {
-      const [journalRows, accountRows] = await Promise.all([
+      const [journalRows, accountRows, salesInvoiceRows, purchaseInvoiceRows] = await Promise.all([
         getJournals(),
         canManage ? getAccounts() : Promise.resolve([]),
+        canManage && canViewSales ? getSalesInvoices() : Promise.resolve([]),
+        canManage && canViewPurchasing ? getPurchaseInvoices() : Promise.resolve([]),
       ])
       setJournals(journalRows)
       setAccounts(accountRows)
+      setSalesInvoices(salesInvoiceRows)
+      setPurchaseInvoices(purchaseInvoiceRows)
     } catch (loadError) {
       if (loadError instanceof ApiError) setError(loadError.message)
       else setError(t('pages.journals.errors.load'))
     } finally {
       setIsLoading(false)
     }
-  }, [canManage, isAuthenticated, t])
+  }, [canManage, canViewPurchasing, canViewSales, isAuthenticated, t])
 
   useEffect(() => {
     void loadData()
@@ -97,6 +108,19 @@ export default function JournalsPage() {
       .map((account) => ({ value: account.id, label: `${account.code} - ${account.name} (${t(`pages.journals.accountTypes.${account.accountType}`)})` })),
     [accounts, t],
   )
+  const postedSalesInvoiceIds = new Set(journals.filter((journal) => journal.sourceDocumentType === 'SalesInvoice' && journal.sourceDocumentId).map((journal) => journal.sourceDocumentId))
+  const postedPurchaseInvoiceIds = new Set(journals.filter((journal) => journal.sourceDocumentType === 'PurchaseInvoice' && journal.sourceDocumentId).map((journal) => journal.sourceDocumentId))
+  const postableSalesInvoices = salesInvoices.filter((invoice) => invoice.isActive && invoice.status !== 1 && invoice.status !== 6 && !postedSalesInvoiceIds.has(invoice.id))
+  const postablePurchaseInvoices = purchaseInvoices.filter((invoice) => invoice.isActive && invoice.status !== 1 && invoice.status !== 6 && !postedPurchaseInvoiceIds.has(invoice.id))
+  const getInvoiceOptionLabel = (invoice: SalesInvoiceListItemResponse | PurchaseInvoiceListItemResponse) =>
+    `${invoice.invoiceNumber} · ${invoice.invoiceDate} · ${invoice.currencyCode} ${invoice.grandTotal.toFixed(2)} · ${t(`common.invoiceStatuses.${invoice.status}`)}`
+  const getSourceDocumentLabel = (journal: JournalEntryDetailsResponse) => {
+    const salesInvoice = salesInvoices.find((invoice) => invoice.id === journal.sourceDocumentId)
+    const purchaseInvoice = purchaseInvoices.find((invoice) => invoice.id === journal.sourceDocumentId)
+    const label = t(`pages.journals.sourceTypes.${journal.sourceDocumentType}`, { defaultValue: t('pages.journals.sourceTypes.other') })
+    const documentNumber = salesInvoice?.invoiceNumber ?? purchaseInvoice?.invoiceNumber
+    return documentNumber ? `${label} · ${documentNumber}` : label
+  }
 
   const handleOpenJournal = async (journalId: string) => {
     setError(null)
@@ -109,7 +133,7 @@ export default function JournalsPage() {
   }
 
   const handlePostSalesInvoice = async () => {
-    if (!canManage) return
+    if (!canManage || !salesInvoiceId) return
     setError(null)
     setFeedback(null)
     try {
@@ -130,7 +154,7 @@ export default function JournalsPage() {
   }
 
   const handlePostPurchaseInvoice = async () => {
-    if (!canManage) return
+    if (!canManage || !purchaseInvoiceId) return
     setError(null)
     setFeedback(null)
     try {
@@ -151,13 +175,12 @@ export default function JournalsPage() {
   }
 
   const handleReverseJournal = async () => {
-    if (!canManage) return
+    if (!canManage || !selectedJournal || selectedJournal.status !== 2) return
     setError(null)
     setFeedback(null)
     try {
-      const journal = await reverseJournal(reverseJournalId, { reversalDate })
+      const journal = await reverseJournal(selectedJournal.id, { reversalDate })
       setFeedback(t('pages.journals.feedback.reversed', { journalNumber: journal.journalNumber }))
-      setReverseJournalId('')
       await loadData()
       setSelectedJournal(journal)
     } catch (reverseError) {
@@ -262,7 +285,18 @@ export default function JournalsPage() {
 
           <VxTypography component="h2" variant="h6">{t('pages.journals.actions.postSales')}</VxTypography>
           <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-            <VxTextField fullWidth label={t('pages.journals.fields.salesInvoiceId')} value={salesInvoiceId} onChange={(e) => setSalesInvoiceId(e.target.value)} />
+            {canViewSales ? (
+              <VxAutocomplete
+                fullWidth
+                options={postableSalesInvoices}
+                value={postableSalesInvoices.find((invoice) => invoice.id === salesInvoiceId) ?? null}
+                onChange={(_, invoice) => setSalesInvoiceId(invoice?.id ?? '')}
+                getOptionLabel={getInvoiceOptionLabel}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                noOptionsText={t('pages.journals.selection.noPostableSalesInvoices')}
+                renderInput={(params) => <VxTextField {...params} label={t('pages.journals.fields.salesInvoice')} />}
+              />
+            ) : <VxAlert severity="info">{t('pages.journals.selection.salesViewRequired')}</VxAlert>}
             <VxTextField fullWidth type="date" label={t('pages.journals.fields.postingDate')} value={postingDate} onChange={(e) => setPostingDate(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
           </VxStack>
           <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
@@ -279,7 +313,7 @@ export default function JournalsPage() {
           </VxStack>
           <VxConfirmActionButton
             title={t('pages.journals.actions.postSales')}
-            targetName={salesInvoiceId || t('pages.journals.actions.postSales')}
+            targetName={postableSalesInvoices.find((invoice) => invoice.id === salesInvoiceId)?.invoiceNumber ?? t('pages.journals.actions.postSales')}
             consequence={t('pages.journals.confirmation.posting', { date: postingDate })}
             confirmLabel={t('pages.journals.actions.confirmPost')}
             pendingLabel={t('pages.journals.actions.confirmingPost')}
@@ -291,7 +325,18 @@ export default function JournalsPage() {
 
           <VxTypography component="h2" variant="h6">{t('pages.journals.actions.postPurchase')}</VxTypography>
           <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-            <VxTextField fullWidth label={t('pages.journals.fields.purchaseInvoiceId')} value={purchaseInvoiceId} onChange={(e) => setPurchaseInvoiceId(e.target.value)} />
+            {canViewPurchasing ? (
+              <VxAutocomplete
+                fullWidth
+                options={postablePurchaseInvoices}
+                value={postablePurchaseInvoices.find((invoice) => invoice.id === purchaseInvoiceId) ?? null}
+                onChange={(_, invoice) => setPurchaseInvoiceId(invoice?.id ?? '')}
+                getOptionLabel={getInvoiceOptionLabel}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                noOptionsText={t('pages.journals.selection.noPostablePurchaseInvoices')}
+                renderInput={(params) => <VxTextField {...params} label={t('pages.journals.fields.purchaseInvoice')} />}
+              />
+            ) : <VxAlert severity="info">{t('pages.journals.selection.purchasingViewRequired')}</VxAlert>}
             <VxTextField fullWidth type="date" label={t('pages.journals.fields.postingDate')} value={postingDate} onChange={(e) => setPostingDate(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
           </VxStack>
           <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
@@ -308,7 +353,7 @@ export default function JournalsPage() {
           </VxStack>
           <VxConfirmActionButton
             title={t('pages.journals.actions.postPurchase')}
-            targetName={purchaseInvoiceId || t('pages.journals.actions.postPurchase')}
+            targetName={postablePurchaseInvoices.find((invoice) => invoice.id === purchaseInvoiceId)?.invoiceNumber ?? t('pages.journals.actions.postPurchase')}
             consequence={t('pages.journals.confirmation.posting', { date: postingDate })}
             confirmLabel={t('pages.journals.actions.confirmPost')}
             pendingLabel={t('pages.journals.actions.confirmingPost')}
@@ -316,22 +361,6 @@ export default function JournalsPage() {
             buttonProps={{ variant: 'contained', disabled: !purchaseInvoiceId || !apAccountId || !expenseAccountId }}
           >{t('pages.journals.actions.postPurchase')}</VxConfirmActionButton>
 
-          <VxDivider />
-
-          <VxTypography component="h2" variant="h6">{t('pages.journals.actions.reverseJournal')}</VxTypography>
-          <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-            <VxTextField fullWidth label={t('pages.journals.fields.journalEntryId')} value={reverseJournalId} onChange={(e) => setReverseJournalId(e.target.value)} />
-            <VxTextField fullWidth type="date" label={t('pages.journals.fields.reversalDate')} value={reversalDate} onChange={(e) => setReversalDate(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
-          </VxStack>
-          <VxConfirmActionButton
-            title={t('pages.journals.actions.reverseJournal')}
-            targetName={reverseJournalId || t('pages.journals.actions.reverseJournal')}
-            consequence={t('pages.journals.confirmation.reversal', { date: reversalDate })}
-            confirmLabel={t('pages.journals.actions.confirmReverse')}
-            pendingLabel={t('pages.journals.actions.reversing')}
-            onConfirm={handleReverseJournal}
-            buttonProps={{ variant: 'outlined', color: 'error', disabled: !reverseJournalId }}
-          >{t('pages.journals.actions.reverseJournal')}</VxConfirmActionButton>
         </VxStack>
       </VxPaper> : null}
 
@@ -344,7 +373,7 @@ export default function JournalsPage() {
       {selectedJournal ? (
         <VxPaper elevation={0} className="panel-card">
           <VxTypography component="h2" variant="h6" sx={{ mb: 2 }}>{t('pages.journals.details.title', { journalNumber: selectedJournal.journalNumber })}</VxTypography>
-          <VxTypography color="text.secondary" sx={{ mb: 1 }}>{t('pages.journals.details.source')}: {selectedJournal.sourceDocumentType} / {selectedJournal.sourceDocumentId ?? t('pages.journals.details.notAvailable')}</VxTypography>
+          <VxTypography color="text.secondary" sx={{ mb: 1 }}>{t('pages.journals.details.source')}: {getSourceDocumentLabel(selectedJournal)}</VxTypography>
           <VxTypography color="text.secondary" sx={{ mb: 2 }}>{t('pages.journals.details.debit')} {selectedJournal.totalDebit.toFixed(2)} / {t('pages.journals.details.credit')} {selectedJournal.totalCredit.toFixed(2)}</VxTypography>
           <VxStack spacing={1}>
             {selectedJournal.lines.map((line) => (
@@ -364,6 +393,20 @@ export default function JournalsPage() {
               onConfirm={handlePostManualJournal}
               buttonProps={{ variant: 'contained', sx: { mt: 2 } }}
             >{t('pages.journals.actions.postManual')}</VxConfirmActionButton>
+          ) : null}
+          {canManage && selectedJournal.status === 2 ? (
+            <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mt: 2, alignItems: { sm: 'center' } }}>
+              <VxTextField type="date" label={t('pages.journals.fields.reversalDate')} value={reversalDate} onChange={(event) => setReversalDate(event.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
+              <VxConfirmActionButton
+                title={t('pages.journals.actions.reverseJournal')}
+                targetName={selectedJournal.journalNumber}
+                consequence={t('pages.journals.confirmation.reversal', { date: reversalDate })}
+                confirmLabel={t('pages.journals.actions.confirmReverse')}
+                pendingLabel={t('pages.journals.actions.reversing')}
+                onConfirm={handleReverseJournal}
+                buttonProps={{ variant: 'outlined', color: 'error' }}
+              >{t('pages.journals.actions.reverseJournal')}</VxConfirmActionButton>
+            </VxStack>
           ) : null}
         </VxPaper>
       ) : null}

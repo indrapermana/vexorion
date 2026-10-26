@@ -1459,7 +1459,9 @@ const esES = {
         confirmReverse: 'Revertir diario',
         reversing: 'Revirtiendo...',
       },
-      fields: { description: 'Descripción', lineAccount: 'Cuenta de la línea {{number}}', lineDescription: 'Descripción de línea (opcional)', salesInvoiceId: 'ID de factura de venta', purchaseInvoiceId: 'ID de factura de compra', journalEntryId: 'ID de asiento', postingDate: 'Fecha de contabilización', reversalDate: 'Fecha de reversión', arAccount: 'Cuenta por cobrar', revenueAccount: 'Cuenta de ingresos', salesTaxAccount: 'Impuesto por pagar (opcional)', apAccount: 'Cuenta por pagar', expenseAccount: 'Cuenta de gastos', purchaseTaxAccount: 'Impuesto deducible (opcional)' },
+      fields: { description: 'Descripción', lineAccount: 'Cuenta de la línea {{number}}', lineDescription: 'Descripción de línea (opcional)', salesInvoice: 'Factura de venta', purchaseInvoice: 'Factura de compra', postingDate: 'Fecha de contabilización', reversalDate: 'Fecha de reversión', arAccount: 'Cuenta por cobrar', revenueAccount: 'Cuenta de ingresos', salesTaxAccount: 'Impuesto por pagar (opcional)', apAccount: 'Cuenta por pagar', expenseAccount: 'Cuenta de gastos', purchaseTaxAccount: 'Impuesto deducible (opcional)' },
+      selection: { noPostableSalesInvoices: 'No hay facturas de venta elegibles.', noPostablePurchaseInvoices: 'No hay facturas de compra elegibles.', salesViewRequired: 'Se requiere permiso de lectura de ventas para seleccionar una factura.', purchasingViewRequired: 'Se requiere permiso de lectura de compras para seleccionar una factura.' },
+      sourceTypes: { SalesInvoice: 'Factura de venta', PurchaseInvoice: 'Factura de compra', ManualJournal: 'Diario manual', SalesInvoiceReversal: 'Reversión de factura de venta', PurchaseInvoiceReversal: 'Reversión de factura de compra', ManualJournalReversal: 'Reversión de diario manual', other: 'Otro origen' },
       manualTotals: 'Debe {{debit}} / Haber {{credit}}',
       confirmation: {
         posting: 'La contabilización crea asientos contables con fecha {{date}}. Los asientos contabilizados deben corregirse mediante una reversión.',

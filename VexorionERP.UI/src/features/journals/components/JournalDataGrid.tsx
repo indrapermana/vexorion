@@ -14,7 +14,13 @@ export default function JournalDataGrid({ rows, isLoading, onOpen }: JournalData
   const columns: VxGridColDef<JournalGridRow>[] = [
     { field: 'journalNumber', headerName: t('pages.journals.grid.journal'), minWidth: 160, flex: 0.7 },
     { field: 'postingDate', headerName: t('pages.journals.grid.postingDate'), minWidth: 130, flex: 0.6 },
-    { field: 'sourceDocumentType', headerName: t('pages.journals.grid.sourceType'), minWidth: 160, flex: 0.7 },
+    {
+      field: 'sourceDocumentType',
+      headerName: t('pages.journals.grid.sourceType'),
+      minWidth: 160,
+      flex: 0.7,
+      renderCell: ({ value }) => t(`pages.journals.sourceTypes.${String(value)}`, { defaultValue: String(value) }),
+    },
     { field: 'totalDebit', headerName: t('pages.journals.grid.debit'), minWidth: 120, flex: 0.5, type: 'number', valueFormatter: (value) => Number(value).toFixed(2) },
     { field: 'totalCredit', headerName: t('pages.journals.grid.credit'), minWidth: 120, flex: 0.5, type: 'number', valueFormatter: (value) => Number(value).toFixed(2) },
     {

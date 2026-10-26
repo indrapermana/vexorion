@@ -1486,7 +1486,9 @@ const idID = {
         confirmReverse: 'Balik jurnal',
         reversing: 'Membalik...',
       },
-      fields: { description: 'Deskripsi', lineAccount: 'Akun baris {{number}}', lineDescription: 'Deskripsi baris (opsional)', salesInvoiceId: 'ID faktur penjualan', purchaseInvoiceId: 'ID faktur pembelian', journalEntryId: 'ID entri jurnal', postingDate: 'Tanggal posting', reversalDate: 'Tanggal pembalikan', arAccount: 'Akun piutang', revenueAccount: 'Akun pendapatan', salesTaxAccount: 'Kewajiban pajak (opsional)', apAccount: 'Akun utang', expenseAccount: 'Akun beban', purchaseTaxAccount: 'Pajak masukan (opsional)' },
+      fields: { description: 'Deskripsi', lineAccount: 'Akun baris {{number}}', lineDescription: 'Deskripsi baris (opsional)', salesInvoice: 'Faktur penjualan', purchaseInvoice: 'Faktur pembelian', postingDate: 'Tanggal posting', reversalDate: 'Tanggal pembalikan', arAccount: 'Akun piutang', revenueAccount: 'Akun pendapatan', salesTaxAccount: 'Kewajiban pajak (opsional)', apAccount: 'Akun utang', expenseAccount: 'Akun beban', purchaseTaxAccount: 'Pajak masukan (opsional)' },
+      selection: { noPostableSalesInvoices: 'Tidak ada faktur penjualan yang memenuhi syarat.', noPostablePurchaseInvoices: 'Tidak ada faktur pembelian yang memenuhi syarat.', salesViewRequired: 'Izin lihat penjualan diperlukan untuk memilih faktur.', purchasingViewRequired: 'Izin lihat pembelian diperlukan untuk memilih faktur.' },
+      sourceTypes: { SalesInvoice: 'Faktur penjualan', PurchaseInvoice: 'Faktur pembelian', ManualJournal: 'Jurnal manual', SalesInvoiceReversal: 'Pembalikan faktur penjualan', PurchaseInvoiceReversal: 'Pembalikan faktur pembelian', ManualJournalReversal: 'Pembalikan jurnal manual', other: 'Sumber lain' },
       manualTotals: 'Debit {{debit}} / Kredit {{credit}}',
       confirmation: {
         posting: 'Posting membuat entri akuntansi bertanggal {{date}}. Entri yang telah diposting harus dikoreksi melalui pembalikan.',

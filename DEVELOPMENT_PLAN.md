@@ -83,6 +83,7 @@ Any capability requiring pending release evidence remains **implemented**, **loc
 - [x] Sales invoices and purchase invoices, lines, totals, payment terms, source-document creation, approval/posting support, and balance tracking.
 - [x] Customer and vendor payments with allocation/over-allocation rules.
 - [x] Chart of accounts, fiscal periods, journals, posting, reversal, dashboard metrics, AR/AP aging, trial balance, P&L, balance sheet, comparisons, drill-down, and CSV exports.
+- [x] Journal invoice posting uses searchable eligible-invoice selection; reversals start from the selected Posted journal and show readable source context instead of raw GUIDs. Locally and manually browser validated 26 October 2026.
 - [x] Audit-log browsing scaffold.
 
 ### 3.3 POS
@@ -513,7 +514,6 @@ Open inventory workspace and reporting work is consolidated in the final Main UI
 
 **Findings**
 
-- Journal posting/reversal asks users to paste invoice or journal GUIDs—an unsafe implementation-oriented routine workflow.
 - Finance pages mix localized shells with hard-coded English columns, actions, statuses, filters, and feedback.
 - Audit browsing is a basic table/filter scaffold without readable event detail, before/after presentation, trace navigation, or export/support flow.
 - Report reconciliation/export coverage and inventory report breadth remain incomplete.
@@ -662,7 +662,6 @@ Complete application work in order: **Main UI → AdminUI → POS**. Finish the 
 
 #### Sales, procurement, inventory, and finance
 
-- [ ] `UX-FIN-01` Replace raw-ID journal actions with searchable contextual document selection.
 - [ ] `UX-FIN-02` Provide a fiscal-period status/calendar view and warn about locked periods before entry.
 - [ ] `UX-FIN-03` Standardize currency/date/sign formatting, totals, comparisons, drill-down, exports, and no-data explanations.
 - [ ] `UX-FIN-04` Add an audit detail view with actor, entity, trace ID, safe before/after, support context, pagination, and export.

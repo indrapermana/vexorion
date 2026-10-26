@@ -1473,7 +1473,9 @@ const enUS = {
         confirmReverse: 'Reverse journal',
         reversing: 'Reversing...',
       },
-      fields: { description: 'Description', lineAccount: 'Line {{number}} account', lineDescription: 'Line description (optional)', salesInvoiceId: 'Sales invoice ID', purchaseInvoiceId: 'Purchase invoice ID', journalEntryId: 'Journal entry ID', postingDate: 'Posting date', reversalDate: 'Reversal date', arAccount: 'AR account', revenueAccount: 'Revenue account', salesTaxAccount: 'Tax liability (optional)', apAccount: 'AP account', expenseAccount: 'Expense account', purchaseTaxAccount: 'Tax receivable (optional)' },
+      fields: { description: 'Description', lineAccount: 'Line {{number}} account', lineDescription: 'Line description (optional)', salesInvoice: 'Sales invoice', purchaseInvoice: 'Purchase invoice', postingDate: 'Posting date', reversalDate: 'Reversal date', arAccount: 'AR account', revenueAccount: 'Revenue account', salesTaxAccount: 'Tax liability (optional)', apAccount: 'AP account', expenseAccount: 'Expense account', purchaseTaxAccount: 'Tax receivable (optional)' },
+      selection: { noPostableSalesInvoices: 'No eligible sales invoices available.', noPostablePurchaseInvoices: 'No eligible purchase invoices available.', salesViewRequired: 'Sales view permission is required to select an invoice.', purchasingViewRequired: 'Purchasing view permission is required to select an invoice.' },
+      sourceTypes: { SalesInvoice: 'Sales invoice', PurchaseInvoice: 'Purchase invoice', ManualJournal: 'Manual journal', SalesInvoiceReversal: 'Sales invoice reversal', PurchaseInvoiceReversal: 'Purchase invoice reversal', ManualJournalReversal: 'Manual journal reversal', other: 'Other source' },
       manualTotals: 'Debits {{debit}} / Credits {{credit}}',
       confirmation: {
         posting: 'Posting creates accounting entries dated {{date}}. Posted entries must be corrected through a reversal.',
