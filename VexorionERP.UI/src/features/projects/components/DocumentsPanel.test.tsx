@@ -1,8 +1,8 @@
 /// <reference types="vitest/globals" />
 
-import { fireEvent, render as renderComponent, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render as renderComponent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from 'react'
+import { createElement, type ButtonHTMLAttributes, type ElementType, type HTMLAttributes, type ReactNode } from 'react'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import DocumentsPanel from './DocumentsPanel'
 import type { DocumentFolderListItemResponse, ProjectDocumentListItemResponse, ProjectDocumentVersionListItemResponse } from '../../../types/api'
@@ -19,6 +19,7 @@ const apiMocks = vi.hoisted(() => ({
   mockDeleteProjectDocument: vi.fn(),
   mockDeleteProjectDocumentFolder: vi.fn(),
   mockGetProjectDocumentDownload: vi.fn(),
+  mockGetProjectDocument: vi.fn(),
   mockUpdateProjectDocument: vi.fn(),
   mockUpdateProjectDocumentFolder: vi.fn(),
 }))
@@ -43,6 +44,7 @@ vi.mock('../../../lib/api', () => ({
   deleteProjectDocument: apiMocks.mockDeleteProjectDocument,
   deleteProjectDocumentFolder: apiMocks.mockDeleteProjectDocumentFolder,
   getProjectDocumentDownload: apiMocks.mockGetProjectDocumentDownload,
+  getProjectDocument: apiMocks.mockGetProjectDocument,
   getProjectDocumentFolders: apiMocks.mockGetProjectDocumentFolders,
   getProjectDocumentVersions: apiMocks.mockGetProjectDocumentVersions,
   getProjectDocuments: apiMocks.mockGetProjectDocuments,
@@ -52,28 +54,31 @@ vi.mock('../../../lib/api', () => ({
 }))
 
 vi.mock('@vexorion/ui', () => {
-  const passThrough = ({ children }: { children?: ReactNode }) => <div>{children}</div>
+  const passThrough = ({ children, component = 'div', role, 'aria-label': label }: HTMLAttributes<HTMLElement> & { component?: ElementType }) => createElement(component, { role, 'aria-label': label }, children)
 
   return {
     AddRoundedIcon: () => <span aria-hidden="true" />,
     CloudUploadRoundedIcon: () => <span aria-hidden="true" />,
     DeleteOutlineRoundedIcon: () => <span aria-hidden="true" />,
+    DownloadRoundedIcon: () => <span aria-hidden="true" />,
+    VisibilityRoundedIcon: () => <span aria-hidden="true" />,
     EditRoundedIcon: () => <span aria-hidden="true" />,
     FolderRoundedIcon: () => <span aria-hidden="true" />,
     SearchRoundedIcon: () => <span aria-hidden="true" />,
-    VxAlert: ({ children }: { children?: ReactNode }) => <div role="alert">{children}</div>,
+    VxAlert: ({ children, action }: { children?: ReactNode, action?: ReactNode }) => <div role="alert">{children}{action}</div>,
     VxBox: passThrough,
-    VxButton: ({ children, onClick, disabled, 'aria-pressed': pressed }: ButtonHTMLAttributes<HTMLButtonElement>) => (
-      <button type="button" onClick={onClick} disabled={disabled} aria-pressed={pressed}>{children}</button>
+    VxButton: ({ children, onClick, disabled, 'aria-pressed': pressed, 'aria-current': current }: ButtonHTMLAttributes<HTMLButtonElement>) => (
+      <button type="button" onClick={onClick} disabled={disabled} aria-pressed={pressed} aria-current={current}>{children}</button>
     ),
     VxChip: ({ label }: { label: string }) => <span>{label}</span>,
     VxCircularProgress: () => <div>loading</div>,
     VxConfirmActionButton: ({ children, buttonProps }: { children?: ReactNode, buttonProps?: ButtonHTMLAttributes<HTMLButtonElement> }) => <button type="button" aria-label={buttonProps?.['aria-label']} disabled={buttonProps?.disabled}>{children}</button>,
-    VxDialog: ({ open, children }: { open: boolean, children?: ReactNode }) => (open ? <div>{children}</div> : null),
+    VxConfirmActionDialog: ({ open, targetName, onConfirm, onClose }: { open: boolean, targetName: string, onConfirm: () => void, onClose: () => void }) => open ? <div role="dialog">{targetName}<button onClick={onConfirm}>Confirm delete</button><button onClick={onClose}>Cancel delete</button></div> : null,
+    VxDialog: ({ open, children }: { open: boolean, children?: ReactNode }) => (open ? <div role="dialog">{children}</div> : null),
     VxDialogActions: passThrough,
     VxDialogContent: passThrough,
     VxDialogTitle: passThrough,
-    VxIconButton: ({ children, onClick, 'aria-label': label }: ButtonHTMLAttributes<HTMLButtonElement>) => <button type="button" aria-label={label} onClick={onClick}>{children}</button>,
+    VxIconButton: ({ children, onClick, disabled, 'aria-label': label }: ButtonHTMLAttributes<HTMLButtonElement>) => <button type="button" aria-label={label} disabled={disabled} onClick={onClick}>{children}</button>,
     VxInputAdornment: passThrough,
     VxMenuItem: ({ children, value }: { children?: ReactNode, value: string | number }) => <option value={value}>{children}</option>,
     VxPaper: passThrough,
@@ -135,6 +140,10 @@ function render(ui: ReactNode, initialEntry = '/projects/project-1?tab=documents
   return { ...renderComponent(<RouterProvider router={router} />), router }
 }
 
+function documentFixture(id: string, title: string, folderId: string | null = null): ProjectDocumentListItemResponse {
+  return { id, title, projectId: 'project-1', documentFolderId: folderId, documentNumber: `DOC-${id}`, fileName: `${id}.pdf`, contentType: 'application/pdf', fileSizeBytes: 100, currentVersionNumber: 1, status: 1, isActive: true }
+}
+
 describe('DocumentsPanel upload/version flows', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -171,6 +180,146 @@ describe('DocumentsPanel upload/version flows', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('pages.projectDetails.documentsPanel.noAccess')
   })
 
+  it('loads metadata for the selected second document and preserves its stored notes', async () => {
+    authMocks.mockUseAuth.mockReturnValue({ user: { permissions: ['project-documents.view', 'project-documents.manage'] } })
+    apiMocks.mockGetProjectDocuments.mockResolvedValue([documentFixture('first', 'First document'), documentFixture('second', 'Second document')])
+    apiMocks.mockGetProjectDocument.mockResolvedValue({ ...documentFixture('second', 'Second document'), notes: 'Keep these notes', tags: 'contract' })
+    apiMocks.mockUpdateProjectDocument.mockResolvedValue({})
+    const user = userEvent.setup()
+    render(<DocumentsPanel projectId="project-1" />)
+    const second = await screen.findByRole('button', { name: 'Second document' })
+    act(() => second.focus())
+    await user.keyboard('{Enter}')
+    expect(second).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(screen.getByRole('button', { name: 'pages.projectDetails.documentsPanel.metadata' }))
+    const dialog = await screen.findByRole('dialog')
+    expect(apiMocks.mockGetProjectDocument).toHaveBeenCalledWith('project-1', 'second')
+    expect(within(dialog).getByLabelText('pages.projectDetails.documentsPanel.columns.title')).toHaveValue('Second document')
+    expect(within(dialog).getByLabelText('pages.projectDetails.documentsPanel.notes')).toHaveValue('Keep these notes')
+    fireEvent.click(within(dialog).getByRole('button', { name: 'common.save' }))
+    await waitFor(() => expect(apiMocks.mockUpdateProjectDocument).toHaveBeenCalledWith('project-1', 'second', expect.objectContaining({ title: 'Second document', notes: 'Keep these notes', tags: 'contract' })))
+  })
+
+  it('provides ancestor breadcrumbs that update folder context without deleting other URL state', async () => {
+    authMocks.mockUseAuth.mockReturnValue({ user: { permissions: ['project-documents.view'] } })
+    apiMocks.mockGetProjectDocumentFolders.mockResolvedValue([
+      { id: 'parent', projectId: 'project-1', parentFolderId: null, name: 'Contracts', isActive: true },
+      { id: 'child', projectId: 'project-1', parentFolderId: 'parent', name: 'Signed', isActive: true },
+    ])
+    const { router } = render(<DocumentsPanel projectId="project-1" />, '/projects/project-1?tab=documents&folder=child&documentSearch=contract')
+    const breadcrumbs = await screen.findByRole('navigation', { name: 'pages.projectDetails.documentsPanel.breadcrumbs' })
+    await waitFor(() => expect(within(breadcrumbs).getByRole('button', { name: 'Signed' })).toHaveAttribute('aria-current', 'location'))
+    fireEvent.click(within(breadcrumbs).getByRole('button', { name: 'Contracts' }))
+    const query = new URLSearchParams(router.state.location.search)
+    expect(query.get('folder')).toBe('parent')
+    expect(query.get('documentSearch')).toBe('contract')
+    expect(query.get('tab')).toBe('documents')
+  })
+
+  it('bounds breadcrumb traversal for cyclic folder data', async () => {
+    authMocks.mockUseAuth.mockReturnValue({ user: { permissions: ['project-documents.view'] } })
+    apiMocks.mockGetProjectDocumentFolders.mockResolvedValue([
+      { id: 'one', projectId: 'project-1', parentFolderId: 'two', name: 'One', isActive: true },
+      { id: 'two', projectId: 'project-1', parentFolderId: 'one', name: 'Two', isActive: true },
+    ])
+    render(<DocumentsPanel projectId="project-1" />, '/projects/project-1?tab=documents&folder=one')
+    const breadcrumbs = screen.getByRole('navigation', { name: 'pages.projectDetails.documentsPanel.breadcrumbs' })
+    expect(await within(breadcrumbs).findByRole('button', { name: 'One' })).toBeInTheDocument()
+    expect(within(breadcrumbs).getAllByRole('button')).toHaveLength(3)
+  })
+
+  it('hides selected-document actions when filters exclude an explicit selection', async () => {
+    authMocks.mockUseAuth.mockReturnValue({ user: { permissions: ['project-documents.view', 'project-documents.manage', 'project-documents.download'] } })
+    render(<DocumentsPanel projectId="project-1" />, '/projects/project-1?tab=documents&document=doc-1')
+    await screen.findByRole('region', { name: 'pages.projectDetails.documentsPanel.selectedDocument' })
+    fireEvent.change(screen.getByLabelText('pages.projectDetails.documentsPanel.search'), { target: { value: 'no match' } })
+    expect(screen.queryByRole('region', { name: 'pages.projectDetails.documentsPanel.selectedDocument' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'pages.projectDetails.documentsPanel.metadata' })).not.toBeInTheDocument()
+    expect(screen.getByText('pages.projectDetails.documentsPanel.selectionUnavailable')).toBeInTheDocument()
+  })
+
+  it('previews the clicked row rather than the currently selected document', async () => {
+    authMocks.mockUseAuth.mockReturnValue({ user: { permissions: ['project-documents.view', 'project-documents.download'] } })
+    apiMocks.mockGetProjectDocuments.mockResolvedValue([documentFixture('first', 'First document'), documentFixture('second', 'Second document')])
+    apiMocks.mockGetProjectDocumentDownload.mockResolvedValue({ downloadUrl: 'https://files.example.invalid/second.pdf' })
+    const open = vi.spyOn(window, 'open').mockImplementation(() => null)
+    render(<DocumentsPanel projectId="project-1" />)
+    fireEvent.click(await screen.findByRole('button', { name: 'pages.projectDetails.documentsPanel.preview: Second document' }))
+    await waitFor(() => expect(apiMocks.mockGetProjectDocumentDownload).toHaveBeenCalledWith('project-1', 'second'))
+    expect(open).toHaveBeenCalledWith('https://files.example.invalid/second.pdf', '_blank', 'noopener,noreferrer')
+    open.mockRestore()
+  })
+
+  it('requires confirmation and deletes only the selected document', async () => {
+    authMocks.mockUseAuth.mockReturnValue({ user: { permissions: ['project-documents.view', 'project-documents.manage'] } })
+    const first = documentFixture('first', 'First document')
+    apiMocks.mockGetProjectDocuments.mockResolvedValueOnce([first, documentFixture('second', 'Second document')]).mockResolvedValue([first])
+    apiMocks.mockDeleteProjectDocument.mockResolvedValue({})
+    render(<DocumentsPanel projectId="project-1" />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Second document' }))
+    fireEvent.click(screen.getByRole('button', { name: 'common.delete: Second document' }))
+    expect(apiMocks.mockDeleteProjectDocument).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel delete' }))
+    expect(apiMocks.mockDeleteProjectDocument).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'common.delete: Second document' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm delete' }))
+    await waitFor(() => expect(apiMocks.mockDeleteProjectDocument).toHaveBeenCalledWith('project-1', 'second'))
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Second document' })).not.toBeInTheDocument())
+  })
+
+  it('refreshes version history after uploading a version for the same selected document', async () => {
+    authMocks.mockUseAuth.mockReturnValue({ user: { permissions: ['project-documents.view', 'project-documents.upload'] } })
+    apiMocks.mockGetProjectDocumentVersions.mockResolvedValueOnce([]).mockResolvedValue([{
+      id: 'version-2', projectDocumentId: 'doc-1', versionNumber: 2, fileName: 'revision-2.pdf',
+      contentType: 'application/pdf', fileSizeBytes: 200, uploadedAtUtc: '2026-10-26T10:00:00Z', isActive: true,
+    }])
+    const { container } = render(<DocumentsPanel projectId="project-1" />)
+    await screen.findByText('pages.projectDetails.documentsPanel.noVersions')
+    fireEvent.click(screen.getByRole('button', { name: 'pages.projectDetails.documentsPanel.addVersion' }))
+    fireEvent.change(container.querySelector('input[type="file"]')!, { target: { files: [new File(['revision'], 'revision-2.pdf', { type: 'application/pdf' })] } })
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'pages.projectDetails.documentsPanel.addVersion' }))
+    expect(await screen.findByText('revision-2.pdf')).toBeInTheDocument()
+    expect(apiMocks.mockGetProjectDocumentVersions).toHaveBeenCalledTimes(2)
+    expect(apiMocks.mockAddProjectDocumentVersion).toHaveBeenCalledWith('project-1', 'doc-1', expect.objectContaining({ file: expect.any(File) }))
+  })
+
+  it('selects the newly uploaded document without losing folder context', async () => {
+    authMocks.mockUseAuth.mockReturnValue({ user: { permissions: ['project-documents.view', 'project-documents.upload'] } })
+    const old = documentFixture('old', 'Old contract', 'contracts')
+    apiMocks.mockGetProjectDocuments.mockResolvedValueOnce([old]).mockResolvedValue([old, documentFixture('new', 'New contract', 'contracts')])
+    apiMocks.mockUploadProjectDocument.mockResolvedValue({ id: 'new' })
+    const { container, router } = render(<DocumentsPanel projectId="project-1" />, '/projects/project-1?tab=documents&folder=contracts&document=old')
+    fireEvent.click(await screen.findByRole('button', { name: 'pages.projectDetails.documentsPanel.upload' }))
+    fireEvent.change(screen.getByLabelText('pages.projectDetails.documentsPanel.columns.title'), { target: { value: 'New contract' } })
+    fireEvent.change(container.querySelector('input[type="file"]')!, { target: { files: [new File(['new'], 'new.pdf', { type: 'application/pdf' })] } })
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'pages.projectDetails.documentsPanel.upload' }))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'New contract' })).toHaveAttribute('aria-pressed', 'true'))
+    const query = new URLSearchParams(router.state.location.search)
+    expect(query.get('folder')).toBe('contracts')
+    expect(query.get('document')).toBe('new')
+  })
+
+  it('reports history failures and retries without changing the selected document', async () => {
+    authMocks.mockUseAuth.mockReturnValue({ user: { permissions: ['project-documents.view'] } })
+    apiMocks.mockGetProjectDocumentVersions.mockRejectedValueOnce(new Error('History unavailable')).mockResolvedValue([])
+    render(<DocumentsPanel projectId="project-1" />)
+    await screen.findByText('pages.projectDetails.documentsPanel.historyError')
+    fireEvent.click(screen.getByRole('button', { name: 'common.refresh' }))
+    expect(await screen.findByText('pages.projectDetails.documentsPanel.noVersions')).toBeInTheDocument()
+    expect(apiMocks.mockGetProjectDocumentVersions).toHaveBeenCalledTimes(2)
+    expect(screen.getByRole('button', { name: 'Specification' })).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('keeps selected document context readable without mutation or download permissions', async () => {
+    authMocks.mockUseAuth.mockReturnValue({ user: { permissions: ['project-documents.view'] } })
+    render(<DocumentsPanel projectId="project-1" />)
+    const selected = await screen.findByRole('region', { name: 'pages.projectDetails.documentsPanel.selectedDocument' })
+    expect(selected).toHaveTextContent('Specification')
+    expect(within(selected).queryByRole('button')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'pages.projectDetails.documentsPanel.upload' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'pages.projectDetails.documentsPanel.newFolder' })).not.toBeInTheDocument()
+  })
+
   it('labels compact folder actions and preserves folder selection and reset', async () => {
     authMocks.mockUseAuth.mockReturnValue({
       user: { permissions: ['project-documents.view', 'project-documents.manage'] },
@@ -184,7 +333,7 @@ describe('DocumentsPanel upload/version flows', () => {
     expect(screen.getByRole('button', { name: 'pages.projectDetails.documentsPanel.newFolder' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'common.edit: Contracts and agreements' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'common.delete: Contracts and agreements' })).toBeInTheDocument()
-    const allFolders = screen.getByRole('button', { name: 'pages.projectDetails.documentsPanel.allFolders' })
+    const allFolders = screen.getAllByRole('button', { name: 'pages.projectDetails.documentsPanel.allFolders' })[0]
     expect(allFolders).toHaveAttribute('aria-pressed', 'true')
     fireEvent.click(folder)
     expect(folder).toHaveAttribute('aria-pressed', 'true')

@@ -1018,6 +1018,12 @@ const esES = {
         },
       },
       documentsPanel: {
+        breadcrumbs: 'Ubicación del documento',
+        historyError: 'No se pudieron cargar las versiones del documento.',
+        noVersions: 'No hay historial de versiones disponible.',
+        selectedDocument: 'Documento seleccionado',
+        metadata: 'Editar metadatos',
+        selectionUnavailable: 'El documento seleccionado no está disponible en estos resultados.',
         noAccess: 'No tienes permiso para ver documentos del proyecto.',
         folders: 'Carpetas',
         allFolders: 'Todas las carpetas',

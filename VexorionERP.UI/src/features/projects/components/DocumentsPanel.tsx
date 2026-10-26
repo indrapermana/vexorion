@@ -3,7 +3,9 @@ import {
   AddRoundedIcon,
   CloudUploadRoundedIcon,
   DeleteOutlineRoundedIcon,
+  DownloadRoundedIcon,
   EditRoundedIcon,
+  VisibilityRoundedIcon,
   FolderRoundedIcon,
   SearchRoundedIcon,
   VxAlert,
@@ -12,6 +14,7 @@ import {
   VxChip,
   VxCircularProgress,
   VxConfirmActionButton,
+  VxConfirmActionDialog,
   VxDialog,
   VxDialogActions,
   VxDialogContent,
@@ -43,6 +46,7 @@ import {
   deleteProjectDocument,
   deleteProjectDocumentFolder,
   getProjectDocumentDownload,
+  getProjectDocument,
   getProjectDocumentFolders,
   getProjectDocumentVersions,
   getProjectDocuments,
@@ -119,11 +123,23 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
   const [folders, setFolders] = useState<DocumentFolderListItemResponse[]>([])
   const [documents, setDocuments] = useState<ProjectDocumentListItemResponse[]>([])
   const [versions, setVersions] = useState<ProjectDocumentVersionListItemResponse[]>([])
+  const [versionsLoading, setVersionsLoading] = useState(false)
+  const [versionsError, setVersionsError] = useState(false)
+  const [versionRefresh, setVersionRefresh] = useState(0)
   const selectedFolderId = searchParams.get('folder') || undefined
-  const selectedDocumentId = searchParams.get('document') || documents[0]?.id
   const statusValue = Number(searchParams.get('documentStatus'))
   const statusFilter: ManagedDocumentStatus | '' = statusOptions.some((option) => option.value === statusValue) ? statusValue as ManagedDocumentStatus : ''
   const searchTerm = searchParams.get('documentSearch') ?? ''
+
+  const visibleDocuments = useMemo(() => {
+    const normalized = searchTerm.trim().toLowerCase()
+    return documents.filter((item) => {
+      if (selectedFolderId && item.documentFolderId !== selectedFolderId) return false
+      if (statusFilter !== '' && item.status !== statusFilter) return false
+      return !normalized || [item.title, item.fileName, item.documentNumber, item.tags ?? ''].some((value) => value.toLowerCase().includes(normalized))
+    })
+  }, [documents, searchTerm, selectedFolderId, statusFilter])
+  const selectedDocumentId = searchParams.get('document') || visibleDocuments[0]?.id
 
   const updateView = (key: string, value: string | undefined) => {
     if ((searchParams.get(key) ?? '') === (value ?? '')) return
@@ -147,6 +163,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
   const [newVersionDialogOpen, setNewVersionDialogOpen] = useState(false)
   const [metaEditorOpen, setMetaEditorOpen] = useState(false)
+  const [deleteDocument, setDeleteDocument] = useState<ProjectDocumentListItemResponse | null>(null)
 
   const [uploadTitle, setUploadTitle] = useState('')
   const [uploadTags, setUploadTags] = useState('')
@@ -157,8 +174,8 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
   const [versionFile, setVersionFile] = useState<File | null>(null)
 
   const selectedDocument = useMemo(
-    () => documents.find((item) => item.id === selectedDocumentId) ?? null,
-    [documents, selectedDocumentId],
+    () => visibleDocuments.find((item) => item.id === selectedDocumentId) ?? null,
+    [visibleDocuments, selectedDocumentId],
   )
 
   const [editTitle, setEditTitle] = useState('')
@@ -242,29 +259,65 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
     uploadBaseline.current = { title: uploadTitle, tags: uploadTags, notes: uploadNotes, folderId: selectedFolderId, file: uploadFile }
     setUploadDialogOpen(true)
   }
-  const openMetadataEditor = () => {
-    metadataBaseline.current = { title: editTitle, tags: editTags, notes: editNotes, folderId: editFolderId }
-    setMetaEditorOpen(true)
+  const openMetadataEditor = async (document: ProjectDocumentListItemResponse) => {
+    if (!canManage || isSaving) return
+    setIsSaving(true)
+    setError(null)
+    try {
+      const details = await getProjectDocument(projectId, document.id)
+      const baseline = { title: details.title, tags: details.tags ?? '', notes: details.notes ?? '', folderId: details.documentFolderId ?? '' }
+      metadataBaseline.current = baseline
+      setEditTitle(baseline.title)
+      setEditTags(baseline.tags)
+      setEditNotes(baseline.notes)
+      setEditFolderId(baseline.folderId)
+      updateView('document', document.id)
+      setMetaEditorOpen(true)
+    } catch (loadError) {
+      setError(loadError instanceof ApiError ? loadError.message : t('pages.projectDetails.documentsPanel.errors.load'))
+    } finally {
+      setIsSaving(false)
+    }
   }
   const openVersionDialog = () => {
     versionBaseline.current = { notes: versionNotes, file: versionFile }
     setNewVersionDialogOpen(true)
   }
 
-  const visibleDocuments = useMemo(() => {
-    const normalized = searchTerm.trim().toLowerCase()
-    return documents.filter((item) => {
-      if (selectedFolderId && item.documentFolderId !== selectedFolderId) return false
-      if (statusFilter !== '' && item.status !== statusFilter) return false
-      if (!normalized) return true
-      return (
-        item.title.toLowerCase().includes(normalized)
-        || item.fileName.toLowerCase().includes(normalized)
-        || item.documentNumber.toLowerCase().includes(normalized)
-        || (item.tags?.toLowerCase().includes(normalized) ?? false)
-      )
-    })
-  }, [documents, searchTerm, selectedFolderId, statusFilter])
+  const openDocumentFile = async (document: ProjectDocumentListItemResponse, mode: 'preview' | 'download') => {
+    if (!canDownload) return
+    try {
+      const result = await getProjectDocumentDownload(projectId, document.id)
+      if (mode === 'preview') {
+        window.open(result.downloadUrl, '_blank', 'noopener,noreferrer')
+      } else {
+        const anchor = window.document.createElement('a')
+        anchor.href = result.downloadUrl
+        anchor.target = '_blank'
+        anchor.rel = 'noopener noreferrer'
+        anchor.download = result.fileName
+        window.document.body.appendChild(anchor)
+        anchor.click()
+        anchor.remove()
+      }
+    } catch (downloadError) {
+      setError(downloadError instanceof ApiError ? downloadError.message : t('pages.projectDetails.documentsPanel.errors.download'))
+    }
+  }
+
+  const folderPath = useMemo(() => {
+    const path: DocumentFolderListItemResponse[] = []
+    const visited = new Set<string>()
+    let folderId = selectedFolderId
+    while (folderId && !visited.has(folderId)) {
+      visited.add(folderId)
+      const folder = folders.find((item) => item.id === folderId)
+      if (!folder) break
+      path.unshift(folder)
+      folderId = folder.parentFolderId ?? undefined
+    }
+    return path
+  }, [folders, selectedFolderId])
 
   const folderChildren = useMemo(() => {
     const map = new Map<string | null, DocumentFolderListItemResponse[]>()
@@ -310,29 +363,31 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
     let active = true
     if (!canView || !availableDocumentId) {
       setVersions([])
+      setVersionsLoading(false)
+      setVersionsError(false)
       return
     }
 
     setVersions([])
+    setVersionsLoading(true)
+    setVersionsError(false)
     const loadVersions = async () => {
       try {
         const result = await getProjectDocumentVersions(projectId, availableDocumentId)
         if (active) setVersions(result)
       } catch {
-        if (active) setVersions([])
+        if (active) setVersionsError(true)
+      } finally {
+        if (active) setVersionsLoading(false)
       }
     }
 
     void loadVersions()
     return () => { active = false }
-  }, [canView, projectId, availableDocumentId])
+  }, [canView, projectId, availableDocumentId, versionRefresh])
 
   useEffect(() => {
     if (!selectedDocument) return
-    setEditTitle(selectedDocument.title)
-    setEditTags(selectedDocument.tags ?? '')
-    setEditNotes('')
-    setEditFolderId(selectedDocument.documentFolderId ?? '')
     setNextStatus(selectedDocument.status)
   }, [selectedDocument])
 
@@ -431,6 +486,17 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
 
           <VxBox sx={{ minWidth: 0 }}>
             <VxStack spacing={1.5}>
+              <VxBox component="nav" aria-label={t('pages.projectDetails.documentsPanel.breadcrumbs')}>
+                <VxStack component="ol" direction="row" useFlexGap spacing={0.5} sx={{ listStyle: 'none', m: 0, p: 0, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <VxBox component="li"><VxButton size="small" variant="text" aria-current={!selectedFolderId ? 'location' : undefined} onClick={() => setSelectedFolderId(undefined)}>{t('pages.projectDetails.documentsPanel.allFolders')}</VxButton></VxBox>
+                  {folderPath.map((folder, index) => (
+                    <VxBox component="li" key={folder.id} sx={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
+                      <VxTypography aria-hidden="true" color="text.secondary">/</VxTypography>
+                      <VxButton size="small" variant="text" aria-current={index === folderPath.length - 1 ? 'location' : undefined} onClick={() => setSelectedFolderId(folder.id)} sx={{ maxWidth: '100%', overflowWrap: 'anywhere', textAlign: 'left' }}>{folder.name}</VxButton>
+                    </VxBox>
+                  ))}
+                </VxStack>
+              </VxBox>
               <VxBox sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'minmax(0, 1fr) 180px', md: canUpload ? 'minmax(0, 1fr) 160px max-content' : 'minmax(0, 1fr) 180px' }, gap: 1.5, alignItems: 'center' }}>
                   <VxTextField
                     size="small"
@@ -460,6 +526,23 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
                 ) : null}
               </VxBox>
 
+              {selectedDocument ? (
+                <VxStack role="region" aria-label={t('pages.projectDetails.documentsPanel.selectedDocument')} spacing={1} sx={{ py: 1.5, borderTop: 1, borderBottom: 1, borderColor: 'divider', minWidth: 0 }}>
+                  <VxTypography component="h3" variant="subtitle2" sx={{ overflowWrap: 'anywhere' }}>{selectedDocument.documentNumber} - {selectedDocument.title}</VxTypography>
+                  <VxStack direction="row" useFlexGap spacing={1} sx={{ flexWrap: 'wrap', alignItems: 'center', '& .MuiButton-root': { borderRadius: '6px', textAlign: 'left' } }}>
+                    {canDownload ? <>
+                      <VxButton size="small" variant="outlined" startIcon={<VisibilityRoundedIcon />} disabled={isSaving} onClick={() => void openDocumentFile(selectedDocument, 'preview')}>{t('pages.projectDetails.documentsPanel.preview', { defaultValue: 'Preview' })}</VxButton>
+                      <VxButton size="small" variant="text" startIcon={<DownloadRoundedIcon />} disabled={isSaving} onClick={() => void openDocumentFile(selectedDocument, 'download')}>{t('pages.projectDetails.documentsPanel.download')}</VxButton>
+                    </> : null}
+                    {canUpload ? <VxButton size="small" variant="outlined" startIcon={<CloudUploadRoundedIcon />} disabled={isSaving} onClick={openVersionDialog}>{t('pages.projectDetails.documentsPanel.addVersion')}</VxButton> : null}
+                    {canManage ? <>
+                      <VxButton size="small" variant="text" startIcon={<EditRoundedIcon />} disabled={isSaving} onClick={() => void openMetadataEditor(selectedDocument)}>{t('pages.projectDetails.documentsPanel.metadata')}</VxButton>
+                      <VxTooltip title={t('common.delete')}><VxIconButton size="small" color="error" aria-label={`${t('common.delete')}: ${selectedDocument.title}`} disabled={isSaving} onClick={() => setDeleteDocument(selectedDocument)} sx={{ ml: 'auto' }}><DeleteOutlineRoundedIcon fontSize="small" /></VxIconButton></VxTooltip>
+                    </> : null}
+                  </VxStack>
+                </VxStack>
+              ) : !isLoading && searchParams.get('document') ? <VxAlert severity="info">{t('pages.projectDetails.documentsPanel.selectionUnavailable')}</VxAlert> : null}
+
               {isLoading ? (
                 <VxBox sx={{ display: 'grid', placeItems: 'center', py: 4 }}><VxCircularProgress size={24} /></VxBox>
               ) : (
@@ -478,8 +561,8 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
                     </VxTableHead>
                     <VxTableBody>
                       {visibleDocuments.map((document) => (
-                        <VxTableRow key={document.id} hover selected={selectedDocumentId === document.id} onClick={() => updateView('document', document.id)} sx={{ cursor: 'pointer' }}>
-                          <VxTableCell>{document.title}</VxTableCell>
+                        <VxTableRow key={document.id} hover selected={selectedDocumentId === document.id} aria-selected={selectedDocumentId === document.id} onClick={() => updateView('document', document.id)} sx={{ cursor: 'pointer' }}>
+                          <VxTableCell><VxButton variant="text" size="small" aria-pressed={selectedDocumentId === document.id} onClick={(event) => { event.stopPropagation(); updateView('document', document.id) }} sx={{ justifyContent: 'flex-start', textAlign: 'left', whiteSpace: 'normal', overflowWrap: 'anywhere', textTransform: 'none', px: 0 }}>{document.title}</VxButton></VxTableCell>
                           <VxTableCell sx={{ fontFamily: 'monospace', fontSize: '0.78rem' }}>{document.documentNumber}</VxTableCell>
                           <VxTableCell>{document.fileName}</VxTableCell>
                           <VxTableCell>{formatBytes(document.fileSizeBytes)}</VxTableCell>
@@ -491,74 +574,8 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
                             <VxStack direction="row" spacing={0.5} sx={{ justifyContent: 'flex-end' }}>
                               {canDownload ? (
                                 <>
-                                  <VxButton
-                                    size="small"
-                                    variant="text"
-                                    onClick={async (event) => {
-                                      event.stopPropagation()
-                                      try {
-                                        const result = await getProjectDocumentDownload(projectId, document.id)
-                                        window.open(result.downloadUrl, '_blank', 'noopener,noreferrer')
-                                      } catch (downloadError) {
-                                        setError(downloadError instanceof ApiError ? downloadError.message : t('pages.projectDetails.documentsPanel.errors.download'))
-                                      }
-                                    }}
-                                  >
-                                    {t('pages.projectDetails.documentsPanel.preview', { defaultValue: 'Preview' })}
-                                  </VxButton>
-                                  <VxButton
-                                    size="small"
-                                    variant="outlined"
-                                    onClick={async (event) => {
-                                      event.stopPropagation()
-                                      try {
-                                        const result = await getProjectDocumentDownload(projectId, document.id)
-                                        const anchor = window.document.createElement('a')
-                                        anchor.href = result.downloadUrl
-                                        anchor.target = '_blank'
-                                        anchor.rel = 'noopener noreferrer'
-                                        anchor.download = result.fileName
-                                        window.document.body.appendChild(anchor)
-                                        anchor.click()
-                                        window.document.body.removeChild(anchor)
-                                      } catch (downloadError) {
-                                        setError(downloadError instanceof ApiError ? downloadError.message : t('pages.projectDetails.documentsPanel.errors.download'))
-                                      }
-                                    }}
-                                  >
-                                    {t('pages.projectDetails.documentsPanel.download')}
-                                  </VxButton>
-                                </>
-                              ) : null}
-                              {canManage ? (
-                                <>
-                                  <VxButton size="small" variant="text" onClick={(event) => { event.stopPropagation(); openMetadataEditor() }}>
-                                    {t('common.edit')}
-                                  </VxButton>
-                                  <VxConfirmActionButton
-                                    title={t('common.delete')}
-                                    targetName={document.title}
-                                    consequence={t('pages.deleteConfirmations.projectDocument.consequence')}
-                                    confirmLabel={t('common.delete')}
-                                    pendingLabel={t('dialogs.deleting')}
-                                    buttonProps={{ size: 'small', color: 'error', variant: 'text', disabled: isSaving }}
-                                    onConfirm={async () => {
-                                      setIsSaving(true)
-                                      setError(null)
-                                      setFeedback(null)
-                                      try {
-                                        await deleteProjectDocument(projectId, document.id)
-                                        setFeedback(t('pages.projectDetails.documentsPanel.feedback.documentDeleted'))
-                                        await loadContext()
-                                      } catch (deleteError) {
-                                        setError(deleteError instanceof ApiError ? deleteError.message : t('pages.projectDetails.documentsPanel.errors.documentDelete'))
-                                      } finally {
-                                        setIsSaving(false)
-                                      }
-                                    }}
-                                  >
-                                    {t('common.delete')}
-                                  </VxConfirmActionButton>
+                                  <VxTooltip title={t('pages.projectDetails.documentsPanel.preview', { defaultValue: 'Preview' })}><VxIconButton size="small" aria-label={`${t('pages.projectDetails.documentsPanel.preview', { defaultValue: 'Preview' })}: ${document.title}`} onClick={(event) => { event.stopPropagation(); void openDocumentFile(document, 'preview') }}><VisibilityRoundedIcon fontSize="small" /></VxIconButton></VxTooltip>
+                                  <VxTooltip title={t('pages.projectDetails.documentsPanel.download')}><VxIconButton size="small" aria-label={`${t('pages.projectDetails.documentsPanel.download')}: ${document.title}`} onClick={(event) => { event.stopPropagation(); void openDocumentFile(document, 'download') }}><DownloadRoundedIcon fontSize="small" /></VxIconButton></VxTooltip>
                                 </>
                               ) : null}
                             </VxStack>
@@ -585,9 +602,6 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
           <VxStack spacing={1.5}>
             <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ justifyContent: 'space-between', alignItems: { md: 'center' } }}>
               <VxTypography component="h3" variant="h6">{t('pages.projectDetails.documentsPanel.versions')}</VxTypography>
-              {canUpload ? (
-                <VxButton variant="outlined" onClick={openVersionDialog}>{t('pages.projectDetails.documentsPanel.addVersion')}</VxButton>
-              ) : null}
             </VxStack>
             <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1}>
               <VxChip label={`${t('pages.projectDetails.documentsPanel.columns.number')}: ${selectedDocument.documentNumber}`} variant="outlined" />
@@ -629,7 +643,8 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
                 </VxButton>
               </VxStack>
             ) : null}
-            <VxTableContainer>
+            {versionsError ? <VxAlert severity="error" action={<VxButton onClick={() => setVersionRefresh((previous) => previous + 1)}>{t('common.refresh')}</VxButton>}>{t('pages.projectDetails.documentsPanel.historyError')}</VxAlert> : null}
+            {versionsLoading ? <VxBox role="status" aria-label={t('common.labels.loading')} sx={{ py: 2 }}><VxCircularProgress size={20} /></VxBox> : <VxTableContainer>
               <VxTable size="small">
                 <VxTableHead>
                   <VxTableRow>
@@ -648,12 +663,43 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
                       <VxTableCell>{new Date(version.uploadedAtUtc).toLocaleString()}</VxTableCell>
                     </VxTableRow>
                   ))}
+                  {!versionsError && versions.length === 0 ? <VxTableRow><VxTableCell colSpan={4}>{t('pages.projectDetails.documentsPanel.noVersions')}</VxTableCell></VxTableRow> : null}
                 </VxTableBody>
               </VxTable>
-            </VxTableContainer>
+            </VxTableContainer>}
           </VxStack>
         </VxPaper>
       ) : null}
+
+      <VxConfirmActionDialog
+        open={canManage && deleteDocument !== null}
+        title={t('common.delete')}
+        targetName={deleteDocument?.title ?? ''}
+        consequence={t('pages.deleteConfirmations.projectDocument.consequence')}
+        confirmLabel={t('common.delete')}
+        pendingLabel={t('dialogs.deleting')}
+        pending={isSaving}
+        onClose={() => { if (!isSaving) setDeleteDocument(null) }}
+        onConfirm={async () => {
+          if (!canManage || !deleteDocument || isSaving) return
+          const targetId = deleteDocument.id
+          setIsSaving(true)
+          setError(null)
+          setFeedback(null)
+          try {
+            await deleteProjectDocument(projectId, targetId)
+            setDocuments((previous) => previous.filter((document) => document.id !== targetId))
+            if (selectedDocumentId === targetId) updateView('document', undefined)
+            setFeedback(t('pages.projectDetails.documentsPanel.feedback.documentDeleted'))
+            await loadContext()
+          } catch (deleteError) {
+            setError(deleteError instanceof ApiError ? deleteError.message : t('pages.projectDetails.documentsPanel.errors.documentDelete'))
+          } finally {
+            setIsSaving(false)
+            setDeleteDocument(null)
+          }
+        }}
+      />
 
       <VxDialog open={folderEditor !== null} onClose={requestFolderClose} maxWidth="sm" fullWidth>
         <VxDialogTitle>{folderEditor?.mode === 'edit' ? t('pages.projectDetails.documentsPanel.editFolder') : t('pages.projectDetails.documentsPanel.newFolder')}</VxDialogTitle>
@@ -750,13 +796,14 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
               setError(null)
               setFeedback(null)
               try {
-                await uploadProjectDocument(projectId, {
+                const uploaded = await uploadProjectDocument(projectId, {
                   title: uploadTitle.trim(),
                   documentFolderId: selectedFolderId,
                   tags: uploadTags.trim() || undefined,
                   notes: uploadNotes.trim() || undefined,
                   file: uploadFile,
                 })
+                updateView('document', uploaded.id)
                 setFeedback(t('pages.projectDetails.documentsPanel.feedback.uploaded'))
                 setUploadDialogOpen(false)
                 setUploadTitle('')
@@ -858,6 +905,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
                 setVersionNotes('')
                 setVersionFile(null)
                 setVersionFileInputKey((key) => key + 1)
+                setVersionRefresh((previous) => previous + 1)
                 await loadContext()
               } catch (versionError) {
                 setError(versionError instanceof ApiError ? versionError.message : t('pages.projectDetails.documentsPanel.errors.versionUpload'))

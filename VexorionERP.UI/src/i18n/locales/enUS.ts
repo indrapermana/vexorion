@@ -1732,6 +1732,12 @@ const enUS = {
         },
       },
       documentsPanel: {
+        breadcrumbs: 'Document location',
+        historyError: 'Unable to load document versions.',
+        noVersions: 'No version history available.',
+        selectedDocument: 'Selected document',
+        metadata: 'Edit metadata',
+        selectionUnavailable: 'The selected document is not available in these results.',
         noAccess: 'You do not have permission to view project documents.',
         folders: 'Folders',
         allFolders: 'All folders',

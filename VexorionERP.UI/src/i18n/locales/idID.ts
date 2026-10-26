@@ -1045,6 +1045,12 @@ const idID = {
         },
       },
       documentsPanel: {
+        breadcrumbs: 'Lokasi dokumen',
+        historyError: 'Gagal memuat versi dokumen.',
+        noVersions: 'Riwayat versi tidak tersedia.',
+        selectedDocument: 'Dokumen terpilih',
+        metadata: 'Ubah metadata',
+        selectionUnavailable: 'Dokumen terpilih tidak tersedia dalam hasil ini.',
         noAccess: 'Anda tidak memiliki izin untuk melihat dokumen proyek.',
         folders: 'Folder',
         allFolders: 'Semua folder',
