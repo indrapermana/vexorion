@@ -108,8 +108,8 @@ jobs:
 
       - name: Test affected packages (with coverage)
         run: >-
-          npx turbo run test:run --filter=...[HEAD^1]
-          -- --coverage --reporter=default --reporter=junit --outputFile=test-results.xml
+          npx turbo run test:run --filter=...[HEAD^1] --concurrency=1
+          -- --maxWorkers=2 --coverage --reporter=default --reporter=junit --outputFile=test-results.xml
 
       # Detect which app dists were produced so deploy jobs can conditionally run.
       - name: Detect built apps

@@ -1,12 +1,14 @@
 /// <reference types="vitest/globals" />
 
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render as renderComponent, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from 'react'
+import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import DocumentsPanel from './DocumentsPanel'
 import type { DocumentFolderListItemResponse, ProjectDocumentListItemResponse, ProjectDocumentVersionListItemResponse } from '../../../types/api'
 
 const apiMocks = vi.hoisted(() => ({
+  t: (key: string) => key,
   mockGetProjectDocumentFolders: vi.fn<() => Promise<DocumentFolderListItemResponse[]>>(),
   mockGetProjectDocuments: vi.fn<() => Promise<ProjectDocumentListItemResponse[]>>(),
   mockGetProjectDocumentVersions: vi.fn<() => Promise<ProjectDocumentVersionListItemResponse[]>>(),
@@ -26,7 +28,7 @@ const authMocks = vi.hoisted(() => ({
 }))
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({ t: apiMocks.t }),
 }))
 
 vi.mock('../../../app/AuthContext', () => ({
@@ -81,7 +83,7 @@ vi.mock('@vexorion/ui', () => {
     VxTableCell: passThrough,
     VxTableContainer: passThrough,
     VxTableHead: passThrough,
-    VxTableRow: passThrough,
+    VxTableRow: ({ children, onClick }: HTMLAttributes<HTMLDivElement>) => <div onClick={onClick}>{children}</div>,
     VxTextField: ({
       label,
       value,
@@ -127,6 +129,11 @@ vi.mock('@vexorion/ui', () => {
     VxTooltip: passThrough,
   }
 })
+
+function render(ui: ReactNode, initialEntry = '/projects/project-1?tab=documents') {
+  const router = createMemoryRouter([{ path: '*', element: ui }], { initialEntries: [initialEntry] })
+  return { ...renderComponent(<RouterProvider router={router} />), router }
+}
 
 describe('DocumentsPanel upload/version flows', () => {
   beforeEach(() => {
@@ -185,6 +192,43 @@ describe('DocumentsPanel upload/version flows', () => {
     fireEvent.click(allFolders)
     expect(allFolders).toHaveAttribute('aria-pressed', 'true')
     expect(folder).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  it('restores document selection, folder, status, and search from the project URL', async () => {
+    authMocks.mockUseAuth.mockReturnValue({ user: { permissions: ['project-documents.view'] } })
+    apiMocks.mockGetProjectDocuments.mockResolvedValue(['first', 'requested'].map((id) => ({
+      id, projectId: 'project-1', documentFolderId: id === 'requested' ? 'contracts' : null,
+      documentNumber: `DOC-${id}`, title: id === 'requested' ? 'Requested contract' : 'First document',
+      fileName: `${id}.pdf`, contentType: 'application/pdf', fileSizeBytes: 100, currentVersionNumber: 1,
+      status: id === 'requested' ? 3 : 1, tags: null, isActive: true,
+    })))
+    render(<DocumentsPanel projectId="project-1" />, '/projects/project-1?tab=documents&document=requested&folder=contracts&documentStatus=3&documentSearch=Requested')
+    await waitFor(() => expect(apiMocks.mockGetProjectDocumentVersions).toHaveBeenCalledWith('project-1', 'requested'))
+    expect(screen.getByLabelText('pages.projectDetails.documentsPanel.search')).toHaveValue('Requested')
+    expect(screen.getByLabelText('pages.projectDetails.documentsPanel.statusFilter')).toHaveValue('3')
+    expect(screen.getByText('Requested contract')).toBeInTheDocument()
+    expect(screen.queryByText('First document')).not.toBeInTheDocument()
+    expect(apiMocks.mockGetProjectDocumentVersions).not.toHaveBeenCalledWith('project-1', 'first')
+  })
+
+  it('does not fetch versions for a URL document absent from this project', async () => {
+    authMocks.mockUseAuth.mockReturnValue({ user: { permissions: ['project-documents.view'] } })
+    render(<DocumentsPanel projectId="project-1" />, '/projects/project-1?tab=documents&document=foreign-document')
+    await screen.findByText('Specification')
+    expect(apiMocks.mockGetProjectDocumentVersions).not.toHaveBeenCalled()
+    expect(screen.queryByText('pages.projectDetails.documentsPanel.versions')).not.toBeInTheDocument()
+  })
+
+  it('keeps document filters in the URL when they change', async () => {
+    authMocks.mockUseAuth.mockReturnValue({ user: { permissions: ['project-documents.view'] } })
+    const { router } = render(<DocumentsPanel projectId="project-1" />)
+    await screen.findByText('Specification')
+    fireEvent.change(screen.getByLabelText('pages.projectDetails.documentsPanel.search'), { target: { value: 'spec' } })
+    fireEvent.change(screen.getByLabelText('pages.projectDetails.documentsPanel.statusFilter'), { target: { value: '1' } })
+    const query = new URLSearchParams(router.state.location.search)
+    expect(query.get('tab')).toBe('documents')
+    expect(query.get('documentSearch')).toBe('spec')
+    expect(query.get('documentStatus')).toBe('1')
   })
 
   it('uploads a document when title and file are provided', async () => {

@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
+  OpenInNewRoundedIcon,
   VxBox,
   VxAlert,
   VxButton,
@@ -20,6 +21,7 @@ import {
   VxTypography,
 } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
+import { Link as RouterLink, useLocation, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
 import { PageBody, PageFeedback, PageHeader, PageLoadingState } from '../../../components/PagePrimitives'
 import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
@@ -66,22 +68,41 @@ function toUtcEndOfDay(value: string) {
 export default function ProjectDocumentsPage() {
   const { t } = useTranslation()
   const { user } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const location = useLocation()
+  const navigationContext = location.state as { returnTo?: unknown, returnState?: unknown } | null
+  const requestedReturnTo = navigationContext?.returnTo
+  const returnToProject = typeof requestedReturnTo === 'string' && requestedReturnTo.startsWith('/projects/')
+    ? requestedReturnTo
+    : null
 
   const canView = user?.permissions.includes('project-documents.view') ?? false
   const canDownload = user?.permissions.includes('project-documents.download') ?? false
   const canUpload = user?.permissions.includes('project-documents.upload') ?? false
+  const canOpenProject = user?.permissions.includes('projects.view') ?? false
 
   const [rows, setRows] = useState<ProjectDocumentSearchItemResponse[]>([])
+  const loadSequence = useRef(0)
   const [projects, setProjects] = useState<ProjectListItemResponse[]>([])
   const [categories, setCategories] = useState<ProjectCategoryListItemResponse[]>([])
 
-  const [projectId, setProjectId] = useState('')
-  const [projectCategoryId, setProjectCategoryId] = useState('')
-  const [status, setStatus] = useState<ManagedDocumentStatus | ''>('')
-  const [tag, setTag] = useState('')
-  const [searchTerm, setSearchTerm] = useState('')
-  const [fromDate, setFromDate] = useState('')
-  const [toDate, setToDate] = useState('')
+  const projectId = searchParams.get('projectId') ?? ''
+  const projectCategoryId = searchParams.get('projectCategoryId') ?? ''
+  const statusValue = Number(searchParams.get('status'))
+  const status: ManagedDocumentStatus | '' = [1, 2, 3, 4, 5, 6].includes(statusValue) ? statusValue as ManagedDocumentStatus : ''
+  const tag = searchParams.get('tag') ?? ''
+  const searchTerm = searchParams.get('search') ?? ''
+  const fromDate = searchParams.get('fromDate') ?? ''
+  const toDate = searchParams.get('toDate') ?? ''
+
+  const updateFilter = (key: string, value: string) => {
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current)
+      if (value) next.set(key, value)
+      else next.delete(key)
+      return next
+    }, { replace: true })
+  }
 
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -128,6 +149,7 @@ export default function ProjectDocumentsPage() {
   const load = useCallback(async () => {
     if (!canView) return
 
+    const requestId = ++loadSequence.current
     setIsLoading(true)
     setError(null)
 
@@ -146,18 +168,21 @@ export default function ProjectDocumentsPage() {
         }),
       ])
 
+      if (requestId !== loadSequence.current) return
       setCategories(categoryResult)
       setProjects(projectResult)
       setRows(documentsResult)
     } catch (loadError) {
-      setError(loadError instanceof ApiError ? loadError.message : t('pages.projectDocuments.errors.load', { defaultValue: 'Unable to load documents.' }))
+      if (requestId === loadSequence.current)
+        setError(loadError instanceof ApiError ? loadError.message : t('pages.projectDocuments.errors.load', { defaultValue: 'Unable to load documents.' }))
     } finally {
-      setIsLoading(false)
+      if (requestId === loadSequence.current) setIsLoading(false)
     }
   }, [canView, fromDate, projectCategoryId, projectId, searchTerm, status, t, tag, toDate])
 
   useEffect(() => {
     void load()
+    return () => { loadSequence.current += 1 }
   }, [load])
 
   if (!canView) {
@@ -168,9 +193,12 @@ export default function ProjectDocumentsPage() {
     <VxStack spacing={2}>
       <PageHeader
         title={t('pages.projectDocuments.title', { defaultValue: 'Document Center' })}
-        description={t('pages.projectDocuments.description', { defaultValue: 'Search across project documents by project, category, date, status, and tags.' })}
+        description={projectId ? projectLabelById.get(projectId) ?? t('pages.projectDocuments.projectTitle') : t('pages.projectDocuments.allProjects')}
         primaryAction={(
             <VxStack direction="row" spacing={1}>
+              {returnToProject && canOpenProject ? (
+                <VxButton variant="outlined" component={RouterLink} to={returnToProject} state={navigationContext?.returnState}>{t('pages.projectDocuments.backToProject')}</VxButton>
+              ) : null}
               {canUpload ? (
                 <VxButton
                   variant="contained"
@@ -201,10 +229,13 @@ export default function ProjectDocumentsPage() {
               size="small"
               label={t('pages.projectDocuments.filters.project', { defaultValue: 'Project' })}
               value={projectId}
-              onChange={(event) => setProjectId(event.target.value)}
+              onChange={(event) => updateFilter('projectId', event.target.value)}
               sx={{ minWidth: 0, width: '100%' }}
             >
               <VxMenuItem value="">{t('common.labels.all', { defaultValue: 'All' })}</VxMenuItem>
+              {projectId && !projects.some((project) => project.id === projectId) ? (
+                <VxMenuItem value={projectId} disabled>{t('pages.projectDocuments.filters.project', { defaultValue: 'Project' })}</VxMenuItem>
+              ) : null}
               {projects.map((project) => <VxMenuItem key={project.id} value={project.id}>{project.projectNumber} - {project.name}</VxMenuItem>)}
             </VxTextField>
 
@@ -213,10 +244,13 @@ export default function ProjectDocumentsPage() {
               size="small"
               label={t('pages.projectDocuments.filters.category', { defaultValue: 'Category' })}
               value={projectCategoryId}
-              onChange={(event) => setProjectCategoryId(event.target.value)}
+              onChange={(event) => updateFilter('projectCategoryId', event.target.value)}
               sx={{ minWidth: 0, width: '100%' }}
             >
               <VxMenuItem value="">{t('common.labels.all', { defaultValue: 'All' })}</VxMenuItem>
+              {projectCategoryId && !categories.some((category) => category.id === projectCategoryId) ? (
+                <VxMenuItem value={projectCategoryId} disabled>{t('pages.projectDocuments.filters.category', { defaultValue: 'Category' })}</VxMenuItem>
+              ) : null}
               {categories.map((category) => <VxMenuItem key={category.id} value={category.id}>{category.code} - {category.name}</VxMenuItem>)}
             </VxTextField>
 
@@ -225,7 +259,7 @@ export default function ProjectDocumentsPage() {
               size="small"
               label={t('pages.projectDocuments.filters.status', { defaultValue: 'Status' })}
               value={status}
-              onChange={(event) => setStatus(event.target.value === '' ? '' : Number(event.target.value) as ManagedDocumentStatus)}
+              onChange={(event) => updateFilter('status', event.target.value)}
               sx={{ minWidth: 0, width: '100%' }}
             >
               <VxMenuItem value="">{t('common.labels.all', { defaultValue: 'All' })}</VxMenuItem>
@@ -236,7 +270,7 @@ export default function ProjectDocumentsPage() {
               size="small"
               label={t('pages.projectDocuments.filters.tag', { defaultValue: 'Tag' })}
               value={tag}
-              onChange={(event) => setTag(event.target.value)}
+              onChange={(event) => updateFilter('tag', event.target.value)}
               sx={{ minWidth: 0, width: '100%' }}
             />
 
@@ -244,7 +278,7 @@ export default function ProjectDocumentsPage() {
               size="small"
               label={t('pages.projectDocuments.filters.search', { defaultValue: 'Search' })}
               value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
+              onChange={(event) => updateFilter('search', event.target.value)}
               sx={{ minWidth: 0, width: '100%' }}
             />
           </VxBox>
@@ -255,7 +289,7 @@ export default function ProjectDocumentsPage() {
               size="small"
               label={t('pages.projectDocuments.filters.fromDate', { defaultValue: 'From date' })}
               value={fromDate}
-              onChange={(event) => setFromDate(event.target.value)}
+              onChange={(event) => updateFilter('fromDate', event.target.value)}
               sx={{ minWidth: 0, width: '100%' }}
             />
             <VxTextField
@@ -263,20 +297,18 @@ export default function ProjectDocumentsPage() {
               size="small"
               label={t('pages.projectDocuments.filters.toDate', { defaultValue: 'To date' })}
               value={toDate}
-              onChange={(event) => setToDate(event.target.value)}
+              onChange={(event) => updateFilter('toDate', event.target.value)}
               sx={{ minWidth: 0, width: '100%' }}
             />
             <VxButton
               variant="text"
               disabled={!projectId && !projectCategoryId && status === '' && !tag && !searchTerm && !fromDate && !toDate}
               onClick={() => {
-                setProjectId('')
-                setProjectCategoryId('')
-                setStatus('')
-                setTag('')
-                setSearchTerm('')
-                setFromDate('')
-                setToDate('')
+                setSearchParams((current) => {
+                  const next = new URLSearchParams(current)
+                  for (const key of ['projectId', 'projectCategoryId', 'status', 'tag', 'search', 'fromDate', 'toDate']) next.delete(key)
+                  return next
+                }, { replace: true })
               }}
             >
               {t('common.resetFilters', { defaultValue: 'Reset filters' })}
@@ -326,6 +358,18 @@ export default function ProjectDocumentsPage() {
                       <VxTableCell>{new Date(row.createdAtUtc).toLocaleString()}</VxTableCell>
                       <VxTableCell align="right">
                         <VxStack direction="row" spacing={0.5} sx={{ justifyContent: 'flex-end' }}>
+                          {canOpenProject ? (
+                            <VxButton
+                              size="small"
+                              variant="text"
+                              startIcon={<OpenInNewRoundedIcon />}
+                              component={RouterLink}
+                              to={`/projects/${encodeURIComponent(row.projectId)}?${new URLSearchParams({ tab: 'documents', document: row.id })}`}
+                              state={{ returnTo: `${location.pathname}${location.search}`, returnState: location.state }}
+                            >
+                              {t('pages.projectDocuments.openInProject')}
+                            </VxButton>
+                          ) : null}
                           {canDownload ? (
                             <>
                               <VxButton

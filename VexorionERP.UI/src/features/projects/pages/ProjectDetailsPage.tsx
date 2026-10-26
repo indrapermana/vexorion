@@ -23,7 +23,7 @@ import {
   VxTypography,
 } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
-import { Link as RouterLink, useLocation, useParams } from 'react-router-dom'
+import { Link as RouterLink, useLocation, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
 import PermissionReadOnlyAlert from '../../../components/PermissionReadOnlyAlert'
@@ -354,9 +354,11 @@ function ProjectDetailsContent() {
   const canManage = user?.permissions.includes(Permissions.projects.manage) ?? false
   const { projectId } = useParams()
   const location = useLocation()
-  const requestedReturnTo = (location.state as { returnTo?: unknown } | null)?.returnTo
+  const [searchParams, setSearchParams] = useSearchParams()
+  const navigationContext = location.state as { returnTo?: unknown, returnState?: unknown } | null
+  const requestedReturnTo = navigationContext?.returnTo
   const returnTo = typeof requestedReturnTo === 'string'
-    && (requestedReturnTo === '/projects' || requestedReturnTo.startsWith('/projects?') || requestedReturnTo.startsWith('/projects/'))
+    && (requestedReturnTo === '/projects' || requestedReturnTo.startsWith('/projects?') || requestedReturnTo.startsWith('/projects/') || requestedReturnTo === '/project-documents' || requestedReturnTo.startsWith('/project-documents?'))
     ? requestedReturnTo
     : '/projects'
   const [project, setProject] = useState<ProjectDetailsResponse | null>(null)
@@ -366,8 +368,9 @@ function ProjectDetailsContent() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<ProjectDetailTab>('overview')
-  const [visitedTabs, setVisitedTabs] = useState<Set<ProjectDetailTab>>(() => new Set(['overview']))
+  const requestedTab = searchParams.get('tab') as ProjectDetailTab | null
+  const activeTab = requestedTab && projectDetailTabs.includes(requestedTab) ? requestedTab : 'overview'
+  const [visitedTabs, setVisitedTabs] = useState<Set<ProjectDetailTab>>(() => new Set([activeTab]))
 
   const [isProjectEditorOpen, setIsProjectEditorOpen] = useState(false)
   const [projectFormState, setProjectFormState] = useState<ProjectFormState | null>(null)
@@ -618,7 +621,7 @@ function ProjectDetailsContent() {
         description={`${t('pages.projectDetails.projectIdLabel')}: ${projectId}`}
         primaryAction={(
           <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-            <VxButton variant="outlined" component={RouterLink} to={returnTo}>{t('pages.projectDetails.backButton')}</VxButton>
+            <VxButton variant="outlined" component={RouterLink} to={returnTo} state={navigationContext?.returnState}>{returnTo.startsWith('/project-documents') ? t('pages.projectDocuments.backToCenter') : t('pages.projectDetails.backButton')}</VxButton>
             {canManage ? <VxButton variant="contained" onClick={() => setIsProjectEditorOpen(true)} disabled={!projectFormState}>{t('pages.projectDetails.editButton')}</VxButton> : null}
           </VxStack>
         )}
@@ -630,8 +633,13 @@ function ProjectDetailsContent() {
       <VxTabs
         value={activeTab}
         onChange={(_, tab: ProjectDetailTab) => {
-          setActiveTab(tab)
-          setVisitedTabs((previous) => new Set([...previous, tab]))
+          setSearchParams((current) => {
+            const next = new URLSearchParams(current)
+            if (tab === 'overview') next.delete('tab')
+            else next.set('tab', tab)
+            return next
+          }, { replace: true })
+          setVisitedTabs((previous) => new Set([...previous, activeTab, tab]))
         }}
         variant="scrollable"
         scrollButtons="auto"
@@ -691,19 +699,27 @@ function ProjectDetailsContent() {
       </ProjectTabPanel>
 
       <ProjectTabPanel tab="assignments" activeTab={activeTab}>
-      {visitedTabs.has('assignments') ? (
+      {activeTab === 'assignments' || visitedTabs.has('assignments') ? (
         <AssignmentsPanel projectId={projectId} />
       ) : null}
       </ProjectTabPanel>
 
       <ProjectTabPanel tab="documents" activeTab={activeTab}>
-      {visitedTabs.has('documents') ? (
-        <DocumentsPanel projectId={projectId} />
+      {activeTab === 'documents' || visitedTabs.has('documents') ? (
+        <VxStack spacing={2}>
+          <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ justifyContent: 'space-between', alignItems: { sm: 'center' } }}>
+            <VxTypography component="h2" variant="h6">{t('pages.projectDocuments.projectTitle')}</VxTypography>
+            {user?.permissions.includes('project-documents.view') ? (
+              <VxButton variant="outlined" component={RouterLink} to={`/project-documents?${new URLSearchParams({ projectId })}`} state={{ returnTo: `${location.pathname}${location.search}`, returnState: location.state }}>{t('pages.projectDocuments.title', { defaultValue: 'Document Center' })}</VxButton>
+            ) : null}
+          </VxStack>
+          <DocumentsPanel projectId={projectId} />
+        </VxStack>
       ) : null}
       </ProjectTabPanel>
 
       <ProjectTabPanel tab="history" activeTab={activeTab}>
-      {visitedTabs.has('history') ? (
+      {activeTab === 'history' || visitedTabs.has('history') ? (
         <VxPaper elevation={0} className="panel-card" sx={{ p: 0 }}>
           <VxStack sx={{ px: 2.5, pt: 2.5 }}>
             <VxTypography component="h2" variant="h6">{t('pages.projectDetails.history.title')}</VxTypography>

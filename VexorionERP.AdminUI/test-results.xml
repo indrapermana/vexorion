@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="52" failures="0" errors="0" time="7.105925457">
+    <testsuite name="src/app/authorization.test.ts" timestamp="2026-10-26T06:32:45.587Z" hostname="indras-macbook-pro" tests="3" failures="0" errors="0" skipped="0" time="0.011464663">
+        <testcase classname="src/app/authorization.test.ts" name="admin authorization matrix &gt; maps admin routes to their read permissions" time="0.005829636">
+        </testcase>
+        <testcase classname="src/app/authorization.test.ts" name="admin authorization matrix &gt; requires both dashboard permissions" time="0.000394691">
+        </testcase>
+        <testcase classname="src/app/authorization.test.ts" name="admin authorization matrix &gt; does not confuse view and manage permissions" time="0.000274374">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/i18n/hardcodedCopy.test.ts" timestamp="2026-10-26T06:32:45.590Z" hostname="indras-macbook-pro" tests="1" failures="0" errors="0" skipped="0" time="0.217960994">
+        <testcase classname="src/i18n/hardcodedCopy.test.ts" name="Admin UI localization boundary &gt; does not render hard-coded operational JSX copy" time="0.214190228">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/i18n/translations.test.ts" timestamp="2026-10-26T06:32:45.592Z" hostname="indras-macbook-pro" tests="6" failures="0" errors="0" skipped="0" time="0.061559696">
+        <testcase classname="src/i18n/translations.test.ts" name="Admin UI translations &gt; enUS has the exact English key set" time="0.005540943">
+        </testcase>
+        <testcase classname="src/i18n/translations.test.ts" name="Admin UI translations &gt; enUS has non-empty values and matching interpolation variables" time="0.016365412">
+        </testcase>
+        <testcase classname="src/i18n/translations.test.ts" name="Admin UI translations &gt; idID has the exact English key set" time="0.000600672">
+        </testcase>
+        <testcase classname="src/i18n/translations.test.ts" name="Admin UI translations &gt; idID has non-empty values and matching interpolation variables" time="0.020838786">
+        </testcase>
+        <testcase classname="src/i18n/translations.test.ts" name="Admin UI translations &gt; esES has the exact English key set" time="0.000893611">
+        </testcase>
+        <testcase classname="src/i18n/translations.test.ts" name="Admin UI translations &gt; esES has non-empty values and matching interpolation variables" time="0.014567799">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/themeContrast.test.ts" timestamp="2026-10-26T06:32:45.595Z" hostname="indras-macbook-pro" tests="2" failures="0" errors="0" skipped="0" time="0.015989473">
+        <testcase classname="src/test/themeContrast.test.ts" name="AdminUI theme contrast &gt; keeps primary and text colors readable in light mode" time="0.011149598">
+        </testcase>
+        <testcase classname="src/test/themeContrast.test.ts" name="AdminUI theme contrast &gt; keeps primary and text colors readable in dark mode" time="0.001848838">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/components/RouteGuards.test.tsx" timestamp="2026-10-26T06:32:45.597Z" hostname="indras-macbook-pro" tests="8" failures="0" errors="0" skipped="0" time="0.285392755">
+        <testcase classname="src/test/components/RouteGuards.test.tsx" name="RouteGuards &gt; shows a loading message while ProtectedRoute is checking session state" time="0.112054728">
+        </testcase>
+        <testcase classname="src/test/components/RouteGuards.test.tsx" name="RouteGuards &gt; redirects unauthenticated users to login on ProtectedRoute" time="0.00855674">
+        </testcase>
+        <testcase classname="src/test/components/RouteGuards.test.tsx" name="RouteGuards &gt; renders the protected outlet when the user is authenticated" time="0.003447092">
+        </testcase>
+        <testcase classname="src/test/components/RouteGuards.test.tsx" name="RouteGuards &gt; shows a loading message while PublicOnlyRoute is checking state" time="0.006924663">
+        </testcase>
+        <testcase classname="src/test/components/RouteGuards.test.tsx" name="RouteGuards &gt; redirects authenticated users away from public-only routes" time="0.005981449">
+        </testcase>
+        <testcase classname="src/test/components/RouteGuards.test.tsx" name="RouteGuards &gt; renders the outlet for unauthenticated users on public-only routes" time="0.00396753">
+        </testcase>
+        <testcase classname="src/test/components/RouteGuards.test.tsx" name="RouteGuards &gt; does not mount an unauthorized admin route" time="0.136236854">
+        </testcase>
+        <testcase classname="src/test/components/RouteGuards.test.tsx" name="RouteGuards &gt; mounts an authorized admin route" time="0.003907446">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/lib/apiCore.test.ts" timestamp="2026-10-26T06:32:45.601Z" hostname="indras-macbook-pro" tests="5" failures="0" errors="0" skipped="0" time="0.01924572">
+        <testcase classname="src/test/lib/apiCore.test.ts" name="requestJson &gt; returns response data when the request succeeds" time="0.007990791">
+        </testcase>
+        <testcase classname="src/test/lib/apiCore.test.ts" name="requestJson &gt; maps problem details into ApiError with status, code, trace id, and field errors" time="0.003160663">
+        </testcase>
+        <testcase classname="src/test/lib/apiCore.test.ts" name="requestJson &gt; provides an actionable message when the server cannot be reached" time="0.001684361">
+        </testcase>
+        <testcase classname="src/test/lib/apiCore.test.ts" name="requestJson &gt; sends only sanitized diagnostic metadata to the protected endpoint" time="0.001451445">
+        </testcase>
+        <testcase classname="src/test/lib/apiCore.test.ts" name="requestJson &gt; does not send expected client-side API errors as diagnostics" time="0.000890096">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/lib/apiErrors.test.ts" timestamp="2026-10-26T06:32:45.603Z" hostname="indras-macbook-pro" tests="8" failures="0" errors="0" skipped="0" time="0.011762583">
+        <testcase classname="src/test/lib/apiErrors.test.ts" name="normalizeApiError &gt; provides a stable fallback for HTTP 401" time="0.005890213">
+        </testcase>
+        <testcase classname="src/test/lib/apiErrors.test.ts" name="normalizeApiError &gt; provides a stable fallback for HTTP 403" time="0.000340331">
+        </testcase>
+        <testcase classname="src/test/lib/apiErrors.test.ts" name="normalizeApiError &gt; provides a stable fallback for HTTP 404" time="0.000220623">
+        </testcase>
+        <testcase classname="src/test/lib/apiErrors.test.ts" name="normalizeApiError &gt; provides a stable fallback for HTTP 409" time="0.000325523">
+        </testcase>
+        <testcase classname="src/test/lib/apiErrors.test.ts" name="normalizeApiError &gt; provides a stable fallback for HTTP 429" time="0.000183811">
+        </testcase>
+        <testcase classname="src/test/lib/apiErrors.test.ts" name="normalizeApiError &gt; prefers detail and preserves business code, trace id, and field errors" time="0.000772773">
+        </testcase>
+        <testcase classname="src/test/lib/apiErrors.test.ts" name="normalizeApiError &gt; adds a server trace reference to unexpected failures" time="0.000411543">
+        </testcase>
+        <testcase classname="src/test/lib/apiErrors.test.ts" name="normalizeApiError &gt; supports legacy string responses during migration" time="0.000434841">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/lib/menuConfig.test.ts" timestamp="2026-10-26T06:32:45.608Z" hostname="indras-macbook-pro" tests="4" failures="0" errors="0" skipped="0" time="0.010149519">
+        <testcase classname="src/test/lib/menuConfig.test.ts" name="menuConfig &gt; returns an empty array when a tenant has no saved configuration" time="0.004274305">
+        </testcase>
+        <testcase classname="src/test/lib/menuConfig.test.ts" name="menuConfig &gt; persists and reads tenant-specific hidden menus" time="0.00096078">
+        </testcase>
+        <testcase classname="src/test/lib/menuConfig.test.ts" name="menuConfig &gt; falls back to an empty array when stored JSON is invalid" time="0.000944141">
+        </testcase>
+        <testcase classname="src/test/lib/menuConfig.test.ts" name="menuConfig &gt; keeps menu keys aligned with the exposed menu list" time="0.000479812">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/pages/LoginPage.test.tsx" timestamp="2026-10-26T06:32:45.610Z" hostname="indras-macbook-pro" tests="5" failures="0" errors="0" skipped="0" time="0.741226024">
+        <testcase classname="src/test/pages/LoginPage.test.tsx" name="LoginPage &gt; does not ship pre-filled credentials" time="0.311686032">
+        </testcase>
+        <testcase classname="src/test/pages/LoginPage.test.tsx" name="LoginPage &gt; uses sign-in autocomplete attributes" time="0.046134185">
+        </testcase>
+        <testcase classname="src/test/pages/LoginPage.test.tsx" name="LoginPage &gt; toggles password visibility" time="0.265752475">
+        </testcase>
+        <testcase classname="src/test/pages/LoginPage.test.tsx" name="LoginPage &gt; warns when Caps Lock is on" time="0.059963887">
+        </testcase>
+        <testcase classname="src/test/pages/LoginPage.test.tsx" name="LoginPage &gt; shows a notice after a session expired" time="0.053869873">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/pages/UsersPage.test.tsx" timestamp="2026-10-26T06:32:45.612Z" hostname="indras-macbook-pro" tests="3" failures="0" errors="0" skipped="0" time="3.206253325">
+        <testcase classname="src/test/pages/UsersPage.test.tsx" name="UsersPage dialogs &gt; creates a tenant user from the create dialog" time="1.652937316">
+        </testcase>
+        <testcase classname="src/test/pages/UsersPage.test.tsx" name="UsersPage dialogs &gt; opens the roles dialog and saves the selected user roles" time="0.360194758">
+        </testcase>
+        <testcase classname="src/test/pages/UsersPage.test.tsx" name="UsersPage dialogs &gt; resets a user password from the reset dialog" time="1.188914844">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/features/tenants/TenantDataGrid.test.tsx" timestamp="2026-10-26T06:32:45.613Z" hostname="indras-macbook-pro" tests="3" failures="0" errors="0" skipped="0" time="0.73375948">
+        <testcase classname="src/test/features/tenants/TenantDataGrid.test.tsx" name="TenantDataGrid &gt; renders the empty-domain fallback and formatted created date" time="0.198013403">
+        </testcase>
+        <testcase classname="src/test/features/tenants/TenantDataGrid.test.tsx" name="TenantDataGrid &gt; calls onEdit and onRemove with the row payload" time="0.469739045">
+        </testcase>
+        <testcase classname="src/test/features/tenants/TenantDataGrid.test.tsx" name="TenantDataGrid &gt; announces module access and status without relying on color or abbreviations" time="0.060870696">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/features/tenants/TenantEditorDialog.test.tsx" timestamp="2026-10-26T06:32:45.614Z" hostname="indras-macbook-pro" tests="4" failures="0" errors="0" skipped="0" time="1.791161225">
+        <testcase classname="src/test/features/tenants/TenantEditorDialog.test.tsx" name="TenantEditorDialog &gt; renders the selected tenant values" time="0.465720082">
+            <system-err>
+An update to TenantEditorDialog inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TenantEditorDialog inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+            </system-err>
+        </testcase>
+        <testcase classname="src/test/features/tenants/TenantEditorDialog.test.tsx" name="TenantEditorDialog &gt; calls onClose when cancel is clicked" time="0.412423445">
+        </testcase>
+        <testcase classname="src/test/features/tenants/TenantEditorDialog.test.tsx" name="TenantEditorDialog &gt; shows validation when name is cleared and save is clicked" time="0.27624732">
+        </testcase>
+        <testcase classname="src/test/features/tenants/TenantEditorDialog.test.tsx" name="TenantEditorDialog &gt; saves valid changes and notifies the parent" time="0.632156446">
+        </testcase>
+    </testsuite>
+</testsuites>

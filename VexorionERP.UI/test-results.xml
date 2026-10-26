@@ -1,0 +1,955 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="326" failures="0" errors="0" time="63.123949099">
+    <testsuite name="src/app/authorization.test.ts" timestamp="2026-10-26T06:30:45.632Z" hostname="indras-macbook-pro" tests="13" failures="0" errors="0" skipped="0" time="0.01350207">
+        <testcase classname="src/app/authorization.test.ts" name="main authorization matrix &gt; distinguishes a hidden menu preference from route access" time="0.005697114">
+        </testcase>
+        <testcase classname="src/app/authorization.test.ts" name="main authorization matrix &gt; does not let a shown preference override module or permission restrictions" time="0.000428043">
+        </testcase>
+        <testcase classname="src/app/authorization.test.ts" name="main authorization matrix &gt; distinguishes unresolved module configuration without blocking unrelated routes" time="0.000315344">
+        </testcase>
+        <testcase classname="src/app/authorization.test.ts" name="main authorization matrix &gt; matches the project-document and employee gates registered by the router" time="0.000393291">
+        </testcase>
+        <testcase classname="src/app/authorization.test.ts" name="main authorization matrix &gt; requires the view permission assigned to a route" time="0.000376847">
+        </testcase>
+        <testcase classname="src/app/authorization.test.ts" name="main authorization matrix &gt; allows inventory viewers to open reports without granting mutation access" time="0.000332657">
+        </testcase>
+        <testcase classname="src/app/authorization.test.ts" name="main authorization matrix &gt; matches payment workspaces to their backend sales and purchasing policies" time="0.000275308">
+        </testcase>
+        <testcase classname="src/app/authorization.test.ts" name="main authorization matrix &gt; requires both tax-code and preference read permissions for tax and discount configuration" time="0.0002037">
+        </testcase>
+        <testcase classname="src/app/authorization.test.ts" name="main authorization matrix &gt; recognizes either scoped manage permission on the combined tax and discount page" time="0.000341882">
+        </testcase>
+        <testcase classname="src/app/authorization.test.ts" name="main authorization matrix &gt; recognizes user-lifecycle and role-assignment actions independently" time="0.00027353">
+        </testcase>
+        <testcase classname="src/app/authorization.test.ts" name="main authorization matrix &gt; accepts either import permission for the import workspace" time="0.000324557">
+        </testcase>
+        <testcase classname="src/app/authorization.test.ts" name="main authorization matrix &gt; supports combined all-of and any-of requirements" time="0.000227914">
+        </testcase>
+        <testcase classname="src/app/authorization.test.ts" name="main authorization matrix &gt; keeps route visibility separate from mutation permission" time="0.000232414">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/components/DocumentAuditPanel.test.tsx" timestamp="2026-10-26T06:30:45.637Z" hostname="indras-macbook-pro" tests="2" failures="0" errors="0" skipped="0" time="0.163321973">
+        <testcase classname="src/components/DocumentAuditPanel.test.tsx" name="DocumentAuditPanel &gt; requests and renders audit events for the selected document only" time="0.155043737">
+        </testcase>
+        <testcase classname="src/components/DocumentAuditPanel.test.tsx" name="DocumentAuditPanel &gt; does not query or expose audit events without permission" time="0.002538273">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/components/DocumentFulfillmentPanel.test.tsx" timestamp="2026-10-26T06:30:45.638Z" hostname="indras-macbook-pro" tests="1" failures="0" errors="0" skipped="0" time="0.094174824">
+        <testcase classname="src/components/DocumentFulfillmentPanel.test.tsx" name="DocumentFulfillmentPanel &gt; loads only shipments linked to the selected sales order" time="0.088989185">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/components/DocumentLifecycleActions.test.tsx" timestamp="2026-10-26T06:30:45.638Z" hostname="indras-macbook-pro" tests="2" failures="0" errors="0" skipped="0" time="0.283506287">
+        <testcase classname="src/components/DocumentLifecycleActions.test.tsx" name="document lifecycle disabled actions &gt; explains why posted shipments cannot be posted or deleted" time="0.255570748">
+        </testcase>
+        <testcase classname="src/components/DocumentLifecycleActions.test.tsx" name="document lifecycle disabled actions &gt; explains why posted receipts cannot be posted or deleted" time="0.022411615">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/components/DocumentLifecycleChip.test.tsx" timestamp="2026-10-26T06:30:45.639Z" hostname="indras-macbook-pro" tests="5" failures="0" errors="0" skipped="0" time="0.204612722">
+        <testcase classname="src/components/DocumentLifecycleChip.test.tsx" name="DocumentLifecycleChip &gt; exposes the lifecycle guidance alongside the visible status" time="0.138608146">
+        </testcase>
+        <testcase classname="src/components/DocumentLifecycleChip.test.tsx" name="DocumentLifecycleChip &gt; provides fallback guidance for unknown status codes" time="0.021829939">
+        </testcase>
+        <testcase classname="src/components/DocumentLifecycleChip.test.tsx" name="DocumentLifecycleChip &gt; resolves overlapping numeric statuses using the document type" time="0.0285748">
+        </testcase>
+        <testcase classname="src/components/DocumentLifecycleChip.test.tsx" name="DocumentLifecycleChip &gt; explains the shipment lifecycle state" time="0.005993432">
+        </testcase>
+        <testcase classname="src/components/DocumentLifecycleChip.test.tsx" name="DocumentLifecycleChip &gt; explains the receipt lifecycle state" time="0.005657675">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/components/DocumentPaymentAllocationsPanel.test.tsx" timestamp="2026-10-26T06:30:45.640Z" hostname="indras-macbook-pro" tests="1" failures="0" errors="0" skipped="0" time="0.099158017">
+        <testcase classname="src/components/DocumentPaymentAllocationsPanel.test.tsx" name="DocumentPaymentAllocationsPanel &gt; loads only the selected invoice allocations and shows payment details" time="0.09302433">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/components/DocumentReviewPanel.test.tsx" timestamp="2026-10-26T06:30:45.641Z" hostname="indras-macbook-pro" tests="1" failures="0" errors="0" skipped="0" time="0.084420693">
+        <testcase classname="src/components/DocumentReviewPanel.test.tsx" name="DocumentReviewPanel &gt; loads and displays selected document details" time="0.079701133">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/components/InventoryEffectPreview.test.tsx" timestamp="2026-10-26T06:30:45.641Z" hostname="indras-macbook-pro" tests="1" failures="0" errors="0" skipped="0" time="0.214279383">
+        <testcase classname="src/components/InventoryEffectPreview.test.tsx" name="InventoryEffectPreview &gt; shows the warehouse, current quantity, change, and resulting quantity" time="0.208526954">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/components/OrderWorkspace.accessibility.test.tsx" timestamp="2026-10-26T06:30:45.641Z" hostname="indras-macbook-pro" tests="1" failures="0" errors="0" skipped="0" time="0.473730173">
+        <testcase classname="src/components/OrderWorkspace.accessibility.test.tsx" name="OrderWorkspace accessibility &gt; announces non-error feedback as status and errors as alerts" time="0.468991633">
+            <system-err>
+react-i18next:: useTranslation: You will need to pass in an i18next instance by using initReactI18next { code: [32m&apos;NO_I18NEXT_INSTANCE&apos;[39m }
+
+            </system-err>
+        </testcase>
+    </testsuite>
+    <testsuite name="src/components/PagePrimitives.test.tsx" timestamp="2026-10-26T06:30:45.642Z" hostname="indras-macbook-pro" tests="6" failures="0" errors="0" skipped="0" time="0.882241411">
+        <testcase classname="src/components/PagePrimitives.test.tsx" name="page primitives &gt; provides the same accessible search control for custom master-data lists" time="0.401679613">
+        </testcase>
+        <testcase classname="src/components/PagePrimitives.test.tsx" name="page primitives &gt; composes a consistent master-data list shell with shared feedback, permissions, filters, and body" time="0.229032276">
+        </testcase>
+        <testcase classname="src/components/PagePrimitives.test.tsx" name="page primitives &gt; provides a consistent heading, primary action, filters, and metrics structure" time="0.08153583">
+        </testcase>
+        <testcase classname="src/components/PagePrimitives.test.tsx" name="page primitives &gt; renders live feedback and exposes retry for recoverable failures" time="0.033323046">
+        </testcase>
+        <testcase classname="src/components/PagePrimitives.test.tsx" name="page primitives &gt; announces successful feedback as a status, not an urgent alert" time="0.019722653">
+        </testcase>
+        <testcase classname="src/components/PagePrimitives.test.tsx" name="page primitives &gt; renders accessible loading, empty, error, and body states" time="0.11197528">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/components/PaymentAllocationSummary.test.tsx" timestamp="2026-10-26T06:30:45.644Z" hostname="indras-macbook-pro" tests="2" failures="0" errors="0" skipped="0" time="0.25810098">
+        <testcase classname="src/components/PaymentAllocationSummary.test.tsx" name="PaymentAllocationSummary &gt; shows allocation and remaining balance for a partial payment" time="0.229910346">
+        </testcase>
+        <testcase classname="src/components/PaymentAllocationSummary.test.tsx" name="PaymentAllocationSummary &gt; warns when part of the payment cannot be applied" time="0.023542542">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/components/ThemeContrast.test.ts" timestamp="2026-10-26T06:30:45.645Z" hostname="indras-macbook-pro" tests="9" failures="0" errors="0" skipped="0" time="0.010332746">
+        <testcase classname="src/components/ThemeContrast.test.ts" name="custom shell color contrast &gt; Main UI keeps sidebar text and hover labels readable in both themes" time="0.004361299">
+        </testcase>
+        <testcase classname="src/components/ThemeContrast.test.ts" name="custom shell color contrast &gt; AdminUI keeps sidebar text and hover labels readable in both themes" time="0.000357529">
+        </testcase>
+        <testcase classname="src/components/ThemeContrast.test.ts" name="custom shell color contrast &gt; Main UI preserves navigation text contrast across hover and active states in dark mode" time="0.000290833">
+        </testcase>
+        <testcase classname="src/components/ThemeContrast.test.ts" name="custom shell color contrast &gt; AdminUI preserves navigation text contrast across hover and active states in dark mode" time="0.000208037">
+        </testcase>
+        <testcase classname="src/components/ThemeContrast.test.ts" name="custom shell color contrast &gt; Main UI keeps public-auth gradient text readable over the brightest radial overlay" time="0.000538447">
+        </testcase>
+        <testcase classname="src/components/ThemeContrast.test.ts" name="custom shell color contrast &gt; AdminUI keeps public-auth gradient text readable over the brightest radial overlay" time="0.000269387">
+        </testcase>
+        <testcase classname="src/components/ThemeContrast.test.ts" name="custom shell color contrast &gt; Main UI keeps public-auth brand overlines readable over the brightest radial overlay" time="0.000310981">
+        </testcase>
+        <testcase classname="src/components/ThemeContrast.test.ts" name="custom shell color contrast &gt; AdminUI keeps public-auth brand overlines readable over the brightest radial overlay" time="0.000147975">
+        </testcase>
+        <testcase classname="src/components/ThemeContrast.test.ts" name="custom shell color contrast &gt; keeps Main UI navigation icon accents distinguishable from light and dark surfaces" time="0.000855492">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/components/ThemePrimitives.snapshot.test.tsx" timestamp="2026-10-26T06:30:45.647Z" hostname="indras-macbook-pro" tests="3" failures="0" errors="0" skipped="0" time="0.546973043">
+        <testcase classname="src/components/ThemePrimitives.snapshot.test.tsx" name="UI theme primitives snapshots &gt; uses accessible primary foreground contrast and visible keyboard focus in both themes" time="0.014250387">
+        </testcase>
+        <testcase classname="src/components/ThemePrimitives.snapshot.test.tsx" name="UI theme primitives snapshots &gt; matches the light theme button, chip, and input primitives" time="0.375631536">
+        </testcase>
+        <testcase classname="src/components/ThemePrimitives.snapshot.test.tsx" name="UI theme primitives snapshots &gt; matches the dark theme lookup select states" time="0.151207615">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/components/VxConfirmAction.test.tsx" timestamp="2026-10-26T06:30:45.648Z" hostname="indras-macbook-pro" tests="3" failures="0" errors="0" skipped="0" time="1.309696869">
+        <testcase classname="src/components/VxConfirmAction.test.tsx" name="VxConfirmAction &gt; names the target, explains the consequence, and gives cancel safe focus" time="0.48097915">
+            <system-err>
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+            </system-err>
+        </testcase>
+        <testcase classname="src/components/VxConfirmAction.test.tsx" name="VxConfirmAction &gt; closes with Escape and restores focus to the trigger" time="0.619687664">
+        </testcase>
+        <testcase classname="src/components/VxConfirmAction.test.tsx" name="VxConfirmAction &gt; locks controls while processing and keeps failures available for retry" time="0.203521271">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/components/VxDataGrid.test.tsx" timestamp="2026-10-26T06:30:45.649Z" hostname="indras-macbook-pro" tests="3" failures="0" errors="0" skipped="0" time="0.228268934">
+        <testcase classname="src/components/VxDataGrid.test.tsx" name="VxDataGrid &gt; applies the shared dense, searchable, paginated table contract" time="0.033870459">
+        </testcase>
+        <testcase classname="src/components/VxDataGrid.test.tsx" name="VxDataGrid &gt; uses a readable preference-key label unless a localized label is provided" time="0.005290252">
+        </testcase>
+        <testcase classname="src/components/VxDataGrid.test.tsx" name="VxDataGrid &gt; restores and updates pagination for grids with a preference key" time="0.184048697">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/components/VxDialog.accessibility.test.tsx" timestamp="2026-10-26T06:30:45.649Z" hostname="indras-macbook-pro" tests="1" failures="0" errors="0" skipped="0" time="0.609956398">
+        <testcase classname="src/components/VxDialog.accessibility.test.tsx" name="VxDialog accessibility &gt; associates the dialog with its title without per-dialog ids" time="0.599743013">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/inventoryOperationsStructure.test.ts" timestamp="2026-10-26T06:30:45.650Z" hostname="indras-macbook-pro" tests="14" failures="0" errors="0" skipped="0" time="0.019781414">
+        <testcase classname="src/features/inventoryOperationsStructure.test.ts" name="inventory operation component boundaries &gt; inventoryAdjustments/pages/InventoryAdjustmentsPage.tsx delegates list, detail, and line-editor rendering" time="0.005262587">
+        </testcase>
+        <testcase classname="src/features/inventoryOperationsStructure.test.ts" name="inventory operation component boundaries &gt; stockTransfers/pages/StockTransfersPage.tsx delegates list, detail, and line-editor rendering" time="0.001650006">
+        </testcase>
+        <testcase classname="src/features/inventoryOperationsStructure.test.ts" name="inventory operation component boundaries &gt; stockCounts/pages/StockCountsPage.tsx delegates list, detail, and line-editor rendering" time="0.00148978">
+        </testcase>
+        <testcase classname="src/features/inventoryOperationsStructure.test.ts" name="inventory operation component boundaries &gt; keeps stock-count lifecycle actions in a dedicated component" time="0.001854857">
+        </testcase>
+        <testcase classname="src/features/inventoryOperationsStructure.test.ts" name="inventory operation component boundaries &gt; inventoryAdjustments/pages/InventoryAdjustmentsPage.tsx delegates delete confirmation to its state-action component" time="0.001284695">
+        </testcase>
+        <testcase classname="src/features/inventoryOperationsStructure.test.ts" name="inventory operation component boundaries &gt; stockTransfers/pages/StockTransfersPage.tsx delegates delete confirmation to its state-action component" time="0.000907392">
+        </testcase>
+        <testcase classname="src/features/inventoryOperationsStructure.test.ts" name="inventory operation component boundaries &gt; shows posting effects before adjustment and transfer status changes" time="0.000485067">
+        </testcase>
+        <testcase classname="src/features/inventoryOperationsStructure.test.ts" name="inventory operation component boundaries &gt; includes stock effects in count post and reverse confirmations" time="0.000385189">
+        </testcase>
+        <testcase classname="src/features/inventoryOperationsStructure.test.ts" name="inventory operation component boundaries &gt; disables deletion outside Draft in inventoryAdjustments/components/InventoryAdjustmentList.tsx" time="0.000715224">
+        </testcase>
+        <testcase classname="src/features/inventoryOperationsStructure.test.ts" name="inventory operation component boundaries &gt; disables deletion outside Draft in stockTransfers/components/StockTransferList.tsx" time="0.000680646">
+        </testcase>
+        <testcase classname="src/features/inventoryOperationsStructure.test.ts" name="inventory operation component boundaries &gt; disables deletion outside Draft in stockCounts/components/StockCountList.tsx" time="0.000667774">
+        </testcase>
+        <testcase classname="src/features/inventoryOperationsStructure.test.ts" name="inventory operation component boundaries &gt; confirms status changes and shows their effects in inventoryAdjustments/pages/InventoryAdjustmentsPage.tsx" time="0.000551485">
+        </testcase>
+        <testcase classname="src/features/inventoryOperationsStructure.test.ts" name="inventory operation component boundaries &gt; confirms status changes and shows their effects in stockTransfers/pages/StockTransfersPage.tsx" time="0.000324854">
+        </testcase>
+        <testcase classname="src/features/inventoryOperationsStructure.test.ts" name="inventory operation component boundaries &gt; keeps stock-count status changes in confirmed lifecycle actions" time="0.000427665">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/hooks/useUnsavedChangesPrompt.test.tsx" timestamp="2026-10-26T06:30:45.653Z" hostname="indras-macbook-pro" tests="5" failures="0" errors="0" skipped="0" time="0.50464269">
+        <testcase classname="src/hooks/useUnsavedChangesPrompt.test.tsx" name="useUnsavedChangesPrompt &gt; closes a clean editor immediately" time="0.23980254">
+        </testcase>
+        <testcase classname="src/hooks/useUnsavedChangesPrompt.test.tsx" name="useUnsavedChangesPrompt &gt; lets the user keep editing or explicitly discard dirty changes" time="0.101374378">
+        </testcase>
+        <testcase classname="src/hooks/useUnsavedChangesPrompt.test.tsx" name="useUnsavedChangesPrompt &gt; does not close or prompt while a save is in progress" time="0.018828468">
+        </testcase>
+        <testcase classname="src/hooks/useUnsavedChangesPrompt.test.tsx" name="useUnsavedChangesPrompt &gt; warns before the browser unloads a dirty form" time="0.003450617">
+        </testcase>
+        <testcase classname="src/hooks/useUnsavedChangesPrompt.test.tsx" name="useUnsavedChangesPrompt &gt; blocks SPA navigation until dirty changes are kept or discarded" time="0.133045297">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/i18n/configCopy.test.ts" timestamp="2026-10-26T06:30:45.654Z" hostname="indras-macbook-pro" tests="1" failures="0" errors="0" skipped="0" time="0.249237072">
+        <testcase classname="src/i18n/configCopy.test.ts" name="configuration localization boundary &gt; does not render hard-coded operational JSX copy in configuration pages" time="0.246344095">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/i18n/financeCopy.test.ts" timestamp="2026-10-26T06:30:45.655Z" hostname="indras-macbook-pro" tests="1" failures="0" errors="0" skipped="0" time="0.171882503">
+        <testcase classname="src/i18n/financeCopy.test.ts" name="finance localization boundary &gt; does not render hard-coded operational JSX copy in journals and reports" time="0.168852655">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/i18n/inventoryCopy.test.ts" timestamp="2026-10-26T06:30:45.655Z" hostname="indras-macbook-pro" tests="1" failures="0" errors="0" skipped="0" time="0.245744764">
+        <testcase classname="src/i18n/inventoryCopy.test.ts" name="inventory localization boundary &gt; does not render hard-coded operational JSX copy in inventory pages" time="0.242982863">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/i18n/mainUiCopy.test.ts" timestamp="2026-10-26T06:30:45.656Z" hostname="indras-macbook-pro" tests="1" failures="0" errors="0" skipped="0" time="1.969116596">
+        <testcase classname="src/i18n/mainUiCopy.test.ts" name="Main UI localization boundary &gt; does not render hard-coded operational JSX copy" time="1.965066328">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/i18n/masterDataDestructiveCopy.test.ts" timestamp="2026-10-26T06:30:45.656Z" hostname="indras-macbook-pro" tests="4" failures="0" errors="0" skipped="0" time="0.010138779">
+        <testcase classname="src/i18n/masterDataDestructiveCopy.test.ts" name="master-data destructive action copy &gt; distinguishes permanent deletion from reversible deactivation in en-US" time="0.003742856">
+        </testcase>
+        <testcase classname="src/i18n/masterDataDestructiveCopy.test.ts" name="master-data destructive action copy &gt; distinguishes permanent deletion from reversible deactivation in id-ID" time="0.001291914">
+        </testcase>
+        <testcase classname="src/i18n/masterDataDestructiveCopy.test.ts" name="master-data destructive action copy &gt; distinguishes permanent deletion from reversible deactivation in es-ES" time="0.00085186">
+        </testcase>
+        <testcase classname="src/i18n/masterDataDestructiveCopy.test.ts" name="master-data destructive action copy &gt; names the dependencies and cascading effects instead of promising unconditional deletion" time="0.000825419">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/i18n/orderEditorCopy.test.ts" timestamp="2026-10-26T06:30:45.657Z" hostname="indras-macbook-pro" tests="1" failures="0" errors="0" skipped="0" time="0.179865759">
+        <testcase classname="src/i18n/orderEditorCopy.test.ts" name="sales and purchasing editor localization boundary &gt; does not render hard-coded operational JSX copy" time="0.177026215">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/i18n/orderEditorKeys.test.ts" timestamp="2026-10-26T06:30:45.657Z" hostname="indras-macbook-pro" tests="1" failures="0" errors="0" skipped="0" time="0.011908836">
+        <testcase classname="src/i18n/orderEditorKeys.test.ts" name="sales and purchasing dialog translation keys &gt; resolves every literal t() key in all locales" time="0.009344851">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/i18n/organizationEngagementCopy.test.ts" timestamp="2026-10-26T06:30:45.658Z" hostname="indras-macbook-pro" tests="5" failures="0" errors="0" skipped="0" time="0.009813913">
+        <testcase classname="src/i18n/organizationEngagementCopy.test.ts" name="organization and project engagement vocabulary &gt; separates master records from project assignments in English" time="0.003657996">
+        </testcase>
+        <testcase classname="src/i18n/organizationEngagementCopy.test.ts" name="organization and project engagement vocabulary &gt; separates organization relationships, project partners, and person assignments" time="0.000527354">
+        </testcase>
+        <testcase classname="src/i18n/organizationEngagementCopy.test.ts" name="organization and project engagement vocabulary &gt; provides the complete vocabulary guidance in English" time="0.000503316">
+        </testcase>
+        <testcase classname="src/i18n/organizationEngagementCopy.test.ts" name="organization and project engagement vocabulary &gt; provides the complete vocabulary guidance in Indonesian" time="0.000339196">
+        </testcase>
+        <testcase classname="src/i18n/organizationEngagementCopy.test.ts" name="organization and project engagement vocabulary &gt; provides the complete vocabulary guidance in Spanish" time="0.000883745">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/i18n/translations.test.ts" timestamp="2026-10-26T06:30:45.659Z" hostname="indras-macbook-pro" tests="11" failures="0" errors="0" skipped="0" time="0.445546611">
+        <testcase classname="src/i18n/translations.test.ts" name="Main UI translations &gt; maps application locale enUS to the Intl locale en-US" time="0.042300601">
+        </testcase>
+        <testcase classname="src/i18n/translations.test.ts" name="Main UI translations &gt; maps application locale idID to the Intl locale id-ID" time="0.002386336">
+        </testcase>
+        <testcase classname="src/i18n/translations.test.ts" name="Main UI translations &gt; maps application locale esES to the Intl locale es-ES" time="0.001459159">
+        </testcase>
+        <testcase classname="src/i18n/translations.test.ts" name="Main UI translations &gt; maps application locale es-ES to the Intl locale es-ES" time="0.000584304">
+        </testcase>
+        <testcase classname="src/i18n/translations.test.ts" name="Main UI translations &gt; maps application locale undefined to the Intl locale en-US" time="0.000612541">
+        </testcase>
+        <testcase classname="src/i18n/translations.test.ts" name="Main UI translations &gt; enUS has the exact English key set" time="0.007300517">
+        </testcase>
+        <testcase classname="src/i18n/translations.test.ts" name="Main UI translations &gt; enUS has non-empty values and matching interpolation variables" time="0.152721274">
+        </testcase>
+        <testcase classname="src/i18n/translations.test.ts" name="Main UI translations &gt; idID has the exact English key set" time="0.003390453">
+        </testcase>
+        <testcase classname="src/i18n/translations.test.ts" name="Main UI translations &gt; idID has non-empty values and matching interpolation variables" time="0.117133778">
+        </testcase>
+        <testcase classname="src/i18n/translations.test.ts" name="Main UI translations &gt; esES has the exact English key set" time="0.004560128">
+        </testcase>
+        <testcase classname="src/i18n/translations.test.ts" name="Main UI translations &gt; esES has non-empty values and matching interpolation variables" time="0.109282482">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/pages/DashboardPage.test.tsx" timestamp="2026-10-26T06:30:45.661Z" hostname="indras-macbook-pro" tests="10" failures="0" errors="0" skipped="0" time="3.601537199">
+        <testcase classname="src/pages/DashboardPage.test.tsx" name="Dashboard hierarchy and filter scope &gt; keeps healthy sections visible and does not render zero finance cards after an initial finance failure" time="0.801177882">
+        </testcase>
+        <testcase classname="src/pages/DashboardPage.test.tsx" name="Dashboard hierarchy and filter scope &gt; keeps payables aging visible while receivables aging loads" time="0.25725265">
+        </testcase>
+        <testcase classname="src/pages/DashboardPage.test.tsx" name="Dashboard hierarchy and filter scope &gt; keeps storage usage visible when its top-consumer query fails" time="0.330252701">
+        </testcase>
+        <testcase classname="src/pages/DashboardPage.test.tsx" name="Dashboard hierarchy and filter scope &gt; keeps sales visible while permitted customer names are still loading" time="0.300322145">
+        </testcase>
+        <testcase classname="src/pages/DashboardPage.test.tsx" name="Dashboard hierarchy and filter scope &gt; does not add overdue amounts twice when calculating outstanding totals and current shares" time="0.317726191">
+        </testcase>
+        <testcase classname="src/pages/DashboardPage.test.tsx" name="Dashboard hierarchy and filter scope &gt; shows not-applicable shares rather than healthy or collection-rate claims for empty balances" time="0.254812107">
+        </testcase>
+        <testcase classname="src/pages/DashboardPage.test.tsx" name="Dashboard hierarchy and filter scope &gt; orders overview, overdue attention, analysis, and recent activity before storage" time="0.30377184">
+        </testcase>
+        <testcase classname="src/pages/DashboardPage.test.tsx" name="Dashboard hierarchy and filter scope &gt; keeps controls in finance and updates only date-dependent finance queries" time="0.620450046">
+        </testcase>
+        <testcase classname="src/pages/DashboardPage.test.tsx" name="Dashboard hierarchy and filter scope &gt; omits sales and storage sections when their permissions are absent" time="0.216534451">
+        </testcase>
+        <testcase classname="src/pages/DashboardPage.test.tsx" name="Dashboard hierarchy and filter scope &gt; renders sales activity without waiting on a disabled customer query" time="0.182198509">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/DocumentCurrencyDefault.test.tsx" timestamp="2026-10-26T06:30:45.664Z" hostname="indras-macbook-pro" tests="2" failures="0" errors="0" skipped="0" time="1.145973676">
+        <testcase classname="src/test/DocumentCurrencyDefault.test.tsx" name="new document currency default &gt; defaults a new purchase order to the company currency" time="0.943318368">
+        </testcase>
+        <testcase classname="src/test/DocumentCurrencyDefault.test.tsx" name="new document currency default &gt; defaults a new sales order to the company currency" time="0.198177799">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/LoginPage.test.tsx" timestamp="2026-10-26T06:30:45.665Z" hostname="indras-macbook-pro" tests="5" failures="0" errors="0" skipped="0" time="0.940895466">
+        <testcase classname="src/test/LoginPage.test.tsx" name="LoginPage &gt; does not ship pre-filled credentials" time="0.395255226">
+        </testcase>
+        <testcase classname="src/test/LoginPage.test.tsx" name="LoginPage &gt; uses sign-in autocomplete attributes" time="0.072595921">
+        </testcase>
+        <testcase classname="src/test/LoginPage.test.tsx" name="LoginPage &gt; toggles password visibility" time="0.325618579">
+        </testcase>
+        <testcase classname="src/test/LoginPage.test.tsx" name="LoginPage &gt; warns when Caps Lock is on" time="0.072224008">
+        </testcase>
+        <testcase classname="src/test/LoginPage.test.tsx" name="LoginPage &gt; shows a notice after a session expired" time="0.070446398">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/LookupSelectField.test.tsx" timestamp="2026-10-26T06:30:45.666Z" hostname="indras-macbook-pro" tests="7" failures="0" errors="0" skipped="0" time="0.84556451">
+        <testcase classname="src/test/LookupSelectField.test.tsx" name="LookupSelectField &gt; renders the label and available options" time="0.266188032">
+        </testcase>
+        <testcase classname="src/test/LookupSelectField.test.tsx" name="LookupSelectField &gt; shows &quot;Required&quot; helper text when options are present" time="0.024369022">
+        </testcase>
+        <testcase classname="src/test/LookupSelectField.test.tsx" name="LookupSelectField &gt; shows custom emptyText when no options are available" time="0.02024777">
+        </testcase>
+        <testcase classname="src/test/LookupSelectField.test.tsx" name="LookupSelectField &gt; shows default emptyText when options are empty and emptyText not set" time="0.019624939">
+        </testcase>
+        <testcase classname="src/test/LookupSelectField.test.tsx" name="LookupSelectField &gt; shows custom helperText when provided" time="0.025547179">
+        </testcase>
+        <testcase classname="src/test/LookupSelectField.test.tsx" name="LookupSelectField &gt; renders as disabled when disabled prop is true" time="0.169724685">
+        </testcase>
+        <testcase classname="src/test/LookupSelectField.test.tsx" name="LookupSelectField &gt; calls onChange when a menu item is selected" time="0.31441574">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/PasswordReset.test.tsx" timestamp="2026-10-26T06:30:45.667Z" hostname="indras-macbook-pro" tests="3" failures="0" errors="0" skipped="0" time="1.09056623">
+        <testcase classname="src/test/PasswordReset.test.tsx" name="password reset pages &gt; shows a generic confirmation after requesting a link" time="0.751478889">
+        </testcase>
+        <testcase classname="src/test/PasswordReset.test.tsx" name="password reset pages &gt; shows the invalid state when the link has no token or the token is rejected" time="0.061421419">
+        </testcase>
+        <testcase classname="src/test/PasswordReset.test.tsx" name="password reset pages &gt; blocks mismatched passwords and goes to sign-in after a successful reset" time="0.273193715">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/PublicAuthLayout.test.tsx" timestamp="2026-10-26T06:30:45.669Z" hostname="indras-macbook-pro" tests="6" failures="0" errors="0" skipped="0" time="0.58696869">
+        <testcase classname="src/test/PublicAuthLayout.test.tsx" name="PublicAuthLayout &gt; renders the brand name" time="0.343252998">
+        </testcase>
+        <testcase classname="src/test/PublicAuthLayout.test.tsx" name="PublicAuthLayout &gt; renders workspace access heading" time="0.050255893">
+        </testcase>
+        <testcase classname="src/test/PublicAuthLayout.test.tsx" name="PublicAuthLayout &gt; renders login page content by default" time="0.05277218">
+        </testcase>
+        <testcase classname="src/test/PublicAuthLayout.test.tsx" name="PublicAuthLayout &gt; renders tenants page content on /tenants path" time="0.049923343">
+        </testcase>
+        <testcase classname="src/test/PublicAuthLayout.test.tsx" name="PublicAuthLayout &gt; renders all three feature rows" time="0.048400465">
+        </testcase>
+        <testcase classname="src/test/PublicAuthLayout.test.tsx" name="PublicAuthLayout &gt; falls back to login content for unknown paths" time="0.033714946">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/RouteGuards.test.tsx" timestamp="2026-10-26T06:30:45.671Z" hostname="indras-macbook-pro" tests="13" failures="0" errors="0" skipped="0" time="0.824193115">
+        <testcase classname="src/test/RouteGuards.test.tsx" name="ProtectedRoute &gt; shows loading alert while session is being checked" time="0.530324962">
+        </testcase>
+        <testcase classname="src/test/RouteGuards.test.tsx" name="ProtectedRoute &gt; redirects to /login when not authenticated" time="0.016178167">
+        </testcase>
+        <testcase classname="src/test/RouteGuards.test.tsx" name="ProtectedRoute &gt; renders the outlet when authenticated" time="0.006265187">
+        </testcase>
+        <testcase classname="src/test/RouteGuards.test.tsx" name="PublicOnlyRoute &gt; shows loading alert while session is loading" time="0.025051775">
+        </testcase>
+        <testcase classname="src/test/RouteGuards.test.tsx" name="PublicOnlyRoute &gt; redirects to / when already authenticated" time="0.005026041">
+        </testcase>
+        <testcase classname="src/test/RouteGuards.test.tsx" name="PublicOnlyRoute &gt; renders the outlet when not authenticated" time="0.005885271">
+        </testcase>
+        <testcase classname="src/test/RouteGuards.test.tsx" name="ModuleRouteGuard &gt; shows a loading state while tenant modules are being loaded" time="0.030960264">
+        </testcase>
+        <testcase classname="src/test/RouteGuards.test.tsx" name="ModuleRouteGuard &gt; does not render or load a disabled employee module route" time="0.020470869">
+        </testcase>
+        <testcase classname="src/test/RouteGuards.test.tsx" name="ModuleRouteGuard &gt; does not render or load a disabled project module route" time="0.006910503">
+        </testcase>
+        <testcase classname="src/test/RouteGuards.test.tsx" name="ModuleRouteGuard &gt; renders and loads an enabled employee module route" time="0.017057334">
+        </testcase>
+        <testcase classname="src/test/RouteGuards.test.tsx" name="ModuleRouteGuard &gt; renders and loads an enabled project module route" time="0.106147347">
+        </testcase>
+        <testcase classname="src/test/RouteGuards.test.tsx" name="PermissionRoute &gt; does not mount a denied route or start its data load" time="0.039457509">
+        </testcase>
+        <testcase classname="src/test/RouteGuards.test.tsx" name="PermissionRoute &gt; mounts a route when any required alternative is granted" time="0.003716039">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/apiCore.test.ts" timestamp="2026-10-26T06:30:45.675Z" hostname="indras-macbook-pro" tests="1" failures="0" errors="0" skipped="0" time="0.020458659">
+        <testcase classname="src/test/apiCore.test.ts" name="client diagnostics &gt; reports sanitized server errors with their support trace ID" time="0.015401116">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/apiErrors.test.ts" timestamp="2026-10-26T06:30:45.675Z" hostname="indras-macbook-pro" tests="7" failures="0" errors="0" skipped="0" time="0.012546673">
+        <testcase classname="src/test/apiErrors.test.ts" name="normalizeApiError &gt; provides a stable fallback for HTTP 401" time="0.006698699">
+        </testcase>
+        <testcase classname="src/test/apiErrors.test.ts" name="normalizeApiError &gt; provides a stable fallback for HTTP 403" time="0.000269394">
+        </testcase>
+        <testcase classname="src/test/apiErrors.test.ts" name="normalizeApiError &gt; provides a stable fallback for HTTP 404" time="0.000168985">
+        </testcase>
+        <testcase classname="src/test/apiErrors.test.ts" name="normalizeApiError &gt; provides a stable fallback for HTTP 409" time="0.000134925">
+        </testcase>
+        <testcase classname="src/test/apiErrors.test.ts" name="normalizeApiError &gt; provides a stable fallback for HTTP 429" time="0.000239089">
+        </testcase>
+        <testcase classname="src/test/apiErrors.test.ts" name="normalizeApiError &gt; preserves problem details, trace id, and field errors" time="0.000685183">
+        </testcase>
+        <testcase classname="src/test/apiErrors.test.ts" name="normalizeApiError &gt; adds the trace reference to unexpected server errors" time="0.000581984">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/auditLogs/auditLogDetails.test.ts" timestamp="2026-10-26T06:30:45.678Z" hostname="indras-macbook-pro" tests="2" failures="0" errors="0" skipped="0" time="0.008273925">
+        <testcase classname="src/features/auditLogs/auditLogDetails.test.ts" name="audit log detail formatting &gt; separates known before/after values and redacts sensitive metadata keys" time="0.004557842">
+        </testcase>
+        <testcase classname="src/features/auditLogs/auditLogDetails.test.ts" name="audit log detail formatting &gt; builds a CSV with formula-like cells neutralized" time="0.000821282">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/reports/reportFormatting.test.ts" timestamp="2026-10-26T06:30:45.679Z" hostname="indras-macbook-pro" tests="2" failures="0" errors="0" skipped="0" time="0.044596525">
+        <testcase classname="src/features/reports/reportFormatting.test.ts" name="report formatting &gt; keeps aging totals separated by currency" time="0.033524244">
+        </testcase>
+        <testcase classname="src/features/reports/reportFormatting.test.ts" name="report formatting &gt; formats ISO date-only values in the selected locale without UTC day shifts" time="0.007879047">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/pages/dashboard/formatters.test.ts" timestamp="2026-10-26T06:30:45.680Z" hostname="indras-macbook-pro" tests="4" failures="0" errors="0" skipped="0" time="0.033359997">
+        <testcase classname="src/pages/dashboard/formatters.test.ts" name="formatCurrency &gt; formats a number as USD by default" time="0.029283633">
+        </testcase>
+        <testcase classname="src/pages/dashboard/formatters.test.ts" name="formatCurrency &gt; respects a custom currency code" time="0.00044367">
+        </testcase>
+        <testcase classname="src/pages/dashboard/formatters.test.ts" name="formatCurrency &gt; formats zero correctly" time="0.000295857">
+        </testcase>
+        <testcase classname="src/pages/dashboard/formatters.test.ts" name="formatCurrency &gt; rounds to 2 decimal places" time="0.000271854">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/auditLogs/pages/AuditLogsPage.test.tsx" timestamp="2026-10-26T06:30:45.681Z" hostname="indras-macbook-pro" tests="1" failures="0" errors="0" skipped="0" time="1.901404569">
+        <testcase classname="src/features/auditLogs/pages/AuditLogsPage.test.tsx" name="AuditLogsPage &gt; opens safe before/after details and filters by the selected trace" time="1.893785024">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/types/ui/inventoryDocumentStatuses.test.ts" timestamp="2026-10-26T06:30:45.681Z" hostname="indras-macbook-pro" tests="3" failures="0" errors="0" skipped="0" time="0.007089974">
+        <testcase classname="src/types/ui/inventoryDocumentStatuses.test.ts" name="inventory document status transitions &gt; allows draft documents to remain draft, complete, or cancel" time="0.003757717">
+        </testcase>
+        <testcase classname="src/types/ui/inventoryDocumentStatuses.test.ts" name="inventory document status transitions &gt; allows completed documents to remain completed or reverse to cancelled" time="0.00031414">
+        </testcase>
+        <testcase classname="src/types/ui/inventoryDocumentStatuses.test.ts" name="inventory document status transitions &gt; does not allow transitions from cancelled or unknown states" time="0.000267142">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/types/ui/inventoryEffects.test.ts" timestamp="2026-10-26T06:30:45.682Z" hostname="indras-macbook-pro" tests="3" failures="0" errors="0" skipped="0" time="0.00816905">
+        <testcase classname="src/types/ui/inventoryEffects.test.ts" name="inventory posting effect calculations &gt; previews adjustment posting and reversal deltas" time="0.003273181">
+        </testcase>
+        <testcase classname="src/types/ui/inventoryEffects.test.ts" name="inventory posting effect calculations &gt; previews both warehouse sides of transfer posting and reversal" time="0.001423822">
+        </testcase>
+        <testcase classname="src/types/ui/inventoryEffects.test.ts" name="inventory posting effect calculations &gt; previews count variance posting and reversal" time="0.000309583">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/types/ui/paymentAllocations.test.ts" timestamp="2026-10-26T06:30:45.683Z" hostname="indras-macbook-pro" tests="3" failures="0" errors="0" skipped="0" time="0.007613467">
+        <testcase classname="src/types/ui/paymentAllocations.test.ts" name="payment allocation preview &gt; previews a partial payment without unapplied funds" time="0.003817654">
+        </testcase>
+        <testcase classname="src/types/ui/paymentAllocations.test.ts" name="payment allocation preview &gt; shows unapplied funds for an amount above the invoice balance" time="0.000284905">
+        </testcase>
+        <testcase classname="src/types/ui/paymentAllocations.test.ts" name="payment allocation preview &gt; blocks excess amounts and currency mismatches before submission" time="0.000447597">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/types/ui/projects.test.ts" timestamp="2026-10-26T06:30:45.683Z" hostname="indras-macbook-pro" tests="2" failures="0" errors="0" skipped="0" time="0.006648605">
+        <testcase classname="src/types/ui/projects.test.ts" name="project ui state helpers &gt; maps all project lifecycle statuses to labels" time="0.003645474">
+        </testcase>
+        <testcase classname="src/types/ui/projects.test.ts" name="project ui state helpers &gt; maps known relationship types and defaults consortium member for unknown" time="0.000504319">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/types/ui/salesInvoices.test.ts" timestamp="2026-10-26T06:30:45.684Z" hostname="indras-macbook-pro" tests="7" failures="0" errors="0" skipped="0" time="0.012168888">
+        <testcase classname="src/types/ui/salesInvoices.test.ts" name="invoice payment availability &gt; maps status 1 and balance 100 to the current payment availability" time="0.005919335">
+        </testcase>
+        <testcase classname="src/types/ui/salesInvoices.test.ts" name="invoice payment availability &gt; maps status 6 and balance 100 to the current payment availability" time="0.000281947">
+        </testcase>
+        <testcase classname="src/types/ui/salesInvoices.test.ts" name="invoice payment availability &gt; maps status 2 and balance 0 to the current payment availability" time="0.000152299">
+        </testcase>
+        <testcase classname="src/types/ui/salesInvoices.test.ts" name="invoice payment availability &gt; maps status 3 and balance -1 to the current payment availability" time="0.0002587">
+        </testcase>
+        <testcase classname="src/types/ui/salesInvoices.test.ts" name="invoice payment availability &gt; maps status 2 and balance 50 to the current payment availability" time="0.000243552">
+        </testcase>
+        <testcase classname="src/types/ui/salesInvoices.test.ts" name="invoice payment availability &gt; maps status 3 and balance 50 to the current payment availability" time="0.000134529">
+        </testcase>
+        <testcase classname="src/types/ui/salesInvoices.test.ts" name="invoice payment availability &gt; maps status 5 and balance 50 to the current payment availability" time="0.000110639">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/accounts/pages/AccountsPage.authorization.test.tsx" timestamp="2026-10-26T06:30:45.686Z" hostname="indras-macbook-pro" tests="2" failures="0" errors="0" skipped="0" time="0.477120845">
+        <testcase classname="src/features/accounts/pages/AccountsPage.authorization.test.tsx" name="AccountsPage authorization &gt; keeps the account list readable while hiding mutation controls from a billing viewer" time="0.220927358">
+        </testcase>
+        <testcase classname="src/features/accounts/pages/AccountsPage.authorization.test.tsx" name="AccountsPage authorization &gt; exposes mutation controls when billing.manage is granted" time="0.251191138">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/config/pages/ConfigImportDataPage.test.tsx" timestamp="2026-10-26T06:30:45.687Z" hostname="indras-macbook-pro" tests="3" failures="0" errors="0" skipped="0" time="1.319116626">
+        <testcase classname="src/features/config/pages/ConfigImportDataPage.test.tsx" name="ConfigImportDataPage import flow &gt; shows history without starting validation-only requests for a history viewer" time="0.223873255">
+        </testcase>
+        <testcase classname="src/features/config/pages/ConfigImportDataPage.test.tsx" name="ConfigImportDataPage import flow &gt; supports happy path: validate then submit successfully" time="0.769924289">
+        </testcase>
+        <testcase classname="src/features/config/pages/ConfigImportDataPage.test.tsx" name="ConfigImportDataPage import flow &gt; shows validation errors and keeps submit disabled when file is invalid" time="0.319290098">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/config/pages/ConfigMenuPage.test.tsx" timestamp="2026-10-26T06:30:45.687Z" hostname="indras-macbook-pro" tests="8" failures="0" errors="0" skipped="0" time="4.834800451">
+        <testcase classname="src/features/config/pages/ConfigMenuPage.test.tsx" name="Menu preferences and effective access &gt; previews hidden preferences locally and only updates navigation after save succeeds" time="1.637540594">
+        </testcase>
+        <testcase classname="src/features/config/pages/ConfigMenuPage.test.tsx" name="Menu preferences and effective access &gt; shows preference, disabled module, and missing permission as separate states" time="0.384048603">
+        </testcase>
+        <testcase classname="src/features/config/pages/ConfigMenuPage.test.tsx" name="Menu preferences and effective access &gt; keeps read-only preview available without mutation controls" time="0.652488048">
+        </testcase>
+        <testcase classname="src/features/config/pages/ConfigMenuPage.test.tsx" name="Menu preferences and effective access &gt; does not permit overwriting preferences after a failed initial load" time="0.320759663">
+        </testcase>
+        <testcase classname="src/features/config/pages/ConfigMenuPage.test.tsx" name="Menu preferences and effective access &gt; preserves the draft after save failure and retries the save rather than reloading preferences" time="0.913860095">
+        </testcase>
+        <testcase classname="src/features/config/pages/ConfigMenuPage.test.tsx" name="Menu preferences and effective access &gt; shows module configuration as loading rather than enabled" time="0.23513554">
+        </testcase>
+        <testcase classname="src/features/config/pages/ConfigMenuPage.test.tsx" name="Menu preferences and effective access &gt; shows module configuration as unavailable rather than enabled" time="0.243651074">
+        </testcase>
+        <testcase classname="src/features/config/pages/ConfigMenuPage.test.tsx" name="Menu preferences and effective access &gt; resets preferences without enabling a disabled module" time="0.440884001">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/config/pages/ConfigNumberingPage.test.tsx" timestamp="2026-10-26T06:30:45.689Z" hostname="indras-macbook-pro" tests="2" failures="0" errors="0" skipped="0" time="1.595808292">
+        <testcase classname="src/features/config/pages/ConfigNumberingPage.test.tsx" name="ConfigNumberingPage &gt; explains future impact and previews every supported generated number" time="0.763206345">
+        </testcase>
+        <testcase classname="src/features/config/pages/ConfigNumberingPage.test.tsx" name="ConfigNumberingPage &gt; saves the edited sequence without changing the other document types" time="0.828173428">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/config/pages/ConfigUsersPage.accessibility.test.tsx" timestamp="2026-10-26T06:30:45.690Z" hostname="indras-macbook-pro" tests="2" failures="0" errors="0" skipped="0" time="1.285902202">
+        <testcase classname="src/features/config/pages/ConfigUsersPage.accessibility.test.tsx" name="ConfigUsersPage accessibility &gt; names the active-state switch with its column label and user" time="0.933845326">
+        </testcase>
+        <testcase classname="src/features/config/pages/ConfigUsersPage.accessibility.test.tsx" name="ConfigUsersPage accessibility &gt; names the role selector and save action with the affected user" time="0.344579178">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/customers/pages/CustomersPage.authorization.test.tsx" timestamp="2026-10-26T06:30:45.690Z" hostname="indras-macbook-pro" tests="2" failures="0" errors="0" skipped="0" time="0.5259888">
+        <testcase classname="src/features/customers/pages/CustomersPage.authorization.test.tsx" name="CustomersPage authorization &gt; keeps the list readable but hides mutation controls without customers.manage" time="0.247414257">
+        </testcase>
+        <testcase classname="src/features/customers/pages/CustomersPage.authorization.test.tsx" name="CustomersPage authorization &gt; exposes mutation controls when customers.manage is granted" time="0.274142318">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/fiscalPeriods/pages/FiscalPeriodsPage.test.tsx" timestamp="2026-10-26T06:30:45.691Z" hostname="indras-macbook-pro" tests="1" failures="0" errors="0" skipped="0" time="0.725635355">
+        <testcase classname="src/features/fiscalPeriods/pages/FiscalPeriodsPage.test.tsx" name="FiscalPeriodsPage &gt; switches from the existing list to a calendar period-status view" time="0.720586461">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/fiscalPeriods/components/FiscalPeriodCalendarView.test.tsx" timestamp="2026-10-26T06:30:45.691Z" hostname="indras-macbook-pro" tests="1" failures="0" errors="0" skipped="0" time="0.593725493">
+        <testcase classname="src/features/fiscalPeriods/components/FiscalPeriodCalendarView.test.tsx" name="FiscalPeriodCalendar &gt; shows covered dates with period status and supports month navigation" time="0.588691579">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/fiscalPeriods/components/FiscalPeriodDateWarning.test.tsx" timestamp="2026-10-26T06:30:45.692Z" hostname="indras-macbook-pro" tests="2" failures="0" errors="0" skipped="0" time="0.305474552">
+        <testcase classname="src/features/fiscalPeriods/components/FiscalPeriodDateWarning.test.tsx" name="FiscalPeriodDateWarning &gt; identifies an open period and warns when the date is in a closed period" time="0.27170406">
+        </testcase>
+        <testcase classname="src/features/fiscalPeriods/components/FiscalPeriodDateWarning.test.tsx" name="FiscalPeriodDateWarning &gt; warns when a date has no fiscal-period coverage" time="0.028696582">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/fiscalPeriods/components/fiscalPeriodCalendar.test.ts" timestamp="2026-10-26T06:30:45.693Z" hostname="indras-macbook-pro" tests="2" failures="0" errors="0" skipped="0" time="0.010565778">
+        <testcase classname="src/features/fiscalPeriods/components/fiscalPeriodCalendar.test.ts" name="fiscal period calendar date helpers &gt; returns a Monday-aligned calendar grid with ISO local dates" time="0.006430948">
+        </testcase>
+        <testcase classname="src/features/fiscalPeriods/components/fiscalPeriodCalendar.test.ts" name="fiscal period calendar date helpers &gt; uses inclusive period boundaries and exposes overlapping periods" time="0.000918511">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/journals/pages/JournalsPage.test.tsx" timestamp="2026-10-26T06:30:45.693Z" hostname="indras-macbook-pro" tests="3" failures="0" errors="0" skipped="0" time="5.572018141">
+        <testcase classname="src/features/journals/pages/JournalsPage.test.tsx" name="JournalsPage source selection &gt; offers contextual searchable invoice options and omits draft, cancelled, and already-posted invoices" time="2.437780538">
+        </testcase>
+        <testcase classname="src/features/journals/pages/JournalsPage.test.tsx" name="JournalsPage source selection &gt; reverses the selected posted journal and shows invoice context without exposing its source GUID" time="1.590099848">
+        </testcase>
+        <testcase classname="src/features/journals/pages/JournalsPage.test.tsx" name="JournalsPage source selection &gt; warns and disables posting when the chosen date falls in a closed fiscal period" time="1.539606896">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/inventoryReports/pages/InventoryReportsPage.test.tsx" timestamp="2026-10-26T06:30:45.695Z" hostname="indras-macbook-pro" tests="3" failures="0" errors="0" skipped="0" time="1.124777676">
+        <testcase classname="src/features/inventoryReports/pages/InventoryReportsPage.test.tsx" name="InventoryReportsPage &gt; shows valuation at standard cost and the balance-to-ledger variance" time="0.494766732">
+        </testcase>
+        <testcase classname="src/features/inventoryReports/pages/InventoryReportsPage.test.tsx" name="InventoryReportsPage &gt; loads movement audit and reorder recommendations through their report tabs" time="0.407713065">
+        </testcase>
+        <testcase classname="src/features/inventoryReports/pages/InventoryReportsPage.test.tsx" name="InventoryReportsPage &gt; explains an inverted movement date range without querying it" time="0.217302644">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/products/components/ProductDataGrid.accessibility.test.tsx" timestamp="2026-10-26T06:30:45.696Z" hostname="indras-macbook-pro" tests="5" failures="0" errors="0" skipped="0" time="0.88426187">
+        <testcase classname="src/features/products/components/ProductDataGrid.accessibility.test.tsx" name="ProductDataGrid accessibility &gt; filters the product list by Sample product" time="0.360818157">
+        </testcase>
+        <testcase classname="src/features/products/components/ProductDataGrid.accessibility.test.tsx" name="ProductDataGrid accessibility &gt; filters the product list by SKU-1" time="0.054337048">
+        </testcase>
+        <testcase classname="src/features/products/components/ProductDataGrid.accessibility.test.tsx" name="ProductDataGrid accessibility &gt; filters the product list by each" time="0.050745807">
+        </testcase>
+        <testcase classname="src/features/products/components/ProductDataGrid.accessibility.test.tsx" name="ProductDataGrid accessibility &gt; shows the established empty state when the search has no matches" time="0.009224797">
+        </testcase>
+        <testcase classname="src/features/products/components/ProductDataGrid.accessibility.test.tsx" name="ProductDataGrid accessibility &gt; identifies expand, edit, and delete controls by product name" time="0.401751226">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/products/components/ProductDetailsPanel.test.tsx" timestamp="2026-10-26T06:30:45.697Z" hostname="indras-macbook-pro" tests="2" failures="0" errors="0" skipped="0" time="0.48571954">
+        <testcase classname="src/features/products/components/ProductDetailsPanel.test.tsx" name="ProductDetailsPanel &gt; presents core product data, image, prices, and an edit action in one detail panel" time="0.379591477">
+        </testcase>
+        <testcase classname="src/features/products/components/ProductDetailsPanel.test.tsx" name="ProductDetailsPanel &gt; keeps the detail panel recoverable after a load failure" time="0.101111528">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/products/components/ProductEditorDialog.test.tsx" timestamp="2026-10-26T06:30:45.698Z" hostname="indras-macbook-pro" tests="1" failures="0" errors="0" skipped="0" time="0.390370404">
+        <testcase classname="src/features/products/components/ProductEditorDialog.test.tsx" name="ProductEditorDialog image upload &gt; uploads a selected image for an existing product and shows the returned preview" time="0.385704052">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/products/components/ProductPurchaseHistoryPanel.test.tsx" timestamp="2026-10-26T06:30:45.698Z" hostname="indras-macbook-pro" tests="3" failures="0" errors="0" skipped="0" time="0.494839334">
+        <testcase classname="src/features/products/components/ProductPurchaseHistoryPanel.test.tsx" name="ProductPurchaseHistoryPanel &gt; shows dated supplier invoice entries and preserves each invoice currency" time="0.218277985">
+        </testcase>
+        <testcase classname="src/features/products/components/ProductPurchaseHistoryPanel.test.tsx" name="ProductPurchaseHistoryPanel &gt; shows an honest empty state when there is no recent purchase history" time="0.011848977">
+        </testcase>
+        <testcase classname="src/features/products/components/ProductPurchaseHistoryPanel.test.tsx" name="ProductPurchaseHistoryPanel &gt; retries after a history load failure" time="0.257639517">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/projects/components/AssignmentsPanel.test.tsx" timestamp="2026-10-26T06:30:45.700Z" hostname="indras-macbook-pro" tests="7" failures="0" errors="0" skipped="0" time="3.435402281">
+        <testcase classname="src/features/projects/components/AssignmentsPanel.test.tsx" name="AssignmentsPanel assignment and relationship UI logic &gt; shows no-access alert when projects.view permission is missing" time="0.264390727">
+        </testcase>
+        <testcase classname="src/features/projects/components/AssignmentsPanel.test.tsx" name="AssignmentsPanel assignment and relationship UI logic &gt; loads assignment data without management-only assignee options for a read-only user" time="0.059976756">
+        </testcase>
+        <testcase classname="src/features/projects/components/AssignmentsPanel.test.tsx" name="AssignmentsPanel assignment and relationship UI logic &gt; creates employee assignment payload from form state" time="0.85330097">
+        </testcase>
+        <testcase classname="src/features/projects/components/AssignmentsPanel.test.tsx" name="AssignmentsPanel assignment and relationship UI logic &gt; confirms discarding unsaved assignment changes" time="0.661365918">
+        </testcase>
+        <testcase classname="src/features/projects/components/AssignmentsPanel.test.tsx" name="AssignmentsPanel assignment and relationship UI logic &gt; switches to consultant mode and submits consultant assignment payload" time="0.864635401">
+        </testcase>
+        <testcase classname="src/features/projects/components/AssignmentsPanel.test.tsx" name="AssignmentsPanel assignment and relationship UI logic &gt; blocks an assignment whose end date is before its start date" time="0.504890232">
+        </testcase>
+        <testcase classname="src/features/projects/components/AssignmentsPanel.test.tsx" name="AssignmentsPanel assignment and relationship UI logic &gt; preserves the assignment type and state when editing an existing consultant" time="0.216820913">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/projects/components/DocumentsPanel.test.tsx" timestamp="2026-10-26T06:30:45.708Z" hostname="indras-macbook-pro" tests="8" failures="0" errors="0" skipped="0" time="2.227717736">
+        <testcase classname="src/features/projects/components/DocumentsPanel.test.tsx" name="DocumentsPanel upload/version flows &gt; shows no-access alert without document view permission" time="0.292965592">
+        </testcase>
+        <testcase classname="src/features/projects/components/DocumentsPanel.test.tsx" name="DocumentsPanel upload/version flows &gt; labels compact folder actions and preserves folder selection and reset" time="0.318122278">
+        </testcase>
+        <testcase classname="src/features/projects/components/DocumentsPanel.test.tsx" name="DocumentsPanel upload/version flows &gt; restores document selection, folder, status, and search from the project URL" time="0.072299999">
+        </testcase>
+        <testcase classname="src/features/projects/components/DocumentsPanel.test.tsx" name="DocumentsPanel upload/version flows &gt; does not fetch versions for a URL document absent from this project" time="0.042058866">
+        </testcase>
+        <testcase classname="src/features/projects/components/DocumentsPanel.test.tsx" name="DocumentsPanel upload/version flows &gt; keeps document filters in the URL when they change" time="0.102975423">
+        </testcase>
+        <testcase classname="src/features/projects/components/DocumentsPanel.test.tsx" name="DocumentsPanel upload/version flows &gt; uploads a document when title and file are provided" time="0.565472893">
+        </testcase>
+        <testcase classname="src/features/projects/components/DocumentsPanel.test.tsx" name="DocumentsPanel upload/version flows &gt; confirms discarding unsaved upload details and restores the form baseline" time="0.659742585">
+        </testcase>
+        <testcase classname="src/features/projects/components/DocumentsPanel.test.tsx" name="DocumentsPanel upload/version flows &gt; adds a new version when a file is selected" time="0.167286003">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/projects/pages/ProjectDetailsPage.test.tsx" timestamp="2026-10-26T06:30:45.714Z" hostname="indras-macbook-pro" tests="9" failures="0" errors="0" skipped="0" time="3.234246912">
+        <testcase classname="src/features/projects/pages/ProjectDetailsPage.test.tsx" name="ProjectDetailsPage tabs &gt; links five tabs to named panels and supports keyboard selection" time="1.527517622">
+            <system-err>
+An update to ForwardRef(ButtonBase) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(Tabs) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(Tabs) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+            </system-err>
+        </testcase>
+        <testcase classname="src/features/projects/pages/ProjectDetailsPage.test.tsx" name="ProjectDetailsPage tabs &gt; mounts child panels only on first visit and retains their state across tab changes" time="0.611583938">
+        </testcase>
+        <testcase classname="src/features/projects/pages/ProjectDetailsPage.test.tsx" name="ProjectDetailsPage tabs &gt; resets the selected tab and retained child state when opening another project" time="0.354653608">
+        </testcase>
+        <testcase classname="src/features/projects/pages/ProjectDetailsPage.test.tsx" name="ProjectDetailsPage tabs &gt; preserves read-only access without exposing project or party editing actions" time="0.177837932">
+        </testcase>
+        <testcase classname="src/features/projects/pages/ProjectDetailsPage.test.tsx" name="ProjectDetailsPage tabs &gt; opens the URL-selected Documents tab and preserves both return destinations" time="0.147815325">
+        </testcase>
+        <testcase classname="src/features/projects/pages/ProjectDetailsPage.test.tsx" name="ProjectDetailsPage tabs &gt; rejects an unsafe return destination: https://example.invalid" time="0.090578946">
+        </testcase>
+        <testcase classname="src/features/projects/pages/ProjectDetailsPage.test.tsx" name="ProjectDetailsPage tabs &gt; rejects an unsafe return destination: //example.invalid" time="0.088975593">
+        </testcase>
+        <testcase classname="src/features/projects/pages/ProjectDetailsPage.test.tsx" name="ProjectDetailsPage tabs &gt; rejects an unsafe return destination: /project-documents-unsafe" time="0.083984857">
+        </testcase>
+        <testcase classname="src/features/projects/pages/ProjectDetailsPage.test.tsx" name="ProjectDetailsPage tabs &gt; falls back to Overview for an unknown tab and preserves document query state when switching tabs" time="0.14100274">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/projects/pages/ProjectDocumentsPage.test.tsx" timestamp="2026-10-26T06:30:45.721Z" hostname="indras-macbook-pro" tests="9" failures="0" errors="0" skipped="0" time="0.937517858">
+        <testcase classname="src/features/projects/pages/ProjectDocumentsPage.test.tsx" name="uploads a document from Document Center after selecting a project" time="0.420193803">
+        </testcase>
+        <testcase classname="src/features/projects/pages/ProjectDocumentsPage.test.tsx" name="restores all search filters from the URL with inclusive UTC date boundaries" time="0.054734922">
+        </testcase>
+        <testcase classname="src/features/projects/pages/ProjectDocumentsPage.test.tsx" name="updates the URL and restores filters on browser Back navigation" time="0.099074451">
+        </testcase>
+        <testcase classname="src/features/projects/pages/ProjectDocumentsPage.test.tsx" name="keeps restored project and category values while lookup options are loading" time="0.023327501">
+        </testcase>
+        <testcase classname="src/features/projects/pages/ProjectDocumentsPage.test.tsx" name="resets managed filters without deleting unrelated URL parameters" time="0.063187144">
+            <system-err>
+An update to ProjectDocumentsPage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectDocumentsPage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectDocumentsPage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectDocumentsPage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+            </system-err>
+        </testcase>
+        <testcase classname="src/features/projects/pages/ProjectDocumentsPage.test.tsx" name="opens the selected document in its project and restores the filtered center on Back" time="0.128836153">
+        </testcase>
+        <testcase classname="src/features/projects/pages/ProjectDocumentsPage.test.tsx" name="does not offer project navigation without project-view permission" time="0.035489042">
+        </testcase>
+        <testcase classname="src/features/projects/pages/ProjectDocumentsPage.test.tsx" name="returns to the originating project document context but rejects external return destinations" time="0.058389213">
+            <system-err>
+An update to ProjectDocumentsPage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectDocumentsPage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectDocumentsPage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectDocumentsPage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() =&gt; {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you&apos;re testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+            </system-err>
+        </testcase>
+        <testcase classname="src/features/projects/pages/ProjectDocumentsPage.test.tsx" name="ignores an older search response after the filters have changed" time="0.049669434">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/projects/pages/ProjectsPage.test.tsx" timestamp="2026-10-26T06:30:45.725Z" hostname="indras-macbook-pro" tests="5" failures="0" errors="0" skipped="0" time="2.78120288">
+        <testcase classname="src/features/projects/pages/ProjectsPage.test.tsx" name="ProjectsPage form state &gt; keeps project details available while hiding mutations from a projects viewer" time="0.577933539">
+        </testcase>
+        <testcase classname="src/features/projects/pages/ProjectsPage.test.tsx" name="ProjectsPage form state &gt; returns from a project detail with the current list filters in the URL" time="0.226803014">
+        </testcase>
+        <testcase classname="src/features/projects/pages/ProjectsPage.test.tsx" name="ProjectsPage form state &gt; loads complete project details before editing and preserves non-list fields" time="0.41600048">
+        </testcase>
+        <testcase classname="src/features/projects/pages/ProjectsPage.test.tsx" name="ProjectsPage form state &gt; blocks saving when the project end date is earlier than its start date" time="0.525637152">
+        </testcase>
+        <testcase classname="src/features/projects/pages/ProjectsPage.test.tsx" name="ProjectsPage form state &gt; asks before discarding a multi-field project edit and keeps values when editing continues" time="1.01700987">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/reports/pages/ReportsPage.test.tsx" timestamp="2026-10-26T06:30:45.728Z" hostname="indras-macbook-pro" tests="2" failures="0" errors="0" skipped="0" time="3.668850469">
+        <testcase classname="src/features/reports/pages/ReportsPage.test.tsx" name="ReportsPage &gt; shows aging totals separately by currency instead of adding unlike currencies" time="1.659389131">
+        </testcase>
+        <testcase classname="src/features/reports/pages/ReportsPage.test.tsx" name="ReportsPage &gt; provides no-data explanations and exports prior-period comparisons" time="2.003285279">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/salesOrders/components/DocumentLineMutationAvailability.test.tsx" timestamp="2026-10-26T06:30:45.729Z" hostname="indras-macbook-pro" tests="4" failures="0" errors="0" skipped="0" time="0.677912652">
+        <testcase classname="src/features/salesOrders/components/DocumentLineMutationAvailability.test.tsx" name="document line mutation availability &gt; &apos;sales order&apos; remains readable and explains why line editing is blocked outside Draft" time="0.479697399">
+        </testcase>
+        <testcase classname="src/features/salesOrders/components/DocumentLineMutationAvailability.test.tsx" name="document line mutation availability &gt; &apos;purchase order&apos; remains readable and explains why line editing is blocked outside Draft" time="0.067217358">
+        </testcase>
+        <testcase classname="src/features/salesOrders/components/DocumentLineMutationAvailability.test.tsx" name="document line mutation availability &gt; &apos;sales invoice&apos; remains readable and explains why line editing is blocked outside Draft" time="0.061531577">
+        </testcase>
+        <testcase classname="src/features/salesOrders/components/DocumentLineMutationAvailability.test.tsx" name="document line mutation availability &gt; &apos;purchase invoice&apos; remains readable and explains why line editing is blocked outside Draft" time="0.064642417">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/salesOrders/pages/SalesOrdersPage.authorization.test.tsx" timestamp="2026-10-26T06:30:45.731Z" hostname="indras-macbook-pro" tests="2" failures="0" errors="0" skipped="0" time="0.489229765">
+        <testcase classname="src/features/salesOrders/pages/SalesOrdersPage.authorization.test.tsx" name="SalesOrdersPage authorization &gt; retains browsing and line inspection while hiding sales mutations for viewers" time="0.253880733">
+        </testcase>
+        <testcase classname="src/features/salesOrders/pages/SalesOrdersPage.authorization.test.tsx" name="SalesOrdersPage authorization &gt; enables header and line mutations for sales managers" time="0.231539589">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/features/salesShipments/components/FulfillmentEntryDialogs.test.tsx" timestamp="2026-10-26T06:30:45.732Z" hostname="indras-macbook-pro" tests="2" failures="0" errors="0" skipped="0" time="0.577603436">
+        <testcase classname="src/features/salesShipments/components/FulfillmentEntryDialogs.test.tsx" name="shipment and receipt quantity entry &gt; shows sales order progress, calculates the projected shipment, and caps entry" time="0.473679728">
+        </testcase>
+        <testcase classname="src/features/salesShipments/components/FulfillmentEntryDialogs.test.tsx" name="shipment and receipt quantity entry &gt; shows receipt progress and prevents entering more than the remaining quantity" time="0.099086919">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/pages/dashboard/components/DashboardAgingSection.test.tsx" timestamp="2026-10-26T06:30:45.733Z" hostname="indras-macbook-pro" tests="5" failures="0" errors="0" skipped="0" time="0.167926472">
+        <testcase classname="src/pages/dashboard/components/DashboardAgingSection.test.tsx" name="DashboardAgingSection &gt; renders AR and AP aging card titles" time="0.12122688">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardAgingSection.test.tsx" name="DashboardAgingSection &gt; renders bar charts when data is present" time="0.009026803">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardAgingSection.test.tsx" name="DashboardAgingSection &gt; renders empty text when aging data is empty" time="0.01010154">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardAgingSection.test.tsx" name="DashboardAgingSection &gt; renders totals when provided" time="0.014255505">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardAgingSection.test.tsx" name="DashboardAgingSection &gt; does not render totals section when totals are null" time="0.008759374">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/pages/dashboard/components/DashboardCashFlowTable.test.tsx" timestamp="2026-10-26T06:30:45.735Z" hostname="indras-macbook-pro" tests="5" failures="0" errors="0" skipped="0" time="0.407038265">
+        <testcase classname="src/pages/dashboard/components/DashboardCashFlowTable.test.tsx" name="DashboardCashFlowTable &gt; renders the section title" time="0.287491743">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardCashFlowTable.test.tsx" name="DashboardCashFlowTable &gt; renders the period window chip" time="0.023331252">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardCashFlowTable.test.tsx" name="DashboardCashFlowTable &gt; renders table column headers" time="0.035425434">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardCashFlowTable.test.tsx" name="DashboardCashFlowTable &gt; renders each cash row" time="0.036920434">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardCashFlowTable.test.tsx" name="DashboardCashFlowTable &gt; renders empty table body when no rows provided" time="0.01674592">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/pages/dashboard/components/DashboardChartsSection.test.tsx" timestamp="2026-10-26T06:30:45.738Z" hostname="indras-macbook-pro" tests="3" failures="0" errors="0" skipped="0" time="0.153492617">
+        <testcase classname="src/pages/dashboard/components/DashboardChartsSection.test.tsx" name="DashboardChartsSection &gt; renders the period cash flow title" time="0.13014976">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardChartsSection.test.tsx" name="DashboardChartsSection &gt; renders the receivables vs payables title" time="0.009756771">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardChartsSection.test.tsx" name="DashboardChartsSection &gt; charts the exact reported cash totals rather than a synthetic daily trend" time="0.00958757">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/pages/dashboard/components/DashboardHeaderFilters.test.tsx" timestamp="2026-10-26T06:30:45.741Z" hostname="indras-macbook-pro" tests="13" failures="0" errors="0" skipped="0" time="0.968833836">
+        <testcase classname="src/pages/dashboard/components/DashboardHeaderFilters.test.tsx" name="DashboardHeaderFilters &gt; shows the returned inclusive period ending 2026-05-03" time="0.318884999">
+            <system-err>
+react-i18next:: useTranslation: You will need to pass in an i18next instance by using initReactI18next { code: [32m&apos;NO_I18NEXT_INSTANCE&apos;[39m }
+
+            </system-err>
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardHeaderFilters.test.tsx" name="DashboardHeaderFilters &gt; shows the returned inclusive period ending 2024-03-01" time="0.041536407">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardHeaderFilters.test.tsx" name="DashboardHeaderFilters &gt; shows the returned inclusive period ending 2026-01-01" time="0.047248449">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardHeaderFilters.test.tsx" name="DashboardHeaderFilters &gt; ships complete KPI definitions in en-US" time="0.053064257">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardHeaderFilters.test.tsx" name="DashboardHeaderFilters &gt; ships complete KPI definitions in id-ID" time="0.042807515">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardHeaderFilters.test.tsx" name="DashboardHeaderFilters &gt; ships complete KPI definitions in es-ES" time="0.043193577">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardHeaderFilters.test.tsx" name="DashboardHeaderFilters &gt; labels the financial overview without presenting filters as page-wide controls" time="0.164876286">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardHeaderFilters.test.tsx" name="DashboardHeaderFilters &gt; renders the date filter with the provided value" time="0.036067658">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardHeaderFilters.test.tsx" name="DashboardHeaderFilters &gt; calls onAsOfDateChange when date changes" time="0.038116687">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardHeaderFilters.test.tsx" name="DashboardHeaderFilters &gt; calls onPeriodChange when period select changes" time="0.039504642">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardHeaderFilters.test.tsx" name="DashboardHeaderFilters &gt; renders period options" time="0.035311665">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardHeaderFilters.test.tsx" name="DashboardHeaderFilters &gt; renders an error alert when error is provided" time="0.072062152">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardHeaderFilters.test.tsx" name="DashboardHeaderFilters &gt; does not render an alert when error is null" time="0.029200853">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/pages/dashboard/components/DashboardHealthSection.test.tsx" timestamp="2026-10-26T06:30:45.747Z" hostname="indras-macbook-pro" tests="7" failures="0" errors="0" skipped="0" time="0.343315764">
+        <testcase classname="src/pages/dashboard/components/DashboardHealthSection.test.tsx" name="DashboardHealthSection &gt; does not represent empty balances as 100% healthy" time="0.189733576">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardHealthSection.test.tsx" name="DashboardHealthSection &gt; renders receivables and payables section headings" time="0.043169281">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardHealthSection.test.tsx" name="DashboardHealthSection &gt; renders the receivables health percentage" time="0.019293851">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardHealthSection.test.tsx" name="DashboardHealthSection &gt; renders the payables health percentage" time="0.023716428">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardHealthSection.test.tsx" name="DashboardHealthSection &gt; renders total receivables formatted value" time="0.020254097">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardHealthSection.test.tsx" name="DashboardHealthSection &gt; renders total payables formatted value" time="0.018937785">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardHealthSection.test.tsx" name="DashboardHealthSection &gt; renders progress bars for both sections" time="0.02234337">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/pages/dashboard/components/DashboardKpiCards.test.tsx" timestamp="2026-10-26T06:30:45.749Z" hostname="indras-macbook-pro" tests="11" failures="0" errors="0" skipped="0" time="0.528335388">
+        <testcase classname="src/pages/dashboard/components/DashboardKpiCards.test.tsx" name="DashboardKpiCards &gt; explains net cash 4000 without treating zero as a positive flow" time="0.196202398">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardKpiCards.test.tsx" name="DashboardKpiCards &gt; explains net cash -4000 without treating zero as a positive flow" time="0.036086313">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardKpiCards.test.tsx" name="DashboardKpiCards &gt; explains net cash 0 without treating zero as a positive flow" time="0.038273959">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardKpiCards.test.tsx" name="DashboardKpiCards &gt; renders the open receivables label" time="0.02792077">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardKpiCards.test.tsx" name="DashboardKpiCards &gt; renders the open payables label" time="0.036504066">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardKpiCards.test.tsx" name="DashboardKpiCards &gt; renders formatted receivables open value" time="0.030158664">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardKpiCards.test.tsx" name="DashboardKpiCards &gt; renders formatted payables open value" time="0.035218603">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardKpiCards.test.tsx" name="DashboardKpiCards &gt; renders overdue warning for receivables when overdue &gt; 0" time="0.028659303">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardKpiCards.test.tsx" name="DashboardKpiCards &gt; does not render overdue warning for payables when overdue is 0" time="0.035022173">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardKpiCards.test.tsx" name="DashboardKpiCards &gt; renders zero values gracefully when snapshot is null" time="0.026373407">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardKpiCards.test.tsx" name="DashboardKpiCards &gt; labels invoice totals as invoiced sales rather than recognized revenue" time="0.033079195">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/pages/dashboard/components/DashboardQuerySection.test.tsx" timestamp="2026-10-26T06:30:45.752Z" hostname="indras-macbook-pro" tests="6" failures="0" errors="0" skipped="0" time="0.525751037">
+        <testcase classname="src/pages/dashboard/components/DashboardQuerySection.test.tsx" name="Dashboard query states &gt; does not render zero-valued content or a success timestamp after a failed first load" time="0.293603055">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardQuerySection.test.tsx" name="Dashboard query states &gt; announces the pending section without rendering its content" time="0.038890314">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardQuerySection.test.tsx" name="Dashboard query states &gt; retries only its own query" time="0.075097979">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardQuerySection.test.tsx" name="Dashboard query states &gt; retains cached data and its successful timestamp when refresh fails" time="0.032515237">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardQuerySection.test.tsx" name="Dashboard query states &gt; retains cached data and disables duplicate refreshes while updating" time="0.057845678">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardQuerySection.test.tsx" name="Dashboard query states &gt; advances freshness only when a successful refresh supplies a newer timestamp" time="0.023135591">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/pages/dashboard/components/DashboardSectionLoader.test.tsx" timestamp="2026-10-26T06:30:45.754Z" hostname="indras-macbook-pro" tests="2" failures="0" errors="0" skipped="0" time="0.120111053">
+        <testcase classname="src/pages/dashboard/components/DashboardSectionLoader.test.tsx" name="DashboardSectionLoader &gt; renders skeleton elements" time="0.109473348">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardSectionLoader.test.tsx" name="DashboardSectionLoader &gt; accepts a custom minHeight prop without crashing" time="0.006387878">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/pages/dashboard/components/DashboardSections.smoke.test.tsx" timestamp="2026-10-26T06:30:45.755Z" hostname="indras-macbook-pro" tests="3" failures="0" errors="0" skipped="0" time="0.445067059">
+        <testcase classname="src/pages/dashboard/components/DashboardSections.smoke.test.tsx" name="Dashboard section smoke tests &gt; renders top customers table with values" time="0.337464228">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardSections.smoke.test.tsx" name="Dashboard section smoke tests &gt; renders recent orders table with status chips" time="0.064289166">
+        </testcase>
+        <testcase classname="src/pages/dashboard/components/DashboardSections.smoke.test.tsx" name="Dashboard section smoke tests &gt; renders quick stats labels and values" time="0.034787119">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/pages/dashboard/components/DashboardStorageSection.test.tsx" timestamp="2026-10-26T06:30:45.757Z" hostname="indras-macbook-pro" tests="1" failures="0" errors="0" skipped="0" time="0.416283582">
+        <testcase classname="src/pages/dashboard/components/DashboardStorageSection.test.tsx" name="DashboardStorageSection &gt; renders usage and top consumer values" time="0.410427295">
+        </testcase>
+    </testsuite>
+</testsuites>

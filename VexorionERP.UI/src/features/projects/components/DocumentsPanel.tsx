@@ -32,6 +32,7 @@ import {
   VxTypography,
 } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
+import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
 import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import {
@@ -108,6 +109,7 @@ function formatBytes(size: number) {
 export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
   const { t } = useTranslation()
   const { user } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const canView = user?.permissions.includes('project-documents.view') ?? false
   const canUpload = user?.permissions.includes('project-documents.upload') ?? false
@@ -117,10 +119,24 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
   const [folders, setFolders] = useState<DocumentFolderListItemResponse[]>([])
   const [documents, setDocuments] = useState<ProjectDocumentListItemResponse[]>([])
   const [versions, setVersions] = useState<ProjectDocumentVersionListItemResponse[]>([])
-  const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>()
-  const [selectedDocumentId, setSelectedDocumentId] = useState<string | undefined>()
-  const [statusFilter, setStatusFilter] = useState<ManagedDocumentStatus | ''>('')
-  const [searchTerm, setSearchTerm] = useState('')
+  const selectedFolderId = searchParams.get('folder') || undefined
+  const selectedDocumentId = searchParams.get('document') || documents[0]?.id
+  const statusValue = Number(searchParams.get('documentStatus'))
+  const statusFilter: ManagedDocumentStatus | '' = statusOptions.some((option) => option.value === statusValue) ? statusValue as ManagedDocumentStatus : ''
+  const searchTerm = searchParams.get('documentSearch') ?? ''
+
+  const updateView = (key: string, value: string | undefined) => {
+    if ((searchParams.get(key) ?? '') === (value ?? '')) return
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current)
+      if (value) next.set(key, value)
+      else next.delete(key)
+      return next
+    }, { replace: true })
+  }
+  const setSelectedFolderId = (value: string | undefined | ((previous: string | undefined) => string | undefined)) => {
+    updateView('folder', typeof value === 'function' ? value(selectedFolderId) : value)
+  }
 
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -277,37 +293,39 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
 
       setFolders(folderResult)
       setDocuments(documentResult)
-      if (!selectedDocumentId && documentResult.length > 0) {
-        setSelectedDocumentId(documentResult[0].id)
-      }
     } catch (loadError) {
       setError(loadError instanceof ApiError ? loadError.message : t('pages.projectDetails.documentsPanel.errors.load'))
     } finally {
       setIsLoading(false)
     }
-  }, [canView, projectId, selectedDocumentId, t])
+  }, [canView, projectId, t])
 
   useEffect(() => {
     void loadContext()
   }, [loadContext])
 
+  const availableDocumentId = selectedDocument?.id
+
   useEffect(() => {
-    if (!selectedDocumentId) {
+    let active = true
+    if (!canView || !availableDocumentId) {
       setVersions([])
       return
     }
 
+    setVersions([])
     const loadVersions = async () => {
       try {
-        const result = await getProjectDocumentVersions(projectId, selectedDocumentId)
-        setVersions(result)
+        const result = await getProjectDocumentVersions(projectId, availableDocumentId)
+        if (active) setVersions(result)
       } catch {
-        setVersions([])
+        if (active) setVersions([])
       }
     }
 
     void loadVersions()
-  }, [projectId, selectedDocumentId])
+    return () => { active = false }
+  }, [canView, projectId, availableDocumentId])
 
   useEffect(() => {
     if (!selectedDocument) return
@@ -419,7 +437,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
                     fullWidth
                     label={t('pages.projectDetails.documentsPanel.search')}
                     value={searchTerm}
-                    onChange={(event) => setSearchTerm(event.target.value)}
+                    onChange={(event) => updateView('documentSearch', event.target.value)}
                     slotProps={{ input: { startAdornment: <VxInputAdornment position="start"><SearchRoundedIcon fontSize="small" /></VxInputAdornment> } }}
                     sx={{ minWidth: 0, '& .MuiOutlinedInput-root': { borderRadius: '6px' } }}
                   />
@@ -429,7 +447,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
                     fullWidth
                     label={t('pages.projectDetails.documentsPanel.statusFilter')}
                     value={statusFilter}
-                    onChange={(event) => setStatusFilter(event.target.value === '' ? '' : Number(event.target.value) as ManagedDocumentStatus)}
+                    onChange={(event) => updateView('documentStatus', event.target.value)}
                     sx={{ minWidth: 0, '& .MuiOutlinedInput-root': { borderRadius: '6px' } }}
                   >
                     <VxMenuItem value="">{t('pages.projectDetails.documentsPanel.allStatuses')}</VxMenuItem>
@@ -460,7 +478,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
                     </VxTableHead>
                     <VxTableBody>
                       {visibleDocuments.map((document) => (
-                        <VxTableRow key={document.id} hover selected={selectedDocumentId === document.id} onClick={() => setSelectedDocumentId(document.id)} sx={{ cursor: 'pointer' }}>
+                        <VxTableRow key={document.id} hover selected={selectedDocumentId === document.id} onClick={() => updateView('document', document.id)} sx={{ cursor: 'pointer' }}>
                           <VxTableCell>{document.title}</VxTableCell>
                           <VxTableCell sx={{ fontFamily: 'monospace', fontSize: '0.78rem' }}>{document.documentNumber}</VxTableCell>
                           <VxTableCell>{document.fileName}</VxTableCell>
@@ -531,7 +549,6 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
                                       try {
                                         await deleteProjectDocument(projectId, document.id)
                                         setFeedback(t('pages.projectDetails.documentsPanel.feedback.documentDeleted'))
-                                        setSelectedDocumentId(undefined)
                                         await loadContext()
                                       } catch (deleteError) {
                                         setError(deleteError instanceof ApiError ? deleteError.message : t('pages.projectDetails.documentsPanel.errors.documentDelete'))

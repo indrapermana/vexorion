@@ -45,11 +45,12 @@ vi.mock('../components/DocumentsPanel', () => ({
   },
 }))
 
-function renderProject() {
+function renderProject(initialEntry: { pathname: string, search?: string, state?: { returnTo?: unknown } } = { pathname: '/projects/project-1', state: { returnTo: '/projects?search=contract' } }) {
   const router = createMemoryRouter([
     { path: '/projects/:projectId', element: <ProjectDetailsPage /> },
+    { path: '/project-documents', element: <div>Document Center destination</div> },
   ], {
-    initialEntries: [{ pathname: '/projects/project-1', state: { returnTo: '/projects?search=contract' } }],
+    initialEntries: [initialEntry],
   })
   render(<RouterProvider router={router} />)
   return router
@@ -140,5 +141,37 @@ describe('ProjectDetailsPage tabs', () => {
     fireEvent.click(tab('parties'))
     expect(screen.queryByRole('button', { name: 'pages.projectDetails.parties.addButton' })).not.toBeInTheDocument()
     expect(screen.getByRole('tabpanel', { name: 'pages.projectDetails.tabs.parties' })).toBeVisible()
+  })
+
+  it('opens the URL-selected Documents tab and preserves both return destinations', async () => {
+    mocks.permissions = ['projects.view', 'project-documents.view']
+    const returnTo = '/project-documents?search=contract&status=3&tag=legal'
+    const search = '?tab=documents&folder=contracts&document=document-2&documentSearch=contract'
+    const router = renderProject({ pathname: '/projects/project-1', search, state: { returnTo } })
+    await screen.findByRole('heading', { name: 'Project project-1', level: 1 })
+    expect(tab('documents')).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('link', { name: 'pages.projectDocuments.backToCenter' })).toHaveAttribute('href', returnTo)
+    const centerLink = screen.getByRole('link', { name: 'pages.projectDocuments.title' })
+    expect(centerLink).toHaveAttribute('href', '/project-documents?projectId=project-1')
+    fireEvent.click(centerLink)
+    expect(router.state.location.state.returnTo).toBe(`/projects/project-1${search}`)
+    expect(router.state.location.state.returnState).toEqual({ returnTo })
+  })
+
+  it.each(['https://example.invalid', '//example.invalid', '/project-documents-unsafe'])('rejects an unsafe return destination: %s', async (returnTo) => {
+    renderProject({ pathname: '/projects/project-1', state: { returnTo } })
+    await screen.findByRole('heading', { name: 'Project project-1', level: 1 })
+    expect(screen.getByRole('link', { name: 'pages.projectDetails.backButton' })).toHaveAttribute('href', '/projects')
+  })
+
+  it('falls back to Overview for an unknown tab and preserves document query state when switching tabs', async () => {
+    const router = renderProject({ pathname: '/projects/project-1', search: '?tab=unknown&folder=contracts&document=document-2' })
+    await screen.findByRole('heading', { name: 'Project project-1', level: 1 })
+    expect(tab('overview')).toHaveAttribute('aria-selected', 'true')
+    fireEvent.click(tab('documents'))
+    const query = new URLSearchParams(router.state.location.search)
+    expect(query.get('tab')).toBe('documents')
+    expect(query.get('folder')).toBe('contracts')
+    expect(query.get('document')).toBe('document-2')
   })
 })

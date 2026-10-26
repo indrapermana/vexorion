@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="97" failures="0" errors="0" time="10.153777187">
+    <testsuite name="src/app/authorization.test.ts" timestamp="2026-10-26T06:32:13.857Z" hostname="indras-macbook-pro" tests="2" failures="0" errors="0" skipped="0" time="0.009122408">
+        <testcase classname="src/app/authorization.test.ts" name="POS authorization matrix &gt; requires every read permission before mounting the sales workspace" time="0.00499899">
+        </testcase>
+        <testcase classname="src/app/authorization.test.ts" name="POS authorization matrix &gt; uses the backend shift-close permission identifier" time="0.000503642">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/themeContrast.test.ts" timestamp="2026-10-26T06:32:13.859Z" hostname="indras-macbook-pro" tests="2" failures="0" errors="0" skipped="0" time="0.021547278">
+        <testcase classname="src/test/themeContrast.test.ts" name="POS theme contrast &gt; keeps primary and text colors readable in light mode" time="0.01447683">
+        </testcase>
+        <testcase classname="src/test/themeContrast.test.ts" name="POS theme contrast &gt; keeps primary and text colors readable in dark mode" time="0.002434856">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/app/shiftStore.test.ts" timestamp="2026-10-26T06:32:13.860Z" hostname="indras-macbook-pro" tests="7" failures="0" errors="0" skipped="0" time="0.040891104">
+        <testcase classname="src/test/app/shiftStore.test.ts" name="shiftStore &gt; starts with no active shift" time="0.008967884">
+        </testcase>
+        <testcase classname="src/test/app/shiftStore.test.ts" name="shiftStore &gt; openShift calls API and sets shift" time="0.011350643">
+        </testcase>
+        <testcase classname="src/test/app/shiftStore.test.ts" name="shiftStore &gt; closeShift calls API and clears shift" time="0.003735428">
+        </testcase>
+        <testcase classname="src/test/app/shiftStore.test.ts" name="shiftStore &gt; closeShift uses 0 as default countedCash" time="0.001743799">
+        </testcase>
+        <testcase classname="src/test/app/shiftStore.test.ts" name="shiftStore &gt; fetchCurrentShift sets shift from API" time="0.001679781">
+        </testcase>
+        <testcase classname="src/test/app/shiftStore.test.ts" name="shiftStore &gt; fetchCurrentShift clears shift when API throws (404)" time="0.002366708">
+        </testcase>
+        <testcase classname="src/test/app/shiftStore.test.ts" name="shiftStore &gt; closeShift is a no-op when no current shift" time="0.001094433">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/app/transactionHistoryStore.test.ts" timestamp="2026-10-26T06:32:13.864Z" hostname="indras-macbook-pro" tests="7" failures="0" errors="0" skipped="0" time="0.024970669">
+        <testcase classname="src/test/app/transactionHistoryStore.test.ts" name="transactionHistoryStore &gt; starts empty" time="0.00877803">
+        </testcase>
+        <testcase classname="src/test/app/transactionHistoryStore.test.ts" name="transactionHistoryStore &gt; push prepends the new transaction" time="0.003655875">
+        </testcase>
+        <testcase classname="src/test/app/transactionHistoryStore.test.ts" name="transactionHistoryStore &gt; is capped at 10 entries" time="0.002325855">
+        </testcase>
+        <testcase classname="src/test/app/transactionHistoryStore.test.ts" name="transactionHistoryStore &gt; the most recent entries are kept when cap is exceeded" time="0.001872847">
+        </testcase>
+        <testcase classname="src/test/app/transactionHistoryStore.test.ts" name="transactionHistoryStore &gt; clear empties the list" time="0.000718664">
+        </testcase>
+        <testcase classname="src/test/app/transactionHistoryStore.test.ts" name="transactionHistoryStore &gt; stores shiftId when provided" time="0.00049402">
+        </testcase>
+        <testcase classname="src/test/app/transactionHistoryStore.test.ts" name="transactionHistoryStore &gt; shiftId is optional (undefined by default)" time="0.000507642">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/components/CartSummaryPanel.accessibility.test.tsx" timestamp="2026-10-26T06:32:13.866Z" hostname="indras-macbook-pro" tests="3" failures="0" errors="0" skipped="0" time="0.964334481">
+        <testcase classname="src/test/components/CartSummaryPanel.accessibility.test.tsx" name="CartSummaryPanel accessibility &gt; names the delivery transaction switch" time="0.475976261">
+        </testcase>
+        <testcase classname="src/test/components/CartSummaryPanel.accessibility.test.tsx" name="CartSummaryPanel accessibility &gt; names compact cart lines and their quantity, discount, and removal controls" time="0.401917741">
+        </testcase>
+        <testcase classname="src/test/components/CartSummaryPanel.accessibility.test.tsx" name="CartSummaryPanel accessibility &gt; shows a product-specific stock warning when cart quantity exceeds availability" time="0.082589688">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/components/PosHeader.test.tsx" timestamp="2026-10-26T06:32:13.867Z" hostname="indras-macbook-pro" tests="15" failures="0" errors="0" skipped="0" time="2.184695087">
+        <testcase classname="src/test/components/PosHeader.test.tsx" name="PosHeader &gt; renders title" time="0.315289722">
+        </testcase>
+        <testcase classname="src/test/components/PosHeader.test.tsx" name="PosHeader &gt; gives the theme icon button an accessible name" time="0.18010327">
+        </testcase>
+        <testcase classname="src/test/components/PosHeader.test.tsx" name="PosHeader &gt; shows currency chip" time="0.041768026">
+        </testcase>
+        <testcase classname="src/test/components/PosHeader.test.tsx" name="PosHeader &gt; does NOT show Return button when canRefund=false" time="0.059130942">
+        </testcase>
+        <testcase classname="src/test/components/PosHeader.test.tsx" name="PosHeader &gt; shows Return button when canRefund=true" time="0.086390195">
+        </testcase>
+        <testcase classname="src/test/components/PosHeader.test.tsx" name="PosHeader &gt; does NOT show Return button without an open shift" time="0.060518493">
+        </testcase>
+        <testcase classname="src/test/components/PosHeader.test.tsx" name="PosHeader &gt; uses the accessible primary palette for the outlined Return button" time="0.080197739">
+        </testcase>
+        <testcase classname="src/test/components/PosHeader.test.tsx" name="PosHeader &gt; calls onOpenReturn when Return button is clicked" time="0.081269344">
+        </testcase>
+        <testcase classname="src/test/components/PosHeader.test.tsx" name="PosHeader &gt; does NOT show Close Shift button when isShiftOpen=false" time="0.061418221">
+        </testcase>
+        <testcase classname="src/test/components/PosHeader.test.tsx" name="PosHeader &gt; shows Close Shift button when isShiftOpen=true and canCloseShift=true" time="0.107145415">
+        </testcase>
+        <testcase classname="src/test/components/PosHeader.test.tsx" name="PosHeader &gt; does NOT show Close Shift button when canCloseShift=false even if shift is open" time="0.095341867">
+        </testcase>
+        <testcase classname="src/test/components/PosHeader.test.tsx" name="PosHeader &gt; shows shift open chip when shift is open" time="0.049557286">
+        </testcase>
+        <testcase classname="src/test/components/PosHeader.test.tsx" name="PosHeader &gt; shows no-shift chip when no shift is open" time="0.051737101">
+        </testcase>
+        <testcase classname="src/test/components/PosHeader.test.tsx" name="PosHeader &gt; signs out immediately from both buttons when no shift is open" time="0.160769571">
+        </testcase>
+        <testcase classname="src/test/components/PosHeader.test.tsx" name="PosHeader &gt; asks for confirmation before signing out with an open shift" time="0.748576778">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/components/PosLiveFeedback.test.tsx" timestamp="2026-10-26T06:32:13.870Z" hostname="indras-macbook-pro" tests="1" failures="0" errors="0" skipped="0" time="0.518212059">
+        <testcase classname="src/test/components/PosLiveFeedback.test.tsx" name="POS live feedback accessibility &gt; announces unexpected runtime failures as alerts" time="0.506666342">
+            <system-err>
+Error: test render failure
+    at ThrowOnRender [90m(/Users/indra/Documents/work/indesyakaryadigital/workspace/VexorionERP/VexorionERP.POS/[39msrc/test/components/PosLiveFeedback.test.tsx:32:9[90m)[39m
+    at Object.react_stack_bottom_frame (/Users/indra/Documents/work/indesyakaryadigital/workspace/VexorionERP/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:25904:20)
+    at renderWithHooks (/Users/indra/Documents/work/indesyakaryadigital/workspace/VexorionERP/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:7662:22)
+    at updateFunctionComponent (/Users/indra/Documents/work/indesyakaryadigital/workspace/VexorionERP/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:10166:19)
+    at beginWork (/Users/indra/Documents/work/indesyakaryadigital/workspace/VexorionERP/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:11778:18)
+    at runWithFiberInDEV (/Users/indra/Documents/work/indesyakaryadigital/workspace/VexorionERP/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:874:13)
+    at performUnitOfWork (/Users/indra/Documents/work/indesyakaryadigital/workspace/VexorionERP/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17641:22)
+    at workLoopSync (/Users/indra/Documents/work/indesyakaryadigital/workspace/VexorionERP/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17469:41)
+    at renderRootSync (/Users/indra/Documents/work/indesyakaryadigital/workspace/VexorionERP/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17450:11)
+    at performWorkOnRoot (/Users/indra/Documents/work/indesyakaryadigital/workspace/VexorionERP/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:16583:35) {
+  [stack]: [36m[Getter/Setter][39m,
+  [message]: [32m&apos;test render failure&apos;[39m
+}
+
+The above error occurred in the &lt;ThrowOnRender&gt; component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, PosErrorBoundary.
+
+
+            </system-err>
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/components/ProductCatalogPanel.accessibility.test.tsx" timestamp="2026-10-26T06:32:13.871Z" hostname="indras-macbook-pro" tests="1" failures="0" errors="0" skipped="0" time="0.615589424">
+        <testcase classname="src/test/components/ProductCatalogPanel.accessibility.test.tsx" name="ProductCatalogPanel accessibility &gt; announces an empty catalog as status feedback" time="0.611374561">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/components/ReceiptModal.test.tsx" timestamp="2026-10-26T06:32:13.872Z" hostname="indras-macbook-pro" tests="6" failures="0" errors="0" skipped="0" time="0.736087653">
+        <testcase classname="src/test/components/ReceiptModal.test.tsx" name="ReceiptModal &gt; renders nothing when data is null" time="0.022805118">
+        </testcase>
+        <testcase classname="src/test/components/ReceiptModal.test.tsx" name="ReceiptModal &gt; renders dialog when data is provided" time="0.40909069">
+        </testcase>
+        <testcase classname="src/test/components/ReceiptModal.test.tsx" name="ReceiptModal &gt; renders all product names" time="0.070251662">
+        </testcase>
+        <testcase classname="src/test/components/ReceiptModal.test.tsx" name="ReceiptModal &gt; shows orderId and invoiceId references" time="0.047431102">
+        </testcase>
+        <testcase classname="src/test/components/ReceiptModal.test.tsx" name="ReceiptModal &gt; shows the customer label" time="0.04081865">
+        </testcase>
+        <testcase classname="src/test/components/ReceiptModal.test.tsx" name="ReceiptModal &gt; calls onClose when the close button is clicked" time="0.141655139">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/components/ReturnRefundDialog.test.tsx" timestamp="2026-10-26T06:32:13.875Z" hostname="indras-macbook-pro" tests="7" failures="0" errors="0" skipped="0" time="1.83198078">
+        <testcase classname="src/test/components/ReturnRefundDialog.test.tsx" name="ReturnRefundDialog &gt; renders the search step initially" time="0.427970881">
+        </testcase>
+        <testcase classname="src/test/components/ReturnRefundDialog.test.tsx" name="ReturnRefundDialog &gt; does not render when open=false" time="0.003148035">
+        </testcase>
+        <testcase classname="src/test/components/ReturnRefundDialog.test.tsx" name="ReturnRefundDialog &gt; shows not-found message when no invoice matches the search" time="0.211645076">
+        </testcase>
+        <testcase classname="src/test/components/ReturnRefundDialog.test.tsx" name="ReturnRefundDialog &gt; calls getSalesInvoices when search button is clicked" time="0.371813376">
+        </testcase>
+        <testcase classname="src/test/components/ReturnRefundDialog.test.tsx" name="ReturnRefundDialog &gt; submits one atomic refund request and reuses its idempotency key after an unknown outcome" time="0.698698704">
+            <system-out>
+[POS] {&quot;timestamp&quot;:&quot;2026-10-26T06:31:26.325Z&quot;,&quot;level&quot;:&quot;info&quot;,&quot;event&quot;:&quot;refund.success&quot;,&quot;data&quot;:{&quot;actorId&quot;:&quot;user-1&quot;,&quot;actorName&quot;:&quot;Alice&quot;,&quot;reason&quot;:&quot;Defective / Damaged&quot;,&quot;originalInvoiceId&quot;:&quot;inv-1&quot;,&quot;creditNoteId&quot;:&quot;credit-1&quot;,&quot;refundId&quot;:&quot;refund-1&quot;,&quot;refundAmount&quot;:10}}
+
+            </system-out>
+        </testcase>
+        <testcase classname="src/test/components/ReturnRefundDialog.test.tsx" name="ReturnRefundDialog &gt; calls onClose when the Cancel / X button is clicked" time="0.066744801">
+        </testcase>
+        <testcase classname="src/test/components/ReturnRefundDialog.test.tsx" name="ReturnRefundDialog &gt; closes from the keyboard while search is active" time="0.047949163">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/components/ShiftCloseDialog.test.tsx" timestamp="2026-10-26T06:32:13.881Z" hostname="indras-macbook-pro" tests="5" failures="0" errors="0" skipped="0" time="0.782864264">
+        <testcase classname="src/test/components/ShiftCloseDialog.test.tsx" name="ShiftCloseDialog &gt; renders when open=true" time="0.449542245">
+        </testcase>
+        <testcase classname="src/test/components/ShiftCloseDialog.test.tsx" name="ShiftCloseDialog &gt; uses section headings beneath the dialog title" time="0.127210624">
+        </testcase>
+        <testcase classname="src/test/components/ShiftCloseDialog.test.tsx" name="ShiftCloseDialog &gt; does not render when open=false" time="0.00501974">
+        </testcase>
+        <testcase classname="src/test/components/ShiftCloseDialog.test.tsx" name="ShiftCloseDialog &gt; sums totalSales from shift transactions only" time="0.060108402">
+        </testcase>
+        <testcase classname="src/test/components/ShiftCloseDialog.test.tsx" name="ShiftCloseDialog &gt; calls onClose when Cancel is clicked" time="0.136915778">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/components/ShiftOpenDialog.test.tsx" timestamp="2026-10-26T06:32:13.883Z" hostname="indras-macbook-pro" tests="7" failures="0" errors="0" skipped="0" time="1.105956501">
+        <testcase classname="src/test/components/ShiftOpenDialog.test.tsx" name="ShiftOpenDialog &gt; renders when open=true" time="0.359164218">
+        </testcase>
+        <testcase classname="src/test/components/ShiftOpenDialog.test.tsx" name="ShiftOpenDialog &gt; does not render dialog content when open=false" time="0.003557176">
+        </testcase>
+        <testcase classname="src/test/components/ShiftOpenDialog.test.tsx" name="ShiftOpenDialog &gt; shows error when submitting with empty input" time="0.163542071">
+        </testcase>
+        <testcase classname="src/test/components/ShiftOpenDialog.test.tsx" name="ShiftOpenDialog &gt; shows error when a negative float is entered" time="0.193189313">
+        </testcase>
+        <testcase classname="src/test/components/ShiftOpenDialog.test.tsx" name="ShiftOpenDialog &gt; calls onOpen with the parsed float when a valid amount is entered" time="0.156090589">
+        </testcase>
+        <testcase classname="src/test/components/ShiftOpenDialog.test.tsx" name="ShiftOpenDialog &gt; calls onOpen with 0 when 0 is entered" time="0.110296713">
+        </testcase>
+        <testcase classname="src/test/components/ShiftOpenDialog.test.tsx" name="ShiftOpenDialog &gt; submits on Enter key press" time="0.115996129">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/i18n/hardcodedCopy.test.ts" timestamp="2026-10-26T06:32:13.885Z" hostname="indras-macbook-pro" tests="1" failures="0" errors="0" skipped="0" time="0.337402205">
+        <testcase classname="src/test/i18n/hardcodedCopy.test.ts" name="POS localization boundary &gt; does not render hard-coded operational JSX copy" time="0.334304875">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/i18n/translations.test.ts" timestamp="2026-10-26T06:32:13.887Z" hostname="indras-macbook-pro" tests="12" failures="0" errors="0" skipped="0" time="0.052118629">
+        <testcase classname="src/test/i18n/translations.test.ts" name="i18n — all TranslationKeys are present in every locale &gt; en contains all 222 keys" time="0.007100513">
+        </testcase>
+        <testcase classname="src/test/i18n/translations.test.ts" name="i18n — all TranslationKeys are present in every locale &gt; id contains all 222 keys" time="0.000573032">
+        </testcase>
+        <testcase classname="src/test/i18n/translations.test.ts" name="i18n — all TranslationKeys are present in every locale &gt; es contains all 222 keys" time="0.000369792">
+        </testcase>
+        <testcase classname="src/test/i18n/translations.test.ts" name="i18n — no extra / unexpected keys in any locale &gt; en has no extra keys" time="0.000495811">
+        </testcase>
+        <testcase classname="src/test/i18n/translations.test.ts" name="i18n — no extra / unexpected keys in any locale &gt; id has no extra keys" time="0.000577507">
+        </testcase>
+        <testcase classname="src/test/i18n/translations.test.ts" name="i18n — no extra / unexpected keys in any locale &gt; es has no extra keys" time="0.000316914">
+        </testcase>
+        <testcase classname="src/test/i18n/translations.test.ts" name="i18n — values are non-empty strings &gt; en has no empty values" time="0.000501934">
+        </testcase>
+        <testcase classname="src/test/i18n/translations.test.ts" name="i18n — values are non-empty strings &gt; id has no empty values" time="0.000333159">
+        </testcase>
+        <testcase classname="src/test/i18n/translations.test.ts" name="i18n — values are non-empty strings &gt; es has no empty values" time="0.000479751">
+        </testcase>
+        <testcase classname="src/test/i18n/translations.test.ts" name="i18n — interpolation variables match English &gt; en preserves every interpolation variable" time="0.013667815">
+        </testcase>
+        <testcase classname="src/test/i18n/translations.test.ts" name="i18n — interpolation variables match English &gt; id preserves every interpolation variable" time="0.008081474">
+        </testcase>
+        <testcase classname="src/test/i18n/translations.test.ts" name="i18n — interpolation variables match English &gt; es preserves every interpolation variable" time="0.015089312">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/lib/apiCore.test.ts" timestamp="2026-10-26T06:32:13.890Z" hostname="indras-macbook-pro" tests="1" failures="0" errors="0" skipped="0" time="0.007307207">
+        <testcase classname="src/test/lib/apiCore.test.ts" name="client diagnostics &gt; reports network failures without including raw error details" time="0.00509513">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/lib/apiErrors.test.ts" timestamp="2026-10-26T06:32:13.891Z" hostname="indras-macbook-pro" tests="7" failures="0" errors="0" skipped="0" time="0.011514212">
+        <testcase classname="src/test/lib/apiErrors.test.ts" name="normalizeApiError &gt; provides a stable fallback for HTTP 401" time="0.006044279">
+        </testcase>
+        <testcase classname="src/test/lib/apiErrors.test.ts" name="normalizeApiError &gt; provides a stable fallback for HTTP 403" time="0.000369841">
+        </testcase>
+        <testcase classname="src/test/lib/apiErrors.test.ts" name="normalizeApiError &gt; provides a stable fallback for HTTP 404" time="0.000242546">
+        </testcase>
+        <testcase classname="src/test/lib/apiErrors.test.ts" name="normalizeApiError &gt; provides a stable fallback for HTTP 409" time="0.000367926">
+        </testcase>
+        <testcase classname="src/test/lib/apiErrors.test.ts" name="normalizeApiError &gt; provides a stable fallback for HTTP 429" time="0.000198559">
+        </testcase>
+        <testcase classname="src/test/lib/apiErrors.test.ts" name="normalizeApiError &gt; preserves problem details, trace id, and field errors" time="0.000826833">
+        </testcase>
+        <testcase classname="src/test/lib/apiErrors.test.ts" name="normalizeApiError &gt; adds the trace reference to unexpected server errors" time="0.000459764">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/lib/posCheckout.test.ts" timestamp="2026-10-26T06:32:13.893Z" hostname="indras-macbook-pro" tests="1" failures="0" errors="0" skipped="0" time="0.0130809">
+        <testcase classname="src/test/lib/posCheckout.test.ts" name="checkoutSale &gt; sends one atomic request carrying the idempotency key" time="0.009659111">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/lib/posDocuments.test.ts" timestamp="2026-10-26T06:32:13.893Z" hostname="indras-macbook-pro" tests="2" failures="0" errors="0" skipped="0" time="0.034143658">
+        <testcase classname="src/test/lib/posDocuments.test.ts" name="generateDocumentNumber &gt; formats document numbers as PREFIX-YYYYMMDDHHMMSS" time="0.02233515">
+        </testcase>
+        <testcase classname="src/test/lib/posDocuments.test.ts" name="generateDocumentNumber &gt; guarantees unique values even when called twice in the same second" time="0.005423269">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/lib/posLogger.test.ts" timestamp="2026-10-26T06:32:13.894Z" hostname="indras-macbook-pro" tests="5" failures="0" errors="0" skipped="0" time="0.031000224">
+        <testcase classname="src/test/lib/posLogger.test.ts" name="posLogger &gt; logs info to console.info as JSON" time="0.017272126">
+        </testcase>
+        <testcase classname="src/test/lib/posLogger.test.ts" name="posLogger &gt; logs warn to console.warn" time="0.000736249">
+        </testcase>
+        <testcase classname="src/test/lib/posLogger.test.ts" name="posLogger &gt; keeps error entries local and excludes error details" time="0.00451247">
+        </testcase>
+        <testcase classname="src/test/lib/posLogger.test.ts" name="posLogger &gt; exposes __posLogs on window" time="0.00059912">
+        </testcase>
+        <testcase classname="src/test/lib/posLogger.test.ts" name="posLogger &gt; omits data key when no data is provided" time="0.000383472">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/lib/printReceipt.test.ts" timestamp="2026-10-26T06:32:13.895Z" hostname="indras-macbook-pro" tests="2" failures="0" errors="0" skipped="0" time="0.049606127">
+        <testcase classname="src/test/lib/printReceipt.test.ts" name="printReceipt &gt; writes escaped receipt HTML with correct totals and reference lines" time="0.044665927">
+        </testcase>
+        <testcase classname="src/test/lib/printReceipt.test.ts" name="printReceipt &gt; alerts when the print popup is blocked" time="0.001272538">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/pages/LoginPage.test.tsx" timestamp="2026-10-26T06:32:13.896Z" hostname="indras-macbook-pro" tests="3" failures="0" errors="0" skipped="0" time="0.781352317">
+        <testcase classname="src/test/pages/LoginPage.test.tsx" name="POS LoginPage &gt; does not ship pre-filled credentials and explains the cashier context" time="0.387705297">
+        </testcase>
+        <testcase classname="src/test/pages/LoginPage.test.tsx" name="POS LoginPage &gt; toggles password visibility and warns about Caps Lock" time="0.295591222">
+        </testcase>
+        <testcase classname="src/test/pages/LoginPage.test.tsx" name="POS LoginPage &gt; shows a notice after a session expired" time="0.093186048">
+        </testcase>
+    </testsuite>
+</testsuites>
