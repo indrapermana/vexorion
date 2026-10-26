@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
   DeleteOutlineRoundedIcon,
   EditRoundedIcon,
   VxAlert,
+  VxBox,
   VxButton,
   VxConfirmActionDialog,
   VxChip,
@@ -16,6 +17,8 @@ import {
   VxMenuItem,
   VxPaper,
   VxStack,
+  VxTab,
+  VxTabs,
   VxTextField,
   VxTypography,
 } from '@vexorion/ui'
@@ -49,6 +52,23 @@ import AssignmentsPanel from '../components/AssignmentsPanel'
 import DocumentsPanel from '../components/DocumentsPanel'
 
 type ProjectDetailTab = 'overview' | 'parties' | 'assignments' | 'documents' | 'history'
+
+const projectDetailTabs: ProjectDetailTab[] = ['overview', 'parties', 'assignments', 'documents', 'history']
+
+function ProjectTabPanel({ tab, activeTab, children }: { tab: ProjectDetailTab, activeTab: ProjectDetailTab, children?: ReactNode }) {
+  return (
+    <VxBox
+      role="tabpanel"
+      id={`project-panel-${tab}`}
+      aria-labelledby={`project-tab-${tab}`}
+      hidden={activeTab !== tab}
+      tabIndex={0}
+      sx={{ minWidth: 0 }}
+    >
+      {children}
+    </VxBox>
+  )
+}
 
 type ProjectFormState = {
   projectCategoryId: string
@@ -324,6 +344,11 @@ function HistoryDataGrid({ rows }: HistoryDataGridProps) {
 }
 
 export default function ProjectDetailsPage() {
+  const { projectId } = useParams()
+  return <ProjectDetailsContent key={projectId} />
+}
+
+function ProjectDetailsContent() {
   const { t } = useTranslation()
   const { isAuthenticated, user } = useAuth()
   const canManage = user?.permissions.includes(Permissions.projects.manage) ?? false
@@ -342,6 +367,7 @@ export default function ProjectDetailsPage() {
   const [error, setError] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<ProjectDetailTab>('overview')
+  const [visitedTabs, setVisitedTabs] = useState<Set<ProjectDetailTab>>(() => new Set(['overview']))
 
   const [isProjectEditorOpen, setIsProjectEditorOpen] = useState(false)
   const [projectFormState, setProjectFormState] = useState<ProjectFormState | null>(null)
@@ -601,15 +627,22 @@ export default function ProjectDetailsPage() {
       <PageFeedback error={error} success={feedback} onRetry={error ? () => void loadProjectContext() : undefined} />
       {!canManage ? <PermissionReadOnlyAlert requiredPermission={Permissions.projects.manage} /> : null}
 
-      <VxPaper elevation={0} className="panel-card">
-        <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1}>
-          <VxButton variant={activeTab === 'overview' ? 'contained' : 'outlined'} aria-pressed={activeTab === 'overview'} onClick={() => setActiveTab('overview')}>{t('pages.projectDetails.tabs.overview')}</VxButton>
-          <VxButton variant={activeTab === 'parties' ? 'contained' : 'outlined'} aria-pressed={activeTab === 'parties'} onClick={() => setActiveTab('parties')}>{t('pages.projectDetails.tabs.parties')}</VxButton>
-          <VxButton variant={activeTab === 'assignments' ? 'contained' : 'outlined'} aria-pressed={activeTab === 'assignments'} onClick={() => setActiveTab('assignments')}>{t('pages.projectDetails.tabs.assignments')}</VxButton>
-          <VxButton variant={activeTab === 'documents' ? 'contained' : 'outlined'} aria-pressed={activeTab === 'documents'} onClick={() => setActiveTab('documents')}>{t('pages.projectDetails.tabs.documents')}</VxButton>
-          <VxButton variant={activeTab === 'history' ? 'contained' : 'outlined'} aria-pressed={activeTab === 'history'} onClick={() => setActiveTab('history')}>{t('pages.projectDetails.tabs.history')}</VxButton>
-        </VxStack>
-      </VxPaper>
+      <VxTabs
+        value={activeTab}
+        onChange={(_, tab: ProjectDetailTab) => {
+          setActiveTab(tab)
+          setVisitedTabs((previous) => new Set([...previous, tab]))
+        }}
+        variant="scrollable"
+        scrollButtons="auto"
+        allowScrollButtonsMobile
+        aria-label={t('pages.projectDetails.title')}
+        sx={{ minWidth: 0, maxWidth: '100%', borderBottom: 1, borderColor: 'divider' }}
+      >
+        {projectDetailTabs.map((tab) => (
+          <VxTab key={tab} value={tab} id={`project-tab-${tab}`} aria-controls={`project-panel-${tab}`} label={t(`pages.projectDetails.tabs.${tab}`)} />
+        ))}
+      </VxTabs>
 
       {isLoading ? (
         <VxPaper elevation={0} className="panel-card">
@@ -617,7 +650,8 @@ export default function ProjectDetailsPage() {
         </VxPaper>
       ) : null}
 
-      {activeTab === 'overview' && project ? (
+      <ProjectTabPanel tab="overview" activeTab={activeTab}>
+      {project ? (
         <VxPaper elevation={0} className="panel-card">
           <VxStack spacing={2}>
             <VxTypography component="h2" variant="h6">{t('pages.projectDetails.overview.title')}</VxTypography>
@@ -634,8 +668,10 @@ export default function ProjectDetailsPage() {
           </VxStack>
         </VxPaper>
       ) : null}
+      </ProjectTabPanel>
 
-      {activeTab === 'parties' ? (
+      <ProjectTabPanel tab="parties" activeTab={activeTab}>
+      {visitedTabs.has('parties') ? (
         <VxPaper elevation={0} className="panel-card" sx={{ p: 0 }}>
           <VxStack spacing={2} sx={{ px: 2.5, pt: 2.5 }}>
             <VxStack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
@@ -652,16 +688,22 @@ export default function ProjectDetailsPage() {
           />
         </VxPaper>
       ) : null}
+      </ProjectTabPanel>
 
-      {activeTab === 'assignments' ? (
+      <ProjectTabPanel tab="assignments" activeTab={activeTab}>
+      {visitedTabs.has('assignments') ? (
         <AssignmentsPanel projectId={projectId} />
       ) : null}
+      </ProjectTabPanel>
 
-      {activeTab === 'documents' ? (
+      <ProjectTabPanel tab="documents" activeTab={activeTab}>
+      {visitedTabs.has('documents') ? (
         <DocumentsPanel projectId={projectId} />
       ) : null}
+      </ProjectTabPanel>
 
-      {activeTab === 'history' ? (
+      <ProjectTabPanel tab="history" activeTab={activeTab}>
+      {visitedTabs.has('history') ? (
         <VxPaper elevation={0} className="panel-card" sx={{ p: 0 }}>
           <VxStack sx={{ px: 2.5, pt: 2.5 }}>
             <VxTypography component="h2" variant="h6">{t('pages.projectDetails.history.title')}</VxTypography>
@@ -669,6 +711,7 @@ export default function ProjectDetailsPage() {
           <HistoryDataGrid rows={timeline} />
         </VxPaper>
       ) : null}
+      </ProjectTabPanel>
 
       <VxDialog open={canManage && isProjectEditorOpen} onClose={requestProjectEditorClose} maxWidth="md" fullWidth>
         <VxDialogTitle>{t('pages.projectDetails.editButton')}</VxDialogTitle>

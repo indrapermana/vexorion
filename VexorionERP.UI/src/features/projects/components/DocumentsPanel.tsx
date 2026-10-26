@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
+  AddRoundedIcon,
+  CloudUploadRoundedIcon,
+  DeleteOutlineRoundedIcon,
+  EditRoundedIcon,
+  FolderRoundedIcon,
+  SearchRoundedIcon,
   VxAlert,
   VxBox,
   VxButton,
@@ -10,6 +16,8 @@ import {
   VxDialogActions,
   VxDialogContent,
   VxDialogTitle,
+  VxIconButton,
+  VxInputAdornment,
   VxMenuItem,
   VxPaper,
   VxStack,
@@ -20,6 +28,7 @@ import {
   VxTableHead,
   VxTableRow,
   VxTextField,
+  VxTooltip,
   VxTypography,
 } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
@@ -318,26 +327,32 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
     const children = folderChildren.get(parentFolderId) ?? []
     return children.map((folder) => (
       <VxBox key={folder.id}>
-        <VxStack direction="row" spacing={1} sx={{ alignItems: 'center', pl: depth * 2, py: 0.5 }}>
+        <VxStack direction="row" spacing={0.25} sx={{ alignItems: 'center', pl: Math.min(depth, 4) * 1.5, py: 0.5, minWidth: 0 }}>
           <VxButton
             size="small"
-            variant={selectedFolderId === folder.id ? 'contained' : 'text'}
+            variant="text"
+            startIcon={<FolderRoundedIcon fontSize="small" />}
+            aria-pressed={selectedFolderId === folder.id}
+            title={folder.name}
+            sx={{ flex: 1, minWidth: 0, justifyContent: 'flex-start', borderRadius: '6px', px: 1, bgcolor: selectedFolderId === folder.id ? 'action.selected' : 'transparent' }}
             onClick={() => setSelectedFolderId((prev) => (prev === folder.id ? undefined : folder.id))}
           >
-            {folder.name}
+            <VxTypography component="span" variant="body2" noWrap sx={{ minWidth: 0 }}>{folder.name}</VxTypography>
           </VxButton>
           {canManage ? (
             <>
-              <VxButton size="small" variant="text" onClick={() => openFolderEditor({ mode: 'edit', folderId: folder.id, parentFolderId: folder.parentFolderId ?? null, name: folder.name, description: folder.description ?? '' })}>
-                {t('common.edit')}
-              </VxButton>
+              <VxTooltip title={t('common.edit')}>
+                <VxIconButton size="small" aria-label={`${t('common.edit')}: ${folder.name}`} onClick={() => openFolderEditor({ mode: 'edit', folderId: folder.id, parentFolderId: folder.parentFolderId ?? null, name: folder.name, description: folder.description ?? '' })}>
+                  <EditRoundedIcon fontSize="small" />
+                </VxIconButton>
+              </VxTooltip>
               <VxConfirmActionButton
                 title={t('common.delete')}
                 targetName={folder.name}
                 consequence={t('pages.deleteConfirmations.folder.consequence')}
                 confirmLabel={t('common.delete')}
                 pendingLabel={t('dialogs.deleting')}
-                buttonProps={{ size: 'small', color: 'error', variant: 'text', disabled: isSaving }}
+                buttonProps={{ size: 'small', color: 'error', variant: 'text', disabled: isSaving, 'aria-label': `${t('common.delete')}: ${folder.name}`, title: t('common.delete'), sx: { minWidth: 28, width: 28, height: 28, p: 0, flexShrink: 0, borderRadius: '6px' } }}
                 onConfirm={async () => {
                   setIsSaving(true)
                   setError(null)
@@ -353,7 +368,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
                   }
                 }}
               >
-                {t('common.delete')}
+                <DeleteOutlineRoundedIcon fontSize="small" />
               </VxConfirmActionButton>
             </>
           ) : null}
@@ -372,19 +387,20 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
       {error ? <VxAlert severity="error" onClose={() => setError(null)}>{error}</VxAlert> : null}
       {feedback ? <VxAlert severity="success" onClose={() => setFeedback(null)}>{feedback}</VxAlert> : null}
 
-      <VxPaper elevation={0} className="panel-card">
-        <VxStack direction={{ xs: 'column', lg: 'row' }} spacing={2}>
-          <VxPaper elevation={0} className="products-metric-card" sx={{ minWidth: { xs: '100%', lg: 280 }, p: 1.5 }}>
+      <VxBox sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', lg: '220px minmax(0, 1fr)' }, gap: 2.5, alignItems: 'start', minWidth: 0 }}>
+          <VxBox component="nav" aria-label={t('pages.projectDetails.documentsPanel.folders')} sx={{ minWidth: 0, pr: { lg: 2.5 }, pb: { xs: 2, lg: 0 }, borderRight: { lg: 1 }, borderBottom: { xs: 1, lg: 0 }, borderColor: 'divider' }}>
             <VxStack spacing={1}>
-              <VxStack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                <VxTypography variant="subtitle1">{t('pages.projectDetails.documentsPanel.folders')}</VxTypography>
+              <VxStack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+                <VxTypography component="h3" variant="subtitle2">{t('pages.projectDetails.documentsPanel.folders')}</VxTypography>
                 {canManage ? (
-                  <VxButton size="small" variant="contained" onClick={() => openFolderEditor({ mode: 'create', parentFolderId: selectedFolderId ?? null, name: '', description: '' })}>
-                    {t('pages.projectDetails.documentsPanel.newFolder')}
-                  </VxButton>
+                  <VxTooltip title={t('pages.projectDetails.documentsPanel.newFolder')}>
+                    <VxIconButton size="small" aria-label={t('pages.projectDetails.documentsPanel.newFolder')} onClick={() => openFolderEditor({ mode: 'create', parentFolderId: selectedFolderId ?? null, name: '', description: '' })}>
+                      <AddRoundedIcon fontSize="small" />
+                    </VxIconButton>
+                  </VxTooltip>
                 ) : null}
               </VxStack>
-              <VxButton size="small" variant={selectedFolderId ? 'outlined' : 'contained'} onClick={() => setSelectedFolderId(undefined)}>
+              <VxButton size="small" variant="text" startIcon={<FolderRoundedIcon />} aria-pressed={!selectedFolderId} sx={{ justifyContent: 'flex-start', borderRadius: '6px', minHeight: 36, bgcolor: selectedFolderId ? 'transparent' : 'action.selected' }} onClick={() => setSelectedFolderId(undefined)}>
                 {t('pages.projectDetails.documentsPanel.allFolders')}
               </VxButton>
               <VxBox sx={{ maxHeight: 360, overflowY: 'auto', pr: 0.5 }}>
@@ -393,36 +409,38 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
                 ) : renderFolderTree(null, 0)}
               </VxBox>
             </VxStack>
-          </VxPaper>
+          </VxBox>
 
-          <VxBox sx={{ flex: 1 }}>
+          <VxBox sx={{ minWidth: 0 }}>
             <VxStack spacing={1.5}>
-              <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ justifyContent: 'space-between' }}>
-                <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ flexWrap: 'wrap' }}>
+              <VxBox sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'minmax(0, 1fr) 180px', md: canUpload ? 'minmax(0, 1fr) 160px max-content' : 'minmax(0, 1fr) 180px' }, gap: 1.5, alignItems: 'center' }}>
                   <VxTextField
                     size="small"
+                    fullWidth
                     label={t('pages.projectDetails.documentsPanel.search')}
                     value={searchTerm}
                     onChange={(event) => setSearchTerm(event.target.value)}
+                    slotProps={{ input: { startAdornment: <VxInputAdornment position="start"><SearchRoundedIcon fontSize="small" /></VxInputAdornment> } }}
+                    sx={{ minWidth: 0, '& .MuiOutlinedInput-root': { borderRadius: '6px' } }}
                   />
                   <VxTextField
                     select
                     size="small"
+                    fullWidth
                     label={t('pages.projectDetails.documentsPanel.statusFilter')}
                     value={statusFilter}
                     onChange={(event) => setStatusFilter(event.target.value === '' ? '' : Number(event.target.value) as ManagedDocumentStatus)}
-                    sx={{ minWidth: 180 }}
+                    sx={{ minWidth: 0, '& .MuiOutlinedInput-root': { borderRadius: '6px' } }}
                   >
                     <VxMenuItem value="">{t('pages.projectDetails.documentsPanel.allStatuses')}</VxMenuItem>
                     {statusOptions.map((option) => <VxMenuItem key={option.value} value={option.value}>{t(`pages.projectDetails.documentsPanel.status.${option.key}`)}</VxMenuItem>)}
                   </VxTextField>
-                </VxStack>
                 {canUpload ? (
-                  <VxButton variant="contained" onClick={openUploadDialog}>
+                  <VxButton variant="contained" startIcon={<CloudUploadRoundedIcon />} sx={{ height: 40, py: 0, whiteSpace: 'nowrap', borderRadius: '6px', gridColumn: { sm: '1 / -1', md: 'auto' }, justifySelf: { xs: 'stretch', sm: 'end' }, width: { xs: '100%', sm: 'auto' } }} onClick={openUploadDialog}>
                     {t('pages.projectDetails.documentsPanel.upload')}
                   </VxButton>
                 ) : null}
-              </VxStack>
+              </VxBox>
 
               {isLoading ? (
                 <VxBox sx={{ display: 'grid', placeItems: 'center', py: 4 }}><VxCircularProgress size={24} /></VxBox>
@@ -543,8 +561,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
               )}
             </VxStack>
           </VxBox>
-        </VxStack>
-      </VxPaper>
+      </VxBox>
 
       {selectedDocument ? (
         <VxPaper elevation={0} className="panel-card">

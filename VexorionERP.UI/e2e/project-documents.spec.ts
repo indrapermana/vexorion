@@ -71,7 +71,7 @@ test('P1-1: upload, version, preview, download, and preserve document history', 
 
     await page.goto(`/projects/${projectId}`)
     await expect(page.getByText(projectName, { exact: true })).toBeVisible()
-    await page.getByRole('button', { name: /^documents$/i }).click()
+    await page.getByRole('tab', { name: /^documents$/i }).click()
     await page.getByRole('button', { name: /upload document/i }).click()
 
     const uploadDialog = page.getByRole('dialog')

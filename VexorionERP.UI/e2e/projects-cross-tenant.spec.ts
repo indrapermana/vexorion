@@ -98,7 +98,7 @@ test('P1-1: tenant A creates a project and links tenant B', async ({ page }) => 
     await page.goto(`/projects/${projectId}`)
     await expect(page.getByText(projectName, { exact: true })).toBeVisible()
 
-    await page.getByRole('button', { name: /^parties$/i }).click()
+    await page.getByRole('tab', { name: /^(partners|parties)$/i }).click()
     await page.getByRole('button', { name: /add (project )?party/i }).click()
 
     const partyDialog = page.getByRole('dialog')

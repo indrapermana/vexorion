@@ -533,10 +533,14 @@ Open finance, journal, reporting, and audit work is consolidated in the final Ma
 
 **Findings**
 
-- Functionality is broad, but Project Details (831 lines) and Documents Panel (726 lines) contain too many concepts/actions in one surface.
+- Project Details now uses five accessible, scrollable tabs with linked panels and retained state for visited assignment/document panels; UX-PROJ-01 is locally and manually browser validated 26 October 2026, including the refined Documents toolbar and folder controls. Broader document workflows remain in the final Main UI backlog.
 - Global Document Center versus project-specific Documents responsibility/navigation is insufficiently explained.
 - Relationship/party forms expose raw tenant IDs and JSON scope text, which is error-prone for administrators.
 - Malware scanning remains intentionally disabled pending private scanner integration and live evidence.
+
+- [x] `UX-PROJ-01` Restructure Project Details into Overview, Parties, Assignments, Documents, and History tabs. Locally and manually browser validated 26 October 2026: shared scrollable tabs provide keyboard navigation and named tab panels; visited panels remain mounted to retain drafts, selections, and filters, while assignment/document loading remains deferred until first visit. Opening another project resets tab and panel state. Existing permission checks, unsaved-change guards, and the Back to projects destination are preserved.
+  - Documents-tab screenshot follow-up (26 October 2026): replaced the growing nested metric card with an unframed 220px desktop folder sidebar and responsive document workspace. Search, status, and Upload align in a grid with 40px controls and explicit 6px corners; upload text stays on one line, folder actions use labelled icons, and long folder names truncate within bounded indentation. Project/locale tests pass 23/23, including folder action/selection coverage; typecheck and production build pass. Scoped lint passes with the existing `react-hooks/refs` findings excluded; unfiltered lint still reports those unchanged form-baseline findings. Read-only authenticated browser measurements confirmed the desktop sidebar width, control sizes/corners, and no document-level overflow at observed wide/narrow widths. The user confirmed manual browser acceptance is green, including the refined Documents layout; this does not close UX-PROJ-04 or the document-storage E2E work.
+  - Evidence: initial Main UI suite passes 309/309, including four new tab accessibility, lazy-mount/state-retention, project-switch reset, and read-only regressions. Focused project, locale, and unsaved-change tests pass 27/27. Typecheck, scoped ESLint, and production build pass; the existing large-chunk warning remains. Four project E2E scenarios now use tab selectors and pass Playwright discovery (five tests including setup); those workflows were not executed. The user confirmed manual browser validation is green on 26 October 2026. This is local and manual browser validation, not the release gate.
 
 Open project, document, relationship, and malware-scanning work is consolidated in the final Main UI backlog.
 
@@ -671,7 +675,6 @@ Complete application work in order: **Main UI → AdminUI → POS**. Finish the 
 
 #### Projects, documents, imports, and generated documents
 
-- [ ] `UX-PROJ-01` Restructure Project Details into Overview, Parties, Assignments, Documents, and History tabs.
 - [ ] `UX-PROJ-02` Clarify global Document Center versus project Documents and preserve navigation/filter context.
 - [ ] `UX-PROJ-03` Replace tenant-ID and JSON-scope entry with authorized pickers and named controls.
 - [ ] `UX-PROJ-04` Improve document breadcrumbs/selection and prioritize preview, download, upload version, metadata, and delete.

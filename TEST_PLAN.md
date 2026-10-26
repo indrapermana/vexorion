@@ -321,6 +321,24 @@ Acceptance (26 October 2026): the user confirmed the Audit Logs browser check pa
 
 ---
 
+### 1.10 Project Details
+
+| # | Scenario | Steps | Expected Result |
+|---|----------|-------|-----------------|
+| 1.10.1 | Accessible project sections | Open a project and visit Overview, Parties, Assignments, Documents, and History | Five localized tabs select the corresponding named panel; only the active panel is visible and exposed to assistive technology |
+| 1.10.2 | Keyboard tab navigation | Focus a project tab; use arrow keys, Home/End, and Enter/Space | Focus moves between tabs; activation selects the matching panel and updates the selected state |
+| 1.10.3 | Retain section state | Change document folder/filter/selection or assignment list state, switch sections, and return; separately edit a record and attempt to dismiss its dialog | Switching tabs does not remount visited panels or erase retained state; dirty edit dialogs still require their existing discard confirmation, and navigation-away guards remain in effect |
+| 1.10.4 | Isolate project detail state | Visit Documents or Assignments, then navigate to a different project | Overview is selected for the new project; previous project panel state and records are not reused; unvisited assignment/document panels do not load |
+| 1.10.5 | Preserve read-only access and return navigation | Open a project with view-only permission from a filtered project list; visit sections and return to the list | Edit project and party mutation actions remain unavailable; child panel permissions still apply; Back to projects preserves its supplied list destination |
+| 1.10.6 | Responsive project tabs | Review at 360, 768, 1024, and 1440 px, including translated labels | Tab navigation scrolls within the page width with usable scroll controls; labels, panels, and actions do not overlap or create document-level horizontal overflow |
+| 1.10.7 | Document toolbar and folder controls | Open Documents with folders present; review wide and narrow layouts; use search, status, and folder selection | Desktop folder sidebar stays bounded at 220px; search, status, and Upload align at 40px height with compact corners; narrow layouts stack cleanly without wrapped upload text or page overflow; folder icon actions have accessible names/tooltips and selection/reset still work |
+
+UX-PROJ-01 acceptance (26 October 2026): the user confirmed manual browser validation is green, including the refined Documents layout. UX-PROJ-01 is complete. The initial Main UI suite passed 309/309, including four focused tab regressions; project/locale/unsaved-change checks passed 27/27. Typecheck, scoped lint, and production build passed with the existing chunk-size warning. Updated project E2E selectors passed discovery only; no authenticated E2E workflows were run. This is local and manual browser validation, not the release gate.
+
+Documents-layout follow-up (26 October 2026): project/locale regressions pass 23/23, including a new folder-control accessibility/selection test; typecheck and production build pass. Scoped lint passes only with the pre-existing ref-during-render rule findings excluded. Read-only authenticated browser checks on an isolated preview confirmed the bounded sidebar, 40px upload height, 6px control corners, and no page overflow at observed wide/narrow widths. The shared browser viewport changed during inspection, so those automated checks are not a completed fixed-viewport acceptance matrix; the user subsequently confirmed manual browser acceptance is green.
+
+---
+
 ## Part 2 — POS Application
 
 ### 2.1 Authentication

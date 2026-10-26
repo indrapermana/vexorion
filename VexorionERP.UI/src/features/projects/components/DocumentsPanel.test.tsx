@@ -2,7 +2,7 @@
 
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import type { MouseEventHandler, ReactNode } from 'react'
+import type { ButtonHTMLAttributes, ReactNode } from 'react'
 import DocumentsPanel from './DocumentsPanel'
 import type { DocumentFolderListItemResponse, ProjectDocumentListItemResponse, ProjectDocumentVersionListItemResponse } from '../../../types/api'
 
@@ -53,17 +53,26 @@ vi.mock('@vexorion/ui', () => {
   const passThrough = ({ children }: { children?: ReactNode }) => <div>{children}</div>
 
   return {
+    AddRoundedIcon: () => <span aria-hidden="true" />,
+    CloudUploadRoundedIcon: () => <span aria-hidden="true" />,
+    DeleteOutlineRoundedIcon: () => <span aria-hidden="true" />,
+    EditRoundedIcon: () => <span aria-hidden="true" />,
+    FolderRoundedIcon: () => <span aria-hidden="true" />,
+    SearchRoundedIcon: () => <span aria-hidden="true" />,
     VxAlert: ({ children }: { children?: ReactNode }) => <div role="alert">{children}</div>,
     VxBox: passThrough,
-    VxButton: ({ children, onClick, disabled }: { children?: ReactNode, onClick?: MouseEventHandler<HTMLButtonElement>, disabled?: boolean }) => (
-      <button type="button" onClick={onClick} disabled={disabled}>{children}</button>
+    VxButton: ({ children, onClick, disabled, 'aria-pressed': pressed }: ButtonHTMLAttributes<HTMLButtonElement>) => (
+      <button type="button" onClick={onClick} disabled={disabled} aria-pressed={pressed}>{children}</button>
     ),
     VxChip: ({ label }: { label: string }) => <span>{label}</span>,
     VxCircularProgress: () => <div>loading</div>,
+    VxConfirmActionButton: ({ children, buttonProps }: { children?: ReactNode, buttonProps?: ButtonHTMLAttributes<HTMLButtonElement> }) => <button type="button" aria-label={buttonProps?.['aria-label']} disabled={buttonProps?.disabled}>{children}</button>,
     VxDialog: ({ open, children }: { open: boolean, children?: ReactNode }) => (open ? <div>{children}</div> : null),
     VxDialogActions: passThrough,
     VxDialogContent: passThrough,
     VxDialogTitle: passThrough,
+    VxIconButton: ({ children, onClick, 'aria-label': label }: ButtonHTMLAttributes<HTMLButtonElement>) => <button type="button" aria-label={label} onClick={onClick}>{children}</button>,
+    VxInputAdornment: passThrough,
     VxMenuItem: ({ children, value }: { children?: ReactNode, value: string | number }) => <option value={value}>{children}</option>,
     VxPaper: passThrough,
     VxStack: passThrough,
@@ -115,6 +124,7 @@ vi.mock('@vexorion/ui', () => {
       )
     ),
     VxTypography: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+    VxTooltip: passThrough,
   }
 })
 
@@ -152,6 +162,29 @@ describe('DocumentsPanel upload/version flows', () => {
     render(<DocumentsPanel projectId="project-1" />)
 
     expect(screen.getByRole('alert')).toHaveTextContent('pages.projectDetails.documentsPanel.noAccess')
+  })
+
+  it('labels compact folder actions and preserves folder selection and reset', async () => {
+    authMocks.mockUseAuth.mockReturnValue({
+      user: { permissions: ['project-documents.view', 'project-documents.manage'] },
+    })
+    apiMocks.mockGetProjectDocumentFolders.mockResolvedValue([
+      { id: 'folder-1', projectId: 'project-1', parentFolderId: null, name: 'Contracts and agreements', description: null, isActive: true },
+    ])
+    render(<DocumentsPanel projectId="project-1" />)
+
+    const folder = await screen.findByRole('button', { name: 'Contracts and agreements' })
+    expect(screen.getByRole('button', { name: 'pages.projectDetails.documentsPanel.newFolder' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'common.edit: Contracts and agreements' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'common.delete: Contracts and agreements' })).toBeInTheDocument()
+    const allFolders = screen.getByRole('button', { name: 'pages.projectDetails.documentsPanel.allFolders' })
+    expect(allFolders).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(folder)
+    expect(folder).toHaveAttribute('aria-pressed', 'true')
+    expect(allFolders).toHaveAttribute('aria-pressed', 'false')
+    fireEvent.click(allFolders)
+    expect(allFolders).toHaveAttribute('aria-pressed', 'true')
+    expect(folder).toHaveAttribute('aria-pressed', 'false')
   })
 
   it('uploads a document when title and file are provided', async () => {

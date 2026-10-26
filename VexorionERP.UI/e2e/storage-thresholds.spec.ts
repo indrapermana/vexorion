@@ -135,7 +135,7 @@ test('P1-1: show storage thresholds and reject uploads beyond the hard quota', a
 
     await tenantPage.goto(`/projects/${projectId}`)
     await expect(tenantPage.getByText(projectName, { exact: true })).toBeVisible()
-    await tenantPage.getByRole('button', { name: /^documents$/i }).click()
+    await tenantPage.getByRole('tab', { name: /^documents$/i }).click()
     await tenantPage.getByRole('button', { name: /upload document/i }).click()
 
     const uploadDialog = tenantPage.getByRole('dialog')
