@@ -43,6 +43,9 @@ test('P1-1: upload, version, preview, download, and preserve document history', 
   let documentId: string | null = null
 
   await page.goto('/')
+  const currentUser = expectSuccessfulFixture(await authenticatedApi<{ tenantId: string }>(page, '/auth/me', 'GET'), 'Current tenant')
+  const originalUsage = expectSuccessfulFixture(await authenticatedApi<{ usedBytes: number }>(page, `/tenants/${currentUser.tenantId}/storage/summary`, 'GET'), 'Original storage usage')
+  expect(originalUsage.usedBytes).toBeGreaterThanOrEqual(0)
 
   try {
     categoryId = expectSuccessfulFixture(
@@ -118,19 +121,28 @@ test('P1-1: upload, version, preview, download, and preserve document history', 
       buffer: Buffer.from(secondContent),
     })
 
-    const versionResponsePromise = page.waitForResponse((response) => (
-      response.request().method() === 'POST'
-      && response.url().endsWith(`/api/projects/${projectId}/documents/${documentId}/versions`)
-    ))
+    let committedVersion: ProjectDocumentVersion | null = null
+    const versionRoute = `**/api/projects/${projectId}/documents/${documentId}/versions`
+    await page.route(versionRoute, async (route) => {
+      if (route.request().method() !== 'POST') { await route.continue(); return }
+      const response = await route.fetch()
+      if (!response.ok()) { await route.fulfill({ response }); return }
+      committedVersion = await response.json() as ProjectDocumentVersion
+      await route.abort('failed')
+    })
     await versionDialog.getByRole('button', { name: /add version/i }).click()
-    const versionResponse = await versionResponsePromise
-    if (!versionResponse.ok()) {
-      throw new Error(`Version upload returned HTTP ${versionResponse.status()}: ${await versionResponse.text()}`)
-    }
-    const uploadedVersion = (await versionResponse.json()) as ProjectDocumentVersion
-    expect(uploadedVersion).toMatchObject({ versionNumber: 2, fileName: secondFileName })
-
-    await expect(page.getByText(/new version uploaded/i)).toBeVisible()
+    await expect(page.getByText(/upload outcome unconfirmed/i)).toBeVisible()
+    expect(committedVersion).toMatchObject({ versionNumber: 2, fileName: secondFileName })
+    await page.unroute(versionRoute)
+    await page.reload()
+    await expect(page.getByText(/upload outcome unconfirmed/i)).toBeVisible()
+    await expect(page.getByRole('button', { name: /^upload document$/i })).toBeDisabled()
+    await page.getByRole('button', { name: /^refresh$/i }).click()
+    const discard = page.getByRole('button', { name: /^discard pending attempt$/i })
+    await expect(discard).toBeEnabled()
+    await discard.click()
+    await page.getByRole('dialog').getByRole('button', { name: /^discard pending attempt$/i }).click()
+    await expect(page.getByText(/upload outcome unconfirmed/i)).toHaveCount(0)
     await expect(documentsTable.getByRole('cell', { name: secondFileName, exact: true })).toBeVisible()
     await expect(documentsTable.getByRole('cell', { name: firstFileName, exact: true })).toHaveCount(0)
     await expect(documentsTable.getByRole('cell', { name: 'v2', exact: true })).toBeVisible()
@@ -180,6 +192,22 @@ test('P1-1: upload, version, preview, download, and preserve document history', 
     const downloadedBlob = await page.request.get(downloadLink.downloadUrl)
     expect(downloadedBlob.ok()).toBeTruthy()
     expect((await downloadedBlob.body()).toString()).toBe(secondContent)
+
+    await page.getByRole('combobox', { name: /^next status$/i }).click()
+    await page.getByRole('option', { name: /^archived$/i }).click()
+    await page.getByRole('button', { name: /^apply status$/i }).click()
+    await expect(page.getByText(/archived documents are read-only/i)).toBeVisible()
+    await expect(page.getByRole('button', { name: /^add version$/i })).toBeDisabled()
+    await expect(page.getByRole('button', { name: /^edit metadata$/i })).toBeDisabled()
+    await expect(page.getByRole('button', { name: /^preview$/i })).toBeEnabled()
+    const retainedUsage = expectSuccessfulFixture(await authenticatedApi<{ usedBytes: number }>(page, `/tenants/${currentUser.tenantId}/storage/summary`, 'GET'), 'Retained version usage')
+    expect(retainedUsage.usedBytes).toBe(originalUsage.usedBytes + Buffer.byteLength(firstContent) + Buffer.byteLength(secondContent))
+    const deletion = await authenticatedApi(page, `/projects/${projectId}/documents/${documentId}`, 'DELETE')
+    expect(deletion.status).toBeGreaterThanOrEqual(200)
+    expect(deletion.status).toBeLessThan(300)
+    documentId = null
+    const finalUsage = expectSuccessfulFixture(await authenticatedApi<{ usedBytes: number }>(page, `/tenants/${currentUser.tenantId}/storage/summary`, 'GET'), 'Storage usage after deletion')
+    expect(finalUsage.usedBytes).toBe(originalUsage.usedBytes)
   } finally {
     if (!page.isClosed()) {
       if (documentId && projectId) {

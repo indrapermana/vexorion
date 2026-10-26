@@ -12,7 +12,8 @@ public class ProjectDocumentCommandService(
     ICurrentTenantProvider currentTenantProvider,
     IAuditLogger auditLogger,
     IHttpContextAccessor httpContextAccessor,
-    IDocumentStorageService documentStorageService)
+    IDocumentStorageService documentStorageService,
+    IStorageAccountingService storageAccountingService)
     : BaseCommandService<ProjectDocument>(currentTenantProvider)
 {
     // Status transitions that are permitted
@@ -77,35 +78,38 @@ public class ProjectDocumentCommandService(
     {
         ArgumentNullException.ThrowIfNull(dbContext);
         var tenantId = TryGetTenantId();
-        if (tenantId.HasValue)
+        if (!tenantId.HasValue)
+            return ServiceResult<bool>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+        var document = await dbContext.ProjectDocuments.GetByTenant(tenantId.Value)
+            .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+        if (document is null)
+            return ServiceResult<bool>.Failure(StatusCodes.Status404NotFound, "Document not found.");
+        var versions = await dbContext.DocumentVersions.IgnoreQueryFilters()
+            .Where(version => version.ProjectDocumentId == id).ToListAsync(cancellationToken);
+        var blobs = versions.Select(version => new { version.TenantId, version.StoragePath, version.FileSizeBytes }).ToList();
+        if (!blobs.Any(blob => blob.StoragePath == document.StoragePath))
+            blobs.Add(new { document.TenantId, document.StoragePath, document.FileSizeBytes });
+        foreach (var path in blobs.Select(blob => blob.StoragePath).Where(path => !string.IsNullOrWhiteSpace(path)).Distinct(StringComparer.Ordinal))
         {
-            var currentPath = await dbContext.ProjectDocuments.GetByTenant(tenantId.Value)
-                .Where(x => x.Id == id)
-                .Select(x => x.StoragePath)
-                .FirstOrDefaultAsync(cancellationToken);
-            var paths = await dbContext.DocumentVersions.GetByTenant(tenantId.Value)
-                .Where(x => x.ProjectDocumentId == id)
-                .Select(x => x.StoragePath)
-                .ToListAsync(cancellationToken);
-            if (!string.IsNullOrWhiteSpace(currentPath))
-                paths.Add(currentPath);
-
-            foreach (var path in paths.Distinct(StringComparer.Ordinal))
+            var deletion = await documentStorageService.DeleteAsync(path, cancellationToken);
+            if (!deletion.Succeeded)
             {
-                var deletion = await documentStorageService.DeleteAsync(path, cancellationToken);
-                if (!deletion.Succeeded)
-                {
-                    return ServiceResult<bool>.Failure(
-                        StatusCodes.Status502BadGateway,
-                        "The document could not be deleted because its stored file could not be removed. Please try again.");
-                }
+                return ServiceResult<bool>.Failure(StatusCodes.Status502BadGateway,
+                    "The document could not be deleted because a stored file could not be removed. Keep this document and retry deletion; some version files may already be removed.",
+                    "document.delete_incomplete");
             }
         }
 
+        await using var transaction = dbContext.Database.IsRelational() ? await dbContext.Database.BeginTransactionAsync(cancellationToken) : null;
+        dbContext.DocumentVersions.RemoveRange(versions);
         var result = await base.DeleteAsync(id, dbContext, cancellationToken);
 
         if (result.Succeeded)
         {
+            foreach (var group in blobs.DistinctBy(blob => blob.StoragePath).GroupBy(blob => blob.TenantId))
+                await storageAccountingService.RecordLedgerEntryAsync(group.Key, -group.Sum(blob => blob.FileSizeBytes), "document_delete",
+                    document.ProjectId, null, GetActorUserId(httpContextAccessor), document.DocumentNumber, dbContext, cancellationToken);
+            if (transaction is not null) await transaction.CommitAsync(cancellationToken);
             await auditLogger.LogAsync(
                 "project_document.deleted",
                 tenantId,
@@ -127,12 +131,16 @@ public class ProjectDocumentCommandService(
         AppDbContext dbContext,
         CancellationToken cancellationToken = default)
     {
+        var tenantId = TryGetTenantId();
+        if (tenantId.HasValue && await dbContext.ProjectDocuments.GetByTenant(tenantId.Value)
+            .AnyAsync(document => document.Id == id && document.Status == ManagedDocumentStatus.Archived, cancellationToken))
+            return ServiceResult<IEntityResponse<ProjectDocument>>.Failure(
+                StatusCodes.Status409Conflict, "Archived documents are read-only.", "document.archived_read_only");
+
         var result = await base.UpdateAsync(id, request, dbContext, cancellationToken);
 
         if (result.Succeeded && result.Value is ProjectDocumentDetailsResponse details)
         {
-            var tenantId = TryGetTenantId();
-
             await auditLogger.LogAsync(
                 "project_document.updated",
                 tenantId,

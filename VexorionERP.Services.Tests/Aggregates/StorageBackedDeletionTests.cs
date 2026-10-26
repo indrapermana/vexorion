@@ -8,6 +8,64 @@ namespace VexorionERP.Services;
 public sealed class StorageBackedDeletionTests
 {
     [Fact]
+    public async Task DeleteDocument_ReleasesEveryChargedVersionWithoutDoubleCountingCurrentBlob()
+    {
+        var owner = Guid.NewGuid();
+        var collaborator = Guid.NewGuid();
+        await using var db = TestDbContextFactory.Create(owner, Guid.NewGuid().ToString());
+        var project = CreateProject(owner);
+        var document = CreateDocument(owner, project.Id, "v2");
+        document.Status = ManagedDocumentStatus.Archived;
+        var first = CreateVersion(owner, document.Id, 1, "v1");
+        first.FileSizeBytes = 3;
+        var second = CreateVersion(collaborator, document.Id, 2, "v2");
+        second.FileSizeBytes = 7;
+        db.AddRange(project, document, first, second,
+            new StorageUsageSummary { Id = Guid.NewGuid(), TenantId = owner, UsedBytes = 3 },
+            new StorageUsageSummary { Id = Guid.NewGuid(), TenantId = collaborator, UsedBytes = 7 });
+        await db.SaveChangesAsync();
+        var storage = new RecordingDocumentStorageService();
+        var service = new ProjectDocumentCommandService(new FixedTenantProvider(owner), new NoOpAuditLogger(), new HttpContextAccessor(), storage, new StorageAccountingService());
+        Assert.True((await service.DeleteAsync(document.Id, db)).Succeeded);
+        Assert.Equal(2, storage.Deleted.Count);
+        Assert.Empty(await db.DocumentVersions.IgnoreQueryFilters().ToListAsync());
+        Assert.All(await db.StorageUsageSummaries.IgnoreQueryFilters().ToListAsync(), summary => Assert.Equal(0, summary.UsedBytes));
+        Assert.Equal(-10, await db.StorageUsageLedgers.IgnoreQueryFilters().SumAsync(entry => entry.DeltaBytes));
+    }
+
+    [Fact]
+    public async Task DeleteDocument_ForeignParentDoesNotTouchFilesOrAccounting()
+    {
+        var tenant = Guid.NewGuid();
+        await using var db = TestDbContextFactory.Create(tenant, Guid.NewGuid().ToString());
+        var project = CreateProject(Guid.NewGuid());
+        var document = CreateDocument(project.TenantId, project.Id, "foreign");
+        db.AddRange(project, document);
+        await db.SaveChangesAsync();
+        var storage = new RecordingDocumentStorageService();
+        var service = new ProjectDocumentCommandService(new FixedTenantProvider(tenant), new NoOpAuditLogger(), new HttpContextAccessor(), storage, new StorageAccountingService());
+        Assert.Equal(404, (await service.DeleteAsync(document.Id, db)).StatusCode);
+        Assert.Empty(storage.Deleted);
+        Assert.Empty(db.StorageUsageLedgers);
+    }
+
+    [Fact]
+    public async Task UpdateDocument_ArchivedMetadataIsReadOnly()
+    {
+        var tenant = Guid.NewGuid();
+        await using var db = TestDbContextFactory.Create(tenant, Guid.NewGuid().ToString());
+        var project = CreateProject(tenant);
+        var document = CreateDocument(tenant, project.Id, "archived");
+        document.Status = ManagedDocumentStatus.Archived;
+        db.AddRange(project, document);
+        await db.SaveChangesAsync();
+        var service = new ProjectDocumentCommandService(new FixedTenantProvider(tenant), new NoOpAuditLogger(), new HttpContextAccessor(), new RecordingDocumentStorageService(), new StorageAccountingService());
+        var result = await service.UpdateAsync(document.Id, new VexorionERP.Contracts.UpdateProjectDocumentRequest { Title = "Changed" }, db);
+        Assert.Equal("document.archived_read_only", result.ErrorCode);
+        Assert.Equal("Document", document.Title);
+    }
+
+    [Fact]
     public async Task DeleteDocument_RemovesEveryDistinctVersionObject()
     {
         var tenantId = Guid.NewGuid();
@@ -20,7 +78,7 @@ public sealed class StorageBackedDeletionTests
         await db.SaveChangesAsync();
         var storage = new RecordingDocumentStorageService();
         var service = new ProjectDocumentCommandService(
-            new FixedTenantProvider(tenantId), new NoOpAuditLogger(), new HttpContextAccessor(), storage);
+            new FixedTenantProvider(tenantId), new NoOpAuditLogger(), new HttpContextAccessor(), storage, new StorageAccountingService());
 
         var result = await service.DeleteAsync(document.Id, db);
 
@@ -41,7 +99,7 @@ public sealed class StorageBackedDeletionTests
         await db.SaveChangesAsync();
         var storage = new RecordingDocumentStorageService { FailedPath = "failed-key" };
         var service = new ProjectDocumentCommandService(
-            new FixedTenantProvider(tenantId), new NoOpAuditLogger(), new HttpContextAccessor(), storage);
+            new FixedTenantProvider(tenantId), new NoOpAuditLogger(), new HttpContextAccessor(), storage, new StorageAccountingService());
 
         var result = await service.DeleteAsync(document.Id, db);
 
@@ -66,7 +124,7 @@ public sealed class StorageBackedDeletionTests
         await db.SaveChangesAsync();
         var storage = new RecordingDocumentStorageService();
         var service = new ProjectCommandService(
-            new FixedTenantProvider(tenantId), new NoOpAuditLogger(), new HttpContextAccessor(), storage);
+            new FixedTenantProvider(tenantId), new NoOpAuditLogger(), new HttpContextAccessor(), new ProjectDocumentCommandService(new FixedTenantProvider(tenantId), new NoOpAuditLogger(), new HttpContextAccessor(), storage, new StorageAccountingService()));
 
         var result = await service.DeleteAsync(project.Id, db);
 

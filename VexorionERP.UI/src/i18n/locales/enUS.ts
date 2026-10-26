@@ -21,6 +21,7 @@ const enUS = {
     publicWorkspaceAccess: 'Workspace access',
   },
   common: {
+    refresh: 'Refresh',
     viewOnly: 'View only',
     yes: 'Yes',
     no: 'No',
@@ -1733,6 +1734,13 @@ const enUS = {
       },
       documentsPanel: {
         breadcrumbs: 'Document location',
+        uploadUnconfirmed: 'Upload outcome unconfirmed. A document or version may already exist. Review the project before starting another attempt.',
+        reconcileFailed: 'Unable to refresh the upload state. The pending attempt remains blocked.',
+        reviewUpload: 'Review project documents',
+        discardAttempt: 'Discard pending attempt',
+        uploadAttempt: 'Unconfirmed upload',
+        duplicateWarning: 'Discarding this pending attempt does not undo an upload. Starting again can create a duplicate if the original request completed.',
+        archivedReadOnly: 'Archived documents are read-only. Versions are retained until an authorized explicit deletion.',
         historyError: 'Unable to load document versions.',
         noVersions: 'No version history available.',
         selectedDocument: 'Selected document',

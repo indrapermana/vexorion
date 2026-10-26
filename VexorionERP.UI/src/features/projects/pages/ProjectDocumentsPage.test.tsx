@@ -69,6 +69,7 @@ function renderCenter(initialEntry: string | { pathname: string, search?: string
 }
 
 beforeEach(() => {
+  sessionStorage.clear()
   vi.clearAllMocks()
   apiMocks.permissions = ['project-documents.view', 'project-documents.upload']
   apiMocks.getProjectCategories.mockResolvedValue([])

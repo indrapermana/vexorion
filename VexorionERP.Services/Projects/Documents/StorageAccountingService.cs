@@ -62,7 +62,8 @@ public class StorageAccountingService : IStorageAccountingService
         CancellationToken cancellationToken = default)
     {
         var summary = await dbContext.StorageUsageSummaries
-            .GetByTenant(tenantId)
+            .IgnoreQueryFilters()
+            .Where(summary => summary.TenantId == tenantId && summary.IsActive)
             .FirstOrDefaultAsync(cancellationToken);
 
         var newUsedBytes = (summary?.UsedBytes ?? 0) + deltaBytes;

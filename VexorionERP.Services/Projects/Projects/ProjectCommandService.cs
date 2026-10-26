@@ -12,7 +12,7 @@ public class ProjectCommandService(
     ICurrentTenantProvider currentTenantProvider,
     IAuditLogger auditLogger,
     IHttpContextAccessor httpContextAccessor,
-    IDocumentStorageService documentStorageService)
+    ProjectDocumentCommandService documentCommands)
     : BaseCommandService<Project>(currentTenantProvider)
 {
     public override async Task<ServiceResult<IEntityResponse<Project>>> CreateAsync(
@@ -90,28 +90,17 @@ public class ProjectCommandService(
                 .Select(x => x.ProjectNumber)
                 .FirstOrDefaultAsync(cancellationToken);
 
+            if (projectNumber is null)
+                return ServiceResult<bool>.Failure(StatusCodes.Status404NotFound, "Project not found.");
+
             var documentIds = await dbContext.ProjectDocuments.GetByTenant(tenantId.Value)
                 .Where(x => x.ProjectId == id)
                 .Select(x => x.Id)
                 .ToListAsync(cancellationToken);
-            var paths = await dbContext.ProjectDocuments.GetByTenant(tenantId.Value)
-                .Where(x => x.ProjectId == id)
-                .Select(x => x.StoragePath)
-                .ToListAsync(cancellationToken);
-            paths.AddRange(await dbContext.DocumentVersions.GetByTenant(tenantId.Value)
-                .Where(x => documentIds.Contains(x.ProjectDocumentId))
-                .Select(x => x.StoragePath)
-                .ToListAsync(cancellationToken));
-
-            foreach (var path in paths.Distinct(StringComparer.Ordinal))
+            foreach (var documentId in documentIds)
             {
-                var deletion = await documentStorageService.DeleteAsync(path, cancellationToken);
-                if (!deletion.Succeeded)
-                {
-                    return ServiceResult<bool>.Failure(
-                        StatusCodes.Status502BadGateway,
-                        "The project could not be deleted because one or more stored documents could not be removed. Please try again.");
-                }
+                var deletion = await documentCommands.DeleteAsync(documentId, dbContext, cancellationToken);
+                if (!deletion.Succeeded) return deletion;
             }
         }
 

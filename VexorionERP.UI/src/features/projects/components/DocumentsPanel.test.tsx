@@ -146,6 +146,7 @@ function documentFixture(id: string, title: string, folderId: string | null = nu
 
 describe('DocumentsPanel upload/version flows', () => {
   beforeEach(() => {
+    sessionStorage.clear()
     vi.clearAllMocks()
 
     apiMocks.mockGetProjectDocumentFolders.mockResolvedValue([])
@@ -178,6 +179,34 @@ describe('DocumentsPanel upload/version flows', () => {
     render(<DocumentsPanel projectId="project-1" />)
 
     expect(screen.getByRole('alert')).toHaveTextContent('pages.projectDetails.documentsPanel.noAccess')
+  })
+
+  it('keeps an unknown initial upload blocked across a remount without resubmitting it', async () => {
+    authMocks.mockUseAuth.mockReturnValue({ user: { permissions: ['project-documents.view', 'project-documents.upload'] } })
+    apiMocks.mockUploadProjectDocument.mockRejectedValue(new Error('Connection closed'))
+    const first = render(<DocumentsPanel projectId="project-1" />)
+    fireEvent.click(await screen.findByRole('button', { name: 'pages.projectDetails.documentsPanel.upload' }))
+    fireEvent.change(screen.getByLabelText('pages.projectDetails.documentsPanel.columns.title'), { target: { value: 'Uncertain' } })
+    fireEvent.change(first.container.querySelector('input[type="file"]')!, { target: { files: [new File(['data'], 'uncertain.pdf', { type: 'application/pdf' })] } })
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'pages.projectDetails.documentsPanel.upload' }))
+    await screen.findByText('pages.projectDetails.documentsPanel.uploadUnconfirmed')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'pages.projectDetails.documentsPanel.upload' })).toBeDisabled()
+    first.unmount()
+    render(<DocumentsPanel projectId="project-1" />)
+    expect(screen.getByText('pages.projectDetails.documentsPanel.uploadUnconfirmed')).toBeInTheDocument()
+    expect(apiMocks.mockUploadProjectDocument).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps archived files readable but prevents metadata and version changes', async () => {
+    authMocks.mockUseAuth.mockReturnValue({ user: { permissions: ['project-documents.view', 'project-documents.manage', 'project-documents.upload', 'project-documents.download'] } })
+    apiMocks.mockGetProjectDocuments.mockResolvedValue([{ ...documentFixture('archived', 'Archived contract'), status: 5 }])
+    render(<DocumentsPanel projectId="project-1" />)
+    await screen.findByText('pages.projectDetails.documentsPanel.archivedReadOnly')
+    expect(screen.getByRole('button', { name: 'pages.projectDetails.documentsPanel.metadata' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'pages.projectDetails.documentsPanel.addVersion' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'pages.projectDetails.documentsPanel.preview' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'common.delete: Archived contract' })).toBeEnabled()
   })
 
   it('loads metadata for the selected second document and preserves its stored notes', async () => {

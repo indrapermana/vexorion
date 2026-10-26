@@ -38,6 +38,8 @@ import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
 import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
+import { isUploadOutcomeUnknown, useUploadRecovery } from '../uploadRecovery'
+import PendingUploadAlert from './PendingUploadAlert'
 import {
   ApiError,
   addProjectDocumentVersion,
@@ -113,6 +115,7 @@ function formatBytes(size: number) {
 export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
   const { t } = useTranslation()
   const { user } = useAuth()
+  const uploadRecovery = useUploadRecovery(user?.tenantId)
   const [searchParams, setSearchParams] = useSearchParams()
 
   const canView = user?.permissions.includes('project-documents.view') ?? false
@@ -256,11 +259,12 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
     setFolderEditor(next)
   }
   const openUploadDialog = () => {
+    if (uploadRecovery.pending) return
     uploadBaseline.current = { title: uploadTitle, tags: uploadTags, notes: uploadNotes, folderId: selectedFolderId, file: uploadFile }
     setUploadDialogOpen(true)
   }
   const openMetadataEditor = async (document: ProjectDocumentListItemResponse) => {
-    if (!canManage || isSaving) return
+    if (!canManage || isSaving || document.status === 5) return
     setIsSaving(true)
     setError(null)
     try {
@@ -280,6 +284,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
     }
   }
   const openVersionDialog = () => {
+    if (uploadRecovery.pending || selectedDocument?.status === 5) return
     versionBaseline.current = { notes: versionNotes, file: versionFile }
     setNewVersionDialogOpen(true)
   }
@@ -346,8 +351,10 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
 
       setFolders(folderResult)
       setDocuments(documentResult)
+      return true
     } catch (loadError) {
       setError(loadError instanceof ApiError ? loadError.message : t('pages.projectDetails.documentsPanel.errors.load'))
+      return false
     } finally {
       setIsLoading(false)
     }
@@ -457,6 +464,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
 
   return (
     <VxStack spacing={2}>
+      {uploadRecovery.pending && !isSaving ? <PendingUploadAlert pending={uploadRecovery.pending} busy={isSaving} onRefreshed={async () => { if (!await loadContext()) throw new Error('Refresh failed'); setVersionRefresh((previous) => previous + 1) }} onDiscard={() => { uploadRecovery.complete(); setUploadDialogOpen(false); setNewVersionDialogOpen(false); setUploadFile(null); setVersionFile(null); setUploadFileInputKey((previous) => previous + 1); setVersionFileInputKey((previous) => previous + 1) }} /> : null}
       {error ? <VxAlert severity="error" onClose={() => setError(null)}>{error}</VxAlert> : null}
       {feedback ? <VxAlert severity="success" onClose={() => setFeedback(null)}>{feedback}</VxAlert> : null}
 
@@ -520,7 +528,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
                     {statusOptions.map((option) => <VxMenuItem key={option.value} value={option.value}>{t(`pages.projectDetails.documentsPanel.status.${option.key}`)}</VxMenuItem>)}
                   </VxTextField>
                 {canUpload ? (
-                  <VxButton variant="contained" startIcon={<CloudUploadRoundedIcon />} sx={{ height: 40, py: 0, whiteSpace: 'nowrap', borderRadius: '6px', gridColumn: { sm: '1 / -1', md: 'auto' }, justifySelf: { xs: 'stretch', sm: 'end' }, width: { xs: '100%', sm: 'auto' } }} onClick={openUploadDialog}>
+                  <VxButton variant="contained" startIcon={<CloudUploadRoundedIcon />} disabled={Boolean(uploadRecovery.pending)} sx={{ height: 40, py: 0, whiteSpace: 'nowrap', borderRadius: '6px', gridColumn: { sm: '1 / -1', md: 'auto' }, justifySelf: { xs: 'stretch', sm: 'end' }, width: { xs: '100%', sm: 'auto' } }} onClick={openUploadDialog}>
                     {t('pages.projectDetails.documentsPanel.upload')}
                   </VxButton>
                 ) : null}
@@ -529,14 +537,15 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
               {selectedDocument ? (
                 <VxStack role="region" aria-label={t('pages.projectDetails.documentsPanel.selectedDocument')} spacing={1} sx={{ py: 1.5, borderTop: 1, borderBottom: 1, borderColor: 'divider', minWidth: 0 }}>
                   <VxTypography component="h3" variant="subtitle2" sx={{ overflowWrap: 'anywhere' }}>{selectedDocument.documentNumber} - {selectedDocument.title}</VxTypography>
+                  {selectedDocument.status === 5 ? <VxAlert severity="info">{t('pages.projectDetails.documentsPanel.archivedReadOnly')}</VxAlert> : null}
                   <VxStack direction="row" useFlexGap spacing={1} sx={{ flexWrap: 'wrap', alignItems: 'center', '& .MuiButton-root': { borderRadius: '6px', textAlign: 'left' } }}>
                     {canDownload ? <>
                       <VxButton size="small" variant="outlined" startIcon={<VisibilityRoundedIcon />} disabled={isSaving} onClick={() => void openDocumentFile(selectedDocument, 'preview')}>{t('pages.projectDetails.documentsPanel.preview', { defaultValue: 'Preview' })}</VxButton>
                       <VxButton size="small" variant="text" startIcon={<DownloadRoundedIcon />} disabled={isSaving} onClick={() => void openDocumentFile(selectedDocument, 'download')}>{t('pages.projectDetails.documentsPanel.download')}</VxButton>
                     </> : null}
-                    {canUpload ? <VxButton size="small" variant="outlined" startIcon={<CloudUploadRoundedIcon />} disabled={isSaving} onClick={openVersionDialog}>{t('pages.projectDetails.documentsPanel.addVersion')}</VxButton> : null}
+                    {canUpload ? <VxButton size="small" variant="outlined" startIcon={<CloudUploadRoundedIcon />} disabled={isSaving || Boolean(uploadRecovery.pending) || selectedDocument.status === 5} onClick={openVersionDialog}>{t('pages.projectDetails.documentsPanel.addVersion')}</VxButton> : null}
                     {canManage ? <>
-                      <VxButton size="small" variant="text" startIcon={<EditRoundedIcon />} disabled={isSaving} onClick={() => void openMetadataEditor(selectedDocument)}>{t('pages.projectDetails.documentsPanel.metadata')}</VxButton>
+                      <VxButton size="small" variant="text" startIcon={<EditRoundedIcon />} disabled={isSaving || selectedDocument.status === 5} onClick={() => void openMetadataEditor(selectedDocument)}>{t('pages.projectDetails.documentsPanel.metadata')}</VxButton>
                       <VxTooltip title={t('common.delete')}><VxIconButton size="small" color="error" aria-label={`${t('common.delete')}: ${selectedDocument.title}`} disabled={isSaving} onClick={() => setDeleteDocument(selectedDocument)} sx={{ ml: 'auto' }}><DeleteOutlineRoundedIcon fontSize="small" /></VxIconButton></VxTooltip>
                     </> : null}
                   </VxStack>
@@ -615,6 +624,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
                   size="small"
                   label={t('pages.projectDetails.documentsPanel.nextStatus')}
                   value={nextStatus}
+                  disabled={selectedDocument.status === 5 || isSaving}
                   onChange={(event) => setNextStatus(Number(event.target.value) as ManagedDocumentStatus)}
                   sx={{ minWidth: 200 }}
                 >
@@ -622,7 +632,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
                 </VxTextField>
                 <VxButton
                   variant="contained"
-                  disabled={nextStatus === '' || nextStatus === selectedDocument.status || isSaving}
+                  disabled={nextStatus === '' || nextStatus === selectedDocument.status || isSaving || selectedDocument.status === 5}
                   onClick={async () => {
                     if (nextStatus === '') return
                     setIsSaving(true)
@@ -789,13 +799,14 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
           <VxButton onClick={requestUploadClose} disabled={isSaving}>{t('common.cancel')}</VxButton>
           <VxButton
             variant="contained"
-            disabled={!uploadTitle.trim() || !uploadFile || isSaving}
+            disabled={!uploadTitle.trim() || !uploadFile || isSaving || Boolean(uploadRecovery.pending)}
             onClick={async () => {
-              if (!uploadFile || !uploadTitle.trim()) return
+              if (!uploadFile || !uploadTitle.trim() || uploadRecovery.pending) return
               setIsSaving(true)
               setError(null)
               setFeedback(null)
               try {
+                uploadRecovery.begin(projectId)
                 const uploaded = await uploadProjectDocument(projectId, {
                   title: uploadTitle.trim(),
                   documentFolderId: selectedFolderId,
@@ -803,6 +814,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
                   notes: uploadNotes.trim() || undefined,
                   file: uploadFile,
                 })
+                uploadRecovery.complete()
                 updateView('document', uploaded.id)
                 setFeedback(t('pages.projectDetails.documentsPanel.feedback.uploaded'))
                 setUploadDialogOpen(false)
@@ -813,6 +825,8 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
                 setUploadFileInputKey((key) => key + 1)
                 await loadContext()
               } catch (uploadError) {
+                uploadRecovery.failed(uploadError)
+                if (isUploadOutcomeUnknown(uploadError)) setUploadDialogOpen(false)
                 setError(uploadError instanceof ApiError ? uploadError.message : t('pages.projectDetails.documentsPanel.errors.upload'))
               } finally {
                 setIsSaving(false)
@@ -889,17 +903,19 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
           <VxButton onClick={requestVersionClose} disabled={isSaving}>{t('common.cancel')}</VxButton>
           <VxButton
             variant="contained"
-            disabled={!selectedDocument || !versionFile || isSaving}
+            disabled={!selectedDocument || !versionFile || isSaving || selectedDocument.status === 5 || Boolean(uploadRecovery.pending)}
             onClick={async () => {
-              if (!selectedDocument || !versionFile) return
+              if (!selectedDocument || !versionFile || selectedDocument.status === 5 || uploadRecovery.pending) return
               setIsSaving(true)
               setError(null)
               setFeedback(null)
               try {
+                uploadRecovery.begin(projectId, selectedDocument.id)
                 await addProjectDocumentVersion(projectId, selectedDocument.id, {
                   notes: versionNotes.trim() || undefined,
                   file: versionFile,
                 })
+                uploadRecovery.complete()
                 setFeedback(t('pages.projectDetails.documentsPanel.feedback.versionAdded'))
                 setNewVersionDialogOpen(false)
                 setVersionNotes('')
@@ -908,6 +924,8 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
                 setVersionRefresh((previous) => previous + 1)
                 await loadContext()
               } catch (versionError) {
+                uploadRecovery.failed(versionError)
+                if (isUploadOutcomeUnknown(versionError)) setNewVersionDialogOpen(false)
                 setError(versionError instanceof ApiError ? versionError.message : t('pages.projectDetails.documentsPanel.errors.versionUpload'))
               } finally {
                 setIsSaving(false)

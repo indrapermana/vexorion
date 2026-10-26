@@ -21,6 +21,7 @@ const idID = {
     publicWorkspaceAccess: 'Akses workspace',
   },
   common: {
+    refresh: 'Muat ulang',
     viewOnly: 'Hanya lihat',
     yes: 'Ya',
     no: 'Tidak',
@@ -1046,6 +1047,13 @@ const idID = {
       },
       documentsPanel: {
         breadcrumbs: 'Lokasi dokumen',
+        uploadUnconfirmed: 'Hasil unggahan belum terkonfirmasi. Dokumen atau versi mungkin sudah tersimpan. Tinjau proyek sebelum memulai percobaan baru.',
+        reconcileFailed: 'Gagal memuat ulang status unggahan. Percobaan tertunda tetap diblokir.',
+        reviewUpload: 'Tinjau dokumen proyek',
+        discardAttempt: 'Abaikan percobaan tertunda',
+        uploadAttempt: 'Unggahan belum terkonfirmasi',
+        duplicateWarning: 'Mengabaikan percobaan ini tidak membatalkan unggahan. Mengunggah kembali dapat membuat duplikat jika permintaan awal berhasil.',
+        archivedReadOnly: 'Dokumen arsip hanya dapat dibaca. Versi disimpan sampai penghapusan eksplisit yang diizinkan.',
         historyError: 'Gagal memuat versi dokumen.',
         noVersions: 'Riwayat versi tidak tersedia.',
         selectedDocument: 'Dokumen terpilih',

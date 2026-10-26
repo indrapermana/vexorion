@@ -25,6 +25,8 @@ import { Link as RouterLink, useLocation, useSearchParams } from 'react-router-d
 import { useAuth } from '../../../app/AuthContext'
 import { PageBody, PageFeedback, PageHeader, PageLoadingState } from '../../../components/PagePrimitives'
 import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
+import { isUploadOutcomeUnknown, useUploadRecovery } from '../uploadRecovery'
+import PendingUploadAlert from '../components/PendingUploadAlert'
 import {
   ApiError,
   getProjectCategories,
@@ -68,6 +70,7 @@ function toUtcEndOfDay(value: string) {
 export default function ProjectDocumentsPage() {
   const { t } = useTranslation()
   const { user } = useAuth()
+  const uploadRecovery = useUploadRecovery(user?.tenantId)
   const [searchParams, setSearchParams] = useSearchParams()
   const location = useLocation()
   const navigationContext = location.state as { returnTo?: unknown, returnState?: unknown } | null
@@ -191,6 +194,7 @@ export default function ProjectDocumentsPage() {
 
   return (
     <VxStack spacing={2}>
+      {uploadRecovery.pending && !isUploading ? <PendingUploadAlert pending={uploadRecovery.pending} busy={isUploading} onRefreshed={load} onDiscard={() => { uploadRecovery.complete(); setUploadDialogOpen(false); setUploadFile(null); setFileInputKey((previous) => previous + 1) }} /> : null}
       <PageHeader
         title={t('pages.projectDocuments.title', { defaultValue: 'Document Center' })}
         description={projectId ? projectLabelById.get(projectId) ?? t('pages.projectDocuments.projectTitle') : t('pages.projectDocuments.allProjects')}
@@ -202,6 +206,7 @@ export default function ProjectDocumentsPage() {
               {canUpload ? (
                 <VxButton
                   variant="contained"
+                  disabled={Boolean(uploadRecovery.pending)}
                   onClick={() => {
                     setUploadProjectId(projectId)
                     setUploadTitle('')
@@ -456,19 +461,21 @@ export default function ProjectDocumentsPage() {
           <VxButton onClick={requestClose} disabled={isUploading}>{t('common.cancel', { defaultValue: 'Cancel' })}</VxButton>
           <VxButton
             variant="contained"
-            disabled={!uploadProjectId || !uploadTitle.trim() || !uploadFile || isUploading}
+            disabled={!uploadProjectId || !uploadTitle.trim() || !uploadFile || isUploading || Boolean(uploadRecovery.pending)}
             onClick={async () => {
-              if (!uploadProjectId || !uploadTitle.trim() || !uploadFile) return
+              if (!uploadProjectId || !uploadTitle.trim() || !uploadFile || uploadRecovery.pending) return
               setIsUploading(true)
               setError(null)
               setFeedback(null)
               try {
+                uploadRecovery.begin(uploadProjectId)
                 await uploadProjectDocument(uploadProjectId, {
                   title: uploadTitle.trim(),
                   tags: uploadTags.trim() || undefined,
                   notes: uploadNotes.trim() || undefined,
                   file: uploadFile,
                 })
+                uploadRecovery.complete()
                 setUploadDialogOpen(false)
                 setUploadTitle('')
                 setUploadTags('')
@@ -478,6 +485,8 @@ export default function ProjectDocumentsPage() {
                 setFeedback(t('pages.projectDetails.documentsPanel.feedback.uploaded', { defaultValue: 'Document uploaded.' }))
                 await load()
               } catch (uploadError) {
+                uploadRecovery.failed(uploadError)
+                if (isUploadOutcomeUnknown(uploadError)) setUploadDialogOpen(false)
                 setError(uploadError instanceof ApiError
                   ? uploadError.message
                   : t('pages.projectDetails.documentsPanel.errors.upload', { defaultValue: 'Unable to upload document.' }))

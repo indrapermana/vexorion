@@ -13,6 +13,26 @@ namespace VexorionERP.Handler.Tests;
 public class AddDocumentVersionCommandHandlerTests
 {
     [Fact]
+    public async Task Handle_ArchivedDocument_IsReadOnlyBeforeStorageOrQuotaMutation()
+    {
+        var tenantId = Guid.NewGuid();
+        var (db, documentId, _) = CreateDbWithDocument(tenantId);
+        var document = await db.ProjectDocuments.SingleAsync();
+        document.Status = ManagedDocumentStatus.Archived;
+        await db.SaveChangesAsync();
+        var accounting = new FakeStorageAccountingService();
+        var storage = new FakeDocumentStorageService();
+        var services = BuildServices(tenantId, db, accounting, storage);
+        var result = await new AddDocumentVersionCommandHandler(services).Handle(
+            new AddDocumentVersionCommand(documentId, null, CreateFormFile("new.pdf", "application/pdf", [1])), CancellationToken.None);
+        Assert.Equal(StatusCodes.Status409Conflict, result.StatusCode);
+        Assert.Equal("document.archived_read_only", result.ErrorCode);
+        Assert.Null(storage.UploadedFileName);
+        Assert.Equal(0, accounting.CheckQuotaCalls);
+        Assert.Single(db.DocumentVersions);
+    }
+
+    [Fact]
     public async Task Handle_WhenValid_AddsNextVersionAndKeepsPreviousVersion()
     {
         var tenantId = Guid.NewGuid();

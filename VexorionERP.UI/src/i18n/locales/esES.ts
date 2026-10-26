@@ -21,6 +21,7 @@ const esES = {
     publicWorkspaceAccess: 'Acceso al espacio de trabajo',
   },
   common: {
+    refresh: 'Actualizar',
     viewOnly: 'Solo lectura',
     yes: 'Sí',
     no: 'No',
@@ -1019,6 +1020,13 @@ const esES = {
       },
       documentsPanel: {
         breadcrumbs: 'Ubicación del documento',
+        uploadUnconfirmed: 'Resultado de carga sin confirmar. El documento o la versión ya podría existir. Revise el proyecto antes de iniciar otro intento.',
+        reconcileFailed: 'No se pudo actualizar el estado. El intento pendiente sigue bloqueado.',
+        reviewUpload: 'Revisar documentos del proyecto',
+        discardAttempt: 'Descartar intento pendiente',
+        uploadAttempt: 'Carga sin confirmar',
+        duplicateWarning: 'Descartar este intento no revierte una carga. Un nuevo intento puede crear un duplicado si la solicitud original finalizó.',
+        archivedReadOnly: 'Los documentos archivados son de solo lectura. Las versiones se conservan hasta una eliminación explícita autorizada.',
         historyError: 'No se pudieron cargar las versiones del documento.',
         noVersions: 'No hay historial de versiones disponible.',
         selectedDocument: 'Documento seleccionado',

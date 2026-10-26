@@ -18,7 +18,7 @@ public class ProjectCommandServiceWorkflowTests
             new FixedTenantProvider(tenantId),
             new NoOpAuditLogger(),
             new HttpContextAccessor(),
-            new NoOpDocumentStorageService());
+            new ProjectDocumentCommandService(new FixedTenantProvider(tenantId), new NoOpAuditLogger(), new HttpContextAccessor(), new NoOpDocumentStorageService(), new StorageAccountingService()));
 
         return (db, svc, tenantId);
     }

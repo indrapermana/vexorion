@@ -48,6 +48,10 @@ public sealed class AddDocumentVersionCommandHandler(IServiceProvider servicePro
             return ServiceResult<ProjectDocumentVersionListItemResponse>.Failure(StatusCodes.Status404NotFound, "Document not found.");
         }
 
+        if (document.Status == ManagedDocumentStatus.Archived)
+            return ServiceResult<ProjectDocumentVersionListItemResponse>.Failure(
+                StatusCodes.Status409Conflict, "Archived documents are read-only.", "document.archived_read_only");
+
         var quotaCheck = await accountingService.CheckQuotaAsync(tenantId.Value, request.File.Length, dbContext, cancellationToken);
         if (!quotaCheck.Succeeded)
             return ServiceResult<ProjectDocumentVersionListItemResponse>.Failure(quotaCheck.StatusCode ?? StatusCodes.Status507InsufficientStorage, quotaCheck.ErrorMessage!);
