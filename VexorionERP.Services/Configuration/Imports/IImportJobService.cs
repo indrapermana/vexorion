@@ -11,6 +11,8 @@ public interface IImportJobService
 
     Task<ServiceResult<ImportValidationResultResponse>> ValidateAsync(ValidateImportFileRequest request, CancellationToken cancellationToken = default);
 
+    Task<ServiceResult<ImportValidationResultResponse>> ValidateRowsAsync(ValidateImportRowsRequest request, CancellationToken cancellationToken = default);
+
     Task<ServiceResult<ImportJobStatusResponse>> SubmitAsync(Guid importJobId, CancellationToken cancellationToken = default);
 
     Task<ServiceResult<ImportJobStatusResponse>> GetStatusAsync(Guid importJobId, CancellationToken cancellationToken = default);

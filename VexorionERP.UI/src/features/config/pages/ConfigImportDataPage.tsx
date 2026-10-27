@@ -1,6 +1,6 @@
 import { CheckCircleOutlineRoundedIcon, CloudUploadRoundedIcon, DownloadRoundedIcon, ErrorOutlineRoundedIcon, FileUploadRoundedIcon, SendRoundedIcon } from '@vexorion/ui'
-import { VxAlert, VxBox, VxButton, VxChip, VxCircularProgress, VxDivider, VxPaper, VxStack, VxTab, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTabs, VxTypography } from '@vexorion/ui'
-import { useEffect, useRef, useState } from 'react'
+import { VxAlert, VxBox, VxButton, VxChip, VxCircularProgress, VxDataGrid, VxDivider, VxStack, VxStep, VxStepLabel, VxStepper, VxTab, VxTabs, VxTooltip, VxTypography, type VxGridColDef } from '@vexorion/ui'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
 import { Permissions } from '../../../app/authorization'
@@ -10,13 +10,16 @@ import { useUnsavedChangesPrompt } from '../../../hooks/useUnsavedChangesPrompt'
 import {
   downloadImportTemplate,
   getAvailableImportTypes,
+  getImportJobStatus,
   submitImportJob,
   validateImportFile,
+  validateImportRows,
 } from '../../../lib/api'
 import ImportHistoryPanel from '../components/ImportHistoryPanel'
 import type {
   AvailableImportTypeResponse,
   ImportJobStatusResponse,
+  ImportPreviewRowResponse,
   ImportValidationResultResponse,
 } from '../../../types/api'
 
@@ -27,25 +30,25 @@ type FlowState =
   | { phase: 'validated'; result: ImportValidationResultResponse }
   | { phase: 'submitting'; result: ImportValidationResultResponse }
   | { phase: 'submitted'; jobStatus: ImportJobStatusResponse }
+  | { phase: 'recovering'; jobId: string; message?: string }
   | { phase: 'error'; message: string }
 
 // Known import types for the tabs — used when backend list is not yet loaded
 const defaultImportTypes: AvailableImportTypeResponse[] = [
-  { importType: 'Customer', columns: [] },
-  { importType: 'Supplier', columns: [] },
-  { importType: 'Product', columns: [] },
-  { importType: 'SalesOrder', columns: [] },
-  { importType: 'PurchaseOrder', columns: [] },
+  { importType: 'customer', columns: [] },
+  { importType: 'supplier', columns: [] },
+  { importType: 'product', columns: [] },
+  { importType: 'sales-order', columns: [] },
+  { importType: 'purchase-order', columns: [] },
 ]
 
 function getJobStatusLabel(status: number): string {
   switch (status) {
-    case 1: return 'Pending'
-    case 2: return 'Validated'
-    case 3: return 'Submitted'
-    case 4: return 'Processing'
-    case 5: return 'Completed'
-    case 6: return 'Failed'
+    case 1: return 'pages.importData.history.statusLabels.draft'
+    case 2: return 'pages.importData.history.statusLabels.validated'
+    case 3: return 'pages.importData.history.statusLabels.failedValidation'
+    case 4: return 'pages.importData.history.statusLabels.imported'
+    case 5: return 'pages.importData.history.statusLabels.importFailed'
     default: return String(status)
   }
 }
@@ -73,20 +76,68 @@ interface ImportFlowPanelProps {
   importType: string
   onSubmitted?: () => void
   canSubmit: boolean
+  canViewHistory: boolean
+  historyRefresh: number
 }
 
-function ImportFlowPanel({ importType, onSubmitted, canSubmit }: ImportFlowPanelProps) {
+function ImportFlowPanel({ importType, onSubmitted, canSubmit, canViewHistory, historyRefresh }: ImportFlowPanelProps) {
+  const { user } = useAuth()
+  const storageKey = `vexorion.import-job:${user?.tenantId ?? 'unknown'}:${importType.toLowerCase()}`
+  const submitting = useRef(false)
   const { t } = useTranslation()
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [flow, setFlow] = useState<FlowState>({ phase: 'idle' })
+  const [flow, setFlow] = useState<FlowState>(() => {
+    const jobId = sessionStorage.getItem(storageKey)
+    return jobId ? { phase: 'recovering', jobId } : { phase: 'idle' }
+  })
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [step, setStep] = useState(0)
+  const [previewRows, setPreviewRows] = useState<ImportPreviewRowResponse[]>([])
+  const [rowsDirty, setRowsDirty] = useState(false)
+  const [lastValidationResult, setLastValidationResult] = useState<ImportValidationResultResponse | null>(null)
   const reset = () => {
+    if (submitting.current || flow.phase === 'recovering') return
+    sessionStorage.removeItem(storageKey)
     setFlow({ phase: 'idle' })
     setSelectedFile(null)
+    setPreviewRows([])
+    setRowsDirty(false)
+    setLastValidationResult(null)
+    setStep(0)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
   }
+
+  const refreshJob = async (jobId: string) => {
+    if (submitting.current) return
+    submitting.current = true
+    try {
+      const jobStatus = await getImportJobStatus(jobId)
+      if (jobStatus.importType.toLowerCase() !== importType.toLowerCase()) throw new Error('Import type mismatch')
+      if (jobStatus.status === 2 && !jobStatus.submittedAtUtc) {
+        const result = { ...jobStatus, errors: [], previewHeaders: jobStatus.previewHeaders ?? [], previewRows: jobStatus.previewRows ?? [] }
+        setPreviewRows(result.previewRows)
+        setRowsDirty(false)
+        setLastValidationResult(result)
+        setFlow({ phase: 'validated', result })
+        setStep(2)
+      } else {
+        setFlow({ phase: 'submitted', jobStatus })
+        setStep(3)
+        onSubmitted?.()
+      }
+    } catch {
+      setFlow({ phase: 'recovering', jobId, message: t('pages.importData.recoveryUnavailable') })
+      setStep(3)
+    } finally { submitting.current = false }
+  }
+
+  const restoreJob = useEffectEvent(() => {
+    const jobId = sessionStorage.getItem(storageKey)
+    if (jobId) void refreshJob(jobId)
+  })
+  useEffect(() => { restoreJob() }, [storageKey])
 
   const { confirmationDialog } = useUnsavedChangesPrompt(
     selectedFile !== null && flow.phase !== 'submitted',
@@ -96,16 +147,24 @@ function ImportFlowPanel({ importType, onSubmitted, canSubmit }: ImportFlowPanel
   )
 
   const handleDownloadTemplate = async () => {
+    if (submitting.current || flow.phase === 'recovering' || flow.phase === 'submitting') return
+    submitting.current = true
+    const previous = flow
     setFlow({ phase: 'downloading' })
     try {
       await downloadImportTemplate(importType)
-      setFlow({ phase: 'idle' })
+      setFlow(previous)
     } catch {
       setFlow({ phase: 'error', message: t('pages.importData.errors.downloadTemplate') })
-    }
+    } finally { submitting.current = false }
   }
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (submitting.current || flow.phase === 'recovering' || flow.phase === 'submitting' || (flow.phase === 'submitted' && ![3, 4, 5].includes(flow.jobStatus.status))) return
+    sessionStorage.removeItem(storageKey)
+    setPreviewRows([])
+    setRowsDirty(false)
+    setLastValidationResult(null)
     const file = event.target.files?.[0] ?? null
     setSelectedFile(file)
     if (flow.phase === 'error' || flow.phase === 'validated' || flow.phase === 'submitted') {
@@ -114,35 +173,121 @@ function ImportFlowPanel({ importType, onSubmitted, canSubmit }: ImportFlowPanel
   }
 
   const handleValidate = async () => {
-    if (!selectedFile) return
+    if (!selectedFile || submitting.current || flow.phase === 'recovering' || flow.phase === 'submitting') return
+    submitting.current = true
     setFlow({ phase: 'validating' })
     try {
       const result = await validateImportFile(importType, selectedFile)
+      setPreviewRows(result.previewRows)
+      setRowsDirty(false)
+      setLastValidationResult(result)
+      if (canSubmit && result.status === 2 && result.invalidRows === 0 && result.validRows > 0) sessionStorage.setItem(storageKey, result.importJobId)
       setFlow({ phase: 'validated', result })
+      setStep(2)
     } catch {
       setFlow({ phase: 'error', message: t('pages.importData.errors.validate') })
+    } finally { submitting.current = false }
+  }
+
+  const validationResult = flow.phase === 'validated' || flow.phase === 'submitting'
+    ? flow.result
+    : flow.phase === 'validating' ? lastValidationResult : null
+  const handleRevalidateRows = async () => {
+    if (!validationResult || !rowsDirty || submitting.current || unresolved) return false
+    submitting.current = true
+    setFlow({ phase: 'validating' })
+    try {
+      const result = await validateImportRows({
+        importType,
+        fileName: validationResult.sourceFileName,
+        headers: validationResult.previewHeaders,
+        rows: previewRows,
+      })
+      setPreviewRows(result.previewRows)
+      setRowsDirty(false)
+      setLastValidationResult(result)
+      if (canSubmit && result.status === 2 && result.invalidRows === 0 && result.validRows > 0) sessionStorage.setItem(storageKey, result.importJobId)
+      else sessionStorage.removeItem(storageKey)
+      setFlow({ phase: 'validated', result })
+      return result.status === 2 && result.invalidRows === 0 && result.validRows > 0
+    } catch {
+      setFlow({ phase: 'validated', result: validationResult })
+      return false
+    } finally {
+      submitting.current = false
+    }
+  }
+
+  const handleNext = async () => {
+    if (unresolved || submitting.current) return
+    if (step === 0) {
+      setStep(1)
+      return
+    }
+    if (step === 1) {
+      await handleValidate()
+      return
+    }
+    if (step === 2) {
+      if (rowsDirty) {
+        if (await handleRevalidateRows()) setStep(3)
+        return
+      }
+      if (isValid) setStep(3)
     }
   }
 
   const handleSubmit = async () => {
-    if (!canSubmit || flow.phase !== 'validated') return
+    if (!canSubmit || flow.phase !== 'validated' || submitting.current || step !== 3 || rowsDirty) return
     const { result } = flow
-    if (result.invalidRows > 0 && result.validRows === 0) return
+    if (result.invalidRows > 0 || result.validRows === 0) return
+    submitting.current = true
     setFlow({ phase: 'submitting', result })
     try {
+      sessionStorage.setItem(storageKey, result.importJobId)
       const jobStatus = await submitImportJob(result.importJobId)
       setFlow({ phase: 'submitted', jobStatus })
+      setStep(3)
       setSelectedFile(null)
       if (fileInputRef.current) fileInputRef.current.value = ''
       onSubmitted?.()
     } catch {
-      setFlow({ phase: 'error', message: t('pages.importData.errors.submit') })
+      setFlow({ phase: 'recovering', jobId: result.importJobId, message: t('pages.importData.submitUnconfirmed') })
+    } finally {
+      submitting.current = false
     }
   }
+  const isValid = validationResult ? validationResult.status === 2 && validationResult.invalidRows === 0 && validationResult.validRows > 0 : false
+  const unresolved = flow.phase === 'recovering' || flow.phase === 'submitting' || (flow.phase === 'submitted' && ![3, 4, 5].includes(flow.jobStatus.status))
+  const activeStep = flow.phase === 'submitted' || flow.phase === 'recovering' ? 3 : step
+  const currentErrors = validationResult?.errors ?? []
 
-  const isValidated = flow.phase === 'validated'
-  const validationResult = isValidated ? flow.result : flow.phase === 'submitting' ? flow.result : null
-  const isValid = validationResult ? validationResult.invalidRows === 0 : false
+  const gridRows = previewRows.map((row) => ({ id: row.rowNumber, rowNumber: row.rowNumber, ...row.values }))
+  const gridColumns: VxGridColDef[] = [
+    { field: 'rowNumber', headerName: t('pages.importData.table.row'), width: 85, editable: false },
+    ...(validationResult?.previewHeaders ?? []).map((header): VxGridColDef => ({
+      field: header,
+      headerName: header,
+      minWidth: 150,
+      flex: 1,
+      editable: true,
+      cellClassName: (params) => currentErrors.some((error) => error.rowNumber === params.row.rowNumber && error.columnName.toLowerCase() === header.toLowerCase()) ? 'import-preview-cell-error' : '',
+      renderCell: (params) => {
+        const messages = currentErrors.filter((error) => error.rowNumber === params.row.rowNumber && error.columnName.toLowerCase() === header.toLowerCase()).map((error) => error.message)
+        return <VxTooltip title={messages.join(' ')}><span>{String(params.value ?? '')}</span></VxTooltip>
+      },
+    })),
+    { field: 'rowErrors', headerName: t('pages.importData.rowErrors'), minWidth: 220, flex: 1, editable: false, sortable: false, valueGetter: (_value, row) => currentErrors.filter((error) => error.rowNumber === row.rowNumber).map((error) => error.message).join(' ') },
+  ]
+
+  const processRowUpdate = (updatedRow: Record<string, unknown>) => {
+    const rowNumber = Number(updatedRow.rowNumber)
+    const values = Object.fromEntries((validationResult?.previewHeaders ?? []).map((header) => [header, String(updatedRow[header] ?? '')]))
+    setPreviewRows((current) => current.map((row) => row.rowNumber === rowNumber ? { rowNumber, values } : row))
+    setRowsDirty(true)
+    sessionStorage.removeItem(storageKey)
+    return updatedRow
+  }
 
   const handleDownloadErrorWorkbook = () => {
     if (!validationResult?.errorWorkbookContent) return
@@ -157,8 +302,12 @@ function ImportFlowPanel({ importType, onSubmitted, canSubmit }: ImportFlowPanel
 
   return (
     <VxStack spacing={3}>
-      {/* Step 1: Download Template */}
-      <VxPaper elevation={0} className="panel-card" sx={{ p: 2.5 }}>
+      <VxBox sx={{ overflowX: 'auto', pb: 1 }}>
+        <VxStepper activeStep={activeStep} alternativeLabel sx={{ minWidth: 480 }}>
+          {['template', 'file', 'validate', 'submit'].map((stage) => <VxStep key={stage}><VxStepLabel>{t(`pages.importData.workflow.${stage}`)}</VxStepLabel></VxStep>)}
+        </VxStepper>
+      </VxBox>
+      {step === 0 ? <VxBox component="section" sx={{ py: 1 }}>
         <VxStack spacing={1.5}>
           <VxStack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
             <DownloadRoundedIcon color="action" />
@@ -166,27 +315,21 @@ function ImportFlowPanel({ importType, onSubmitted, canSubmit }: ImportFlowPanel
               {t('pages.importData.steps.downloadTemplate')}
             </VxTypography>
           </VxStack>
-          <VxTypography variant="body2" color="text.secondary">
-            {t('pages.importData.steps.downloadTemplateDesc')}
-          </VxTypography>
           <VxBox>
             <VxButton
               variant="outlined"
               startIcon={flow.phase === 'downloading' ? <VxCircularProgress size={16} /> : <DownloadRoundedIcon />}
               onClick={handleDownloadTemplate}
-              disabled={flow.phase === 'downloading' || flow.phase === 'validating' || flow.phase === 'submitting'}
+              disabled={flow.phase === 'downloading' || flow.phase === 'validating' || unresolved}
               size="small"
             >
               {flow.phase === 'downloading' ? t('pages.importData.downloading') : t('pages.importData.downloadTemplate')}
             </VxButton>
           </VxBox>
         </VxStack>
-      </VxPaper>
+      </VxBox> : null}
 
-      <VxDivider />
-
-      {/* Step 2: Upload File */}
-      <VxPaper elevation={0} className="panel-card" sx={{ p: 2.5 }}>
+      {step === 1 ? <VxBox component="section" sx={{ py: 1 }}>
         <VxStack spacing={1.5}>
           <VxStack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
             <CloudUploadRoundedIcon color="action" />
@@ -194,56 +337,37 @@ function ImportFlowPanel({ importType, onSubmitted, canSubmit }: ImportFlowPanel
               {t('pages.importData.steps.uploadFile')}
             </VxTypography>
           </VxStack>
-          <VxTypography variant="body2" color="text.secondary">
-            {t('pages.importData.steps.uploadFileDesc')}
-          </VxTypography>
-          <VxStack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+          <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ alignItems: { sm: 'center' } }}>
             <input
               ref={fileInputRef}
               type="file"
-              accept=".xlsx,.csv"
+              accept=".xlsx"
+              disabled={flow.phase === 'downloading' || flow.phase === 'validating' || unresolved}
+              aria-label={t('pages.importData.chooseFile')}
               style={{ display: 'none' }}
               onChange={handleFileChange}
               id={`file-input-${importType}`}
             />
-            <label htmlFor={`file-input-${importType}`}>
               <VxButton
-                component="span"
+                onClick={() => fileInputRef.current?.click()}
                 variant="outlined"
                 startIcon={<FileUploadRoundedIcon />}
                 size="small"
-                disabled={flow.phase === 'validating' || flow.phase === 'submitting'}
+                disabled={flow.phase === 'downloading' || flow.phase === 'validating' || unresolved}
               >
                 {t('pages.importData.chooseFile')}
               </VxButton>
-            </label>
             {selectedFile && (
-              <VxTypography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+              <VxTypography variant="body2" color="text.secondary" sx={{ overflowWrap: 'anywhere' }}>
                 {selectedFile.name}
               </VxTypography>
             )}
           </VxStack>
-          {selectedFile && (
-            <VxBox>
-              <VxButton
-                variant="contained"
-                startIcon={flow.phase === 'validating' ? <VxCircularProgress size={16} color="inherit" /> : <CheckCircleOutlineRoundedIcon />}
-                onClick={handleValidate}
-                disabled={flow.phase === 'validating' || flow.phase === 'submitting'}
-                size="small"
-              >
-                {flow.phase === 'validating' ? t('pages.importData.validating') : t('pages.importData.validate')}
-              </VxButton>
-            </VxBox>
-          )}
         </VxStack>
-      </VxPaper>
+      </VxBox> : null}
 
-      {/* Validation Result */}
-      {validationResult && (
-        <>
-          <VxDivider />
-          <VxPaper elevation={0} className="panel-card" sx={{ p: 2.5 }}>
+      {step === 2 && validationResult ? (
+          <VxBox component="section" sx={{ py: 1, minWidth: 0 }}>
             <VxStack spacing={2}>
               <VxStack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
                 {isValid
@@ -254,7 +378,7 @@ function ImportFlowPanel({ importType, onSubmitted, canSubmit }: ImportFlowPanel
                 </VxTypography>
               </VxStack>
 
-              <VxStack direction="row" spacing={2} sx={{ flexWrap: 'wrap' }}>
+              <VxStack direction="row" useFlexGap spacing={2} sx={{ flexWrap: 'wrap' }}>
                 <VxChip
                   label={`${t('pages.importData.totalRows')}: ${validationResult.totalRows}`}
                   size="small"
@@ -273,91 +397,59 @@ function ImportFlowPanel({ importType, onSubmitted, canSubmit }: ImportFlowPanel
                 )}
               </VxStack>
 
-              {canSubmit && isValid && (
-                <VxAlert severity="success">{t('pages.importData.allRowsValid')}</VxAlert>
-              )}
-
-              {!isValid && validationResult.errors.length > 0 && (
-                <VxStack spacing={1.5}>
-                  {validationResult.errorWorkbookContent && (
-                    <VxBox>
-                      <VxButton
-                        variant="outlined"
-                        startIcon={<DownloadRoundedIcon />}
-                        onClick={handleDownloadErrorWorkbook}
-                        size="small"
-                      >
-                        {t('pages.importData.downloadErrorWorkbook')}
-                      </VxButton>
-                    </VxBox>
-                  )}
-                  <VxBox sx={{ overflowX: 'auto' }}>
-                    <VxTable size="small">
-                      <VxTableHead>
-                        <VxTableRow>
-                          <VxTableCell>{t('pages.importData.table.row')}</VxTableCell>
-                          <VxTableCell>{t('pages.importData.table.column')}</VxTableCell>
-                          <VxTableCell>{t('pages.importData.table.category')}</VxTableCell>
-                          <VxTableCell>{t('pages.importData.table.message')}</VxTableCell>
-                        </VxTableRow>
-                      </VxTableHead>
-                      <VxTableBody>
-                        {validationResult.errors.slice(0, 50).map((err, idx) => (
-                          <VxTableRow key={idx}>
-                            <VxTableCell>{err.rowNumber}</VxTableCell>
-                            <VxTableCell>{err.columnName}</VxTableCell>
-                            <VxTableCell>{err.category}</VxTableCell>
-                            <VxTableCell>{err.message}</VxTableCell>
-                          </VxTableRow>
-                        ))}
-                        {validationResult.errors.length > 50 && (
-                          <VxTableRow>
-                            <VxTableCell colSpan={4} sx={{ textAlign: 'center', color: 'text.secondary', fontStyle: 'italic' }}>
-                              {t('pages.importData.moreErrors', { count: validationResult.errors.length - 50 })}
-                            </VxTableCell>
-                          </VxTableRow>
-                        )}
-                      </VxTableBody>
-                    </VxTable>
-                  </VxBox>
-                </VxStack>
-              )}
-
-              {isValid && (
-                <VxBox>
-                  <VxButton
-                    variant="contained"
-                    color="success"
-                    startIcon={flow.phase === 'submitting' ? <VxCircularProgress size={16} color="inherit" /> : <SendRoundedIcon />}
-                    onClick={handleSubmit}
-                    disabled={flow.phase === 'submitting'}
-                    size="small"
-                  >
-                    {flow.phase === 'submitting' ? t('pages.importData.submitting') : t('pages.importData.submit')}
-                  </VxButton>
-                </VxBox>
-              )}
+              {validationResult.errors.some((error) => error.rowNumber <= 1) ? <VxAlert severity="error">{validationResult.errors.filter((error) => error.rowNumber <= 1).map((error) => error.message).join(' ')}</VxAlert> : null}
+              {!isValid ? <VxAlert severity="warning">{t('pages.importData.correctionRequired')}</VxAlert> : null}
+              {rowsDirty ? <VxAlert severity="info">{t('pages.importData.revalidateChanges')}</VxAlert> : null}
+              {validationResult.errorWorkbookContent && !rowsDirty ? <VxButton variant="outlined" startIcon={<DownloadRoundedIcon />} onClick={handleDownloadErrorWorkbook} size="small" sx={{ alignSelf: 'flex-start' }}>{t('pages.importData.downloadErrorWorkbook')}</VxButton> : null}
+              <VxBox sx={{ width: '100%', minWidth: 0 }}>
+                <VxDataGrid
+                  aria-label={t('pages.importData.previewGrid')}
+                  rows={gridRows}
+                  columns={gridColumns}
+                  processRowUpdate={processRowUpdate}
+                  onProcessRowUpdateError={() => setRowsDirty(true)}
+                  autoHeight
+                  pageSizeOptions={[10, 25, 50]}
+                  showToolbar={false}
+                  disableColumnMenu
+                  sx={{ minWidth: 0, '& .import-preview-cell-error': { backgroundColor: 'error.light', color: 'error.contrastText' } }}
+                />
+              </VxBox>
             </VxStack>
-          </VxPaper>
-        </>
-      )}
+          </VxBox>
+      ) : null}
 
-      {/* Submitted */}
-      {flow.phase === 'submitted' && (
+      {step === 3 ? <VxStack spacing={2}>
+        {validationResult ? <>
+          <VxTypography variant="subtitle1" sx={{ fontWeight: 600 }}>{selectedFile?.name ?? validationResult.sourceFileName}</VxTypography>
+          <VxStack direction="row" useFlexGap spacing={1} sx={{ flexWrap: 'wrap' }}>
+            <VxChip label={`${t('pages.importData.totalRows')}: ${validationResult.totalRows}`} size="small" />
+            <VxChip color="success" label={`${t('pages.importData.validRows')}: ${validationResult.validRows}`} size="small" />
+            {validationResult.invalidRows > 0 ? <VxChip color="error" label={`${t('pages.importData.invalidRows')}: ${validationResult.invalidRows}`} size="small" /> : null}
+          </VxStack>
+        </> : null}
+        {canSubmit && isValid && !rowsDirty && flow.phase !== 'submitted' ? <VxButton variant="contained" color="success" startIcon={unresolved ? <VxCircularProgress size={16} color="inherit" /> : <SendRoundedIcon />} onClick={() => void handleSubmit()} disabled={unresolved}>{unresolved ? t('pages.importData.submitting') : t('pages.importData.submit')}</VxButton> : null}
+        {!canSubmit ? <PermissionReadOnlyAlert requiredPermission={Permissions.imports.submit} /> : null}
+        {flow.phase === 'submitted' && (
         <VxAlert
-          severity="success"
+          severity={flow.jobStatus.status === 4 ? 'success' : flow.jobStatus.status === 5 ? 'error' : 'info'}
           action={
-            <VxButton color="inherit" size="small" onClick={reset}>
+            <VxButton color="inherit" size="small" disabled={unresolved} onClick={reset}>
               {t('pages.importData.importAnother')}
             </VxButton>
           }
         >
           {t('pages.importData.submitSuccess', {
-            status: getJobStatusLabel(flow.jobStatus.status),
+            status: flow.jobStatus.submittedAtUtc && !flow.jobStatus.completedAtUtc && flow.jobStatus.status === 2 ? t('pages.importData.submissionPending') : t(getJobStatusLabel(flow.jobStatus.status)),
             jobId: flow.jobStatus.importJobId,
           })}
         </VxAlert>
-      )}
+        )}
+
+      {flow.phase === 'recovering' ? <VxAlert severity="warning" action={<VxButton onClick={() => void refreshJob(flow.jobId)}>{t('common.refresh')}</VxButton>}>{flow.message ?? t('pages.importData.submitUnconfirmed')}</VxAlert> : null}
+      {flow.phase === 'submitted' ? <VxStack spacing={1}><VxTypography variant="body2">{flow.jobStatus.importJobId}</VxTypography>{flow.jobStatus.errorSummary ? <VxAlert severity="error">{flow.jobStatus.errorSummary}</VxAlert> : null}<VxButton onClick={() => void refreshJob(flow.jobStatus.importJobId)}>{t('common.refresh')}</VxButton></VxStack> : null}
+      {canViewHistory ? <><VxDivider /><ImportHistoryPanel importType={importType} refreshTrigger={historyRefresh} /></> : null}
+      </VxStack> : null}
 
       {/* Error */}
       {flow.phase === 'error' && (
@@ -373,6 +465,10 @@ function ImportFlowPanel({ importType, onSubmitted, canSubmit }: ImportFlowPanel
         </VxAlert>
       )}
       {confirmationDialog}
+      <VxStack direction="row" spacing={1} sx={{ justifyContent: 'space-between', pt: 1 }}>
+        <VxButton variant="outlined" onClick={() => setStep((current) => Math.max(0, current - 1))} disabled={step === 0 || unresolved || flow.phase === 'validating' || flow.phase === 'submitted'}>{t('pages.importData.previous')}</VxButton>
+        {step < 3 ? <VxButton variant="contained" onClick={() => void handleNext()} disabled={unresolved || flow.phase === 'validating' || (step === 1 && !selectedFile) || (step === 2 && !rowsDirty && !isValid)} startIcon={flow.phase === 'validating' ? <VxCircularProgress size={16} color="inherit" /> : undefined}>{flow.phase === 'validating' ? t('pages.importData.validating') : t('pages.importData.next')}</VxButton> : null}
+      </VxStack>
     </VxStack>
   )
 }
@@ -384,7 +480,8 @@ export default function ConfigImportDataPage() {
   const canSubmit = user?.permissions.includes(Permissions.imports.submit) ?? false
   const canViewHistory = user?.permissions.includes(Permissions.imports.history) ?? false
   const [importTypes, setImportTypes] = useState<AvailableImportTypeResponse[]>(defaultImportTypes)
-  const [selectedTab, setSelectedTab] = useState(0)
+  const [selectedTab, setSelectedTab] = useState('customer')
+  const [visited, setVisited] = useState(() => new Set(['customer']))
   const [historyRefresh, setHistoryRefresh] = useState(0)
 
   useEffect(() => {
@@ -399,11 +496,11 @@ export default function ConfigImportDataPage() {
       })
   }, [canValidate])
 
-  const activeImportType = importTypes[selectedTab]?.importType ?? ''
+  const labels: Record<string, string> = { customer: 'Customer', supplier: 'Supplier', product: 'Product', 'sales-order': 'SalesOrder', 'purchase-order': 'PurchaseOrder' }
 
   return (
     <VxStack spacing={3}>
-      <PageHeader title={t('pages.importData.title')} description={t('pages.importData.description')} />
+      <PageHeader title={t('pages.importData.title')} />
 
       {!canValidate ? <PermissionReadOnlyAlert requiredPermission={Permissions.imports.validate} /> : null}
       {canValidate && !canSubmit ? <PermissionReadOnlyAlert requiredPermission={Permissions.imports.submit} /> : null}
@@ -412,7 +509,8 @@ export default function ConfigImportDataPage() {
       <PageBody>
         <VxTabs
           value={selectedTab}
-          onChange={(_, v: number) => setSelectedTab(v)}
+          onChange={(_, value: string) => { setSelectedTab(value); setVisited((previous) => new Set([...previous, value])) }}
+          aria-label={t('pages.importData.title')}
           variant="scrollable"
           scrollButtons="auto"
           sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}
@@ -420,28 +518,28 @@ export default function ConfigImportDataPage() {
           {importTypes.map((dt) => (
             <VxTab
               key={dt.importType}
-              label={t(`pages.importData.entityTypes.${dt.importType}`, { defaultValue: dt.importType })}
+              value={dt.importType}
+              id={`import-tab-${dt.importType}`}
+              aria-controls={`import-panel-${dt.importType}`}
+              label={t(`pages.importData.entityTypes.${labels[dt.importType] ?? dt.importType}`, { defaultValue: dt.importType })}
             />
           ))}
         </VxTabs>
 
-        <VxBox sx={{ p: 3, minWidth: 0 }}>
-          {activeImportType && (
-            <>
+        <VxBox sx={{ p: { xs: 1.5, sm: 3 }, minWidth: 0 }}>
+          {importTypes.filter((type) => visited.has(type.importType)).map(({ importType: activeImportType }) => (
+            <VxBox key={activeImportType} role="tabpanel" id={`import-panel-${activeImportType}`} aria-labelledby={`import-tab-${activeImportType}`} hidden={selectedTab !== activeImportType} sx={{ minWidth: 0 }}>
               {canValidate ? <ImportFlowPanel
-                key={activeImportType}
+                key={`${user?.tenantId ?? 'unknown'}:${activeImportType}`}
                 importType={activeImportType}
                 canSubmit={canSubmit}
+                canViewHistory={canViewHistory}
+                historyRefresh={historyRefresh}
                 onSubmitted={() => setHistoryRefresh((n) => n + 1)}
               /> : null}
-              {canValidate && canViewHistory ? <VxDivider sx={{ my: 3 }} /> : null}
-              {canViewHistory ? <ImportHistoryPanel
-                key={`history-${activeImportType}`}
-                importType={activeImportType}
-                refreshTrigger={historyRefresh}
-              /> : null}
-            </>
-          )}
+              {!canValidate && canViewHistory ? <ImportHistoryPanel key={`history-${activeImportType}`} importType={activeImportType} refreshTrigger={historyRefresh} /> : null}
+            </VxBox>
+          ))}
         </VxBox>
       </PageBody>
     </VxStack>

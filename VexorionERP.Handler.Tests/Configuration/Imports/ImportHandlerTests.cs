@@ -107,6 +107,31 @@ public class ImportHandlerTests
         Assert.Equal(5, result.Value.TotalRows);
     }
 
+    [Fact]
+    public async Task ValidateImportRowsCommandHandler_DelegatesToService()
+    {
+        var jobId = Guid.NewGuid();
+        var fakeService = new FakeImportJobService
+        {
+            ValidateRowsResult = ServiceResult<ImportValidationResultResponse>.Success(new ImportValidationResultResponse
+            {
+                ImportJobId = jobId,
+                ImportType = "customer",
+                Status = ImportJobStatus.Validated,
+                TotalRows = 1,
+                ValidRows = 1,
+            }),
+        };
+
+        var handler = new ValidateImportRowsCommandHandler(BuildProvider(fakeService));
+        var result = await handler.Handle(
+            new ValidateImportRowsCommand(new ValidateImportRowsRequest { ImportType = "customer", FileName = "customers.xlsx" }),
+            CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(jobId, result.Value!.ImportJobId);
+    }
+
     // ── SubmitImportJobCommandHandler ─────────────────────────────────────────
 
     [Fact]

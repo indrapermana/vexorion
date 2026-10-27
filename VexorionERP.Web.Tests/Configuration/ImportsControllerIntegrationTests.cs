@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Net;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc;
@@ -66,6 +67,23 @@ public class ImportsControllerIntegrationTests : IClassFixture<TestWebApplicatio
     }
 
     [Fact]
+    public async Task Imports_Template_ReturnsDownloadableXlsxWorkbook()
+    {
+        var client = _factory.CreateClient();
+        client.SetBearerToken(Guid.NewGuid(), AppPermissions.Imports.Validate);
+
+        var response = await client.GetAsync("/api/imports/template/customer");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", response.Content.Headers.ContentType?.MediaType);
+        Assert.Contains("customer-template.xlsx", response.Content.Headers.ContentDisposition?.ToString());
+        var bytes = await response.Content.ReadAsByteArrayAsync();
+        using var workbook = new ZipArchive(new MemoryStream(bytes), ZipArchiveMode.Read);
+        Assert.NotNull(workbook.GetEntry("xl/workbook.xml"));
+        Assert.NotNull(workbook.GetEntry("xl/worksheets/sheet1.xml"));
+    }
+
+    [Fact]
     public async Task Imports_Validate_FileExceedsMaxSize_ReturnsPayloadTooLargeProblem()
     {
         var client = _factory.CreateClient();
@@ -86,6 +104,24 @@ public class ImportsControllerIntegrationTests : IClassFixture<TestWebApplicatio
         Assert.Contains("maximum allowed size", problem.Detail, StringComparison.OrdinalIgnoreCase);
         Assert.True(problem.Extensions.TryGetValue("code", out var code));
         Assert.Equal("import.file_too_large", code?.ToString());
+    }
+
+    [Fact]
+    public async Task Imports_ValidateRows_WithoutValidatePermission_ReturnsForbidden()
+    {
+        var client = _factory.CreateClient();
+        client.SetBearerToken(Guid.NewGuid(), AppPermissions.Billing.View);
+        var request = new ValidateImportRowsRequest
+        {
+            ImportType = "customer",
+            FileName = "customers.xlsx",
+            Headers = ["CustomerNumber", "Name"],
+            Rows = [new ImportPreviewRowResponse { Values = new Dictionary<string, string> { ["CustomerNumber"] = "C001", ["Name"] = "Edited" } }],
+        };
+
+        var response = await client.PostAsJsonAsync("/api/imports/validate-rows", request);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
     [Fact]

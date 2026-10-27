@@ -71,7 +71,7 @@ public class ImportJobService(
             return ServiceResult<ImportValidationResultResponse>.Failure(StatusCodes.Status400BadRequest, "Import type and file name are required.");
         }
 
-        if (!SupportedTemplates.TryGetValue(request.ImportType.Trim(), out var expectedColumns))
+        if (!SupportedTemplates.ContainsKey(request.ImportType.Trim()))
         {
             return ServiceResult<ImportValidationResultResponse>.Failure(StatusCodes.Status404NotFound, $"Unsupported import type '{request.ImportType}'.");
         }
@@ -80,8 +80,6 @@ public class ImportJobService(
         {
             return ServiceResult<ImportValidationResultResponse>.Failure(StatusCodes.Status400BadRequest, "File content is required.");
         }
-
-        var errors = new List<ImportValidationErrorResponse>();
 
         var fileExtension = Path.GetExtension(request.FileName)?.ToLowerInvariant();
         if (fileExtension != ".xlsx")
@@ -99,6 +97,56 @@ public class ImportJobService(
             return ServiceResult<ImportValidationResultResponse>.Failure(StatusCodes.Status400BadRequest, "Invalid Excel file content.");
         }
 
+        return await ValidateWorkbookRowsAsync(
+            request.ImportType.Trim(), request.FileName.Trim(), workbookReadResult, tenantId.Value, cancellationToken);
+    }
+
+    public async Task<ServiceResult<ImportValidationResultResponse>> ValidateRowsAsync(
+        ValidateImportRowsRequest request, CancellationToken cancellationToken = default)
+    {
+        var tenantId = currentTenantProvider.TenantId;
+        if (!tenantId.HasValue)
+        {
+            return ServiceResult<ImportValidationResultResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.ImportType) || string.IsNullOrWhiteSpace(request.FileName))
+        {
+            return ServiceResult<ImportValidationResultResponse>.Failure(StatusCodes.Status400BadRequest, "Import type and file name are required.");
+        }
+
+        if (!SupportedTemplates.ContainsKey(request.ImportType.Trim()))
+        {
+            return ServiceResult<ImportValidationResultResponse>.Failure(StatusCodes.Status404NotFound, $"Unsupported import type '{request.ImportType}'.");
+        }
+
+        if (request.Headers is null || request.Rows is null || request.Rows.Any(row => row is null || row.Values is null))
+        {
+            return ServiceResult<ImportValidationResultResponse>.Failure(StatusCodes.Status400BadRequest, "Import preview rows are required.");
+        }
+
+        var rows = request.Rows.Select((row, index) =>
+        {
+            var values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var (key, value) in row.Values)
+            {
+                values[key] = value ?? string.Empty;
+            }
+
+            return new ImportWorkbookRow(index + 2, values);
+        }).ToArray();
+
+        var workbook = new ImportWorkbookReadResult(request.Headers.ToArray(), rows);
+        return await ValidateWorkbookRowsAsync(
+            request.ImportType.Trim(), request.FileName.Trim(), workbook, tenantId.Value, cancellationToken);
+    }
+
+    private async Task<ServiceResult<ImportValidationResultResponse>> ValidateWorkbookRowsAsync(
+        string importType, string fileName, ImportWorkbookReadResult workbookReadResult, Guid tenantId,
+        CancellationToken cancellationToken)
+    {
+        var expectedColumns = SupportedTemplates[importType];
+        var errors = new List<ImportValidationErrorResponse>();
         var totalRows = workbookReadResult.Rows.Count;
         if (totalRows == 0)
         {
@@ -113,8 +161,8 @@ public class ImportJobService(
 
         var validationErrors = await importValidationEngine.ValidateAsync(
             new ImportValidationContext(
-                tenantId.Value,
-                request.ImportType.Trim(),
+                tenantId,
+                importType,
                 expectedColumns,
                 workbookReadResult),
             cancellationToken);
@@ -137,9 +185,9 @@ public class ImportJobService(
 
         var importJob = new ImportJob
         {
-            TenantId = tenantId.Value,
-            ImportType = request.ImportType.Trim().ToLowerInvariant(),
-            SourceFileName = request.FileName.Trim(),
+            TenantId = tenantId,
+            ImportType = importType.ToLowerInvariant(),
+            SourceFileName = fileName,
             Status = status,
             TotalRows = totalRows,
             ValidRows = validRows,
@@ -157,7 +205,7 @@ public class ImportJobService(
 
         await auditLogger.LogAsync(
             eventType: "imports.validation.completed",
-            tenantId: tenantId.Value,
+            tenantId: tenantId,
             actorUserId: null,
             targetUserId: null,
             entityName: nameof(ImportJob),
@@ -172,7 +220,7 @@ public class ImportJobService(
 
         if (errors.Count > 0)
         {
-            var errorWorkbook = importWorkbookService.BuildValidationErrorWorkbook(request.ImportType, errors);
+            var errorWorkbook = importWorkbookService.BuildValidationErrorWorkbook(importType, errors);
             errorWorkbookContent = errorWorkbook.Content;
             errorWorkbookFileName = errorWorkbook.FileName;
             errorWorkbookContentType = errorWorkbook.ContentType;
@@ -182,6 +230,7 @@ public class ImportJobService(
         {
             ImportJobId = importJob.Id,
             ImportType = importJob.ImportType,
+            SourceFileName = fileName,
             Status = importJob.Status,
             TotalRows = importJob.TotalRows,
             ValidRows = importJob.ValidRows,
@@ -190,6 +239,15 @@ public class ImportJobService(
             ErrorWorkbookContentType = errorWorkbookContentType,
             ErrorWorkbookContent = errorWorkbookContent,
             Errors = errors,
+            PreviewHeaders = workbookReadResult.Headers
+                .Concat(expectedColumns)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray(),
+            PreviewRows = workbookReadResult.Rows.Select(row => new ImportPreviewRowResponse
+            {
+                RowNumber = row.RowNumber,
+                Values = row.Values,
+            }).ToArray(),
         };
 
         return ServiceResult<ImportValidationResultResponse>.Success(result);
@@ -353,10 +411,15 @@ public class ImportJobService(
 
     private static ImportJobStatusResponse MapStatus(ImportJob job)
     {
+        var previewRows = job.Status == ImportJobStatus.Validated && !job.SubmittedAtUtc.HasValue
+            ? JsonSerializer.Deserialize<List<ImportWorkbookRow>>(job.ValidatedRowsJson ?? "[]") ?? []
+            : [];
+
         return new ImportJobStatusResponse
         {
             ImportJobId = job.Id,
             ImportType = job.ImportType,
+            SourceFileName = job.SourceFileName,
             Status = job.Status,
             TotalRows = job.TotalRows,
             ValidRows = job.ValidRows,
@@ -365,6 +428,12 @@ public class ImportJobService(
             SubmittedAtUtc = job.SubmittedAtUtc,
             CompletedAtUtc = job.CompletedAtUtc,
             ErrorSummary = job.ErrorSummary,
+            PreviewHeaders = SupportedTemplates.GetValueOrDefault(job.ImportType) ?? [],
+            PreviewRows = previewRows.Select(row => new ImportPreviewRowResponse
+            {
+                RowNumber = row.RowNumber,
+                Values = row.Values,
+            }).ToArray(),
         };
     }
 }

@@ -6,6 +6,7 @@ public class ImportValidationResultResponse
 {
     public Guid ImportJobId { get; set; }
     public string ImportType { get; set; } = string.Empty;
+    public string SourceFileName { get; set; } = string.Empty;
     public ImportJobStatus Status { get; set; }
     public int TotalRows { get; set; }
     public int ValidRows { get; set; }
@@ -14,4 +15,6 @@ public class ImportValidationResultResponse
     public string? ErrorWorkbookContentType { get; set; }
     public byte[]? ErrorWorkbookContent { get; set; }
     public IReadOnlyCollection<ImportValidationErrorResponse> Errors { get; set; } = [];
+    public IReadOnlyCollection<string> PreviewHeaders { get; set; } = [];
+    public IReadOnlyCollection<ImportPreviewRowResponse> PreviewRows { get; set; } = [];
 }

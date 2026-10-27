@@ -287,6 +287,70 @@ public class ImportJobServiceTests
         Assert.NotNull(result.Value.ErrorWorkbookContent);
     }
 
+    [Fact]
+    public async Task ValidateRowsAsync_PersistsEditedValuesAndReturnsPreview()
+    {
+        var tenantId = Guid.NewGuid();
+        using var db = CreateInMemoryDbContext();
+        var svc = CreateService(db, tenantId: tenantId);
+
+        var result = await svc.ValidateRowsAsync(new ValidateImportRowsRequest
+        {
+            ImportType = "customer",
+            FileName = "customers.xlsx",
+            Headers = ["CustomerNumber", "Name"],
+            Rows = [new ImportPreviewRowResponse
+            {
+                RowNumber = 99,
+                Values = new Dictionary<string, string> { ["CustomerNumber"] = "C001", ["Name"] = "Edited name" },
+            }],
+        });
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(ImportJobStatus.Validated, result.Value!.Status);
+        Assert.Equal("customers.xlsx", result.Value.SourceFileName);
+        Assert.Contains("Name", result.Value.PreviewHeaders);
+        Assert.Equal("Edited name", Assert.Single(result.Value.PreviewRows).Values["Name"]);
+        var job = await db.ImportJobs.SingleAsync();
+        var storedRows = System.Text.Json.JsonSerializer.Deserialize<List<ImportWorkbookRow>>(job.ValidatedRowsJson!);
+        var storedRow = Assert.Single(storedRows!);
+        Assert.Equal(2, storedRow.RowNumber);
+        Assert.Equal("Edited name", storedRow.Values["Name"]);
+    }
+
+    [Fact]
+    public async Task ValidateRowsAsync_ReturnsEditedPreviewAndErrorsForInvalidRows()
+    {
+        using var db = CreateInMemoryDbContext();
+        var engine = new FakeImportValidationEngine
+        {
+            Errors = [new ImportValidationErrorResponse
+            {
+                RowNumber = 2,
+                ColumnName = "Name",
+                Category = "BusinessRule",
+                Message = "Name is required.",
+            }],
+        };
+        var svc = CreateService(db, engine: engine);
+
+        var result = await svc.ValidateRowsAsync(new ValidateImportRowsRequest
+        {
+            ImportType = "customer",
+            FileName = "customers.xlsx",
+            Headers = ["CustomerNumber", "Name"],
+            Rows = [new ImportPreviewRowResponse
+            {
+                Values = new Dictionary<string, string> { ["CustomerNumber"] = "C001", ["Name"] = string.Empty },
+            }],
+        });
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(ImportJobStatus.FailedValidation, result.Value!.Status);
+        Assert.Equal(string.Empty, Assert.Single(result.Value.PreviewRows).Values["Name"]);
+        Assert.Contains(result.Value.Errors, error => error.Message == "Name is required.");
+    }
+
     // ── GetStatusAsync ────────────────────────────────────────────────────────
 
     [Fact]

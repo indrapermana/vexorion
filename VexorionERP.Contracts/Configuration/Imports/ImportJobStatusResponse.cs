@@ -6,6 +6,7 @@ public class ImportJobStatusResponse
 {
     public Guid ImportJobId { get; set; }
     public string ImportType { get; set; } = string.Empty;
+    public string SourceFileName { get; set; } = string.Empty;
     public ImportJobStatus Status { get; set; }
     public int TotalRows { get; set; }
     public int ValidRows { get; set; }
@@ -14,4 +15,6 @@ public class ImportJobStatusResponse
     public DateTime? SubmittedAtUtc { get; set; }
     public DateTime? CompletedAtUtc { get; set; }
     public string? ErrorSummary { get; set; }
+    public IReadOnlyCollection<string> PreviewHeaders { get; set; } = [];
+    public IReadOnlyCollection<ImportPreviewRowResponse> PreviewRows { get; set; } = [];
 }

@@ -570,6 +570,11 @@ Open project, document, and relationship work is consolidated in the final Main 
 - Import functionality exists, but the correction loop and idempotent/concurrent submission behavior lack E2E evidence.
 - Generated-document history/preview/download/regenerate exists, but authorization, isolation, retention, real-storage behavior, and recovery remain incomplete.
 
+- [x] `UX-IMP-01` Present all import types in a four-step Template → File → Validate → Submit flow with editable row previews and duplicate-submission recovery. Owner-confirmed manual browser validation completed 27 October 2026.
+  - Implemented locally (26 October 2026): each step displays only its own panel with Previous/Next navigation; Submit displays the row-count summary and imports directly. Every import type uses the same editable data grid. Row/column validation errors appear inline and by row; edited rows are revalidated by the server before Submit is enabled. History appears only in the final stage (or the history-only permission view). Visited import-type tabs retain their flow state.
+  - A tenant/type-scoped session job pointer survives reload. Lost submit responses block new uploads/submissions until the same job is refreshed; validated, unsubmitted jobs require explicit review again, accepted/pending jobs remain blocked, and terminal outcomes expose monitoring/history. Failed status lookup remains blocked; history-view permission is still required for status lookup and must not be bypassed. Validation-only users cannot submit and do not create a submit-recovery marker.
+  - Template download defect fixed: the API returns generated XLSX bytes as an attachment; integration tests inspect workbook/sheet entries. Authenticated Chromium downloads the actual template, edits a required field in the grid, confirms the edited value reaches server revalidation, and submits once from the summary. Validation and submit responses are mocked; this does not prove real record creation. Verification: 385 Main UI tests (coverage/JUnit), 13 focused page tests, 40 import handler/service tests, and 10 import API tests pass; typecheck, scoped lint, and production build pass with the existing chunk-size warning. The browser scenario passes 2/2 including setup/cleanup and settled no-overflow assertions at 1440px and 390px. Session recovery remains tab-local; cross-tab/device coordination, real-record E2E, concurrent/different-job idempotency, and rollback/runbooks remain unfinished. No migration or production deployment was performed; malware scanning remains deferred.
+
 Open import and generated-document work is consolidated in the final Main UI backlog.
 
 ### 5.10 Admin UI
@@ -698,7 +703,6 @@ Removal verification (26 October 2026): 14 upload/version handler, 11 document/r
 
 #### Projects, documents, imports, and generated documents
 
-- [ ] `UX-IMP-01` Present imports as template → file → validate → correct → confirm → submit → monitor; prevent duplicate submission.
 - [ ] `UX-IMP-02` Make import errors actionable by sheet, row, column, field, cause, and retry path.
 - [ ] `UX-DOC-01` Standardize generated-document history, preview, download, regeneration, and failure recovery.
 - [ ] Add import/generated-document endpoint tests for authorization, tenant isolation, content types, file limits, and mocked storage; keep a real-container suite optional.

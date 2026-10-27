@@ -3,6 +3,7 @@ import type {
   ImportJobHistoryItemResponse,
   ImportJobStatusResponse,
   ImportValidationResultResponse,
+  ValidateImportRowsRequest,
 } from '../../types/api'
 import { apiClient, requestJson } from './core'
 
@@ -43,6 +44,10 @@ export async function validateImportFile(importType: string, file: File) {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
   return response.data
+}
+
+export function validateImportRows(request: ValidateImportRowsRequest) {
+  return requestJson<ImportValidationResultResponse>('/imports/validate-rows', 'POST', request)
 }
 
 export function submitImportJob(importJobId: string) {

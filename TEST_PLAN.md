@@ -394,6 +394,21 @@ Post-removal validation (26 October 2026): upload/version handler tests pass 14/
 
 ---
 
+### 1.13 Guided Imports
+
+| # | Scenario | Steps | Expected Result |
+|---|----------|-------|-----------------|
+| 1.13.1 | Four isolated stages | Move through Template, File, Validate, and Submit with Next/Previous; inspect each panel | Only the active stage's workflow content is shown; Next/Previous navigation is consistent; every import type uses the same flow |
+| 1.13.2 | Downloadable template | Download the template from the real API and open it as an XLSX workbook | The API returns an attachment with valid workbook and worksheet entries, not JSON bytes mislabeled as `.xlsx` |
+| 1.13.3 | Editable preview and row issues | Upload a workbook with missing/invalid values; inspect and edit cells in the Validate grid; continue | Parsed rows and expected columns appear in the grid; cell errors are marked and row messages identify the issue; edited values remain visible and require server revalidation; invalid rows cannot proceed |
+| 1.13.4 | Submit summary and duplicate prevention | Continue after a clean validation; inspect counts; double-click Submit | Summary shows total/valid counts; Submit immediately starts import without a second confirmation dialog; only one POST is sent |
+| 1.13.5 | Same-job recovery | Lose the submit response; reload; refresh the saved job | The tenant/type-scoped job pointer survives; no automatic submit/revalidation occurs; validated jobs restore preview rows; accepted/incomplete jobs block another import |
+| 1.13.6 | Failed status lookup and permissions | Make status lookup fail; separately use validation-only and history-only permissions | Recovery warning stays on Submit and blocks blind retry; validation-only users cannot submit; history-only users retain history access |
+| 1.13.7 | Import-type tab retention | Select a file or edit preview rows; switch import type and return | Each visited import type retains its own current step, file, preview, and edits; changes cannot cross import types |
+| 1.13.8 | Responsive preview and summary | Inspect the grid and Submit summary at 1440px and 390px widths | Grid remains usable with bounded horizontal scrolling, text/actions fit, and the page has no horizontal overflow |
+
+Current UX-IMP-01 verification: automated evidence from 26 October 2026 includes Main UI coverage/JUnit 385/385, focused import page tests 13/13, handler/service tests 40/40, and import controller tests 10/10. Typecheck, scoped lint, and production build pass with the existing chunk warning. Authenticated Chromium passes 2/2 including setup/cleanup: real template download, inline preview edit, revalidation request with the edited value, direct summary submission, and responsive checks at 1440px/390px. The owner confirmed manual browser validation on 27 October 2026. Validation/revalidation/submit responses in the automated browser scenario are mocked, so this is not real record-creation evidence. Recovery is session/tab-local. Real-record E2E, concurrency/rollback/runbooks, and release acceptance remain outstanding; no migration or production deployment was performed.
+
 ## Part 2 — POS Application
 
 ### 2.1 Authentication

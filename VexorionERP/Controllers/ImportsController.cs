@@ -25,10 +25,17 @@ public class ImportsController(
 
     [HttpGet("template/{importType}")]
     [Authorize(Policy = AppPermissions.Imports.Validate)]
-    public async Task<ActionResult<ImportTemplateResponse>> DownloadTemplate(string importType)
+    public async Task<ActionResult> DownloadTemplate(string importType)
     {
         var result = await mediator.Send(new DownloadImportTemplateQuery(importType), HttpContext.RequestAborted);
-        return ToActionResult(result);
+        if (!result.Succeeded)
+        {
+            var failure = ToActionResult(result);
+            return failure.Result ?? BadRequest();
+        }
+
+        var template = result.Value!;
+        return File(template.Content, template.ContentType, template.FileName);
     }
 
     [HttpPost("validate")]
@@ -50,6 +57,14 @@ public class ImportsController(
         };
 
         var result = await mediator.Send(new ValidateImportFileCommand(request), HttpContext.RequestAborted);
+        return ToActionResult(result);
+    }
+
+    [HttpPost("validate-rows")]
+    [Authorize(Policy = AppPermissions.Imports.Validate)]
+    public async Task<ActionResult<ImportValidationResultResponse>> ValidateRows([FromBody] ValidateImportRowsRequest request)
+    {
+        var result = await mediator.Send(new ValidateImportRowsCommand(request), HttpContext.RequestAborted);
         return ToActionResult(result);
     }
 

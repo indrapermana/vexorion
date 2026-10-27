@@ -85,6 +85,9 @@ internal sealed class FakeImportJobService : IImportJobService
     public ServiceResult<ImportValidationResultResponse> ValidateResult { get; set; }
         = ServiceResult<ImportValidationResultResponse>.Failure(500, "Not configured");
 
+    public ServiceResult<ImportValidationResultResponse> ValidateRowsResult { get; set; }
+        = ServiceResult<ImportValidationResultResponse>.Failure(500, "Not configured");
+
     public ServiceResult<ImportJobStatusResponse> SubmitResult { get; set; }
         = ServiceResult<ImportJobStatusResponse>.Failure(500, "Not configured");
 
@@ -102,6 +105,9 @@ internal sealed class FakeImportJobService : IImportJobService
 
     public Task<ServiceResult<ImportValidationResultResponse>> ValidateAsync(
         ValidateImportFileRequest request, CancellationToken cancellationToken = default) => Task.FromResult(ValidateResult);
+
+    public Task<ServiceResult<ImportValidationResultResponse>> ValidateRowsAsync(
+        ValidateImportRowsRequest request, CancellationToken cancellationToken = default) => Task.FromResult(ValidateRowsResult);
 
     public Task<ServiceResult<ImportJobStatusResponse>> SubmitAsync(
         Guid importJobId, CancellationToken cancellationToken = default) => Task.FromResult(SubmitResult);

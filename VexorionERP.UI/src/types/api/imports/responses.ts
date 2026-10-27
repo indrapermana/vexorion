@@ -20,6 +20,7 @@ export type ImportValidationErrorResponse = {
 export type ImportValidationResultResponse = {
   importJobId: string
   importType: string
+  sourceFileName: string
   status: number
   totalRows: number
   validRows: number
@@ -28,11 +29,26 @@ export type ImportValidationResultResponse = {
   errorWorkbookContentType?: string | null
   errorWorkbookContent?: string | null // base64
   errors: ImportValidationErrorResponse[]
+  previewHeaders: string[]
+  previewRows: ImportPreviewRowResponse[]
+}
+
+export type ImportPreviewRowResponse = {
+  rowNumber: number
+  values: Record<string, string>
+}
+
+export type ValidateImportRowsRequest = {
+  importType: string
+  fileName: string
+  headers: string[]
+  rows: ImportPreviewRowResponse[]
 }
 
 export type ImportJobStatusResponse = {
   importJobId: string
   importType: string
+  sourceFileName: string
   status: number
   totalRows: number
   validRows: number
@@ -41,6 +57,8 @@ export type ImportJobStatusResponse = {
   submittedAtUtc?: string | null
   completedAtUtc?: string | null
   errorSummary?: string | null
+  previewHeaders?: string[]
+  previewRows?: ImportPreviewRowResponse[]
 }
 
 export type ImportJobHistoryItemResponse = {
