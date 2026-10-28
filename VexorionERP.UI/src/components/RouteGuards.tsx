@@ -1,4 +1,4 @@
-import { VxAlert } from '@vexorion/ui'
+import { VxAlert } from '@vexorion/ui/bootstrap'
 import { useTranslation } from 'react-i18next'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../app/AuthContext'

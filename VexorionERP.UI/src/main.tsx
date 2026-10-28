@@ -1,6 +1,6 @@
 import { StrictMode, useEffect, useMemo, useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { VxCssBaseline, VxThemeProvider } from '@vexorion/ui'
+import { VxCssBaseline, VxThemeProvider } from '@vexorion/ui/bootstrap'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import './index.css'

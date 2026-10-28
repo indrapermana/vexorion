@@ -232,6 +232,7 @@ Run these from repository root:
 | `npm run test` | Run test tasks via Turbo |
 | `npx turbo run build --filter=vexorionerp-adminui` | Build only AdminUI and its dependencies |
 | `npx turbo run build --filter=vexorionerp-ui --filter=vexorionerp-pos` | Build selected apps only |
+| `npm --workspace VexorionERP.UI run bundle:check` | Check the completed Main UI production build against raw and gzip bundle budgets |
 
 ### Shared UI package version bump workflow
 
@@ -523,7 +524,7 @@ GitHub Actions uses two path-scoped workflows, and the badges at the top of this
 | Backend | `.github/workflows/backend.yml` | `**.cs`, `**.csproj`, `**.sln`, or the workflow file itself |
 | Frontend | `.github/workflows/frontend.yml` | Any frontend application, shared package, root frontend configuration, or frontend workflow change |
 
-The frontend workflow builds, type-checks, lints, and unit-tests affected packages and uploads test, coverage, and distribution artifacts. Its three Playwright jobs are currently hard-disabled in workflow conditions; even after they are enabled, missing credentials can skip execution. A skipped E2E job is not a passing E2E or release gate. The backend workflow runs restore, Release build, `.NET` tests, and uploads test/coverage artifacts before deployment eligibility.
+The frontend workflow builds, type-checks, lints, and unit-tests affected packages, enforces the Main UI raw/gzip bundle budget when that application is built, and uploads test, coverage, and distribution artifacts. Its three Playwright jobs are currently hard-disabled in workflow conditions; even after they are enabled, missing credentials can skip execution. A skipped E2E job is not a passing E2E or release gate. The backend workflow runs restore, Release build, `.NET` tests, and uploads test/coverage artifacts before deployment eligibility.
 
 The authenticated frontends and public landing page deploy to Cloudflare Pages through explicit deployment gates. The production API runs on Google Cloud Run, PostgreSQL runs on Neon, and object storage uses Cloudflare R2.
 

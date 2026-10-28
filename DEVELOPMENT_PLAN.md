@@ -43,7 +43,7 @@ Percentage-complete labels are intentionally not used. Capability-inventory chec
 | `dotnet test VexorionERP.sln --no-restore --disable-build-servers --verbosity minimal -m:1 -p:UseSharedCompilation=false` | PASS | 887/887: Services 529, Web 203, Handlers 155. Includes tenant-level R2 cleanup and storage-backed deletion regression coverage. |
 | `dotnet package list --project VexorionERP.sln --vulnerable --include-transitive --no-restore` | PASS | NuGet reported no vulnerable direct or transitive packages in all nine projects, including AWSSDK.S3 4.0.104.5. |
 | `npm run test:run` | PASS | 195/195 frontend tests: Main UI 94, AdminUI 30, POS 71, plus 7/7 isolated E2E tenant-lifecycle tests. The command also validates the local API routing contract for all three applications before running unit tests. |
-| `npm run build` | PASS WITH WARNING | All four frontend packages built; Main UI emitted the known chunk-size warning. |
+| `npm run build` | PASS | All frontend packages built. Main UI route/vendor splitting removed the previous chunk-size warning; its largest minified chunk is 407.57 kB (122.19 kB gzip), down from 675.48 kB (200.26 kB gzip). CI now enforces raw and gzip bundle budgets. |
 | POS checkout/refund and cashier UX validation | PASS; FEAT-POS-01B/02 and UX-POS-01/02 locally accepted | POS frontend tests 97/97, production build, typecheck, and lint (zero errors; five existing hook warnings); guarded PostgreSQL checkout and refund integrations each pass 1/1; authenticated combined checkout/refund/responsive Playwright spec passes 8/8 with isolated tenant cleanup and orphan check. Responsive run covers 390/768/1024/1440 px with no document overflow. Clean `vexorionerp_test` and owner-confirmed production-like `vexorionerp` include `20261024053601_AddPosRefundWorkflow`. Full solution tests: 932 passed/2 guarded PostgreSQL tests skipped. Broader release rollback/forward-fix rehearsal remains under P1-5. |
 | EF migration model state | PASS | `dotnet ef migrations has-pending-model-changes` reports no model change since the last migration; existing migrations were preserved. All five migrations were applied independently to empty Neon staging and production databases. A production-like upgrade rehearsal remains unvalidated. |
 | Cloudflare frontend to production API | OWNER CONFIRMED | Exact production CORS checks passed and login succeeds on Main UI, Admin UI, and POS after all three were rebuilt against the production Cloud Run `/api` URL. This confirms deployed authentication routing, not full workflow or release validation. |
@@ -265,7 +265,10 @@ Remaining provider retirement, upgrade/rollback rehearsal, runbooks, observabili
 
 ### P2-1 — Performance and maintainability
 
-Performance, shared-client, maintainability, accessibility, and locale follow-up is prioritized in the final application/shared backlog.
+- [x] Reduce the Main UI minified bundle through route/vendor splitting and add a CI bundle budget. Completed 28 October 2026: the application bootstrap and API-error imports no longer pull the entire shared UI barrel into the entry graph; MUI core, data grid, charts, icons, React, router, query, forms, and i18n receive deliberate vendor boundaries. The largest minified chunk fell from 675.48 kB/200.26 kB gzip to 407.57 kB/122.19 kB gzip, the entry is 364.14 kB/97.05 kB gzip, and the Vite oversized-chunk warning is gone. `bundle:check` enforces 450 KiB raw/140 KiB gzip per JavaScript chunk and 400 KiB raw/110 KiB gzip for the entry after each affected Main UI build in CI.
+  - Evidence: Main UI production build, bundle-budget check, Main UI and shared UI typechecks, scoped changed-file lint, and RouteGuards tests (13/13) pass. Full Main UI lint still reports the pre-existing 20 `react-hooks/refs` errors in `features/projects/components/DocumentsPanel.tsx`. Two bounded full-unit-suite attempts did not finish reliably under local resource contention, so this item does not claim a fresh full-suite pass. No backend or migration changes were made; this is local validation, not the release gate.
+
+Remaining maintainability, accessibility, locale, and interactive-acceptance work is prioritized in the final Main UI backlog.
 
 ### P2-2 — Storage/security clarification
 
@@ -736,7 +739,6 @@ Removal verification (26 October 2026): 14 upload/version handler, 11 document/r
 
 #### Main UI performance and localization
 
-- [ ] Reduce the Main UI minified bundle through route/vendor splitting and add a CI bundle budget.
 - [ ] Finish Main UI locale completeness and remove hard-coded operational copy with parity tests.
 - [ ] Decompose large Main UI page components where it improves task clarity and testability.
 - [ ] Complete Main UI authenticated interactive acceptance at 768/1024 widths, dark mode, zoom, dialogs/actions, and populated edge cases.

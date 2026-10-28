@@ -1,6 +1,6 @@
 import './App.css'
 import { Suspense, lazy } from 'react'
-import { VxAlert } from '@vexorion/ui'
+import { VxAlert } from '@vexorion/ui/bootstrap'
 import { useTranslation } from 'react-i18next'
 import { createBrowserRouter, Route, Routes, RouterProvider } from 'react-router-dom'
 import { AuthProvider } from './app/AuthContext'

@@ -656,6 +656,15 @@ Current import concurrency/rollback and generated-document compensation verifica
 | 4.5.1 | Normal usage not throttled | Perform typical operations | Responses are 200/201/204 |
 | 4.5.2 | Rapid requests throttled | Fire 201+ requests in 10 seconds to any endpoint | 429 Too Many Requests returned |
 
+### 4.6 Main UI Bundle Budget
+
+Run a production build before the budget check. The frontend CI workflow runs the same check whenever the affected-package build produces `VexorionERP.UI/dist/index.html`.
+
+| # | Scenario | Steps | Expected Result |
+|---|----------|-------|-----------------|
+| 4.6.1 | Production bundle stays within budget | Run `npm --workspace VexorionERP.UI run build`, then `npm --workspace VexorionERP.UI run bundle:check` | Every JavaScript chunk is at most 450 KiB raw and 140 KiB gzip; the HTML entry chunk is at most 400 KiB raw and 110 KiB gzip |
+| 4.6.2 | Budget regression blocks CI | Temporarily lower one budget below the reported size and run `npm --workspace VexorionERP.UI run bundle:check` | Command exits non-zero and identifies the offending asset and limit; restore the configured budget afterward |
+
 ---
 
 ## Test Execution Notes

@@ -99,6 +99,10 @@ jobs:
             npx turbo run build --filter=...[HEAD^1]
           fi
 
+      - name: Enforce Main UI bundle budget
+        if: hashFiles('VexorionERP.UI/dist/index.html') != ''
+        run: npm --workspace VexorionERP.UI run bundle:check
+
       - name: Type check affected packages
         run: npx turbo run typecheck --filter=...[HEAD^1]
         continue-on-error: false

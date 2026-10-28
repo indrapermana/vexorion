@@ -1,5 +1,5 @@
 import axios, { AxiosError } from 'axios'
-import { normalizeApiError, type ApiFieldErrors } from '@vexorion/ui'
+import { normalizeApiError, type ApiFieldErrors } from '@vexorion/ui/api-errors'
 import { getApiAccessToken, handleRefresh, handleUnauthorized } from '../apiAuth'
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api'
