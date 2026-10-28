@@ -22,7 +22,13 @@ type ViewerState =
   | { kind: 'hidden' }
   | { kind: 'loading' }
   | { kind: 'ready'; objectUrl: string; fileName: string; fullscreen: boolean }
-  | { kind: 'error'; message: string }
+  | { kind: 'error'; message: string; document: GeneratedDocumentResponse }
+
+type RecoveryAction =
+  | { kind: 'reload' }
+  | { kind: 'generate' }
+  | { kind: 'refresh' }
+  | { kind: 'download'; document: GeneratedDocumentResponse }
 
 function formatLabel(format: GeneratedDocumentFormat) {
   return format === 'Docx' ? 'DOCX' : 'PDF'
@@ -39,6 +45,7 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
   const [documents, setDocuments] = useState<GeneratedDocumentResponse[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [recoveryAction, setRecoveryAction] = useState<RecoveryAction | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
   const [format, setFormat] = useState<GeneratedDocumentFormat>('Pdf')
   const [isGenerating, setIsGenerating] = useState(false)
@@ -61,8 +68,10 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
     try {
       const docs = await listGeneratedDocuments(sourceType, sourceEntityId)
       setDocuments(docs)
+      setRecoveryAction(null)
     } catch (error) {
       setError(error instanceof Error ? error.message : t('pages.documentsPanel.errors.load'))
+      setRecoveryAction({ kind: 'reload' })
     } finally {
       setIsLoading(false)
     }
@@ -87,6 +96,7 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
     if (!sourceEntityId) return
     setIsGenerating(true)
     setError(null)
+    setRecoveryAction(null)
     setFeedback(null)
     try {
       await generateDocument({ sourceType, sourceEntityId, format, forceRegenerate: false })
@@ -94,6 +104,7 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
       await loadDocuments()
     } catch (error) {
       setError(error instanceof Error ? error.message : t('pages.documentsPanel.errors.generate'))
+      setRecoveryAction({ kind: 'generate' })
     } finally {
       setIsGenerating(false)
     }
@@ -102,6 +113,7 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
   const handleDownload = async (doc: GeneratedDocumentResponse) => {
     setActionLoadingId(doc.generatedDocumentId)
     setError(null)
+    setRecoveryAction(null)
     try {
       const { downloadUrl } = await getDocumentDownloadLink(doc.generatedDocumentId)
       const a = document.createElement('a')
@@ -113,6 +125,7 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
       document.body.removeChild(a)
     } catch (error) {
       setError(error instanceof Error ? error.message : t('pages.documentsPanel.errors.download'))
+      setRecoveryAction({ kind: 'download', document: doc })
     } finally {
       setActionLoadingId(null)
     }
@@ -122,12 +135,15 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
     setActionLoadingId(doc.generatedDocumentId)
     setError(null)
     setFeedback(null)
+    setRecoveryAction(null)
     try {
       await regenerateDocument(doc.generatedDocumentId)
       setFeedback(t('pages.documentsPanel.regenerated'))
       await loadDocuments()
     } catch (error) {
-      setError(error instanceof Error ? error.message : t('pages.documentsPanel.errors.regenerate'))
+      const message = error instanceof Error ? error.message : t('pages.documentsPanel.errors.regenerate')
+      setError(`${message} ${t('pages.documentsPanel.regenerateRecovery')}`)
+      setRecoveryAction({ kind: 'refresh' })
     } finally {
       setActionLoadingId(null)
     }
@@ -145,8 +161,21 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
       }
       setViewer({ kind: 'ready', objectUrl, fileName: doc.fileName, fullscreen: false })
     } catch (error) {
-      setViewer({ kind: 'error', message: error instanceof Error ? error.message : t('pages.documentsPanel.errors.preview') })
+      setViewer({ kind: 'error', message: error instanceof Error ? error.message : t('pages.documentsPanel.errors.preview'), document: doc })
     }
+  }
+
+  const handleRecovery = async () => {
+    if (!recoveryAction) return
+    if (recoveryAction.kind === 'generate') {
+      await handleGenerate()
+      return
+    }
+    if (recoveryAction.kind === 'download') {
+      await handleDownload(recoveryAction.document)
+      return
+    }
+    await loadDocuments()
   }
 
   if (!sourceEntityId) {
@@ -158,7 +187,7 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
     )
   }
 
-  const readyDocs = documents.filter((d) => d.status === 'Ready')
+  const isBusy = isLoading || isGenerating || actionLoadingId !== null
 
   return (
     <VxPaper elevation={0} className="panel-card">
@@ -193,16 +222,25 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
               </VxButton>
             </VxStack>
           )}
+          <VxButton
+            variant="text"
+            size="small"
+            startIcon={isLoading ? <VxCircularProgress size={14} /> : <RefreshRoundedIcon fontSize="small" />}
+            onClick={() => void loadDocuments()}
+            disabled={isBusy}
+          >
+            {t('pages.documentsPanel.refreshHistory')}
+          </VxButton>
         </VxStack>
 
-        {error && <VxAlert severity="error" onClose={() => setError(null)}>{error}</VxAlert>}
+        {error && <VxAlert severity="error" onClose={() => { setError(null); setRecoveryAction(null) }} action={recoveryAction ? <VxButton color="inherit" size="small" disabled={isBusy} onClick={() => void handleRecovery()}>{t(recoveryAction.kind === 'refresh' || recoveryAction.kind === 'reload' ? 'pages.documentsPanel.refreshHistory' : 'common.retry')}</VxButton> : undefined}>{error}</VxAlert>}
         {feedback && <VxAlert severity="success" onClose={() => setFeedback(null)}>{feedback}</VxAlert>}
 
         {isLoading ? (
           <VxBox sx={{ display: 'grid', placeItems: 'center', py: 3 }}>
             <VxCircularProgress size={24} />
           </VxBox>
-        ) : readyDocs.length === 0 ? (
+        ) : documents.length === 0 ? (
           <VxTypography color="text.secondary" variant="body2">{t('pages.documentsPanel.noGenerated')}</VxTypography>
         ) : (
           <VxTableContainer>
@@ -212,13 +250,15 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
                   <VxTableCell>{t('pages.documentsPanel.columns.file')}</VxTableCell>
                   <VxTableCell>{t('pages.documentsPanel.columns.format')}</VxTableCell>
                   <VxTableCell>{t('pages.documentsPanel.columns.version')}</VxTableCell>
+                  <VxTableCell>{t('pages.documentsPanel.columns.status')}</VxTableCell>
                   <VxTableCell>{t('pages.documentsPanel.columns.generated')}</VxTableCell>
                   <VxTableCell align="right">{t('pages.documentsPanel.columns.actions')}</VxTableCell>
                 </VxTableRow>
               </VxTableHead>
               <VxTableBody>
-                {readyDocs.map((doc) => {
+                {documents.map((doc) => {
                   const isActionLoading = actionLoadingId === doc.generatedDocumentId
+                  const canOpenDocument = doc.status !== 'Failed'
                   return (
                     <VxTableRow key={doc.generatedDocumentId} hover>
                       <VxTableCell>
@@ -231,48 +271,56 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
                       </VxTableCell>
                       <VxTableCell>v{doc.version}</VxTableCell>
                       <VxTableCell>
+                        <VxChip
+                          label={t(`pages.documentsPanel.statuses.${doc.status.toLowerCase()}`)}
+                          size="small"
+                          color={doc.status === 'Ready' ? 'success' : doc.status === 'Failed' ? 'error' : 'default'}
+                          variant={doc.status === 'Ready' ? 'filled' : 'outlined'}
+                        />
+                      </VxTableCell>
+                      <VxTableCell>
                         <VxTypography variant="body2" color="text.secondary">
                           {new Date(doc.generatedAtUtc).toLocaleString(i18n.resolvedLanguage)}
                         </VxTypography>
                       </VxTableCell>
                       <VxTableCell align="right">
                         <VxButtonGroup size="small" variant="outlined">
-                          {canView && (
+                          {canView && canOpenDocument && (
                             <VxTooltip title={t(doc.format === 'Docx' ? 'pages.documentsPanel.previewAsPdf' : 'pages.documentsPanel.viewInline')}>
                               <span>
                                 <VxIconButton
                                   size="small"
                                   onClick={() => void handleViewInline(doc)}
                                   disabled={isActionLoading}
-                                  aria-label={t(doc.format === 'Docx' ? 'pages.documentsPanel.previewAsPdf' : 'pages.documentsPanel.viewInline')}
+                                  aria-label={t(doc.format === 'Docx' ? 'pages.documentsPanel.previewAsPdfFile' : 'pages.documentsPanel.viewInlineFile', { fileName: doc.fileName })}
                                 >
                                   {doc.format === 'Docx' ? <PictureAsPdfRoundedIcon fontSize="small" /> : <VisibilityRoundedIcon fontSize="small" />}
                                 </VxIconButton>
                               </span>
                             </VxTooltip>
                           )}
-                          {canDownload && (
+                          {canDownload && canOpenDocument && (
                             <VxTooltip title={t('pages.documentsPanel.download')}>
                               <span>
                                 <VxIconButton
                                   size="small"
                                   onClick={() => void handleDownload(doc)}
                                   disabled={isActionLoading}
-                                  aria-label={t('pages.documentsPanel.download')}
+                                  aria-label={t('pages.documentsPanel.downloadFile', { fileName: doc.fileName })}
                                 >
                                   {isActionLoading ? <VxCircularProgress size={14} /> : <DownloadRoundedIcon fontSize="small" />}
                                 </VxIconButton>
                               </span>
                             </VxTooltip>
                           )}
-                          {canRegenerate && (
+                          {canRegenerate && doc.status === 'Ready' && (
                             <VxTooltip title={t('pages.documentsPanel.regenerate')}>
                               <span>
                                 <VxIconButton
                                   size="small"
                                   onClick={() => void handleRegenerate(doc)}
                                   disabled={isActionLoading}
-                                  aria-label={t('pages.documentsPanel.regenerate')}
+                                  aria-label={t('pages.documentsPanel.regenerateFile', { fileName: doc.fileName })}
                                 >
                                   {isActionLoading ? <VxCircularProgress size={14} /> : <RefreshRoundedIcon fontSize="small" />}
                                 </VxIconButton>
@@ -322,7 +370,7 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
                   <VxCircularProgress />
                 </VxBox>
               )}
-              {viewer.kind === 'error' && <VxAlert severity="error">{viewer.message}</VxAlert>}
+              {viewer.kind === 'error' && <VxAlert severity="error" action={<VxButton color="inherit" size="small" onClick={() => void handleViewInline(viewer.document)}>{t('common.retry')}</VxButton>}>{viewer.message}</VxAlert>}
               {viewer.kind === 'ready' && (
                 <VxBox
                   sx={{
