@@ -583,6 +583,10 @@ Open project, document, and relationship work is consolidated in the final Main 
   - History has an explicit refresh action. Load, generation, and download failures retain a safe retry path; preview failures retry the selected version. An uncertain regeneration never offers a blind POST retry: it instructs the user to refresh and reconcile history first because a new version may already exist. English, Indonesian, and Spanish copy follow the same contract.
   - Verification: three focused workflow regressions and 11 locale parity checks pass. The exact affected-package coverage/JUnit gate passes 388/388 with two workers; the suite timeout is explicitly 15 seconds to prevent instrumentation/load-only false negatives while retaining a bounded hang detector. Main UI typecheck, scoped lint, and production build pass with the existing chunk-size warning. Manual browser confirmation and real-storage generate/history/preview/download/regenerate E2E remain separately tracked; no backend behavior, migration, or production deployment changed.
 
+- [x] Add import/generated-document endpoint tests for authorization, tenant isolation, content types, file limits, and mocked storage; keep a real-container suite optional. Locally completed 28 October 2026: import endpoint coverage retains unauthenticated/permission boundaries, downloadable XLSX validation, and the configured 10 MB rejection contract, and now proves status/history cannot expose another tenant's jobs. Generated-document endpoint coverage exercises unauthenticated and permission boundaries, tenant-filtered history, cross-tenant inline/download-link 404 responses, and PDF inline headers/bytes through a dedicated fake storage adapter.
+  - Storage isolation: cross-tenant failures assert that neither a blob read nor signed-link request reaches the fake adapter. The generated-document test host replaces the production storage registration, so the default suite requires no R2/Azure credentials or container. A real-storage lifecycle remains a separate optional/integration gate.
+  - Evidence: focused import/generated-document endpoint suite passes 19/19 and the complete Web integration suite passes 260/260 on .NET 10. No production controller/service behavior, database migration, or deployment changed.
+
 Open import and generated-document work is consolidated in the final Main UI backlog.
 
 ### 5.10 Admin UI
@@ -711,7 +715,6 @@ Removal verification (26 October 2026): 14 upload/version handler, 11 document/r
 
 #### Projects, documents, imports, and generated documents
 
-- [ ] Add import/generated-document endpoint tests for authorization, tenant isolation, content types, file limits, and mocked storage; keep a real-container suite optional.
 - [ ] Add import E2E: template download → invalid upload → annotated errors → correction → validation → submit → verify records.
 - [ ] Add generated-document E2E: generate → history → preview → download → regenerate/version.
 - [ ] Verify idempotent/concurrent import submissions, document retention, rollback, and operator runbooks.

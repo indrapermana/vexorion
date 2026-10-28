@@ -2,18 +2,20 @@ using System.IO.Compression;
 using System.Net;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using VexorionERP.Contracts;
+using VexorionERP.Database;
 using VexorionERP.Models;
 using VexorionERP.Web.Tests;
 using Xunit;
 
 namespace VexorionERP.Web.Tests;
 
-public class ImportsControllerIntegrationTests : IClassFixture<TestWebApplicationFactory>
+public class ImportsControllerIntegrationTests : IClassFixture<StableTestWebApplicationFactory>
 {
-    private readonly TestWebApplicationFactory _factory;
+    private readonly StableTestWebApplicationFactory _factory;
 
-    public ImportsControllerIntegrationTests(TestWebApplicationFactory factory)
+    public ImportsControllerIntegrationTests(StableTestWebApplicationFactory factory)
     {
         _factory = factory;
     }
@@ -159,5 +161,59 @@ public class ImportsControllerIntegrationTests : IClassFixture<TestWebApplicatio
         var response = await client.PostAsync($"/api/imports/{Guid.NewGuid()}/submit", content: null);
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Imports_Status_WhenJobBelongsToAnotherTenant_ReturnsNotFound()
+    {
+        var tenantA = Guid.NewGuid();
+        var importJobId = await SeedImportJobAsync(tenantA, "tenant-a.xlsx");
+        var client = _factory.CreateClient();
+        client.SetBearerToken(Guid.NewGuid(), AppPermissions.Imports.ViewHistory);
+
+        var response = await client.GetAsync($"/api/imports/{importJobId}/status");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Imports_History_ReturnsOnlyCurrentTenantJobs()
+    {
+        var tenantA = Guid.NewGuid();
+        var tenantB = Guid.NewGuid();
+        var tenantAJobId = await SeedImportJobAsync(tenantA, "tenant-a.xlsx");
+        await SeedImportJobAsync(tenantB, "tenant-b.xlsx");
+        var client = _factory.CreateClient();
+        client.SetBearerToken(tenantA, AppPermissions.Imports.ViewHistory);
+
+        var response = await client.GetAsync("/api/imports/history?page=1&pageSize=20");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var payload = await response.Content.ReadFromJsonAsync<IReadOnlyCollection<ImportJobHistoryItemResponse>>();
+        var job = Assert.Single(Assert.IsAssignableFrom<IReadOnlyCollection<ImportJobHistoryItemResponse>>(payload));
+        Assert.Equal(tenantAJobId, job.ImportJobId);
+        Assert.Equal("tenant-a.xlsx", job.SourceFileName);
+    }
+
+    private async Task<Guid> SeedImportJobAsync(Guid tenantId, string fileName)
+    {
+        var importJobId = Guid.NewGuid();
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        dbContext.ImportJobs.Add(new ImportJob
+        {
+            Id = importJobId,
+            TenantId = tenantId,
+            ImportType = "customer",
+            SourceFileName = fileName,
+            Status = ImportJobStatus.Validated,
+            TotalRows = 1,
+            ValidRows = 1,
+            RequestedByUserId = Guid.NewGuid(),
+            ValidatedAtUtc = DateTime.UtcNow,
+            ValidatedRowsJson = "[]",
+        });
+        await dbContext.SaveChangesAsync();
+        return importJobId;
     }
 }

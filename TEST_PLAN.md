@@ -425,6 +425,8 @@ Current UX-IMP-02 verification: automated evidence from 27 October 2026 includes
 
 Current UX-DOC-01 verification: automated evidence from 28 October 2026 includes 3/3 focused generated-document workflow tests, 11/11 locale parity checks, and the exact affected-package coverage/JUnit gate at 388/388. Main UI typecheck, scoped lint, and production build pass with the existing chunk warning. Manual browser confirmation and the separately planned real-storage generated-document lifecycle E2E remain outstanding; endpoint authorization/isolation, retention, rollback, and operational runbooks are not claimed by this UX ticket. No backend behavior, migration, or production deployment changed.
 
+Current import/generated-document endpoint verification (28 October 2026): 19/19 focused Web integration tests and the complete 260/260 Web suite pass. Import tests cover authentication/permissions, XLSX attachment structure/content type, the configured 10 MB upload limit and machine-readable `import.file_too_large` response, plus tenant-scoped status/history. Generated-document tests cover authentication/permissions, tenant-filtered history, cross-tenant 404 responses before any storage access, and inline PDF content type/disposition/bytes through a fake `IDocumentStorageService`. These are in-memory endpoint checks with mocked storage; they do not replace the optional real-storage lifecycle E2E, PostgreSQL integration, or production validation.
+
 ## Part 2 — POS Application
 
 ### 2.1 Authentication
