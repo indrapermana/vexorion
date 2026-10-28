@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import ReportsPage from './ReportsPage'
 
 const api = vi.hoisted(() => ({
@@ -37,8 +37,14 @@ function setEmptyReports() {
 
 describe('ReportsPage', () => {
   beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-10-26T12:00:00Z'))
     vi.clearAllMocks()
     setEmptyReports()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it('shows aging totals separately by currency instead of adding unlike currencies', async () => {

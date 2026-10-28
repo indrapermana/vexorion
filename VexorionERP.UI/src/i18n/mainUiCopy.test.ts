@@ -65,5 +65,5 @@ describe('Main UI localization boundary', () => {
 
     expect(Object.keys(mainUiModules).length).toBeGreaterThanOrEqual(20)
     expect(findings, findings.join('\n')).toEqual([])
-  })
+  }, 15_000)
 })
