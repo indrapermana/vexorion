@@ -567,6 +567,7 @@ After the migration succeeds, verify that `vexorion_runtime_production` has acce
 - [Cloudflare R2 production setup](docs/CLOUDFLARE_R2_SETUP.md)
 - [Cloudflare Pages setup for the three authenticated UIs](docs/CLOUDFLARE_PAGES_UI_SETUP.md)
 - [Historical Cloudflare frontend migration runbook](docs/CLOUDFLARE_FRONTEND_MIGRATION.md)
+- [Import and generated-document operations](docs/IMPORT_AND_GENERATED_DOCUMENT_OPERATIONS.md)
 
 ## Migration commands
 

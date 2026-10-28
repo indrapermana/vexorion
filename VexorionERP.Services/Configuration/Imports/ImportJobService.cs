@@ -311,6 +311,17 @@ public class ImportJobService(
             return ServiceResult<ImportJobStatusResponse>.Failure(StatusCodes.Status400BadRequest, "Tenant context is required.");
         }
 
+        // Establish the tenant boundary before invoking the provider-specific atomic update. The
+        // update below remains the concurrency authority; this preflight only guarantees that an
+        // inaccessible identifier is consistently reported as not found without touching it.
+        var belongsToTenant = await dbContext.ImportJobs
+            .AsNoTracking()
+            .AnyAsync(x => x.Id == importJobId && x.TenantId == tenantId.Value, cancellationToken);
+        if (!belongsToTenant)
+        {
+            return ServiceResult<ImportJobStatusResponse>.Failure(StatusCodes.Status404NotFound, "Import job was not found.");
+        }
+
         // Atomic lock: stamp SubmittedAtUtc only while the job is still unsubmitted (Status=Validated,
         // SubmittedAtUtc=null). A second concurrent call sees 0 rows affected and returns 409,
         // preventing double-execution of the import.

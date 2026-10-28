@@ -1,6 +1,7 @@
 using System.IO.Compression;
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using VexorionERP.Contracts;
@@ -174,6 +175,24 @@ public class ImportsControllerIntegrationTests : IClassFixture<StableTestWebAppl
         var response = await client.GetAsync($"/api/imports/{importJobId}/status");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Imports_Submit_WhenJobBelongsToAnotherTenant_ReturnsNotFoundWithoutClaimingJob()
+    {
+        var ownerTenant = Guid.NewGuid();
+        var importJobId = await SeedImportJobAsync(ownerTenant, "tenant-a-submit.xlsx");
+        var client = _factory.CreateClient();
+        client.SetBearerToken(Guid.NewGuid(), AppPermissions.Imports.Submit);
+
+        var response = await client.PostAsync($"/api/imports/{importJobId}/submit", content: null);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var job = await dbContext.ImportJobs.IgnoreQueryFilters().SingleAsync(x => x.Id == importJobId);
+        Assert.Null(job.SubmittedAtUtc);
+        Assert.Equal(ImportJobStatus.Validated, job.Status);
     }
 
     [Fact]

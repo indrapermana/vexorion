@@ -565,10 +565,10 @@ Open project, document, and relationship work is consolidated in the final Main 
 
 ### 5.9 Import and generated documents
 
-**Findings**
+**Resolved findings**
 
-- Import functionality exists, but the correction loop and idempotent/concurrent submission behavior lack E2E evidence.
-- Generated-document history/preview/download/regenerate exists, but authorization, isolation, retention, real-storage behavior, and recovery remain incomplete.
+- Import correction, real-record creation, concurrent submission, rollback, tenant isolation, and recovery now have automated evidence and an operator runbook.
+- Generated-document history, preview, download, regeneration, tenant/storage isolation, retained versions, real R2 behavior, compensation, and recovery now have automated evidence and an operator runbook.
 
 - [x] `UX-IMP-01` Present all import types in a four-step Template → File → Validate → Submit flow with editable row previews and duplicate-submission recovery. Owner-confirmed manual browser validation completed 27 October 2026.
   - Implemented locally (26 October 2026): each step displays only its own panel with Previous/Next navigation; Submit displays the row-count summary and imports directly. Every import type uses the same editable data grid. Row/column validation errors appear inline and by row; edited rows are revalidated by the server before Submit is enabled. History appears only in the final stage (or the history-only permission view). Visited import-type tabs retain their flow state.
@@ -583,9 +583,9 @@ Open project, document, and relationship work is consolidated in the final Main 
   - History has an explicit refresh action. Load, generation, and download failures retain a safe retry path; preview failures retry the selected version. An uncertain regeneration never offers a blind POST retry: it instructs the user to refresh and reconcile history first because a new version may already exist. English, Indonesian, and Spanish copy follow the same contract.
   - Verification: three focused workflow regressions and 11 locale parity checks pass. The exact affected-package coverage/JUnit gate passes 388/388 with two workers; the suite timeout is explicitly 15 seconds to prevent instrumentation/load-only false negatives while retaining a bounded hang detector. Main UI typecheck, scoped lint, and production build pass with the existing chunk-size warning. Manual browser confirmation and real-storage generate/history/preview/download/regenerate E2E remain separately tracked; no backend behavior, migration, or production deployment changed.
 
-- [x] Add import/generated-document endpoint tests for authorization, tenant isolation, content types, file limits, and mocked storage; keep a real-container suite optional. Locally completed 28 October 2026: import endpoint coverage retains unauthenticated/permission boundaries, downloadable XLSX validation, and the configured 10 MB rejection contract, and now proves status/history cannot expose another tenant's jobs. Generated-document endpoint coverage exercises unauthenticated and permission boundaries, tenant-filtered history, cross-tenant inline/download-link 404 responses, and PDF inline headers/bytes through a dedicated fake storage adapter.
+- [x] Add import/generated-document endpoint tests for authorization, tenant isolation, content types, file limits, and mocked storage; keep a real-container suite optional. Locally completed 28 October 2026: import endpoint coverage retains unauthenticated/permission boundaries, downloadable XLSX validation, and the configured 10 MB rejection contract, and now proves status/history/submit cannot expose or claim another tenant's jobs. Generated-document endpoint coverage exercises unauthenticated and permission boundaries, tenant-filtered history, cross-tenant inline/download-link/regenerate 404 responses, and PDF inline headers/bytes through a dedicated fake storage adapter.
   - Storage isolation: cross-tenant failures assert that neither a blob read nor signed-link request reaches the fake adapter. The generated-document test host replaces the production storage registration, so the default suite requires no R2/Azure credentials or container. A real-storage lifecycle remains a separate optional/integration gate.
-  - Evidence: focused import/generated-document endpoint suite passes 19/19 and the complete Web integration suite passes 260/260 on .NET 10. No production controller/service behavior, database migration, or deployment changed.
+  - Evidence: focused import/generated-document endpoint suite passes 22/22 and the complete Web integration suite passes 263/263 on .NET 10. Cross-tenant submit leaves the inaccessible job unclaimed; cross-tenant regeneration performs no storage upload. No database migration or deployment was performed.
 
 - [x] Add import E2E: template download → invalid upload → annotated errors → correction → validation → submit → verify records. Locally integration-validated 28 October 2026 against the Development API and database. The browser downloads the real customer template, uploads a generated standards-based XLSX with a missing required name, and verifies the server's worksheet, row, column, field, cause, correction, and retry-path output. It edits the preview, exercises real row revalidation and submission endpoints, then verifies the imported customer through the tenant-scoped customer API.
   - Isolation and cleanup: the scenario runs inside the generated automation tenant, uses a run-unique customer number, explicitly deletes the imported customer, then global teardown deletes the tenant and passes the orphan check. The XLSX fixture is generated as readable test code rather than a committed opaque binary. No API route is mocked.
@@ -601,7 +601,14 @@ Open project, document, and relationship work is consolidated in the final Main 
   - Operator policy and recovery steps are documented in `docs/IMPORT_AND_GENERATED_DOCUMENT_OPERATIONS.md`, including uncertain submit-response reconciliation, import terminal-state handling, generated-document/R2 orphan checks, safe SQL verification, retention limits, and escalation boundaries. There is no age-based purge, legal-hold workflow, or distributed PostgreSQL/R2 transaction claim.
   - Evidence: focused import service tests pass 31/31, including simultaneous claims and a persisted-row rollback; generated-document compensation tests pass 2/2. Complete Handler tests pass 166/166, Services tests pass 606 with three intentional environment-dependent skips, and Web integration tests pass 261/261. No migration or production deployment was performed.
 
-Open import and generated-document work is consolidated in the final Main UI backlog.
+- [x] `FEAT-IMP-01` Complete import/generated-document tenant isolation, storage, idempotency, E2E, retention, rollback, and runbook work. Consolidation audit completed locally 28 October 2026.
+  - Tenant isolation: validation and generation use the current tenant; status, history, inline content, signed links, submission, and regeneration are tenant-scoped. Explicit endpoint regressions prove cross-tenant submission returns 404 without claiming the job and cross-tenant regeneration returns 404 without reaching storage.
+  - Storage and lifecycle: real Development API/R2 E2E covers generated DOCX persistence, PDF preview, download, retained/superseded versions, regeneration, tenant cleanup, and orphan checks. Metadata-save compensation removes a newly uploaded object or reports manual reconciliation when deletion fails.
+  - Idempotency and rollback: a repeated/non-forced generation resolves the current ready version; uncertain regeneration requires history reconciliation. A validated import job has one atomic submit owner, duplicate/concurrent submission cannot execute twice, and executor failure rolls back all business writes before recording failure.
+  - E2E and operations: real-record customer import E2E and generated-document real-storage E2E pass in isolated automation tenants with cleanup/orphan verification. Retention, uncertain-response recovery, safe verification queries, R2 reconciliation, and escalation limits are documented in `docs/IMPORT_AND_GENERATED_DOCUMENT_OPERATIONS.md` and linked from the README.
+  - Final evidence: focused import/generated-document endpoints pass 22/22, focused import services pass 31/31, generated-document compensation passes 2/2, and the complete Web integration suite passes 263/263. The immediately preceding complete Handler and Services suites remain green at 166/166 and 606 passed with three intentional environment-dependent skips. No migration, production validation, or deployment was performed.
+
+The reviewed import and generated-document scope is complete. Future retention-policy expansion, legal hold, scheduled purge, or production acceptance must be tracked as new work rather than inferred from this local completion.
 
 ### 5.10 Admin UI
 
@@ -726,10 +733,6 @@ Owner sequencing decision (26 October 2026): do not resume malware-scanning impl
 Removal verification (26 October 2026): 14 upload/version handler, 11 document/runtime API, and 14 content/size/storage-quota service checks pass (39/39). The application test host verifies that no malware scanner is registered and valid PDF validation succeeds; legacy enabled/required scanner settings do not activate scanning. The real local API/R2 document lifecycle passes again with the ClamAV container confirmed stopped (2/2 including authentication, 35.6 seconds), with tenant deletion and orphan check passing. Standalone prototype tests remain separate and the opt-in live scanner check is skipped by default. No production deployment or database migration was performed.
 
 ### Stage 1 — Main UI
-
-#### Projects, documents, imports, and generated documents
-
-- [ ] `FEAT-IMP-01` Complete import/generated-document tenant isolation, storage, idempotency, E2E, retention, rollback, and runbook work.
 
 #### Main UI performance and localization
 

@@ -42,6 +42,7 @@ public sealed class FakeDocumentStorageService : IDocumentStorageService
 
     public int DownloadRequestCount { get; private set; }
     public int DownloadUrlRequestCount { get; private set; }
+    public int UploadRequestCount { get; private set; }
 
     public void Add(string blobPath, byte[] content, string contentType) =>
         _objects[blobPath] = (content, contentType);
@@ -54,6 +55,7 @@ public sealed class FakeDocumentStorageService : IDocumentStorageService
         string contentType,
         CancellationToken cancellationToken = default)
     {
+        UploadRequestCount++;
         var blobPath = $"{tenantId:N}/{sourceType}/{fileName}";
         using var memory = new MemoryStream();
         content.CopyTo(memory);

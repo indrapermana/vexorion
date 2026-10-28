@@ -128,6 +128,21 @@ public class DocumentsControllerIntegrationTests : IClassFixture<GeneratedDocume
     }
 
     [Fact]
+    public async Task Regenerate_WhenDocumentBelongsToAnotherTenant_ReturnsNotFoundWithoutStorageUpload()
+    {
+        var ownerTenant = Guid.NewGuid();
+        var documentId = await SeedDocumentAsync(ownerTenant, Guid.NewGuid(), "restricted-regenerate.pdf");
+        var uploadsBeforeRequest = _factory.Storage.UploadRequestCount;
+        var client = _factory.CreateClient();
+        client.SetBearerToken(Guid.NewGuid(), AppPermissions.Documents.Regenerate);
+
+        var response = await client.PostAsync($"/api/documents/{documentId}/regenerate", null);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(uploadsBeforeRequest, _factory.Storage.UploadRequestCount);
+    }
+
+    [Fact]
     public async Task Inline_WithViewPermission_ReturnsMockedPdfAsInlineContent()
     {
         var tenantId = Guid.NewGuid();
