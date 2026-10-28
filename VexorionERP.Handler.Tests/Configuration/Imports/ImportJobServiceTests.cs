@@ -660,4 +660,123 @@ public class ImportJobServiceTests
         Assert.Equal(409, second.StatusCode);
         Assert.Equal(1, executor.ExecuteCalls); // executed only once
     }
+
+    [Fact]
+    public async Task SubmitAsync_ConcurrentClaims_ExecutesOnlyOnce()
+    {
+        var tenantId = Guid.NewGuid();
+        var databaseName = $"import-concurrency-{Guid.NewGuid():N}";
+        var connectionString = $"Data Source={databaseName};Mode=Memory;Cache=Shared";
+        await using var keeper = new SqliteConnection(connectionString);
+        await keeper.OpenAsync();
+
+        var options = new DbContextOptionsBuilder<AppDbContext>().UseSqlite(connectionString).Options;
+        await using (var seed = new AppDbContext(options))
+        {
+            await seed.Database.EnsureCreatedAsync();
+            await SeedTenantAsync(seed, tenantId);
+            seed.ImportJobs.Add(new ImportJob
+            {
+                Id = Guid.Parse("10000000-0000-0000-0000-000000000001"),
+                TenantId = tenantId,
+                ImportType = "customer",
+                SourceFileName = "file.xlsx",
+                Status = ImportJobStatus.Validated,
+                ValidatedRowsJson = """[{"RowNumber":2,"Values":{"CustomerNumber":"C001"}}]""",
+                TotalRows = 1,
+                ValidRows = 1,
+            });
+            await seed.SaveChangesAsync();
+        }
+
+        await using var firstDb = new AppDbContext(options);
+        await using var secondDb = new AppDbContext(options);
+        var executor = new BlockingImportExecutor("customer");
+        var firstService = CreateService(firstDb, tenantId: tenantId, executors: [executor]);
+        var secondService = CreateService(secondDb, tenantId: tenantId, executors: [executor]);
+        var jobId = Guid.Parse("10000000-0000-0000-0000-000000000001");
+
+        var firstSubmit = firstService.SubmitAsync(jobId);
+        await executor.Started.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        var secondSubmit = Task.Run(() => secondService.SubmitAsync(jobId));
+        executor.Release.TrySetResult();
+        var first = await firstSubmit.WaitAsync(TimeSpan.FromSeconds(5));
+        var second = await secondSubmit.WaitAsync(TimeSpan.FromSeconds(5));
+
+        Assert.True(first.Succeeded);
+        Assert.False(second.Succeeded);
+        Assert.Equal(409, second.StatusCode);
+        Assert.Equal(1, executor.ExecuteCalls);
+    }
+
+    [Fact]
+    public async Task SubmitAsync_ExecutorError_RollsBackBusinessRowsAndRecordsFailure()
+    {
+        var tenantId = Guid.NewGuid();
+        var (db, conn) = CreateSqliteDbContext();
+        await using var _ = conn;
+        await using var __ = db;
+        await SeedTenantAsync(db, tenantId);
+
+        var job = new ImportJob
+        {
+            TenantId = tenantId,
+            ImportType = "customer",
+            SourceFileName = "file.xlsx",
+            Status = ImportJobStatus.Validated,
+            ValidatedRowsJson = """[{"RowNumber":2,"Values":{"CustomerNumber":"C001","Name":"Customer"}}]""",
+            TotalRows = 1,
+            ValidRows = 1,
+        };
+        db.ImportJobs.Add(job);
+        await db.SaveChangesAsync();
+
+        var executor = new PersistThenFailImportExecutor(db);
+        var service = CreateService(db, tenantId: tenantId, executors: [executor]);
+        var result = await service.SubmitAsync(job.Id);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(ImportJobStatus.ImportFailed, result.Value!.Status);
+        Assert.Contains("simulated row failure", result.Value.ErrorSummary);
+        Assert.Empty(await db.Customers.IgnoreQueryFilters().Where(x => x.TenantId == tenantId).ToListAsync());
+    }
+
+    private sealed class BlockingImportExecutor(string importType) : IImportExecutor
+    {
+        public string ImportType => importType;
+        public int ExecuteCalls { get; private set; }
+        public TaskCompletionSource Started { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource Release { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public async Task<ImportExecuteResult> ExecuteAsync(
+            Guid tenantId,
+            IReadOnlyCollection<ImportWorkbookRow> rows,
+            CancellationToken cancellationToken = default)
+        {
+            ExecuteCalls++;
+            Started.TrySetResult();
+            await Release.Task.WaitAsync(cancellationToken);
+            return new ImportExecuteResult(rows.Count, 0, 0, []);
+        }
+    }
+
+    private sealed class PersistThenFailImportExecutor(AppDbContext dbContext) : IImportExecutor
+    {
+        public string ImportType => "customer";
+
+        public async Task<ImportExecuteResult> ExecuteAsync(
+            Guid tenantId,
+            IReadOnlyCollection<ImportWorkbookRow> rows,
+            CancellationToken cancellationToken = default)
+        {
+            dbContext.Customers.Add(new Customer
+            {
+                TenantId = tenantId,
+                CustomerNumber = "C001",
+                Name = "Customer",
+            });
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return new ImportExecuteResult(1, 0, 0, ["simulated row failure"]);
+        }
+    }
 }

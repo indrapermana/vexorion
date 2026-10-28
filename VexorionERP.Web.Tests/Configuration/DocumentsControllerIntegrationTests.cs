@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Mvc;
 using VexorionERP.Contracts;
 using VexorionERP.Database;
 using VexorionERP.Models;
@@ -41,6 +43,25 @@ public class DocumentsControllerIntegrationTests : IClassFixture<GeneratedDocume
         });
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Generate_WithStringEnums_BindsToThePublicJsonContract()
+    {
+        var client = _factory.CreateClient();
+        client.SetBearerToken(Guid.NewGuid(), AppPermissions.Documents.Generate);
+        using var content = new StringContent(
+            """{"sourceType":"SalesOrder","sourceEntityId":"00000000-0000-0000-0000-000000000000","format":"Docx","forceRegenerate":false}""",
+            Encoding.UTF8,
+            "application/json");
+
+        var response = await client.PostAsync("/api/documents/generate", content);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        Assert.NotNull(problem);
+        Assert.Contains("Source entity id is required", problem.Detail, StringComparison.OrdinalIgnoreCase);
+        Assert.False(problem.Extensions.TryGetValue("code", out var code) && code?.ToString() == "validation.failed");
     }
 
     [Fact]

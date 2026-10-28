@@ -329,7 +329,37 @@ public class GeneratedDocumentService(
         };
 
         dbContext.GeneratedDocuments.Add(document);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            // Storage and PostgreSQL cannot share a transaction. Compensate a metadata failure by
+            // deleting the just-uploaded object so a failed generation does not create an orphan.
+            dbContext.ChangeTracker.Clear();
+            string cleanupMessage;
+            try
+            {
+                var cleanupResult = await documentStorageService.DeleteAsync(uploaded.BlobPath, CancellationToken.None);
+                cleanupMessage = cleanupResult.Succeeded
+                    ? "The uploaded object was removed."
+                    : $"The uploaded object could not be removed: {cleanupResult.ErrorMessage ?? "unknown storage error"}";
+            }
+            catch (Exception cleanupException)
+            {
+                cleanupMessage = $"The uploaded object could not be removed: {cleanupException.Message}";
+            }
+
+            if (ex is OperationCanceledException && cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+
+            return ServiceResult<GeneratedDocumentResponse>.Failure(
+                StatusCodes.Status500InternalServerError,
+                $"Generated document metadata could not be saved. {cleanupMessage}");
+        }
 
         await auditLogger.LogAsync(
             eventType: supersedePriorVersions ? "documents.regenerated" : "documents.generated",

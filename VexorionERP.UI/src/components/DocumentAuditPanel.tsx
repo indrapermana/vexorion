@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { VxAlert, VxPaper, VxStack, VxTable, VxTableBody, VxTableCell, VxTableHead, VxTableRow, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
+import { getIntlLocale } from '../i18n/translationConstant'
 import { ApiError, getAuditLogs } from '../lib/api'
 import type { AuditLogListItemResponse } from '../types/api'
 
@@ -54,7 +55,7 @@ export default function DocumentAuditPanel({ entityName, entityId, canView }: Do
             <VxTableBody>
               {items.map((item) => (
                 <VxTableRow key={item.id}>
-                  <VxTableCell>{new Date(item.createdAtUtc).toLocaleString(i18n.resolvedLanguage)}</VxTableCell>
+                  <VxTableCell>{new Date(item.createdAtUtc).toLocaleString(getIntlLocale(i18n.resolvedLanguage))}</VxTableCell>
                   <VxTableCell>{item.eventType}</VxTableCell>
                   <VxTableCell>{item.description ?? '-'}</VxTableCell>
                 </VxTableRow>

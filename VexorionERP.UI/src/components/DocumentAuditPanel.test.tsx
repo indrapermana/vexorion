@@ -14,7 +14,7 @@ const translate = (key: string) => ({
 vi.mock('../lib/api', () => ({ ApiError: class ApiError extends Error {}, ...auditMocks }))
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    i18n: { resolvedLanguage: 'en-US' },
+    i18n: { resolvedLanguage: 'enUS' },
     t: translate,
   }),
 }))

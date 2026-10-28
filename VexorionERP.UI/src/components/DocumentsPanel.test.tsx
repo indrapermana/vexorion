@@ -22,7 +22,7 @@ vi.mock('react-i18next', () => {
   const t = (key: string, values?: Record<string, string>) => values?.fileName ? `${key}: ${values.fileName}` : key
   return {
     useTranslation: () => ({
-      i18n: { resolvedLanguage: 'en-US' },
+      i18n: { resolvedLanguage: 'enUS' },
       t,
     }),
   }

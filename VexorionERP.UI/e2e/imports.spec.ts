@@ -1,179 +1,104 @@
 /**
- * imports.spec.ts — TC-M-059 (Import E2E flow)
+ * imports.spec.ts — TC-M-059 (real-record import E2E flow)
  *
- * Scenario:
- * template download -> invalid upload -> edit preview -> revalidate
- * -> review summary -> submit success
+ * Real template download -> invalid XLSX upload -> annotated error -> edit
+ * preview -> server revalidation -> real submit -> verify created customer.
  */
-import { test, expect } from './fixtures'
+import { authenticatedApi, expectSuccessfulFixture } from './api-helpers'
+import { test, expect, uid } from './fixtures'
+import { createCustomerImportWorkbook } from './xlsx-fixture'
+
+type CustomerListItem = {
+  id: string
+  customerNumber: string
+  name: string
+  email?: string | null
+}
 
 test.describe('Config — Import Data', () => {
-  test('TC-M-059: full import flow supports correction and successful submit', async ({ page }, testInfo) => {
-    const errorWorkbookContent = Buffer.from('mock-error-workbook').toString('base64')
-    let validateCalls = 0
-    let rowValidateCalls = 0
-    let revalidatedEmail = ''
-    let submitCalls = 0
+  test('TC-M-059: real import flow corrects an invalid row and creates the customer', async ({ page }) => {
+    const suffix = uid('import').replace(/[^a-z0-9]/gi, '').slice(-12).toUpperCase()
+    const customerNumber = `E2E-${suffix}`
+    const customerName = `Imported customer ${suffix}`
+    const customerEmail = `import-${suffix.toLowerCase()}@e2e.invalid`
+    let createdCustomerId: string | null = null
 
-    await page.route('**/api/imports/types', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify([
-          { importType: 'customer', columns: ['CustomerNumber', 'Name', 'Email'] },
-        ]),
+    try {
+      await page.goto('/config/import-data')
+      await page.waitForLoadState('networkidle')
+
+      const templateDownloadPromise = page.waitForEvent('download')
+      await page.getByRole('button', { name: /download template/i }).click()
+      const templateDownload = await templateDownloadPromise
+      expect(templateDownload.suggestedFilename()).toBe('customer-template.xlsx')
+      const templateStream = await templateDownload.createReadStream()
+      const templateChunks: Buffer[] = []
+      for await (const chunk of templateStream) templateChunks.push(Buffer.from(chunk))
+      expect(Buffer.concat(templateChunks).subarray(0, 2).toString()).toBe('PK')
+      await page.getByRole('button', { name: /^next$/i }).click()
+
+      await page.locator('input[type="file"]').setInputFiles({
+        name: `${customerNumber}-invalid.xlsx`,
+        mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        buffer: createCustomerImportWorkbook({ customerNumber, name: '', email: customerEmail }),
       })
-    })
 
-    await page.route('**/api/imports/history**', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify([]),
-      })
-    })
+      const validationResponse = page.waitForResponse((response) => (
+        response.request().method() === 'POST' && response.url().endsWith('/api/imports/validate')
+      ))
+      await page.getByRole('button', { name: /^next$/i }).click()
+      expect((await validationResponse).status()).toBe(200)
 
-    await page.route('**/api/imports/validate', async (route) => {
-      validateCalls += 1
+      const issueTable = page.getByRole('table', { name: /issues and correction path|issue summary/i })
+      await expect(issueTable).toContainText('Template')
+      await expect(issueTable).toContainText('2')
+      await expect(issueTable).toContainText('B')
+      await expect(issueTable).toContainText('Name')
+      await expect(issueTable).toContainText(/Name is required/i)
+      await expect(issueTable).toContainText(/edit.*validate again/i)
 
-      if (validateCalls === 1) {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            importJobId: '11111111-1111-1111-1111-111111111111',
-            importType: 'customer',
-            sourceFileName: 'customers-invalid.xlsx',
-            status: 3,
-            totalRows: 1,
-            validRows: 0,
-            invalidRows: 1,
-            errorWorkbookFileName: 'customer-errors.xlsx',
-            errorWorkbookContentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            errorWorkbookContent,
-            errors: [
-              {
-                rowNumber: 2,
-                columnName: 'Email',
-                category: 'Validation',
-                message: 'Invalid email format',
-              },
-            ],
-            previewHeaders: ['CustomerNumber', 'Name', 'Email'],
-            previewRows: [{ rowNumber: 2, values: { CustomerNumber: 'C001', Name: 'Customer One', Email: 'invalid' } }],
-          }),
-        })
-        return
+      const nameCell = page.locator('[data-id="2"] [data-field="Name"]')
+      await nameCell.dblclick()
+      const nameEditor = nameCell.locator('input')
+      await expect(nameEditor).toBeVisible()
+      await nameEditor.fill(customerName)
+      await nameEditor.press('Enter')
+      await expect(nameCell).toHaveText(customerName)
+
+      const revalidationResponse = page.waitForResponse((response) => (
+        response.request().method() === 'POST' && response.url().endsWith('/api/imports/validate-rows')
+      ))
+      await page.getByRole('button', { name: /^next$/i }).click()
+      expect((await revalidationResponse).status()).toBe(200)
+      await expect(page.getByText(/Valid rows: 1/i)).toBeVisible()
+
+      const submitResponse = page.waitForResponse((response) => (
+        response.request().method() === 'POST'
+        && /\/api\/imports\/[0-9a-f-]+\/submit$/i.test(response.url())
+      ))
+      await page.getByRole('button', { name: /^submit import$/i }).click()
+      expect((await submitResponse).status()).toBe(200)
+      await expect(page.getByText(/Import submitted/i)).toBeVisible()
+
+      const customers = expectSuccessfulFixture(
+        await authenticatedApi<CustomerListItem[]>(page, '/customers', 'GET'),
+        'Imported customer lookup',
+      )
+      const importedCustomer = customers.find((customer) => customer.customerNumber === customerNumber)
+      expect(importedCustomer, `Customer ${customerNumber} was not created by the import.`).toEqual(expect.objectContaining({
+        customerNumber,
+        name: customerName,
+        email: customerEmail,
+      }))
+      createdCustomerId = importedCustomer?.id ?? null
+    } finally {
+      if (!page.isClosed()) {
+        if (!createdCustomerId) {
+          const lookup = await authenticatedApi<CustomerListItem[]>(page, '/customers', 'GET').catch(() => null)
+          createdCustomerId = lookup?.body?.find((customer) => customer.customerNumber === customerNumber)?.id ?? null
+        }
+        if (createdCustomerId) await authenticatedApi(page, `/customers/${createdCustomerId}`, 'DELETE')
       }
-
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          importJobId: '22222222-2222-2222-2222-222222222222',
-          importType: 'customer',
-          sourceFileName: 'customers-invalid.xlsx',
-          status: 2,
-          totalRows: 1,
-          validRows: 1,
-          invalidRows: 0,
-          errors: [],
-          previewHeaders: ['CustomerNumber', 'Name', 'Email'],
-          previewRows: [{ rowNumber: 2, values: { CustomerNumber: 'C001', Name: 'Customer One', Email: 'fixed@example.com' } }],
-        }),
-      })
-    })
-
-    await page.route('**/api/imports/validate-rows', async (route) => {
-      rowValidateCalls += 1
-      const request = route.request().postDataJSON() as { rows: Array<{ values: { Email: string } }> }
-      revalidatedEmail = request.rows[0].values.Email
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          importJobId: '22222222-2222-2222-2222-222222222222',
-          importType: 'customer',
-          sourceFileName: 'customers-invalid.xlsx',
-          status: 2,
-          totalRows: 1,
-          validRows: 1,
-          invalidRows: 0,
-          errors: [],
-          previewHeaders: ['CustomerNumber', 'Name', 'Email'],
-          previewRows: [{ rowNumber: 2, values: { CustomerNumber: 'C001', Name: 'Customer One', Email: revalidatedEmail } }],
-        }),
-      })
-    })
-
-    await page.route('**/api/imports/*/submit', async (route) => {
-      submitCalls += 1
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          importJobId: '22222222-2222-2222-2222-222222222222',
-          importType: 'customer',
-          sourceFileName: 'customers-invalid.xlsx',
-          status: 4,
-          totalRows: 1,
-          validRows: 1,
-          invalidRows: 0,
-          validatedAtUtc: null,
-          submittedAtUtc: null,
-          completedAtUtc: null,
-          errorSummary: null,
-        }),
-      })
-    })
-
-    await page.goto('/config/import-data')
-    await page.waitForLoadState('networkidle')
-
-    // Step 1: template download
-    const templateDownloadPromise = page.waitForEvent('download')
-    await page.getByRole('button', { name: /download template/i }).click()
-    const templateDownload = await templateDownloadPromise
-    expect(templateDownload.suggestedFilename()).toBe('customer-template.xlsx')
-    const templateStream = await templateDownload.createReadStream()
-    const templateChunks: Buffer[] = []
-    for await (const chunk of templateStream) templateChunks.push(Buffer.from(chunk))
-    expect(Buffer.concat(templateChunks).subarray(0, 2).toString()).toBe('PK')
-    await page.getByRole('button', { name: /^next$/i }).click()
-
-    // Step 2: upload and validate
-    await page.locator('input[type="file"]').setInputFiles({
-      name: 'customers-invalid.xlsx',
-      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      buffer: Buffer.from('invalid-file-content'),
-    })
-
-    await page.getByRole('button', { name: /^next$/i }).click()
-    await expect(page.getByText('Invalid email format')).toBeVisible()
-    const emailCell = page.locator('[data-id="2"] [data-field="Email"]')
-    await emailCell.dblclick()
-    const emailEditor = emailCell.locator('input')
-    await expect(emailEditor).toBeVisible()
-    await emailEditor.fill('fixed@example.com')
-    await emailEditor.press('Enter')
-    await expect(emailCell).toHaveText('fixed@example.com')
-    await page.getByRole('button', { name: /^next$/i }).click()
-    await expect.poll(() => rowValidateCalls).toBe(1)
-    expect(revalidatedEmail).toBe('fixed@example.com')
-
-    // Step 4: summary and submit
-    await expect(page.getByText(/Valid rows: 1/i)).toBeVisible()
-    expect(submitCalls).toBe(0)
-    for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844 }]) {
-      await page.setViewportSize(viewport)
-      await expect(page.getByRole('button', { name: /^submit import$/i })).toBeVisible()
-      await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth), { message: `No page overflow at ${viewport.width}px` }).toBeLessThanOrEqual(viewport.width)
-      await page.screenshot({ path: testInfo.outputPath(`import-submit-${viewport.width}.png`), fullPage: true })
     }
-    await page.getByRole('button', { name: /^submit import$/i }).click()
-    await expect(page.getByText(/Import submitted/i)).toBeVisible()
-
-    expect(validateCalls).toBe(1)
-    expect(submitCalls).toBe(1)
   })
 })

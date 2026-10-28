@@ -314,6 +314,7 @@ public class ImportJobService(
         // Atomic lock: stamp SubmittedAtUtc only while the job is still unsubmitted (Status=Validated,
         // SubmittedAtUtc=null). A second concurrent call sees 0 rows affected and returns 409,
         // preventing double-execution of the import.
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
         var locked = await dbContext.ImportJobs
             .Where(x => x.Id == importJobId && x.TenantId == tenantId.Value
                      && x.Status == ImportJobStatus.Validated
@@ -324,6 +325,7 @@ public class ImportJobService(
 
         if (locked == 0)
         {
+            await transaction.RollbackAsync(cancellationToken);
             var existing = await dbContext.ImportJobs
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == importJobId && x.TenantId == tenantId.Value, cancellationToken);
@@ -344,18 +346,19 @@ public class ImportJobService(
 
         if (string.IsNullOrEmpty(job!.ValidatedRowsJson))
         {
+            await transaction.RollbackAsync(cancellationToken);
+            await MarkImportFailedAsync(importJobId, "Import job has no validated row data.", tenantId.Value, cancellationToken);
             return ServiceResult<ImportJobStatusResponse>.Failure(StatusCodes.Status422UnprocessableEntity, "Import job has no validated row data. Please re-validate the file.");
         }
 
         if (!_executors.TryGetValue(job.ImportType, out var executor))
         {
+            await transaction.RollbackAsync(cancellationToken);
+            await MarkImportFailedAsync(importJobId, $"No executor registered for import type '{job.ImportType}'.", tenantId.Value, cancellationToken);
             return ServiceResult<ImportJobStatusResponse>.Failure(StatusCodes.Status400BadRequest, $"No executor registered for import type '{job.ImportType}'.");
         }
 
         var rows = JsonSerializer.Deserialize<List<ImportWorkbookRow>>(job.ValidatedRowsJson) ?? [];
-
-        // SubmittedAtUtc is already set by the atomic update above.
-        job.Status = ImportJobStatus.Imported;
 
         ImportExecuteResult executeResult;
         try
@@ -364,19 +367,30 @@ public class ImportJobService(
 
             if (executeResult.Errors.Count > 0)
             {
-                job.Status = ImportJobStatus.ImportFailed;
-                job.ErrorSummary = string.Join(" | ", executeResult.Errors.Take(10));
+                await transaction.RollbackAsync(cancellationToken);
+                return await MarkImportFailedAsync(
+                    importJobId,
+                    string.Join(" | ", executeResult.Errors.Take(10)),
+                    tenantId.Value,
+                    cancellationToken);
             }
+
+            job.Status = ImportJobStatus.Imported;
+            job.CompletedAtUtc = DateTime.UtcNow;
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
         }
         catch (Exception ex)
         {
-            job.Status = ImportJobStatus.ImportFailed;
-            job.ErrorSummary = ex.Message;
-            executeResult = new ImportExecuteResult(0, 0, 0, [ex.Message]);
-        }
+            await transaction.RollbackAsync(CancellationToken.None);
+            if (ex is OperationCanceledException && cancellationToken.IsCancellationRequested)
+            {
+                await MarkImportFailedAsync(importJobId, "Import execution was cancelled and rolled back.", tenantId.Value, CancellationToken.None);
+                throw;
+            }
 
-        job.CompletedAtUtc = DateTime.UtcNow;
-        await dbContext.SaveChangesAsync(cancellationToken);
+            return await MarkImportFailedAsync(importJobId, ex.Message, tenantId.Value, cancellationToken);
+        }
 
         await auditLogger.LogAsync(
             eventType: "imports.submitted",
@@ -387,6 +401,37 @@ public class ImportJobService(
             entityId: job.Id.ToString(),
             description: "Import job submitted.",
             metadata: new { job.ImportType, job.TotalRows, job.ValidRows, job.InvalidRows },
+            cancellationToken: cancellationToken);
+
+        return ServiceResult<ImportJobStatusResponse>.Success(MapStatus(job));
+    }
+
+    private async Task<ServiceResult<ImportJobStatusResponse>> MarkImportFailedAsync(
+        Guid importJobId,
+        string errorSummary,
+        Guid tenantId,
+        CancellationToken cancellationToken)
+    {
+        // A rollback does not reset tracked entity state. Clear it before loading the claimed job so
+        // only the terminal job status is persisted and no imported business rows can leak through.
+        dbContext.ChangeTracker.Clear();
+        var job = await dbContext.ImportJobs
+            .FirstAsync(x => x.Id == importJobId && x.TenantId == tenantId, cancellationToken);
+        job.Status = ImportJobStatus.ImportFailed;
+        job.SubmittedAtUtc ??= DateTime.UtcNow;
+        job.ErrorSummary = errorSummary;
+        job.CompletedAtUtc = DateTime.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        await auditLogger.LogAsync(
+            eventType: "imports.submitted",
+            tenantId: tenantId,
+            actorUserId: null,
+            targetUserId: null,
+            entityName: nameof(ImportJob),
+            entityId: job.Id.ToString(),
+            description: "Import job failed and its record changes were rolled back.",
+            metadata: new { job.ImportType, job.TotalRows, job.ValidRows, job.InvalidRows, job.ErrorSummary },
             cancellationToken: cancellationToken);
 
         return ServiceResult<ImportJobStatusResponse>.Success(MapStatus(job));

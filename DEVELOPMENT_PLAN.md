@@ -587,6 +587,20 @@ Open project, document, and relationship work is consolidated in the final Main 
   - Storage isolation: cross-tenant failures assert that neither a blob read nor signed-link request reaches the fake adapter. The generated-document test host replaces the production storage registration, so the default suite requires no R2/Azure credentials or container. A real-storage lifecycle remains a separate optional/integration gate.
   - Evidence: focused import/generated-document endpoint suite passes 19/19 and the complete Web integration suite passes 260/260 on .NET 10. No production controller/service behavior, database migration, or deployment changed.
 
+- [x] Add import E2E: template download → invalid upload → annotated errors → correction → validation → submit → verify records. Locally integration-validated 28 October 2026 against the Development API and database. The browser downloads the real customer template, uploads a generated standards-based XLSX with a missing required name, and verifies the server's worksheet, row, column, field, cause, correction, and retry-path output. It edits the preview, exercises real row revalidation and submission endpoints, then verifies the imported customer through the tenant-scoped customer API.
+  - Isolation and cleanup: the scenario runs inside the generated automation tenant, uses a run-unique customer number, explicitly deletes the imported customer, then global teardown deletes the tenant and passes the orphan check. The XLSX fixture is generated as readable test code rather than a committed opaque binary. No API route is mocked.
+  - Evidence: Playwright authentication and Chromium import scenario pass 2/2 in 17.0 seconds against the local HTTPS Development API with TLS verification enabled through the exported public development certificate. Main UI typecheck, scoped E2E lint, Playwright discovery, and `git diff --check` pass. This is local integration evidence, not production validation.
+
+- [x] Add generated-document E2E: generate → history → preview → download → regenerate/version. Locally integration-validated 28 October 2026 against the Development API, PostgreSQL database, and configured R2 storage. The browser creates disposable customer, warehouse, and sales-order records, generates a DOCX through the real Documents panel, verifies persisted history, previews the generated PDF bytes, downloads and validates the DOCX attachment, regenerates it, and verifies v1 becomes Superseded while v2 is the only current regeneratable version. No API route is mocked.
+  - Contract fixes discovered by the real flow: the generated-document source, format, and status enums now accept the string values published by the TypeScript client, with an integration regression covering the public JSON contract. Generated-document timestamps now map application locale keys such as `enUS` to valid BCP-47 locales before formatting, with component tests using the real locale key.
+  - Isolation and cleanup: the scenario runs inside the generated automation tenant and removes its disposable source records; global teardown deletes the tenant, generated-document metadata, and stored objects, then passes the orphan check.
+  - Evidence: Playwright authentication and generated-document lifecycle pass 2/2 in 20.5 seconds with TLS verification enabled. The focused Web generated-document suite passes 8/8, the complete Web integration suite passes 261/261, and focused Main UI document component tests pass 5/5. Main UI typecheck and scoped lint pass. This is local integration evidence, not production validation.
+
+- [x] Verify idempotent/concurrent import submissions, document retention, rollback, and operator runbooks. Completed locally 28 October 2026. Import submission now claims and executes a validated job inside one database transaction: simultaneous requests for the same job execute once, the competing request receives `409 Conflict`, and executor errors/exceptions roll back every imported business-row write before recording the terminal `ImportFailed` status. Missing validated data or an executor also closes the claimed job as failed instead of leaving an indefinitely submitted job.
+  - Generated-document retention remains version-preserving: regeneration retains superseded metadata and R2 objects, and tenant deletion remains the explicit full cleanup boundary. If R2 upload succeeds but generated-document metadata persistence fails, the service now compensates by deleting the just-uploaded object; a failed compensation returns an actionable reconciliation error rather than silently claiming rollback.
+  - Operator policy and recovery steps are documented in `docs/IMPORT_AND_GENERATED_DOCUMENT_OPERATIONS.md`, including uncertain submit-response reconciliation, import terminal-state handling, generated-document/R2 orphan checks, safe SQL verification, retention limits, and escalation boundaries. There is no age-based purge, legal-hold workflow, or distributed PostgreSQL/R2 transaction claim.
+  - Evidence: focused import service tests pass 31/31, including simultaneous claims and a persisted-row rollback; generated-document compensation tests pass 2/2. Complete Handler tests pass 166/166, Services tests pass 606 with three intentional environment-dependent skips, and Web integration tests pass 261/261. No migration or production deployment was performed.
+
 Open import and generated-document work is consolidated in the final Main UI backlog.
 
 ### 5.10 Admin UI
@@ -715,9 +729,6 @@ Removal verification (26 October 2026): 14 upload/version handler, 11 document/r
 
 #### Projects, documents, imports, and generated documents
 
-- [ ] Add import E2E: template download → invalid upload → annotated errors → correction → validation → submit → verify records.
-- [ ] Add generated-document E2E: generate → history → preview → download → regenerate/version.
-- [ ] Verify idempotent/concurrent import submissions, document retention, rollback, and operator runbooks.
 - [ ] `FEAT-IMP-01` Complete import/generated-document tenant isolation, storage, idempotency, E2E, retention, rollback, and runbook work.
 
 #### Main UI performance and localization

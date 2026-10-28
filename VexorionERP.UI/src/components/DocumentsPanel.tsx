@@ -3,6 +3,7 @@ import { DescriptionRoundedIcon, DownloadRoundedIcon, FullscreenRoundedIcon, Pic
 import { VxAlert, VxBox, VxButton, VxButtonGroup, VxChip, VxCircularProgress, VxDivider, VxFormControl, VxIconButton, VxInputLabel, VxMenuItem, VxPaper, VxSelect, VxStack, VxTable, VxTableBody, VxTableCell, VxTableContainer, VxTableHead, VxTableRow, VxTooltip, VxTypography } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../app/AuthContext'
+import { getIntlLocale } from '../i18n/translationConstant'
 import {
   fetchDocumentInlineBlob,
   fetchDocumentPdfPreviewBlob,
@@ -280,7 +281,7 @@ export default function DocumentsPanel({ sourceType, sourceEntityId }: Documents
                       </VxTableCell>
                       <VxTableCell>
                         <VxTypography variant="body2" color="text.secondary">
-                          {new Date(doc.generatedAtUtc).toLocaleString(i18n.resolvedLanguage)}
+                          {new Date(doc.generatedAtUtc).toLocaleString(getIntlLocale(i18n.resolvedLanguage))}
                         </VxTypography>
                       </VxTableCell>
                       <VxTableCell align="right">
