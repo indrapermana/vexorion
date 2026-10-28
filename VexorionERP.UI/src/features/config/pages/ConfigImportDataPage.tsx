@@ -1,5 +1,5 @@
 import { CheckCircleOutlineRoundedIcon, CloudUploadRoundedIcon, DownloadRoundedIcon, ErrorOutlineRoundedIcon, FileUploadRoundedIcon, SendRoundedIcon } from '@vexorion/ui'
-import { VxAlert, VxBox, VxButton, VxChip, VxCircularProgress, VxDataGrid, VxDivider, VxStack, VxStep, VxStepLabel, VxStepper, VxTab, VxTabs, VxTooltip, VxTypography, type VxGridColDef } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxChip, VxCircularProgress, VxDataGrid, VxDivider, VxStack, VxStep, VxStepLabel, VxStepper, VxTab, VxTable, VxTableBody, VxTableCell, VxTableContainer, VxTableHead, VxTableRow, VxTabs, VxTooltip, VxTypography, type VxGridColDef } from '@vexorion/ui'
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../app/AuthContext'
@@ -401,6 +401,31 @@ function ImportFlowPanel({ importType, onSubmitted, canSubmit, canViewHistory, h
               {!isValid ? <VxAlert severity="warning">{t('pages.importData.correctionRequired')}</VxAlert> : null}
               {rowsDirty ? <VxAlert severity="info">{t('pages.importData.revalidateChanges')}</VxAlert> : null}
               {validationResult.errorWorkbookContent && !rowsDirty ? <VxButton variant="outlined" startIcon={<DownloadRoundedIcon />} onClick={handleDownloadErrorWorkbook} size="small" sx={{ alignSelf: 'flex-start' }}>{t('pages.importData.downloadErrorWorkbook')}</VxButton> : null}
+              {validationResult.errors.length > 0 ? <VxBox>
+                <VxTypography component="h3" variant="subtitle2" sx={{ mb: 1 }}>{t('pages.importData.issueSummary')}</VxTypography>
+                <VxTableContainer sx={{ maxHeight: 320 }}>
+                  <VxTable size="small" stickyHeader aria-label={t('pages.importData.issueSummary')}>
+                    <VxTableHead><VxTableRow>
+                      <VxTableCell>{t('pages.importData.table.sheet')}</VxTableCell>
+                      <VxTableCell>{t('pages.importData.table.row')}</VxTableCell>
+                      <VxTableCell>{t('pages.importData.table.column')}</VxTableCell>
+                      <VxTableCell>{t('pages.importData.table.field')}</VxTableCell>
+                      <VxTableCell>{t('pages.importData.table.cause')}</VxTableCell>
+                      <VxTableCell>{t('pages.importData.table.correction')}</VxTableCell>
+                      <VxTableCell>{t('pages.importData.table.retryPath')}</VxTableCell>
+                    </VxTableRow></VxTableHead>
+                    <VxTableBody>{validationResult.errors.map((error, index) => <VxTableRow key={`${error.rowNumber}-${error.columnName}-${index}`}>
+                      <VxTableCell>{error.sheetName || t('pages.importData.unknownSheet')}</VxTableCell>
+                      <VxTableCell>{error.rowNumber > 0 ? error.rowNumber : '—'}</VxTableCell>
+                      <VxTableCell>{error.columnReference || error.columnName || '—'}</VxTableCell>
+                      <VxTableCell>{error.fieldName || error.columnName || '—'}</VxTableCell>
+                      <VxTableCell>{error.cause || error.message}</VxTableCell>
+                      <VxTableCell>{error.suggestedAction || t('pages.importData.retryActions.editAndRevalidate')}</VxTableCell>
+                      <VxTableCell><VxChip size="small" variant="outlined" label={error.retryAction === 'upload-corrected-file' ? t('pages.importData.retryActions.uploadCorrectedFile') : t('pages.importData.retryActions.editAndRevalidate')} /></VxTableCell>
+                    </VxTableRow>)}</VxTableBody>
+                  </VxTable>
+                </VxTableContainer>
+              </VxBox> : null}
               <VxBox sx={{ width: '100%', minWidth: 0 }}>
                 <VxDataGrid
                   aria-label={t('pages.importData.previewGrid')}

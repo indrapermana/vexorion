@@ -229,6 +229,7 @@ public class ImportJobServiceTests
         var workbook = new FakeImportWorkbookService
         {
             ReadResult = new ImportWorkbookReadResult(
+                "Customers",
                 ["CustomerNumber", "Name", "Email", "PhoneNumber", "BillingAddress"],
                 [new ImportWorkbookRow(2, new Dictionary<string, string> { ["CustomerNumber"] = "C001" })]),
         };
@@ -258,6 +259,7 @@ public class ImportJobServiceTests
         var workbook = new FakeImportWorkbookService
         {
             ReadResult = new ImportWorkbookReadResult(
+                "Customer import",
                 ["CustomerNumber"],
                 [new ImportWorkbookRow(2, new Dictionary<string, string> { ["CustomerNumber"] = "" })]),
         };
@@ -284,6 +286,13 @@ public class ImportJobServiceTests
         Assert.Equal(ImportJobStatus.FailedValidation, result.Value!.Status);
         Assert.Equal(1, result.Value.InvalidRows);
         Assert.Single(result.Value.Errors);
+        var error = Assert.Single(result.Value.Errors);
+        Assert.Equal("Customer import", error.SheetName);
+        Assert.Equal("A", error.ColumnReference);
+        Assert.Equal("CustomerNumber", error.FieldName);
+        Assert.Equal("CustomerNumber is required.", error.Cause);
+        Assert.Equal("edit-and-revalidate", error.RetryAction);
+        Assert.Contains("validate the rows again", error.SuggestedAction);
         Assert.NotNull(result.Value.ErrorWorkbookContent);
     }
 

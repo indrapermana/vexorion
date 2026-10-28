@@ -11,10 +11,16 @@ export type ImportTemplateResponse = {
 }
 
 export type ImportValidationErrorResponse = {
+  sheetName?: string
   rowNumber: number
+  columnReference?: string
   columnName: string
+  fieldName?: string
   category: string
   message: string
+  cause?: string
+  suggestedAction?: string
+  retryAction?: string
 }
 
 export type ImportValidationResultResponse = {

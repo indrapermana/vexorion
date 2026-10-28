@@ -136,7 +136,7 @@ public class ImportJobService(
             return new ImportWorkbookRow(index + 2, values);
         }).ToArray();
 
-        var workbook = new ImportWorkbookReadResult(request.Headers.ToArray(), rows);
+        var workbook = new ImportWorkbookReadResult("Edited preview", request.Headers.ToArray(), rows);
         return await ValidateWorkbookRowsAsync(
             request.ImportType.Trim(), request.FileName.Trim(), workbook, tenantId.Value, cancellationToken);
     }
@@ -168,6 +168,7 @@ public class ImportJobService(
             cancellationToken);
 
         errors.AddRange(validationErrors);
+        EnrichValidationErrors(errors, workbookReadResult);
 
         var invalidRows = errors
             .Where(x => x.RowNumber > 1)
@@ -251,6 +252,55 @@ public class ImportJobService(
         };
 
         return ServiceResult<ImportValidationResultResponse>.Success(result);
+    }
+
+    private static void EnrichValidationErrors(
+        IEnumerable<ImportValidationErrorResponse> errors,
+        ImportWorkbookReadResult workbook)
+    {
+        var headers = workbook.Headers.ToArray();
+        foreach (var error in errors)
+        {
+            error.SheetName = string.IsNullOrWhiteSpace(error.SheetName) ? workbook.SheetName : error.SheetName;
+            error.FieldName = string.IsNullOrWhiteSpace(error.FieldName) ? error.ColumnName : error.FieldName;
+            error.Cause = string.IsNullOrWhiteSpace(error.Cause) ? error.Message : error.Cause;
+
+            var columnIndex = Array.FindIndex(headers, header =>
+                header.Equals(error.ColumnName, StringComparison.OrdinalIgnoreCase));
+            error.ColumnReference = string.IsNullOrWhiteSpace(error.ColumnReference)
+                ? columnIndex >= 0 ? ToExcelColumnReference(columnIndex + 1) : error.ColumnName
+                : error.ColumnReference;
+
+            if (string.IsNullOrWhiteSpace(error.SuggestedAction))
+            {
+                error.SuggestedAction = error.Category.Equals("Schema", StringComparison.OrdinalIgnoreCase)
+                    ? "Download a fresh template, restore the required headers, and upload the corrected workbook."
+                    : error.Category.Equals("ReferenceExistence", StringComparison.OrdinalIgnoreCase)
+                        ? "Correct the reference or create the referenced record, then validate the rows again."
+                        : error.Category.Equals("TypeConversion", StringComparison.OrdinalIgnoreCase)
+                            ? "Enter a value in the required format, then validate the rows again."
+                            : "Correct the highlighted field, then validate the rows again.";
+            }
+
+            error.RetryAction = string.IsNullOrWhiteSpace(error.RetryAction)
+                ? error.Category.Equals("Schema", StringComparison.OrdinalIgnoreCase)
+                    ? "upload-corrected-file"
+                    : "edit-and-revalidate"
+                : error.RetryAction;
+        }
+    }
+
+    private static string ToExcelColumnReference(int columnNumber)
+    {
+        var reference = string.Empty;
+        while (columnNumber > 0)
+        {
+            columnNumber--;
+            reference = (char)('A' + columnNumber % 26) + reference;
+            columnNumber /= 26;
+        }
+
+        return reference;
     }
 
     public async Task<ServiceResult<ImportJobStatusResponse>> SubmitAsync(Guid importJobId, CancellationToken cancellationToken = default)

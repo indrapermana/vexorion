@@ -1663,6 +1663,9 @@ const idID = {
       previous: 'Sebelumnya',
       next: 'Berikutnya',
       rowErrors: 'Masalah baris',
+      issueSummary: 'Masalah dan langkah perbaikan',
+      unknownSheet: 'Lembar kerja pertama',
+      retryActions: { editAndRevalidate: 'Edit kolom yang ditandai, lalu validasi kembali', uploadCorrectedFile: 'Perbaiki workbook, lalu unggah kembali' },
       previewGrid: 'Pratinjau data impor',
       revalidateChanges: 'Baris yang diubah harus divalidasi ulang sebelum melanjutkan.',
       submit: 'Kirim impor',
@@ -1682,7 +1685,7 @@ const idID = {
         uploadFileDesc: 'Pilih file .xlsx atau .csv yang telah diisi lalu klik Validasi untuk memeriksa kesalahan.',
         validationResult: 'Hasil validasi',
       },
-      table: { row: 'Baris', column: 'Kolom', category: 'Kategori', message: 'Pesan kesalahan' },
+      table: { sheet: 'Lembar', row: 'Baris', column: 'Kolom', field: 'Bidang', cause: 'Penyebab', correction: 'Cara memperbaiki', retryPath: 'Ulangi dari', category: 'Kategori', message: 'Pesan kesalahan' },
       entityTypes: {
         Customer: 'Pelanggan', Supplier: 'Pemasok', Product: 'Produk',
         SalesOrder: 'Pesanan Penjualan', PurchaseOrder: 'Pesanan Pembelian',

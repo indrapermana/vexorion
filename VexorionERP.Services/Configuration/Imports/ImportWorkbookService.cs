@@ -45,7 +45,7 @@ public class ImportWorkbookService : IImportWorkbookService
         var firstRow = sheet.FirstRowUsed();
         if (firstRow is null)
         {
-            return new ImportWorkbookReadResult([], []);
+            return new ImportWorkbookReadResult(sheet.Name, [], []);
         }
 
         var lastColumn = sheet.LastColumnUsed()?.ColumnNumber() ?? 0;
@@ -82,7 +82,7 @@ public class ImportWorkbookService : IImportWorkbookService
             }
         }
 
-        return new ImportWorkbookReadResult(headers, rows);
+        return new ImportWorkbookReadResult(sheet.Name, headers, rows);
     }
 
     public ImportErrorWorkbookResult BuildValidationErrorWorkbook(string importType, IReadOnlyCollection<ImportValidationErrorResponse> errors)
@@ -90,20 +90,26 @@ public class ImportWorkbookService : IImportWorkbookService
         using var workbook = new XLWorkbook();
         var sheet = workbook.Worksheets.Add("ValidationErrors");
 
-        sheet.Cell(1, 1).Value = "RowNumber";
-        sheet.Cell(1, 2).Value = "ColumnName";
-        sheet.Cell(1, 3).Value = "Category";
-        sheet.Cell(1, 4).Value = "Message";
-        sheet.Range(1, 1, 1, 4).Style.Font.Bold = true;
-        sheet.Range(1, 1, 1, 4).Style.Fill.BackgroundColor = XLColor.LightGray;
+        sheet.Cell(1, 1).Value = "SheetName";
+        sheet.Cell(1, 2).Value = "RowNumber";
+        sheet.Cell(1, 3).Value = "ColumnReference";
+        sheet.Cell(1, 4).Value = "FieldName";
+        sheet.Cell(1, 5).Value = "Cause";
+        sheet.Cell(1, 6).Value = "SuggestedAction";
+        sheet.Cell(1, 7).Value = "RetryAction";
+        sheet.Range(1, 1, 1, 7).Style.Font.Bold = true;
+        sheet.Range(1, 1, 1, 7).Style.Fill.BackgroundColor = XLColor.LightGray;
 
         var row = 2;
         foreach (var error in errors)
         {
-            sheet.Cell(row, 1).Value = error.RowNumber;
-            sheet.Cell(row, 2).Value = error.ColumnName;
-            sheet.Cell(row, 3).Value = error.Category;
-            sheet.Cell(row, 4).Value = error.Message;
+            sheet.Cell(row, 1).Value = error.SheetName;
+            sheet.Cell(row, 2).Value = error.RowNumber;
+            sheet.Cell(row, 3).Value = error.ColumnReference;
+            sheet.Cell(row, 4).Value = error.FieldName;
+            sheet.Cell(row, 5).Value = error.Cause;
+            sheet.Cell(row, 6).Value = error.SuggestedAction;
+            sheet.Cell(row, 7).Value = error.RetryAction;
             row++;
         }
 

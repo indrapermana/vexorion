@@ -25,6 +25,7 @@ internal sealed class FakeImportWorkbookService : IImportWorkbookService
 
     public ImportWorkbookReadResult ReadResult { get; set; } =
         new(
+            "Template",
             ["Col1"],
             [new ImportWorkbookRow(2, new Dictionary<string, string> { ["Col1"] = "val" })]);
 

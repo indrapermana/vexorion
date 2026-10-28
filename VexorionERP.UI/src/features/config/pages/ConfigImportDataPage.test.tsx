@@ -182,7 +182,7 @@ describe('ConfigImportDataPage import flow', () => {
     apiMocks.mockValidateImportRows.mockImplementation(() => new Promise((resolve) => { finishRevalidation = resolve }))
     render(<ConfigImportDataPage />)
     await validate()
-    expect(screen.getByText('Name is required.')).toBeVisible()
+    expect(screen.getAllByText('Name is required.').length).toBeGreaterThanOrEqual(1)
     const cell = screen.getByRole('grid', { name: 'pages.importData.previewGrid' }).querySelector('[data-id="2"] [data-field="Name"]')
     expect(cell).not.toBeNull()
     fireEvent.doubleClick(cell as HTMLElement)
@@ -284,10 +284,16 @@ describe('ConfigImportDataPage import flow', () => {
       invalidRows: 1,
       errors: [
         {
+          sheetName: 'Customers',
           rowNumber: 2,
+          columnReference: 'C',
           columnName: 'Email',
+          fieldName: 'Email',
           category: 'Validation',
           message: 'Invalid email format',
+          cause: 'The email address is not valid.',
+          suggestedAction: 'Enter a complete email address.',
+          retryAction: 'edit-and-revalidate',
         },
       ],
       previewHeaders: ['CustomerNumber', 'Name', 'Email'],
@@ -304,6 +310,11 @@ describe('ConfigImportDataPage import flow', () => {
     })
 
     expect(screen.getByText('Invalid email format')).toBeVisible()
+    expect(screen.getByRole('table', { name: 'pages.importData.issueSummary' })).toBeVisible()
+    expect(screen.getByText('Customers')).toBeVisible()
+    expect(screen.getByText('The email address is not valid.')).toBeVisible()
+    expect(screen.getByText('Enter a complete email address.')).toBeVisible()
+    expect(screen.getByText('pages.importData.retryActions.editAndRevalidate')).toBeVisible()
     expect(screen.getByRole('button', { name: 'pages.importData.next' })).toBeDisabled()
     expect(screen.queryByRole('button', { name: 'pages.importData.submit' })).not.toBeInTheDocument()
     expect(apiMocks.mockSubmitImportJob).not.toHaveBeenCalled()

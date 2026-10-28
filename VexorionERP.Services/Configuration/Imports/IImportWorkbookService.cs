@@ -4,7 +4,7 @@ namespace VexorionERP.Services;
 
 public record ImportWorkbookRow(int RowNumber, Dictionary<string, string> Values);
 
-public record ImportWorkbookReadResult(IReadOnlyCollection<string> Headers, IReadOnlyCollection<ImportWorkbookRow> Rows);
+public record ImportWorkbookReadResult(string SheetName, IReadOnlyCollection<string> Headers, IReadOnlyCollection<ImportWorkbookRow> Rows);
 
 public record ImportErrorWorkbookResult(string FileName, string ContentType, byte[] Content);
 
