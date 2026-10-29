@@ -9,6 +9,12 @@ public class TenantModuleEffectiveAccessResponse
     public TenantModuleEffectiveAccessItemResponse Employee { get; set; } = new();
 }
 
+public class TenantModuleEffectiveAccessBatchResponse
+{
+    public IReadOnlyCollection<TenantModuleEffectiveAccessResponse> Items { get; set; } = [];
+    public IReadOnlyCollection<Guid> FailedTenantIds { get; set; } = [];
+}
+
 public class TenantModuleEffectiveAccessItemResponse
 {
     public bool ToggleEnabled { get; set; }

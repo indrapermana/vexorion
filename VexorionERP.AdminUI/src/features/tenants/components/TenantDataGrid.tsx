@@ -12,9 +12,10 @@ interface TenantDataGridProps {
   onRemove: (tenant: TenantListItemResponse) => Promise<void> | void
   effectiveAccessByTenantId?: Record<string, TenantModuleEffectiveAccessResponse>
   canManage?: boolean
+  isAccessLoading?: boolean
 }
 
-export function TenantDataGrid({ rows, isLoading, onEdit, onRemove, effectiveAccessByTenantId, canManage = true }: TenantDataGridProps) {
+export function TenantDataGrid({ rows, isLoading, onEdit, onRemove, effectiveAccessByTenantId, canManage = true, isAccessLoading = false }: TenantDataGridProps) {
   const { t } = useTranslation()
 
   const columns = useMemo<VxGridColDef<TenantGridRow>[]>(
@@ -72,7 +73,7 @@ export function TenantDataGrid({ rows, isLoading, onEdit, onRemove, effectiveAcc
         renderCell: (params) => {
           const access = effectiveAccessByTenantId?.[params.row.id]
           if (!access) {
-            return <VxTypography variant="caption" color="text.secondary">{t('common.loading')}</VxTypography>
+            return <VxTypography variant="caption" color="text.secondary">{isAccessLoading ? t('common.loading') : t('pages.dashboard.notAvailable')}</VxTypography>
           }
 
           const chips = [
@@ -134,7 +135,7 @@ export function TenantDataGrid({ rows, isLoading, onEdit, onRemove, effectiveAcc
         ),
       },
     ],
-    [canManage, effectiveAccessByTenantId, onEdit, onRemove, t],
+    [canManage, effectiveAccessByTenantId, isAccessLoading, onEdit, onRemove, t],
   )
 
   return (

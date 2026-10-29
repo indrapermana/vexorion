@@ -735,6 +735,8 @@ Historical milestone/checklist/roadmap documents were removed after consolidatio
 
 - [x] `UX-ADMIN-01` Align shell/pages, localization, lists, metrics, filters, loading, empty, feedback, and actions with shared patterns.
   - Completed (29 October 2026): confirmed the authenticated shell already follows the shared responsive navigation, title, action, and localization contracts. Dashboard now distinguishes loading, empty, error/retry, and populated states instead of rendering misleading zero metrics while requests are pending or failed. Menu Configuration now places tenant selection and Save in the shared header hierarchy, presents localized loading/empty/error/success states, and provides recoverable retry behavior. Tenant filters and legend moved into the standard filter region, duplicate page padding was removed, and Users/Tenants use localized retry actions. The shared page contract now includes a reusable empty state and caller-localized retry label. Validation: shared UI typecheck passes; AdminUI 54/54 tests, typecheck, production build, and lint pass with zero errors (six generated coverage warnings); `git diff --check` passes. Effective-access batching, user-security semantics, access explanations, and account lifecycle remain scoped to the subsequent AdminUI tickets.
+- [x] `UX-ADMIN-02` Replace per-tenant effective-access requests with a batch/summary or lazy-detail contract; expose partial failure/retry.
+  - Completed (29 October 2026): added an authorized tenant-module effective-access batch endpoint and handler that load tenants and module configurations in two queries, replacing the AdminUI tenant list's one-request-per-tenant pattern. The shared evaluator now keeps list and detail results identical, and both handlers deliberately bypass the current-tenant query filter for authorized cross-tenant administration. The response contract identifies failed tenant IDs; AdminUI also detects missing rows, keeps the tenant list usable, displays unavailable access without an endless loading state, and retries only the access summary unless the tenant list itself failed. Create, edit, and delete flows refresh or remove their summary state. Validation: focused backend handler tests pass (2/2), including rollout and cross-tenant query-filter behavior; AdminUI focused tests pass (5/5), full AdminUI tests pass (56/56), production build and typecheck pass, lint has zero errors (six generated coverage warnings), backend build succeeds with zero warnings/errors, and `git diff --check` passes.
 
 ## 9. Prioritized unfinished work
 
@@ -750,7 +752,6 @@ Removal verification (26 October 2026): 14 upload/version handler, 11 document/r
 
 ### Stage 2 — AdminUI
 
-- [ ] `UX-ADMIN-02` Replace per-tenant effective-access requests with a batch/summary or lazy-detail contract; expose partial failure/retry.
 - [ ] `UX-ADMIN-03` Clarify user creation, roles, account state, and password reset with security/audit context.
 - [ ] `UX-ADMIN-04` Explain tenant/module/menu changes and preview effective access, distinguishing policy, entitlement, permission, and preference.
 - [ ] `FEAT-ADMIN-01` Review user activation, session revocation, credential rotation, tenant suspension/reactivation, and audit history; implement only approved semantics.

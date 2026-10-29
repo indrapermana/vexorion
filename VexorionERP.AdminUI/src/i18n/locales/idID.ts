@@ -89,7 +89,7 @@ const idID = {
       legend: 'Legenda', enabled: 'AKTIF', disabled: 'NONAKTIF',
       modules: { project: 'Manajemen Proyek', document: 'Manajemen Dokumen', employee: 'Manajemen Karyawan' },
       viewOnly: 'Anda memiliki akses hanya lihat. Membuat, mengubah, dan menghapus tenant memerlukan izin tenants.manage.',
-      errors: { load: 'Gagal memuat tenant.', remove: 'Gagal menghapus tenant.' },
+      errors: { load: 'Gagal memuat tenant.', access: 'Akses modul tidak tersedia untuk {{count}} tenant. Coba lagi untuk memperbarui status ini.', remove: 'Gagal menghapus tenant.' },
     },
   },
   components: {

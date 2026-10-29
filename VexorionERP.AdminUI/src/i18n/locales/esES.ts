@@ -89,7 +89,7 @@ const esES = {
       legend: 'Leyenda', enabled: 'ACTIVO', disabled: 'INACTIVO',
       modules: { project: 'Gestión de proyectos', document: 'Gestión de documentos', employee: 'Gestión de empleados' },
       viewOnly: 'Tienes acceso de solo lectura. Crear, editar y eliminar inquilinos requiere tenants.manage.',
-      errors: { load: 'No se pudieron cargar los inquilinos.', remove: 'No se pudo eliminar el inquilino.' },
+      errors: { load: 'No se pudieron cargar los inquilinos.', access: 'El acceso a modulos no esta disponible para {{count}} inquilino(s). Reintenta para actualizar estos estados.', remove: 'No se pudo eliminar el inquilino.' },
     },
   },
   components: {

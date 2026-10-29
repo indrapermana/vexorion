@@ -89,7 +89,7 @@ const enUS = {
       legend: 'Legend', enabled: 'ON', disabled: 'OFF',
       modules: { project: 'Project Management', document: 'Document Management', employee: 'Employee Management' },
       viewOnly: 'You have view-only access. Tenant creation, editing, and removal require the tenants.manage permission.',
-      errors: { load: 'Failed to load tenants.', remove: 'Failed to remove tenant.' },
+      errors: { load: 'Failed to load tenants.', access: 'Module access is unavailable for {{count}} tenant(s). Retry to refresh these statuses.', remove: 'Failed to remove tenant.' },
     },
   },
   components: {

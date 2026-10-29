@@ -66,3 +66,8 @@ export type TenantModuleEffectiveAccessResponse = {
   document: TenantModuleEffectiveAccessItemResponse
   employee: TenantModuleEffectiveAccessItemResponse
 }
+
+export type TenantModuleEffectiveAccessBatchResponse = {
+  items: TenantModuleEffectiveAccessResponse[]
+  failedTenantIds: string[]
+}

@@ -4,6 +4,7 @@ import type {
   OnboardTenantResponse,
   TenantListItemResponse,
   TenantModuleEffectiveAccessResponse,
+  TenantModuleEffectiveAccessBatchResponse,
   TenantPreferencesResponse,
   TenantTelemetryResponse,
   UpdateTenantRequest,
@@ -45,4 +46,8 @@ export function getTenantTelemetry(rangeDays?: 7 | 30) {
 
 export function getTenantModuleEffectiveAccess(tenantId: string) {
   return requestJson<TenantModuleEffectiveAccessResponse>(`/tenants/${tenantId}/modules/effective`)
+}
+
+export function getTenantModuleEffectiveAccessBatch() {
+  return requestJson<TenantModuleEffectiveAccessBatchResponse>('/tenants/modules/effective')
 }

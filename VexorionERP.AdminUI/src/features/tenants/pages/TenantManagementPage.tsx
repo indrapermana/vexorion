@@ -2,7 +2,7 @@ import { VxBox, VxButton, VxChip, VxFormControlLabel, VxPageBody, VxPageFeedback
 import { lazy, useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { VxCard } from '@vexorion/ui'
-import { ApiError, deleteTenant, getTenantModuleEffectiveAccess, getTenants, reportClientDiagnostic } from '../../../lib/api'
+import { ApiError, deleteTenant, getTenantModuleEffectiveAccessBatch, getTenants, reportClientDiagnostic } from '../../../lib/api'
 import type { TenantListItemResponse, TenantModuleEffectiveAccessResponse } from '../../../types/api'
 import { TenantDataGrid } from '../components/TenantDataGrid'
 import { TenantOnboardingDialog } from '../components/TenantOnboardingDialog'
@@ -18,6 +18,8 @@ export default function TenantManagementPage() {
   const [tenants, setTenants] = useState<TenantListItemResponse[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [accessError, setAccessError] = useState<string | null>(null)
+  const [isAccessLoading, setIsAccessLoading] = useState(false)
   const [isEditorOpen, setIsEditorOpen] = useState(false)
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false)
   const [selectedTenant, setSelectedTenant] = useState<TenantListItemResponse | null>(null)
@@ -33,40 +35,41 @@ export default function TenantManagementPage() {
     return !access.project.effectiveEnabled || !access.document.effectiveEnabled || !access.employee.effectiveEnabled
   }, [effectiveAccessByTenantId])
 
+  const loadEffectiveAccess = useCallback(async (tenantIds: string[]) => {
+    setIsAccessLoading(true)
+    setAccessError(null)
+    try {
+      const response = await getTenantModuleEffectiveAccessBatch()
+      const accessByTenantId = Object.fromEntries(response.items.map((item) => [item.tenantId, item]))
+      setEffectiveAccessByTenantId(accessByTenantId)
+      const missingTenantIds = tenantIds.filter((tenantId) => !accessByTenantId[tenantId])
+      const failedTenantIds = new Set([...response.failedTenantIds, ...missingTenantIds])
+      if (failedTenantIds.size > 0) {
+        setAccessError(t('pages.tenantManagement.errors.access', { count: failedTenantIds.size }))
+      }
+    } catch (err) {
+      setEffectiveAccessByTenantId({})
+      setAccessError(err instanceof ApiError ? err.message : t('pages.tenantManagement.errors.access', { count: tenantIds.length }))
+      if (!(err instanceof ApiError)) reportClientDiagnostic('operation.failed', err)
+    } finally {
+      setIsAccessLoading(false)
+    }
+  }, [t])
+
   const loadTenants = useCallback(async () => {
     setIsLoading(true)
     setError(null)
     try {
       const data = await getTenants()
       setTenants(data)
-
-      const accessEntries = await Promise.all(
-        data.map(async (tenant) => {
-          try {
-            const access = await getTenantModuleEffectiveAccess(tenant.id)
-            return [tenant.id, access] as const
-          } catch (accessError) {
-            if (!(accessError instanceof ApiError)) reportClientDiagnostic('operation.failed', accessError)
-            return null
-          }
-        }),
-      )
-
-      setEffectiveAccessByTenantId(
-        accessEntries.reduce<Record<string, TenantModuleEffectiveAccessResponse>>((acc, entry) => {
-          if (entry) {
-            acc[entry[0]] = entry[1]
-          }
-          return acc
-        }, {}),
-      )
+      await loadEffectiveAccess(data.map((tenant) => tenant.id))
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t('pages.tenantManagement.errors.load'))
       if (!(err instanceof ApiError)) reportClientDiagnostic('operation.failed', err)
     } finally {
       setIsLoading(false)
     }
-  }, [t])
+  }, [loadEffectiveAccess, t])
 
   useEffect(() => {
     void loadTenants()
@@ -85,12 +88,18 @@ export default function TenantManagementPage() {
   const handleTenantSaved = (updated: TenantListItemResponse) => {
     setTenants((prev) => prev.map((t) => (t.id === updated.id ? updated : t)))
     handleEditorClose()
+    void loadEffectiveAccess(tenants.map((tenant) => tenant.id))
   }
 
   const handleTenantRemove = async (tenant: TenantListItemResponse) => {
     try {
       await deleteTenant(tenant.id)
       setTenants((prev) => prev.filter((item) => item.id !== tenant.id))
+      setEffectiveAccessByTenantId((current) => {
+        const next = { ...current }
+        delete next[tenant.id]
+        return next
+      })
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t('pages.tenantManagement.errors.remove'))
       if (!(err instanceof ApiError)) reportClientDiagnostic('operation.failed', err)
@@ -99,6 +108,7 @@ export default function TenantManagementPage() {
 
   const handleTenantCreated = (newTenant: TenantListItemResponse) => {
     setTenants((prev) => [newTenant, ...prev])
+    void loadEffectiveAccess([newTenant.id, ...tenants.map((tenant) => tenant.id)])
   }
 
   const activeTenants = tenants.filter((t) => t.isActive).length
@@ -149,9 +159,9 @@ export default function TenantManagementPage() {
         </VxBox>
 
         <VxPageFeedback
-          error={error}
+          error={error ?? accessError}
           info={!canManage ? t('pages.tenantManagement.viewOnly') : undefined}
-          onRetry={() => void loadTenants()}
+          onRetry={() => void (error ? loadTenants() : loadEffectiveAccess(tenants.map((tenant) => tenant.id)))}
           retryLabel={t('common.retry')}
         />
 
@@ -163,6 +173,7 @@ export default function TenantManagementPage() {
             onRemove={handleTenantRemove}
             effectiveAccessByTenantId={effectiveAccessByTenantId}
             canManage={canManage}
+            isAccessLoading={isAccessLoading}
           />
         </VxPageBody>
 
