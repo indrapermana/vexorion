@@ -12,6 +12,8 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           manualChunks(id) {
+            if (id.includes('/packages/ui/src/')) return 'vexorion-ui'
+            if (id.includes('/VexorionERP.UI/src/i18n/locales/')) return 'app-locales'
             if (!id.includes('node_modules')) return
             if (id.includes('@mui/x-data-grid')) return 'vendor-mui-data-grid'
             if (id.includes('@mui/x-charts')) return 'vendor-mui-charts'
