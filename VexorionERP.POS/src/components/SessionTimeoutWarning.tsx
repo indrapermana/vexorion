@@ -1,4 +1,4 @@
-import { VxButton, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxButton, VxCircularProgress, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxStack, VxTypography } from '@vexorion/ui'
 import { useEffect, useState } from 'react'
 import { useI18n } from '../app/I18nContext'
 import { useAuth } from '../app/AuthContext'
@@ -8,9 +8,10 @@ const CHECK_INTERVAL_MS = 30_000 // 30 seconds
 
 export function SessionTimeoutWarning() {
   const { t } = useI18n()
-  const { session, isAuthenticated, logout } = useAuth()
+  const { session, isAuthenticated, logout, extendSession } = useAuth()
   const [open, setOpen] = useState(false)
   const [minutesLeft, setMinutesLeft] = useState(3)
+  const [isExtending, setIsExtending] = useState(false)
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -37,20 +38,30 @@ export function SessionTimeoutWarning() {
 
   if (!isAuthenticated) return null
 
+  const keepSession = async () => {
+    setIsExtending(true)
+    const extended = await extendSession()
+    setIsExtending(false)
+    if (extended) setOpen(false)
+  }
+
   return (
     <VxDialog open={open} maxWidth="xs" fullWidth>
       <VxDialogTitle>{t('session.expiringSoon')}</VxDialogTitle>
-      <VxDialogContent>
-        <VxTypography>
-          {t('session.expiresIn').replace('{minutes}', String(minutesLeft))}
-        </VxTypography>
+      <VxDialogContent dividers>
+        <VxStack spacing={1.5}>
+          <VxTypography>
+            {t('session.expiresIn').replace('{minutes}', String(minutesLeft))}
+          </VxTypography>
+          <VxAlert severity="warning">{t('session.transactionWarning')}</VxAlert>
+        </VxStack>
       </VxDialogContent>
-      <VxDialogActions>
-        <VxButton color="error" onClick={() => { setOpen(false); void logout() }}>
+      <VxDialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+        <VxButton color="error" disabled={isExtending} onClick={() => { setOpen(false); void logout() }} sx={{ minHeight: 44 }}>
           {t('session.signOut')}
         </VxButton>
-        <VxButton variant="contained" onClick={() => setOpen(false)}>
-          {t('session.extend')}
+        <VxButton variant="contained" disabled={isExtending} onClick={() => void keepSession()} sx={{ minHeight: 44 }} startIcon={isExtending ? <VxCircularProgress size={16} /> : null}>
+          {isExtending ? t('session.extending') : t('session.extend')}
         </VxButton>
       </VxDialogActions>
     </VxDialog>

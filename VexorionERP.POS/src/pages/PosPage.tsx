@@ -15,6 +15,8 @@ import { ShiftCloseDialog } from '../components/pos/ShiftCloseDialog'
 import ReturnRefundDialog from '../components/pos/ReturnRefundDialog'
 import { StockConflictDialog } from '../components/pos/StockConflictDialog'
 import { ReceiptModal, type ReceiptData } from '../components/pos/ReceiptModal'
+import { PosConnectivityStatus } from '../components/PosConnectivityStatus'
+import { useOnlineStatus } from '../hooks/useOnlineStatus'
 import type { CartLine, QuickCustomerForm } from '../components/pos/types'
 import { posLogger } from '../lib/posLogger'
 import {
@@ -52,6 +54,7 @@ export default function PosPage() {
   const canCheckout = user?.permissions.includes(PosPermissions.checkout) ?? false
   const canCloseShift = user?.permissions.includes(PosPermissions.shiftClose) ?? false
   const canRefund = user?.permissions.includes(PosPermissions.refund) ?? false
+  const isOnline = useOnlineStatus()
 
   const isShiftOpen = currentShift !== null
   const cashierName =
@@ -83,6 +86,21 @@ export default function PosPage() {
   const inventoryBalancesQuery = useQuery({ queryKey: ['pos', 'inventory-balances'], queryFn: getInventoryBalances, staleTime: 15_000 })
   const productsQuery = useQuery({ queryKey: ['pos', 'products'], queryFn: getProducts, staleTime: 300_000 })
   const warehousesQuery = useQuery({ queryKey: ['pos', 'warehouses'], queryFn: getWarehouses, staleTime: 300_000 })
+  const previousOnlineRef = useRef(isOnline)
+
+  useEffect(() => {
+    const wasOnline = previousOnlineRef.current
+    previousOnlineRef.current = isOnline
+
+    if (!wasOnline && isOnline) {
+      void Promise.all([
+        customersQuery.refetch(),
+        inventoryBalancesQuery.refetch(),
+        productsQuery.refetch(),
+        warehousesQuery.refetch(),
+      ])
+    }
+  }, [customersQuery, inventoryBalancesQuery, isOnline, productsQuery, warehousesQuery])
 
   const customers = customersQuery.data ?? []
   const inventoryBalances = inventoryBalancesQuery.data?.filter((x) => x.isActive) ?? []
@@ -282,6 +300,11 @@ export default function PosPage() {
   }
 
   const createQuickCustomer = async () => {
+    if (!isOnline) {
+      setError(t('connectivity.offlineMessage'))
+      return
+    }
+
     if (!quickCustomer.name.trim()) {
       setError(t('page.quickCustomerNameRequired'))
       return
@@ -318,6 +341,11 @@ export default function PosPage() {
     setError(null)
     setCheckoutResult(null)
     setStockConflict(null)
+
+    if (!isOnline) {
+      setError(t('cart.offlineCheckout'))
+      return
+    }
 
     if (!currentShift) {
       setError(t('shift.noShift'))
@@ -518,6 +546,8 @@ export default function PosPage() {
         onSignOut={logout}
       />
 
+      <PosConnectivityStatus isOnline={isOnline} />
+
       <VxPageFeedback
         error={error}
         success={checkoutResult ? t('page.checkoutCompleted', {
@@ -550,11 +580,26 @@ export default function PosPage() {
             stockByProduct={stockByProduct}
             currencyCode={currencyCode}
             notes={notes}
+            isLoading={productsQuery.isLoading || inventoryBalancesQuery.isLoading || warehousesQuery.isLoading}
+            hasLoadError={productsQuery.isError || inventoryBalancesQuery.isError || warehousesQuery.isError}
             onCustomerChange={setSelectedCustomerId}
             onWarehouseChange={setSelectedWarehouseId}
-            onOpenQuickCustomer={() => setIsQuickCreateOpen(true)}
+            onOpenQuickCustomer={() => {
+              if (!isOnline) {
+                setError(t('connectivity.offlineMessage'))
+                return
+              }
+              setIsQuickCreateOpen(true)
+            }}
             onAddToCart={addToCart}
             onNotesChange={setNotes}
+            onRetryLoad={() => {
+              void Promise.all([
+                inventoryBalancesQuery.refetch(),
+                productsQuery.refetch(),
+                warehousesQuery.refetch(),
+              ])
+            }}
           />
           <VxButton
             variant="contained"
@@ -582,6 +627,7 @@ export default function PosPage() {
             isProcessing={isProcessing}
             hasPendingAttempt={hasPendingCheckoutAttempt}
             canCheckout={canCheckout}
+            isOnline={isOnline}
             onBackToCatalog={() => setMobileSaleStep('catalog')}
             onRemoveCartLine={removeCartLine}
             onLineDiscountChange={updateLineDiscount}

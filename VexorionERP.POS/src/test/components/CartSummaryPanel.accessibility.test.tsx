@@ -26,6 +26,7 @@ function renderPaymentPanel(overrides: Partial<ComponentProps<typeof CartSummary
     isProcessing: false,
     hasPendingAttempt: false,
     canCheckout: true,
+    isOnline: true,
     stockByProduct: { 'product-1': 10 },
     onBackToCatalog: vi.fn(),
     onRemoveCartLine: vi.fn(),
@@ -58,6 +59,7 @@ describe('CartSummaryPanel accessibility', () => {
         isProcessing={false}
         hasPendingAttempt={false}
         canCheckout={false}
+        isOnline
         stockByProduct={{}}
         onBackToCatalog={vi.fn()}
         onRemoveCartLine={vi.fn()}
@@ -96,6 +98,7 @@ describe('CartSummaryPanel accessibility', () => {
         isProcessing={false}
         hasPendingAttempt={false}
         canCheckout
+        isOnline
         stockByProduct={{ 'product-1': 10 }}
         onBackToCatalog={vi.fn()}
         onRemoveCartLine={vi.fn()}
@@ -138,6 +141,7 @@ describe('CartSummaryPanel accessibility', () => {
         isProcessing={false}
         hasPendingAttempt={false}
         canCheckout
+        isOnline
         stockByProduct={{ 'product-1': 1 }}
         onBackToCatalog={vi.fn()}
         onRemoveCartLine={vi.fn()}
@@ -192,5 +196,12 @@ describe('CartSummaryPanel accessibility', () => {
 
     expect(screen.getByRole('status')).toHaveTextContent('Do not refresh or submit it again')
     expect(screen.getByRole('button', { name: 'Processing...' })).toBeDisabled()
+  })
+
+  it('keeps the cart reviewable offline but blocks checkout without queuing a sale', () => {
+    renderPaymentPanel({ isOnline: false })
+
+    expect(screen.getByRole('status')).toHaveTextContent('does not queue offline checkout requests')
+    expect(screen.getByRole('button', { name: 'Checkout' })).toBeDisabled()
   })
 })

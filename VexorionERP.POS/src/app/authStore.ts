@@ -115,6 +115,7 @@ export const useAuthStore = create<AuthState>()(
           clearAuthState()
         }
       },
+      extendSession: async () => Boolean(await refreshAccessToken()),
       refreshUser: async () => {
         const { session } = get()
         if (!session?.accessToken) {

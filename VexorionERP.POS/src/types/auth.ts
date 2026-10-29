@@ -9,6 +9,7 @@ export type AuthState = {
   initialize: () => Promise<void>
   login: (request: LoginRequest) => Promise<void>
   logout: () => Promise<void>
+  extendSession: () => Promise<boolean>
   refreshUser: () => Promise<void>
   clearFeedback: () => void
 }

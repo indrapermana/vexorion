@@ -19,6 +19,7 @@ export function useAuth() {
   const validation = useAuthStore((state) => state.validation)
   const login = useAuthStore((state) => state.login)
   const logout = useAuthStore((state) => state.logout)
+  const extendSession = useAuthStore((state) => state.extendSession)
   const refreshUser = useAuthStore((state) => state.refreshUser)
   const clearFeedback = useAuthStore((state) => state.clearFeedback)
 
@@ -31,6 +32,7 @@ export function useAuth() {
     validation,
     login,
     logout,
+    extendSession,
     refreshUser,
     clearFeedback,
   }

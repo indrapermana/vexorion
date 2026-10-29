@@ -35,6 +35,7 @@ type CartSummaryPanelProps = {
   isProcessing: boolean
   hasPendingAttempt: boolean
   canCheckout: boolean
+  isOnline: boolean
   stockByProduct: Record<string, number>
   onBackToCatalog: () => void
   onRemoveCartLine: (productId: string) => void
@@ -59,6 +60,7 @@ export function CartSummaryPanel({
   isProcessing,
   hasPendingAttempt,
   canCheckout,
+  isOnline,
   stockByProduct,
   onBackToCatalog,
   onRemoveCartLine,
@@ -306,7 +308,10 @@ export function CartSummaryPanel({
         {!canCheckout && cart.length > 0 ? (
           <VxAlert severity="error">{t('cart.checkoutPermissionRequired')}</VxAlert>
         ) : null}
-        <VxButton variant="contained" size="large" onClick={onCheckout} disabled={isProcessing || !isPaymentSufficient || !canCheckout}>
+        {!isOnline && cart.length > 0 ? (
+          <VxAlert severity="warning" role="status">{t('cart.offlineCheckout')}</VxAlert>
+        ) : null}
+        <VxButton variant="contained" size="large" onClick={onCheckout} disabled={isProcessing || !isPaymentSufficient || !canCheckout || !isOnline}>
           {isProcessing ? t('cart.processing') : hasPendingAttempt ? t('cart.retrySameSale') : t('cart.checkout')}
         </VxButton>
         <VxButton

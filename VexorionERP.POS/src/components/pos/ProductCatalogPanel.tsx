@@ -1,5 +1,5 @@
 import { AddRoundedIcon, Inventory2RoundedIcon, PersonAddAltRoundedIcon, QrCodeScannerRoundedIcon, RemoveRoundedIcon } from '@vexorion/ui'
-import { VxAlert, VxBox, VxButton, VxDivider, VxIconButton, VxInputAdornment, VxMenuItem, VxMuiCard, VxMuiCardActions, VxMuiCardContent, VxPaper, VxPagination, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxCircularProgress, VxDivider, VxIconButton, VxInputAdornment, VxMenuItem, VxMuiCard, VxMuiCardActions, VxMuiCardContent, VxPaper, VxPagination, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useI18n } from '../../app/I18nContext'
 import { useBarcodeScanner } from '../../hooks/useBarcodeScanner'
@@ -43,11 +43,14 @@ type ProductCatalogPanelProps = {
   stockByProduct: Record<string, number>
   currencyCode: string
   notes: string
+  isLoading: boolean
+  hasLoadError: boolean
   onCustomerChange: (customerId: string) => void
   onWarehouseChange: (warehouseId: string) => void
   onOpenQuickCustomer: () => void
   onAddToCart: (product: ProductListItemResponse, quantity: number) => void
   onNotesChange: (value: string) => void
+  onRetryLoad: () => void
 }
 
 export function ProductCatalogPanel({
@@ -59,11 +62,14 @@ export function ProductCatalogPanel({
   stockByProduct,
   currencyCode,
   notes,
+  isLoading,
+  hasLoadError,
   onCustomerChange,
   onWarehouseChange,
   onOpenQuickCustomer,
   onAddToCart,
   onNotesChange,
+  onRetryLoad,
 }: ProductCatalogPanelProps) {
   const { t } = useI18n()
   const [selectedCatalog, setSelectedCatalog] = useState('ALL')
@@ -172,6 +178,21 @@ export function ProductCatalogPanel({
     <VxPaper sx={{ p: 2, minWidth: 0, maxWidth: '100%' }}>
       <VxTypography component="h2" variant="h6" sx={{ mb: 1.5 }}>{t('catalog.title')}</VxTypography>
       <VxStack spacing={1.5}>
+        {isLoading ? (
+          <VxStack direction="row" spacing={1} role="status" aria-live="polite" sx={{ alignItems: 'center' }}>
+            <VxCircularProgress size={20} />
+            <VxTypography variant="body2">{t('catalog.loading')}</VxTypography>
+          </VxStack>
+        ) : null}
+        {hasLoadError ? (
+          <VxAlert
+            severity="error"
+            role="alert"
+            action={<VxButton color="inherit" size="small" onClick={onRetryLoad}>{t('catalog.retry')}</VxButton>}
+          >
+            {t('catalog.loadError')}
+          </VxAlert>
+        ) : null}
         <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
           <VxTextField
             inputRef={scanInputRef}
@@ -386,8 +407,10 @@ export function ProductCatalogPanel({
           })}
         </VxBox>
 
-        {filteredProducts.length === 0 ? (
-          <VxAlert severity="info" role="status">{t('catalog.noProducts')}</VxAlert>
+        {!isLoading && !hasLoadError && filteredProducts.length === 0 ? (
+          <VxAlert severity="info" role="status">
+            {products.length === 0 ? t('catalog.noProductsConfigured') : t('catalog.noProducts')}
+          </VxAlert>
         ) : null}
 
         <VxStack direction={{ xs: 'column', sm: 'row' }} sx={{ justifyContent: 'space-between', alignItems: { sm: 'center' } }}>
