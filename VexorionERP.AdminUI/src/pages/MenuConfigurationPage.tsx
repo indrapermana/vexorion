@@ -1,8 +1,8 @@
-import { VxAlert, VxBox, VxButton, VxChip, VxMenuItem, VxPageBody, VxPageEmpty, VxPageFeedback, VxPageHeader, VxPageLoading, VxStack, VxSwitch, VxTextField, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxButton, VxChip, VxMenuItem, VxPageBody, VxPageEmpty, VxPageFeedback, VxPageHeader, VxPageLoading, VxStack, VxSwitch, VxTable, VxTableBody, VxTableCell, VxTableContainer, VxTableHead, VxTableRow, VxTextField, VxTypography } from '@vexorion/ui'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ApiError, getTenantMenuConfiguration, getTenants, reportClientDiagnostic, updateTenantMenuConfiguration } from '../lib/api'
-import type { TenantListItemResponse } from '../types/api'
+import { ApiError, getTenantMenuConfiguration, getTenantModuleEffectiveAccess, getTenants, reportClientDiagnostic, updateTenantMenuConfiguration } from '../lib/api'
+import type { TenantListItemResponse, TenantModuleEffectiveAccessItemResponse, TenantModuleEffectiveAccessResponse } from '../types/api'
 import { useAuth } from '../app/AuthContext'
 import { AdminPermissions, hasAdminPermissions } from '../app/authorization'
 
@@ -28,6 +28,12 @@ const tenantMenuItems = [
   { key: '/fiscal-periods', labelKey: 'fiscalPeriods' },
   { key: '/journals', labelKey: 'journals' },
   { key: '/reports', labelKey: 'reports' },
+  { key: '/project-categories', labelKey: 'projectCategories', module: 'project' },
+  { key: '/project-documents', labelKey: 'projectDocuments', module: 'document' },
+  { key: '/projects', labelKey: 'projects', module: 'project' },
+  { key: '/employees', labelKey: 'employees', module: 'employee' },
+  { key: '/consultants', labelKey: 'consultants', module: 'employee' },
+  { key: '/tenant-relationships', labelKey: 'tenantRelationships', module: 'project' },
   { key: '/config', labelKey: 'configuration' },
 ] as const
 
@@ -40,6 +46,8 @@ export default function MenuConfigurationPage() {
   const [tenants, setTenants] = useState<TenantListItemResponse[]>([])
   const [selectedTenantId, setSelectedTenantId] = useState('')
   const [hiddenMenus, setHiddenMenus] = useState<MenuItemKey[]>([])
+  const [moduleAccess, setModuleAccess] = useState<TenantModuleEffectiveAccessResponse | null>(null)
+  const [moduleAccessUnavailable, setModuleAccessUnavailable] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [isLoadingTenants, setIsLoadingTenants] = useState(true)
@@ -68,18 +76,32 @@ export default function MenuConfigurationPage() {
   const loadConfiguration = useCallback(async () => {
     if (!selectedTenantId) {
       setHiddenMenus([])
+      setModuleAccess(null)
+      setModuleAccessUnavailable(false)
       return
     }
 
     setIsLoadingConfiguration(true)
     setError(null)
     try {
-      const response = await getTenantMenuConfiguration(selectedTenantId)
-      setHiddenMenus(response.hiddenMenuLinks as MenuItemKey[])
+      const [configurationResult, moduleAccessResult] = await Promise.allSettled([
+        getTenantMenuConfiguration(selectedTenantId),
+        getTenantModuleEffectiveAccess(selectedTenantId),
+      ])
+
+      if (configurationResult.status === 'rejected') throw configurationResult.reason
+      setHiddenMenus(configurationResult.value.hiddenMenuLinks as MenuItemKey[])
+      setModuleAccess(moduleAccessResult.status === 'fulfilled' ? moduleAccessResult.value : null)
+      setModuleAccessUnavailable(moduleAccessResult.status === 'rejected')
+      if (moduleAccessResult.status === 'rejected' && !(moduleAccessResult.reason instanceof ApiError)) {
+        reportClientDiagnostic('operation.failed', moduleAccessResult.reason)
+      }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t('pages.menuConfiguration.errors.load'))
       if (!(err instanceof ApiError)) reportClientDiagnostic('operation.failed', err)
       setHiddenMenus([])
+      setModuleAccess(null)
+      setModuleAccessUnavailable(false)
     } finally {
       setIsLoadingConfiguration(false)
     }
@@ -104,6 +126,11 @@ export default function MenuConfigurationPage() {
 
       return current.filter((item) => item !== menuKey)
     })
+  }
+
+  const getModuleItem = (module: 'project' | 'document' | 'employee' | undefined): TenantModuleEffectiveAccessItemResponse | null => {
+    if (!module || !moduleAccess) return null
+    return moduleAccess[module]
   }
 
   const handleSave = async () => {
@@ -166,30 +193,60 @@ export default function MenuConfigurationPage() {
             </VxStack>
           ) : null}
 
-          <VxStack spacing={1}>
+          <VxAlert severity="info">{t('pages.menuConfiguration.accessPolicy')}</VxAlert>
+          {moduleAccessUnavailable ? <VxAlert severity="warning">{t('pages.menuConfiguration.moduleUnavailable')}</VxAlert> : null}
+
+          <VxTableContainer>
+            <VxTable size="small" aria-label={t('pages.menuConfiguration.previewTitle')} sx={{ minWidth: 920 }}>
+              <VxTableHead>
+                <VxTableRow>
+                  <VxTableCell>{t('pages.menuConfiguration.columns.workspace')}</VxTableCell>
+                  <VxTableCell>{t('pages.menuConfiguration.columns.preference')}</VxTableCell>
+                  <VxTableCell>{t('pages.menuConfiguration.columns.policy')}</VxTableCell>
+                  <VxTableCell>{t('pages.menuConfiguration.columns.entitlement')}</VxTableCell>
+                  <VxTableCell>{t('pages.menuConfiguration.columns.permission')}</VxTableCell>
+                  <VxTableCell>{t('pages.menuConfiguration.columns.result')}</VxTableCell>
+                </VxTableRow>
+              </VxTableHead>
+              <VxTableBody>
             {tenantMenuItems.map((menuItem) => {
               const isEnabled = !hiddenMenus.includes(menuItem.key)
+              const module = 'module' in menuItem ? menuItem.module : undefined
+              const moduleItem = getModuleItem(module)
+              const result = !isEnabled
+                ? 'hidden'
+                : module && !moduleItem
+                  ? 'unavailable'
+                  : moduleItem && !moduleItem.allowedByRollout
+                    ? 'policyBlocked'
+                    : moduleItem && !moduleItem.toggleEnabled
+                      ? 'notEntitled'
+                      : 'eligible'
 
               return (
-                <VxStack
-                  key={menuItem.key}
-                  direction="row"
-                  sx={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1, minWidth: 0, p: 1.25, border: '1px solid rgba(108, 92, 231, 0.08)', borderRadius: 2 }}
-                >
-                  <VxBox sx={{ minWidth: 0 }}>
+                <VxTableRow key={menuItem.key}>
+                  <VxTableCell component="th" scope="row">
                     <VxTypography variant="body2" sx={{ fontWeight: 600 }}>{t(`menuItems.${menuItem.labelKey}`)}</VxTypography>
                     <VxTypography variant="caption" color="text.secondary" sx={{ overflowWrap: 'anywhere' }}>{t('pages.menuConfiguration.menuKey')} {menuItem.key}</VxTypography>
-                  </VxBox>
-                  <VxSwitch
-                    checked={isEnabled}
-                    slotProps={{ input: { 'aria-label': t(`menuItems.${menuItem.labelKey}`) } }}
-                    disabled={!canManage}
-                    onChange={(_, checked) => toggleMenu(menuItem.key, checked)}
-                  />
-                </VxStack>
+                  </VxTableCell>
+                  <VxTableCell>
+                    <VxSwitch
+                      checked={isEnabled}
+                      slotProps={{ input: { 'aria-label': t('pages.menuConfiguration.showItem', { name: t(`menuItems.${menuItem.labelKey}`) }) } }}
+                      disabled={!canManage}
+                      onChange={(_, checked) => toggleMenu(menuItem.key, checked)}
+                    />
+                  </VxTableCell>
+                  <VxTableCell><VxChip size="small" variant="outlined" color={moduleItem && !moduleItem.allowedByRollout ? 'warning' : 'default'} label={t(module ? moduleItem ? moduleItem.allowedByRollout ? 'pages.menuConfiguration.states.allowed' : 'pages.menuConfiguration.states.blocked' : 'pages.menuConfiguration.states.unavailable' : 'pages.menuConfiguration.states.notRequired')} /></VxTableCell>
+                  <VxTableCell><VxChip size="small" variant="outlined" color={moduleItem && !moduleItem.toggleEnabled ? 'warning' : 'default'} label={t(module ? moduleItem ? moduleItem.toggleEnabled ? 'pages.menuConfiguration.states.enabled' : 'pages.menuConfiguration.states.disabled' : 'pages.menuConfiguration.states.unavailable' : 'pages.menuConfiguration.states.notRequired')} /></VxTableCell>
+                  <VxTableCell><VxChip size="small" variant="outlined" label={t('pages.menuConfiguration.states.perUser')} /></VxTableCell>
+                  <VxTableCell><VxChip size="small" color={result === 'eligible' ? 'success' : result === 'unavailable' ? 'default' : 'warning'} label={t(`pages.menuConfiguration.results.${result}`)} /></VxTableCell>
+                </VxTableRow>
               )
             })}
-          </VxStack>
+              </VxTableBody>
+            </VxTable>
+          </VxTableContainer>
 
         </VxStack>
         )}

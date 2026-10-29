@@ -17,6 +17,8 @@ vi.mock('react-i18next', () => ({
         'components.tenants.editor.nameLabel': 'Name',
         'components.tenants.editor.domainLabel': 'Domain',
         'components.tenants.editor.activeLabel': 'Active',
+        'components.tenants.editor.tenantChangeContext': 'Tenant identity changes do not change modules, menus, or roles.',
+        'components.tenants.editor.accessPreviewHelp': 'Policy and entitlement are separate from permissions and menu preferences.',
         'components.tenants.editor.validationRequired': 'Name is required',
         'components.tenants.editor.validationMin': 'Name must be at least 2 characters',
         'common.cancel': 'Cancel',
@@ -64,6 +66,8 @@ describe('TenantEditorDialog', () => {
     expect(screen.getByDisplayValue('Acme Corp')).toBeInTheDocument()
     expect(screen.getByDisplayValue('acme.test')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'components.tenants.editor.accessPreview', level: 3 })).toBeInTheDocument()
+    expect(screen.getByText('Tenant identity changes do not change modules, menus, or roles.')).toBeInTheDocument()
+    expect(screen.getByText('Policy and entitlement are separate from permissions and menu preferences.')).toBeInTheDocument()
   })
 
   it('calls onClose when cancel is clicked', async () => {

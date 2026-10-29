@@ -137,9 +137,11 @@ export function TenantEditorDialog({ open, tenant, onClose, onSaved }: TenantEdi
             control={<VxCheckbox {...register('isActive')} checked={isActive} />}
             label={t('components.tenants.editor.activeLabel')}
           />
+          <VxAlert severity="info">{t('components.tenants.editor.tenantChangeContext')}</VxAlert>
 
           <VxStack spacing={1.25} sx={{ pt: 1 }}>
             <VxTypography component="h3" variant="subtitle2">{t('components.tenants.editor.accessPreview')}</VxTypography>
+            <VxTypography variant="body2" color="text.secondary">{t('components.tenants.editor.accessPreviewHelp')}</VxTypography>
             {isPreviewLoading ? <VxTypography variant="body2" color="text.secondary">{t('components.tenants.editor.loadingPreview')}</VxTypography> : null}
             {previewError ? <VxAlert severity="warning">{previewError}</VxAlert> : null}
             {accessPreview
