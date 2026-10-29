@@ -1,22 +1,15 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-  DeleteOutlineRoundedIcon,
-  EditRoundedIcon,
   VxAlert,
   VxAutocomplete,
-  VxBox,
   VxButton,
   VxConfirmActionDialog,
-  VxChip,
   VxCheckbox,
-  VxDataGrid,
   VxDialog,
   VxDialogActions,
   VxDialogContent,
   VxDialogTitle,
   VxFormControlLabel,
-  VxGridActionsCellItem,
-  type VxGridColDef,
   VxMenuItem,
   VxPaper,
   VxStack,
@@ -55,25 +48,12 @@ import type {
 } from '../../../types/api'
 import AssignmentsPanel from '../components/AssignmentsPanel'
 import DocumentsPanel from '../components/DocumentsPanel'
-
-type ProjectDetailTab = 'overview' | 'parties' | 'assignments' | 'documents' | 'history'
+import ProjectHistoryDataGrid from '../components/ProjectHistoryDataGrid'
+import ProjectPartyDataGrid from '../components/ProjectPartyDataGrid'
+import ProjectTabPanel, { type ProjectDetailTab } from '../components/ProjectTabPanel'
+import { getProjectStatusLabelKey, getRelationshipTypeLabelKey } from '../projectPresentation'
 
 const projectDetailTabs: ProjectDetailTab[] = ['overview', 'parties', 'assignments', 'documents', 'history']
-
-function ProjectTabPanel({ tab, activeTab, children }: { tab: ProjectDetailTab, activeTab: ProjectDetailTab, children?: ReactNode }) {
-  return (
-    <VxBox
-      role="tabpanel"
-      id={`project-panel-${tab}`}
-      aria-labelledby={`project-tab-${tab}`}
-      hidden={activeTab !== tab}
-      tabIndex={0}
-      sx={{ minWidth: 0 }}
-    >
-      {children}
-    </VxBox>
-  )
-}
 
 type ProjectFormState = {
   projectCategoryId: string
@@ -99,17 +79,6 @@ type ProjectPartyFormState = {
   isActive: boolean
 }
 
-type PartyDataGridProps = {
-  rows: ProjectPartyListItemResponse[]
-  onEdit: (party: ProjectPartyListItemResponse) => void
-  onDelete: (partyId: string) => void
-  canManage?: boolean
-}
-
-type HistoryDataGridProps = {
-  rows: ProjectTimelineItemResponse[]
-}
-
 const initialProjectPartyFormState: ProjectPartyFormState = {
   relatedTenantId: '',
   relationshipType: 2,
@@ -119,233 +88,6 @@ const initialProjectPartyFormState: ProjectPartyFormState = {
   effectiveFrom: '',
   effectiveTo: '',
   isActive: true,
-}
-
-function getStatusLabelKey(status: ProjectLifecycleStatus): string {
-  switch (status) {
-    case 1:
-      return 'common.statusLabels.draft'
-    case 2:
-      return 'common.statusLabels.inReview'
-    case 3:
-      return 'common.statusLabels.submitted'
-    case 4:
-      return 'common.statusLabels.awarded'
-    case 5:
-      return 'common.statusLabels.completed'
-    case 6:
-      return 'common.statusLabels.cancelled'
-    default:
-      return 'common.statusLabels.draft'
-  }
-}
-
-function getRelationshipTypeKey(type: TenantRelationshipType): string {
-  switch (type) {
-    case 1:
-      return 'common.relationshipTypes.primeContractor'
-    case 2:
-      return 'common.relationshipTypes.subcontractor'
-    case 3:
-      return 'common.relationshipTypes.legalSponsor'
-    case 4:
-      return 'common.relationshipTypes.deliveryPartner'
-    case 5:
-      return 'common.relationshipTypes.customer'
-    case 6:
-      return 'common.relationshipTypes.vendor'
-    case 7:
-      return 'common.relationshipTypes.consortiumMember'
-    default:
-      return 'common.relationshipTypes.subcontractor'
-  }
-}
-
-function PartyDataGrid({ rows, onEdit, onDelete, canManage = true }: PartyDataGridProps) {
-  const { t } = useTranslation()
-
-  const columns: VxGridColDef<ProjectPartyListItemResponse>[] = [
-    {
-      field: 'relatedTenantName',
-      headerName: t('pages.projectDetails.parties.columns.relatedTenant'),
-      minWidth: 230,
-      flex: 1,
-      renderCell: ({ row }) => (
-        <VxTypography variant="body2">{[row.relatedTenantCode, row.relatedTenantName].filter(Boolean).join(' - ') || t('pages.tenantRelationships.unavailableTenant')}</VxTypography>
-      ),
-    },
-    {
-      field: 'relationshipType',
-      headerName: t('pages.projectDetails.parties.columns.relationship'),
-      minWidth: 180,
-      flex: 0.9,
-      renderCell: ({ value }) => t(getRelationshipTypeKey(value as TenantRelationshipType)),
-    },
-    {
-      field: 'scope',
-      headerName: t('pages.projectDetails.parties.columns.scope'),
-      minWidth: 220,
-      flex: 1,
-      sortable: false,
-      filterable: false,
-      renderCell: ({ row }) => (
-        <VxStack direction="row" spacing={0.75} sx={{ py: 1 }}>
-          {row.canViewDocuments ? <VxChip size="small" label={t('pages.projectDetails.parties.scopeLabels.viewDocuments')} /> : null}
-          {row.canUploadDocuments ? <VxChip size="small" label={t('pages.projectDetails.parties.scopeLabels.uploadDocuments')} /> : null}
-          {row.canAssignPeople ? <VxChip size="small" label={t('pages.projectDetails.parties.scopeLabels.assignPeople')} /> : null}
-        </VxStack>
-      ),
-    },
-    {
-      field: 'effective',
-      headerName: t('pages.projectDetails.parties.columns.effective'),
-      minWidth: 200,
-      flex: 0.9,
-      sortable: false,
-      valueGetter: (_value, row) => `${row.effectiveFrom || t('common.labels.any')} - ${row.effectiveTo || t('common.labels.open')}`,
-    },
-    {
-      field: 'isActive',
-      headerName: t('pages.projectDetails.parties.columns.active'),
-      minWidth: 120,
-      flex: 0.7,
-      renderCell: ({ value }) => (value ? t('common.labels.active') : t('common.labels.inactive')),
-    },
-    {
-      field: 'actions',
-      type: 'actions',
-      headerName: t('pages.projectDetails.parties.columns.actions'),
-      minWidth: 110,
-      getActions: ({ row }) => canManage ? [
-        <VxGridActionsCellItem
-          key={`edit-${row.id}`}
-          icon={<EditRoundedIcon />}
-          label={t('common.edit')}
-          onClick={() => onEdit(row)}
-          showInMenu={false}
-        />,
-        <VxGridActionsCellItem
-          key={`delete-${row.id}`}
-          icon={<DeleteOutlineRoundedIcon />}
-          label={t('common.delete')}
-          onClick={() => onDelete(row.id)}
-          showInMenu={false}
-        />,
-      ] : [],
-    },
-  ]
-
-  return (
-    <VxDataGrid
-      preferenceKey="project-parties"
-      autoHeight
-      rows={rows}
-      columns={columns}
-      disableRowSelectionOnClick
-      pageSizeOptions={[5, 10, 25]}
-      initialState={{
-        pagination: {
-          paginationModel: { pageSize: 10, page: 0 },
-        },
-        sorting: {
-          sortModel: [{ field: 'relatedTenantName', sort: 'asc' }],
-        },
-      }}
-      showToolbar
-      localeText={{
-        noRowsLabel: t('pages.projectDetails.parties.noRecords'),
-      }}
-      sx={{
-        border: 'none',
-        '--DataGrid-containerBackground': 'transparent',
-        '& .MuiDataGrid-columnHeaders': {
-          backgroundColor: 'rgba(108, 92, 231, 0.06)',
-          borderBottom: '1px solid rgba(108, 92, 231, 0.08)',
-        },
-        '& .MuiDataGrid-cell': {
-          borderColor: 'rgba(108, 92, 231, 0.06)',
-        },
-      }}
-      slotProps={{
-        toolbar: {
-          showQuickFilter: true,
-        },
-      }}
-    />
-  )
-}
-
-function HistoryDataGrid({ rows }: HistoryDataGridProps) {
-  const { t } = useTranslation()
-
-  const columns: VxGridColDef<ProjectTimelineItemResponse>[] = [
-    {
-      field: 'createdAtUtc',
-      headerName: t('pages.projectDetails.history.columns.timestamp'),
-      minWidth: 220,
-      flex: 1,
-      renderCell: ({ value }) => new Date(value as string).toLocaleString(),
-    },
-    {
-      field: 'eventType',
-      headerName: t('pages.projectDetails.history.columns.event'),
-      minWidth: 180,
-      flex: 0.9,
-    },
-    {
-      field: 'description',
-      headerName: t('pages.projectDetails.history.columns.description'),
-      minWidth: 260,
-      flex: 1.4,
-      renderCell: ({ value }) => value || t('common.labels.none'),
-    },
-    {
-      field: 'actorUserId',
-      headerName: t('pages.projectDetails.history.columns.actor'),
-      minWidth: 220,
-      flex: 1,
-      renderCell: ({ value }) => value || t('common.labels.none'),
-    },
-  ]
-
-  return (
-    <VxDataGrid
-      preferenceKey="project-history"
-      autoHeight
-      rows={rows}
-      columns={columns}
-      disableRowSelectionOnClick
-      pageSizeOptions={[5, 10, 25]}
-      initialState={{
-        pagination: {
-          paginationModel: { pageSize: 10, page: 0 },
-        },
-        sorting: {
-          sortModel: [{ field: 'createdAtUtc', sort: 'desc' }],
-        },
-      }}
-      showToolbar
-      localeText={{
-        noRowsLabel: t('pages.projectDetails.history.noRecords'),
-      }}
-      sx={{
-        border: 'none',
-        '--DataGrid-containerBackground': 'transparent',
-        '& .MuiDataGrid-columnHeaders': {
-          backgroundColor: 'rgba(108, 92, 231, 0.06)',
-          borderBottom: '1px solid rgba(108, 92, 231, 0.08)',
-        },
-        '& .MuiDataGrid-cell': {
-          borderColor: 'rgba(108, 92, 231, 0.06)',
-        },
-      }}
-      slotProps={{
-        toolbar: {
-          showQuickFilter: true,
-        },
-      }}
-    />
-  )
 }
 
 export default function ProjectDetailsPage() {
@@ -694,7 +436,7 @@ function ProjectDetailsContent() {
             <VxStack direction={{ xs: 'column', md: 'row' }} spacing={2}>
               <PageMetric label={t('pages.projectDetails.overview.projectNumber')} value={project.projectNumber} />
               <PageMetric label={t('pages.projectDetails.overview.category')} value={categoryLabelById.get(project.projectCategoryId) || project.projectCategoryId} />
-              <PageMetric label={t('pages.projectDetails.overview.status')} value={t(getStatusLabelKey(project.status))} />
+              <PageMetric label={t('pages.projectDetails.overview.status')} value={t(getProjectStatusLabelKey(project.status))} />
             </VxStack>
             <VxTypography color="text.secondary">{t('pages.projectDetails.overview.governmentAgency')}: {project.governmentAgency || t('common.labels.none')}</VxTypography>
             <VxTypography color="text.secondary">{t('pages.projectDetails.overview.submissionReference')}: {project.submissionReference || t('common.labels.none')}</VxTypography>
@@ -718,7 +460,7 @@ function ProjectDetailsContent() {
             {partyOptionsError ? <VxAlert severity="error" action={<VxButton disabled={partyOptionsLoading} onClick={() => void loadPartyOptions()}>{t('common.refresh')}</VxButton>}>{partyOptionsError}</VxAlert> : null}
             {canManage && !partyOptionsLoading && !partyOptionsError && newPartyOptions.length === 0 ? <VxAlert severity="info">{t('pages.projectDetails.parties.noEligiblePartners')}</VxAlert> : null}
           </VxStack>
-          <PartyDataGrid
+          <ProjectPartyDataGrid
             rows={parties}
             onEdit={openEditPartyDialog}
             onDelete={(partyId) => setDeletePartyId(partyId)}
@@ -754,7 +496,7 @@ function ProjectDetailsContent() {
           <VxStack sx={{ px: 2.5, pt: 2.5 }}>
             <VxTypography component="h2" variant="h6">{t('pages.projectDetails.history.title')}</VxTypography>
           </VxStack>
-          <HistoryDataGrid rows={timeline} />
+          <ProjectHistoryDataGrid rows={timeline} />
         </VxPaper>
       ) : null}
       </ProjectTabPanel>
@@ -858,7 +600,7 @@ function ProjectDetailsContent() {
               noOptionsText={t('pages.projectDetails.parties.noEligiblePartners')}
               disabled={isSavingParty || partyOptionsLoading || Boolean(partyOptionsError)}
               getOptionKey={(option) => `${option.relatedTenantId}:${option.relationshipType}`}
-              getOptionLabel={(option) => `${option.relatedTenantCode} - ${option.relatedTenantName} - ${t(getRelationshipTypeKey(option.relationshipType))}`}
+              getOptionLabel={(option) => `${option.relatedTenantCode} - ${option.relatedTenantName} - ${t(getRelationshipTypeLabelKey(option.relationshipType))}`}
               isOptionEqualToValue={(option, value) => option.relatedTenantId === value.relatedTenantId && option.relationshipType === value.relationshipType}
               onChange={(_, option) => setPartyFormState((previous) => ({
                 ...previous, relatedTenantId: option?.relatedTenantId ?? '', relationshipType: option?.relationshipType ?? 2,

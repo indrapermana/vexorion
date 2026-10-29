@@ -1,24 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   AddRoundedIcon,
-  DeleteOutlineRoundedIcon,
-  EditRoundedIcon,
   VxAlert,
-  VxBox,
   VxButton,
   VxConfirmActionDialog,
-  VxChip,
-  VxDataGrid,
   VxDialog,
   VxDialogActions,
   VxDialogContent,
   VxDialogTitle,
-  VxGridActionsCellItem,
-  type VxGridColDef,
   VxMenuItem,
   VxStack,
   VxTextField,
-  VxTypography,
 } from '@vexorion/ui'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
@@ -38,6 +30,7 @@ import {
 } from '../../../lib/api'
 import type { ProjectCategoryListItemResponse, ProjectLifecycleStatus } from '../../../types/api'
 import type { ProjectGridRow, ProjectStatusFilterValue } from '../../../types/ui'
+import ProjectsDataGrid from '../components/ProjectsDataGrid'
 
 type ProjectFormState = {
   projectCategoryId: string
@@ -50,15 +43,6 @@ type ProjectFormState = {
   status: ProjectLifecycleStatus
   notes: string
   isActive: boolean
-}
-
-type ProjectsDataGridProps = {
-  rows: ProjectGridRow[]
-  isLoading: boolean
-  onOpenDetails: (projectId: string) => void
-  onEdit: (project: ProjectGridRow) => void
-  onDelete: (project: ProjectGridRow) => void
-  canManage?: boolean
 }
 
 const defaultProjectFormState: ProjectFormState = {
@@ -74,155 +58,10 @@ const defaultProjectFormState: ProjectFormState = {
   isActive: true,
 }
 
-function getStatusLabelKey(status: ProjectLifecycleStatus): string {
-  switch (status) {
-    case 1:
-      return 'common.statusLabels.draft'
-    case 2:
-      return 'common.statusLabels.inReview'
-    case 3:
-      return 'common.statusLabels.submitted'
-    case 4:
-      return 'common.statusLabels.awarded'
-    case 5:
-      return 'common.statusLabels.completed'
-    case 6:
-      return 'common.statusLabels.cancelled'
-    default:
-      return 'common.statusLabels.draft'
-  }
-}
-
 function parseStatusFilter(value: string | null): ProjectStatusFilterValue {
   if (value === null) return 'all'
   const status = Number(value)
   return [1, 2, 3, 4, 5, 6].includes(status) ? status as ProjectLifecycleStatus : 'all'
-}
-
-function ProjectsDataGrid({ rows, isLoading, onOpenDetails, onEdit, onDelete, canManage = true }: ProjectsDataGridProps) {
-  const { t } = useTranslation()
-
-  const columns: VxGridColDef<ProjectGridRow>[] = [
-    {
-      field: 'project',
-      headerName: t('pages.projects.columns.project'),
-      minWidth: 220,
-      flex: 1.2,
-      sortable: false,
-      valueGetter: (_value, row) => row.name,
-      renderCell: ({ row }) => (
-        <VxBox sx={{ py: 1 }}>
-          <VxTypography sx={{ fontWeight: 700 }}>{row.name}</VxTypography>
-          <VxTypography variant="body2" color="text.secondary">{row.projectNumber}</VxTypography>
-        </VxBox>
-      ),
-    },
-    {
-      field: 'categoryLabel',
-      headerName: t('pages.projects.columns.category'),
-      minWidth: 210,
-      flex: 1,
-      renderCell: ({ row }) => row.categoryLabel || row.projectCategoryId,
-    },
-    {
-      field: 'duration',
-      headerName: t('pages.projects.columns.duration'),
-      minWidth: 220,
-      flex: 1,
-      sortable: false,
-      valueGetter: (_value, row) => `${row.startDate} - ${row.endDate || t('common.labels.open')}`,
-    },
-    {
-      field: 'status',
-      headerName: t('pages.projects.columns.status'),
-      minWidth: 140,
-      flex: 0.8,
-      renderCell: ({ value }) => (
-        <VxChip
-          size="small"
-          label={t(getStatusLabelKey(value as ProjectLifecycleStatus))}
-          color={value === 6 ? 'default' : 'primary'}
-          variant={value === 6 ? 'outlined' : 'filled'}
-        />
-      ),
-    },
-    {
-      field: 'isActive',
-      headerName: t('pages.projects.columns.active'),
-      minWidth: 130,
-      flex: 0.7,
-      renderCell: ({ value }) => (value ? t('common.labels.active') : t('common.labels.inactive')),
-    },
-    {
-      field: 'actions',
-      type: 'actions',
-      headerName: t('pages.projects.columns.actions'),
-      minWidth: 120,
-      getActions: ({ row }) => [
-        <VxGridActionsCellItem
-          key={`details-${row.id}`}
-          icon={<EditRoundedIcon />}
-          label={t('common.labels.details')}
-          onClick={() => onOpenDetails(row.id)}
-          showInMenu
-        />,
-        ...(canManage ? [<VxGridActionsCellItem
-          key={`edit-${row.id}`}
-          icon={<EditRoundedIcon />}
-          label={t('common.edit')}
-          onClick={() => onEdit(row)}
-          showInMenu={false}
-        />,
-        <VxGridActionsCellItem
-          key={`delete-${row.id}`}
-          icon={<DeleteOutlineRoundedIcon />}
-          label={t('common.delete')}
-          onClick={() => onDelete(row)}
-          showInMenu={false}
-        />] : []),
-      ],
-    },
-  ]
-
-  return (
-    <VxDataGrid
-      preferenceKey="projects"
-      autoHeight
-      rows={rows}
-      columns={columns}
-      loading={isLoading}
-      disableRowSelectionOnClick
-      pageSizeOptions={[5, 10, 25]}
-      initialState={{
-        pagination: {
-          paginationModel: { pageSize: 10, page: 0 },
-        },
-        sorting: {
-          sortModel: [{ field: 'name', sort: 'asc' }],
-        },
-      }}
-      showToolbar
-      localeText={{
-        noRowsLabel: t('pages.projects.noRecords'),
-      }}
-      sx={{
-        border: 'none',
-        '--DataGrid-containerBackground': 'transparent',
-        '& .MuiDataGrid-columnHeaders': {
-          backgroundColor: 'rgba(108, 92, 231, 0.06)',
-          borderBottom: '1px solid rgba(108, 92, 231, 0.08)',
-        },
-        '& .MuiDataGrid-cell': {
-          borderColor: 'rgba(108, 92, 231, 0.06)',
-        },
-      }}
-      slotProps={{
-        toolbar: {
-          showQuickFilter: true,
-        },
-      }}
-    />
-  )
 }
 
 export default function ProjectsPage() {

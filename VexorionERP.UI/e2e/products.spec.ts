@@ -79,6 +79,55 @@ test.describe('Products', () => {
     await expect(page.getByText('No posted purchase invoice history in the last 12 months.', { exact: true })).toBeVisible()
   })
 
+  test('Main UI populated product actions and dialogs fit tablet dark mode', async ({ page }, testInfo) => {
+    await page.addInitScript(() => {
+      window.localStorage.setItem('vexorionerp.ui.language', 'enUS')
+      window.localStorage.setItem('vexorion.themeMode', 'dark')
+    })
+
+    const crud = new GenericCrudPage(page, '/products')
+    await crud.goto()
+    await crud.clickAdd()
+    const createDialog = page.getByRole('dialog')
+    const productName = `${UNIQUE()} long populated acceptance product`
+    await createDialog.getByLabel('Product name').fill(productName)
+    await createDialog.getByLabel('SKU').fill(uid('SKU'))
+    await crud.saveDialog()
+    await expect(createDialog).not.toBeVisible({ timeout: 8_000 })
+
+    for (const width of [768, 1024]) {
+      await page.setViewportSize({ width, height: 900 })
+      await expect(page.getByText(productName, { exact: true })).toBeVisible()
+      await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1)
+
+      const editButton = page.getByRole('button', { name: `Edit: ${productName}` })
+      await editButton.click()
+      const editor = page.getByRole('dialog')
+      await expect(editor).toBeVisible()
+      await expect(editor.getByLabel('Product name')).toHaveValue(productName)
+      const editorBox = await editor.boundingBox()
+      expect(editorBox).not.toBeNull()
+      expect(editorBox!.x).toBeGreaterThanOrEqual(0)
+      expect(editorBox!.x + editorBox!.width).toBeLessThanOrEqual(width)
+      await page.screenshot({ path: testInfo.outputPath(`product-editor-dark-${width}.png`), fullPage: true, animations: 'disabled' })
+      await editor.getByRole('button', { name: 'Cancel', exact: true }).click()
+      await expect(editor).not.toBeVisible()
+      await expect(editButton).toBeFocused()
+
+      const deleteButton = page.getByRole('button', { name: `Delete: ${productName}` })
+      await deleteButton.click()
+      const deleteDialog = page.getByRole('dialog')
+      await expect(deleteDialog).toContainText(productName)
+      const deleteBox = await deleteDialog.boundingBox()
+      expect(deleteBox).not.toBeNull()
+      expect(deleteBox!.x).toBeGreaterThanOrEqual(0)
+      expect(deleteBox!.x + deleteBox!.width).toBeLessThanOrEqual(width)
+      await deleteDialog.getByRole('button', { name: 'Cancel', exact: true }).click()
+      await expect(deleteDialog).not.toBeVisible()
+      await expect(deleteButton).toBeFocused()
+    }
+  })
+
   test('TC-M-016: products list page loads', async ({ page }) => {
     await page.goto('/products')
     await page.waitForLoadState('networkidle')

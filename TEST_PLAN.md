@@ -640,6 +640,7 @@ Current import concurrency/rollback and generated-document compensation verifica
 | 4.3.1 | Switch ERP to Bahasa Indonesia | Browser/app language set to `id-ID` | All ERP labels in Bahasa Indonesia |
 | 4.3.2 | Switch POS to Bahasa Indonesia | POS settings → language → ID | All POS labels translated |
 | 4.3.3 | Currency format — IDR | Company currency = IDR | Numbers formatted without decimal (e.g. Rp 10.000) |
+| 4.3.4 | Main UI locale and operational-copy regression | Run `npm --workspace VexorionERP.UI exec vitest run src/i18n/translations.test.ts src/i18n/mainUiCopy.test.ts src/i18n/configCopy.test.ts src/i18n/inventoryCopy.test.ts src/i18n/orderEditorCopy.test.ts src/i18n/financeCopy.test.ts -- --maxWorkers=1` | English, Indonesian, and Spanish have identical non-empty keys and interpolation variables; covered Main UI TSX surfaces contain no hard-coded operational render copy |
 
 ### 4.4 Logging & Observability
 
@@ -664,6 +665,21 @@ Run a production build before the budget check. The frontend CI workflow runs th
 |---|----------|-------|-----------------|
 | 4.6.1 | Production bundle stays within budget | Run `npm --workspace VexorionERP.UI run build`, then `npm --workspace VexorionERP.UI run bundle:check` | Every JavaScript chunk is at most 450 KiB raw and 140 KiB gzip; the HTML entry chunk is at most 400 KiB raw and 110 KiB gzip |
 | 4.6.2 | Budget regression blocks CI | Temporarily lower one budget below the reported size and run `npm --workspace VexorionERP.UI run bundle:check` | Command exits non-zero and identifies the offending asset and limit; restore the configured budget afterward |
+
+### 4.7 Main UI Component Boundaries
+
+| # | Scenario | Steps | Expected Result |
+|---|----------|-------|-----------------|
+| 4.7.1 | Project pages preserve module boundaries | Run `npm --workspace VexorionERP.UI exec vitest run src/features/projects/projectStructure.test.ts -- --maxWorkers=1` | Project list/detail pages delegate list, party, history, and tab rendering; neither page owns an inline data grid; shared project label mappings remain centralized |
+
+### 4.8 Main UI Interactive Responsive Acceptance
+
+These scenarios require the guarded isolated-tenant E2E environment and a running Development API. The responsive route suite deliberately uses a width proxy for 200% zoom because headless Chromium does not apply browser zoom shortcuts; real 200% zoom remains a manual integrated-browser check.
+
+| # | Scenario | Steps | Expected Result |
+|---|----------|-------|-----------------|
+| 4.8.1 | Authenticated route matrix | Run `npx playwright test e2e/responsive.acceptance.spec.ts` with the documented E2E environment | Every protected Main UI route renders at 768/1024 px in Spanish dark mode without document overflow; narrow/light and zoom-width proxy checks also pass; tenant cleanup and orphan check pass |
+| 4.8.2 | Populated tablet actions and dialogs | Run `npx playwright test e2e/products.spec.ts --grep 'Main UI populated product actions and dialogs fit tablet dark mode'` with the documented E2E environment | A run-scoped product renders at 768/1024 px in dark mode; edit and delete dialogs remain inside the viewport; cancel closes without mutation and restores focus; tenant cleanup and orphan check pass |
 
 ---
 
