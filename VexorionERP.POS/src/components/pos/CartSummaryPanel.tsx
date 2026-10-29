@@ -1,5 +1,5 @@
 import { AddRoundedIcon, ArrowBackRoundedIcon, DeleteOutlineRoundedIcon, DeliveryDiningRoundedIcon, RemoveRoundedIcon } from '@vexorion/ui'
-import { VxBox, VxButton, VxChip, VxDivider, VxIconButton, VxMenuItem, VxPaper, VxStack, VxSwitch, VxTextField, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxChip, VxDivider, VxIconButton, VxLinearProgress, VxPaper, VxStack, VxSwitch, VxTextField, VxTypography } from '@vexorion/ui'
 import { useState } from 'react'
 import { useI18n } from '../../app/I18nContext'
 import type { CartLine } from './types'
@@ -33,6 +33,7 @@ type CartSummaryPanelProps = {
   paymentMethod: string
   isDelivery: boolean
   isProcessing: boolean
+  hasPendingAttempt: boolean
   canCheckout: boolean
   stockByProduct: Record<string, number>
   onBackToCatalog: () => void
@@ -56,6 +57,7 @@ export function CartSummaryPanel({
   paymentMethod,
   isDelivery,
   isProcessing,
+  hasPendingAttempt,
   canCheckout,
   stockByProduct,
   onBackToCatalog,
@@ -69,6 +71,9 @@ export function CartSummaryPanel({
 }: CartSummaryPanelProps) {
   const { t } = useI18n()
   const [quantityDrafts, setQuantityDrafts] = useState<Record<string, string>>({})
+  const isCash = paymentMethod === 'Cash'
+  const isPaymentSufficient = cart.length > 0 && paymentAmount >= grandTotal
+  const remainingAmount = Math.max(grandTotal - paymentAmount, 0)
 
   const commitQuantity = (productId: string) => {
     const rawValue = quantityDrafts[productId]
@@ -208,28 +213,73 @@ export function CartSummaryPanel({
           <VxTypography component="p" variant="h6">{t('cart.grandTotal', { value: formatMoney(grandTotal, currencyCode) })}</VxTypography>
         </VxStack>
 
-        <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-          <VxTextField
-            type="number"
-            label={t('cart.paymentAmount')}
-            value={paymentAmount}
-            onChange={(event) => onPaymentAmountChange(Number(event.target.value))}
-            fullWidth
-          />
-          <VxTextField
-            select
-            label={t('cart.method')}
-            value={paymentMethod}
-            onChange={(event) => onPaymentMethodChange(event.target.value)}
-            sx={{ minWidth: 160 }}
-          >
-            <VxMenuItem value="Cash">{t('cart.method.cash')}</VxMenuItem>
-            <VxMenuItem value="Card">{t('cart.method.card')}</VxMenuItem>
-            <VxMenuItem value="Transfer">{t('cart.method.transfer')}</VxMenuItem>
-          </VxTextField>
-        </VxStack>
+        <VxBox sx={{ p: 1.5, border: '1px solid', borderColor: 'divider', borderRadius: 1, bgcolor: 'action.hover' }}>
+          <VxStack spacing={1.5}>
+            <VxStack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'baseline', gap: 1 }}>
+              <VxTypography component="h3" variant="subtitle1" sx={{ fontWeight: 700 }}>{t('cart.paymentTitle')}</VxTypography>
+              <VxBox sx={{ textAlign: 'right' }}>
+                <VxTypography variant="caption" color="text.secondary">{t('cart.amountDue')}</VxTypography>
+                <VxTypography variant="h5" sx={{ fontWeight: 800 }}>{formatMoney(grandTotal, currencyCode)}</VxTypography>
+              </VxBox>
+            </VxStack>
 
-        <VxTypography variant="body2">{t('cart.change', { value: formatMoney(changeAmount, currencyCode) })}</VxTypography>
+            <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1} aria-label={t('cart.method')} role="group">
+              {[
+                ['Cash', t('cart.method.cash')],
+                ['Card', t('cart.method.card')],
+                ['Transfer', t('cart.method.transfer')],
+              ].map(([value, label]) => (
+                <VxButton
+                  key={value}
+                  variant={paymentMethod === value ? 'contained' : 'outlined'}
+                  aria-pressed={paymentMethod === value}
+                  onClick={() => onPaymentMethodChange(value)}
+                  fullWidth
+                >
+                  {label}
+                </VxButton>
+              ))}
+            </VxStack>
+
+            {isCash ? (
+              <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                <VxTextField
+                  type="number"
+                  label={t('cart.amountReceived')}
+                  value={paymentAmount}
+                  onChange={(event) => onPaymentAmountChange(Math.max(0, Number(event.target.value) || 0))}
+                  slotProps={{ htmlInput: { min: 0, step: 0.01 } }}
+                  fullWidth
+                />
+                <VxButton variant="outlined" onClick={() => onPaymentAmountChange(grandTotal)}>
+                  {t('cart.exactAmount')}
+                </VxButton>
+              </VxStack>
+            ) : (
+              <VxAlert severity="info">{t('cart.exactPayment')}</VxAlert>
+            )}
+
+            {isCash && !isPaymentSufficient && cart.length > 0 ? (
+              <VxAlert severity="warning" role="alert">
+                {t('cart.shortBy', { value: formatMoney(remainingAmount, currencyCode) })}
+              </VxAlert>
+            ) : null}
+
+            {isPaymentSufficient ? (
+              <VxStack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', gap: 1 }}>
+                <VxTypography variant="body2" color="success.main">{t('cart.paymentReady')}</VxTypography>
+                {isCash ? (
+                  <VxBox sx={{ textAlign: 'right' }}>
+                    <VxTypography variant="caption" color="text.secondary">{t('cart.changeDue')}</VxTypography>
+                    <VxTypography variant="h6" color="success.main" sx={{ fontWeight: 800 }}>
+                      {formatMoney(changeAmount, currencyCode)}
+                    </VxTypography>
+                  </VxBox>
+                ) : null}
+              </VxStack>
+            ) : null}
+          </VxStack>
+        </VxBox>
         <VxStack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
           <DeliveryDiningRoundedIcon fontSize="small" color={isDelivery ? 'primary' : 'disabled'} />
           <VxTypography variant="body2" sx={{ mr: 'auto' }}>{t('cart.deliveryTransaction')}</VxTypography>
@@ -244,8 +294,20 @@ export function CartSummaryPanel({
           {t('shortcut.hint')}
         </VxTypography>
 
-        <VxButton variant="contained" size="large" onClick={onCheckout} disabled={isProcessing || cart.length === 0 || !canCheckout}>
-          {isProcessing ? t('cart.processing') : t('cart.checkout')}
+        {hasPendingAttempt ? (
+          <VxAlert severity="warning" role="status">{t('cart.retryHint')}</VxAlert>
+        ) : null}
+        {isProcessing ? (
+          <VxStack spacing={0.75} role="status" aria-live="polite">
+            <VxLinearProgress />
+            <VxTypography variant="body2" color="text.secondary">{t('cart.processingHint')}</VxTypography>
+          </VxStack>
+        ) : null}
+        {!canCheckout && cart.length > 0 ? (
+          <VxAlert severity="error">{t('cart.checkoutPermissionRequired')}</VxAlert>
+        ) : null}
+        <VxButton variant="contained" size="large" onClick={onCheckout} disabled={isProcessing || !isPaymentSufficient || !canCheckout}>
+          {isProcessing ? t('cart.processing') : hasPendingAttempt ? t('cart.retrySameSale') : t('cart.checkout')}
         </VxButton>
         <VxButton
           variant="text"

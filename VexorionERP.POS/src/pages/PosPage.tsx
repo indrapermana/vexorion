@@ -73,6 +73,7 @@ export default function PosPage() {
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [hasPendingCheckoutAttempt, setHasPendingCheckoutAttempt] = useState(false)
   const [stockConflict, setStockConflict] = useState<PosStockInsufficientItem[] | null>(null)
 
   const [isQuickCreateOpen, setIsQuickCreateOpen] = useState(false)
@@ -201,6 +202,23 @@ export default function PosPage() {
   // Stable ref so the keyboard handler always calls the latest checkout closure
   const checkoutRef = useRef<() => Promise<void>>(() => Promise.resolve())
   const attemptRef = useRef<{ key: string; signature: string } | null>(null)
+  const processingRef = useRef(false)
+
+  useEffect(() => {
+    if (paymentMethod !== 'Cash' && paymentAmount !== grandTotal) {
+      setPaymentAmount(grandTotal)
+    }
+  }, [grandTotal, paymentAmount, paymentMethod])
+
+  useEffect(() => {
+    setHasPendingCheckoutAttempt(false)
+  }, [cart, selectedCustomerId, selectedWarehouseId, paymentAmount, paymentMethod, notes, isDelivery])
+
+  useEffect(() => {
+    if (cart.length > 0) {
+      setCheckoutResult(null)
+    }
+  }, [cart.length])
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -293,6 +311,10 @@ export default function PosPage() {
   }
 
   const checkout = async () => {
+    if (processingRef.current) {
+      return
+    }
+
     setError(null)
     setCheckoutResult(null)
     setStockConflict(null)
@@ -325,7 +347,9 @@ export default function PosPage() {
       warehouseId: selectedWarehouse.id,
     })
 
+    processingRef.current = true
     setIsProcessing(true)
+    setHasPendingCheckoutAttempt(false)
 
     try {
       let customerId = selectedCustomerId
@@ -358,6 +382,7 @@ export default function PosPage() {
 
       const sale = await checkoutSale({ idempotencyKey: attemptRef.current.key, ...saleRequest })
       attemptRef.current = null
+      setHasPendingCheckoutAttempt(false)
 
       const order = { id: sale.salesOrderId }
       const invoice = { id: sale.salesInvoiceId }
@@ -434,6 +459,7 @@ export default function PosPage() {
       const durationMs = Math.round(performance.now() - startTime)
 
       if (requestError instanceof ApiError && requestError.code === 'inventory.insufficient_stock') {
+        attemptRef.current = null
         posLogger.warn('checkout.failure', {
           reason: 'stock_conflict_concurrent',
           durationMs,
@@ -457,9 +483,17 @@ export default function PosPage() {
       } else {
         posLogger.error('checkout.failure')
         if (!(requestError instanceof ApiError)) reportClientDiagnostic('operation.failed', requestError)
-        setError(requestError instanceof ApiError ? requestError.message : t('page.processingError'))
+        const hasUnknownOutcome = !(requestError instanceof ApiError) || requestError.status === 0 || requestError.status >= 500
+        if (hasUnknownOutcome) {
+          setHasPendingCheckoutAttempt(true)
+          setError(requestError instanceof ApiError ? requestError.message : t('page.checkoutUnknownOutcome'))
+        } else {
+          attemptRef.current = null
+          setError(requestError.message)
+        }
       }
     } finally {
+      processingRef.current = false
       setIsProcessing(false)
     }
   }
@@ -546,6 +580,7 @@ export default function PosPage() {
             paymentMethod={paymentMethod}
             isDelivery={isDelivery}
             isProcessing={isProcessing}
+            hasPendingAttempt={hasPendingCheckoutAttempt}
             canCheckout={canCheckout}
             onBackToCatalog={() => setMobileSaleStep('catalog')}
             onRemoveCartLine={removeCartLine}
