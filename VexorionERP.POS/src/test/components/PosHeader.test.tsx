@@ -8,9 +8,15 @@ const BASE_PROPS = {
   isShiftOpen: false,
   canCloseShift: false,
   canRefund: false,
+  isHistoryOpen: false,
+  onToggleHistory: vi.fn(),
   onCloseShift: vi.fn(),
   onOpenReturn: vi.fn(),
   onSignOut: vi.fn(),
+}
+
+async function openRegisterActions() {
+  await userEvent.click(screen.getByRole('button', { name: 'More register actions' }))
 }
 
 describe('PosHeader', () => {
@@ -19,8 +25,24 @@ describe('PosHeader', () => {
     expect(screen.getByText(/vexorion pos/i)).toBeInTheDocument()
   })
 
-  it('gives the theme icon button an accessible name', () => {
+  it('keeps secondary actions behind an explicit disclosure', async () => {
     renderWithProviders(<PosHeader {...BASE_PROPS} />)
+    const disclosure = screen.getByRole('button', { name: 'More register actions' })
+    expect(disclosure).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByRole('button', { name: 'Sign Out' })).not.toBeInTheDocument()
+
+    await userEvent.click(disclosure)
+
+    expect(screen.getByText('Register actions')).toBeInTheDocument()
+    expect(screen.getByText('Transactions')).toBeInTheDocument()
+    expect(screen.getByText('Settings')).toBeInTheDocument()
+    expect(screen.getByText('Session')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Sign Out' })).toBeInTheDocument()
+  })
+
+  it('gives the theme button an accessible name', async () => {
+    renderWithProviders(<PosHeader {...BASE_PROPS} />)
+    await openRegisterActions()
     expect(screen.getByRole('button', { name: /theme:/i })).toBeInTheDocument()
   })
 
@@ -29,32 +51,37 @@ describe('PosHeader', () => {
     expect(screen.getByText(/EUR/)).toBeInTheDocument()
   })
 
-  it('does NOT show Return button when canRefund=false', () => {
+  it('does NOT show Return button when canRefund=false', async () => {
     renderWithProviders(<PosHeader {...BASE_PROPS} canRefund={false} />)
+    await openRegisterActions()
     expect(screen.queryByRole('button', { name: /return|retur|devolucion/i })).not.toBeInTheDocument()
   })
 
-  it('shows Return button when canRefund=true', () => {
+  it('shows Return button when canRefund=true', async () => {
     renderWithProviders(<PosHeader {...BASE_PROPS} canRefund isShiftOpen />)
+    await openRegisterActions()
     expect(screen.getByRole('button', { name: /return|retur|devolucion/i })).toBeInTheDocument()
   })
 
-  it('does NOT show Return button without an open shift', () => {
+  it('does NOT show Return button without an open shift', async () => {
     renderWithProviders(<PosHeader {...BASE_PROPS} canRefund isShiftOpen={false} />)
+    await openRegisterActions()
     expect(screen.queryByRole('button', { name: /return|retur|devolucion/i })).not.toBeInTheDocument()
   })
 
-  it('uses the accessible primary palette for the outlined Return button', () => {
+  it('uses the accessible primary palette for the outlined Return button', async () => {
     renderWithProviders(<PosHeader {...BASE_PROPS} canRefund isShiftOpen />)
+    await openRegisterActions()
     const returnButton = screen.getByRole('button', { name: /return|retur|devolucion/i })
     expect(returnButton).toHaveClass('MuiButton-colorPrimary')
     expect(returnButton).not.toHaveClass('MuiButton-colorSecondary')
   })
 
-  it('calls onOpenReturn when Return button is clicked', () => {
+  it('calls onOpenReturn when Return button is clicked', async () => {
     const onOpenReturn = vi.fn()
     renderWithProviders(<PosHeader {...BASE_PROPS} canRefund isShiftOpen onOpenReturn={onOpenReturn} />)
-    screen.getByRole('button', { name: /return|retur|devolucion/i }).click()
+    await openRegisterActions()
+    await userEvent.click(screen.getByRole('button', { name: /return|retur|devolucion/i }))
     expect(onOpenReturn).toHaveBeenCalledOnce()
   })
 
@@ -63,7 +90,7 @@ describe('PosHeader', () => {
     expect(screen.queryByRole('button', { name: /close shift|tutup giliran|cerrar turno/i })).not.toBeInTheDocument()
   })
 
-  it('shows Close Shift button when isShiftOpen=true and canCloseShift=true', () => {
+  it('shows Close Shift button when isShiftOpen=true and canCloseShift=true', async () => {
     renderWithProviders(
       <PosHeader
         {...BASE_PROPS}
@@ -72,6 +99,7 @@ describe('PosHeader', () => {
         shiftOpenedAt={new Date().toISOString()}
       />,
     )
+    await openRegisterActions()
     expect(screen.getByRole('button', { name: /close shift|tutup giliran|cerrar turno/i })).toBeInTheDocument()
   })
 
@@ -96,17 +124,26 @@ describe('PosHeader', () => {
       />,
     )
     // Chip should reflect open status (not the "no shift" fallback text)
-    expect(screen.queryByText(/no active shift|tidak ada giliran|sin turno/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/no active shift|tidak ada giliran|sin turno/i, { selector: '.MuiChip-label' })).not.toBeInTheDocument()
   })
 
   it('shows no-shift chip when no shift is open', () => {
     renderWithProviders(<PosHeader {...BASE_PROPS} isShiftOpen={false} />)
-    expect(screen.getByText(/no active shift|tidak ada giliran|sin turno/i)).toBeInTheDocument()
+    expect(screen.getByText(/no active shift|tidak ada giliran|sin turno/i, { selector: '.MuiChip-label' })).toBeInTheDocument()
+  })
+
+  it('opens transaction history from the transaction action group', async () => {
+    const onToggleHistory = vi.fn()
+    renderWithProviders(<PosHeader {...BASE_PROPS} onToggleHistory={onToggleHistory} />)
+    await openRegisterActions()
+    await userEvent.click(screen.getByRole('button', { name: 'Transaction history' }))
+    expect(onToggleHistory).toHaveBeenCalledOnce()
   })
 
   it('signs out immediately from both buttons when no shift is open', async () => {
     const onSignOut = vi.fn()
     renderWithProviders(<PosHeader {...BASE_PROPS} onSignOut={onSignOut} />)
+    await openRegisterActions()
     await userEvent.click(screen.getByRole('button', { name: 'Sign Out' }))
     await userEvent.click(screen.getByRole('button', { name: 'Switch User' }))
     expect(onSignOut).toHaveBeenCalledTimes(2)
@@ -115,6 +152,7 @@ describe('PosHeader', () => {
   it('asks for confirmation before signing out with an open shift', async () => {
     const onSignOut = vi.fn()
     renderWithProviders(<PosHeader {...BASE_PROPS} isShiftOpen shiftOpenedAt={new Date().toISOString()} onSignOut={onSignOut} />)
+    await openRegisterActions()
     await userEvent.click(screen.getByRole('button', { name: 'Sign Out' }))
     expect(onSignOut).not.toHaveBeenCalled()
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }))

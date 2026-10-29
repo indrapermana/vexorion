@@ -5,9 +5,13 @@ import { useI18n } from '../app/I18nContext'
 import { useTransactionHistory } from '../app/transactionHistoryStore'
 import { ReceiptModal, type ReceiptData } from './pos/ReceiptModal'
 
-export function TransactionHistoryPanel() {
+type TransactionHistoryPanelProps = {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}
+
+export function TransactionHistoryPanel({ open, onOpenChange }: TransactionHistoryPanelProps) {
   const { transactions, clear } = useTransactionHistory()
-  const [open, setOpen] = useState(false)
   const { t } = useI18n()
   const [reprintData, setReprintData] = useState<ReceiptData | null>(null)
 
@@ -37,7 +41,7 @@ export function TransactionHistoryPanel() {
               >{t('history.clear')}</VxConfirmActionButton>
             </VxTooltip>
           ) : null}
-          <VxButton size="small" onClick={() => setOpen((previous) => !previous)}>
+          <VxButton size="small" onClick={() => onOpenChange(!open)}>
             {open ? t('common.collapse') : t('common.show')}
           </VxButton>
         </VxStack>

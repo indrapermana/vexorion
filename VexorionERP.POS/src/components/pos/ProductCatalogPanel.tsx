@@ -174,6 +174,49 @@ export function ProductCatalogPanel({
       <VxStack spacing={1.5}>
         <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
           <VxTextField
+            inputRef={scanInputRef}
+            label={t('scan.label')}
+            placeholder={t('scan.placeholder')}
+            value={scanInput}
+            onChange={(event) => setScanInput(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault()
+                handleScanSubmit(scanInput)
+              }
+            }}
+            autoFocus
+            fullWidth
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <VxInputAdornment position="start">
+                    <QrCodeScannerRoundedIcon fontSize="small" />
+                  </VxInputAdornment>
+                ),
+              },
+            }}
+          />
+          <VxTextField
+            label={t('catalog.search')}
+            placeholder={t('catalog.searchPlaceholder')}
+            value={productSearch}
+            onChange={(event) => setProductSearch(event.target.value)}
+            fullWidth
+          />
+        </VxStack>
+        {scanFeedback ? (
+          <VxAlert
+            severity={scanFeedback.type}
+            role={scanFeedback.type === 'error' ? 'alert' : 'status'}
+            sx={{ py: 0.5 }}
+          >
+            {scanFeedback.message}
+          </VxAlert>
+        ) : null}
+
+        <VxStack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
+          <VxTextField
             select
             label={t('catalog.customer')}
             value={selectedCustomerId}
@@ -219,48 +262,7 @@ export function ProductCatalogPanel({
               </VxMenuItem>
             ))}
           </VxTextField>
-          <VxTextField
-            label={t('catalog.search')}
-            placeholder={t('catalog.searchPlaceholder')}
-            value={productSearch}
-            onChange={(event) => setProductSearch(event.target.value)}
-            fullWidth
-          />
         </VxStack>
-
-        <VxTextField
-          inputRef={scanInputRef}
-          label={t('scan.label')}
-          placeholder={t('scan.placeholder')}
-          value={scanInput}
-          onChange={(event) => setScanInput(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              event.preventDefault()
-              handleScanSubmit(scanInput)
-            }
-          }}
-          autoFocus
-          fullWidth
-          slotProps={{
-            input: {
-              startAdornment: (
-                <VxInputAdornment position="start">
-                  <QrCodeScannerRoundedIcon fontSize="small" />
-                </VxInputAdornment>
-              ),
-            },
-          }}
-        />
-        {scanFeedback ? (
-          <VxAlert
-            severity={scanFeedback.type}
-            role={scanFeedback.type === 'error' ? 'alert' : 'status'}
-            sx={{ py: 0.5 }}
-          >
-            {scanFeedback.message}
-          </VxAlert>
-        ) : null}
 
         <VxDivider />
 

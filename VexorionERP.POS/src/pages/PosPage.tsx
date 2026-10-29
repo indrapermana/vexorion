@@ -59,6 +59,7 @@ export default function PosPage() {
 
   const [isCloseShiftOpen, setIsCloseShiftOpen] = useState(false)
   const [isReturnOpen, setIsReturnOpen] = useState(false)
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false)
   const [mobileSaleStep, setMobileSaleStep] = useState<'catalog' | 'payment'>('catalog')
 
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>(GUEST_CUSTOMER_TAG)
@@ -478,6 +479,8 @@ export default function PosPage() {
         onCloseShift={() => setIsCloseShiftOpen(true)}
         canRefund={canRefund && isShiftOpen}
         onOpenReturn={() => setIsReturnOpen(true)}
+        isHistoryOpen={isHistoryOpen}
+        onToggleHistory={() => setIsHistoryOpen((current) => !current)}
         onSignOut={logout}
       />
 
@@ -556,7 +559,7 @@ export default function PosPage() {
         </VxBox>
       </VxBox>
 
-      <TransactionHistoryPanel />
+      <TransactionHistoryPanel open={isHistoryOpen} onOpenChange={setIsHistoryOpen} />
 
       <QuickCustomerDialog
         open={isQuickCreateOpen}
