@@ -36,7 +36,11 @@ export default function UsersPage() {
   const [tenants, setTenants] = useState<TenantListItemResponse[]>([])
   const [selectedTenantId, setSelectedTenantId] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
+  const [isSavingRoles, setIsSavingRoles] = useState(false)
+  const [isResettingPassword, setIsResettingPassword] = useState(false)
 
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [createForm, setCreateForm] = useState(initialCreateForm)
@@ -98,9 +102,14 @@ export default function UsersPage() {
   }, [tenants])
 
   const roleOptions = roles.map((x) => x.role)
+  const currentTenant = tenants.find((tenant) => tenant.id === user?.tenantId)
+  const currentTenantLabel = currentTenant ? `${currentTenant.name} (${currentTenant.code})` : user?.tenantId ?? t('pages.users.currentTenantFallback')
+  const isCreationScopeMismatch = Boolean(selectedTenantId && selectedTenantId !== user?.tenantId)
 
   const handleCreateUser = async () => {
     setCreateErrors({})
+    setError(null)
+    setSuccess(null)
     if (!isPasswordPolicyMet(createForm.password)) {
       setCreateErrors({ Password: [t('login.passwordPolicy')] })
       return
@@ -116,11 +125,13 @@ export default function UsersPage() {
     }
 
     try {
+      setIsCreating(true)
       const created = await createUser(payload)
       setUsers((current) => [created, ...current])
       setCreateForm(initialCreateForm)
       setCreateRoles([])
       setIsCreateOpen(false)
+      setSuccess(t('pages.users.success.created'))
     } catch (err) {
       if (err instanceof ApiError && err.validation) {
         setCreateErrors(err.validation)
@@ -128,13 +139,18 @@ export default function UsersPage() {
       }
       setError(err instanceof ApiError ? err.message : t('pages.users.errors.create'))
       if (!(err instanceof ApiError)) reportClientDiagnostic('operation.failed', err)
+    } finally {
+      setIsCreating(false)
     }
   }
 
   const handleSetUserStatus = useCallback(async (user: UserListItemResponse, isActive: boolean) => {
+    setError(null)
+    setSuccess(null)
     try {
       await setUserStatus(user.id, { isActive })
       setUsers((current) => current.map((x) => (x.id === user.id ? { ...x, isActive } : x)))
+      setSuccess(t(isActive ? 'pages.users.success.activated' : 'pages.users.success.deactivated'))
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t('pages.users.errors.status'))
       if (!(err instanceof ApiError)) reportClientDiagnostic('operation.failed', err)
@@ -144,27 +160,39 @@ export default function UsersPage() {
   const handleAssignRoles = async () => {
     if (!rolesDialogUser) return
 
+    setError(null)
+    setSuccess(null)
     try {
+      setIsSavingRoles(true)
       await assignUserRoles(rolesDialogUser.id, { roles: rolesSelection })
       setUsers((current) => current.map((x) => (x.id === rolesDialogUser.id ? { ...x, roles: rolesSelection } : x)))
       setRolesDialogUser(null)
       setRolesSelection([])
+      setSuccess(t('pages.users.success.roles'))
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t('pages.users.errors.roles'))
       if (!(err instanceof ApiError)) reportClientDiagnostic('operation.failed', err)
+    } finally {
+      setIsSavingRoles(false)
     }
   }
 
   const handleResetPassword = async () => {
     if (!resetDialogUser || !newPassword) return
 
+    setError(null)
+    setSuccess(null)
     try {
+      setIsResettingPassword(true)
       await resetUserPassword(resetDialogUser.id, { newPassword })
       setResetDialogUser(null)
       setNewPassword('')
+      setSuccess(t('pages.users.success.password'))
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t('pages.users.errors.password'))
       if (!(err instanceof ApiError)) reportClientDiagnostic('operation.failed', err)
+    } finally {
+      setIsResettingPassword(false)
     }
   }
 
@@ -252,7 +280,7 @@ export default function UsersPage() {
                 buttonProps={{ size: 'small', color: 'warning', variant: 'outlined', startIcon: <PersonOffRoundedIcon /> }}
               >{t('pages.users.deactivate')}</VxConfirmActionButton>
             ) : (
-              <VxButton size="small" color="success" variant="outlined" onClick={() => void handleSetUserStatus(params.row, true)}>
+              <VxButton size="small" color="success" variant="outlined" title={t('pages.users.activateContext')} onClick={() => void handleSetUserStatus(params.row, true)}>
                 {t('pages.users.activate')}
               </VxButton>
             )}
@@ -269,7 +297,7 @@ export default function UsersPage() {
         title={t('pages.users.title')}
         description={t('pages.users.description')}
         action={canManage && canViewRoles ? (
-          <VxButton variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setIsCreateOpen(true)}>
+          <VxButton variant="contained" startIcon={<AddRoundedIcon />} disabled={isCreationScopeMismatch} title={isCreationScopeMismatch ? t('pages.users.createScopeMismatch', { tenant: currentTenantLabel }) : undefined} onClick={() => setIsCreateOpen(true)}>
             {t('pages.users.add')}
           </VxButton>
         ) : undefined}
@@ -294,11 +322,13 @@ export default function UsersPage() {
 
       <VxPageFeedback
         error={error}
+        success={success}
         info={!canManage ? t('pages.users.viewOnly') : undefined}
         onRetry={() => void Promise.all([loadMetadata(), loadUsers()])}
         retryLabel={t('common.retry')}
       />
       {canManage && !canViewRoles ? <VxAlert severity="info">{t('pages.users.roleWarning')}</VxAlert> : null}
+      {canManage && canViewRoles && isCreationScopeMismatch ? <VxAlert severity="info">{t('pages.users.createScopeMismatch', { tenant: currentTenantLabel })}</VxAlert> : null}
 
       <VxPageBody>
         <VxDataGrid
@@ -316,6 +346,8 @@ export default function UsersPage() {
         <VxDialogTitle>{t('pages.users.add')}</VxDialogTitle>
         <VxDialogContent>
           <VxStack spacing={2} sx={{ mt: 1 }}>
+            <VxAlert severity="info">{t('pages.users.createScope', { tenant: currentTenantLabel })}</VxAlert>
+            <VxAlert severity="warning">{t('pages.users.createSecurity')}</VxAlert>
             <VxTextField label={t('pages.users.username')} value={createForm.userName} onChange={(event) => setCreateForm((x) => ({ ...x, userName: event.target.value }))} error={Boolean(createErrors.UserName)} helperText={[createErrors.UserName].flat()[0]} />
             <VxTextField label={t('pages.users.email')} value={createForm.email} onChange={(event) => setCreateForm((x) => ({ ...x, email: event.target.value }))} error={Boolean(createErrors.Email)} helperText={[createErrors.Email].flat()[0]} />
             <VxTextField label={t('pages.users.password')} type="password" autoComplete="new-password" value={createForm.password} onChange={(event) => setCreateForm((x) => ({ ...x, password: event.target.value }))} error={Boolean(createErrors.Password) || (createForm.password.length > 0 && !isPasswordPolicyMet(createForm.password))} helperText={[createErrors.Password].flat()[0] ?? t('login.passwordPolicy')} />
@@ -339,41 +371,44 @@ export default function UsersPage() {
           </VxStack>
         </VxDialogContent>
         <VxDialogActions>
-          <VxButton onClick={() => setIsCreateOpen(false)}>{t('common.cancel')}</VxButton>
-          <VxButton onClick={() => void handleCreateUser()} variant="contained">{t('pages.users.create')}</VxButton>
+          <VxButton onClick={() => setIsCreateOpen(false)} disabled={isCreating}>{t('common.cancel')}</VxButton>
+          <VxButton onClick={() => void handleCreateUser()} variant="contained" disabled={isCreating}>{isCreating ? t('common.saving') : t('pages.users.create')}</VxButton>
         </VxDialogActions>
       </VxDialog>
 
       <VxDialog open={canManage && canViewRoles && Boolean(rolesDialogUser)} onClose={() => setRolesDialogUser(null)} maxWidth="sm" fullWidth>
         <VxDialogTitle>{t('pages.users.updateRoles')}</VxDialogTitle>
         <VxDialogContent>
-          <VxTextField
-            sx={{ mt: 1 }}
-            select
-            label={t('pages.users.roles')}
-            value={rolesSelection}
-            onChange={(event) => setRolesSelection(typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value)}
-            slotProps={{
-              select: {
-                multiple: true,
-              },
-            }}
-            fullWidth
-          >
-            {roleOptions.map((role) => (
-              <VxMenuItem key={role} value={role}>{role}</VxMenuItem>
-            ))}
-          </VxTextField>
+          <VxStack spacing={2} sx={{ mt: 1 }}>
+            <VxAlert severity="warning">{t('pages.users.roleContext', { user: rolesDialogUser?.userName ?? '' })}</VxAlert>
+            <VxTextField
+              select
+              label={t('pages.users.roles')}
+              value={rolesSelection}
+              onChange={(event) => setRolesSelection(typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value)}
+              slotProps={{
+                select: {
+                  multiple: true,
+                },
+              }}
+              fullWidth
+            >
+              {roleOptions.map((role) => (
+                <VxMenuItem key={role} value={role}>{role}</VxMenuItem>
+              ))}
+            </VxTextField>
+          </VxStack>
         </VxDialogContent>
         <VxDialogActions>
-          <VxButton onClick={() => setRolesDialogUser(null)}>{t('common.cancel')}</VxButton>
-          <VxButton onClick={() => void handleAssignRoles()} variant="contained">{t('pages.users.saveRoles')}</VxButton>
+          <VxButton onClick={() => setRolesDialogUser(null)} disabled={isSavingRoles}>{t('common.cancel')}</VxButton>
+          <VxButton onClick={() => void handleAssignRoles()} variant="contained" disabled={isSavingRoles}>{isSavingRoles ? t('common.saving') : t('pages.users.saveRoles')}</VxButton>
         </VxDialogActions>
       </VxDialog>
 
       <VxDialog open={canManage && Boolean(resetDialogUser)} onClose={() => setResetDialogUser(null)} maxWidth="sm" fullWidth>
         <VxDialogTitle>{t('pages.users.resetPassword')}</VxDialogTitle>
         <VxDialogContent>
+          <VxAlert severity="warning" sx={{ mt: 1 }}>{t('pages.users.passwordContext', { user: resetDialogUser?.userName ?? '' })}</VxAlert>
           <VxTextField
             sx={{ mt: 1 }}
             fullWidth
@@ -387,8 +422,8 @@ export default function UsersPage() {
           />
         </VxDialogContent>
         <VxDialogActions>
-          <VxButton onClick={() => setResetDialogUser(null)}>{t('common.cancel')}</VxButton>
-          <VxButton onClick={() => void handleResetPassword()} variant="contained" disabled={!isPasswordPolicyMet(newPassword)}>{t('pages.users.reset')}</VxButton>
+          <VxButton onClick={() => setResetDialogUser(null)} disabled={isResettingPassword}>{t('common.cancel')}</VxButton>
+          <VxButton onClick={() => void handleResetPassword()} variant="contained" disabled={isResettingPassword || !isPasswordPolicyMet(newPassword)}>{isResettingPassword ? t('common.saving') : t('pages.users.reset')}</VxButton>
         </VxDialogActions>
       </VxDialog>
     </VxStack>

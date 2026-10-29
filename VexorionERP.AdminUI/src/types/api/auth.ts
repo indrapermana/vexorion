@@ -12,6 +12,7 @@ export type AuthSessionResponse = {
 
 export type CurrentUserResponse = {
   id: string
+  tenantId: string
   email: string
   firstName: string
   lastName: string

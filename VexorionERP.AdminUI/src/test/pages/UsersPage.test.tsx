@@ -33,6 +33,8 @@ vi.mock('react-i18next', () => ({
         'pages.users.columns.tenant': 'Tenant',
         'pages.users.columns.user': 'User',
         'pages.users.create': 'Create User',
+        'pages.users.createScope': 'This user will be created in Acme Corp (ACME).',
+        'pages.users.createSecurity': 'The account is active and the operation is audited.',
         'pages.users.deactivate': 'Deactivate',
         'pages.users.deactivateConsequence': 'The user will no longer be able to sign in.',
         'pages.users.deactivateTitle': 'Deactivate user',
@@ -45,14 +47,19 @@ vi.mock('react-i18next', () => ({
         'pages.users.password': 'Password',
         'pages.users.reset': 'Reset',
         'pages.users.resetPassword': 'Reset Password',
+        'pages.users.passwordContext': 'Resetting this password revokes refresh sessions and is audited.',
         'pages.users.roleWarning': 'Role changes take effect the next time the user signs in.',
         'pages.users.roles': 'Roles',
+        'pages.users.roleContext': 'Replacing roles applies with a new access token and is audited.',
         'pages.users.saveRoles': 'Save Roles',
         'pages.users.tenantFilter': 'Tenant',
         'pages.users.title': 'Users',
         'pages.users.updateRoles': 'Update Roles',
         'pages.users.username': 'Username',
         'pages.users.viewOnly': 'You have view-only access.',
+        'pages.users.success.created': 'User created.',
+        'pages.users.success.roles': 'User roles updated.',
+        'pages.users.success.password': 'Password reset and refresh sessions revoked.',
       }
 
       return messages[key] ?? key
@@ -63,6 +70,7 @@ vi.mock('react-i18next', () => ({
 vi.mock('../../app/AuthContext', () => ({
   useAuth: () => ({
     user: {
+      tenantId: 'tenant-1',
       permissions: ['users.view', 'users.manage', 'roles.view', 'tenants.view'],
     },
   }),
@@ -156,6 +164,8 @@ describe('UsersPage dialogs', () => {
 
     await screen.findByText('alice')
     await user.click(screen.getByRole('button', { name: /add tenant user/i }))
+    expect(screen.getByText('This user will be created in Acme Corp (ACME).')).toBeInTheDocument()
+    expect(screen.getByText('The account is active and the operation is audited.')).toBeInTheDocument()
 
     fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'bob' } })
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'bob@example.com' } })
@@ -178,6 +188,7 @@ describe('UsersPage dialogs', () => {
     await waitFor(() => {
       expect(screen.queryByRole('heading', { name: 'Add Tenant User' })).not.toBeInTheDocument()
     })
+    expect(screen.getByText('User created.')).toBeInTheDocument()
   })
 
   it('opens the roles dialog and saves the selected user roles', async () => {
@@ -185,6 +196,7 @@ describe('UsersPage dialogs', () => {
 
     await screen.findByText('alice')
     await userEvent.click(screen.getByRole('button', { name: /update roles/i }))
+    expect(screen.getByText('Replacing roles applies with a new access token and is audited.')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Save Roles' }))
 
     await waitFor(() => {
@@ -196,6 +208,7 @@ describe('UsersPage dialogs', () => {
     await waitFor(() => {
       expect(screen.queryByRole('heading', { name: 'Update Roles' })).not.toBeInTheDocument()
     })
+    expect(screen.getByText('User roles updated.')).toBeInTheDocument()
   })
 
   it('resets a user password from the reset dialog', async () => {
@@ -203,6 +216,7 @@ describe('UsersPage dialogs', () => {
 
     await screen.findByText('alice')
     await userEvent.click(screen.getByRole('button', { name: /reset password/i }))
+    expect(screen.getByText('Resetting this password revokes refresh sessions and is audited.')).toBeInTheDocument()
 
     await userEvent.type(screen.getByLabelText('New password'), 'NewPassword456')
     await userEvent.click(screen.getByRole('button', { name: 'Reset' }))
@@ -216,5 +230,6 @@ describe('UsersPage dialogs', () => {
     await waitFor(() => {
       expect(screen.queryByRole('heading', { name: 'Reset Password' })).not.toBeInTheDocument()
     })
+    expect(screen.getByText('Password reset and refresh sessions revoked.')).toBeInTheDocument()
   })
 })
