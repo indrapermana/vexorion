@@ -56,6 +56,29 @@ public class AuthApplicationServiceFlowTests
     }
 
     [Fact]
+    public async Task LoginAsync_InactiveTenant_Returns401WithoutIssuingToken()
+    {
+        using var scope = BuildScope(nameof(LoginAsync_InactiveTenant_Returns401WithoutIssuingToken), out var db, out var userManager, out var signInManager, out var tokenService, out var auditLogger, out var httpContextAccessor);
+        var tenant = new Tenant { Id = Guid.NewGuid(), Name = "Suspended", Code = "SUSP", IsActive = false };
+        db.Tenants.Add(tenant);
+        var user = new User { TenantId = tenant.Id, UserName = "alice", Email = "alice@susp.test", IsActive = true };
+        await userManager.CreateAsync(user, "Password1!");
+        await db.SaveChangesAsync();
+
+        var service = new AuthApplicationService(db, userManager, signInManager, tokenService, auditLogger, httpContextAccessor);
+        var result = await service.LoginAsync(new LoginRequest
+        {
+            TenantCode = tenant.Code,
+            UserNameOrEmail = user.UserName!,
+            Password = "Password1!"
+        });
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(StatusCodes.Status401Unauthorized, result.StatusCode);
+        Assert.Null(tokenService.LastUserAgent);
+    }
+
+    [Fact]
     public async Task LoginAsync_Success_IssuesTokenAndWritesAudit()
     {
         using var scope = BuildScope(nameof(LoginAsync_Success_IssuesTokenAndWritesAudit), out var db, out var userManager, out var signInManager, out var tokenService, out var auditLogger, out var httpContextAccessor);
@@ -378,5 +401,8 @@ public class AuthApplicationServiceFlowTests
             LastIpAddress = ipAddress;
             return Task.CompletedTask;
         }
+
+        public Task RevokeAllTenantRefreshTokensAsync(Guid tenantId, string? ipAddress, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
     }
 }

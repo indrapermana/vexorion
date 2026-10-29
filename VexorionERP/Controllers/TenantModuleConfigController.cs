@@ -22,7 +22,7 @@ public class TenantModuleConfigController(IMediator mediator) : ServiceResultCon
     }
 
     [HttpGet("effective")]
-    [Authorize(Policy = AppPermissions.TenantModules.View)]
+    [Authorize(Policy = AppPermissions.TenantModules.View, Roles = AppRoles.SystemAdmin)]
     public async Task<ActionResult<TenantModuleEffectiveAccessResponse>> GetEffective(Guid tenantId)
     {
         var result = await mediator.Send(new GetTenantModuleEffectiveAccessQuery(tenantId), HttpContext.RequestAborted);
@@ -30,7 +30,7 @@ public class TenantModuleConfigController(IMediator mediator) : ServiceResultCon
     }
 
     [HttpPut]
-    [Authorize(Policy = AppPermissions.TenantModules.Manage)]
+    [Authorize(Policy = AppPermissions.TenantModules.Manage, Roles = AppRoles.SystemAdmin)]
     public async Task<ActionResult<TenantModuleConfigResponse>> Update(Guid tenantId, [FromBody] UpdateTenantModuleConfigRequest request)
     {
         var sub = User.FindFirstValue(ClaimTypes.NameIdentifier);

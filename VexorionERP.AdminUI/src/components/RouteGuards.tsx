@@ -6,7 +6,7 @@ import { hasAdminPermissions, type AdminPermissionRequirement } from '../app/aut
 
 export function ProtectedRoute() {
   const { t } = useTranslation()
-  const { isAuthenticated, isLoading } = useAuth()
+  const { isAuthenticated, isLoading, user } = useAuth()
 
   if (isLoading) {
     return <VxAlert severity="info">{t('routeGuards.checkingSession')}</VxAlert>
@@ -14,6 +14,10 @@ export function ProtectedRoute() {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
+  }
+
+  if (!user?.roles.includes('SystemAdmin')) {
+    return <VxAlert severity="warning">{t('routeGuards.systemAdminRequired')}</VxAlert>
   }
 
   return <Outlet />

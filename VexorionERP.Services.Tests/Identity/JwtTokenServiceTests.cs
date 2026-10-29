@@ -148,6 +148,8 @@ public class JwtTokenServiceTests
 
         await IdentityTestHelper.SeedRolesAsync(scope);
         var tenantId = Guid.NewGuid();
+        db.Tenants.Add(new Tenant { Id = tenantId, Name = "Tenant", Code = "T", IsActive = true });
+        await db.SaveChangesAsync();
         var user = new User { TenantId = tenantId, UserName = "u3", Email = "u3@vx.test" };
         await userManager.CreateAsync(user, "Pass1");
         await userManager.AddToRoleAsync(user, AppRoles.Manager);
@@ -169,6 +171,27 @@ public class JwtTokenServiceTests
         Assert.Null(newToken.RevokedAtUtc);
         Assert.Equal("2.2.2.2", newToken.CreatedByIpAddress);
         Assert.Equal("ua2", newToken.UserAgent);
+    }
+
+    [Fact]
+    public async Task RefreshAsync_WithInactiveTenant_ReturnsNull()
+    {
+        var service = BuildService(nameof(RefreshAsync_WithInactiveTenant_ReturnsNull), out var db, out var userManager, out var scope);
+        using var disposeScope = scope;
+
+        var tenant = new Tenant { Id = Guid.NewGuid(), Name = "Tenant", Code = "T", IsActive = true };
+        db.Tenants.Add(tenant);
+        var user = new User { TenantId = tenant.Id, UserName = "tenant-user", Email = "tenant-user@vx.test", IsActive = true };
+        await userManager.CreateAsync(user, "Pass1");
+        await db.SaveChangesAsync();
+        var issued = await service.IssueTokenPairAsync(user, null, null);
+
+        tenant.IsActive = false;
+        await db.SaveChangesAsync();
+        var refreshed = await service.RefreshAsync(issued.RefreshToken, null, null);
+
+        Assert.Null(refreshed);
+        Assert.Null(db.RefreshTokens.Single().RevokedAtUtc);
     }
 
     [Fact]
@@ -220,5 +243,27 @@ public class JwtTokenServiceTests
 
         Assert.Single(userBTokens);
         Assert.Null(userBTokens[0].RevokedAtUtc);
+    }
+
+    [Fact]
+    public async Task RevokeAllTenantRefreshTokensAsync_RevokesOnlyTenantTokens()
+    {
+        var service = BuildService(nameof(RevokeAllTenantRefreshTokensAsync_RevokesOnlyTenantTokens), out var db, out var userManager, out var scope);
+        using var disposeScope = scope;
+
+        var tenantA = Guid.NewGuid();
+        var tenantB = Guid.NewGuid();
+        var userA = new User { TenantId = tenantA, UserName = "tenant-a", Email = "a@vx.test" };
+        var userB = new User { TenantId = tenantB, UserName = "tenant-b", Email = "b@vx.test" };
+        await userManager.CreateAsync(userA, "Pass1");
+        await userManager.CreateAsync(userB, "Pass1");
+        await service.IssueTokenPairAsync(userA, null, null);
+        await service.IssueTokenPairAsync(userB, null, null);
+
+        await service.RevokeAllTenantRefreshTokensAsync(tenantA, "4.4.4.4");
+
+        Assert.NotNull(db.RefreshTokens.Single(x => x.TenantId == tenantA).RevokedAtUtc);
+        Assert.Equal("4.4.4.4", db.RefreshTokens.Single(x => x.TenantId == tenantA).RevokedByIpAddress);
+        Assert.Null(db.RefreshTokens.Single(x => x.TenantId == tenantB).RevokedAtUtc);
     }
 }

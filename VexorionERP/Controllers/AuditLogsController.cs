@@ -28,4 +28,19 @@ public class AuditLogsController(
         var result = await mediator.Send(new GetAuditLogsQuery(eventType, entityName, entityId, correlationId, fromUtc, toUtc, page, pageSize), HttpContext.RequestAborted);
         return ToActionResult(result);
     }
+
+    [HttpGet("admin/lifecycle")]
+    [Authorize(Policy = AppPermissions.Tenants.View, Roles = AppRoles.SystemAdmin)]
+    public async Task<ActionResult<AuditLogListResponse>> GetAdminLifecycle(
+        [FromQuery] Guid tenantId,
+        [FromQuery] Guid? targetUserId,
+        [FromQuery] bool tenantOnly = false,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 50)
+    {
+        var result = await mediator.Send(
+            new GetAdminLifecycleAuditLogsQuery(tenantId, targetUserId, tenantOnly, page, pageSize),
+            HttpContext.RequestAborted);
+        return ToActionResult(result);
+    }
 }

@@ -11,7 +11,7 @@ import type {
 } from '../../types/api'
 
 export function getTenants() {
-  return requestJson<TenantListItemResponse[]>('/tenants')
+  return requestJson<TenantListItemResponse[]>('/tenants/admin')
 }
 
 export function onboardTenant(request: OnboardTenantRequest) {

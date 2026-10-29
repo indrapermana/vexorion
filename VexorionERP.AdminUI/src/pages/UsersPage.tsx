@@ -1,11 +1,12 @@
-import { AddRoundedIcon, LockResetRoundedIcon, ManageAccountsRoundedIcon, PersonOffRoundedIcon, VxDataGrid, type VxGridColDef } from '@vexorion/ui'
+import { AddRoundedIcon, HistoryRoundedIcon, LockResetRoundedIcon, ManageAccountsRoundedIcon, PersonOffRoundedIcon, VxDataGrid, type VxGridColDef } from '@vexorion/ui'
 import { VxAlert, VxBox, VxButton, VxChip, VxConfirmActionButton, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxMenuItem, VxPageBody, VxPageFeedback, VxPageHeader, VxStack, VxTextField, VxTypography, isPasswordPolicyMet } from '@vexorion/ui'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ApiError, assignUserRoles, createUser, getRoles, getTenants, getUsersForAdmin, reportClientDiagnostic, resetUserPassword, setUserStatus } from '../lib/api'
+import { ApiError, assignUserRoles, createUser, getAdminLifecycleAudit, getRoles, getTenants, getUsersForAdmin, reportClientDiagnostic, resetUserPassword, setUserStatus } from '../lib/api'
 import type { CreateUserRequest, UserListItemResponse } from '../types/api/users'
 import type { RolePermissionsResponse } from '../types/api/roles'
 import type { TenantListItemResponse } from '../types/api'
+import type { AdminLifecycleAuditItemResponse } from '../types/api/audit'
 import { useAuth } from '../app/AuthContext'
 import { AdminPermissions, hasAdminPermissions } from '../app/authorization'
 
@@ -41,6 +42,10 @@ export default function UsersPage() {
   const [isCreating, setIsCreating] = useState(false)
   const [isSavingRoles, setIsSavingRoles] = useState(false)
   const [isResettingPassword, setIsResettingPassword] = useState(false)
+  const [auditDialogUser, setAuditDialogUser] = useState<UserListItemResponse | null>(null)
+  const [auditItems, setAuditItems] = useState<AdminLifecycleAuditItemResponse[]>([])
+  const [isAuditLoading, setIsAuditLoading] = useState(false)
+  const [auditError, setAuditError] = useState<string | null>(null)
 
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [createForm, setCreateForm] = useState(initialCreateForm)
@@ -196,6 +201,22 @@ export default function UsersPage() {
     }
   }
 
+  const openAuditHistory = useCallback(async (selectedUser: UserListItemResponse) => {
+    setAuditDialogUser(selectedUser)
+    setAuditItems([])
+    setAuditError(null)
+    setIsAuditLoading(true)
+    try {
+      const response = await getAdminLifecycleAudit(selectedUser.tenantId, selectedUser.id)
+      setAuditItems(response.items)
+    } catch (err) {
+      setAuditError(err instanceof ApiError ? err.message : t('pages.users.audit.loadError'))
+      if (!(err instanceof ApiError)) reportClientDiagnostic('operation.failed', err)
+    } finally {
+      setIsAuditLoading(false)
+    }
+  }, [t])
+
   const columns = useMemo<VxGridColDef<UserListItemResponse>[]>(
     () => [
       {
@@ -239,7 +260,7 @@ export default function UsersPage() {
       {
         field: 'id',
         headerName: t('pages.users.columns.actions'),
-        minWidth: 360,
+        minWidth: 480,
         sortable: false,
         filterable: false,
         renderCell: (params) => (
@@ -268,6 +289,9 @@ export default function UsersPage() {
             >
               {t('pages.users.resetPassword')}
             </VxButton>
+            <VxButton size="small" variant="outlined" startIcon={<HistoryRoundedIcon />} onClick={() => void openAuditHistory(params.row)}>
+              {t('pages.users.audit.action')}
+            </VxButton>
             {params.row.isActive ? (
               <VxConfirmActionButton
                 title={t('pages.users.deactivateTitle')}
@@ -288,7 +312,7 @@ export default function UsersPage() {
         ),
       },
     ],
-    [canManage, canViewRoles, handleSetUserStatus, t, tenantNameMap],
+    [canManage, canViewRoles, handleSetUserStatus, openAuditHistory, t, tenantNameMap],
   )
 
   return (
@@ -425,6 +449,30 @@ export default function UsersPage() {
           <VxButton onClick={() => setResetDialogUser(null)} disabled={isResettingPassword}>{t('common.cancel')}</VxButton>
           <VxButton onClick={() => void handleResetPassword()} variant="contained" disabled={isResettingPassword || !isPasswordPolicyMet(newPassword)}>{isResettingPassword ? t('common.saving') : t('pages.users.reset')}</VxButton>
         </VxDialogActions>
+      </VxDialog>
+
+      <VxDialog open={Boolean(auditDialogUser)} onClose={() => setAuditDialogUser(null)} maxWidth="md" fullWidth>
+        <VxDialogTitle>{t('pages.users.audit.title', { user: auditDialogUser?.userName ?? '' })}</VxDialogTitle>
+        <VxDialogContent>
+          <VxStack spacing={1.5} sx={{ mt: 1 }}>
+            <VxAlert severity="info">{t('pages.users.audit.scope')}</VxAlert>
+            {isAuditLoading ? <VxTypography role="status">{t('pages.users.audit.loading')}</VxTypography> : null}
+            {auditError ? <VxAlert severity="error">{auditError}</VxAlert> : null}
+            {!isAuditLoading && !auditError && auditItems.length === 0 ? <VxTypography color="text.secondary">{t('pages.users.audit.empty')}</VxTypography> : null}
+            {auditItems.map((item) => (
+              <VxBox key={item.id} sx={{ p: 1.5, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+                <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ justifyContent: 'space-between' }}>
+                  <VxTypography variant="subtitle2">{item.eventType}</VxTypography>
+                  <VxTypography variant="caption" color="text.secondary">{new Date(item.createdAtUtc).toLocaleString()}</VxTypography>
+                </VxStack>
+                <VxTypography variant="body2">{item.description ?? t('pages.users.audit.noDescription')}</VxTypography>
+                <VxTypography variant="caption" color="text.secondary">{t('pages.users.audit.actor', { actor: item.actorUserName ?? t('pages.users.audit.system') })}</VxTypography>
+                {item.correlationId ? <VxTypography variant="caption" color="text.secondary" sx={{ display: 'block' }}>{t('pages.users.audit.trace', { trace: item.correlationId })}</VxTypography> : null}
+              </VxBox>
+            ))}
+          </VxStack>
+        </VxDialogContent>
+        <VxDialogActions><VxButton onClick={() => setAuditDialogUser(null)}>{t('common.close')}</VxButton></VxDialogActions>
       </VxDialog>
     </VxStack>
   )

@@ -6,6 +6,7 @@ const authState = vi.hoisted(() => ({
   isAuthenticated: false,
   isLoading: false,
   permissions: [] as string[],
+  roles: [] as string[],
 }))
 
 vi.mock('react-i18next', () => ({
@@ -24,7 +25,7 @@ vi.mock('react-i18next', () => ({
 vi.mock('../../app/AuthContext', () => ({
   useAuth: () => ({
     session: authState.isAuthenticated ? { accessToken: 'token' } : null,
-    user: authState.isAuthenticated ? { permissions: authState.permissions } : null,
+    user: authState.isAuthenticated ? { permissions: authState.permissions, roles: authState.roles } : null,
     isLoading: authState.isLoading,
     isAuthenticated: authState.isAuthenticated,
     error: null,
@@ -86,10 +87,22 @@ describe('RouteGuards', () => {
   it('renders the protected outlet when the user is authenticated', () => {
     authState.isLoading = false
     authState.isAuthenticated = true
+    authState.roles = ['SystemAdmin']
 
     renderProtectedRoute()
 
     expect(screen.getByText('Protected content')).toBeInTheDocument()
+  })
+
+  it('blocks authenticated tenant administrators from the platform console', () => {
+    authState.isLoading = false
+    authState.isAuthenticated = true
+    authState.roles = ['TenantAdmin']
+
+    renderProtectedRoute()
+
+    expect(screen.getByRole('alert')).toHaveTextContent('routeGuards.systemAdminRequired')
+    expect(screen.queryByText('Protected content')).not.toBeInTheDocument()
   })
 
   it('shows a loading message while PublicOnlyRoute is checking state', () => {

@@ -29,6 +29,11 @@ public class AuthApplicationService(
             });
         }
 
+        if (!tenant.IsActive)
+        {
+            return ServiceResult<LoginResponse>.Failure(StatusCodes.Status401Unauthorized, "Invalid credentials.");
+        }
+
         var normalizedLookup = request.UserNameOrEmail.Trim().ToUpperInvariant();
         var user = await userManager.Users
             .FirstOrDefaultAsync(x => x.TenantId == tenant.Id && (x.NormalizedUserName == normalizedLookup || x.NormalizedEmail == normalizedLookup), cancellationToken);

@@ -4,7 +4,7 @@ const enUS = {
     save: 'Save',
     saving: 'Saving...',
     loading: 'Loading...',
-    edit: 'Edit', viewOnly: 'View only', remove: 'Remove', removing: 'Removing...', retry: 'Retry',
+    edit: 'Edit', viewOnly: 'View only', remove: 'Remove', removing: 'Removing...', retry: 'Retry', close: 'Close',
   },
   shell: {
     brand: 'VEXORION ERP', navigation: 'Navigation', logout: 'Logout', publicAccessOnly: 'Public access only',
@@ -34,6 +34,7 @@ const enUS = {
     checkingSession: 'Checking session...',
     loadingWorkspace: 'Loading workspace...',
     permissionDenied: 'You do not have permission to open this workspace.',
+    systemAdminRequired: 'The Admin Console is restricted to platform SystemAdmin accounts.',
   },
   login: {
     title: 'Admin Sign In',
@@ -77,6 +78,7 @@ const enUS = {
       passwordContext: 'Set a new password for {{user}}. Refresh tokens will be revoked, but an existing access token may continue until it expires. The reset is recorded in the audit log; the password is not.',
       activateContext: 'The user can sign in again after activation. Activation does not create a session and is recorded in the audit log.',
       success: { created: 'User created.', roles: 'User roles updated.', password: 'Password reset and refresh sessions revoked.', activated: 'User activated.', deactivated: 'User deactivated and refresh sessions revoked.' },
+      audit: { action: 'Audit history', title: 'Lifecycle history for {{user}}', scope: 'Shows security and lifecycle events recorded for this user. Passwords and token values are never included.', loading: 'Loading lifecycle history...', empty: 'No lifecycle events have been recorded for this user.', loadError: 'Unable to load lifecycle history.', noDescription: 'No description recorded.', actor: 'Actor: {{actor}}', system: 'System', trace: 'Trace: {{trace}}' },
       columns: { user: 'User', tenant: 'Tenant', roles: 'Roles', status: 'Status', actions: 'Actions' },
       viewOnly: 'You have view-only access. User creation, role assignment, password reset, and status changes require the users.manage permission.',
       errors: { load: 'Unable to load users.', create: 'Unable to create user.', status: 'Unable to update user status.', roles: 'Unable to update user roles.', password: 'Unable to reset password.' },
@@ -133,7 +135,8 @@ const enUS = {
         codeHelperText: 'Code cannot be changed after creation.',
         domainLabel: 'Domain',
         activeLabel: 'Active',
-        tenantChangeContext: 'Name and domain changes update tenant identity details. The active flag is stored on the tenant record; this edit does not change modules, menu preferences, roles, or promise immediate session termination.',
+        tenantChangeContext: 'Name and domain changes update tenant identity details. Suspending a tenant blocks new sign-ins and refreshes and revokes refresh sessions; existing access tokens may continue until expiry. Reactivation permits future sign-ins but does not restore old sessions. Modules, menus, and roles are unchanged.',
+        auditTitle: 'Tenant lifecycle history', auditHelp: 'Shows tenant detail, suspension, and reactivation events. It does not include credentials or token values.', auditLoading: 'Loading tenant lifecycle history...', auditEmpty: 'No tenant lifecycle events have been recorded.', auditLoadError: 'Unable to load tenant lifecycle history.', auditNoDescription: 'No description recorded.',
         errors: {
           save: 'Unable to save tenant right now.',
         },

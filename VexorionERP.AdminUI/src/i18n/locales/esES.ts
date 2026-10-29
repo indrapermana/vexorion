@@ -4,7 +4,7 @@ const esES = {
     save: 'Guardar',
     saving: 'Guardando...',
     loading: 'Cargando...',
-    edit: 'Editar', viewOnly: 'Solo lectura', remove: 'Eliminar', removing: 'Eliminando...', retry: 'Reintentar',
+    edit: 'Editar', viewOnly: 'Solo lectura', remove: 'Eliminar', removing: 'Eliminando...', retry: 'Reintentar', close: 'Cerrar',
   },
   shell: {
     brand: 'VEXORION ERP', navigation: 'Navegación', logout: 'Cerrar sesión', publicAccessOnly: 'Solo acceso público',
@@ -34,6 +34,7 @@ const esES = {
     checkingSession: 'Verificando sesión...',
     loadingWorkspace: 'Cargando espacio...',
     permissionDenied: 'No tienes permiso para abrir este espacio de trabajo.',
+    systemAdminRequired: 'La consola de administración está restringida a cuentas SystemAdmin de la plataforma.',
   },
   login: {
     title: 'Inicio de sesión de administrador',
@@ -77,6 +78,7 @@ const esES = {
       passwordContext: 'Establece una contraseña nueva para {{user}}. Los tokens de actualizacion se revocan, pero un token de acceso existente puede continuar hasta caducar. El cambio queda auditado; la contraseña no.',
       activateContext: 'El usuario podra iniciar sesion despues de activarlo. La activacion no crea una sesion y queda registrada en la auditoria.',
       success: { created: 'Usuario creado.', roles: 'Roles del usuario actualizados.', password: 'Contraseña restablecida y sesiones de actualizacion revocadas.', activated: 'Usuario activado.', deactivated: 'Usuario desactivado y sesiones de actualizacion revocadas.' },
+      audit: { action: 'Historial de auditoría', title: 'Historial del ciclo de vida de {{user}}', scope: 'Muestra los eventos de seguridad y ciclo de vida registrados para este usuario. Nunca incluye contraseñas ni valores de token.', loading: 'Cargando historial...', empty: 'No hay eventos de ciclo de vida para este usuario.', loadError: 'No se pudo cargar el historial.', noDescription: 'Sin descripción.', actor: 'Actor: {{actor}}', system: 'Sistema', trace: 'Traza: {{trace}}' },
       columns: { user: 'Usuario', tenant: 'Inquilino', roles: 'Roles', status: 'Estado', actions: 'Acciones' },
       viewOnly: 'Tienes acceso de solo lectura. Crear usuarios, asignar roles, restablecer contraseñas y cambiar estados requiere users.manage.',
       errors: { load: 'No se pudieron cargar los usuarios.', create: 'No se pudo crear el usuario.', status: 'No se pudo actualizar el estado del usuario.', roles: 'No se pudieron actualizar los roles.', password: 'No se pudo restablecer la contraseña.' },
@@ -133,7 +135,8 @@ const esES = {
         codeHelperText: 'El código no se puede cambiar después de la creación.',
         domainLabel: 'Dominio',
         activeLabel: 'Activo',
-        tenantChangeContext: 'Los cambios de nombre y dominio actualizan la identidad del inquilino. El estado activo se guarda en el registro; esta edición no cambia módulos, preferencias, roles ni promete terminar sesiones inmediatamente.',
+        tenantChangeContext: 'Los cambios de nombre y dominio actualizan la identidad. La suspensión bloquea nuevos accesos y renovaciones y revoca sesiones de actualización; los tokens de acceso existentes pueden continuar hasta caducar. La reactivación permite futuros accesos sin restaurar sesiones anteriores. Módulos, menús y roles no cambian.',
+        auditTitle: 'Historial del ciclo de vida', auditHelp: 'Muestra cambios de datos, suspensión y reactivación del inquilino. No incluye credenciales ni valores de token.', auditLoading: 'Cargando historial del inquilino...', auditEmpty: 'No hay eventos del ciclo de vida.', auditLoadError: 'No se pudo cargar el historial del inquilino.', auditNoDescription: 'Sin descripción.',
         errors: {
           save: 'No se puede guardar el inquilino en este momento.',
         },

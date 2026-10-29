@@ -21,7 +21,7 @@ public class UsersController(IMediator mediator) : ServiceResultControllerBase
     }
 
     [HttpGet("admin")]
-    [Authorize(Policy = AppPermissions.Tenants.View)]
+    [Authorize(Policy = AppPermissions.Tenants.View, Roles = AppRoles.SystemAdmin)]
     public async Task<ActionResult<IReadOnlyCollection<UserListItemResponse>>> GetAllForAdmin([FromQuery] Guid? tenantId)
     {
         var result = await mediator.Send(new GetUsersForAdminQuery(tenantId), HttpContext.RequestAborted);

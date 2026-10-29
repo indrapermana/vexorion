@@ -31,4 +31,7 @@ internal sealed class FakeTokenService : ITokenService
 
     public Task RevokeAllUserRefreshTokensAsync(Guid userId, Guid tenantId, string? ipAddress, CancellationToken cancellationToken = default)
         => Task.CompletedTask;
+
+    public Task RevokeAllTenantRefreshTokensAsync(Guid tenantId, string? ipAddress, CancellationToken cancellationToken = default)
+        => Task.CompletedTask;
 }

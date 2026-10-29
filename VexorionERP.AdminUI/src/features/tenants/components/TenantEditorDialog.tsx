@@ -1,11 +1,11 @@
-import { VxAlert, VxButton, VxCheckbox, VxChip, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxFormControlLabel, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxBox, VxButton, VxCheckbox, VxChip, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxFormControlLabel, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { useTranslation } from 'react-i18next'
 import { useEffect, useMemo, useState } from 'react'
-import { ApiError, getTenantModuleEffectiveAccess, reportClientDiagnostic, updateTenant } from '../../../lib/api'
-import type { TenantModuleEffectiveAccessItemResponse, TenantModuleEffectiveAccessResponse } from '../../../types/api'
+import { ApiError, getAdminTenantLifecycleAudit, getTenantModuleEffectiveAccess, reportClientDiagnostic, updateTenant } from '../../../lib/api'
+import type { AdminLifecycleAuditItemResponse, TenantModuleEffectiveAccessItemResponse, TenantModuleEffectiveAccessResponse } from '../../../types/api'
 import type { TenantEditorDialogProps } from '../../../types/ui'
 
 type FormData = {
@@ -26,6 +26,9 @@ export function TenantEditorDialog({ open, tenant, onClose, onSaved }: TenantEdi
   const [isPreviewLoading, setIsPreviewLoading] = useState(false)
   const [previewError, setPreviewError] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [auditItems, setAuditItems] = useState<AdminLifecycleAuditItemResponse[]>([])
+  const [auditError, setAuditError] = useState<string | null>(null)
+  const [isAuditLoading, setIsAuditLoading] = useState(false)
   const {
     register,
     handleSubmit,
@@ -74,6 +77,34 @@ export function TenantEditorDialog({ open, tenant, onClose, onSaved }: TenantEdi
     return () => {
       isDisposed = true
     }
+  }, [open, t, tenant])
+
+  useEffect(() => {
+    if (!open || !tenant) {
+      setAuditItems([])
+      setAuditError(null)
+      return
+    }
+
+    let isDisposed = false
+    const loadAudit = async () => {
+      setIsAuditLoading(true)
+      setAuditError(null)
+      try {
+        const response = await getAdminTenantLifecycleAudit(tenant.id)
+        if (!isDisposed) setAuditItems(response.items)
+      } catch (error) {
+        if (!isDisposed) {
+          setAuditError(error instanceof ApiError ? error.message : t('components.tenants.editor.auditLoadError'))
+          if (!(error instanceof ApiError)) reportClientDiagnostic('operation.failed', error)
+        }
+      } finally {
+        if (!isDisposed) setIsAuditLoading(false)
+      }
+    }
+
+    void loadAudit()
+    return () => { isDisposed = true }
   }, [open, t, tenant])
 
   const renderModuleRow = (label: string, item: TenantModuleEffectiveAccessItemResponse) => (
@@ -153,6 +184,21 @@ export function TenantEditorDialog({ open, tenant, onClose, onSaved }: TenantEdi
                   </VxStack>
                 )
               : null}
+          </VxStack>
+
+          <VxStack spacing={1.25} sx={{ pt: 1 }}>
+            <VxTypography component="h3" variant="subtitle2">{t('components.tenants.editor.auditTitle')}</VxTypography>
+            <VxTypography variant="body2" color="text.secondary">{t('components.tenants.editor.auditHelp')}</VxTypography>
+            {isAuditLoading ? <VxTypography role="status">{t('components.tenants.editor.auditLoading')}</VxTypography> : null}
+            {auditError ? <VxAlert severity="warning">{auditError}</VxAlert> : null}
+            {!isAuditLoading && !auditError && auditItems.length === 0 ? <VxTypography color="text.secondary">{t('components.tenants.editor.auditEmpty')}</VxTypography> : null}
+            {auditItems.map((item) => (
+              <VxBox key={item.id} sx={{ p: 1.25, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+                <VxTypography variant="subtitle2">{item.eventType}</VxTypography>
+                <VxTypography variant="body2">{item.description ?? t('components.tenants.editor.auditNoDescription')}</VxTypography>
+                <VxTypography variant="caption" color="text.secondary">{new Date(item.createdAtUtc).toLocaleString()}</VxTypography>
+              </VxBox>
+            ))}
           </VxStack>
         </VxStack>
       </VxDialogContent>

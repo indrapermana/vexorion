@@ -4,7 +4,7 @@ const idID = {
     save: 'Simpan',
     saving: 'Menyimpan...',
     loading: 'Memuat...',
-    edit: 'Ubah', viewOnly: 'Hanya lihat', remove: 'Hapus', removing: 'Menghapus...', retry: 'Coba lagi',
+    edit: 'Ubah', viewOnly: 'Hanya lihat', remove: 'Hapus', removing: 'Menghapus...', retry: 'Coba lagi', close: 'Tutup',
   },
   shell: {
     brand: 'VEXORION ERP', navigation: 'Navigasi', logout: 'Keluar', publicAccessOnly: 'Akses publik saja',
@@ -34,6 +34,7 @@ const idID = {
     checkingSession: 'Memeriksa sesi...',
     loadingWorkspace: 'Memuat ruang kerja...',
     permissionDenied: 'Anda tidak memiliki izin untuk membuka ruang kerja ini.',
+    systemAdminRequired: 'Konsol Admin hanya tersedia untuk akun platform SystemAdmin.',
   },
   login: {
     title: 'Masuk Admin',
@@ -77,6 +78,7 @@ const idID = {
       passwordContext: 'Tetapkan kata sandi baru untuk {{user}}. Token refresh akan dicabut, tetapi token akses yang ada dapat tetap berlaku sampai kedaluwarsa. Reset dicatat dalam log audit; kata sandi tidak dicatat.',
       activateContext: 'Pengguna dapat login kembali setelah diaktifkan. Aktivasi tidak membuat sesi dan dicatat dalam log audit.',
       success: { created: 'Pengguna dibuat.', roles: 'Peran pengguna diperbarui.', password: 'Kata sandi direset dan sesi refresh dicabut.', activated: 'Pengguna diaktifkan.', deactivated: 'Pengguna dinonaktifkan dan sesi refresh dicabut.' },
+      audit: { action: 'Riwayat audit', title: 'Riwayat siklus hidup {{user}}', scope: 'Menampilkan peristiwa keamanan dan siklus hidup yang dicatat untuk pengguna ini. Kata sandi dan nilai token tidak pernah disertakan.', loading: 'Memuat riwayat siklus hidup...', empty: 'Belum ada peristiwa siklus hidup untuk pengguna ini.', loadError: 'Tidak dapat memuat riwayat siklus hidup.', noDescription: 'Tidak ada deskripsi.', actor: 'Pelaku: {{actor}}', system: 'Sistem', trace: 'Jejak: {{trace}}' },
       columns: { user: 'Pengguna', tenant: 'Tenant', roles: 'Peran', status: 'Status', actions: 'Aksi' },
       viewOnly: 'Anda memiliki akses hanya lihat. Pembuatan pengguna, penetapan peran, reset kata sandi, dan perubahan status memerlukan izin users.manage.',
       errors: { load: 'Tidak dapat memuat pengguna.', create: 'Tidak dapat membuat pengguna.', status: 'Tidak dapat memperbarui status pengguna.', roles: 'Tidak dapat memperbarui peran pengguna.', password: 'Tidak dapat mereset kata sandi.' },
@@ -133,7 +135,8 @@ const idID = {
         codeHelperText: 'Kode tidak dapat diubah setelah dibuat.',
         domainLabel: 'Domain',
         activeLabel: 'Aktif',
-        tenantChangeContext: 'Perubahan nama dan domain memperbarui identitas tenant. Status aktif disimpan pada data tenant; perubahan ini tidak mengubah modul, preferensi menu, peran, atau menjanjikan penghentian sesi secara langsung.',
+        tenantChangeContext: 'Perubahan nama dan domain memperbarui identitas tenant. Penangguhan memblokir login dan refresh baru serta mencabut sesi refresh; token akses yang ada dapat berlaku sampai kedaluwarsa. Pengaktifan kembali mengizinkan login berikutnya tanpa memulihkan sesi lama. Modul, menu, dan peran tidak berubah.',
+        auditTitle: 'Riwayat siklus hidup tenant', auditHelp: 'Menampilkan perubahan detail, penangguhan, dan pengaktifan kembali tenant. Kredensial dan nilai token tidak disertakan.', auditLoading: 'Memuat riwayat tenant...', auditEmpty: 'Belum ada peristiwa siklus hidup tenant.', auditLoadError: 'Tidak dapat memuat riwayat tenant.', auditNoDescription: 'Tidak ada deskripsi.',
         errors: {
           save: 'Tidak dapat menyimpan tenant saat ini.',
         },

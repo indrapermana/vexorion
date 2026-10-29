@@ -9,6 +9,7 @@ import type { UserListItemResponse } from '../../types/api/users'
 const apiMocks = vi.hoisted(() => ({
   assignUserRoles: vi.fn(),
   createUser: vi.fn(),
+  getAdminLifecycleAudit: vi.fn(),
   getRoles: vi.fn(),
   getTenants: vi.fn(),
   getUsersForAdmin: vi.fn(),
@@ -21,10 +22,15 @@ vi.mock('react-i18next', () => ({
     t: (key: string) => {
       const messages: Record<string, string> = {
         'common.cancel': 'Cancel',
+        'common.close': 'Close',
         'common.viewOnly': 'View only',
         'components.tenants.grid.active': 'Active',
         'components.tenants.grid.inactive': 'Inactive',
         'pages.users.activate': 'Activate',
+        'pages.users.audit.action': 'Audit history',
+        'pages.users.audit.title': 'Lifecycle history',
+        'pages.users.audit.scope': 'Safe lifecycle events only.',
+        'pages.users.audit.empty': 'No lifecycle events.',
         'pages.users.add': 'Add Tenant User',
         'pages.users.allTenants': 'All tenants',
         'pages.users.columns.actions': 'Actions',
@@ -143,6 +149,7 @@ describe('UsersPage dialogs', () => {
     apiMocks.getRoles.mockResolvedValue(ROLES)
     apiMocks.getTenants.mockResolvedValue(TENANTS)
     apiMocks.getUsersForAdmin.mockResolvedValue(USERS)
+    apiMocks.getAdminLifecycleAudit.mockResolvedValue({ page: 1, pageSize: 50, totalCount: 0, items: [] })
     apiMocks.createUser.mockResolvedValue({
       id: 'user-2',
       tenantId: 'tenant-1',
@@ -231,5 +238,16 @@ describe('UsersPage dialogs', () => {
       expect(screen.queryByRole('heading', { name: 'Reset Password' })).not.toBeInTheDocument()
     })
     expect(screen.getByText('Password reset and refresh sessions revoked.')).toBeInTheDocument()
+  })
+
+  it('loads lifecycle audit history for the selected tenant user', async () => {
+    render(<UsersPage />)
+
+    await screen.findByText('alice')
+    await userEvent.click(screen.getByRole('button', { name: 'Audit history' }))
+
+    await waitFor(() => expect(apiMocks.getAdminLifecycleAudit).toHaveBeenCalledWith('tenant-1', 'user-1'))
+    expect(screen.getByText('Safe lifecycle events only.')).toBeInTheDocument()
+    expect(await screen.findByText('No lifecycle events.')).toBeInTheDocument()
   })
 })

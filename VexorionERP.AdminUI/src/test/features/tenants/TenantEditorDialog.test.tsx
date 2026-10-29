@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { TenantListItemResponse } from '../../../types/api'
 
 const apiMocks = vi.hoisted(() => ({
+  getAdminTenantLifecycleAudit: vi.fn(),
   getTenantModuleEffectiveAccess: vi.fn(),
   updateTenant: vi.fn(),
 }))
@@ -32,6 +33,7 @@ vi.mock('react-i18next', () => ({
 }))
 
 vi.mock('../../../lib/api', () => ({
+  getAdminTenantLifecycleAudit: apiMocks.getAdminTenantLifecycleAudit,
   getTenantModuleEffectiveAccess: apiMocks.getTenantModuleEffectiveAccess,
   updateTenant: apiMocks.updateTenant,
 }))
@@ -50,6 +52,7 @@ const TENANT: TenantListItemResponse = {
 describe('TenantEditorDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    apiMocks.getAdminTenantLifecycleAudit.mockResolvedValue({ page: 1, pageSize: 20, totalCount: 0, items: [] })
     apiMocks.getTenantModuleEffectiveAccess.mockResolvedValue({
       tenantId: TENANT.id,
       tenantCode: TENANT.code,

@@ -61,6 +61,14 @@ public class JwtTokenService(
             return null;
         }
 
+        var tenantIsActive = await dbContext.Tenants
+            .AsNoTracking()
+            .AnyAsync(x => x.Id == entity.TenantId && x.IsActive, cancellationToken);
+        if (!tenantIsActive)
+        {
+            return null;
+        }
+
         var replacementToken = GenerateRefreshToken();
         var replacementHash = ComputeHash(replacementToken);
         entity.RevokedAtUtc = DateTime.UtcNow;
@@ -111,6 +119,22 @@ public class JwtTokenService(
     {
         var tokens = await dbContext.Set<RefreshToken>()
             .Where(x => x.UserId == userId && x.TenantId == tenantId && x.RevokedAtUtc == null)
+            .ToListAsync(cancellationToken);
+
+        foreach (var token in tokens)
+        {
+            token.RevokedAtUtc = DateTime.UtcNow;
+            token.RevokedByIpAddress = ipAddress;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task RevokeAllTenantRefreshTokensAsync(Guid tenantId, string? ipAddress, CancellationToken cancellationToken = default)
+    {
+        var tokens = await dbContext.Set<RefreshToken>()
+            .IgnoreQueryFilters()
+            .Where(x => x.TenantId == tenantId && x.RevokedAtUtc == null)
             .ToListAsync(cancellationToken);
 
         foreach (var token in tokens)

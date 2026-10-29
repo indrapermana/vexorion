@@ -206,6 +206,22 @@ public class UserManagementServiceTests
         Assert.True(result.Succeeded);
     }
 
+    [Fact]
+    public async Task ResetPassword_WhenNewPasswordIsInvalid_PreservesExistingPassword()
+    {
+        var tenantId = Guid.NewGuid();
+        var service = BuildService(nameof(ResetPassword_WhenNewPasswordIsInvalid_PreservesExistingPassword), tenantId, out var userManager, out _);
+        var user = new User { TenantId = tenantId, UserName = "safe-reset", Email = "safe-reset@t.com" };
+        await userManager.CreateAsync(user, "OldPass1");
+        var principal = new ClaimsPrincipal(new ClaimsIdentity(
+            [new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString())], "Test"));
+
+        var result = await service.ResetPasswordAsync(user.Id, new ResetPasswordRequest { NewPassword = "" }, principal);
+
+        Assert.False(result.Succeeded);
+        Assert.True(await userManager.CheckPasswordAsync(user, "OldPass1"));
+    }
+
     // ── UnlockAsync ───────────────────────────────────────────────────────────
 
     [Fact]

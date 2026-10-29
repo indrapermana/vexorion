@@ -140,16 +140,11 @@ public class UserManagementService(
             return ServiceResult<bool>.Failure(StatusCodes.Status404NotFound, "User not found.");
         }
 
-        var removeResult = await userManager.RemovePasswordAsync(user);
-        if (!removeResult.Succeeded && user.PasswordHash is not null)
+        var resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
+        var resetResult = await userManager.ResetPasswordAsync(user, resetToken, request.NewPassword);
+        if (!resetResult.Succeeded)
         {
-            return ServiceResult<bool>.ValidationFailure(removeResult.Errors.GroupBy(x => x.Code).ToDictionary(group => group.Key, group => group.Select(x => x.Description).ToArray()));
-        }
-
-        var addResult = await userManager.AddPasswordAsync(user, request.NewPassword);
-        if (!addResult.Succeeded)
-        {
-            return ServiceResult<bool>.ValidationFailure(addResult.Errors.GroupBy(x => x.Code).ToDictionary(group => group.Key, group => group.Select(x => x.Description).ToArray()));
+            return ServiceResult<bool>.ValidationFailure(resetResult.Errors.GroupBy(x => x.Code).ToDictionary(group => group.Key, group => group.Select(x => x.Description).ToArray()));
         }
 
         await tokenService.RevokeAllUserRefreshTokensAsync(user.Id, user.TenantId, null, cancellationToken);

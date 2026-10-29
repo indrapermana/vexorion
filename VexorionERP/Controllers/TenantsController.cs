@@ -1,6 +1,7 @@
 using Mediator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using VexorionERP.Contracts;
 using VexorionERP.Handler;
 using VexorionERP.Models;
@@ -27,8 +28,16 @@ public class TenantsController(IMediator mediator) : ServiceResultControllerBase
         return ToActionResult(result);
     }
 
+    [HttpGet("admin")]
+    [Authorize(Policy = AppPermissions.Tenants.View, Roles = AppRoles.SystemAdmin)]
+    public async Task<ActionResult<IReadOnlyCollection<TenantListItemResponse>>> GetAllForAdmin()
+    {
+        var result = await mediator.Send(new GetTenantsQuery(), HttpContext.RequestAborted);
+        return ToActionResult(result);
+    }
+
     [HttpGet("modules/effective")]
-    [Authorize(Policy = AppPermissions.TenantModules.View)]
+    [Authorize(Policy = AppPermissions.TenantModules.View, Roles = AppRoles.SystemAdmin)]
     public async Task<ActionResult<TenantModuleEffectiveAccessBatchResponse>> GetModuleEffectiveAccess()
     {
         var result = await mediator.Send(new GetTenantModuleEffectiveAccessBatchQuery(), HttpContext.RequestAborted);
@@ -36,15 +45,16 @@ public class TenantsController(IMediator mediator) : ServiceResultControllerBase
     }
 
     [HttpPut("{tenantId:guid}")]
-    [Authorize(Policy = AppPermissions.Tenants.Manage)]
+    [Authorize(Policy = AppPermissions.Tenants.Manage, Roles = AppRoles.SystemAdmin)]
     public async Task<ActionResult<TenantListItemResponse>> Update(Guid tenantId, [FromBody] UpdateTenantRequest request)
     {
-        var result = await mediator.Send(new UpdateTenantCommand(tenantId, request), HttpContext.RequestAborted);
+        var actorUserId = Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var parsedActorUserId) ? parsedActorUserId : (Guid?)null;
+        var result = await mediator.Send(new UpdateTenantCommand(tenantId, request, actorUserId), HttpContext.RequestAborted);
         return ToActionResult(result);
     }
 
     [HttpDelete("{tenantId:guid}")]
-    [Authorize(Policy = AppPermissions.Tenants.Manage)]
+    [Authorize(Policy = AppPermissions.Tenants.Manage, Roles = AppRoles.SystemAdmin)]
     public async Task<ActionResult> Delete(Guid tenantId)
     {
         var result = await mediator.Send(new DeleteTenantCommand(tenantId), HttpContext.RequestAborted);
@@ -52,7 +62,7 @@ public class TenantsController(IMediator mediator) : ServiceResultControllerBase
     }
 
     [HttpGet("{tenantId:guid}/preferences/menu")]
-    [Authorize(Policy = AppPermissions.Tenants.View)]
+    [Authorize(Policy = AppPermissions.Tenants.View, Roles = AppRoles.SystemAdmin)]
     public async Task<ActionResult<TenantPreferencesResponse>> GetTenantMenuConfiguration(Guid tenantId)
     {
         var result = await mediator.Send(new GetTenantMenuConfigurationQuery(tenantId), HttpContext.RequestAborted);
@@ -60,7 +70,7 @@ public class TenantsController(IMediator mediator) : ServiceResultControllerBase
     }
 
     [HttpPut("{tenantId:guid}/preferences/menu")]
-    [Authorize(Policy = AppPermissions.Tenants.Manage)]
+    [Authorize(Policy = AppPermissions.Tenants.Manage, Roles = AppRoles.SystemAdmin)]
     public async Task<ActionResult<TenantPreferencesResponse>> UpdateTenantMenuConfiguration(Guid tenantId, [FromBody] UpdateMenuConfigurationRequest request)
     {
         var result = await mediator.Send(new UpdateTenantMenuConfigurationForTenantCommand(tenantId, request), HttpContext.RequestAborted);
@@ -68,7 +78,7 @@ public class TenantsController(IMediator mediator) : ServiceResultControllerBase
     }
 
     [HttpGet("telemetry")]
-    [Authorize(Policy = AppPermissions.Tenants.View)]
+    [Authorize(Policy = AppPermissions.Tenants.View, Roles = AppRoles.SystemAdmin)]
     public async Task<ActionResult<TenantTelemetryResponse>> GetTelemetry(
         [FromQuery] int? rangeDays,
         [FromQuery] DateTime? fromUtc,
