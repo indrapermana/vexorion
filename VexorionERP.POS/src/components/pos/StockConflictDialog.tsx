@@ -1,4 +1,4 @@
-import { VxButton, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxList, VxListItem, VxListItemText, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxButton, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxList, VxListItem, VxListItemText, VxTypography } from '@vexorion/ui'
 import React from 'react'
 import { useI18n } from '../../app/I18nContext'
 import type { PosStockInsufficientItem } from '../../types/api'
@@ -16,12 +16,15 @@ export function StockConflictDialog({ open, insufficientItems, cart, onAdjust, o
   const { t } = useI18n()
 
   return (
-    <VxDialog open={open} maxWidth="sm" fullWidth>
+    <VxDialog open={open} maxWidth="sm" fullWidth scroll="paper" aria-describedby="stock-conflict-consequence">
       <VxDialogTitle>{t('stock.conflictTitle')}</VxDialogTitle>
-      <VxDialogContent>
+      <VxDialogContent dividers>
         <VxTypography variant="body2" sx={{ mb: 1 }}>
           {t('stock.conflictMessage')}
         </VxTypography>
+        <VxAlert id="stock-conflict-consequence" severity="warning" sx={{ mb: 1.5 }}>
+          {t('stock.conflictConsequence')}
+        </VxAlert>
         <VxList dense>
           {insufficientItems.map((item) => {
             const productName = cart.find((line) => line.productId === item.productId)?.productName ?? item.productId
@@ -41,11 +44,11 @@ export function StockConflictDialog({ open, insufficientItems, cart, onAdjust, o
           })}
         </VxList>
       </VxDialogContent>
-      <VxDialogActions>
-        <VxButton onClick={onCancel} color="inherit">
+      <VxDialogActions sx={{ px: 3, py: 2, gap: 1, flexWrap: 'wrap' }}>
+        <VxButton onClick={onCancel} color="inherit" sx={{ minHeight: 44 }}>
           {t('stock.conflictCancel')}
         </VxButton>
-        <VxButton onClick={onAdjust} variant="contained">
+        <VxButton onClick={onAdjust} variant="contained" sx={{ minHeight: 44 }}>
           {t('stock.conflictAdjust')}
         </VxButton>
       </VxDialogActions>

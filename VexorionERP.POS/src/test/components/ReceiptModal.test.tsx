@@ -48,6 +48,7 @@ describe('ReceiptModal', () => {
     renderWithProviders(<ReceiptModal open data={data} onClose={vi.fn()} />)
     expect(screen.getByText('Widget A')).toBeInTheDocument()
     expect(screen.getByText('Gadget B')).toBeInTheDocument()
+    expect(screen.getByRole('table', { name: 'Receipt' })).toBeInTheDocument()
   })
 
   it('shows orderId and invoiceId references', () => {

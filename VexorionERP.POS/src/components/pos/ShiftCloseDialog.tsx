@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { LockRoundedIcon } from '@vexorion/ui'
-import { VxButton, VxChip, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxDivider, VxInputAdornment, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
+import { VxAlert, VxButton, VxChip, VxDialog, VxDialogActions, VxDialogContent, VxDialogTitle, VxDivider, VxInputAdornment, VxStack, VxTextField, VxTypography } from '@vexorion/ui'
 import { useI18n } from '../../app/I18nContext'
 import { useTransactionHistory } from '../../app/transactionHistoryStore'
 import type { Shift } from '../../app/shiftStore'
@@ -77,7 +77,7 @@ export function ShiftCloseDialog({ open, shift, currencyCode, onClose, onConfirm
 
   const handleConfirm = () => {
     if (!Number.isFinite(countedCash) || countedCash < 0) {
-      setInputError('Enter a valid counted cash amount.')
+      setInputError(t('shift.close.invalidAmount'))
       return
     }
     setInputError(null)
@@ -86,15 +86,16 @@ export function ShiftCloseDialog({ open, shift, currencyCode, onClose, onConfirm
   }
 
   return (
-    <VxDialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <VxDialog open={open} onClose={onClose} maxWidth="sm" fullWidth scroll="paper" aria-describedby="shift-close-consequence">
       <VxDialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <LockRoundedIcon color="warning" />
         {t('shift.close.title')}
       </VxDialogTitle>
-      <VxDialogContent>
+      <VxDialogContent dividers>
         <VxStack spacing={2} sx={{ pt: 1 }}>
+          <VxAlert id="shift-close-consequence" severity="warning">{t('shift.close.consequence')}</VxAlert>
           {/* Shift meta */}
-          <VxStack direction="row" spacing={3}>
+          <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 0.5, sm: 3 }}>
             <VxTypography variant="body2" color="text.secondary">
               {t('shift.summary.openedAt')}: <strong>{openedAtFormatted}</strong>
             </VxTypography>
@@ -107,6 +108,7 @@ export function ShiftCloseDialog({ open, shift, currencyCode, onClose, onConfirm
 
           {/* Sales breakdown — Item 7 */}
           <VxTypography component="h3" variant="subtitle2">{t('shift.summary.title')}</VxTypography>
+          <VxAlert severity="info">{t('shift.close.localEstimate')}</VxAlert>
           <VxStack spacing={0.5}>
             <SummaryRow label={t('shift.summary.totalSales')} value={fmt(totalSales)} bold />
             <SummaryRow label={t('shift.summary.cashSales')} value={fmt(cashSales)} indent />
@@ -158,9 +160,9 @@ export function ShiftCloseDialog({ open, shift, currencyCode, onClose, onConfirm
           ) : null}
         </VxStack>
       </VxDialogContent>
-      <VxDialogActions>
-        <VxButton onClick={onClose}>{t('common.cancel')}</VxButton>
-        <VxButton variant="contained" color="warning" onClick={handleConfirm}>
+      <VxDialogActions sx={{ px: 3, py: 2, gap: 1, flexWrap: 'wrap' }}>
+        <VxButton onClick={onClose} sx={{ minHeight: 44 }}>{t('common.cancel')}</VxButton>
+        <VxButton variant="contained" color="warning" onClick={handleConfirm} sx={{ minHeight: 44 }}>
           {t('shift.close.submit')}
         </VxButton>
       </VxDialogActions>

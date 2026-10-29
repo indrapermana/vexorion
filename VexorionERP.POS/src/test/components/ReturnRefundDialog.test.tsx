@@ -138,7 +138,9 @@ describe('ReturnRefundDialog', () => {
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'INV-2026-001' } })
     fireEvent.click(screen.getByRole('button', { name: /search|cari|buscar/i }))
     await screen.findByText('Qty remaining')
-    fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '1' } })
+    expect(screen.getByText(/confirming creates a credit note/i)).toBeInTheDocument()
+    const quantityInput = screen.getByRole('spinbutton', { name: /return qty:/i })
+    fireEvent.change(quantityInput, { target: { value: '1' } })
     fireEvent.click(screen.getByRole('button', { name: /confirm return|konfirmasi retur|confirmar devolucion/i }))
 
     await screen.findByText(/could not confirm whether this return completed/i)

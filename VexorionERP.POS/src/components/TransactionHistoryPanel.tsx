@@ -37,11 +37,11 @@ export function TransactionHistoryPanel({ open, onOpenChange }: TransactionHisto
                 consequence={t('history.clearConsequence')}
                 confirmLabel={t('history.clear')}
                 onConfirm={clear}
-                buttonProps={{ size: 'small', startIcon: <DeleteSweepRoundedIcon />, color: 'inherit' }}
+                buttonProps={{ size: 'small', startIcon: <DeleteSweepRoundedIcon />, color: 'inherit', sx: { minHeight: 44 } }}
               >{t('history.clear')}</VxConfirmActionButton>
             </VxTooltip>
           ) : null}
-          <VxButton size="small" onClick={() => onOpenChange(!open)}>
+          <VxButton size="small" onClick={() => onOpenChange(!open)} sx={{ minHeight: 44 }}>
             {open ? t('common.collapse') : t('common.show')}
           </VxButton>
         </VxStack>
@@ -54,7 +54,8 @@ export function TransactionHistoryPanel({ open, onOpenChange }: TransactionHisto
             <VxTypography variant="body2" color="text.secondary">{t('history.empty')}</VxTypography>
           </VxBox>
         ) : (
-          <VxTable size="small">
+          <VxBox sx={{ overflowX: 'auto', maxWidth: '100%' }}>
+          <VxTable size="small" aria-label={t('history.title', { count: transactions.length })} sx={{ minWidth: 760 }}>
             <VxTableHead>
               <VxTableRow>
                 <VxTableCell>{t('history.time')}</VxTableCell>
@@ -64,7 +65,9 @@ export function TransactionHistoryPanel({ open, onOpenChange }: TransactionHisto
                 <VxTableCell>{t('history.method')}</VxTableCell>
                 <VxTableCell align="right">{t('history.lines')}</VxTableCell>
                 <VxTableCell>{t('history.flags')}</VxTableCell>
-                <VxTableCell>{t('history.invoice')}</VxTableCell>                <VxTableCell />              </VxTableRow>
+                <VxTableCell>{t('history.invoice')}</VxTableCell>
+                <VxTableCell />
+              </VxTableRow>
             </VxTableHead>
             <VxTableBody>
               {transactions.map((transaction) => (
@@ -115,6 +118,7 @@ export function TransactionHistoryPanel({ open, onOpenChange }: TransactionHisto
                       <VxIconButton
                         size="small"
                         aria-label={t('receipt.reprint')}
+                        sx={{ width: 44, height: 44 }}
                         onClick={() =>
                           setReprintData({
                             completedAt: transaction.completedAt,
@@ -139,6 +143,7 @@ export function TransactionHistoryPanel({ open, onOpenChange }: TransactionHisto
               ))}
             </VxTableBody>
           </VxTable>
+          </VxBox>
         )}
       </VxCollapse>
 

@@ -69,6 +69,8 @@ describe('ShiftCloseDialog', () => {
     expect(screen.getByRole('heading', { name: 'Close Shift', level: 2 })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Shift Summary', level: 3 })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Cash Reconciliation', level: 3 })).toBeInTheDocument()
+    expect(screen.getByText(/closing ends this cashier shift/i)).toBeInTheDocument()
+    expect(screen.getByText(/estimates from transaction history stored on this device/i)).toBeInTheDocument()
   })
 
   it('does not render when open=false', () => {

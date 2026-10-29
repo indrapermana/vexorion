@@ -81,7 +81,8 @@ export function ReceiptModal({ open, data, onClose }: Props) {
             {t('receipt.noLines')}
           </VxTypography>
         ) : (
-          <VxTable size="small" aria-label={t('receipt.title')}>
+          <VxBox sx={{ overflowX: 'auto', maxWidth: '100%' }}>
+          <VxTable size="small" aria-label={t('receipt.title')} sx={{ minWidth: 560 }}>
             <VxTableHead>
               <VxTableRow>
                 <VxTableCell>{t('cart.product')}</VxTableCell>
@@ -120,6 +121,7 @@ export function ReceiptModal({ open, data, onClose }: Props) {
               })}
             </VxTableBody>
           </VxTable>
+          </VxBox>
         )}
 
         <VxDivider sx={{ my: 2 }} />
@@ -173,13 +175,14 @@ export function ReceiptModal({ open, data, onClose }: Props) {
         </VxStack>
       </VxDialogContent>
 
-      <VxDialogActions>
-        <VxButton onClick={onClose}>{t('receipt.close')}</VxButton>
+      <VxDialogActions sx={{ px: 3, py: 2, gap: 1, flexWrap: 'wrap' }}>
+        <VxButton onClick={onClose} sx={{ minHeight: 44 }}>{t('receipt.close')}</VxButton>
         <VxBox sx={{ flex: 1 }} />
         <VxButton
           variant="contained"
           startIcon={<PrintRoundedIcon />}
           onClick={() => printReceipt(data, t)}
+          sx={{ minHeight: 44 }}
         >
           {t('receipt.print')}
         </VxButton>

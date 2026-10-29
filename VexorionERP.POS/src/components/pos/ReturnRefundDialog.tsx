@@ -251,7 +251,7 @@ export default function ReturnRefundDialog({
       return
     }
     if (!effectiveReason) {
-      setProcessError(t('return.reason') + ' is required.')
+      setProcessError(t('return.reasonRequired'))
       return
     }
 
@@ -288,6 +288,8 @@ export default function ReturnRefundDialog({
       onClose={isProcessing || pendingRecovery ? undefined : onClose}
       fullWidth
       maxWidth="md"
+      scroll="paper"
+      aria-describedby={step === 'review' ? 'return-consequence' : undefined}
     >
       <VxDialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <UndoRoundedIcon />
@@ -323,7 +325,7 @@ export default function ReturnRefundDialog({
           <VxStack spacing={2}>
             {/* Invoice summary card */}
             <VxBox sx={{ p: 1.5, border: 1, borderColor: 'divider', borderRadius: 1 }}>
-              <VxStack direction="row" spacing={4}>
+              <VxStack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 1, sm: 4 }}>
                 <VxBox>
                   <VxTypography variant="caption" color="text.secondary">
                     {t('return.invoice')}
@@ -387,7 +389,12 @@ export default function ReturnRefundDialog({
                               value={returnQtys[line.id] ?? 0}
                               disabled={hasAttempted || (remainingQtys[line.id] ?? 0) <= 0}
                               slotProps={{
-                                htmlInput: { min: 0, max: remainingQtys[line.id] ?? 0, step: 1 },
+                                htmlInput: {
+                                  min: 0,
+                                  max: remainingQtys[line.id] ?? 0,
+                                  step: 1,
+                                  'aria-label': `${t('return.qtyLabel')}: ${productLabel}`,
+                                },
                               }}
                               onChange={(e) => {
                                 const val = Math.min(
@@ -396,11 +403,11 @@ export default function ReturnRefundDialog({
                                 )
                                 setReturnQtys((prev) => ({ ...prev, [line.id]: val }))
                               }}
-                              sx={{ width: 84 }}
+                              sx={{ width: 84, '& .MuiInputBase-root': { minHeight: 44 } }}
                             />
                           </VxTableCell>
                           <VxTableCell>
-                            <VxFormControl size="small" sx={{ minWidth: 130 }}>
+                            <VxFormControl size="small" sx={{ minWidth: 130, '& .MuiInputBase-root': { minHeight: 44 } }}>
                               <VxInputLabel>{t('return.disposition')}</VxInputLabel>
                               <VxSelect
                                 value={returnToStock[line.id] ? 'stock' : 'writeoff'}
@@ -479,6 +486,8 @@ export default function ReturnRefundDialog({
               </VxBox>
             )}
 
+            <VxAlert id="return-consequence" severity="warning">{t('return.consequence')}</VxAlert>
+
             {processError ? <VxAlert severity="error" role="alert">{processError}</VxAlert> : null}
           </VxStack>
         )}
@@ -499,16 +508,17 @@ export default function ReturnRefundDialog({
         )}
       </VxDialogContent>
 
-      <VxDialogActions>
+      <VxDialogActions sx={{ px: 3, py: 2, gap: 1, flexWrap: 'wrap' }}>
         {step === 'search' && (
           <>
-            <VxButton onClick={onClose} disabled={pendingRecovery}>{t('common.cancel')}</VxButton>
+            <VxButton onClick={onClose} disabled={pendingRecovery} sx={{ minHeight: 44 }}>{t('common.cancel')}</VxButton>
             {pendingRecovery ? (
               <VxButton
                 variant="contained"
                 onClick={retryPendingRefund}
                 disabled={isProcessing}
                 startIcon={isProcessing ? <VxCircularProgress size={16} /> : null}
+                sx={{ minHeight: 44 }}
               >
                 {isProcessing ? t('return.processing') : t('return.retrySame')}
               </VxButton>
@@ -518,6 +528,7 @@ export default function ReturnRefundDialog({
                 onClick={() => void handleSearch()}
                 disabled={!searchQuery.trim() || isSearching}
                 startIcon={isSearching ? <VxCircularProgress size={16} /> : null}
+                sx={{ minHeight: 44 }}
               >
                 {t('return.searchButton')}
               </VxButton>
@@ -529,6 +540,7 @@ export default function ReturnRefundDialog({
           <>
             <VxButton
               disabled={hasAttempted}
+              sx={{ minHeight: 44 }}
               onClick={() => {
                 setStep('search')
                 setFoundInvoice(null)
@@ -537,7 +549,7 @@ export default function ReturnRefundDialog({
             >
               {t('return.back')}
             </VxButton>
-            <VxButton onClick={onClose} disabled={isProcessing}>{t('common.cancel')}</VxButton>
+            <VxButton onClick={onClose} disabled={isProcessing} sx={{ minHeight: 44 }}>{t('common.cancel')}</VxButton>
             <VxButton
               variant="contained"
               color="warning"
@@ -549,6 +561,7 @@ export default function ReturnRefundDialog({
                 isLoadingLines
               }
               startIcon={isProcessing ? <VxCircularProgress size={16} /> : null}
+              sx={{ minHeight: 44 }}
             >
               {isProcessing ? t('return.processing') : t(pendingRecovery ? 'return.retrySame' : 'return.confirm')}
             </VxButton>
@@ -556,7 +569,7 @@ export default function ReturnRefundDialog({
         )}
 
         {step === 'success' && (
-          <VxButton variant="contained" onClick={onClose}>
+          <VxButton variant="contained" onClick={onClose} sx={{ minHeight: 44 }}>
             {t('return.close')}
           </VxButton>
         )}

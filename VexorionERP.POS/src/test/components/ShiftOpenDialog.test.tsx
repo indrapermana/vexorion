@@ -26,7 +26,7 @@ describe('ShiftOpenDialog', () => {
     const submitBtn = screen.getByRole('button', { name: /open shift|open|mulai|abrir/i })
     await userEvent.setup().click(submitBtn)
     expect(onOpen).not.toHaveBeenCalled()
-    expect(screen.getByText(/valid amount/i)).toBeInTheDocument()
+    expect(screen.getByText(/valid opening amount/i)).toBeInTheDocument()
   })
 
   it('shows error when a negative float is entered', async () => {
@@ -38,7 +38,7 @@ describe('ShiftOpenDialog', () => {
     await userEvent.setup().type(input, '-50')
     fireEvent.click(screen.getByRole('button', { name: /open shift|open|mulai|abrir/i }))
     expect(onOpen).not.toHaveBeenCalled()
-    expect(screen.getByText(/valid amount/i)).toBeInTheDocument()
+    expect(screen.getByText(/valid opening amount/i)).toBeInTheDocument()
   })
 
   it('calls onOpen with the parsed float when a valid amount is entered', async () => {
