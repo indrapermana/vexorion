@@ -108,7 +108,7 @@ export default function TenantManagementPage() {
     : tenants
 
   return (
-    <VxBox sx={{ p: 3 }}>
+    <VxBox>
       <VxStack spacing={3}>
         <VxPageHeader
           title={t('shell.tenants')}
@@ -118,6 +118,22 @@ export default function TenantManagementPage() {
               {t('pages.tenantManagement.newTenant')}
             </VxButton>
           ) : undefined}
+          filters={(
+            <VxStack direction={{ xs: 'column', lg: 'row' }} spacing={1.5} sx={{ justifyContent: 'space-between', alignItems: { lg: 'center' } }}>
+              <VxFormControlLabel
+                control={<VxSwitch checked={showDisabledModulesOnly} onChange={(event) => setShowDisabledModulesOnly(event.target.checked)} />}
+                label={t('pages.tenantManagement.disabledOnly')}
+              />
+              <VxStack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+                <VxTypography variant="caption" color="textSecondary">{t('pages.tenantManagement.legend')}</VxTypography>
+                <VxChip size="small" color="success" label={t('pages.tenantManagement.enabled')} />
+                <VxChip size="small" variant="outlined" label={t('pages.tenantManagement.disabled')} />
+                <VxChip size="small" variant="outlined" label={t('pages.tenantManagement.modules.project')} />
+                <VxChip size="small" variant="outlined" label={t('pages.tenantManagement.modules.document')} />
+                <VxChip size="small" variant="outlined" label={t('pages.tenantManagement.modules.employee')} />
+              </VxStack>
+            </VxStack>
+          )}
         />
 
         <VxBox sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: 2, minWidth: 0 }}>
@@ -132,30 +148,11 @@ export default function TenantManagementPage() {
           </VxCard>
         </VxBox>
 
-        <VxStack direction={{ xs: 'column', lg: 'row' }} spacing={1.5} sx={{ justifyContent: 'space-between', alignItems: { lg: 'center' } }}>
-          <VxStack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
-            <VxFormControlLabel
-              control={<VxSwitch checked={showDisabledModulesOnly} onChange={(event) => setShowDisabledModulesOnly(event.target.checked)} />}
-              label={t('pages.tenantManagement.disabledOnly')}
-            />
-          </VxStack>
-
-          <VxStack spacing={0.5} sx={{ alignItems: { xs: 'flex-start', lg: 'flex-end' } }}>
-            <VxTypography variant="caption" color="textSecondary">{t('pages.tenantManagement.legend')}</VxTypography>
-            <VxStack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
-              <VxChip size="small" color="success" label={t('pages.tenantManagement.enabled')} />
-              <VxChip size="small" variant="outlined" label={t('pages.tenantManagement.disabled')} />
-              <VxChip size="small" variant="outlined" label={t('pages.tenantManagement.modules.project')} />
-              <VxChip size="small" variant="outlined" label={t('pages.tenantManagement.modules.document')} />
-              <VxChip size="small" variant="outlined" label={t('pages.tenantManagement.modules.employee')} />
-            </VxStack>
-          </VxStack>
-        </VxStack>
-
         <VxPageFeedback
           error={error}
           info={!canManage ? t('pages.tenantManagement.viewOnly') : undefined}
           onRetry={() => void loadTenants()}
+          retryLabel={t('common.retry')}
         />
 
         <VxPageBody>

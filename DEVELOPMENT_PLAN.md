@@ -731,6 +731,11 @@ An item is done only when all applicable conditions are satisfied:
 
 Historical milestone/checklist/roadmap documents were removed after consolidation because their duplicated status markers had diverged from the current code and test evidence.
 
+### AdminUI module completion
+
+- [x] `UX-ADMIN-01` Align shell/pages, localization, lists, metrics, filters, loading, empty, feedback, and actions with shared patterns.
+  - Completed (29 October 2026): confirmed the authenticated shell already follows the shared responsive navigation, title, action, and localization contracts. Dashboard now distinguishes loading, empty, error/retry, and populated states instead of rendering misleading zero metrics while requests are pending or failed. Menu Configuration now places tenant selection and Save in the shared header hierarchy, presents localized loading/empty/error/success states, and provides recoverable retry behavior. Tenant filters and legend moved into the standard filter region, duplicate page padding was removed, and Users/Tenants use localized retry actions. The shared page contract now includes a reusable empty state and caller-localized retry label. Validation: shared UI typecheck passes; AdminUI 54/54 tests, typecheck, production build, and lint pass with zero errors (six generated coverage warnings); `git diff --check` passes. Effective-access batching, user-security semantics, access explanations, and account lifecycle remain scoped to the subsequent AdminUI tickets.
+
 ## 9. Prioritized unfinished work
 
 Complete application work in order: **Main UI → AdminUI → POS**. Finish the active application's module queue before moving to the next. Shared/release gates follow the application queues. This section is the source of truth for all remaining actionable work; earlier sections contain findings, decisions, and completed evidence only.
@@ -745,7 +750,6 @@ Removal verification (26 October 2026): 14 upload/version handler, 11 document/r
 
 ### Stage 2 — AdminUI
 
-- [ ] `UX-ADMIN-01` Align shell/pages, localization, lists, metrics, filters, loading, empty, feedback, and actions with shared patterns.
 - [ ] `UX-ADMIN-02` Replace per-tenant effective-access requests with a batch/summary or lazy-detail contract; expose partial failure/retry.
 - [ ] `UX-ADMIN-03` Clarify user creation, roles, account state, and password reset with security/audit context.
 - [ ] `UX-ADMIN-04` Explain tenant/module/menu changes and preview effective access, distinguishing policy, entitlement, permission, and preference.

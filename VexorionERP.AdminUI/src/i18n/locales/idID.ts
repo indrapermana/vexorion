@@ -4,7 +4,7 @@ const idID = {
     save: 'Simpan',
     saving: 'Menyimpan...',
     loading: 'Memuat...',
-    edit: 'Ubah', viewOnly: 'Hanya lihat', remove: 'Hapus', removing: 'Menghapus...',
+    edit: 'Ubah', viewOnly: 'Hanya lihat', remove: 'Hapus', removing: 'Menghapus...', retry: 'Coba lagi',
   },
   shell: {
     brand: 'VEXORION ERP', navigation: 'Navigasi', logout: 'Keluar', publicAccessOnly: 'Akses publik saja',
@@ -58,6 +58,7 @@ const idID = {
       paidHint: 'Tenant berbayar disimpulkan dari tenant yang memiliki domain.', loginOverview: 'Ringkasan Login Tenant',
       topPage: 'Halaman teratas: {{page}} ({{count}})', topPageUnavailable: 'Halaman teratas: Tidak tersedia', loadError: 'Tidak dapat memuat metrik dasbor saat ini.',
       free: 'Gratis: {{count}}', paid: 'Berbayar: {{count}}', users: 'Pengguna: {{count}}', logins: 'Login: {{count}}', notAvailable: 'Tidak tersedia',
+      emptyTitle: 'Belum ada tenant', emptyDescription: 'Aktivitas tenant akan muncul setelah tenant pertama dibuat.',
     },
     users: {
       title: 'Pengguna', description: 'Kelola pengguna tenant, peran, reset kata sandi, dan status aktivasi.', add: 'Tambah Pengguna Tenant',
@@ -74,6 +75,7 @@ const idID = {
       title: 'Konfigurasi Menu', description: 'Aktifkan atau nonaktifkan menu aplikasi tenant. Konfigurasi disimpan pada preferensi tenant di backend.',
       viewOnly: 'Anda memiliki akses hanya lihat. Menyimpan perubahan menu memerlukan izin tenants.manage.', tenant: 'Tenant', menuKey: 'kunci menu:',
       activeTenant: 'Tenant aktif', inactiveTenant: 'Tenant tidak aktif', domain: 'Domain: {{domain}}', noDomain: 'Tidak ada domain khusus',
+      loading: 'Memuat konfigurasi menu...', emptyTitle: 'Tidak ada tenant', emptyDescription: 'Buat tenant sebelum mengatur menu aplikasi.', saved: 'Konfigurasi menu tersimpan.',
       errors: { tenants: 'Tidak dapat memuat tenant untuk konfigurasi menu.', load: 'Tidak dapat memuat konfigurasi menu tenant ini.', save: 'Tidak dapat menyimpan konfigurasi menu.' },
     },
     tenantManagement: {

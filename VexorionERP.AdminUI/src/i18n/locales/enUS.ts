@@ -4,7 +4,7 @@ const enUS = {
     save: 'Save',
     saving: 'Saving...',
     loading: 'Loading...',
-    edit: 'Edit', viewOnly: 'View only', remove: 'Remove', removing: 'Removing...',
+    edit: 'Edit', viewOnly: 'View only', remove: 'Remove', removing: 'Removing...', retry: 'Retry',
   },
   shell: {
     brand: 'VEXORION ERP', navigation: 'Navigation', logout: 'Logout', publicAccessOnly: 'Public access only',
@@ -58,6 +58,7 @@ const enUS = {
       paidHint: 'Paid tenants are inferred from tenants with a configured domain.', loginOverview: 'Tenant Login Overview',
       topPage: 'Top page: {{page}} ({{count}})', topPageUnavailable: 'Top page: N/A', loadError: 'Unable to load dashboard metrics right now.',
       free: 'Free: {{count}}', paid: 'Paid: {{count}}', users: 'Users: {{count}}', logins: 'Logins: {{count}}', notAvailable: 'N/A',
+      emptyTitle: 'No tenants yet', emptyDescription: 'Tenant activity will appear here after the first tenant is onboarded.',
     },
     users: {
       title: 'Users', description: 'Manage tenant users, roles, password reset, and activation status.', add: 'Add Tenant User',
@@ -74,6 +75,7 @@ const enUS = {
       title: 'Menu Configuration', description: 'Enable or disable tenant app menus per tenant. Configuration is persisted in backend tenant preferences.',
       viewOnly: 'You have view-only access. Saving menu changes requires the tenants.manage permission.', tenant: 'Tenant', menuKey: 'menu key:',
       activeTenant: 'Active tenant', inactiveTenant: 'Inactive tenant', domain: 'Domain: {{domain}}', noDomain: 'No custom domain',
+      loading: 'Loading menu configuration...', emptyTitle: 'No tenants available', emptyDescription: 'Onboard a tenant before configuring application menus.', saved: 'Menu configuration saved.',
       errors: { tenants: 'Unable to load tenants for menu configuration.', load: 'Unable to load menu configuration for this tenant.', save: 'Unable to save menu configuration.' },
     },
     tenantManagement: {

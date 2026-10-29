@@ -13,10 +13,10 @@ export function VxPageHeader({ title, description, action, filters }: { title: R
   </VxPaper>
 }
 
-export function VxPageFeedback({ error, success, info, onRetry }: { error?: ReactNode; success?: ReactNode; info?: ReactNode; onRetry?: () => void }) {
+export function VxPageFeedback({ error, success, info, onRetry, retryLabel = 'Retry' }: { error?: ReactNode; success?: ReactNode; info?: ReactNode; onRetry?: () => void; retryLabel?: ReactNode }) {
   if (!error && !success && !info) return null
   return <VxStack spacing={1.5}>
-    {error ? <VxAlert severity="error" role="alert" action={onRetry ? <VxButton color="inherit" size="small" onClick={onRetry}>Retry</VxButton> : undefined}>{error}</VxAlert> : null}
+    {error ? <VxAlert severity="error" role="alert" action={onRetry ? <VxButton color="inherit" size="small" onClick={onRetry}>{retryLabel}</VxButton> : undefined}>{error}</VxAlert> : null}
     {success ? <VxAlert severity="success" role="status">{success}</VxAlert> : null}
     {info ? <VxAlert severity="info" role="status">{info}</VxAlert> : null}
   </VxStack>
@@ -28,4 +28,8 @@ export function VxPageBody({ children }: { children: ReactNode }) {
 
 export function VxPageLoading({ label = 'Loading...' }: { label?: ReactNode }) {
   return <VxBox role="status" sx={{ display: 'grid', placeItems: 'center', minHeight: 180 }}><VxStack spacing={1.5} sx={{ alignItems: 'center' }}><VxCircularProgress size={28} /><VxTypography color="text.secondary">{label}</VxTypography></VxStack></VxBox>
+}
+
+export function VxPageEmpty({ title, description }: { title: ReactNode; description?: ReactNode }) {
+  return <VxBox role="status" sx={{ display: 'grid', placeItems: 'center', minHeight: 180, textAlign: 'center', px: 2 }}><VxStack spacing={0.75} sx={{ alignItems: 'center', maxWidth: 560 }}><VxTypography component="h2" variant="h6">{title}</VxTypography>{description ? <VxTypography color="text.secondary">{description}</VxTypography> : null}</VxStack></VxBox>
 }

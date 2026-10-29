@@ -296,6 +296,7 @@ export default function UsersPage() {
         error={error}
         info={!canManage ? t('pages.users.viewOnly') : undefined}
         onRetry={() => void Promise.all([loadMetadata(), loadUsers()])}
+        retryLabel={t('common.retry')}
       />
       {canManage && !canViewRoles ? <VxAlert severity="info">{t('pages.users.roleWarning')}</VxAlert> : null}
 

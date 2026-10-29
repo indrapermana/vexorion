@@ -1,4 +1,4 @@
-import { VxBox, VxChip, VxPageFeedback, VxPageHeader, VxPaper, VxStack, VxTypography } from '@vexorion/ui'
+import { VxBox, VxChip, VxPageBody, VxPageEmpty, VxPageFeedback, VxPageHeader, VxPageLoading, VxPaper, VxStack, VxTypography } from '@vexorion/ui'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ApartmentRoundedIcon, PersonRoundedIcon, StackedBarChartRoundedIcon, TravelExploreRoundedIcon, VxCard } from '@vexorion/ui'
@@ -24,9 +24,11 @@ export default function DashboardPage() {
   const [telemetryByTenant, setTelemetryByTenant] = useState<Map<string, TenantTelemetryListItemResponse>>(new Map())
   const [rangeDays, setRangeDays] = useState<7 | 30>(7)
   const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   const loadDashboard = useCallback(async () => {
     setError(null)
+    setIsLoading(true)
 
     try {
       const [tenantData, userData, telemetry] = await Promise.all([getTenants(), getUsersForAdmin(), getTenantTelemetry(rangeDays)])
@@ -36,6 +38,8 @@ export default function DashboardPage() {
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t('pages.dashboard.loadError'))
       if (!(err instanceof ApiError)) reportClientDiagnostic('operation.failed', err)
+    } finally {
+      setIsLoading(false)
     }
   }, [rangeDays, t])
 
@@ -98,7 +102,16 @@ export default function DashboardPage() {
           </VxStack>
       )} />
 
-      <VxPageFeedback error={error} />
+      <VxPageFeedback error={error} onRetry={() => void loadDashboard()} retryLabel={t('common.retry')} />
+
+      {isLoading && tenants.length === 0 ? (
+        <VxPageBody><VxPageLoading label={t('common.loading')} /></VxPageBody>
+      ) : error && tenants.length === 0 ? (
+        null
+      ) : tenants.length === 0 ? (
+        <VxPageBody><VxPageEmpty title={t('pages.dashboard.emptyTitle')} description={t('pages.dashboard.emptyDescription')} /></VxPageBody>
+      ) : (
+        <>
 
       <VxBox sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', md: '1fr 1fr', xl: 'repeat(4, 1fr)' } }}>
         <VxBox>
@@ -161,6 +174,8 @@ export default function DashboardPage() {
           </VxPaper>
         </VxBox>
       </VxBox>
+        </>
+      )}
     </VxStack>
   )
 }

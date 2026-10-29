@@ -1,5 +1,5 @@
-import { VxAlert, VxBox, VxButton, VxChip, VxMenuItem, VxPageFeedback, VxPageHeader, VxPaper, VxStack, VxSwitch, VxTextField, VxTypography } from '@vexorion/ui'
-import { useEffect, useMemo, useState } from 'react'
+import { VxAlert, VxBox, VxButton, VxChip, VxMenuItem, VxPageBody, VxPageEmpty, VxPageFeedback, VxPageHeader, VxPageLoading, VxStack, VxSwitch, VxTextField, VxTypography } from '@vexorion/ui'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ApiError, getTenantMenuConfiguration, getTenants, reportClientDiagnostic, updateTenantMenuConfiguration } from '../lib/api'
 import type { TenantListItemResponse } from '../types/api'
@@ -41,45 +41,53 @@ export default function MenuConfigurationPage() {
   const [selectedTenantId, setSelectedTenantId] = useState('')
   const [hiddenMenus, setHiddenMenus] = useState<MenuItemKey[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+  const [isLoadingTenants, setIsLoadingTenants] = useState(true)
+  const [isLoadingConfiguration, setIsLoadingConfiguration] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
-  useEffect(() => {
-    const loadTenants = async () => {
-      try {
-        const data = await getTenants()
-        setTenants(data)
-        if (data.length > 0) {
-          setSelectedTenantId(data[0].id)
-        }
-      } catch (err) {
-        setError(err instanceof ApiError ? err.message : t('pages.menuConfiguration.errors.tenants'))
-        if (!(err instanceof ApiError)) reportClientDiagnostic('operation.failed', err)
-      }
+  const loadTenants = useCallback(async () => {
+    setIsLoadingTenants(true)
+    setError(null)
+    try {
+      const data = await getTenants()
+      setTenants(data)
+      setSelectedTenantId((current) => current && data.some((tenant) => tenant.id === current) ? current : (data[0]?.id ?? ''))
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : t('pages.menuConfiguration.errors.tenants'))
+      if (!(err instanceof ApiError)) reportClientDiagnostic('operation.failed', err)
+    } finally {
+      setIsLoadingTenants(false)
     }
-
-    void loadTenants()
   }, [t])
 
   useEffect(() => {
+    void loadTenants()
+  }, [loadTenants])
+
+  const loadConfiguration = useCallback(async () => {
     if (!selectedTenantId) {
       setHiddenMenus([])
       return
     }
 
-    const loadConfiguration = async () => {
-      try {
-        setError(null)
-        const response = await getTenantMenuConfiguration(selectedTenantId)
-        setHiddenMenus(response.hiddenMenuLinks as MenuItemKey[])
-      } catch (err) {
-        setError(err instanceof ApiError ? err.message : t('pages.menuConfiguration.errors.load'))
-        if (!(err instanceof ApiError)) reportClientDiagnostic('operation.failed', err)
-        setHiddenMenus([])
-      }
+    setIsLoadingConfiguration(true)
+    setError(null)
+    try {
+      const response = await getTenantMenuConfiguration(selectedTenantId)
+      setHiddenMenus(response.hiddenMenuLinks as MenuItemKey[])
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : t('pages.menuConfiguration.errors.load'))
+      if (!(err instanceof ApiError)) reportClientDiagnostic('operation.failed', err)
+      setHiddenMenus([])
+    } finally {
+      setIsLoadingConfiguration(false)
     }
-
-    void loadConfiguration()
   }, [selectedTenantId, t])
+
+  useEffect(() => {
+    void loadConfiguration()
+  }, [loadConfiguration])
 
   const selectedTenant = useMemo(
     () => tenants.find((tenant) => tenant.id === selectedTenantId) ?? null,
@@ -87,6 +95,7 @@ export default function MenuConfigurationPage() {
   )
 
   const toggleMenu = (menuKey: MenuItemKey, enabled: boolean) => {
+    setSuccess(null)
     setHiddenMenus((current) => {
       if (!enabled) {
         if (current.includes(menuKey)) return current
@@ -105,6 +114,7 @@ export default function MenuConfigurationPage() {
       setError(null)
       const updated = await updateTenantMenuConfiguration(selectedTenantId, hiddenMenus)
       setHiddenMenus(updated.hiddenMenuLinks as MenuItemKey[])
+      setSuccess(t('pages.menuConfiguration.saved'))
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t('pages.menuConfiguration.errors.save'))
       if (!(err instanceof ApiError)) reportClientDiagnostic('operation.failed', err)
@@ -115,27 +125,40 @@ export default function MenuConfigurationPage() {
 
   return (
     <VxStack spacing={2.5}>
-      <VxPageHeader title={t('pages.menuConfiguration.title')} description={t('pages.menuConfiguration.description')} />
-
-      <VxPageFeedback error={error} />
-      {!canManage ? <VxAlert severity="info">{t('pages.menuConfiguration.viewOnly')}</VxAlert> : null}
-
-      <VxPaper className="panel-card" elevation={0}>
-        <VxStack spacing={2}>
+      <VxPageHeader
+        title={t('pages.menuConfiguration.title')}
+        description={t('pages.menuConfiguration.description')}
+        action={canManage && selectedTenantId ? (
+          <VxButton variant="contained" onClick={() => void handleSave()} disabled={isSaving || isLoadingConfiguration}>
+            {isSaving ? t('common.saving') : t('common.save')}
+          </VxButton>
+        ) : undefined}
+        filters={tenants.length > 0 ? (
           <VxTextField
             select
+            size="small"
             label={t('pages.menuConfiguration.tenant')}
             value={selectedTenantId}
-            onChange={(event) => setSelectedTenantId(event.target.value)}
-            fullWidth
+            onChange={(event) => { setSuccess(null); setSelectedTenantId(event.target.value) }}
+            sx={{ minWidth: 280 }}
           >
             {tenants.map((tenant) => (
-              <VxMenuItem key={tenant.id} value={tenant.id}>
-                {tenant.name} ({tenant.code})
-              </VxMenuItem>
+              <VxMenuItem key={tenant.id} value={tenant.id}>{tenant.name} ({tenant.code})</VxMenuItem>
             ))}
           </VxTextField>
+        ) : undefined}
+      />
 
+      <VxPageFeedback error={error} success={success} onRetry={() => void (selectedTenantId ? loadConfiguration() : loadTenants())} retryLabel={t('common.retry')} />
+      {!canManage ? <VxAlert severity="info">{t('pages.menuConfiguration.viewOnly')}</VxAlert> : null}
+
+      <VxPageBody>
+        {isLoadingTenants || isLoadingConfiguration ? (
+          <VxPageLoading label={t('pages.menuConfiguration.loading')} />
+        ) : tenants.length === 0 ? (
+          <VxPageEmpty title={t('pages.menuConfiguration.emptyTitle')} description={t('pages.menuConfiguration.emptyDescription')} />
+        ) : (
+        <VxStack spacing={2}>
           {selectedTenant ? (
             <VxStack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
               <VxChip label={selectedTenant.isActive ? t('pages.menuConfiguration.activeTenant') : t('pages.menuConfiguration.inactiveTenant')} color={selectedTenant.isActive ? 'success' : 'default'} size="small" />
@@ -168,13 +191,9 @@ export default function MenuConfigurationPage() {
             })}
           </VxStack>
 
-          <VxStack direction="row" sx={{ justifyContent: 'flex-end' }}>
-            <VxButton variant="contained" onClick={() => void handleSave()} disabled={!canManage || isSaving || !selectedTenantId}>
-              {isSaving ? t('common.saving') : t('common.save')}
-            </VxButton>
-          </VxStack>
         </VxStack>
-      </VxPaper>
+        )}
+      </VxPageBody>
     </VxStack>
   )
 }

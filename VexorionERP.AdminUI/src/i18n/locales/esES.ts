@@ -4,7 +4,7 @@ const esES = {
     save: 'Guardar',
     saving: 'Guardando...',
     loading: 'Cargando...',
-    edit: 'Editar', viewOnly: 'Solo lectura', remove: 'Eliminar', removing: 'Eliminando...',
+    edit: 'Editar', viewOnly: 'Solo lectura', remove: 'Eliminar', removing: 'Eliminando...', retry: 'Reintentar',
   },
   shell: {
     brand: 'VEXORION ERP', navigation: 'Navegación', logout: 'Cerrar sesión', publicAccessOnly: 'Solo acceso público',
@@ -58,6 +58,7 @@ const esES = {
       paidHint: 'Los inquilinos de pago se infieren a partir de los que tienen un dominio configurado.', loginOverview: 'Resumen de acceso por inquilino',
       topPage: 'Página principal: {{page}} ({{count}})', topPageUnavailable: 'Página principal: N/D', loadError: 'No se pudieron cargar las métricas del panel.',
       free: 'Gratis: {{count}}', paid: 'De pago: {{count}}', users: 'Usuarios: {{count}}', logins: 'Accesos: {{count}}', notAvailable: 'N/D',
+      emptyTitle: 'Aun no hay inquilinos', emptyDescription: 'La actividad aparecera despues de incorporar el primer inquilino.',
     },
     users: {
       title: 'Usuarios', description: 'Administra usuarios, roles, restablecimiento de contraseñas y estado de activación.', add: 'Agregar usuario del inquilino',
@@ -74,6 +75,7 @@ const esES = {
       title: 'Configuración del menú', description: 'Activa o desactiva los menús de la aplicación por inquilino. La configuración se guarda en las preferencias del backend.',
       viewOnly: 'Tienes acceso de solo lectura. Guardar cambios requiere el permiso tenants.manage.', tenant: 'Inquilino', menuKey: 'clave del menú:',
       activeTenant: 'Inquilino activo', inactiveTenant: 'Inquilino inactivo', domain: 'Dominio: {{domain}}', noDomain: 'Sin dominio personalizado',
+      loading: 'Cargando la configuracion del menu...', emptyTitle: 'No hay inquilinos disponibles', emptyDescription: 'Incorpora un inquilino antes de configurar los menus.', saved: 'Configuracion del menu guardada.',
       errors: { tenants: 'No se pudieron cargar los inquilinos para configurar el menú.', load: 'No se pudo cargar la configuración del menú.', save: 'No se pudo guardar la configuración del menú.' },
     },
     tenantManagement: {
