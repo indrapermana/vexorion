@@ -55,12 +55,13 @@ const idID = {
   },
   pages: {
     dashboard: {
-      title: 'Dasbor Admin Sistem', description: 'Ringkasan seluruh tenant dan pengguna berdasarkan telemetri backend dan analitik tenant.',
+      title: 'Dasbor Admin Sistem', description: 'Status akun berasal dari direktori tenant dan pengguna. Aktivitas menggunakan telemetri backend untuk periode yang dipilih.',
       last7Days: '7 hari terakhir', last30Days: '30 hari terakhir', totalTenants: 'Total tenant', activeTenants: 'Tenant aktif',
-      totalUsers: 'Total pengguna', mostVisitedPage: 'Halaman paling sering dikunjungi', freePaid: 'Tenant Gratis vs Berbayar',
-      paidHint: 'Tenant berbayar disimpulkan dari tenant yang memiliki domain.', loginOverview: 'Ringkasan Login Tenant',
-      topPage: 'Halaman teratas: {{page}} ({{count}})', topPageUnavailable: 'Halaman teratas: Tidak tersedia', loadError: 'Tidak dapat memuat metrik dasbor saat ini.',
-      free: 'Gratis: {{count}}', paid: 'Berbayar: {{count}}', users: 'Pengguna: {{count}}', logins: 'Login: {{count}}', notAvailable: 'Tidak tersedia',
+      totalUsers: 'Total pengguna', activeUsers: 'Pengguna aktif', accountStatus: 'Status akun', tenants: 'Tenant', usersHeading: 'Pengguna',
+      active: 'Aktif: {{count}}', inactive: 'Nonaktif: {{count}}', activityOverview: 'Aktivitas tenant', loadingActivity: 'Memuat aktivitas tenant...',
+      overallTopPage: 'Halaman teratas keseluruhan: {{page}} ({{count}} kunjungan)', topPage: 'Halaman teratas: {{page}} ({{count}})', topPageUnavailable: 'Halaman teratas: Tidak tersedia',
+      tenantLoadError: 'Tidak dapat memuat metrik tenant.', userLoadError: 'Tidak dapat memuat metrik pengguna.', telemetryLoadError: 'Tidak dapat memuat aktivitas tenant untuk periode ini.',
+      users: 'Pengguna: {{count}}', logins: 'Login: {{count}}', notAvailable: 'Tidak tersedia', noTenantActivity: 'Aktivitas tenant tidak tersedia sampai data tenant dimuat.',
       emptyTitle: 'Belum ada tenant', emptyDescription: 'Aktivitas tenant akan muncul setelah tenant pertama dibuat.',
     },
     users: {

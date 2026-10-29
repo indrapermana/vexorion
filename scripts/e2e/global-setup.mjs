@@ -43,9 +43,14 @@ export default async function globalSetup(config) {
     writeRunMetadata(metadataPath, run)
     events.push({ stage: 'provision', status: 'passed', tenantCode: run.tenantCode, tenantId: run.tenantId })
     writeLifecycleDiagnostics(lifecycleDiagnosticsPath, events)
-    delete process.env.E2E_CONTROL_TENANT_CODE
-    delete process.env.E2E_CONTROL_USERNAME
-    delete process.env.E2E_CONTROL_PASSWORD
+    // AdminUI is a cross-tenant platform console. Its browser session must use
+    // the verified SystemAdmin control identity while the isolated tenant
+    // remains the run-owned data target and cleanup boundary.
+    if (application !== 'vexorionerp-adminui') {
+      delete process.env.E2E_CONTROL_TENANT_CODE
+      delete process.env.E2E_CONTROL_USERNAME
+      delete process.env.E2E_CONTROL_PASSWORD
+    }
     console.log(`Provisioned isolated automation tenant ${run.tenantCode} (${run.tenantId}).`)
   } catch (error) {
     events.push({ stage: 'provision', status: 'failed', message: error instanceof Error ? error.message : 'Unknown failure' })

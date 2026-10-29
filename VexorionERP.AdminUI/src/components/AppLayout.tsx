@@ -182,7 +182,14 @@ export default function AppLayout() {
         {sidebar(isSidebarCollapsed)}
       </VxDrawer>
 
-      <VxBox className="dashboard-main" sx={{ ml: { lg: `${desktopDrawerWidth}px` }, transition: 'margin-left 180ms ease' }}>
+      <VxBox
+        className="dashboard-main"
+        sx={{
+          ml: { lg: `${desktopDrawerWidth}px` },
+          width: { xs: '100%', lg: `calc(100% - ${desktopDrawerWidth}px)` },
+          transition: 'margin-left 180ms ease, width 180ms ease',
+        }}
+      >
         <VxToolbar
           className="dashboard-topbar"
           sx={{

@@ -6,8 +6,11 @@ const viewportWidths = [360, 768, 1024, 1440]
 test.describe('AdminUI responsive acceptance', () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      window.localStorage.setItem('language', 'esES')
-      window.localStorage.setItem('vexorion.admin.themeMode', 'dark')
+      if (!window.sessionStorage.getItem('admin-responsive-initialized')) {
+        window.localStorage.setItem('language', 'esES')
+        window.localStorage.setItem('vexorion.admin.themeMode', 'dark')
+        window.sessionStorage.setItem('admin-responsive-initialized', 'true')
+      }
     })
   })
 
@@ -15,6 +18,7 @@ test.describe('AdminUI responsive acceptance', () => {
     test(`${route} fits the responsive viewport matrix`, async ({ page }) => {
       await page.goto(route)
       await expect(page.getByRole('heading').first()).toBeVisible()
+      await expect(page.locator('html')).toHaveAttribute('data-theme-mode', 'dark')
       await expect(page.getByText(/^undefined ·/)).toHaveCount(0)
       await expect(page).toHaveURL(new RegExp(`${route === '/' ? '/$' : `${route.replaceAll('/', '\\/')}$`}`))
 
@@ -49,6 +53,20 @@ test.describe('AdminUI responsive acceptance', () => {
           dimensions.document,
           `${route} overflows at ${width}px: document width ${dimensions.document}px, viewport ${dimensions.viewport}px; elements ${JSON.stringify(dimensions.overflowElements)}`,
         ).toBeLessThanOrEqual(dimensions.viewport)
+        if (width === 1440) {
+          const sidebar = await page.locator('.MuiDrawer-paper:visible').boundingBox()
+          const main = await page.locator('.dashboard-main').boundingBox()
+          const content = await page.locator('.dashboard-content').boundingBox()
+          const pageHeader = await page.locator('.hero-panel').boundingBox()
+          expect(sidebar).not.toBeNull()
+          expect(main).not.toBeNull()
+          expect(content).not.toBeNull()
+          expect(pageHeader).not.toBeNull()
+          expect(main!.x, 'Desktop content must start after the permanent navigation').toBeGreaterThanOrEqual(sidebar!.x + sidebar!.width - 1)
+          expect(main!.x + main!.width, 'Desktop content must remain inside the viewport').toBeLessThanOrEqual(width + 1)
+          expect(content!.x, `Dashboard content escaped its main column: ${JSON.stringify({ sidebar, main, content, pageHeader })}`).toBeGreaterThanOrEqual(main!.x)
+          expect(pageHeader!.x, `Page header is obscured by navigation: ${JSON.stringify({ sidebar, main, content, pageHeader })}`).toBeGreaterThanOrEqual(content!.x)
+        }
       }
 
       await page.evaluate(() => {
@@ -57,6 +75,7 @@ test.describe('AdminUI responsive acceptance', () => {
       })
       await page.reload()
       await expect(page.getByRole('heading').first()).toBeVisible()
+      await expect(page.locator('html')).toHaveAttribute('data-theme-mode', 'light')
       await page.setViewportSize({ width: 360, height: 900 })
       const lightThemeDimensions = await page.evaluate(() => ({
         viewport: document.documentElement.clientWidth,

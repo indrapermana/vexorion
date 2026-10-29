@@ -7,12 +7,21 @@ import { fileURLToPath } from 'node:url'
 // ---------------------------------------------------------------------------
 
 function readRunCredentials() {
-  return JSON.parse(readFileSync(fileURLToPath(new URL('./.auth/run.json', import.meta.url)), 'utf8')) as {
+  const run = JSON.parse(readFileSync(fileURLToPath(new URL('./.auth/run.json', import.meta.url)), 'utf8')) as {
     runId: string
     tenantCode: string
     username: string
     password: string
   }
+
+  const tenantCode = process.env.E2E_CONTROL_TENANT_CODE?.trim()
+  const username = process.env.E2E_CONTROL_USERNAME?.trim()
+  const password = process.env.E2E_CONTROL_PASSWORD?.trim()
+  if (!tenantCode || !username || !password) {
+    throw new Error('AdminUI E2E authentication requires the verified SystemAdmin control credentials.')
+  }
+
+  return { ...run, tenantCode, username, password }
 }
 
 export const AUTH_CREDENTIALS = {

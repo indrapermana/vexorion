@@ -55,12 +55,13 @@ const enUS = {
   },
   pages: {
     dashboard: {
-      title: 'System Admin Dashboard', description: 'Snapshot across all tenants and users using backend telemetry and tenant analytics.',
+      title: 'System Admin Dashboard', description: 'Account status comes from the tenant and user directories. Activity uses backend telemetry for the selected period.',
       last7Days: 'Last 7 days', last30Days: 'Last 30 days', totalTenants: 'Total tenants', activeTenants: 'Active tenants',
-      totalUsers: 'Total users', mostVisitedPage: 'Most visited page', freePaid: 'Free vs Paid Tenants',
-      paidHint: 'Paid tenants are inferred from tenants with a configured domain.', loginOverview: 'Tenant Login Overview',
-      topPage: 'Top page: {{page}} ({{count}})', topPageUnavailable: 'Top page: N/A', loadError: 'Unable to load dashboard metrics right now.',
-      free: 'Free: {{count}}', paid: 'Paid: {{count}}', users: 'Users: {{count}}', logins: 'Logins: {{count}}', notAvailable: 'N/A',
+      totalUsers: 'Total users', activeUsers: 'Active users', accountStatus: 'Account status', tenants: 'Tenants', usersHeading: 'Users',
+      active: 'Active: {{count}}', inactive: 'Inactive: {{count}}', activityOverview: 'Tenant activity', loadingActivity: 'Loading tenant activity...',
+      overallTopPage: 'Overall top page: {{page}} ({{count}} visits)', topPage: 'Top page: {{page}} ({{count}})', topPageUnavailable: 'Top page: N/A',
+      tenantLoadError: 'Unable to load tenant metrics.', userLoadError: 'Unable to load user metrics.', telemetryLoadError: 'Unable to load tenant activity for this period.',
+      users: 'Users: {{count}}', logins: 'Logins: {{count}}', notAvailable: 'N/A', noTenantActivity: 'Tenant activity is unavailable until tenant data loads.',
       emptyTitle: 'No tenants yet', emptyDescription: 'Tenant activity will appear here after the first tenant is onboarded.',
     },
     users: {

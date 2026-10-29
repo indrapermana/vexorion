@@ -55,12 +55,13 @@ const esES = {
   },
   pages: {
     dashboard: {
-      title: 'Panel de Administración del Sistema', description: 'Resumen de todos los inquilinos y usuarios mediante telemetría y analítica.',
+      title: 'Panel de Administración del Sistema', description: 'El estado de las cuentas proviene de los directorios de inquilinos y usuarios. La actividad usa la telemetría del periodo seleccionado.',
       last7Days: 'Últimos 7 días', last30Days: 'Últimos 30 días', totalTenants: 'Total de inquilinos', activeTenants: 'Inquilinos activos',
-      totalUsers: 'Total de usuarios', mostVisitedPage: 'Página más visitada', freePaid: 'Inquilinos gratuitos y de pago',
-      paidHint: 'Los inquilinos de pago se infieren a partir de los que tienen un dominio configurado.', loginOverview: 'Resumen de acceso por inquilino',
-      topPage: 'Página principal: {{page}} ({{count}})', topPageUnavailable: 'Página principal: N/D', loadError: 'No se pudieron cargar las métricas del panel.',
-      free: 'Gratis: {{count}}', paid: 'De pago: {{count}}', users: 'Usuarios: {{count}}', logins: 'Accesos: {{count}}', notAvailable: 'N/D',
+      totalUsers: 'Total de usuarios', activeUsers: 'Usuarios activos', accountStatus: 'Estado de las cuentas', tenants: 'Inquilinos', usersHeading: 'Usuarios',
+      active: 'Activos: {{count}}', inactive: 'Inactivos: {{count}}', activityOverview: 'Actividad de los inquilinos', loadingActivity: 'Cargando actividad...',
+      overallTopPage: 'Página principal general: {{page}} ({{count}} visitas)', topPage: 'Página principal: {{page}} ({{count}})', topPageUnavailable: 'Página principal: N/D',
+      tenantLoadError: 'No se pudieron cargar las métricas de inquilinos.', userLoadError: 'No se pudieron cargar las métricas de usuarios.', telemetryLoadError: 'No se pudo cargar la actividad para este periodo.',
+      users: 'Usuarios: {{count}}', logins: 'Accesos: {{count}}', notAvailable: 'N/D', noTenantActivity: 'La actividad no está disponible hasta que se carguen los inquilinos.',
       emptyTitle: 'Aun no hay inquilinos', emptyDescription: 'La actividad aparecera despues de incorporar el primer inquilino.',
     },
     users: {
