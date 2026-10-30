@@ -142,6 +142,7 @@ export function CartSummaryPanel({
                           aria-label={`${t('catalog.decreaseQty')}: ${line.productName}`}
                           disabled={line.quantity <= 1}
                           onClick={() => onLineQtyChange(line.productId, line.quantity - 1)}
+                          sx={{ minWidth: 44, minHeight: 44 }}
                         >
                           <RemoveRoundedIcon fontSize="small" />
                         </VxIconButton>
@@ -169,6 +170,7 @@ export function CartSummaryPanel({
                           size="small"
                           aria-label={`${t('catalog.increaseQty')}: ${line.productName}`}
                           onClick={() => onLineQtyChange(line.productId, line.quantity + 1)}
+                          sx={{ minWidth: 44, minHeight: 44 }}
                         >
                           <AddRoundedIcon fontSize="small" />
                         </VxIconButton>
@@ -196,6 +198,7 @@ export function CartSummaryPanel({
                         color="error"
                         aria-label={`${t('cart.remove')}: ${line.productName}`}
                         onClick={() => onRemoveCartLine(line.productId)}
+                        sx={{ minWidth: 44, minHeight: 44 }}
                       >
                         <DeleteOutlineRoundedIcon fontSize="small" />
                       </VxIconButton>
@@ -237,6 +240,7 @@ export function CartSummaryPanel({
                   aria-pressed={paymentMethod === value}
                   onClick={() => onPaymentMethodChange(value)}
                   fullWidth
+                  sx={{ minHeight: 44 }}
                 >
                   {label}
                 </VxButton>
@@ -253,7 +257,7 @@ export function CartSummaryPanel({
                   slotProps={{ htmlInput: { min: 0, step: 0.01 } }}
                   fullWidth
                 />
-                <VxButton variant="outlined" onClick={() => onPaymentAmountChange(grandTotal)}>
+                <VxButton variant="outlined" onClick={() => onPaymentAmountChange(grandTotal)} sx={{ minHeight: 44 }}>
                   {t('cart.exactAmount')}
                 </VxButton>
               </VxStack>
@@ -311,7 +315,7 @@ export function CartSummaryPanel({
         {!isOnline && cart.length > 0 ? (
           <VxAlert severity="warning" role="status">{t('cart.offlineCheckout')}</VxAlert>
         ) : null}
-        <VxButton variant="contained" size="large" onClick={onCheckout} disabled={isProcessing || !isPaymentSufficient || !canCheckout || !isOnline}>
+        <VxButton variant="contained" size="large" onClick={onCheckout} disabled={isProcessing || !isPaymentSufficient || !canCheckout || !isOnline} sx={{ minHeight: 48 }}>
           {isProcessing ? t('cart.processing') : hasPendingAttempt ? t('cart.retrySameSale') : t('cart.checkout')}
         </VxButton>
         <VxButton

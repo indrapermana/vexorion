@@ -552,6 +552,20 @@ Current import concurrency/rollback and generated-document compensation verifica
 | 2.10.1 | Change language | Settings → switch language (EN/ID/ES) | All POS UI text updates to selected language |
 | 2.10.2 | Change theme | Settings → switch dark/light mode | Theme applies immediately |
 
+### 2.11 POS Register Manual Regression
+
+Run these scenarios on the intended cashier workstation after the unfinished implementation backlog is complete. Use a dedicated test tenant, test products, and a test shift; do not run the checkout/print scenarios against live customer data.
+
+| # | Scenario | Steps | Expected Result |
+|---|----------|-------|-----------------|
+| 2.11.1 | Physical barcode scanner/wedge | Connect the target USB/Bluetooth scanner → place the cursor outside editable fields → scan a configured product barcode/SKU twice | Each complete scan adds exactly one unit; feedback identifies the product; scanner input remains ready for the next scan; no duplicate characters or page shortcut is triggered |
+| 2.11.2 | Register keyboard shortcuts | Add two different products → press F8 → prepare valid tender → press F2 | F8 removes only the most recently added cart line; F2 submits one checkout only when the shift, stock, permission, and payment requirements are satisfied |
+| 2.11.3 | 1024×768 touch/register layout | Set the target browser to 1024×768 at 100% zoom → complete catalog, cart, payment, shift, history, return, and receipt actions using touch or pointer | No document-level horizontal overflow or clipped required action; high-frequency controls are comfortably selectable; focus/labels identify scanner, quantity, tender, checkout, dialog, and receipt controls |
+| 2.11.4 | Offline and reconnect recovery | Add an item → disconnect the workstation network → attempt checkout → reconnect | Cart remains reviewable; offline status is announced; checkout is disabled and nothing is queued; after reconnect, reference data refreshes and checkout becomes available without duplicating a sale |
+| 2.11.5 | Target browser and 80 mm receipt printer | Complete a test cash sale → choose Print in the receipt → inspect browser print preview → print one receipt on the target device | Print popup opens; preview uses the intended 80 mm layout; product lines, totals, tender, change, order/invoice references, and footer are readable; exactly one receipt is printed without clipping or an extra blank page |
+
+`UX-POS-07` automated acceptance covers the responsive matrix, simulated scanner/keyboard flow, offline recovery, measured touch targets, checkout, and print-popup generation. The scenarios above are retained as manual hardware/integrated-browser regression and do not reopen the completed implementation ticket unless they expose a defect.
+
 ---
 
 ## Part 3 — Admin UI (Tenant Management)

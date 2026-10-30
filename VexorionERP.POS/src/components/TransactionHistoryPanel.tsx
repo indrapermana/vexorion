@@ -30,16 +30,14 @@ export function TransactionHistoryPanel({ open, onOpenChange }: TransactionHisto
         </VxStack>
         <VxStack direction="row" spacing={1}>
           {transactions.length > 0 ? (
-            <VxTooltip title={t('history.clearTooltip')}>
-              <VxConfirmActionButton
-                title={t('history.clear')}
-                targetName={t('history.title')}
-                consequence={t('history.clearConsequence')}
-                confirmLabel={t('history.clear')}
-                onConfirm={clear}
-                buttonProps={{ size: 'small', startIcon: <DeleteSweepRoundedIcon />, color: 'inherit', sx: { minHeight: 44 } }}
-              >{t('history.clear')}</VxConfirmActionButton>
-            </VxTooltip>
+            <VxConfirmActionButton
+              title={t('history.clear')}
+              targetName={t('history.title')}
+              consequence={t('history.clearConsequence')}
+              confirmLabel={t('history.clear')}
+              onConfirm={clear}
+              buttonProps={{ size: 'small', startIcon: <DeleteSweepRoundedIcon />, color: 'inherit', sx: { minHeight: 44 } }}
+            >{t('history.clear')}</VxConfirmActionButton>
           ) : null}
           <VxButton size="small" onClick={() => onOpenChange(!open)} sx={{ minHeight: 44 }}>
             {open ? t('common.collapse') : t('common.show')}

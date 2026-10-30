@@ -366,6 +366,7 @@ export function ProductCatalogPanel({
                       size="small"
                       onClick={() => updateQty(product.id, qty - 1)}
                       aria-label={`${t('catalog.decreaseQty')}: ${product.name}`}
+                      sx={{ minWidth: 44, minHeight: 44 }}
                     >
                       <RemoveRoundedIcon fontSize="small" />
                     </VxIconButton>
@@ -387,6 +388,7 @@ export function ProductCatalogPanel({
                       size="small"
                       onClick={() => updateQty(product.id, qty + 1)}
                       aria-label={`${t('catalog.increaseQty')}: ${product.name}`}
+                      sx={{ minWidth: 44, minHeight: 44 }}
                     >
                       <AddRoundedIcon fontSize="small" />
                     </VxIconButton>
@@ -398,6 +400,7 @@ export function ProductCatalogPanel({
                     startIcon={<AddRoundedIcon />}
                     disabled={!canAdd}
                     onClick={() => onAddToCart(product, qty)}
+                    sx={{ minHeight: 44 }}
                   >
                     {t('catalog.add')}
                   </VxButton>
