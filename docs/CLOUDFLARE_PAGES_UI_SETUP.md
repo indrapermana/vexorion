@@ -153,5 +153,5 @@ Correct `FRONTEND_PROD_API_BASE_URL`, then manually run the workflow with `deplo
 - [ ] All three custom domains are Active with valid HTTPS.
 - [ ] Login and authenticated API calls work in all three apps.
 - [ ] No CORS errors occur.
-- [ ] Obsolete Azure UI resources/DNS are retired only after validation.
+- [x] Obsolete Azure UI resources and credentials were retired after validation (owner-confirmed 31 October 2026).
 

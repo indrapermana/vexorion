@@ -4,7 +4,7 @@
 
 **Date:** 2026-10-21
 
-**Status:** Production infrastructure provisioned and manually smoke-tested; automated cutover and customer onboarding not yet authorized
+**Status:** Production cutover and Azure resource retirement complete; broader real-customer release gates remain tracked separately
 
 **Priority:** Data integrity, security, and recoverability before minimum infrastructure cost
 
@@ -24,7 +24,7 @@ Confirmed decisions:
 - Real customer data may be entered only after the new environment passes the readiness gates in this document.
 - The backend is upgraded from .NET 8 to .NET 10 before provider-specific migration work begins.
 - ClamAV remains disabled until a private scanner is provisioned and integration-tested.
-- Azure resources are not deleted by this plan. Any later retirement requires separate inventory, retention, and owner approval.
+- This plan did not itself delete Azure resources. The later owner-approved retirement was confirmed complete on 31 October 2026 after replacement cutover and rollback validation: all Azure application, database, storage, and frontend resources, secrets, and deployment credentials were deleted.
 - The early pilot uses one persistent production environment. After production CI, application, storage, frontend, rollback, and dependency checks passed, the GitHub staging environment and Neon staging project were deleted and the GCP staging project entered its provider deletion window.
 
 Non-goals:

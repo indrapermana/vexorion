@@ -67,7 +67,7 @@ Any capability requiring pending release evidence remains **implemented**, **loc
 - [x] Current frontend production build succeeds.
 - [x] Normal API startup performs read-only database/schema validation; migrations and bootstrap run only through explicit `migrate`, `bootstrap`, or `provision` operations.
 - [x] Local development configuration is Git-ignored with a tracked sanitized example; production configuration contains no database, JWT, bootstrap, storage, or logging secret values.
-- [x] Azure and Cloudflare R2 storage adapters are provider-selectable. R2 documents use private object keys and signed reads; product images require a separate bucket and HTTPS public custom domain. Azure remains the default pending real R2 validation.
+- [x] Azure and Cloudflare R2 storage adapters remain provider-selectable in code. Production uses the integration-validated R2 provider: documents use private object keys and signed reads, while product images use a separate bucket and HTTPS public custom domain. All former Azure resources and credentials are retired.
 - [x] Main UI, Admin UI, POS, and the public landing page are deployed through Cloudflare Pages; owner-confirmed login smoke evidence exists for all three authenticated applications.
 
 ### 3.2 Core ERP
@@ -261,7 +261,8 @@ Finance report reconciliation and export coverage remains in the final Main UI b
 ### P1-5 — Release operations and observability
 
 - [x] Complete the Cloudflare Pages cutover for Main UI, AdminUI, POS, and the public landing page using `docs/CLOUDFLARE_FRONTEND_MIGRATION.md`. Deployment jobs, custom domains, apex/`www` routing, static headers, and the landing implementation are present; Azure Static Web Apps deployment jobs were retired. The owner confirmed successful login on all three authenticated applications on 20 October 2026.
-Remaining provider retirement, upgrade/rollback rehearsal, runbooks, observability, manual smoke, and release-candidate gates are consolidated in the final shared/release backlog.
+- [x] Retire the former Azure hosting estate after replacement cutover. Owner-confirmed 31 October 2026: all Azure API, database, storage, and frontend resources were deleted after Cloud Run, Neon, R2, and Cloudflare Pages cutover; Cloud Run revision rollback/forward validation and R2 lifecycle checks had passed; all Azure secrets and deployment credentials were also deleted. Azure is no longer a rollback target, and no Azure resource should continue generating charges.
+Remaining upgrade/rollback rehearsal, runbooks, observability, manual smoke, and release-candidate gates are consolidated in the final shared/release backlog.
 
 ### P2-1 — Performance and maintainability
 
@@ -774,7 +775,6 @@ POS implementation items are complete. Retain the POS Admin responsive and recov
 ### Shared and release operations
 
 - [ ] Apply/verify migrations on a clean database and production-like upgraded snapshot; rehearse rollback/forward-fix. POS-02 has clean-database and owner-confirmed production-like migration evidence; broader release rehearsal remains open.
-- [ ] Retire Azure API/database/storage resources only after Cloud Run, Neon, and R2 cutover, rollback, and retention checks.
 - [ ] Create support runbook, admin training, incident paths, backup/restore evidence, and release smoke checklist.
 - [ ] Complete parked `MIG-M06` backup/disaster-recovery design and exercise, including recovery objectives, restore verification, and operator procedures.
 - [ ] Add dashboards/alerts for API 5xx, authorization denials, import/document/storage failures, checkout failures, latency, throttling, and quota blocks.

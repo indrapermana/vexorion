@@ -59,7 +59,7 @@ The public landing page and authenticated frontends are deployed through Cloudfl
 | Admin UI | `https://admin.vexorionerp.com` | Login manually confirmed by the owner on 20 October 2026 |
 | POS | `https://pos.vexorionerp.com` | Login manually confirmed by the owner on 20 October 2026 |
 
-This is deployment smoke evidence, not full release validation. The API, database, and object-storage migration is tracked in [the Azure exit plan](docs/VEXORIONERP_AZURE_MIGRATION_PLAN.md). Azure resources must not be retired until the replacement backend passes its migration and rollback gates.
+This is deployment smoke evidence, not full release validation. The API, database, and object-storage migration is tracked in [the Azure exit plan](docs/VEXORIONERP_AZURE_MIGRATION_PLAN.md). The owner confirmed on 31 October 2026 that all former Azure application, database, storage, and frontend resources—and their secrets/deployment credentials—were deleted after the replacement cutover and rollback checks passed. Azure is no longer a rollback target.
 
 The backend supports provider-selectable Azure Blob Storage and Cloudflare R2 adapters. Production uses R2 with separate buckets: private documents are served through short-lived signed URLs, while non-sensitive product images use a dedicated public HTTPS custom domain. Configure secrets only through managed environment variables; the tracked development example contains placeholders.
 

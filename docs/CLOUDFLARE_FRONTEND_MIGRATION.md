@@ -1,6 +1,6 @@
 # Cloudflare frontend migration runbook
 
-Status: Cloudflare static cutover complete; Azure retirement in progress. Azure API-backed validation and Azure Static Web Apps resource deletion remain pending.
+Status: Cloudflare static cutover and Azure retirement complete. The owner confirmed deletion of all former Azure resources, secrets, and deployment credentials on 31 October 2026.
 
 ## Target topology
 
@@ -189,18 +189,13 @@ Completed repository action:
 - [x] Remove the three Azure Static Web Apps deployment jobs from `.github/workflows/frontend.yml`; future frontend deployments target Cloudflare only.
 - [x] Preserve the former Azure resource hostnames in repository history and the DNS baseline above.
 
-Owner actions still required before marking retirement complete:
+Retirement completion record (owner-confirmed 31 October 2026):
 
-1. Let the updated Frontend workflow pass and confirm all four Cloudflare deployment jobs succeed.
-2. In Azure, identify the resources by **resource type** `Static Web App` and confirm their default hostnames are exactly:
-   - Main UI: `proud-plant-059c31a00.7.azurestaticapps.net`
-   - Admin UI: `ambitious-bay-0a07d0f00.7.azurestaticapps.net`
-   - POS UI: `ashy-stone-0c83b9c00.7.azurestaticapps.net`
-3. Before deletion, confirm none of those three resources contains a needed custom domain, deployment token, linked monitoring dependency, or shared resource required outside the frontend.
-4. Delete only those three **Static Web App** resources. Do not delete their resource group unless every other resource in it has been independently inventoried.
-5. Remove the three obsolete GitHub secrets: `AZURE_STATIC_WEB_APPS_API_TOKEN_UI`, `AZURE_STATIC_WEB_APPS_API_TOKEN_ADMIN`, and `AZURE_STATIC_WEB_APPS_API_TOKEN_POS`.
-6. Never remove Azure App Service, PostgreSQL, Blob Storage, `api.vexorionerp.com`, or `asuid.api` as part of this frontend retirement.
-7. Restore the API separately and complete the deferred API-backed smoke tests before marking the overall migration complete.
+- [x] All four Cloudflare deployment paths and production domains replaced the former Azure-hosted applications.
+- [x] The three Azure Static Web Apps were deleted after their custom-domain and deployment dependencies were checked.
+- [x] The former Azure App Service/API, PostgreSQL database, and Blob Storage resources were deleted after the Cloud Run, Neon, and R2 production cutover and rollback checks.
+- [x] Obsolete Azure GitHub secrets, service secrets, and deployment credentials were deleted.
+- [x] Azure is no longer a production dependency or rollback target. Rollback now uses Cloudflare deployment rollback and Cloud Run revision rollback against the same Neon/R2 data.
 
 ## Rollback
 
