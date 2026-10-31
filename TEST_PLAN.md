@@ -548,6 +548,11 @@ Current import concurrency/rollback and generated-document compensation verifica
 | 2.9.2 | Grant POS role | Toggle PosUser on for a user → Save | User can now access POS checkout |
 | 2.9.3 | Revoke POS role | Toggle PosUser off → Save | User loses checkout access |
 | 2.9.4 | Non-admin cannot access | Login as regular cashier | Admin panel not accessible |
+| 2.9.5 | Narrow POS Admin layout | At 360–390 px, open POS Admin with users having long names, emails, and multiple roles | Users render as readable cards; content wraps; status and POS access remain visible; no document-level horizontal overflow |
+| 2.9.6 | Tablet/register POS Admin layout | At 768 px and 1024×768, open POS Admin with populated users | Data-dense table remains usable in its labelled local scroll region; the page and Back action do not overflow or clip |
+| 2.9.7 | Dark and localized POS Admin | Check populated and empty pages in dark mode with EN, ID, and ES | Text, chips, cards/table, switches, feedback, and empty state remain legible and translated |
+| 2.9.8 | POS Admin load recovery | Simulate a failed users request → choose Retry after restoring connectivity | The actual load error and Retry are shown; retry loads users without a page refresh |
+| 2.9.9 | Inactive-user protection | View an inactive user in table and mobile card layouts | Status is Inactive and both responsive presentations expose a disabled POS User switch |
 
 ---
 
