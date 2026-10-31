@@ -71,6 +71,14 @@ public class PosCheckoutService(
 
     private async Task<ServiceResult<PosCheckoutResponse>> ExecuteAsync(Guid tenantId, Guid cashierId, PosCheckoutRequest request, string requestHash, CancellationToken cancellationToken)
     {
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        if (string.Equals(dbContext.Database.ProviderName, "Npgsql.EntityFrameworkCore.PostgreSQL", StringComparison.Ordinal))
+        {
+            await dbContext.Database.ExecuteSqlInterpolatedAsync(
+                $"SELECT 1 FROM \"ShiftSession\" WHERE \"Id\" = {request.ShiftId} AND \"TenantId\" = {tenantId} FOR UPDATE",
+                cancellationToken);
+        }
+
         var shift = await dbContext.ShiftSessions.GetByTenant(tenantId)
             .FirstOrDefaultAsync(x => x.Id == request.ShiftId, cancellationToken);
         if (shift is null || shift.CashierId != cashierId)
@@ -127,8 +135,6 @@ public class PosCheckoutService(
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var suffix = $"{today:yyyyMMdd}-{request.IdempotencyKey:N}"[..17];
         var currency = shift.CurrencyCode;
-
-        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
         var order = new SalesOrder
         {

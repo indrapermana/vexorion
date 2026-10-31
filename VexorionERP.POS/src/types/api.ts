@@ -125,7 +125,35 @@ export type OpenShiftRequest = {
 
 export type CloseShiftRequest = {
   countedCash: number
+  varianceReason?: string | null
   notes?: string | null
+}
+
+export type PosCashMovementType = 'CashIn' | 'CashOut' | 1 | 2
+
+export type CreatePosCashMovementRequest = {
+  type: PosCashMovementType
+  amount: number
+  reason: string
+}
+
+export type PosCashMovementResponse = CreatePosCashMovementRequest & {
+  id: string
+  occurredAtUtc: string
+}
+
+export type PosShiftReconciliationResponse = {
+  shiftId: string
+  openingFloat: number
+  cashSales: number
+  cashRefunds: number
+  cardSales: number
+  transferSales: number
+  cashIn: number
+  cashOut: number
+  expectedCash: number
+  currencyCode: string
+  movements: PosCashMovementResponse[]
 }
 
 export type ShiftSessionResponse = {
@@ -137,6 +165,15 @@ export type ShiftSessionResponse = {
   closedAtUtc?: string | null
   openingFloat: number
   countedCash?: number | null
+  cashSales: number
+  cashRefunds: number
+  cardSales: number
+  transferSales: number
+  cashIn: number
+  cashOut: number
+  expectedCash?: number | null
+  cashVariance?: number | null
+  varianceReason?: string | null
   currencyCode: string
   status: 'Open' | 'Closed' | number
   notes?: string | null

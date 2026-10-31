@@ -679,7 +679,7 @@ Open AdminUI work is consolidated in the final AdminUI backlog.
   - Include shift cash-in/out movements and end-of-shift reconciliation. Expected cash is opening float + cash sales - cash refunds + cash-in - cash-out; compare with counted cash, record the variance, and require a reason when it is non-zero. Keep card/transfer totals separately visible. This is operational till tracking, not D9 general-ledger posting.
   - Do not add a separate post-sale void/delete operation. Uncommitted cart edits can be discarded; completed sales are corrected through the POS return/refund flow. Preserve a reason and audit trail for any future persisted pre-completion void.
   - Defer hold/resume, generic manager override, and offline mode until pilot evidence supports them. Initial hardware scope is keyboard-wedge scanning and browser printing; defer model-specific scanner/printer/cash-drawer integration until target devices are confirmed.
-- `FEAT-POS-04` cash movements and end-of-shift reconciliation are tracked in the final POS backlog; do not create general-ledger entries while D9 is deferred.
+- [x] `FEAT-POS-04` Implement audited shift cash-in/out and end-of-shift reconciliation. Completed 30 October 2026: till movements require a positive amount and reason, are tenant/shift/cashier scoped, and write audit events. The close dialog now loads server-authoritative cash/card/transfer sales, cash refunds, movements, and expected cash instead of device-local history. Expected cash is opening float + cash sales - cash refunds + cash-in - cash-out; closing persists the tender snapshot, counted cash, variance, and a mandatory explanation for any non-zero variance. Checkout, refund, and close lock the same PostgreSQL shift row so transactions cannot commit across the closing boundary. New reconciliation and movement routes require `Pos.ShiftClose`; cash movements remain operational only and create no general-ledger entries. Migration: `20261030004159_AddPosShiftReconciliation`. Validation: focused service tests pass 3/3, route authorization coverage includes reconciliation/movement/close, focused POS dialog/store tests pass 12/12, backend and POS builds pass, and POS lint has zero errors (existing generated-coverage and hook warnings remain). Manual integrated reconciliation is retained in `TEST_PLAN.md` section 2.2.
 
 ### 5.12 Review coverage and completion evidence
 
@@ -768,7 +768,6 @@ AdminUI implementation and acceptance items are complete. Continue with the POS 
 
 ### Stage 3 — POS
 
-- [ ] `FEAT-POS-04` Implement audited shift cash-in/out and end-of-shift reconciliation: expected cash, tender totals, counted-cash variance, reason for non-zero variance, POS UI/localization, and unit/API/E2E coverage. Do not add GL postings; D9 remains deferred.
 - [ ] Resolve POS Admin narrow-table overflow and verify populated, dark-mode, hardware-oriented, and recovery states.
 
 ### Shared and release operations

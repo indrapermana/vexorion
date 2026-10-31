@@ -86,4 +86,57 @@ public class PosCheckoutAuthorizationTests : IClassFixture<TestWebApplicationFac
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
+
+    [Theory]
+    [InlineData("GET", "reconciliation")]
+    [InlineData("POST", "cash-movements")]
+    public async Task ShiftReconciliationEndpoints_WithoutShiftClosePermission_ReturnForbidden(string method, string suffix)
+    {
+        var client = _factory.CreateClient();
+        client.SetBearerToken(Guid.NewGuid(), AppPermissions.Pos.Checkout);
+        using var request = new HttpRequestMessage(new HttpMethod(method), $"/api/pos/shifts/{Guid.NewGuid()}/{suffix}");
+        if (method == "POST")
+            request.Content = JsonContent.Create(new CreatePosCashMovementRequest
+            {
+                Type = PosCashMovementType.CashIn,
+                Amount = 1m,
+                Reason = "Register test",
+            });
+
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData("GET", "reconciliation")]
+    [InlineData("POST", "cash-movements")]
+    public async Task ShiftReconciliationEndpoints_WithShiftClosePermission_ReachAction(string method, string suffix)
+    {
+        var client = _factory.CreateClient();
+        client.SetBearerToken(Guid.NewGuid(), AppPermissions.Pos.ShiftClose);
+        using var request = new HttpRequestMessage(new HttpMethod(method), $"/api/pos/shifts/{Guid.NewGuid()}/{suffix}");
+        if (method == "POST")
+            request.Content = JsonContent.Create(new CreatePosCashMovementRequest
+            {
+                Type = PosCashMovementType.CashIn,
+                Amount = 1m,
+                Reason = "Register test",
+            });
+
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CloseShift_WithoutShiftClosePermission_ReturnsForbidden()
+    {
+        var client = _factory.CreateClient();
+        client.SetBearerToken(Guid.NewGuid(), AppPermissions.Pos.Checkout);
+
+        var response = await client.PostAsJsonAsync($"/api/pos/shifts/{Guid.NewGuid()}/close", new CloseShiftRequest());
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
 }

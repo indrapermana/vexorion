@@ -110,6 +110,9 @@ public class PosRefundService(
         if (string.Equals(dbContext.Database.ProviderName, "Npgsql.EntityFrameworkCore.PostgreSQL", StringComparison.Ordinal))
         {
             await dbContext.Database.ExecuteSqlInterpolatedAsync(
+                $"SELECT 1 FROM \"ShiftSession\" WHERE \"Id\" = {request.ShiftId} AND \"TenantId\" = {tenantId} FOR UPDATE",
+                cancellationToken);
+            await dbContext.Database.ExecuteSqlInterpolatedAsync(
                 $"SELECT 1 FROM \"SalesInvoice\" WHERE \"Id\" = {request.SalesInvoiceId} AND \"TenantId\" = {tenantId} FOR UPDATE",
                 cancellationToken);
         }

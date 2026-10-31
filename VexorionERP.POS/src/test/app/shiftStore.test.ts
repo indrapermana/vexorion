@@ -12,6 +12,12 @@ const mockShift: ShiftSessionResponse = {
   closedAtUtc: null,
   openingFloat: 500,
   countedCash: null,
+  cashSales: 0,
+  cashRefunds: 0,
+  cardSales: 0,
+  transferSales: 0,
+  cashIn: 0,
+  cashOut: 0,
   currencyCode: 'USD',
   status: 'Open',
   notes: null,
@@ -81,7 +87,7 @@ describe('shiftStore', () => {
       await useShift.getState().closeShift(120.5)
     })
 
-    expect(posApi.closeShiftApi).toHaveBeenCalledWith('shift-api-1', { countedCash: 120.5 })
+    expect(posApi.closeShiftApi).toHaveBeenCalledWith('shift-api-1', { countedCash: 120.5, varianceReason: undefined })
     expect(useShift.getState().currentShift).toBeNull()
   })
 
@@ -93,7 +99,7 @@ describe('shiftStore', () => {
       await useShift.getState().closeShift()
     })
 
-    expect(posApi.closeShiftApi).toHaveBeenCalledWith('shift-api-1', { countedCash: 0 })
+    expect(posApi.closeShiftApi).toHaveBeenCalledWith('shift-api-1', { countedCash: 0, varianceReason: undefined })
   })
 
   it('fetchCurrentShift sets shift from API', async () => {

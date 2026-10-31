@@ -1,10 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { act } from '@testing-library/react'
-import { renderWithProviders, screen } from '../testUtils'
+import { renderWithProviders, screen, waitFor } from '../testUtils'
 import { ShiftCloseDialog } from '../../components/pos/ShiftCloseDialog'
 import { useTransactionHistory } from '../../app/transactionHistoryStore'
 import type { Shift } from '../../app/shiftStore'
 import type { PosTransaction } from '../../app/transactionHistoryStore'
+import * as posApi from '../../lib/api/pos'
+
+vi.mock('../../lib/api/pos', () => ({
+  getShiftReconciliationApi: vi.fn(),
+  addShiftCashMovementApi: vi.fn(),
+}))
 
 const SHIFT: Shift = {
   id: 'shift-test-1',
@@ -13,6 +19,20 @@ const SHIFT: Shift = {
   openedByName: 'Alice',
   openingFloat: 500,
   currencyCode: 'USD',
+}
+
+const RECONCILIATION = {
+  shiftId: SHIFT.id,
+  openingFloat: 500,
+  cashSales: 200,
+  cashRefunds: 20,
+  cardSales: 75,
+  transferSales: 25,
+  cashIn: 10,
+  cashOut: 5,
+  expectedCash: 685,
+  currencyCode: 'USD',
+  movements: [],
 }
 
 function makeTx(overrides: Partial<PosTransaction> = {}): PosTransaction {
@@ -40,7 +60,10 @@ function resetHistory() {
 }
 
 describe('ShiftCloseDialog', () => {
-  beforeEach(resetHistory)
+  beforeEach(() => {
+    resetHistory()
+    vi.mocked(posApi.getShiftReconciliationApi).mockResolvedValue(RECONCILIATION)
+  })
 
   it('renders when open=true', () => {
     renderWithProviders(
@@ -70,7 +93,7 @@ describe('ShiftCloseDialog', () => {
     expect(screen.getByRole('heading', { name: 'Shift Summary', level: 3 })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Cash Reconciliation', level: 3 })).toBeInTheDocument()
     expect(screen.getByText(/closing ends this cashier shift/i)).toBeInTheDocument()
-    expect(screen.getByText(/estimates from transaction history stored on this device/i)).toBeInTheDocument()
+    expect(screen.getByText(/calculated from completed server records/i)).toBeInTheDocument()
   })
 
   it('does not render when open=false', () => {
@@ -86,7 +109,7 @@ describe('ShiftCloseDialog', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
-  it('sums totalSales from shift transactions only', () => {
+  it('renders authoritative totals from the server instead of device history', async () => {
     act(() => {
       // Two transactions for this shift
       useTransactionHistory.getState().push(makeTx({ grandTotal: 120 }))
@@ -105,10 +128,8 @@ describe('ShiftCloseDialog', () => {
       />,
     )
 
-    // Total sales row should show $200.00, not $10199.00
-    // Use getAllByText since '200' may appear in multiple rows, then check at least one matches
-    const matches = screen.getAllByText(/\$200\.00|200\.00/)
-    expect(matches.length).toBeGreaterThan(0)
+    await waitFor(() => expect(posApi.getShiftReconciliationApi).toHaveBeenCalledWith(SHIFT.id))
+    expect(screen.getAllByText(/\$200\.00|200\.00/).length).toBeGreaterThan(0)
     expect(screen.queryByText(/\$10,?199/)).not.toBeInTheDocument()
   })
 

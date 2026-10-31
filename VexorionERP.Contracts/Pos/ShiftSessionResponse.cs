@@ -12,6 +12,15 @@ public class ShiftSessionResponse
     public DateTime? ClosedAtUtc { get; set; }
     public decimal OpeningFloat { get; set; }
     public decimal? CountedCash { get; set; }
+    public decimal CashSales { get; set; }
+    public decimal CashRefunds { get; set; }
+    public decimal CardSales { get; set; }
+    public decimal TransferSales { get; set; }
+    public decimal CashIn { get; set; }
+    public decimal CashOut { get; set; }
+    public decimal? ExpectedCash { get; set; }
+    public decimal? CashVariance { get; set; }
+    public string? VarianceReason { get; set; }
     public string CurrencyCode { get; set; } = string.Empty;
     public ShiftStatus Status { get; set; }
     public string? Notes { get; set; }

@@ -19,7 +19,7 @@ type ShiftState = {
     userName: string
     currencyCode: string
   }) => Promise<void>
-  closeShift: (countedCash?: number) => Promise<void>
+  closeShift: (countedCash?: number, varianceReason?: string) => Promise<void>
   fetchCurrentShift: () => Promise<void>
 }
 
@@ -48,12 +48,12 @@ export const useShift = create<ShiftState>()((set, get) => ({
     }
   },
 
-  closeShift: async (countedCash = 0) => {
+  closeShift: async (countedCash = 0, varianceReason) => {
     const shift = get().currentShift
     if (!shift) return
     set({ loading: true })
     try {
-      await closeShiftApi(shift.id, { countedCash })
+      await closeShiftApi(shift.id, { countedCash, varianceReason })
       set({ currentShift: null })
     } finally {
       set({ loading: false })

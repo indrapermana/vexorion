@@ -17,6 +17,16 @@ public class ShiftSession : TenantEntityBase
     /// <summary>Cash amount physically counted in the till at closing.</summary>
     public decimal? CountedCash { get; set; }
 
+    public decimal CashSales { get; set; }
+    public decimal CashRefunds { get; set; }
+    public decimal CardSales { get; set; }
+    public decimal TransferSales { get; set; }
+    public decimal CashIn { get; set; }
+    public decimal CashOut { get; set; }
+    public decimal? ExpectedCash { get; set; }
+    public decimal? CashVariance { get; set; }
+    public string? VarianceReason { get; set; }
+
     public string CurrencyCode { get; set; } = "USD";
 
     public ShiftStatus Status { get; set; } = ShiftStatus.Open;

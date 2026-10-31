@@ -452,10 +452,16 @@ Current import concurrency/rollback and generated-document compensation verifica
 |---|----------|-------|-----------------|
 | 2.2.1 | Open shift | POS page loads → Open Shift dialog appears → enter opening cash → Open | Shift opened; cashier name and shift info shown in header |
 | 2.2.2 | Shift persists on refresh | Open shift → refresh browser | Shift still active (loaded from backend) |
-| 2.2.3 | Close shift without counted cash | Click Close Shift → leave counted cash empty → Confirm | Shift closed; confirmation shown |
-| 2.2.4 | Close shift with counted cash | Click Close Shift → enter counted amount → Confirm | Shift closed with variance calculated |
+| 2.2.3 | Close shift without counted cash | Click Close Shift → leave counted cash empty → Confirm | Validation is shown; the shift remains open |
+| 2.2.4 | Close balanced shift | Complete cash sales/refunds → enter counted cash equal to server expected cash → Confirm | Shift closes; expected/count/zero variance and tender totals are persisted |
 | 2.2.5 | Block checkout when shift closed | Attempt checkout without opening shift | Checkout button disabled |
-| 2.2.6 | Only shift owner or manager can close | Login as different cashier → attempt to close another's shift | Not allowed (permission check) |
+| 2.2.6 | Only shift owner can reconcile or close | Login as a different cashier with shift-close permission → attempt to view/reconcile/close another cashier's shift | Request is rejected; no movement or close is persisted |
+| 2.2.7 | Cash-in changes expected cash | Record cash-in with amount and reason | Movement is audited and immediately increases server expected cash |
+| 2.2.8 | Cash-out changes expected cash | Record cash-out with amount and reason | Movement is audited and immediately decreases server expected cash |
+| 2.2.9 | Reject invalid cash movement | Submit zero/negative amount or blank reason | Validation identifies the invalid field; expected cash is unchanged |
+| 2.2.10 | Require variance reason | Enter counted cash different from expected cash and leave reason blank | Shift remains open and a reason-required message is shown |
+| 2.2.11 | Close with explained variance | Enter a different counted amount, add a reason, and close | Shift closes with server tender totals, expected cash, signed variance, and reason persisted and audited |
+| 2.2.12 | Closing boundary concurrency | Submit checkout/refund while closing the same shift | PostgreSQL shift lock serializes operations; reconciliation includes the committed transaction or the transaction is rejected as shift closed |
 
 ---
 

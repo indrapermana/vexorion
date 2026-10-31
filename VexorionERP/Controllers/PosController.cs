@@ -184,37 +184,40 @@ public class PosController(AppDbContext dbContext, ICurrentTenantProvider curren
     public async Task<ActionResult<ShiftSessionResponse>> CloseShift(
         Guid shiftId,
         [FromBody] CloseShiftRequest request,
+        [FromServices] IPosShiftService shiftService,
         CancellationToken cancellationToken)
     {
-        var tenantId = currentTenantProvider.TenantId;
-        if (!tenantId.HasValue)
-            return ApiFailure(StatusCodes.Status400BadRequest, "Tenant context is required.", "tenant.context_required");
-
         var cashierId = GetCurrentUserId();
         if (!cashierId.HasValue)
             return Unauthorized();
+        return ToActionResult(await shiftService.CloseAsync(cashierId.Value, shiftId, request, cancellationToken));
+    }
 
-        var shift = await dbContext.ShiftSessions
-            .GetByTenant(tenantId.Value)
-            .FirstOrDefaultAsync(x => x.Id == shiftId, cancellationToken);
+    [HttpGet("shifts/{shiftId:guid}/reconciliation")]
+    [Authorize(Policy = AppPermissions.Pos.ShiftClose)]
+    public async Task<ActionResult<PosShiftReconciliationResponse>> GetShiftReconciliation(
+        Guid shiftId,
+        [FromServices] IPosShiftService shiftService,
+        CancellationToken cancellationToken)
+    {
+        var cashierId = GetCurrentUserId();
+        if (!cashierId.HasValue)
+            return Unauthorized();
+        return ToActionResult(await shiftService.GetReconciliationAsync(cashierId.Value, shiftId, cancellationToken));
+    }
 
-        if (shift is null)
-            return ApiFailure(StatusCodes.Status404NotFound, "Shift not found.", "pos.shift_not_found");
-
-        if (shift.CashierId != cashierId.Value)
-            return Forbid();
-
-        if (shift.Status == ShiftStatus.Closed)
-            return ApiFailure(StatusCodes.Status409Conflict, "Shift is already closed.", "pos.shift_already_closed");
-
-        shift.Status = ShiftStatus.Closed;
-        shift.ClosedAtUtc = DateTime.UtcNow;
-        shift.CountedCash = request.CountedCash;
-        shift.Notes = string.IsNullOrWhiteSpace(request.Notes) ? shift.Notes : request.Notes.Trim();
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return Ok(shift.Adapt<ShiftSessionResponse>());
+    [HttpPost("shifts/{shiftId:guid}/cash-movements")]
+    [Authorize(Policy = AppPermissions.Pos.ShiftClose)]
+    public async Task<ActionResult<PosCashMovementResponse>> AddShiftCashMovement(
+        Guid shiftId,
+        [FromBody] CreatePosCashMovementRequest request,
+        [FromServices] IPosShiftService shiftService,
+        CancellationToken cancellationToken)
+    {
+        var cashierId = GetCurrentUserId();
+        if (!cashierId.HasValue)
+            return Unauthorized();
+        return ToActionResult(await shiftService.AddCashMovementAsync(cashierId.Value, shiftId, request, cancellationToken));
     }
 
     /// <summary>

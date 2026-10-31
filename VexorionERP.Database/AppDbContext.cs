@@ -86,6 +86,7 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
     public DbSet<TenantModuleConfig> TenantModuleConfigs => Set<TenantModuleConfig>();
     public DbSet<TenantPageVisit> TenantPageVisits => Set<TenantPageVisit>();
     public DbSet<ShiftSession> ShiftSessions => Set<ShiftSession>();
+    public DbSet<PosCashMovement> PosCashMovements => Set<PosCashMovement>();
     public DbSet<PosCheckoutRecord> PosCheckoutRecords => Set<PosCheckoutRecord>();
     public DbSet<PosRefundRecord> PosRefundRecords => Set<PosRefundRecord>();
     public DbSet<PosRefundLine> PosRefundLines => Set<PosRefundLine>();

@@ -10,6 +10,9 @@ import type {
   OpenShiftRequest,
   CloseShiftRequest,
   ShiftSessionResponse,
+  CreatePosCashMovementRequest,
+  PosCashMovementResponse,
+  PosShiftReconciliationResponse,
 } from '../../types/api'
 import { requestJson } from './core'
 
@@ -43,4 +46,12 @@ export function closeShiftApi(shiftId: string, request: CloseShiftRequest) {
 
 export function getCurrentShiftApi() {
   return requestJson<ShiftSessionResponse>('/pos/shifts/current')
+}
+
+export function getShiftReconciliationApi(shiftId: string) {
+  return requestJson<PosShiftReconciliationResponse>(`/pos/shifts/${shiftId}/reconciliation`)
+}
+
+export function addShiftCashMovementApi(shiftId: string, request: CreatePosCashMovementRequest) {
+  return requestJson<PosCashMovementResponse>(`/pos/shifts/${shiftId}/cash-movements`, 'POST', request)
 }

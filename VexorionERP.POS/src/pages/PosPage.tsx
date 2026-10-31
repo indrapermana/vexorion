@@ -687,8 +687,8 @@ export default function PosPage() {
           shift={currentShift}
           currencyCode={currencyCode}
           onClose={() => setIsCloseShiftOpen(false)}
-          onConfirm={(countedCash) => {
-            void closeShift(countedCash)
+          onConfirm={(countedCash, varianceReason) => {
+            void closeShift(countedCash, varianceReason)
             setIsCloseShiftOpen(false)
           }}
         />

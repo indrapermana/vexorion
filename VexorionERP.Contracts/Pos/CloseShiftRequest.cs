@@ -8,5 +8,8 @@ public class CloseShiftRequest
     public decimal CountedCash { get; set; }
 
     [StringLength(1000)]
+    public string? VarianceReason { get; set; }
+
+    [StringLength(1000)]
     public string? Notes { get; set; }
 }
