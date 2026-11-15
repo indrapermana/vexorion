@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import JournalsPage from './JournalsPage'
 
 const api = vi.hoisted(() => ({
@@ -34,6 +34,16 @@ vi.mock('../components/JournalDataGrid', () => ({
 }))
 
 describe('JournalsPage source selection', () => {
+  const renderPage = () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-10-15T12:00:00Z'))
+    const view = render(<JournalsPage />)
+    vi.useRealTimers()
+    return view
+  }
+
+  afterEach(() => vi.useRealTimers())
+
   beforeEach(() => {
     vi.clearAllMocks()
     api.getJournals.mockResolvedValue([{
@@ -69,7 +79,7 @@ describe('JournalsPage source selection', () => {
   })
 
   it('offers contextual searchable invoice options and omits draft, cancelled, and already-posted invoices', async () => {
-    render(<JournalsPage />)
+    renderPage()
 
     await waitFor(() => expect(api.getSalesInvoices).toHaveBeenCalled())
     expect(screen.queryByLabelText('pages.journals.fields.salesInvoiceId')).not.toBeInTheDocument()
@@ -96,7 +106,7 @@ describe('JournalsPage source selection', () => {
   })
 
   it('reverses the selected posted journal and shows invoice context without exposing its source GUID', async () => {
-    render(<JournalsPage />)
+    renderPage()
     const openJournal = await screen.findByRole('button', { name: 'Open first journal' })
     await waitFor(() => expect(openJournal).toBeEnabled())
     fireEvent.click(openJournal)
@@ -112,7 +122,7 @@ describe('JournalsPage source selection', () => {
   })
 
   it('warns and disables posting when the chosen date falls in a closed fiscal period', async () => {
-    render(<JournalsPage />)
+    renderPage()
     await waitFor(() => expect(api.getFiscalPeriods).toHaveBeenCalled())
     expect(await screen.findAllByText('pages.fiscalPeriods.dateStatus.open: FY26-10')).not.toHaveLength(0)
     const postingDateFields = screen.getAllByLabelText('pages.journals.fields.postingDate')

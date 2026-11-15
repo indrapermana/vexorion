@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   AddRoundedIcon,
   CloudUploadRoundedIcon,
@@ -186,31 +186,31 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
   const [editNotes, setEditNotes] = useState('')
   const [editFolderId, setEditFolderId] = useState<string | ''>('')
   const [nextStatus, setNextStatus] = useState<ManagedDocumentStatus | ''>('')
-  const folderBaseline = useRef<FolderEditorState | null>(null)
-  const uploadBaseline = useRef<UploadFormBaseline | null>(null)
-  const metadataBaseline = useRef<MetadataFormBaseline | null>(null)
-  const versionBaseline = useRef<VersionFormBaseline | null>(null)
+  const [folderBaseline, setFolderBaseline] = useState<FolderEditorState | null>(null)
+  const [uploadBaseline, setUploadBaseline] = useState<UploadFormBaseline | null>(null)
+  const [metadataBaseline, setMetadataBaseline] = useState<MetadataFormBaseline | null>(null)
+  const [versionBaseline, setVersionBaseline] = useState<VersionFormBaseline | null>(null)
   const [uploadFileInputKey, setUploadFileInputKey] = useState(0)
   const [versionFileInputKey, setVersionFileInputKey] = useState(0)
 
   const { requestClose: requestFolderClose, confirmationDialog: folderDiscardDialog } = useUnsavedChangesPrompt(
-    Boolean(folderEditor && folderBaseline.current && JSON.stringify(folderEditor) !== JSON.stringify(folderBaseline.current)),
+    Boolean(folderEditor && folderBaseline && JSON.stringify(folderEditor) !== JSON.stringify(folderBaseline)),
     isSaving,
     () => setFolderEditor(null),
-    () => setFolderEditor(folderBaseline.current),
+    () => setFolderEditor(folderBaseline),
   )
   const { requestClose: requestUploadClose, confirmationDialog: uploadDiscardDialog } = useUnsavedChangesPrompt(
-    uploadDialogOpen && Boolean(uploadBaseline.current && (
-      uploadTitle !== uploadBaseline.current.title
-      || uploadTags !== uploadBaseline.current.tags
-      || uploadNotes !== uploadBaseline.current.notes
-      || selectedFolderId !== uploadBaseline.current.folderId
-      || uploadFile !== uploadBaseline.current.file
+    uploadDialogOpen && Boolean(uploadBaseline && (
+      uploadTitle !== uploadBaseline.title
+      || uploadTags !== uploadBaseline.tags
+      || uploadNotes !== uploadBaseline.notes
+      || selectedFolderId !== uploadBaseline.folderId
+      || uploadFile !== uploadBaseline.file
     )),
     isSaving,
     () => setUploadDialogOpen(false),
     () => {
-      const baseline = uploadBaseline.current
+      const baseline = uploadBaseline
       if (!baseline) return
       setUploadTitle(baseline.title)
       setUploadTags(baseline.tags)
@@ -221,16 +221,16 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
     },
   )
   const { requestClose: requestMetadataClose, confirmationDialog: metadataDiscardDialog } = useUnsavedChangesPrompt(
-    metaEditorOpen && Boolean(metadataBaseline.current && (
-      editTitle !== metadataBaseline.current.title
-      || editTags !== metadataBaseline.current.tags
-      || editNotes !== metadataBaseline.current.notes
-      || editFolderId !== metadataBaseline.current.folderId
+    metaEditorOpen && Boolean(metadataBaseline && (
+      editTitle !== metadataBaseline.title
+      || editTags !== metadataBaseline.tags
+      || editNotes !== metadataBaseline.notes
+      || editFolderId !== metadataBaseline.folderId
     )),
     isSaving,
     () => setMetaEditorOpen(false),
     () => {
-      const baseline = metadataBaseline.current
+      const baseline = metadataBaseline
       if (!baseline) return
       setEditTitle(baseline.title)
       setEditTags(baseline.tags)
@@ -239,14 +239,14 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
     },
   )
   const { requestClose: requestVersionClose, confirmationDialog: versionDiscardDialog } = useUnsavedChangesPrompt(
-    newVersionDialogOpen && Boolean(versionBaseline.current && (
-      versionNotes !== versionBaseline.current.notes
-      || versionFile !== versionBaseline.current.file
+    newVersionDialogOpen && Boolean(versionBaseline && (
+      versionNotes !== versionBaseline.notes
+      || versionFile !== versionBaseline.file
     )),
     isSaving,
     () => setNewVersionDialogOpen(false),
     () => {
-      const baseline = versionBaseline.current
+      const baseline = versionBaseline
       if (!baseline) return
       setVersionNotes(baseline.notes)
       setVersionFile(baseline.file)
@@ -255,12 +255,12 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
   )
 
   const openFolderEditor = (next: FolderEditorState) => {
-    folderBaseline.current = next
+    setFolderBaseline(next)
     setFolderEditor(next)
   }
   const openUploadDialog = () => {
     if (uploadRecovery.pending) return
-    uploadBaseline.current = { title: uploadTitle, tags: uploadTags, notes: uploadNotes, folderId: selectedFolderId, file: uploadFile }
+    setUploadBaseline({ title: uploadTitle, tags: uploadTags, notes: uploadNotes, folderId: selectedFolderId, file: uploadFile })
     setUploadDialogOpen(true)
   }
   const openMetadataEditor = async (document: ProjectDocumentListItemResponse) => {
@@ -270,7 +270,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
     try {
       const details = await getProjectDocument(projectId, document.id)
       const baseline = { title: details.title, tags: details.tags ?? '', notes: details.notes ?? '', folderId: details.documentFolderId ?? '' }
-      metadataBaseline.current = baseline
+      setMetadataBaseline(baseline)
       setEditTitle(baseline.title)
       setEditTags(baseline.tags)
       setEditNotes(baseline.notes)
@@ -285,7 +285,7 @@ export default function DocumentsPanel({ projectId }: DocumentsPanelProps) {
   }
   const openVersionDialog = () => {
     if (uploadRecovery.pending || selectedDocument?.status === 5) return
-    versionBaseline.current = { notes: versionNotes, file: versionFile }
+    setVersionBaseline({ notes: versionNotes, file: versionFile })
     setNewVersionDialogOpen(true)
   }
 
