@@ -21,10 +21,6 @@ public class TenantOnboardingService(
     public async Task<ServiceResult<OnboardTenantResponse>> OnboardAsync(OnboardTenantRequest request, ClaimsPrincipal principal, CancellationToken cancellationToken = default)
     {
         var hasExistingTenants = await dbContext.Tenants.AnyAsync(cancellationToken);
-        if (hasExistingTenants && !principal.IsInRole(AppRoles.SystemAdmin))
-        {
-            return ServiceResult<OnboardTenantResponse>.Failure(StatusCodes.Status403Forbidden, "Forbidden.");
-        }
 
         var tenantCode = request.TenantCode.Trim().ToUpperInvariant();
         var tenantExists = await dbContext.Tenants.AnyAsync(x => x.Code.ToUpper() == tenantCode, cancellationToken);
@@ -103,12 +99,24 @@ public class TenantOnboardingService(
             ? new[] { AppRoles.TenantAdmin } 
             : new[] { AppRoles.SystemAdmin, AppRoles.TenantAdmin };
         
-        await userManager.AddToRolesAsync(adminUser, rolesToAssign);
+        var roleResult = await userManager.AddToRolesAsync(adminUser, rolesToAssign);
+        if (!roleResult.Succeeded)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return ServiceResult<OnboardTenantResponse>.ValidationFailure(
+                IdentityErrorFieldMapper.ToFieldErrors(
+                    roleResult.Errors,
+                    nameof(request.AdminPassword),
+                    nameof(request.AdminUserName),
+                    nameof(request.AdminEmail)));
+        }
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
-        var actorUserId = userManager.GetUserId(principal);
-        await auditLogger.LogAsync("tenants.onboarded", tenant.Id, actorUserId is null ? null : Guid.Parse(actorUserId), adminUser.Id, nameof(Tenant), tenant.Id.ToString(), "Tenant onboarded.", new { TenantCode = tenant.Code, CompanyCode = company.Code }, cancellationToken: cancellationToken);
+        var actorUserId = Guid.TryParse(userManager.GetUserId(principal), out var parsedActorUserId)
+            ? parsedActorUserId
+            : (Guid?)null;
+        await auditLogger.LogAsync("tenants.onboarded", tenant.Id, actorUserId, adminUser.Id, nameof(Tenant), tenant.Id.ToString(), "Tenant onboarded.", new { TenantCode = tenant.Code, CompanyCode = company.Code }, cancellationToken: cancellationToken);
 
         return ServiceResult<OnboardTenantResponse>.Success(new OnboardTenantResponse
         {

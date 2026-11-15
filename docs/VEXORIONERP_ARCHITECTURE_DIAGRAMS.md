@@ -214,7 +214,9 @@ Storage is deleted before the database record. If R2 cleanup fails, the record r
 
 ```mermaid
 flowchart LR
-    Operator[Authorized operator]
+    Pipeline[GitHub deployment workflow]
+    Job[Restricted Cloud Run migration job]
+    Operator[Authorized recovery operator]
     Migration[Explicit migrate operation]
     Bootstrap[Explicit bootstrap operation]
     Runtime[Normal API startup]
@@ -223,7 +225,9 @@ flowchart LR
     Pooler[Pooled Neon endpoint<br/>runtime role]
     DB[(Same production database)]
 
-    Operator -->|vexorion-operation=migrate| Migration
+    Pipeline -->|Immutable image digest| Job
+    Job -->|vexorion-operation=migrate| Migration
+    Operator -.->|Manual recovery only| Migration
     Operator -->|vexorion-operation=bootstrap| Bootstrap
     Migration -->|Schema privileges| Direct
     Bootstrap -->|One-time identity provisioning| Direct
@@ -237,7 +241,7 @@ flowchart LR
     DB --> Admin[Initial admin identity]
 ```
 
-Normal startup cannot apply migrations or bootstrap data. The runtime role can use application tables but cannot create database or schema objects.
+Normal startup cannot apply migrations or bootstrap data. Production deployment waits for the restricted migration job before updating API traffic; a failed migration leaves the previous API revision active. The runtime role can use application tables but cannot create database or schema objects.
 
 ## 8. Backend CI/CD workflow
 

@@ -92,6 +92,13 @@ export default function LoginPage() {
       <VxButton type="submit" variant="contained" size="large" disabled={isSubmitting}>
         {isSubmitting ? t('pages.auth.login.signingIn') : t('pages.auth.login.signInButton')}
       </VxButton>
+
+      <VxTypography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
+        {t('pages.auth.login.needWorkspace')}{' '}
+        <VxLink component={RouterLink} to="/tenants" underline="hover">
+          {t('pages.auth.login.createTenantLink')}
+        </VxLink>
+      </VxTypography>
     </VxStack>
   )
 }

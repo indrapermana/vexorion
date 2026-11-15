@@ -528,9 +528,13 @@ The frontend workflow builds, type-checks, lints, and unit-tests affected packag
 
 The authenticated frontends and public landing page deploy to Cloudflare Pages through explicit deployment gates. The production API runs on Google Cloud Run, PostgreSQL runs on Neon, and object storage uses Cloudflare R2.
 
-### Production deployment reminder: apply migrations first
+### Production database migrations
 
-The backend deployment does **not** apply EF Core migrations automatically. Before pushing or rerunning a backend deployment that contains a new file under `VexorionERP.Database/Migrations`, apply the migration to production using the dedicated direct Neon migrator connection. Otherwise, the new Cloud Run revision will intentionally fail startup validation and the previous healthy revision will remain active.
+The backend workflow applies EF Core migrations automatically before it updates the production Cloud Run service. It deploys the immutable application image as a one-task Cloud Run job, supplies only the dedicated direct Neon migrator connection from Secret Manager, waits for the job to succeed, and then deploys the same image digest to the API. A migration failure stops the workflow while the previous healthy API revision remains active.
+
+The one-time job, identity, secret, IAM, and GitHub environment setup is documented in [Google Cloud Run production setup](docs/GOOGLE_CLOUD_RUN_PRODUCTION_SETUP.md). Migrations must remain backward-compatible with the currently serving revision; use expand-contract changes when old and new application versions cannot safely share a schema.
+
+For an authorized recovery or local verification, the same explicit operation can still be run manually. Securely read the connection string without adding it to shell history:
 
 From the repository root, securely read the connection string without adding it to shell history:
 
@@ -544,7 +548,6 @@ Apply all pending migrations:
 ```bash
 ASPNETCORE_ENVIRONMENT=Development \
 ConnectionStrings__MigrationConnection="$VEXORION_MIGRATION_CONNECTION" \
-Jwt__SecretKey="$(openssl rand -hex 32)" \
 dotnet run \
   --project VexorionERP/VexorionERP.csproj \
   --no-launch-profile \
@@ -558,7 +561,7 @@ The production migration connection must use the direct Neon endpoint, database 
 unset VEXORION_MIGRATION_CONNECTION
 ```
 
-After the migration succeeds, verify that `vexorion_runtime_production` has access to any newly created tables, then push the backend change or rerun the failed GitHub Actions deployment. Automatic execution through a restricted Cloud Run migration job is planned but is not implemented yet.
+After a manual recovery migration succeeds, verify runtime access to newly created tables and rerun the failed GitHub Actions deployment. Do not expose the migrator connection to the normal API service.
 
 ### Infrastructure setup guides
 

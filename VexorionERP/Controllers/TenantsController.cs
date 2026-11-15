@@ -1,6 +1,7 @@
 using Mediator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 using VexorionERP.Contracts;
 using VexorionERP.Handler;
@@ -13,6 +14,7 @@ namespace VexorionERP;
 public class TenantsController(IMediator mediator) : ServiceResultControllerBase
 {
     [AllowAnonymous]
+    [EnableRateLimiting("tenant-onboarding")]
     [HttpPost("onboard")]
     public async Task<ActionResult<OnboardTenantResponse>> Onboard([FromBody] OnboardTenantRequest request)
     {

@@ -12,6 +12,8 @@ This runbook provisions the production GCP project and deploys the .NET 10 Vexor
 | Image package | `api` |
 | Cloud Run service | `vexorionerp-api-production` |
 | Runtime service account | `vexorionerp-api-production@vexorionerp-production.iam.gserviceaccount.com` |
+| Migration job | `vexorionerp-db-migrate-production` |
+| Migration service account | `vexorionerp-migration-prod@vexorionerp-production.iam.gserviceaccount.com` |
 | GitHub deployer | `vexorionerp-github-production@vexorionerp-production.iam.gserviceaccount.com` |
 
 ## 1. Create and select the project
@@ -75,9 +77,13 @@ gcloud iam service-accounts create vexorionerp-api-production \
 gcloud iam service-accounts create vexorionerp-github-production \
   --project=vexorionerp-production \
   --display-name='VexorionERP GitHub production deployer'
+
+gcloud iam service-accounts create vexorionerp-migration-prod \
+  --project=vexorionerp-production \
+  --display-name='VexorionERP production database migrator'
 ```
 
-The runtime identity reads only its required secrets. The deployer may update Cloud Run, push to the production repository, and act as the runtime identity. Do not create user-managed service-account keys.
+The runtime identity reads only its required runtime secrets. The migration identity reads only the direct Neon migrator connection. The deployer may update the Cloud Run service/job, execute the job, push to the production repository, and act as the two workload identities. Do not create user-managed service-account keys.
 
 ## 5. Create production secrets
 
@@ -90,6 +96,7 @@ Create these Secret Manager resources:
 | `vexorionerp-production-r2-access-key-id` | `Storage__R2__AccessKeyId` |
 | `vexorionerp-production-r2-secret-access-key` | `Storage__R2__SecretAccessKey` |
 | `vexorionerp-production-grafana-loki-api-key` | `GrafanaLoki__ApiKey` |
+| `vexorionerp-production-db-migration-connection` | Migration job `ConnectionStrings__MigrationConnection` |
 
 Create each resource, then add its value without putting the value in the command line:
 
@@ -105,7 +112,16 @@ gcloud secrets versions add <secret-name> \
 
 Type or pipe the value from a protected local source, then press Ctrl-D. Grant `roles/secretmanager.secretAccessor` to the runtime service account on each secret resource, not at project scope.
 
-Map an explicit tested version such as `1`, rather than `latest`, so secret rotation is a controlled revision change.
+Map an explicit tested version such as `1`, rather than `latest`, for API runtime secrets so rotation is a controlled revision change. The workflow currently resolves the migration connection through `latest` when it deploys the job; only add a new enabled version after validating it, and disable the previous version after a successful deployment.
+
+Grant the migration identity access only to the migration connection secret:
+
+```bash
+gcloud secrets add-iam-policy-binding vexorionerp-production-db-migration-connection \
+  --project=vexorionerp-production \
+  --member='serviceAccount:vexorionerp-migration-prod@vexorionerp-production.iam.gserviceaccount.com' \
+  --role='roles/secretmanager.secretAccessor'
+```
 
 ## 6. Configure the Cloud Run service
 
@@ -160,8 +176,31 @@ Grant the deployer only the permissions needed to:
 - Push images to `vexorionerp-api`.
 - Update `vexorionerp-api-production`.
 - Act as the production runtime service account.
+- Create/update and execute `vexorionerp-db-migrate-production`.
+- Act as the production migration service account.
 
 It must not read application secrets. Keep Artifact Registry permissions scoped to the repository when possible.
+
+Allow the GitHub deployer to attach the migration identity to the Cloud Run job:
+
+```bash
+gcloud iam service-accounts add-iam-policy-binding \
+  vexorionerp-migration-prod@vexorionerp-production.iam.gserviceaccount.com \
+  --project=vexorionerp-production \
+  --member='serviceAccount:vexorionerp-github-production@vexorionerp-production.iam.gserviceaccount.com' \
+  --role='roles/iam.serviceAccountUser'
+```
+
+The deployer already updates the production Cloud Run service. Verify that its Cloud Run role also permits creating, updating, and executing jobs before changing project-level IAM:
+
+```bash
+gcloud projects get-iam-policy vexorionerp-production \
+  --flatten='bindings[].members' \
+  --filter='bindings.members:serviceAccount:vexorionerp-github-production@vexorionerp-production.iam.gserviceaccount.com AND bindings.role:roles/run' \
+  --format='table(bindings.role)'
+```
+
+An existing `roles/run.admin` binding covers the workflow. Do not add another Cloud Run role if it is already present.
 
 ## 9. Configure the GitHub production environment
 
@@ -172,6 +211,9 @@ GCP_PROJECT_ID=vexorionerp-production
 GCP_REGION=asia-southeast2
 GCP_ARTIFACT_REPOSITORY=vexorionerp-api
 GCP_CLOUD_RUN_SERVICE=vexorionerp-api-production
+GCP_MIGRATION_JOB=vexorionerp-db-migrate-production
+GCP_MIGRATION_SERVICE_ACCOUNT=vexorionerp-migration-prod@vexorionerp-production.iam.gserviceaccount.com
+GCP_MIGRATION_CONNECTION_SECRET=vexorionerp-production-db-migration-connection
 GCP_IMAGE_NAME=api
 GCP_WORKLOAD_IDENTITY_PROVIDER=projects/<project-number>/locations/global/workloadIdentityPools/github-actions/providers/vexorionerp-master
 GCP_DEPLOY_SERVICE_ACCOUNT=vexorionerp-github-production@vexorionerp-production.iam.gserviceaccount.com
@@ -188,8 +230,10 @@ Push an approved commit to `master`. `.github/workflows/backend.yml` will:
 3. Build the .NET 10 container with the Six Labors license as a BuildKit secret.
 4. Push the SHA-tagged image to Artifact Registry.
 5. Resolve its immutable digest.
-6. Update Cloud Run to that digest.
-7. Verify `/health/live` and `/health/ready`.
+6. Deploy and execute the database migration job with that digest.
+7. Stop without changing API traffic if migration fails.
+8. Update the API service to that same digest.
+9. Verify `/health/live` and `/health/ready`.
 
 ## 11. Verify production
 
@@ -228,6 +272,8 @@ Cloud Run retains revisions. Move 100% traffic to the previously verified revisi
 - [ ] Runtime and deployer use separate service accounts.
 - [ ] No service-account key exists.
 - [ ] Runtime secret access is resource-scoped.
+- [ ] Migration identity can read only the direct Neon migration secret; the API runtime cannot read it.
+- [ ] Deployer can manage/execute the migration job and act as its service account without reading the secret value.
 - [ ] GitHub OIDC trust is repository, branch, owner, and workflow restricted.
 - [ ] Cloud Run is min 0, max 1, and health checks pass.
 - [ ] Runtime secrets exist only in Secret Manager.

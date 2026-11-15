@@ -75,25 +75,27 @@ public class TenantOnboardingServiceTests
     };
 
     [Fact]
-    public async Task Onboard_WhenSecondTenantAndNotSystemAdmin_Returns403()
+    public async Task Onboard_WhenSecondTenantAndAnonymous_SucceedsWithTenantAdminOnly()
     {
-        var dbName = nameof(Onboard_WhenSecondTenantAndNotSystemAdmin_Returns403);
+        var dbName = nameof(Onboard_WhenSecondTenantAndAnonymous_SucceedsWithTenantAdminOnly);
         var (dbContext, userManager, scope) = IdentityTestHelper.CreateScopedServices(dbName);
         await using (scope as IAsyncDisposable ?? (IAsyncDisposable?)null)
         {
-            // Seed an existing tenant so hasExistingTenants == true
+            await IdentityTestHelper.SeedRolesAsync(scope);
             dbContext.Tenants.Add(new Tenant { Id = Guid.NewGuid(), Name = "Existing", Code = "EX" });
             await dbContext.SaveChangesAsync();
 
             var service = new TenantOnboardingService(dbContext, userManager, new NoOpAuditLogger(), DefaultGovernanceOptions);
-            // Principal without SystemAdmin role
-            var principal = new ClaimsPrincipal(new ClaimsIdentity(
-                [new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString())], "Test"));
+            var principal = new ClaimsPrincipal(new ClaimsIdentity());
 
             var result = await service.OnboardAsync(ValidRequest("ACME"), principal);
 
-            Assert.False(result.Succeeded);
-            Assert.Equal(StatusCodes.Status403Forbidden, result.StatusCode);
+            Assert.True(result.Succeeded);
+            var user = await userManager.FindByIdAsync(result.Value!.AdminUserId.ToString());
+            Assert.NotNull(user);
+            var roles = await userManager.GetRolesAsync(user);
+            Assert.Contains(AppRoles.TenantAdmin, roles);
+            Assert.DoesNotContain(AppRoles.SystemAdmin, roles);
         }
     }
 
@@ -109,7 +111,7 @@ public class TenantOnboardingServiceTests
             await dbContext.SaveChangesAsync();
 
             var service = new TenantOnboardingService(dbContext, userManager, new NoOpAuditLogger(), DefaultGovernanceOptions);
-            // Principal with SystemAdmin so the first guard is bypassed
+            // Duplicate tenant codes remain rejected for authenticated administrators too.
             var principal = new ClaimsPrincipal(new ClaimsIdentity(
                 [
                     new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
@@ -143,6 +145,11 @@ public class TenantOnboardingServiceTests
             Assert.NotEqual(Guid.Empty, result.Value!.TenantId);
             Assert.NotEqual(Guid.Empty, result.Value.AdminUserId);
             Assert.NotEqual(Guid.Empty, result.Value.CompanyId);
+            var user = await userManager.FindByIdAsync(result.Value.AdminUserId.ToString());
+            Assert.NotNull(user);
+            var roles = await userManager.GetRolesAsync(user);
+            Assert.Contains(AppRoles.SystemAdmin, roles);
+            Assert.Contains(AppRoles.TenantAdmin, roles);
         }
     }
 }

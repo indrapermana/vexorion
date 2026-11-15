@@ -169,6 +169,22 @@ public sealed class ApplicationProvisioningTests
     }
 
     [Fact]
+    public void ProductionMigrationConfiguration_RequiresOnlyMigrationConnection()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["ConnectionStrings:MigrationConnection"] = "Host=db;Database=vexorion;Username=migrator;Password=StrongDatabasePassword!;Ssl Mode=VerifyFull"
+            })
+            .Build();
+
+        ProductionConfigurationValidator.Validate(
+            configuration,
+            ProductionEnvironment(),
+            ApplicationOperation.Migrate);
+    }
+
+    [Fact]
     public void ProductionConfiguration_AcceptsManagedR2Values()
     {
         var configuration = new ConfigurationBuilder()

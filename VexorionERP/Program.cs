@@ -94,6 +94,7 @@ const string ShortLivedAuthorizedGetPolicy = "ShortLivedAuthorizedGet";
 const string TenantRateLimitPolicy = "tenant-fixed";
 const string ClientDiagnosticsRateLimitPolicy = "client-diagnostics";
 const string PasswordResetRateLimitPolicy = "password-reset";
+const string TenantOnboardingRateLimitPolicy = "tenant-onboarding";
 
 builder.Services.AddApplicationIdentity(builder.Configuration);
 builder.Services.AddApplicationAuthorization();
@@ -194,6 +195,16 @@ builder.Services.AddRateLimiter(options =>
             {
                 Window = TimeSpan.FromMinutes(1),
                 PermitLimit = 20,
+                QueueLimit = 0,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst
+            }));
+    options.AddPolicy(TenantOnboardingRateLimitPolicy, context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                Window = TimeSpan.FromHours(1),
+                PermitLimit = 5,
                 QueueLimit = 0,
                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst
             }));

@@ -7,16 +7,16 @@ import { useUnsavedChangesPrompt } from '../hooks/useUnsavedChangesPrompt'
 import type { OnboardTenantRequest, OnboardTenantResponse, ValidationProblem } from '../types/api'
 
 const initialForm: OnboardTenantRequest = {
-  tenantName: 'Northwind Fabrication',
-  tenantCode: 'northwind',
-  domain: 'northwind.local',
-  companyName: 'Northwind Fabrication Ltd',
-  companyCode: 'NWF',
-  adminUserName: 'owner',
-  adminEmail: 'owner@northwind.local',
-  adminPassword: 'OwnerStart123!',
-  firstName: 'Nadia',
-  lastName: 'Wong',
+  tenantName: '',
+  tenantCode: '',
+  domain: '',
+  companyName: '',
+  companyCode: '',
+  adminUserName: '',
+  adminEmail: '',
+  adminPassword: '',
+  firstName: '',
+  lastName: '',
 }
 
 export default function TenantsPage() {
@@ -81,34 +81,34 @@ export default function TenantsPage() {
 
       <VxGrid container spacing={2}>
         <VxGrid size={{ xs: 12, md: 6 }}>
-          <VxTextField fullWidth label={t('pages.auth.tenants.fields.tenantName')} value={form.tenantName} onChange={(event) => setField('tenantName', event.target.value)} error={Boolean(validation?.TenantName)} helperText={validation?.TenantName?.[0]} />
+          <VxTextField fullWidth name="tenantName" autoComplete="organization" label={t('pages.auth.tenants.fields.tenantName')} value={form.tenantName} onChange={(event) => setField('tenantName', event.target.value)} error={Boolean(validation?.TenantName)} helperText={validation?.TenantName?.[0]} />
         </VxGrid>
         <VxGrid size={{ xs: 12, md: 6 }}>
-          <VxTextField fullWidth label={t('pages.auth.tenants.fields.tenantCode')} value={form.tenantCode} onChange={(event) => setField('tenantCode', event.target.value)} error={Boolean(validation?.TenantCode)} helperText={validation?.TenantCode?.[0] ?? t('pages.auth.tenants.tenantCodeHelp')} />
+          <VxTextField fullWidth name="tenantCode" autoComplete="off" label={t('pages.auth.tenants.fields.tenantCode')} value={form.tenantCode} onChange={(event) => setField('tenantCode', event.target.value)} error={Boolean(validation?.TenantCode)} helperText={validation?.TenantCode?.[0] ?? t('pages.auth.tenants.tenantCodeHelp')} />
         </VxGrid>
         <VxGrid size={{ xs: 12, md: 6 }}>
-          <VxTextField fullWidth label={t('pages.auth.tenants.fields.domain')} value={form.domain ?? ''} onChange={(event) => setField('domain', event.target.value)} error={Boolean(validation?.Domain)} helperText={validation?.Domain?.[0]} />
+          <VxTextField fullWidth name="domain" autoComplete="url" label={t('pages.auth.tenants.fields.domain')} value={form.domain ?? ''} onChange={(event) => setField('domain', event.target.value)} error={Boolean(validation?.Domain)} helperText={validation?.Domain?.[0]} />
         </VxGrid>
         <VxGrid size={{ xs: 12, md: 6 }}>
-          <VxTextField fullWidth label={t('pages.auth.tenants.fields.companyName')} value={form.companyName} onChange={(event) => setField('companyName', event.target.value)} error={Boolean(validation?.CompanyName)} helperText={validation?.CompanyName?.[0]} />
+          <VxTextField fullWidth name="companyName" autoComplete="organization" label={t('pages.auth.tenants.fields.companyName')} value={form.companyName} onChange={(event) => setField('companyName', event.target.value)} error={Boolean(validation?.CompanyName)} helperText={validation?.CompanyName?.[0]} />
         </VxGrid>
         <VxGrid size={{ xs: 12, md: 6 }}>
-          <VxTextField fullWidth label={t('pages.auth.tenants.fields.companyCode')} value={form.companyCode} onChange={(event) => setField('companyCode', event.target.value)} error={Boolean(validation?.CompanyCode)} helperText={validation?.CompanyCode?.[0]} />
+          <VxTextField fullWidth name="companyCode" autoComplete="off" label={t('pages.auth.tenants.fields.companyCode')} value={form.companyCode} onChange={(event) => setField('companyCode', event.target.value)} error={Boolean(validation?.CompanyCode)} helperText={validation?.CompanyCode?.[0]} />
         </VxGrid>
         <VxGrid size={{ xs: 12, md: 6 }}>
-          <VxTextField fullWidth label={t('pages.auth.tenants.fields.adminUserName')} value={form.adminUserName} onChange={(event) => setField('adminUserName', event.target.value)} error={Boolean(validation?.AdminUserName)} helperText={validation?.AdminUserName?.[0]} />
+          <VxTextField fullWidth name="adminUserName" autoComplete="username" label={t('pages.auth.tenants.fields.adminUserName')} value={form.adminUserName} onChange={(event) => setField('adminUserName', event.target.value)} error={Boolean(validation?.AdminUserName)} helperText={validation?.AdminUserName?.[0]} />
         </VxGrid>
         <VxGrid size={{ xs: 12, md: 6 }}>
-          <VxTextField fullWidth label={t('pages.auth.tenants.fields.adminEmail')} value={form.adminEmail} onChange={(event) => setField('adminEmail', event.target.value)} error={Boolean(validation?.AdminEmail)} helperText={validation?.AdminEmail?.[0]} />
+          <VxTextField fullWidth name="adminEmail" type="email" autoComplete="email" label={t('pages.auth.tenants.fields.adminEmail')} value={form.adminEmail} onChange={(event) => setField('adminEmail', event.target.value)} error={Boolean(validation?.AdminEmail)} helperText={validation?.AdminEmail?.[0]} />
         </VxGrid>
         <VxGrid size={{ xs: 12, md: 6 }}>
           <VxPasswordField fullWidth name="adminPassword" autoComplete="new-password" label={t('pages.auth.tenants.fields.adminPassword')} showPasswordLabel={t('pages.auth.login.showPassword')} hidePasswordLabel={t('pages.auth.login.hidePassword')} capsLockMessage={t('pages.auth.login.capsLockOn')} value={form.adminPassword} onChange={(event) => setField('adminPassword', event.target.value)} error={Boolean(validation?.AdminPassword) || (form.adminPassword.length > 0 && !isPasswordPolicyMet(form.adminPassword))} helperText={validation?.AdminPassword?.[0] ?? t('pages.auth.login.passwordPolicy')} />
         </VxGrid>
         <VxGrid size={{ xs: 12, md: 6 }}>
-          <VxTextField fullWidth label={t('pages.auth.tenants.fields.firstName')} value={form.firstName} onChange={(event) => setField('firstName', event.target.value)} error={Boolean(validation?.FirstName)} helperText={validation?.FirstName?.[0]} />
+          <VxTextField fullWidth name="firstName" autoComplete="given-name" label={t('pages.auth.tenants.fields.firstName')} value={form.firstName} onChange={(event) => setField('firstName', event.target.value)} error={Boolean(validation?.FirstName)} helperText={validation?.FirstName?.[0]} />
         </VxGrid>
         <VxGrid size={{ xs: 12, md: 6 }}>
-          <VxTextField fullWidth label={t('pages.auth.tenants.fields.lastName')} value={form.lastName} onChange={(event) => setField('lastName', event.target.value)} error={Boolean(validation?.LastName)} helperText={validation?.LastName?.[0]} />
+          <VxTextField fullWidth name="lastName" autoComplete="family-name" label={t('pages.auth.tenants.fields.lastName')} value={form.lastName} onChange={(event) => setField('lastName', event.target.value)} error={Boolean(validation?.LastName)} helperText={validation?.LastName?.[0]} />
         </VxGrid>
       </VxGrid>
 

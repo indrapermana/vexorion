@@ -41,6 +41,11 @@ describe('LoginPage', () => {
     expect(screen.getByLabelText('pages.auth.login.password', { selector: 'input' })).toHaveAttribute('autocomplete', 'current-password')
   })
 
+  it('links new users to public workspace registration', () => {
+    renderPage()
+    expect(screen.getByRole('link', { name: 'pages.auth.login.createTenantLink' })).toHaveAttribute('href', '/tenants')
+  })
+
   it('toggles password visibility', () => {
     renderPage()
     const input = screen.getByLabelText('pages.auth.login.password', { selector: 'input' })

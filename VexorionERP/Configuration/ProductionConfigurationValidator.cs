@@ -47,6 +47,14 @@ public static class ProductionConfigurationValidator
                 $"ConnectionStrings:{connectionName} is not a valid PostgreSQL connection string.", exception);
         }
 
+        // A migration job receives only its dedicated Neon migrator credential.
+        // Runtime JWT, storage, email, and bootstrap secrets are intentionally not
+        // exposed to that job.
+        if (operation == ApplicationOperation.Migrate)
+        {
+            return;
+        }
+
         RequireSecret("Jwt:SecretKey", configuration["Jwt:SecretKey"]);
 
         var bootstrapPassword = configuration["Bootstrap:AdminPassword"];

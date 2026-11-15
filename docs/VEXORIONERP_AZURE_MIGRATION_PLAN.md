@@ -399,7 +399,7 @@ Cloud Run production evidence (owner-confirmed, 2026-10-21):
 - The runtime identity has resource-level accessor bindings only on the production Neon connection, JWT key, R2 access-key ID, R2 secret key, and Grafana Loki API-key secrets. Non-secret R2 and Loki identifiers are managed as Cloud Run environment variables.
 - Cloud Logging remains active through console output and Grafana Loki is enabled as a second sink with a log-write credential. The credential exposed during local diagnostic review was rotated before production configuration.
 - Liveness, Neon-backed readiness, anonymous HTTP 401 behavior, authenticated admin login, current-user access, permissions, and Loki ingestion were owner-confirmed.
-- The production GitHub workflow passed its complete build/test, OIDC exchange, image push, immutable-digest deployment, and live/ready verification. No long-lived Google key or runtime secret was supplied to GitHub.
+- The production GitHub workflow builds/tests and pushes an immutable digest, runs that digest through a restricted Cloud Run migration job, and only then deploys the API service and verifies live/ready health. No long-lived Google key, runtime secret, or migration credential is supplied to GitHub.
 - A reversible production smoke test created a temporary category and project, uploaded a text document to R2, verified a byte-identical signed download, deleted the document, confirmed the prior signed URL and API record returned HTTP 404, and removed the project/category. Audit history remains by design.
 - Traffic was rolled back from CI revision `vexorionerp-api-production-00002-tjs` to the previous healthy revision `vexorionerp-api-production-00001-c49`; live, ready, anonymous 401, and authenticated login passed. Traffic was restored to `00002-tjs` and both health checks passed.
 - Exact CORS preflight behavior passed for Main UI, Admin UI, and POS. All three Cloudflare applications were rebuilt against the production Cloud Run `/api` URL and owner-confirmed login succeeded.
@@ -422,10 +422,10 @@ CI/CD implementation evidence (2026-10-21):
 
 - The former staging workflow completed successfully and its post-deployment live/ready checks returned `Healthy`; this is historical rehearsal evidence, not production CI evidence.
 - The production workload identity pool `github-actions` and provider `vexorionerp-master` restrict OIDC assertions to repository `indrapermana/vexorion`, `refs/heads/master`, and `.github/workflows/backend.yml`.
-- Dedicated deployer `vexorionerp-github-production` can update Cloud Run in the production project, push only to the production Artifact Registry repository, and act as the production runtime identity. It cannot read runtime secrets and has no user-managed service-account key.
-- The backend workflow runs the full build/test gate before building and pushing a commit-SHA-tagged image, resolves its registry digest, deploys the digest, and verifies both health endpoints.
+- Dedicated deployer `vexorionerp-github-production` can update the production Cloud Run service and migration job, execute the job, push only to the production Artifact Registry repository, and act as the separate runtime and migration identities. It cannot read their secrets and has no user-managed service-account key.
+- The backend workflow runs the full build/test gate before building and pushing a commit-SHA-tagged image, resolves its registry digest, applies pending migrations with that digest, deploys the same digest only after migration success, and verifies both health endpoints.
 - The Six Labors license is supplied to Docker only as a BuildKit secret. Google-generated `gha-creds-*.json` files are excluded from Git and the Docker build context.
-- The GitHub `production` environment has seven deployment variables, the `SIXLABORS_LICENSE_FILE` build secret, and the master-branch restriction. The first production workflow deployment passed. Runtime secrets remain in Google Secret Manager and are injected directly by Cloud Run; they are intentionally not duplicated in GitHub.
+- The GitHub `production` environment includes the Cloud Run migration job/service-account/secret-resource names alongside the existing deployment variables, the `SIXLABORS_LICENSE_FILE` build secret, and the master-branch restriction. Runtime and migration secrets remain in Google Secret Manager and are injected directly by Cloud Run; they are intentionally not duplicated in GitHub.
 
 ### MIG-M05 — Production hostname decision
 

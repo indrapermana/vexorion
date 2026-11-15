@@ -66,6 +66,8 @@ Any capability requiring pending release evidence remains **implemented**, **loc
 - [x] CI definitions for backend, frontend builds/tests, and credential-gated E2E jobs.
 - [x] Current frontend production build succeeds.
 - [x] Normal API startup performs read-only database/schema validation; migrations and bootstrap run only through explicit `migrate`, `bootstrap`, or `provision` operations.
+- [x] Production backend deployment runs the immutable image as a restricted Cloud Run migration job before updating API traffic; migration failure leaves the previous revision active. The API runtime and migration identities use separate Neon credentials.
+- [x] Public Main UI registration creates a new tenant, company, and tenant administrator. Subsequent tenants receive `TenantAdmin` only; the first tenant in a completely empty system retains the `SystemAdmin` bootstrap exception. The endpoint has a dedicated per-IP rate limit.
 - [x] Local development configuration is Git-ignored with a tracked sanitized example; production configuration contains no database, JWT, bootstrap, storage, or logging secret values.
 - [x] Azure and Cloudflare R2 storage adapters remain provider-selectable in code. Production uses the integration-validated R2 provider: documents use private object keys and signed reads, while product images use a separate bucket and HTTPS public custom domain. All former Azure resources and credentials are retired.
 - [x] Main UI, Admin UI, POS, and the public landing page are deployed through Cloudflare Pages; owner-confirmed login smoke evidence exists for all three authenticated applications.
@@ -774,7 +776,7 @@ POS implementation items are complete. Retain the POS Admin responsive and recov
 
 ### Shared and release operations
 
-- [ ] Apply/verify migrations on a clean database and production-like upgraded snapshot; rehearse rollback/forward-fix. POS-02 has clean-database and owner-confirmed production-like migration evidence; broader release rehearsal remains open.
+- [ ] Verify the automated Cloud Run migration job on a clean database and production-like upgraded snapshot; rehearse failure, rollback, and forward-fix. POS-02 has clean-database and owner-confirmed production-like migration evidence; broader release rehearsal remains open.
 - [ ] Create support runbook, admin training, incident paths, backup/restore evidence, and release smoke checklist.
 - [ ] Complete parked `MIG-M06` backup/disaster-recovery design and exercise, including recovery objectives, restore verification, and operator procedures.
 - [ ] Add dashboards/alerts for API 5xx, authorization denials, import/document/storage failures, checkout failures, latency, throttling, and quota blocks.

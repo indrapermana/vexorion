@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
 using VexorionERP.Database;
 
 namespace VexorionERP;
@@ -64,6 +65,15 @@ public static class ApplicationInitializationExtensions
         }
 
         configuration["ConnectionStrings:DefaultConnection"] = privilegedConnection;
+
+        // Migration-only Cloud Run jobs do not need the runtime JWT secret, but the
+        // shared service graph validates JWT configuration while it is being built.
+        // Use a process-local value that is never persisted or used to issue tokens.
+        if (operation == ApplicationOperation.Migrate &&
+            string.IsNullOrWhiteSpace(configuration["Jwt:SecretKey"]))
+        {
+            configuration["Jwt:SecretKey"] = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+        }
     }
 
     public static async Task ValidateApplicationRuntimeAsync(this WebApplication app)

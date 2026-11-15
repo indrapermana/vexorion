@@ -96,12 +96,13 @@ Do not replace `VerifyFull` with `Require`; `VerifyFull` provides stricter hostn
 
 ## 5. Apply EF Core migrations
 
-Supply secrets only for the current shell or through a secure local environment file. The explicit operation prevents ordinary API startup from changing the schema.
+Normal production deployments apply migrations through the restricted Cloud Run migration job documented in [GOOGLE_CLOUD_RUN_PRODUCTION_SETUP.md](GOOGLE_CLOUD_RUN_PRODUCTION_SETUP.md). The normal API service still performs read-only schema validation and never receives the migrator credential.
+
+Use this manual command only for initial provisioning, authorized recovery, or local verification. Supply secrets only for the current shell or through a secure local environment file:
 
 ```bash
 ASPNETCORE_ENVIRONMENT=Production \
 ConnectionStrings__MigrationConnection='<direct-migration-connection>' \
-Jwt__SecretKey='<temporary-valid-jwt-secret>' \
 dotnet run \
   --project VexorionERP/VexorionERP.csproj \
   --no-launch-profile \
