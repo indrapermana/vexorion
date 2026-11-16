@@ -35,6 +35,19 @@ public class ReportingControllerAuthorizationTests : IClassFixture<TestWebApplic
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
+    [Theory]
+    [InlineData("ar-aging/export")]
+    [InlineData("ap-aging/export")]
+    public async Task Reports_AgingExport_WithoutReportsView_ReturnsForbidden(string route)
+    {
+        var client = _factory.CreateClient();
+        client.SetBearerToken(Guid.NewGuid(), AppPermissions.Inventory.View);
+
+        var response = await client.GetAsync($"/api/reports/{route}");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
     [Fact]
     public async Task Reports_TrialBalance_WithBillingView_ReturnsOk()
     {

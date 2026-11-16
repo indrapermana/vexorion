@@ -141,6 +141,24 @@ public class ReportsController(IMediator mediator) : ServiceResultControllerBase
         return ToActionResult(result);
     }
 
+    [HttpGet("ar-aging/export")]
+    [Authorize(Policy = AppPermissions.Reports.View)]
+    public async Task<IActionResult> ExportArAging([FromQuery] DateOnly? asOfDate)
+    {
+        var effectiveDate = asOfDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
+        var result = await mediator.Send(new GetArAgingQuery(effectiveDate));
+        if (!result.Succeeded)
+            return ToActionResult(result).Result ?? BadRequest();
+
+        var r = result.Value!;
+        var sb = new StringBuilder();
+        sb.AppendLine("Customer Number,Customer Name,Currency,Current,1-30,31-60,61-90,Over 90,Total");
+        foreach (var item in r.Items)
+            sb.AppendLine($"{CsvEscape(item.CustomerNumber)},{CsvEscape(item.CustomerName)},{CsvEscape(item.CurrencyCode)},{item.Buckets.Current},{item.Buckets.Due1To30},{item.Buckets.Due31To60},{item.Buckets.Due61To90},{item.Buckets.DueOver90},{item.Buckets.Total}");
+        sb.AppendLine($"TOTAL,,,{r.Totals.Current},{r.Totals.Due1To30},{r.Totals.Due31To60},{r.Totals.Due61To90},{r.Totals.DueOver90},{r.Totals.Total}");
+        return File(Encoding.UTF8.GetBytes(sb.ToString()), "text/csv", $"ar-aging-{effectiveDate:yyyy-MM-dd}.csv");
+    }
+
     [HttpGet("ap-aging")]
     [Authorize(Policy = AppPermissions.Reports.View)]
     [OutputCache(PolicyName = "ShortLivedAuthorizedGet")]
@@ -149,6 +167,24 @@ public class ReportsController(IMediator mediator) : ServiceResultControllerBase
         var effectiveDate = asOfDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
         var result = await mediator.Send(new GetApAgingQuery(effectiveDate));
         return ToActionResult(result);
+    }
+
+    [HttpGet("ap-aging/export")]
+    [Authorize(Policy = AppPermissions.Reports.View)]
+    public async Task<IActionResult> ExportApAging([FromQuery] DateOnly? asOfDate)
+    {
+        var effectiveDate = asOfDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
+        var result = await mediator.Send(new GetApAgingQuery(effectiveDate));
+        if (!result.Succeeded)
+            return ToActionResult(result).Result ?? BadRequest();
+
+        var r = result.Value!;
+        var sb = new StringBuilder();
+        sb.AppendLine("Supplier Number,Supplier Name,Currency,Current,1-30,31-60,61-90,Over 90,Total");
+        foreach (var item in r.Items)
+            sb.AppendLine($"{CsvEscape(item.SupplierNumber)},{CsvEscape(item.SupplierName)},{CsvEscape(item.CurrencyCode)},{item.Buckets.Current},{item.Buckets.Due1To30},{item.Buckets.Due31To60},{item.Buckets.Due61To90},{item.Buckets.DueOver90},{item.Buckets.Total}");
+        sb.AppendLine($"TOTAL,,,{r.Totals.Current},{r.Totals.Due1To30},{r.Totals.Due31To60},{r.Totals.Due61To90},{r.Totals.DueOver90},{r.Totals.Total}");
+        return File(Encoding.UTF8.GetBytes(sb.ToString()), "text/csv", $"ap-aging-{effectiveDate:yyyy-MM-dd}.csv");
     }
 
     [HttpGet("trial-balance")]

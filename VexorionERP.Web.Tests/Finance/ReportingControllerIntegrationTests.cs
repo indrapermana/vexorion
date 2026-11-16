@@ -48,6 +48,26 @@ public class ReportingControllerIntegrationTests : IClassFixture<TestWebApplicat
         Assert.Empty(payload.Items);
     }
 
+    [Theory]
+    [InlineData("ar-aging/export?asOfDate=2026-04-30", "Customer Number,Customer Name,Currency", "TOTAL,,,")]
+    [InlineData("ap-aging/export?asOfDate=2026-04-30", "Supplier Number,Supplier Name,Currency", "TOTAL,,,")]
+    public async Task Reports_AgingExport_EmptyState_ReturnsCsv(
+        string route,
+        string expectedHeader,
+        string expectedTotal)
+    {
+        var client = _factory.CreateClient();
+        client.SetBearerToken(Guid.NewGuid(), AppPermissions.Reports.View);
+
+        var response = await client.GetAsync($"/api/reports/{route}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("text/csv", response.Content.Headers.ContentType?.MediaType);
+        var content = await response.Content.ReadAsStringAsync();
+        Assert.Contains(expectedHeader, content);
+        Assert.Contains(expectedTotal, content);
+    }
+
     [Fact]
     public async Task Reports_TrialBalance_EmptyState_ReturnsReportEnvelope()
     {

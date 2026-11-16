@@ -22,13 +22,13 @@ This matrix cross-references the 118 manual cases in `VexorionERP_FULL_REGRESSIO
 | Sales | 9 | 0 | 5 | 4 |
 | Purchasing | 8 | 0 | 4 | 4 |
 | Inventory | 11 | 8 | 0 | 3 |
-| Finance | 13 | 0 | 7 | 6 |
+| Finance | 13 | 8 | 4 | 1 |
 | Projects | 7 | 0 | 6 | 1 |
 | Imports | 4 | 3 | 1 | 0 |
 | POS | 18 | 2 | 13 | 3 |
 | Security | 5 | 0 | 2 | 3 |
 | Operations | 7 | 0 | 2 | 5 |
-| **Total** | **118** | **13** | **71** | **34** |
+| **Total** | **118** | **21** | **68** | **29** |
 
 ## Foundation
 
@@ -130,15 +130,15 @@ This matrix cross-references the 118 manual cases in `VexorionERP_FULL_REGRESSIO
 |---|---|---|---|
 | FIN-001 | Partial | `finance-workflow.spec.ts` TC-1.8.1.1–1.8.1.3 | List/create/empty-code validation are covered; update/delete/invariants/dependencies are not. |
 | FIN-002 | Partial | `finance-workflow.spec.ts` TC-1.8.2.1–1.8.2.3 | List/create/required code are covered; calendar agreement, overlap, and status lifecycle are not. |
-| FIN-003 | Partial | `finance-workflow.spec.ts` journal-page controls | Posting UI is covered; balanced/unbalanced journal posting and account balances are not. |
-| FIN-004 | Missing | None | Closed/uncovered-period posting controls are not automated. |
-| FIN-005 | Partial | `finance-workflow.spec.ts` TC-1.8.3.2/.3/.5 | Disabled prerequisites are covered; successful balanced posting/source linkage/deduplication are not. |
-| FIN-006 | Partial | `finance-workflow.spec.ts` TC-1.8.4 | Disabled reversal prerequisites are covered; successful/invalid/single-use reversal is not. |
+| FIN-003 | Full | `finance-lifecycle.spec.ts` FIN-003/004/006/008/009/010 | Balanced journals post once, unbalanced creation fails causally, and report balances reconcile to posted lines. |
+| FIN-004 | Full | `finance-lifecycle.spec.ts` FIN-003/004/006/008/009/010 | Uncovered creation and closed-period posting are rejected; reopening permits the same valid draft to post. |
+| FIN-005 | Full | `finance-lifecycle.spec.ts` FIN-005/011 | Sales/purchase invoices and both payment types create balanced, correctly-accounted, source-linked journals; duplicate posting is rejected. |
+| FIN-006 | Full | `finance-lifecycle.spec.ts` FIN-003/004/006/008/009/010 | Reversal posts exact opposite lines and links the source; a repeated reversal is rejected. |
 | FIN-007 | Partial | `dashboard.spec.ts` UX-DASH-01–03 and TC-M-006–009 | Dashboard data presentation/retry is covered; reconciliation to reports is not. |
-| FIN-008 | Missing | Reports route smoke only | Trial-balance calculation, balance, scope, and export are not automated. |
-| FIN-009 | Missing | Reports route smoke only | P&L signs, subtotals, comparison, drill-down, and export are not automated. |
-| FIN-010 | Missing | Reports route smoke only | Balance Sheet equation, drill-down, and journal trace are not automated. |
-| FIN-011 | Missing | Dashboard aging presentation only | Due-date buckets, outstanding balances, currency separation, and export are not reconciled. |
+| FIN-008 | Full | `finance-lifecycle.spec.ts` FIN-003/004/006/008/009/010 | Trial Balance debit/credit equality, cumulative account balances, scope, totals, and CSV equivalence are asserted. |
+| FIN-009 | Full | `finance-lifecycle.spec.ts` FIN-003/004/006/008/009/010 | Current/prior revenue, expenses, net income, account drill-down, and CSV subtotals reconcile. |
+| FIN-010 | Full | `finance-lifecycle.spec.ts` FIN-003/004/006/008/009/010 | Assets equal liabilities plus equity/current earnings; account lines and CSV totals reconcile to journal history. |
+| FIN-011 | Full | `finance-lifecycle.spec.ts` FIN-005/011 | AR/AP current and overdue buckets, partial/paid balances, currency separation, totals, and CSV exports reconcile. |
 | FIN-012 | Missing | Dashboard targeted failure states only | Report no-data and date-boundary rules are not automated. |
 | FIN-013 | Partial | `finance.spec.ts` TC-M-046/047; `permissions.spec.ts` TC-4.1.5 | Page/list access is covered; action completeness, actor/tenant/trace accuracy, and secret absence are not. |
 
@@ -214,8 +214,8 @@ Implement one independently reviewable workflow at a time in this order:
 
 1. **P0-AUTO-01 — Inventory lifecycle and reconciliation — completed 16 November 2026**  
    INV-001 through INV-007 and INV-011 now use real completion/cancellation, movement, balance, immutability, insufficient-stock, and duplicate-effect assertions in an isolated automation tenant.
-2. **P0-AUTO-02 — Financial posting and reports**  
-   Cover FIN-003 through FIN-006 and FIN-008 through FIN-011 with seeded journals and explicit accounting reconciliation.
+2. **P0-AUTO-02 — Financial posting and reports — completed 16 November 2026**
+   FIN-003 through FIN-006 and FIN-008 through FIN-011 now reconcile posting, period gates, reversal, statements, drill-down, aging, currencies, and CSV exports in an isolated automation tenant.
 3. **P0-AUTO-03 — Trade source, concurrency, and persistence**  
    Cover SAL-001/003–008 and PUR-001/003–007, including source quantities, immutable states, concurrency, allocation, inventory, and ledger effects.
 4. **P0-AUTO-04 — POS full refund and hard stock conflict**  
