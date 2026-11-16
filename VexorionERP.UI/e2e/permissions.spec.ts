@@ -33,14 +33,11 @@ test('TC-4.1.1: unauthenticated API call returns 401', async () => {
 
 test('TC-4.1.2: navigating to protected route without auth redirects to login', async ({ browser }) => {
   // Fresh context — no stored auth
-  const context = await browser.newContext()
+  const context = await browser.newContext({ storageState: { cookies: [], origins: [] } })
   const page = await context.newPage()
 
   await page.goto('/customers')
-  await page.waitForLoadState('networkidle')
-
-  // Should redirect to login
-  expect(page.url()).toContain('/login')
+  await expect(page).toHaveURL(/\/login/, { timeout: 10_000 })
   await context.close()
 })
 

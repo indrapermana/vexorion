@@ -178,7 +178,7 @@ test.describe('Dashboard', () => {
     await dashboardPage.goto()
     await dashboardPage.waitForLoad()
     // At least some numeric value is displayed (revenue, totals, etc.)
-    await expect(page.locator('text=/[0-9]/')).toBeVisible({ timeout: 8_000 })
+    await expect(page.locator('text=/[0-9]/').first()).toBeVisible({ timeout: 8_000 })
   })
 
   test('TC-M-009: no unhandled error boundary shown', async ({ page, dashboardPage }) => {

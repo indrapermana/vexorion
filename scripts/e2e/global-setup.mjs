@@ -8,6 +8,7 @@ import {
   readLifecycleDiagnostics,
   readRunMetadata,
   runMetadataPath,
+  seedE2ETenant,
   shouldRetainTenant,
   writeLifecycleDiagnostics,
   writeRunMetadata,
@@ -42,6 +43,10 @@ export default async function globalSetup(config) {
     run = await provisionE2ETenant({ application })
     writeRunMetadata(metadataPath, run)
     events.push({ stage: 'provision', status: 'passed', tenantCode: run.tenantCode, tenantId: run.tenantId })
+    if (application === 'vexorionerp-ui') {
+      await seedE2ETenant({ run })
+      events.push({ stage: 'fixture-seed', status: 'passed', tenantCode: run.tenantCode })
+    }
     writeLifecycleDiagnostics(lifecycleDiagnosticsPath, events)
     // AdminUI is a cross-tenant platform console. Its browser session must use
     // the verified SystemAdmin control identity while the isolated tenant

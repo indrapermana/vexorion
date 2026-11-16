@@ -89,7 +89,7 @@ test.describe('Stock Count Workflow', () => {
       if (await opt.isVisible()) await opt.click()
     }
 
-    const createBtn = dialog.getByRole('button', { name: /create stock count/i }).last()
+    const createBtn = dialog.getByRole('button', { name: /^save$/i })
     await createBtn.click()
 
     const stillOpen = await page.getByRole('dialog').isVisible()

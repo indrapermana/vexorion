@@ -22,8 +22,8 @@ test.describe('Customers', () => {
     await expect(dialog).toBeVisible({ timeout: 5_000 })
 
     const name = UNIQUE()
-    // Fill the name field (first text input in dialog)
-    await dialog.getByRole('textbox').first().fill(name)
+    await dialog.getByLabel(/customer number/i).fill(uid('CUST'))
+    await dialog.getByLabel(/customer name/i).fill(name)
 
     await crud.saveDialog()
     // Dialog should close

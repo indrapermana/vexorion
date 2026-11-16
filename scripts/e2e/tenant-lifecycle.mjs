@@ -140,6 +140,81 @@ export async function provisionE2ETenant({ application, environment = process.en
   }
 }
 
+export async function seedE2ETenant({ run, environment = process.env, fetchImpl = fetch }) {
+  const apiBaseUrl = validateE2ESafety(environment)
+  if (run.apiBaseUrl !== apiBaseUrl) throw new Error('Run metadata API URL does not match the fixture API URL.')
+
+  const session = await requestJson(fetchImpl, `${apiBaseUrl}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      tenantCode: run.tenantCode,
+      userNameOrEmail: run.username,
+      password: run.password,
+    }),
+  }, 'Automation tenant fixture login')
+  const headers = { Authorization: `Bearer ${session.accessToken}`, 'Content-Type': 'application/json' }
+  const suffix = run.runId.replace(/[^a-z0-9]/giu, '').slice(-10).toUpperCase()
+
+  const create = (path, body, operation) => requestJson(fetchImpl, `${apiBaseUrl}${path}`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(body),
+  }, operation)
+
+  const warehouse = await create('/warehouses', {
+    code: `E2E${suffix}`.slice(0, 20),
+    name: `E2E Primary Warehouse ${suffix}`,
+    locationDescription: 'Playwright isolated fixture',
+  }, 'Primary warehouse fixture')
+  await create('/warehouses', {
+    code: `E2B${suffix}`.slice(0, 20),
+    name: `E2E Secondary Warehouse ${suffix}`,
+    locationDescription: 'Playwright isolated fixture',
+  }, 'Secondary warehouse fixture')
+  const product = await create('/products', {
+    sku: `E2E-${suffix}`,
+    name: `E2E Product ${suffix}`,
+    unitOfMeasure: 'EA',
+    standardCost: 5,
+    salesPrice: 10,
+    reorderLevel: 0,
+  }, 'Product fixture')
+  await create('/customers', {
+    customerNumber: `E2E-${suffix}`,
+    name: `E2E Customer ${suffix}`,
+    creditLimit: 10000,
+  }, 'Customer fixture')
+  await create('/suppliers', {
+    supplierNumber: `E2E-${suffix}`,
+    name: `E2E Supplier ${suffix}`,
+    paymentTerms: 'Net 30',
+  }, 'Supplier fixture')
+  await create('/fiscal-periods', {
+    periodCode: `E2E-${suffix}`,
+    startDate: '2020-01-01',
+    endDate: '2035-12-31',
+    isClosed: false,
+  }, 'Fiscal period fixture')
+  for (const [code, name, accountType, normalBalance] of [
+    [`AR${suffix}`, 'E2E Accounts Receivable', 1, 1],
+    [`REV${suffix}`, 'E2E Revenue', 4, 2],
+    [`AP${suffix}`, 'E2E Accounts Payable', 2, 2],
+    [`EXP${suffix}`, 'E2E Expense', 5, 1],
+  ]) {
+    await create('/accounts', {
+      code: code.slice(0, 20),
+      name,
+      accountType,
+      normalBalance,
+      isPostingAllowed: true,
+      isActive: true,
+    }, `Account fixture (${name})`)
+  }
+
+  return { warehouseId: warehouse.id, productId: product.id }
+}
+
 export async function cleanupE2ETenant({ run, environment = process.env, fetchImpl = fetch }) {
   const apiBaseUrl = validateE2ESafety(environment)
   if (run.apiBaseUrl !== apiBaseUrl) throw new Error('Run metadata API URL does not match the cleanup API URL.')

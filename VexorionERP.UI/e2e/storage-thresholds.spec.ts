@@ -69,7 +69,8 @@ test('P1-1: show storage thresholds and reject uploads beyond the hard quota', a
     const tenantPage = await tenantContext.newPage()
     let thresholdStatus = 1
     let usedPercent = 80
-    await tenantPage.route(`**/api/tenants/${tenantId}/storage/summary`, async (route) => {
+    const storageSummaryRoute = '**/api/tenants/*/storage/summary**'
+    await tenantContext.route(storageSummaryRoute, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -92,22 +93,31 @@ test('P1-1: show storage thresholds and reject uploads beyond the hard quota', a
     await loginPage.login(tenantCode, tenantUsername, tenantPassword)
     await expect(tenantPage).not.toHaveURL(/\/login/, { timeout: 10_000 })
 
-    await expect(tenantPage.getByText('Warning', { exact: true })).toBeVisible()
+    // Login navigation can begin dashboard queries before the authenticated
+    // tenant state has settled. Reload once and wait for the intercepted
+    // tenant-scoped summary so the threshold assertion observes that response.
+    const initialSummary = tenantPage.waitForResponse((response) => response.url().includes('/storage/summary'))
+    await tenantPage.reload({ waitUntil: 'domcontentloaded' })
+    const initialSummaryResponse = await initialSummary
+    expect(initialSummaryResponse.url()).toContain(`/tenants/${tenantId}/storage/summary`)
+    await expect(initialSummaryResponse.json()).resolves.toMatchObject({ usedPercent: 80, thresholdStatus: 1 })
+
+    await expect(tenantPage.getByText('Near limit', { exact: true })).toBeVisible()
     await expect(tenantPage.getByText('80% used', { exact: true })).toBeVisible()
 
     thresholdStatus = 2
     usedPercent = 95
     await tenantPage.reload({ waitUntil: 'domcontentloaded' })
-    await expect(tenantPage.getByText('Soft block', { exact: true })).toBeVisible()
+    await expect(tenantPage.getByText('Upload restriction', { exact: true })).toBeVisible()
     await expect(tenantPage.getByText('95% used', { exact: true })).toBeVisible()
 
     thresholdStatus = 3
     usedPercent = 100
     await tenantPage.reload({ waitUntil: 'domcontentloaded' })
-    await expect(tenantPage.getByText('Hard block', { exact: true })).toBeVisible()
+    await expect(tenantPage.getByText('Uploads blocked', { exact: true })).toBeVisible()
     await expect(tenantPage.getByText('100% used', { exact: true })).toBeVisible()
 
-    await tenantPage.unroute(`**/api/tenants/${tenantId}/storage/summary`)
+    await tenantContext.unroute(storageSummaryRoute)
 
     const categoryId = expectSuccessfulFixture(
       await authenticatedApi<CreatedEntity>(tenantPage, '/project-categories', 'POST', {

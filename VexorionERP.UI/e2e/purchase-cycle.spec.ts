@@ -28,11 +28,12 @@ test.describe('Prerequisite: Supplier', () => {
     await page.waitForLoadState('networkidle')
 
     const dialog = await openAddDialog(page, /new supplier/i)
-    await fillField(page, /supplier number/i, uid('SUP'))
-    await fillField(page, /supplier name/i, uid('E2E Supplier'))
+    const supplierName = uid('E2E Supplier')
+    await fillField(page, /supplier number/i, uid('SUP').slice(0, 50))
+    await fillField(page, /supplier name/i, supplierName)
     await dialog.getByRole('button', { name: /create supplier/i }).click()
     await expect(dialog).not.toBeVisible({ timeout: 10_000 })
-    await expect(page.getByText(/e2e supplier/i)).toBeVisible({ timeout: 5_000 })
+    await expect(page.getByText(supplierName, { exact: true })).toBeVisible({ timeout: 5_000 })
   })
 })
 
@@ -89,7 +90,7 @@ test.describe('Purchase Order Workflow', () => {
     await dialog.getByRole('button', { name: /create purchase order/i }).click()
 
     await expect(dialog).toBeVisible({ timeout: 3_000 })
-    await expect(dialog.getByText(/required/i)).toBeVisible()
+    await expect(dialog.getByText(/order number is required/i)).toBeVisible()
     await dialog.getByRole('button', { name: /cancel/i }).click()
   })
 })
@@ -103,6 +104,13 @@ test.describe('Purchase Receipt Workflow', () => {
     await page.goto('/purchase-receipts')
     await page.waitForLoadState('networkidle')
 
+    const newReceipt = page.getByRole('button', { name: /new receipt/i }).first()
+    if (await newReceipt.isDisabled()) {
+      // A draft order is intentionally not eligible for receiving. The
+      // separate UX-TRADE-04 scenario covers the enabled confirmed-order flow.
+      await expect(newReceipt).toBeDisabled()
+      return
+    }
     const dialog = await openAddDialog(page, /new receipt/i)
     await fillField(page, /receipt number/i, uid('PR'))
     await selectFirstOption(page, /warehouse/i)
@@ -171,7 +179,7 @@ test.describe('Purchase Invoice Workflow', () => {
     await dialog.getByRole('button', { name: /create purchase invoice/i }).click()
 
     await expect(dialog).toBeVisible({ timeout: 3_000 })
-    await expect(dialog.getByText(/required/i)).toBeVisible()
+    await expect(dialog.getByText(/invoice number is required/i)).toBeVisible()
     await dialog.getByRole('button', { name: /cancel/i }).click()
   })
 })

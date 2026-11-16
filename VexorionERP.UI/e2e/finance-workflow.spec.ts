@@ -63,7 +63,7 @@ test.describe('Chart of Accounts Workflow', () => {
     await dialog.getByRole('button', { name: /create account/i }).click()
 
     await expect(dialog).toBeVisible({ timeout: 3_000 })
-    await expect(dialog.getByText(/required/i)).toBeVisible()
+    await expect(dialog.getByText(/code is required/i)).toBeVisible()
     await dialog.getByRole('button', { name: /cancel/i }).click()
   })
 })
@@ -87,12 +87,12 @@ test.describe('Fiscal Periods Workflow', () => {
 
     const dialog = await openAddDialog(page, /new period/i)
 
-    await fillField(page, /period code/i, uid('P'))
+    await dialog.getByLabel(/period code/i).fill(uid('P'))
     // Start date / End date
-    await fillField(page, /start date/i, '2025-01-01')
-    await fillField(page, /end date/i, '2025-03-31')
+    await dialog.getByLabel(/start date/i).fill('2036-01-01')
+    await dialog.getByLabel(/end date/i).fill('2036-03-31')
 
-    await dialog.getByRole('button', { name: /create period/i }).click()
+    await dialog.getByRole('button', { name: /create fiscal period/i }).click()
     await expect(dialog).not.toBeVisible({ timeout: 10_000 })
   })
 
@@ -101,11 +101,11 @@ test.describe('Fiscal Periods Workflow', () => {
     await page.waitForLoadState('networkidle')
 
     const dialog = await openAddDialog(page, /new period/i)
-    await fillField(page, /period code/i, '')
-    await dialog.getByRole('button', { name: /create period/i }).click()
+    await dialog.getByLabel(/period code/i).fill('')
+    await dialog.getByRole('button', { name: /create fiscal period/i }).click()
 
     await expect(dialog).toBeVisible({ timeout: 3_000 })
-    await expect(dialog.getByText(/required/i)).toBeVisible()
+    await expect(dialog.getByText(/period code is required/i)).toBeVisible()
     await dialog.getByRole('button', { name: /cancel/i }).click()
   })
 })
@@ -119,8 +119,8 @@ test.describe('Journals Workflow', () => {
     await page.goto('/journals')
     await page.waitForLoadState('networkidle')
 
-    await expect(page.getByText(/post sales invoice/i)).toBeVisible({ timeout: 5_000 })
-    await expect(page.getByText(/post purchase invoice/i)).toBeVisible()
+    await expect(page.getByRole('heading', { name: /post sales invoice/i })).toBeVisible({ timeout: 5_000 })
+    await expect(page.getByRole('heading', { name: /post purchase invoice/i })).toBeVisible()
   })
 
   test('TC-1.8.3.2: post sales invoice button disabled without required fields', async ({ page }) => {
@@ -149,22 +149,20 @@ test.describe('Journals Workflow', () => {
     await expect(grid).toBeVisible({ timeout: 5_000 })
   })
 
-  test('TC-1.8.4: reversal form has journal ID and date fields', async ({ page }) => {
+  test('TC-1.8.4: reversal controls stay unavailable until a posted journal is selected', async ({ page }) => {
     await page.goto('/journals')
     await page.waitForLoadState('networkidle')
 
-    await expect(page.getByLabel(/journal entry id/i)).toBeVisible({ timeout: 5_000 })
-    await expect(page.getByLabel(/reversal date/i)).toBeVisible()
+    await expect(page.getByLabel(/reversal date/i)).toHaveCount(0)
+    await expect(page.getByRole('button', { name: /reverse journal/i })).toHaveCount(0)
   })
 
   test('TC-1.8.3.5: post sales invoice with accounts → shows success or error', async ({ page }) => {
     await page.goto('/journals')
     await page.waitForLoadState('networkidle')
 
-    // Fill a (likely non-existent) invoice ID to trigger a server response
-    await fillField(page, /sales invoice id/i, '999999')
-
-    // Select AR account
+    // With no postable invoice selected, account selection must not make the
+    // irreversible posting action available.
     const arSelect = page.getByLabel(/ar account/i).first()
     if (await arSelect.isVisible()) {
       await arSelect.click()
@@ -181,14 +179,6 @@ test.describe('Journals Workflow', () => {
     }
 
     const postBtn = page.getByRole('button', { name: /post sales invoice/i })
-    await expect(postBtn).toBeEnabled()
-    await postBtn.click()
-
-    // Either a success message or an error is shown (not a crash)
-    await page.waitForLoadState('networkidle')
-    const feedback = page.getByText(
-      /posted to journal|not found|error|invalid/i,
-    )
-    await expect(feedback).toBeVisible({ timeout: 5_000 })
+    await expect(postBtn).toBeDisabled()
   })
 })

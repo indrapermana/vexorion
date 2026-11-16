@@ -31,13 +31,14 @@ test.describe('Config — Users', () => {
     await expect(page.getByText(/something went wrong/i)).not.toBeVisible()
   })
 
-  test('TC-M-051: create user dialog opens', async ({ page }) => {
-    const crud = new GenericCrudPage(page, '/config/users')
-    await crud.goto()
-    await crud.clickAdd()
-    const dialog = page.getByRole('dialog')
-    await expect(dialog).toBeVisible({ timeout: 5_000 })
-    await crud.closeDialog()
+  test('TC-M-051: create user form is available', async ({ page }) => {
+    await page.goto('/config/users')
+    await page.waitForLoadState('networkidle')
+    const form = page.getByRole('heading', { name: /create user/i }).locator('..')
+    await expect(form.getByLabel(/username/i)).toBeVisible()
+    await expect(form.getByLabel(/email/i)).toBeVisible()
+    await expect(form.getByLabel(/^password/i)).toBeVisible()
+    await expect(page.getByRole('button', { name: /create user/i })).toBeVisible()
   })
 })
 

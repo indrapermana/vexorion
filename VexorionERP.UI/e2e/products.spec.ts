@@ -163,15 +163,8 @@ test.describe('Products', () => {
     const name = UNIQUE()
     const sku = uid('SKU')
 
-    // Fill name — first textbox
-    await dialog.getByRole('textbox').nth(0).fill(name)
-    // Fill SKU — look for SKU-labelled field or second textbox
-    const skuField = dialog.getByLabel(/sku|code/i).first()
-    if (await skuField.isVisible()) {
-      await skuField.fill(sku)
-    } else {
-      await dialog.getByRole('textbox').nth(1).fill(sku)
-    }
+    await dialog.getByLabel(/product name/i).fill(name)
+    await dialog.getByLabel(/^sku/i).fill(sku)
 
     await crud.saveDialog()
     await expect(dialog).not.toBeVisible({ timeout: 8_000 })

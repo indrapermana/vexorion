@@ -135,6 +135,23 @@ type Fixtures = {
 }
 
 export const test = base.extend<Fixtures>({
+  storageState: async ({}, use) => {
+    await use({ cookies: [], origins: [] })
+  },
+  page: async ({ page }, use) => {
+    // The complete Main UI suite can exceed the normal access-token lifetime.
+    // Authenticate each test independently so refresh-token rotation or a long
+    // run cannot invalidate the shared setup snapshot for later scenarios.
+    await page.goto('/login')
+    const loginPage = new LoginPageObject(page)
+    await loginPage.login(
+      AUTH_CREDENTIALS.tenantCode,
+      AUTH_CREDENTIALS.username,
+      AUTH_CREDENTIALS.password,
+    )
+    await expect(page).not.toHaveURL(/\/login/, { timeout: 10_000 })
+    await use(page)
+  },
   loginPage: async ({ page }, use) => {
     await use(new LoginPageObject(page))
   },
