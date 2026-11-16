@@ -46,10 +46,14 @@ test('TC-A-021: user list shows table or empty state', async ({ page }) => {
 
 test('TC-A-022: tenant filter field is present and editable', async ({ page }) => {
   await gotoUsers(page)
-  const tenantFilter = page.getByLabel(/tenant filter/i)
+  const tenantFilter = page.getByRole('combobox', { name: /tenant filter/i })
   await expect(tenantFilter).toBeVisible({ timeout: 5_000 })
-  await tenantFilter.fill('demo')
-  await page.keyboard.press('Enter')
+  await tenantFilter.click()
+  const tenantOption = page.getByRole('option').filter({ hasNotText: /all tenants/i }).first()
+  await expect(tenantOption).toBeVisible()
+  const tenantName = (await tenantOption.textContent())?.trim() ?? ''
+  await tenantOption.click()
+  await expect(tenantFilter).toContainText(tenantName)
   // List should still load (not crash)
   await expect(page.getByText(/something went wrong/i)).not.toBeVisible()
 })
@@ -150,11 +154,20 @@ test('TC-A-026: reset password dialog opens for a user', async ({ page }) => {
 test('TC-A-027: enter new password and click reset', async ({ page }) => {
   await gotoUsers(page)
 
-  const resetBtn = page.getByRole('button', { name: /reset password/i }).first()
-  if (!(await resetBtn.isVisible({ timeout: 3_000 }).catch(() => false))) {
-    test.skip(true, 'No users in list')
-  }
-  await resetBtn.click()
+  const username = uid('password-target')
+  await page.getByRole('button', { name: /add tenant user/i }).click()
+  const createDialog = page.getByRole('dialog')
+  await createDialog.getByLabel(/username/i).fill(username)
+  await createDialog.getByLabel(/email/i).fill(`${username}@example.com`)
+  await createDialog.getByLabel(/^password$/i).fill('InitialPass@123!')
+  await createDialog.getByLabel(/first name/i).fill('Password')
+  await createDialog.getByLabel(/last name/i).fill('Target')
+  await createDialog.getByRole('button', { name: /create user/i }).click()
+  await expect(createDialog).not.toBeVisible({ timeout: 10_000 })
+
+  const userRow = page.getByRole('row').filter({ hasText: username })
+  await expect(userRow).toBeVisible()
+  await userRow.getByRole('button', { name: /reset password/i }).click()
 
   const dialog = page.getByRole('dialog')
   await expect(dialog).toBeVisible({ timeout: 5_000 })

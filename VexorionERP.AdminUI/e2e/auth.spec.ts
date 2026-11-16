@@ -41,16 +41,14 @@ test.describe('AdminUI Authentication', () => {
     )
     await expect(page).not.toHaveURL(/\/login/, { timeout: 10_000 })
 
-    const logoutBtn = page.getByRole('button', { name: /logout|sign out/i })
-    const avatarBtn = page.getByRole('button', { name: /account|avatar|user/i }).last()
-
-    if (await logoutBtn.isVisible()) {
-      await logoutBtn.click()
-    } else {
-      await avatarBtn.click()
-      await page.getByRole('menuitem', { name: /logout|sign out/i }).click()
-    }
+    const logoutBtn = page.getByRole('button', { name: /logout|sign out/i }).last()
+    await expect(logoutBtn).toBeVisible()
+    await logoutBtn.click()
 
     await expect(page).toHaveURL(/\/login/, { timeout: 5_000 })
+    await expect.poll(() => page.evaluate(() => {
+      const persisted = localStorage.getItem('auth-storage')
+      return persisted ? JSON.parse(persisted).state?.session ?? null : null
+    })).toBeNull()
   })
 })

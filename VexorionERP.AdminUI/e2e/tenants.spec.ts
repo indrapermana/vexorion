@@ -15,8 +15,9 @@ test.describe('Tenant List', () => {
 
   test('TC-A-006: tenant list shows active count', async ({ page, tenantsPage }) => {
     await tenantsPage.goto()
-    // Some numeric summary of tenants should be visible
-    await expect(page.locator('text=/\\d+/')).toBeVisible({ timeout: 5_000 })
+    const activeTenantCard = page.locator('.panel-card').filter({ hasText: /active tenants/i })
+    await expect(activeTenantCard).toBeVisible({ timeout: 5_000 })
+    await expect(activeTenantCard.getByText(/^\d+$/)).toBeVisible()
   })
 
   test('TC-A-007: tenant list shows table or empty state', async ({ page, tenantsPage }) => {
@@ -45,13 +46,31 @@ test.describe('Tenant Create', () => {
 
     const name = UNIQUE_NAME()
     const code = UNIQUE_CODE()
-    await tenantsPage.fillTenantForm(name, code)
+    const adminUserName = uid('tenantadmin').replace(/[^a-zA-Z0-9._-]/g, '').slice(0, 40)
+    await dialog.getByLabel(/tenant name/i).fill(name)
+    await dialog.getByLabel(/tenant code/i).fill(code)
+    await dialog.getByLabel(/company name/i).fill(`${name} Company`)
+    await dialog.getByLabel(/company code/i).fill('MAIN')
+    await dialog.getByLabel(/first name/i).fill('E2E')
+    await dialog.getByLabel(/last name/i).fill('Administrator')
+    await dialog.getByLabel(/username/i).fill(adminUserName)
+    await dialog.getByLabel(/email/i).fill(`${adminUserName}@example.com`)
+    await dialog.getByRole('textbox', { name: 'Password', exact: true }).fill('TenantAdmin@123!')
     await tenantsPage.saveDialog()
 
-    // Dialog should close
-    await expect(dialog).not.toBeVisible({ timeout: 10_000 })
-    // New tenant appears in list
-    await expect(page.getByText(name)).toBeVisible({ timeout: 5_000 })
+    const tenantRow = page.getByRole('row').filter({ hasText: name })
+    try {
+      await expect(dialog).not.toBeVisible({ timeout: 10_000 })
+      await expect(tenantRow).toBeVisible({ timeout: 5_000 })
+    } finally {
+      if (await tenantRow.isVisible().catch(() => false)) {
+        await tenantRow.getByRole('button', { name: new RegExp(`remove: ${name}`, 'i') }).click()
+        const confirmDialog = page.getByRole('dialog')
+        await expect(confirmDialog).toBeVisible()
+        await confirmDialog.getByRole('button', { name: /remove tenant/i }).click()
+        await expect(tenantRow).not.toBeVisible({ timeout: 10_000 })
+      }
+    }
   })
 
   test('TC-A-010: create tenant — empty name shows validation', async ({ page, tenantsPage }) => {
