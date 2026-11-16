@@ -4,6 +4,7 @@
  * Creates disposable project fixtures through authenticated APIs, then uses
  * the browser UI for upload, versioning, preview, and download operations.
  */
+import { request as playwrightRequest } from '@playwright/test'
 import { expect, test, uid } from './fixtures'
 import { authenticatedApi, expectSuccessfulFixture, type CreatedEntity } from './api-helpers'
 
@@ -24,8 +25,27 @@ type ProjectDocumentDownload = {
   fileSizeBytes: number
 }
 
-test('P1-1: upload, version, preview, download, and preserve document history', async ({ page }) => {
-  test.setTimeout(90_000)
+function getSignedUrlExpiry(downloadUrl: string): number {
+  const url = new URL(downloadUrl)
+  const signedAt = url.searchParams.get('X-Amz-Date')
+  const lifetimeSeconds = Number(url.searchParams.get('X-Amz-Expires'))
+  if (!signedAt || !/^\d{8}T\d{6}Z$/u.test(signedAt) || !Number.isFinite(lifetimeSeconds)) {
+    throw new Error('R2 download URL is missing valid X-Amz-Date/X-Amz-Expires controls.')
+  }
+  const signedAtUtc = Date.UTC(
+    Number(signedAt.slice(0, 4)),
+    Number(signedAt.slice(4, 6)) - 1,
+    Number(signedAt.slice(6, 8)),
+    Number(signedAt.slice(9, 11)),
+    Number(signedAt.slice(11, 13)),
+    Number(signedAt.slice(13, 15)),
+  )
+  return signedAtUtc + lifetimeSeconds * 1_000
+}
+
+// Also covers PRJ-003 invalid uploads and PRJ-006 cancel/cascade cleanup.
+test('PRJ-005: private project documents enforce signed-link security, expiry, and cascade cleanup', async ({ page }) => {
+  test.setTimeout(420_000)
 
   const suffix = uid('doc')
   const categoryCode = uid('E2EDOC').slice(0, 50)
@@ -77,10 +97,60 @@ test('P1-1: upload, version, preview, download, and preserve document history', 
     await page.getByRole('tab', { name: /^documents$/i }).click()
     const documentsTable = page.getByRole('table').filter({ has: page.getByRole('columnheader', { name: /^title$/i }) })
     const historyTable = page.getByRole('table').filter({ has: page.getByRole('columnheader', { name: /^uploaded at$/i }) })
-    await page.getByRole('button', { name: /upload document/i }).click()
 
-    const uploadDialog = page.getByRole('dialog')
+    let uploadRequests = 0
+    const countUploadRequests = (request: import('@playwright/test').Request) => {
+      if (request.method() === 'POST' && request.url().endsWith(`/api/projects/${projectId}/documents/upload`)) uploadRequests += 1
+    }
+    page.on('request', countUploadRequests)
+    await page.getByRole('button', { name: /upload document/i }).click()
+    let uploadDialog = page.getByRole('dialog')
+    await uploadDialog.getByLabel(/^title$/i).fill(`Cancelled ${documentTitle}`)
+    await uploadDialog.locator('input[type="file"]').setInputFiles({
+      name: `cancelled-${suffix}.pdf`,
+      mimeType: 'application/pdf',
+      buffer: Buffer.from(firstContent),
+    })
+    await uploadDialog.getByRole('button', { name: /^cancel$/i }).click()
+    const discardUpload = page.getByRole('dialog', { name: /discard unsaved changes/i })
+    await expect(discardUpload).toBeVisible()
+    await discardUpload.getByRole('button', { name: /^discard changes$/i }).click()
+    await expect(uploadDialog).not.toBeVisible()
+    expect(uploadRequests).toBe(0)
+
+    await page.getByRole('button', { name: /upload document/i }).click()
+    uploadDialog = page.getByRole('dialog')
     await uploadDialog.getByLabel(/^title$/i).fill(documentTitle)
+    await uploadDialog.locator('input[type="file"]').setInputFiles({
+      name: `empty-${suffix}.pdf`,
+      mimeType: 'application/pdf',
+      buffer: Buffer.alloc(0),
+    })
+    let invalidUploadResponse = page.waitForResponse((response) => (
+      response.request().method() === 'POST'
+      && response.url().endsWith(`/api/projects/${projectId}/documents/upload`)
+    ))
+    await uploadDialog.getByRole('button', { name: /upload document/i }).click()
+    let invalidUpload = await invalidUploadResponse
+    expect(invalidUpload.status()).toBe(400)
+    expect(await invalidUpload.json()).toMatchObject({ code: 'document.file_empty' })
+    await expect(page.getByText('The uploaded file is empty.', { exact: true })).toBeVisible()
+
+    await uploadDialog.locator('input[type="file"]').setInputFiles({
+      name: `mismatched-${suffix}.pdf`,
+      mimeType: 'application/pdf',
+      buffer: Buffer.from('This is not a PDF file.'),
+    })
+    invalidUploadResponse = page.waitForResponse((response) => (
+      response.request().method() === 'POST'
+      && response.url().endsWith(`/api/projects/${projectId}/documents/upload`)
+    ))
+    await uploadDialog.getByRole('button', { name: /upload document/i }).click()
+    invalidUpload = await invalidUploadResponse
+    expect(invalidUpload.status()).toBe(400)
+    expect(await invalidUpload.json()).toMatchObject({ code: 'document.file_signature_invalid' })
+    await expect(page.getByText(/file type is unsupported|contents do not match/i)).toBeVisible()
+
     await uploadDialog.locator('input[type="file"]').setInputFiles({
       name: firstFileName,
       mimeType: 'application/pdf',
@@ -193,6 +263,34 @@ test('P1-1: upload, version, preview, download, and preserve document history', 
     expect(downloadedBlob.ok()).toBeTruthy()
     expect((await downloadedBlob.body()).toString()).toBe(secondContent)
 
+    const anonymous = await playwrightRequest.newContext()
+    try {
+      const anonymousApi = await anonymous.get(
+        `${new URL(page.url()).origin}/api/projects/${projectId}/documents/${documentId}/download`,
+      )
+      expect(anonymousApi.status()).toBe(401)
+
+      const anonymousRead = await anonymous.get(downloadLink.downloadUrl)
+      expect(anonymousRead.ok()).toBeTruthy()
+      expect((await anonymousRead.body()).toString()).toBe(secondContent)
+      const signedWrite = await anonymous.put(downloadLink.downloadUrl, { data: Buffer.from('forbidden overwrite') })
+      expect([401, 403]).toContain(signedWrite.status())
+
+      const tamperedUrl = new URL(downloadLink.downloadUrl)
+      tamperedUrl.searchParams.set('response-content-type', 'text/html')
+      const tamperedRead = await anonymous.get(tamperedUrl.toString())
+      expect([401, 403]).toContain(tamperedRead.status())
+
+      const expiresAt = getSignedUrlExpiry(downloadLink.downloadUrl)
+      const waitForExpiryMs = Math.max(0, expiresAt - Date.now() + 5_000)
+      expect(waitForExpiryMs, 'Signed URL lifetime exceeds the seven-minute security-test budget.').toBeLessThan(410_000)
+      await page.waitForTimeout(waitForExpiryMs)
+      const expiredRead = await anonymous.get(downloadLink.downloadUrl)
+      expect([401, 403]).toContain(expiredRead.status())
+    } finally {
+      await anonymous.dispose()
+    }
+
     await page.getByRole('combobox', { name: /^next status$/i }).click()
     await page.getByRole('option', { name: /^archived$/i }).click()
     await page.getByRole('button', { name: /^apply status$/i }).click()
@@ -202,12 +300,20 @@ test('P1-1: upload, version, preview, download, and preserve document history', 
     await expect(page.getByRole('button', { name: /^preview$/i })).toBeEnabled()
     const retainedUsage = expectSuccessfulFixture(await authenticatedApi<{ usedBytes: number }>(page, `/tenants/${currentUser.tenantId}/storage/summary`, 'GET'), 'Retained version usage')
     expect(retainedUsage.usedBytes).toBe(originalUsage.usedBytes + Buffer.byteLength(firstContent) + Buffer.byteLength(secondContent))
-    const deletion = await authenticatedApi(page, `/projects/${projectId}/documents/${documentId}`, 'DELETE')
+    const freshLink = expectSuccessfulFixture(
+      await authenticatedApi<ProjectDocumentDownload>(page, `/projects/${projectId}/documents/${documentId}/download`, 'GET'),
+      'Fresh signed link before project cascade deletion',
+    )
+    const deletion = await authenticatedApi(page, `/projects/${projectId}`, 'DELETE')
     expect(deletion.status).toBeGreaterThanOrEqual(200)
     expect(deletion.status).toBeLessThan(300)
     documentId = null
+    projectId = null
     const finalUsage = expectSuccessfulFixture(await authenticatedApi<{ usedBytes: number }>(page, `/tenants/${currentUser.tenantId}/storage/summary`, 'GET'), 'Storage usage after deletion')
     expect(finalUsage.usedBytes).toBe(originalUsage.usedBytes)
+    const deletedObject = await page.request.get(freshLink.downloadUrl)
+    expect(deletedObject.status()).toBe(404)
+    page.off('request', countUploadRequests)
   } finally {
     if (!page.isClosed()) {
       if (documentId && projectId) {

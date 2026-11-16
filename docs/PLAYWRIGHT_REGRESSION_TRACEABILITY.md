@@ -23,12 +23,12 @@ This matrix cross-references the 118 manual cases in `VexorionERP_FULL_REGRESSIO
 | Purchasing | 8 | 6 | 0 | 2 |
 | Inventory | 11 | 8 | 0 | 3 |
 | Finance | 13 | 8 | 4 | 1 |
-| Projects | 7 | 0 | 6 | 1 |
+| Projects | 7 | 3 | 4 | 0 |
 | Imports | 4 | 3 | 1 | 0 |
 | POS | 18 | 4 | 12 | 2 |
 | Security | 5 | 0 | 2 | 3 |
 | Operations | 7 | 0 | 2 | 5 |
-| **Total** | **118** | **36** | **58** | **24** |
+| **Total** | **118** | **39** | **56** | **23** |
 
 ## Foundation
 
@@ -148,10 +148,10 @@ This matrix cross-references the 118 manual cases in `VexorionERP_FULL_REGRESSIO
 |---|---|---|---|
 | PRJ-001 | Partial | `project-documents.spec.ts` and cross-tenant fixtures create categories through API | Dedicated category UI CRUD/validation is not covered. |
 | PRJ-002 | Partial | `projects-cross-tenant.spec.ts`; document fixture project creation | Create/link behavior is covered; edit and list/detail consistency are not complete. |
-| PRJ-003 | Partial | `project-documents.spec.ts` | Valid private upload and byte-identical preview/download are covered; invalid upload reasons are not in this workflow. |
+| PRJ-003 | Full | `project-documents.spec.ts` PRJ-005 | Valid private upload and byte-identical preview/download remain covered; empty and signature-mismatched files now assert exact HTTP status/error codes and visible user-facing causes before a valid retry. |
 | PRJ-004 | Partial | `project-documents.spec.ts` | Version ordering/history/download are covered; folder path and search are not. |
-| PRJ-005 | Missing | None | Signed-link expiry and anonymous/write rejection are not automated. |
-| PRJ-006 | Partial | `project-documents.spec.ts`; project cleanup paths | Document deletion/storage usage is verified; project cascade cleanup and cancel behavior are not fully asserted. |
+| PRJ-005 | Full | `project-documents.spec.ts` PRJ-005 | The API rejects anonymous link creation, a valid signed URL permits anonymous read only, PUT and query tampering are denied, and the same URL is rejected after its real R2 expiry time. |
+| PRJ-006 | Full | `project-documents.spec.ts` PRJ-005 | Dirty upload cancellation requires confirmation and sends no request; deleting the parent project removes every document version, restores tenant storage usage, and makes a fresh pre-delete object URL return 404. |
 | PRJ-007 | Partial | `project-relationship-authorization.spec.ts`; `projects-cross-tenant.spec.ts` | Relationship/project-party access is covered; the complete granular module/API matrix is not. |
 
 ## Imports
@@ -220,8 +220,8 @@ Implement one independently reviewable workflow at a time in this order:
    SAL-001/003–008 and PUR-001/003–007 now reconcile persisted totals, source invoices, immutable states, fulfillment concurrency, allocations, inventory movements/balances, and ledger effects in an isolated automation tenant.
 4. **P0-AUTO-04 — POS full refund and hard stock conflict — completed 16 November 2026**
    POS-009 now forces a real stale-cart backend conflict and proves safe recovery to one sale. POS-012 now proves a full cash refund across invoice settlement, eligibility, inventory, and shift reconciliation.
-5. **P0-AUTO-05 — Project signed-link security and cleanup**  
-   Cover PRJ-005 and finish PRJ-003/006 invalid-upload, expiry, anonymous/write denial, and project cascade cleanup.
+5. **P0-AUTO-05 — Project signed-link security and cleanup — completed 16 November 2026**
+   PRJ-003/005/006 now cover precise invalid-upload causes, confirmed cancellation without a request, anonymous API denial, signed read-only access, tamper/write rejection, real R2 expiry, and parent-project cascade removal with storage reconciliation and object 404 proof.
 6. **P0-AUTO-06 — Cross-cutting security**  
    Cover SEC-001/002/004/005 with an explicit tenant/object matrix, injection payloads, CORS/header checks, and storage access checks.
 7. **P0-AUTO-07 — Release gates outside Playwright**  
