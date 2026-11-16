@@ -6,9 +6,9 @@ using VexorionERP.Services;
 namespace VexorionERP.Middleware;
 
 /// <summary>
-/// Middleware that captures authorization boundary 403 Forbid responses and logs them as audit events.
-/// This ensures that access-denied decisions made by ASP.NET Authorization policies (before controller execution)
-/// are audited with the same rigor as business-rule denials in service layers.
+/// Captures authorization-policy 403 responses and authenticated API 404 responses as audit events.
+/// Tenant-scoped services deliberately return 404 for both missing and foreign-tenant IDs so callers cannot
+/// distinguish them; auditing those concealed denials preserves an internal security trail without leaking it.
 /// </summary>
 public sealed class AuthorizationBoundaryAuditMiddleware
 {
@@ -36,8 +36,13 @@ public sealed class AuthorizationBoundaryAuditMiddleware
         {
             await _next(context);
 
-            // Check if response is 403 Forbid
-            if (context.Response.StatusCode == StatusCodes.Status403Forbidden)
+            var isAuthorizationDenial = context.Response.StatusCode == StatusCodes.Status403Forbidden;
+            var isConcealedResourceDenial =
+                context.Response.StatusCode == StatusCodes.Status404NotFound
+                && context.Request.Path.StartsWithSegments("/api")
+                && context.User.Identity?.IsAuthenticated == true;
+
+            if (isAuthorizationDenial || isConcealedResourceDenial)
             {
                 await LogAccessDeniedAsync(context);
             }
@@ -102,7 +107,9 @@ public sealed class AuthorizationBoundaryAuditMiddleware
                 StatusCode = context.Response.StatusCode
             };
 
-            var description = $"Access denied by authorization policy for {requestMethod} {resourcePath}";
+            var description = context.Response.StatusCode == StatusCodes.Status404NotFound
+                ? $"Tenant-scoped resource access concealed for {requestMethod} {resourcePath}"
+                : $"Access denied by authorization policy for {requestMethod} {resourcePath}";
             var eventType = "authorization.access_denied";
 
             await auditLogger.LogAsync(

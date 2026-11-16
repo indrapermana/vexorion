@@ -273,6 +273,24 @@ test('PRJ-005: private project documents enforce signed-link security, expiry, a
       const anonymousRead = await anonymous.get(downloadLink.downloadUrl)
       expect(anonymousRead.ok()).toBeTruthy()
       expect((await anonymousRead.body()).toString()).toBe(secondContent)
+
+      const unsignedObjectUrl = new URL(downloadLink.downloadUrl)
+      unsignedObjectUrl.search = ''
+      const unsignedRead = await anonymous.get(unsignedObjectUrl.toString())
+      // R2's S3 endpoint returns 400 when signing parameters are absent and
+      // 401/403 for other anonymous authorization failures.
+      expect([400, 401, 403]).toContain(unsignedRead.status())
+      const unsignedWrite = await anonymous.put(unsignedObjectUrl.toString(), { data: Buffer.from('forbidden overwrite') })
+      expect([400, 401, 403]).toContain(unsignedWrite.status())
+      const unsignedDelete = await anonymous.delete(unsignedObjectUrl.toString())
+      expect([400, 401, 403]).toContain(unsignedDelete.status())
+
+      const [bucketSegment] = unsignedObjectUrl.pathname.split('/').filter(Boolean)
+      expect(bucketSegment).toBeTruthy()
+      const unsignedListUrl = `${unsignedObjectUrl.origin}/${bucketSegment}?list-type=2`
+      const unsignedList = await anonymous.get(unsignedListUrl)
+      expect([400, 401, 403]).toContain(unsignedList.status())
+
       const signedWrite = await anonymous.put(downloadLink.downloadUrl, { data: Buffer.from('forbidden overwrite') })
       expect([401, 403]).toContain(signedWrite.status())
 

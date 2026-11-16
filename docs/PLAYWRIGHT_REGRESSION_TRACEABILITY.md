@@ -26,9 +26,9 @@ This matrix cross-references the 118 manual cases in `VexorionERP_FULL_REGRESSIO
 | Projects | 7 | 3 | 4 | 0 |
 | Imports | 4 | 3 | 1 | 0 |
 | POS | 18 | 4 | 12 | 2 |
-| Security | 5 | 0 | 2 | 3 |
+| Security | 5 | 4 | 0 | 1 |
 | Operations | 7 | 0 | 2 | 5 |
-| **Total** | **118** | **39** | **56** | **23** |
+| **Total** | **118** | **43** | **54** | **21** |
 
 ## Foundation
 
@@ -190,11 +190,11 @@ This matrix cross-references the 118 manual cases in `VexorionERP_FULL_REGRESSIO
 
 | Excel ID | Coverage | Playwright evidence | Remaining gap |
 |---|---|---|---|
-| SEC-001 | Partial | Main `permissions.spec.ts`; project cross-tenant authorization tests | Selected wrong-tenant/project boundaries are covered; systematic object read/update/delete denial and audit are not. |
-| SEC-002 | Missing | None | Stored/reflected script and exported-formula injection are not automated. |
+| SEC-001 | Full | `CrossTenantPermissionBoundaryIntegrationTests`; `AuthorizationBoundaryAuditTests` | Customer, product, project, document, and sales-order lists plus GET/PUT/DELETE paths conceal foreign-tenant objects, preserve their data, and record authenticated 404/403 denial audits without exposing existence. |
+| SEC-002 | Full | `security-boundaries.spec.ts`; `ReportingControllerIntegrationTests.Reports_Exports_NeutralizeFormulaText` | Stored and reflected HTML/script payloads remain inert in the browser; persisted text is unchanged, while all reporting CSV endpoints neutralize nine dangerous formula-prefix variants. |
 | SEC-003 | Missing | None | Authentication/sensitive endpoint throttling and recovery are not automated. |
-| SEC-004 | Missing | None | Production security headers and allowed/disallowed CORS origin matrix are not automated. |
-| SEC-005 | Partial | `project-documents.spec.ts`; product UI; storage threshold suite | Private document flow/public image presentation is covered in parts; direct list/write/delete denial and signed-link expiry are not. |
+| SEC-004 | Full | `SecurityHeadersCorsIntegrationTests` | HTTPS security/HSTS headers, the exact Main/Admin/POS Authorization preflight matrix, and attacker/suffix/null origin rejection are asserted at the application boundary. |
+| SEC-005 | Full | `security-boundaries.spec.ts`; `project-documents.spec.ts` PRJ-005 | A real uploaded product image is anonymously readable through the configured public domain; unsigned document list/read/write/delete, signed-URL write/tamper, and expired signed reads are denied against real R2. |
 
 ## Operations
 
@@ -222,8 +222,8 @@ Implement one independently reviewable workflow at a time in this order:
    POS-009 now forces a real stale-cart backend conflict and proves safe recovery to one sale. POS-012 now proves a full cash refund across invoice settlement, eligibility, inventory, and shift reconciliation.
 5. **P0-AUTO-05 — Project signed-link security and cleanup — completed 16 November 2026**
    PRJ-003/005/006 now cover precise invalid-upload causes, confirmed cancellation without a request, anonymous API denial, signed read-only access, tamper/write rejection, real R2 expiry, and parent-project cascade removal with storage reconciliation and object 404 proof.
-6. **P0-AUTO-06 — Cross-cutting security**  
-   Cover SEC-001/002/004/005 with an explicit tenant/object matrix, injection payloads, CORS/header checks, and storage access checks.
+6. **P0-AUTO-06 — Cross-cutting security — completed 16 November 2026**
+   SEC-001/002/004/005 now cover an audited tenant/object/transaction matrix, inert stored/reflected payloads, CSV formula neutralization, exact CORS/security-header behavior, public product images, and private R2 list/read/write/delete plus signed-expiry boundaries.
 7. **P0-AUTO-07 — Release gates outside Playwright**  
    Implement FND-001 and OPS-002/003/004/007 in deployment/integration scripts rather than forcing them into browser tests.
 
