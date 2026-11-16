@@ -9,109 +9,8 @@
  * Covers TEST_PLAN: 2.4.1, 2.4.2, 2.4.3
  */
 import { test, expect } from './fixtures'
-import { AUTH_CREDENTIALS } from './fixtures'
-import { request as playwrightRequest, type APIResponse } from '@playwright/test'
 import { randomUUID } from 'node:crypto'
-
-type JsonObject = Record<string, unknown>
-type RunApiRequest = <T>(method: 'GET' | 'POST' | 'PUT', path: string, data?: JsonObject) => Promise<T>
-
-async function readJson<T>(response: APIResponse, operation: string): Promise<T> {
-  if (!response.ok()) {
-    throw new Error(`${operation} failed with HTTP ${response.status()}.`)
-  }
-  return response.json() as Promise<T>
-}
-
-async function createRunApiContext() {
-  const apiBaseUrl = process.env.E2E_API_BASE_URL?.replace(/\/$/u, '')
-  if (!apiBaseUrl) throw new Error('E2E_API_BASE_URL is required for the POS refund integration scenario.')
-
-  const anonymous = await playwrightRequest.newContext()
-  try {
-    const loginResponse = await anonymous.post(`${apiBaseUrl}/auth/login`, {
-      data: {
-        tenantCode: AUTH_CREDENTIALS.tenantCode,
-        userNameOrEmail: AUTH_CREDENTIALS.username,
-        password: AUTH_CREDENTIALS.password,
-      },
-    })
-    const session = await readJson<{ accessToken: string }>(loginResponse, 'POS test-user login')
-    const api = await playwrightRequest.newContext({
-      extraHTTPHeaders: { Authorization: `Bearer ${session.accessToken}` },
-    })
-    const currentUser = await readJson<{ permissions: string[] }>(
-      await api.get(`${apiBaseUrl}/auth/me`),
-      'POS test-user permission check',
-    )
-    const requiredPermissions = [
-      'customers.manage',
-      'customers.view',
-      'inventory.manage',
-      'inventory.view',
-      'pos.checkout',
-      'pos.refund',
-      'products.manage',
-      'products.view',
-      'sales.view',
-    ]
-    const missingPermissions = requiredPermissions.filter((permission) => !currentUser.permissions.includes(permission))
-    if (missingPermissions.length > 0) {
-      await api.dispose()
-      throw new Error(`Generated E2E tenant administrator is missing required permissions: ${missingPermissions.join(', ')}.`)
-    }
-
-    const requestJson = async <T>(method: 'GET' | 'POST' | 'PUT', path: string, data?: JsonObject): Promise<T> => {
-      const response = await api.fetch(`${apiBaseUrl}${path}`, { method, data })
-      return readJson<T>(response, `POS E2E fixture ${method} ${path}`)
-    }
-
-    return { api, requestJson }
-  } finally {
-    await anonymous.dispose()
-  }
-}
-
-async function seedPosCatalog(requestJson: RunApiRequest, suffix: string) {
-  const customer = await requestJson<{ id: string }>('POST', '/customers', {
-    customerNumber: `POS-E2E-${suffix}`,
-    name: `POS E2E Customer ${suffix}`,
-  })
-  const warehouse = await requestJson<{ id: string }>('POST', '/warehouses', {
-    code: `P${suffix}`,
-    name: `POS E2E Warehouse ${suffix}`,
-  })
-  const product = await requestJson<{ id: string; name: string }>('POST', '/products', {
-    sku: `POS-E2E-${suffix}`,
-    name: `POS E2E Product ${suffix}`,
-    unitOfMeasure: 'EA',
-    standardCost: 5,
-    salesPrice: 10,
-    reorderLevel: 0,
-  })
-  const adjustmentNumber = `POS-E2E-${suffix}`
-  const adjustmentDate = new Date().toISOString().slice(0, 10)
-  const adjustment = await requestJson<{ id: string }>('POST', '/inventory-adjustments', {
-    adjustmentNumber,
-    warehouseId: warehouse.id,
-    adjustmentDate,
-    reason: `POS E2E fixture ${suffix}`,
-  })
-  await requestJson('POST', `/inventory-adjustments/${adjustment.id}/lines`, {
-    productId: product.id,
-    quantityDelta: 5,
-    unitCost: 5,
-    reason: `POS E2E fixture ${suffix}`,
-  })
-  await requestJson('PUT', `/inventory-adjustments/${adjustment.id}`, {
-    adjustmentNumber,
-    warehouseId: warehouse.id,
-    adjustmentDate,
-    status: 4,
-    reason: `POS E2E fixture ${suffix}`,
-  })
-  return { customer, warehouse, product }
-}
+import { createRunApiContext, seedPosCatalog, type JsonObject } from './api-fixtures'
 
 async function ensureOpenShift(page: import('@playwright/test').Page) {
   await page.goto('/')
@@ -298,6 +197,103 @@ test.describe('POS Return & Refund', () => {
         '/inventory-balances',
       )
       expect(balances.find((balance) => balance.productId === product.id)?.quantityOnHand).toBe(4)
+    } finally {
+      await api.dispose()
+    }
+  })
+
+  test('POS-012: full cash refund reverses settlement, stock, and shift cash', async ({ page }) => {
+    const { api, requestJson } = await createRunApiContext()
+    const suffix = randomUUID().replaceAll('-', '').slice(0, 12).toUpperCase()
+    const { customer, warehouse, product } = await seedPosCatalog(requestJson, suffix)
+
+    try {
+      await ensureOpenShift(page)
+      await expandRegisterActions(page)
+      const shift = await requestJson<{ id: string }>('GET', '/pos/shifts/current')
+      const sale = await requestJson<{
+        salesInvoiceId: string
+        invoiceNumber: string
+      }>('POST', '/pos/checkout', {
+        idempotencyKey: randomUUID(),
+        shiftId: shift.id,
+        customerId: customer.id,
+        warehouseId: warehouse.id,
+        isDelivery: false,
+        notes: `POS full refund E2E fixture ${suffix}`,
+        paymentMethod: 'CASH',
+        paymentAmount: 20,
+        lines: [{ productId: product.id, quantity: 2, unitPrice: 0, discountAmount: 0 }],
+      })
+      const reconciliationBefore = await requestJson<{
+        cashSales: number
+        cashRefunds: number
+        expectedCash: number
+      }>('GET', `/pos/shifts/${shift.id}/reconciliation`)
+
+      let refundResponse: {
+        refundId: string
+        creditNoteId: string
+        refundPaymentId: string | null
+        totalCreditAmount: number
+        refundAmount: number
+        appliedCreditAmount: number
+      } | undefined
+      await page.route('**/api/pos/refund', async (route) => {
+        if (route.request().method() !== 'POST') return route.continue()
+        const response = await route.fetch()
+        expect(response.ok()).toBeTruthy()
+        refundResponse = await response.json() as typeof refundResponse
+        await route.fulfill({ response, body: JSON.stringify(refundResponse) })
+      })
+
+      await page.getByRole('button', { name: /return.*refund|refund|return/i }).click()
+      const dialog = page.getByRole('dialog')
+      await dialog.getByLabel(/invoice number/i).fill(sale.invoiceNumber)
+      await dialog.getByRole('button', { name: /search/i }).click()
+      await expect(dialog.getByText('Qty remaining')).toBeVisible()
+      await dialog.getByRole('spinbutton').fill('2')
+      await dialog.getByRole('button', { name: /confirm return/i }).click()
+
+      await expect(dialog.getByText(/CR-POS-/)).toBeVisible({ timeout: 15_000 })
+      await expect(dialog.getByText(/Credit total: USD 20\.00/)).toBeVisible()
+      await expect(dialog.getByText(/Cash refund: USD 20\.00/)).toBeVisible()
+      expect(refundResponse).toMatchObject({
+        totalCreditAmount: 20,
+        refundAmount: 20,
+        appliedCreditAmount: 20,
+      })
+      expect(refundResponse?.refundId).toBeTruthy()
+      expect(refundResponse?.creditNoteId).toBeTruthy()
+      expect(refundResponse?.refundPaymentId).toBeTruthy()
+
+      const invoice = await requestJson<{ appliedCreditTotal: number; paidTotal: number; balanceDue: number }>(
+        'GET',
+        `/sales-invoices/${sale.salesInvoiceId}`,
+      )
+      expect(invoice.appliedCreditTotal).toBe(20)
+      expect(invoice.paidTotal).toBe(0)
+      expect(invoice.balanceDue).toBe(0)
+
+      const eligibility = await requestJson<{
+        lines: Array<{ productId: string; quantityRemaining: number }>
+      }>('GET', `/pos/refund/${sale.salesInvoiceId}/lines`)
+      expect(eligibility.lines.some((line) => line.productId === product.id)).toBe(false)
+
+      const balances = await requestJson<Array<{ productId: string; quantityOnHand: number }>>(
+        'GET',
+        '/inventory-balances',
+      )
+      expect(balances.find((balance) => balance.productId === product.id)?.quantityOnHand).toBe(5)
+
+      const reconciliationAfter = await requestJson<{
+        cashSales: number
+        cashRefunds: number
+        expectedCash: number
+      }>('GET', `/pos/shifts/${shift.id}/reconciliation`)
+      expect(reconciliationAfter.cashSales).toBe(reconciliationBefore.cashSales)
+      expect(reconciliationAfter.cashRefunds).toBe(reconciliationBefore.cashRefunds + 20)
+      expect(reconciliationAfter.expectedCash).toBe(reconciliationBefore.expectedCash - 20)
     } finally {
       await api.dispose()
     }

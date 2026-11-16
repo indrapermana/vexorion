@@ -25,10 +25,10 @@ This matrix cross-references the 118 manual cases in `VexorionERP_FULL_REGRESSIO
 | Finance | 13 | 8 | 4 | 1 |
 | Projects | 7 | 0 | 6 | 1 |
 | Imports | 4 | 3 | 1 | 0 |
-| POS | 18 | 2 | 13 | 3 |
+| POS | 18 | 4 | 12 | 2 |
 | Security | 5 | 0 | 2 | 3 |
 | Operations | 7 | 0 | 2 | 5 |
-| **Total** | **118** | **34** | **59** | **25** |
+| **Total** | **118** | **36** | **58** | **24** |
 
 ## Foundation
 
@@ -175,10 +175,10 @@ This matrix cross-references the 118 manual cases in `VexorionERP_FULL_REGRESSIO
 | POS-006 | Partial | Cashier journey, checkout workflow, retry test | Real checkout/receipt/invoice/stock behavior is covered in parts; full totals/tax/discount/accounting reconciliation is not. |
 | POS-007 | Partial | `checkout-workflows.spec.ts` card checkout; shift summary UI | Card checkout succeeds; payment reference persistence, mixed payment, and reconciliation are incomplete. |
 | POS-008 | Full | `refund.spec.ts` POS-01B | Same idempotency key/request is retried; one invoice, one stock effect, one receipt, and replay result are asserted. |
-| POS-009 | Partial | `checkout-workflows.spec.ts` TC-2.2.5 | The current test is conditional and does not reliably force/assert a backend stock conflict and cart recovery. |
+| POS-009 | Full | `checkout-workflows.spec.ts` POS-009 | A seeded one-unit product is added to the cart, concurrently depleted through the API, rejected by the real checkout path, restocked, and successfully retried from the preserved cart; no invoice is created before recovery and exactly one is created afterward. |
 | POS-010 | Full | `ux-pos-07.acceptance.spec.ts`; POS-01B retry scenario | Offline status/checkout blocking/recovery and unknown-outcome retry safety are asserted. |
 | POS-011 | Partial | Receipt dismissal, history panel, print popup tests | View/print/history are covered; identical reprint contents and no-mutation behavior are not. |
-| POS-012 | Missing | None | A real full refund with complete stock/finance/shift reversal is not automated. |
+| POS-012 | Full | `refund.spec.ts` POS-012 | A real two-unit cash sale is fully refunded through the UI; credit/refund/payment identifiers, invoice settlement, exhausted eligibility, restored stock, and exact shift cash-refund/expected-cash deltas are asserted. |
 | POS-013 | Partial | `refund.spec.ts` TC-2.4.5 | Atomic partial refund, retry, invoice totals, and stock are asserted; cumulative over-refund rejection is not. |
 | POS-014 | Partial | Refund button shift guard and permission-oriented UI tests | Authorized visibility is covered; a truly unauthorized identity/API denial and audit are not. |
 | POS-015 | Partial | `shift-workflows.spec.ts` TC-2.1.3/.5.1 | Close/variance/new-shift requirement UI is covered; persisted reconciliation accuracy is not queried afterward. |
@@ -218,8 +218,8 @@ Implement one independently reviewable workflow at a time in this order:
    FIN-003 through FIN-006 and FIN-008 through FIN-011 now reconcile posting, period gates, reversal, statements, drill-down, aging, currencies, and CSV exports in an isolated automation tenant.
 3. **P0-AUTO-03 — Trade source, concurrency, and persistence — completed 16 November 2026**
    SAL-001/003–008 and PUR-001/003–007 now reconcile persisted totals, source invoices, immutable states, fulfillment concurrency, allocations, inventory movements/balances, and ledger effects in an isolated automation tenant.
-4. **P0-AUTO-04 — POS full refund and hard stock conflict**  
-   Cover POS-012 and replace the conditional POS-009 test with a guaranteed conflict plus recovery assertions.
+4. **P0-AUTO-04 — POS full refund and hard stock conflict — completed 16 November 2026**
+   POS-009 now forces a real stale-cart backend conflict and proves safe recovery to one sale. POS-012 now proves a full cash refund across invoice settlement, eligibility, inventory, and shift reconciliation.
 5. **P0-AUTO-05 — Project signed-link security and cleanup**  
    Cover PRJ-005 and finish PRJ-003/006 invalid-upload, expiry, anonymous/write denial, and project cascade cleanup.
 6. **P0-AUTO-06 — Cross-cutting security**  

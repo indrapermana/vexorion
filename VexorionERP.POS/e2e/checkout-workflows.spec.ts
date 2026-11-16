@@ -12,6 +12,8 @@
  */
 import { test, expect } from './fixtures'
 import type { Page } from '@playwright/test'
+import { randomUUID } from 'node:crypto'
+import { createRunApiContext, postInventoryAdjustment, seedPosCatalog } from './api-fixtures'
 
 // ---------------------------------------------------------------------------
 // Helper: ensure a shift is open and at least one item is in the cart
@@ -82,41 +84,54 @@ test('TC-2.2.3: card payment completes checkout', async ({ page }) => {
 // TC-2.2.5 — Stock conflict dialog
 // ---------------------------------------------------------------------------
 
-test('TC-2.2.5: stock conflict dialog shows when insufficient stock', async ({ page }) => {
-  await page.goto('/')
-  await page.waitForLoadState('networkidle')
+test('POS-009: stale cart shows a real stock conflict and recovers without a duplicate sale', async ({ page }) => {
+  const { api, requestJson } = await createRunApiContext()
+  const suffix = randomUUID().replaceAll('-', '').slice(0, 12).toUpperCase()
+  const { warehouse, product } = await seedPosCatalog(requestJson, suffix, 1)
 
-  // Open shift if needed
-  const shiftDialog = page.getByRole('dialog', { name: /open shift/i })
-  if (await shiftDialog.isVisible({ timeout: 2_000 }).catch(() => false)) {
-    await shiftDialog.getByLabel(/opening cash float/i).fill('100')
-    await shiftDialog.getByRole('button', { name: /open shift/i }).click()
-    await expect(shiftDialog).not.toBeVisible({ timeout: 10_000 })
-  }
-
-  // Expect stock conflict i18n keys exist
-  // This test verifies the UI can handle out-of-stock state
-  const stockConflictTitle = 'Stock Conflict'
-  const conflictMessage = 'Some items in your cart exceed available stock'
-
-  // Add a product and try to set quantity > stock (if UI allows manual qty entry)
-  const qtyInput = page.locator('input[type="number"]').first()
-  if (await qtyInput.isVisible({ timeout: 2_000 }).catch(() => false)) {
-    await qtyInput.fill('99999')
-    const checkoutBtn = page.getByRole('button', { name: /checkout/i })
-    if (await checkoutBtn.isEnabled({ timeout: 2_000 }).catch(() => false)) {
-      await checkoutBtn.click()
-      // Either stock conflict dialog appears or normal checkout dialog
-      const dialog = page.getByRole('dialog')
-      if (await dialog.getByText(stockConflictTitle).isVisible({ timeout: 3_000 }).catch(() => false)) {
-        await expect(dialog.getByText(conflictMessage)).toBeVisible()
-        // Adjust cart option
-        await expect(dialog.getByRole('button', { name: /adjust cart/i })).toBeVisible()
-        await dialog.getByRole('button', { name: /cancel checkout/i }).click()
-      }
+  try {
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
+    const shiftDialog = page.getByRole('dialog', { name: /open shift/i })
+    if (await shiftDialog.isVisible({ timeout: 2_000 }).catch(() => false)) {
+      await shiftDialog.getByLabel(/opening cash float/i).fill('100')
+      await shiftDialog.getByRole('button', { name: /open shift/i }).click()
+      await expect(shiftDialog).not.toBeVisible({ timeout: 10_000 })
     }
-  } else {
-    test.skip(true, 'Cannot force stock conflict from UI — skipping')
+
+    const warehouseSelector = page.getByRole('combobox', { name: /warehouse/i })
+    await warehouseSelector.click()
+    await page.getByRole('option', { name: new RegExp(warehouse.name) }).click()
+    const productCard = page.locator('.MuiCard-root').filter({ hasText: product.name })
+    await expect(productCard).toBeVisible()
+    await productCard.getByRole('button', { name: /^add$/i }).click()
+    await page.getByRole('button', { name: /use exact amount/i }).click()
+
+    // Simulate another register consuming the last unit after this register built its cart.
+    await postInventoryAdjustment(requestJson, `${suffix}-CONFLICT`, warehouse.id, product.id, -1)
+    await page.getByRole('button', { name: /^checkout$/i }).click()
+
+    const conflictDialog = page.getByRole('dialog', { name: /stock conflict/i })
+    await expect(conflictDialog).toBeVisible({ timeout: 15_000 })
+    await expect(conflictDialog.getByText(/exceed available stock/i)).toBeVisible()
+    await expect(conflictDialog.getByText(new RegExp(`${product.name}.*requested 1.*available 0`, 'i'))).toBeVisible()
+    await expect(page.getByRole('dialog', { name: /receipt/i })).not.toBeVisible()
+    const invoicesBeforeRecovery = await requestJson<Array<{ invoiceNumber: string }>>('GET', '/sales-invoices')
+
+    // Restore stock, ask the UI to refresh authoritative availability, and retry the same cart.
+    await postInventoryAdjustment(requestJson, `${suffix}-RECOVER`, warehouse.id, product.id, 1)
+    await conflictDialog.getByRole('button', { name: /adjust cart/i }).click()
+    await expect(conflictDialog).not.toBeVisible()
+    await expect(page.getByRole('spinbutton', { name: `Qty: ${product.name}` })).toHaveValue('1')
+    await page.getByRole('button', { name: /^checkout$/i }).click()
+
+    const receipt = page.getByRole('dialog', { name: /receipt/i })
+    await expect(receipt).toBeVisible({ timeout: 15_000 })
+    await expect(receipt.getByText(product.name)).toBeVisible()
+    const invoicesAfterRecovery = await requestJson<Array<{ invoiceNumber: string }>>('GET', '/sales-invoices')
+    expect(invoicesAfterRecovery).toHaveLength(invoicesBeforeRecovery.length + 1)
+  } finally {
+    await api.dispose()
   }
 })
 
