@@ -56,32 +56,45 @@ export class PosPageObject {
     await this.page.goto('/')
   }
 
-  async openShift(openingFloat = '100') {
-    const openBtn = this.page.getByRole('button', { name: /open shift/i })
-    await openBtn.click()
-    const dialog = this.page.getByRole('dialog')
-    await dialog.getByRole('spinbutton').fill(openingFloat)
-    await dialog.getByRole('button', { name: /open/i }).click()
+  async openShift(openingFloat: string | number = '100') {
+    await this.page.waitForLoadState('networkidle')
+    const dialog = this.page.getByRole('dialog', { name: /open shift/i })
+    if (!(await dialog.isVisible({ timeout: 3_000 }).catch(() => false))) return
+    const openingCash = dialog.getByLabel(/opening cash float/i)
+    if (!(await openingCash.isVisible().catch(() => false))) return
+    await openingCash.fill(String(openingFloat), { timeout: 2_000 }).catch(() => undefined)
+    if (!(await dialog.isVisible().catch(() => false))) return
+    await dialog.getByRole('button', { name: /open shift/i }).click({ timeout: 2_000 }).catch(() => undefined)
+    await expect(dialog).not.toBeVisible({ timeout: 10_000 })
   }
 
-  async addProductToCart(productName: string) {
-    const productCard = this.page.getByText(productName).first()
-    await productCard.click()
+  async addProductToCart(productName?: string) {
+    const addButton = productName
+      ? this.page.locator('.MuiCard-root').filter({ hasText: productName }).getByRole('button', { name: /^add$/i })
+      : this.page.locator('button:not(:disabled)').filter({ hasText: /^Add$/ }).first()
+    await expect(addButton).toBeVisible({ timeout: 5_000 })
+    await addButton.click()
   }
 
-  async checkout(paymentAmount: string) {
-    await this.page.getByRole('button', { name: /checkout/i }).click()
-    const dialog = this.page.getByRole('dialog')
-    const amountField = dialog.getByRole('spinbutton')
-    await amountField.clear()
-    await amountField.fill(paymentAmount)
-    await dialog.getByRole('button', { name: /confirm|complete/i }).click()
+  async checkout(paymentAmount?: string) {
+    if (paymentAmount) {
+      await this.page.getByRole('spinbutton', { name: /cash received/i }).fill(paymentAmount)
+    } else {
+      await this.page.getByRole('button', { name: /use exact amount/i }).click()
+    }
+    await this.page.getByRole('button', { name: /^checkout$/i }).click()
   }
 
   async closeShift(countedCash: string) {
+    const moreActions = this.page.getByRole('button', { name: /more register actions/i })
+    if (await moreActions.isVisible().catch(() => false)) await moreActions.click()
     await this.page.getByRole('button', { name: /close shift/i }).click()
-    const dialog = this.page.getByRole('dialog')
-    await dialog.getByRole('spinbutton').fill(countedCash)
+    const dialog = this.page.getByRole('dialog', { name: /close shift/i })
+    await dialog.getByLabel(/counted cash/i).fill(countedCash)
+    const varianceReason = dialog.getByLabel(/variance reason/i)
+    if (await varianceReason.waitFor({ state: 'visible', timeout: 2_000 }).then(() => true).catch(() => false)) {
+      await varianceReason.fill('E2E reconciliation')
+    }
     await dialog.getByRole('button', { name: /close/i }).click()
   }
 }

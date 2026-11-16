@@ -76,23 +76,28 @@ test.describe('POS Shift Workflows', () => {
       await posPage.openShift('100')
     }
 
+    await page.getByRole('button', { name: /more register actions/i }).click()
     // Click close shift
     const closeBtn = page.getByRole('button', { name: /close shift/i })
     await expect(closeBtn).toBeVisible({ timeout: 5_000 })
     await closeBtn.click()
 
-    const dialog = page.getByRole('dialog')
+    const dialog = page.getByRole('dialog', { name: /close shift/i })
     await expect(dialog).toBeVisible({ timeout: 5_000 })
 
     // Shift summary should include expected fields
-    await expect(dialog.getByText(/total sales/i)).toBeVisible()
-    await expect(dialog.getByText(/expected cash/i)).toBeVisible()
+    await expect(dialog.getByText(/shift summary/i)).toBeVisible()
+    await expect(dialog.getByText(/expected cash in drawer/i)).toBeVisible()
 
     // Enter counted cash (slightly different to verify variance shows)
     await dialog.getByLabel(/counted cash/i).fill('95')
+    const varianceReason = dialog.getByLabel(/variance reason/i)
+    if (await varianceReason.waitFor({ state: 'visible', timeout: 2_000 }).then(() => true).catch(() => false)) {
+      await varianceReason.fill('E2E reconciliation')
+    }
 
     // Variance chip should update (positive or short)
-    await expect(dialog.getByText(/variance|short|over/i)).toBeVisible({ timeout: 3_000 })
+    await expect(dialog.getByText(/short|over/i).last()).toBeVisible({ timeout: 3_000 })
 
     // Actually close the shift
     await dialog.getByRole('button', { name: /close shift/i }).last().click()
@@ -113,11 +118,17 @@ test.describe('POS Shift Workflows', () => {
 
     // Close shift if open (so we can test the no-shift state)
     const closeBtn = page.getByRole('button', { name: /close shift/i })
+    const moreActions = page.getByRole('button', { name: /more register actions/i })
+    if (await moreActions.isVisible().catch(() => false)) await moreActions.click()
     if (await closeBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
       await closeBtn.click()
-      const dialog = page.getByRole('dialog')
+      const dialog = page.getByRole('dialog', { name: /close shift/i })
       if (await dialog.isVisible()) {
         await dialog.getByLabel(/counted cash/i).fill('0')
+        const varianceReason = dialog.getByLabel(/variance reason/i)
+        if (await varianceReason.waitFor({ state: 'visible', timeout: 2_000 }).then(() => true).catch(() => false)) {
+          await varianceReason.fill('E2E reconciliation')
+        }
         await dialog.getByRole('button', { name: /close shift/i }).last().click()
         await expect(dialog).not.toBeVisible({ timeout: 10_000 })
       }
@@ -129,7 +140,7 @@ test.describe('POS Shift Workflows', () => {
       await expect(checkoutBtn).toBeDisabled()
     } else {
       // Or the "No active shift" message is shown
-      await expect(page.getByText(/no active shift/i)).toBeVisible({ timeout: 3_000 })
+      await expect(page.getByText(/no active shift/i).first()).toBeVisible({ timeout: 3_000 })
     }
   })
 })

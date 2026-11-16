@@ -127,6 +127,14 @@ async function ensureOpenShift(page: import('@playwright/test').Page) {
     expect(response.ok()).toBeTruthy()
     await expect(dialog).not.toBeVisible()
   }
+  await expect(page.getByText(/shift open since/i)).toBeVisible({ timeout: 5_000 })
+}
+
+async function expandRegisterActions(page: import('@playwright/test').Page) {
+  const moreActions = page.getByRole('button', { name: /more register actions/i })
+  if (await moreActions.isVisible().catch(() => false)) {
+    await moreActions.click()
+  }
 }
 
 async function selectWarehouse(page: import('@playwright/test').Page, warehouseName: string) {
@@ -141,6 +149,7 @@ test.describe('POS Return & Refund', () => {
   // -------------------------------------------------------------------------
   test('TC-2.4.1: return/refund button opens dialog', async ({ page }) => {
     await ensureOpenShift(page)
+    await expandRegisterActions(page)
 
     const returnBtn = page.getByRole('button', { name: /return.*refund|refund|return/i })
     await expect(returnBtn).toBeVisible({ timeout: 5_000 })
@@ -159,6 +168,7 @@ test.describe('POS Return & Refund', () => {
   // -------------------------------------------------------------------------
   test('TC-2.4.2: return dialog contains invoice search fields', async ({ page }) => {
     await ensureOpenShift(page)
+    await expandRegisterActions(page)
 
     const returnBtn = page.getByRole('button', { name: /return.*refund|refund|return/i })
     await expect(returnBtn).toBeVisible({ timeout: 5_000 })
@@ -184,6 +194,7 @@ test.describe('POS Return & Refund', () => {
   // -------------------------------------------------------------------------
   test('TC-2.4.3: searching non-existent invoice shows not-found message', async ({ page }) => {
     await ensureOpenShift(page)
+    await expandRegisterActions(page)
 
     const returnBtn = page.getByRole('button', { name: /return.*refund|refund|return/i })
     await expect(returnBtn).toBeVisible({ timeout: 5_000 })
@@ -210,6 +221,7 @@ test.describe('POS Return & Refund', () => {
   // -------------------------------------------------------------------------
   test('TC-2.4.4: return/refund appears after opening a shift', async ({ page }) => {
     await ensureOpenShift(page)
+    await expandRegisterActions(page)
     const returnBtn = page.getByRole('button', { name: /return.*refund|refund|return/i })
     await expect(returnBtn).toBeVisible({ timeout: 5_000 })
   })
@@ -220,6 +232,7 @@ test.describe('POS Return & Refund', () => {
     const { customer, warehouse, product } = await seedPosCatalog(requestJson, suffix)
 
     await ensureOpenShift(page)
+    await expandRegisterActions(page)
     const shift = await requestJson<{ id: string }>('GET', '/pos/shifts/current')
     const sale = await requestJson<{
       salesInvoiceId: string
@@ -319,7 +332,7 @@ test.describe('POS Return & Refund', () => {
       await expect(page.getByText(product.name, { exact: true })).toBeVisible()
       const productCard = page.locator('.MuiCard-root').filter({ hasText: product.name })
       await productCard.getByRole('button', { name: /^add$/i }).click()
-      await page.getByLabel(/payment amount/i).fill('10')
+      await page.getByRole('spinbutton', { name: /cash received/i }).fill('10')
       await page.getByRole('button', { name: /checkout/i }).click()
 
       const receipt = page.getByRole('dialog', { name: /receipt/i })
@@ -369,7 +382,7 @@ test.describe('POS Return & Refund', () => {
       await expect(page.getByRole('spinbutton', { name: `Qty: ${product.name}` })).toHaveValue('1')
       await expect(page.getByRole('button', { name: `Increase quantity: ${product.name}` })).toBeVisible()
       await expect(page.getByRole('button', { name: `Remove: ${product.name}` })).toBeVisible()
-      await expect(page.getByLabel('Payment amount')).toBeVisible()
+      await expect(page.getByRole('spinbutton', { name: /cash received/i })).toBeVisible()
 
       for (const width of [390, 768, 1024, 1440]) {
         await page.setViewportSize({ width, height: 900 })

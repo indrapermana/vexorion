@@ -24,29 +24,10 @@ test.describe('Cashier checkout journey', () => {
     // Verify shift chip now shows "Open"
     await expect(page.getByText(/shift.*open|open.*shift/i).first()).toBeVisible({ timeout: 5_000 })
 
-    // Add the first product in the catalogue to the cart
-    // Products are rendered as clickable cards; grab whatever is visible
-    const firstProduct = page.locator('[data-testid="product-card"]').first()
-    if (await firstProduct.isVisible()) {
-      await firstProduct.click()
-    } else {
-      // Fallback: click any product by role
-      await page.getByRole('button', { name: /.+/ }).nth(3).click()
-    }
+    await posPage.addProductToCart()
 
-    // Checkout
+    await page.getByRole('button', { name: /use exact amount/i }).click()
     await page.getByRole('button', { name: /checkout/i }).click()
-    const checkoutDialog = page.getByRole('dialog')
-    await expect(checkoutDialog).toBeVisible()
-
-    // Enter payment amount equal to or greater than the grand total
-    const amountField = checkoutDialog.getByRole('spinbutton').first()
-    const currentValue = await amountField.inputValue()
-    if (!currentValue || Number(currentValue) === 0) {
-      await amountField.fill('9999')
-    }
-
-    await checkoutDialog.getByRole('button', { name: /confirm|complete/i }).click()
 
     // Receipt modal should appear
     await expect(page.getByRole('dialog', { name: /receipt/i })).toBeVisible({ timeout: 10_000 })
@@ -92,13 +73,16 @@ test.describe('Return flow', () => {
   test('opens return dialog and searches for an invoice', async ({ page, posPage }) => {
     await posPage.goto()
 
+    const moreActions = page.getByRole('button', { name: /more register actions/i })
+    if (await moreActions.isVisible().catch(() => false)) await moreActions.click()
+
     const returnBtn = page.getByRole('button', { name: /return|refund/i })
-    if (!(await returnBtn.isVisible())) {
+    if (!(await returnBtn.isVisible({ timeout: 3_000 }).catch(() => false))) {
       test.skip(true, 'Return button not visible — user may lack pos.refund permission')
     }
 
     await returnBtn.click()
-    const dialog = page.getByRole('dialog')
+    const dialog = page.getByRole('dialog', { name: /return.*refund/i })
     await expect(dialog).toBeVisible()
 
     // Enter a search term (invoice reference)
@@ -107,7 +91,7 @@ test.describe('Return flow', () => {
     await dialog.getByRole('button', { name: /search/i }).click()
 
     // Either results load or a "not found" alert appears
-    const notFound = dialog.getByText(/not found|no results/i)
+    const notFound = dialog.getByText(/not found|no results|no invoice found/i)
     const results = dialog.getByRole('row')
     await expect(notFound.or(results.first())).toBeVisible({ timeout: 8_000 })
   })
@@ -121,17 +105,24 @@ test.describe('Shift close', () => {
   test('close shift shows variance chip and confirms close', async ({ page, posPage }) => {
     await posPage.goto()
 
+    const moreActions = page.getByRole('button', { name: /more register actions/i })
+    if (await moreActions.isVisible().catch(() => false)) await moreActions.click()
+
     const closeShiftBtn = page.getByRole('button', { name: /close shift/i })
-    if (!(await closeShiftBtn.isVisible())) {
+    if (!(await closeShiftBtn.isVisible({ timeout: 3_000 }).catch(() => false))) {
       test.skip(true, 'Close shift button not visible — shift may not be open')
     }
 
     await closeShiftBtn.click()
-    const dialog = page.getByRole('dialog')
+    const dialog = page.getByRole('dialog', { name: /close shift/i })
     await expect(dialog).toBeVisible()
 
     // Enter a counted cash amount
-    await dialog.getByRole('spinbutton').fill('100')
+    await dialog.getByLabel(/counted cash/i).fill('100')
+    const varianceReason = dialog.getByLabel(/variance reason/i)
+    if (await varianceReason.waitFor({ state: 'visible', timeout: 2_000 }).then(() => true).catch(() => false)) {
+      await varianceReason.fill('E2E reconciliation')
+    }
 
     // Variance chip or summary should appear
     await expect(dialog.getByText(/variance|expected|counted/i).first()).toBeVisible({ timeout: 3_000 })

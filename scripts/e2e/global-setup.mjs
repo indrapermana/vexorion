@@ -43,8 +43,8 @@ export default async function globalSetup(config) {
     run = await provisionE2ETenant({ application })
     writeRunMetadata(metadataPath, run)
     events.push({ stage: 'provision', status: 'passed', tenantCode: run.tenantCode, tenantId: run.tenantId })
-    if (application === 'vexorionerp-ui') {
-      await seedE2ETenant({ run })
+    if (application === 'vexorionerp-ui' || application === 'vexorionerp-pos') {
+      await seedE2ETenant({ run, includeInventory: application === 'vexorionerp-pos' })
       events.push({ stage: 'fixture-seed', status: 'passed', tenantCode: run.tenantCode })
     }
     writeLifecycleDiagnostics(lifecycleDiagnosticsPath, events)

@@ -140,7 +140,7 @@ export async function provisionE2ETenant({ application, environment = process.en
   }
 }
 
-export async function seedE2ETenant({ run, environment = process.env, fetchImpl = fetch }) {
+export async function seedE2ETenant({ run, includeInventory = false, environment = process.env, fetchImpl = fetch }) {
   const apiBaseUrl = validateE2ESafety(environment)
   if (run.apiBaseUrl !== apiBaseUrl) throw new Error('Run metadata API URL does not match the fixture API URL.')
 
@@ -210,6 +210,34 @@ export async function seedE2ETenant({ run, environment = process.env, fetchImpl 
       isPostingAllowed: true,
       isActive: true,
     }, `Account fixture (${name})`)
+  }
+
+  if (includeInventory) {
+    const adjustmentNumber = `E2E-${suffix}`
+    const adjustmentDate = new Date().toISOString().slice(0, 10)
+    const adjustment = await create('/inventory-adjustments', {
+      adjustmentNumber,
+      warehouseId: warehouse.id,
+      adjustmentDate,
+      reason: 'Playwright isolated POS fixture',
+    }, 'Inventory adjustment fixture')
+    await create(`/inventory-adjustments/${adjustment.id}/lines`, {
+      productId: product.id,
+      quantityDelta: 100,
+      unitCost: 5,
+      reason: 'Playwright isolated POS fixture',
+    }, 'Inventory adjustment line fixture')
+    await requestJson(fetchImpl, `${apiBaseUrl}/inventory-adjustments/${adjustment.id}`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({
+        adjustmentNumber,
+        warehouseId: warehouse.id,
+        adjustmentDate,
+        status: 4,
+        reason: 'Playwright isolated POS fixture',
+      }),
+    }, 'Post inventory adjustment fixture')
   }
 
   return { warehouseId: warehouse.id, productId: product.id }

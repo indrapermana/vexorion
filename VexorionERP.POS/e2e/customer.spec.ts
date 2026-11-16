@@ -16,43 +16,24 @@ test.describe('POS Customer Selection', () => {
   }) => {
     await posPage.addProductToCart()
     await posPage.checkout()
-    // A payment dialog or confirmation screen should appear
-    const paymentArea = page.getByText(/payment|pay|tender/i)
-    await expect(paymentArea).toBeVisible({ timeout: 5_000 })
+    await expect(page.getByRole('dialog', { name: /receipt/i })).toBeVisible({ timeout: 10_000 })
   })
 
   test('TC-P-018: select named customer', async ({ page }) => {
-    const customerBtn = page.getByRole('button', { name: /customer|select customer/i }).first()
-    if (await customerBtn.isVisible()) {
-      await customerBtn.click()
-      // Customer search / picker should open
-      const picker = page.getByRole('dialog').or(page.getByRole('listbox'))
-      await expect(picker).toBeVisible({ timeout: 5_000 })
-      // Dismiss
-      await page.keyboard.press('Escape')
-    } else {
-      test.skip(true, 'No customer selector button visible')
-    }
+    const customerSelect = page.getByRole('combobox', { name: /customer/i })
+    await expect(customerSelect).toBeVisible()
+    await customerSelect.click()
+    const customerOption = page.getByRole('option').filter({ hasNotText: /^Guest$/i }).first()
+    const customerName = (await customerOption.textContent())?.trim() ?? ''
+    await customerOption.click()
+    await expect(customerSelect).toContainText(customerName)
   })
 
   test('TC-P-019: quick create customer — empty name shows validation', async ({ page }) => {
-    const customerBtn = page.getByRole('button', { name: /customer|select customer/i }).first()
-    if (!(await customerBtn.isVisible())) {
-      test.skip(true, 'No customer selector button visible')
-    }
-    await customerBtn.click()
-    const addCustBtn = page.getByRole('button', { name: /add|new|create customer/i })
-    if (await addCustBtn.isVisible()) {
-      await addCustBtn.click()
-      const dialog = page.getByRole('dialog')
-      for (const box of await dialog.getByRole('textbox').all()) {
-        await box.clear()
-      }
-      await dialog.getByRole('button', { name: /save|create/i }).last().click()
-      await expect(dialog).toBeVisible({ timeout: 3_000 })
-      await page.keyboard.press('Escape')
-    } else {
-      test.skip(true, 'No quick-add customer button')
-    }
+    await page.getByRole('button', { name: /quick customer/i }).click()
+    const dialog = page.getByRole('dialog')
+    await dialog.getByRole('button', { name: /^create$/i }).click()
+    await expect(dialog.getByText(/enter a customer name/i)).toBeVisible()
+    await dialog.getByRole('button', { name: /cancel/i }).click()
   })
 })

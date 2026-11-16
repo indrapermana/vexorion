@@ -13,16 +13,14 @@ test.describe('POS Cart', () => {
   test('TC-P-010: add product to cart shows item in cart', async ({ page, posPage }) => {
     await posPage.addProductToCart()
     // Cart should have at least one line
-    const cartLines = page.locator('[data-testid="cart-item"], .cart-item, [class*="cart"]').first()
-    await expect(cartLines).toBeVisible({ timeout: 5_000 })
+    await expect(page.getByRole('list', { name: /cart line items/i }).getByRole('listitem')).toHaveCount(1)
   })
 
   test('TC-P-011: add same product increments quantity', async ({ page, posPage }) => {
     await posPage.addProductToCart()
     await posPage.addProductToCart()
     // Look for a quantity indicator of 2 or a quantity "2"
-    const qty = page.locator('[data-testid="qty"], text=2').first()
-    await expect(qty).toBeVisible({ timeout: 5_000 })
+    await expect(page.getByRole('list', { name: /cart line items/i }).getByRole('spinbutton', { name: /^qty:/i })).toHaveValue('2')
   })
 
   test('TC-P-012: cart shows calculated total', async ({ page, posPage }) => {
