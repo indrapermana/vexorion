@@ -605,7 +605,7 @@ public class StockTransferCommandServiceBranchTests
     }
 
     [Fact]
-    public async Task Delete_NotDraft_Returns400()
+    public async Task Delete_NotDraft_Returns409()
     {
         var (tenantId, srcWarehouseId, dstWarehouseId, productId, transferId) = SeedIds();
         var db = TestDbContextFactory.Create(tenantId, Guid.NewGuid().ToString());
@@ -629,7 +629,7 @@ public class StockTransferCommandServiceBranchTests
         var result = await service.DeleteAsync(transferId);
 
         Assert.False(result.Succeeded);
-        Assert.Equal(400, result.StatusCode);
+        Assert.Equal(409, result.StatusCode);
     }
 
     [Fact]

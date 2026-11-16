@@ -115,7 +115,7 @@ public class StockCountCommandService(
             return ServiceResult<bool>.Failure(StatusCodes.Status404NotFound, "Stock count not found.");
 
         if (stockCount.Status != DocumentStatus.Draft)
-            return ServiceResult<bool>.Failure(StatusCodes.Status400BadRequest, "Stock counts can only be deleted while in Draft status.");
+            return ServiceResult<bool>.Failure(StatusCodes.Status409Conflict, "Stock counts can only be deleted while in Draft status.");
 
         context.StockCounts.Remove(stockCount);
         await context.SaveChangesAsync(cancellationToken);

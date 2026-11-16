@@ -230,7 +230,7 @@ public class InventoryAdjustmentCommandService(
 
         if (adjustment.Status != DocumentStatus.Draft)
         {
-            return ServiceResult<bool>.Failure(StatusCodes.Status400BadRequest, "Inventory adjustments can only be deleted while in Draft status.");
+            return ServiceResult<bool>.Failure(StatusCodes.Status409Conflict, "Inventory adjustments can only be deleted while in Draft status.");
         }
 
         return null;

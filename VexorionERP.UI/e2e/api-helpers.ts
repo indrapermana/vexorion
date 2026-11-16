@@ -12,7 +12,7 @@ export type CreatedEntity = {
 export async function authenticatedApi<T>(
   page: Page,
   path: string,
-  method: 'GET' | 'POST' | 'DELETE',
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE',
   body?: unknown,
 ): Promise<ApiResult<T>> {
   return page.evaluate(async ({ requestPath, requestMethod, requestBody }) => {

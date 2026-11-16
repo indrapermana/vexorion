@@ -28,7 +28,7 @@ public class StockTransferLineCommandService(
 
         if (transfer.Status != DocumentStatus.Draft)
         {
-            return ServiceResult<ILineResponse<StockTransferLine>>.Failure(StatusCodes.Status400BadRequest, "Stock transfer lines can only be modified while the transfer is in Draft status.");
+            return ServiceResult<ILineResponse<StockTransferLine>>.Failure(StatusCodes.Status409Conflict, "Stock transfer lines can only be modified while the transfer is in Draft status.");
         }
 
         if (!await dbContext.Products.AnyAsync(x => x.Id == request.ProductId, cancellationToken))
@@ -66,7 +66,7 @@ public class StockTransferLineCommandService(
 
         if (transfer.Status != DocumentStatus.Draft)
         {
-            return ServiceResult<ILineResponse<StockTransferLine>>.Failure(StatusCodes.Status400BadRequest, "Stock transfer lines can only be modified while the transfer is in Draft status.");
+            return ServiceResult<ILineResponse<StockTransferLine>>.Failure(StatusCodes.Status409Conflict, "Stock transfer lines can only be modified while the transfer is in Draft status.");
         }
 
         var line = transfer.Lines.FirstOrDefault(x => x.Id == stockTransferLineId);
@@ -100,7 +100,7 @@ public class StockTransferLineCommandService(
 
         if (transfer.Status != DocumentStatus.Draft)
         {
-            return ServiceResult<bool>.Failure(StatusCodes.Status400BadRequest, "Stock transfer lines can only be modified while the transfer is in Draft status.");
+            return ServiceResult<bool>.Failure(StatusCodes.Status409Conflict, "Stock transfer lines can only be modified while the transfer is in Draft status.");
         }
 
         var line = transfer.Lines.FirstOrDefault(x => x.Id == stockTransferLineId);

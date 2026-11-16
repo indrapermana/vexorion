@@ -774,6 +774,20 @@ AdminUI implementation and acceptance items are complete. Continue with the POS 
 
 POS implementation items are complete. Retain the POS Admin responsive and recovery scenarios in `TEST_PLAN.md` for the planned integrated manual regression pass.
 
+### Automated regression traceability
+
+The 118-case manual regression workbook is cross-referenced against the current Playwright suites in `docs/PLAYWRIGHT_REGRESSION_TRACEABILITY.md`. After P0-AUTO-01, the strict baseline is 13 Full, 71 Partial, and 34 Missing cases; a page-load, route-fit, conditional skip, or dialog-open check does not count as complete business-workflow coverage.
+
+- [x] `P0-AUTO-01` Inventory completion/cancellation, movement, balance, immutability, insufficient-stock, and cross-flow reconciliation are automated for INV-001–007 and INV-011. The isolated-tenant Playwright scenario passes 4/4 including setup, tenant deletion, and orphan verification; the service suite passes 613 with 3 opt-in integration checks skipped. Non-Draft line/document mutations now consistently return HTTP 409 conflict semantics.
+- [ ] `P0-AUTO-02` Automate financial posting, reversal, period gates, and reconciled Trial Balance, P&L, Balance Sheet, and aging cases for FIN-003–006 and FIN-008–011.
+- [ ] `P0-AUTO-03` Automate sales/purchase source quantities, immutable states, concurrency, allocations, inventory effects, and ledger effects for the P0 trade cases.
+- [ ] `P0-AUTO-04` Automate a real POS full refund and replace the conditional stock-conflict scenario with a guaranteed conflict and recovery assertion.
+- [ ] `P0-AUTO-05` Automate project signed-link expiry/access denial, invalid-upload causes, and project cascade storage cleanup.
+- [ ] `P0-AUTO-06` Automate the P0 cross-tenant, injection, CORS/header, and R2 access-control security matrix.
+- [ ] `P0-AUTO-07` Implement production endpoint, cold-start/readiness, migration, rollback/forward-fix, and release-evidence gates in deployment/integration tooling rather than browser Playwright.
+
+New Playwright workflow titles use the workbook ID as their primary traceability identifier. Existing `TC-M-*`, `TC-A-*`, and `TC-P-*` names remain historical aliases until each test is touched by a focused change.
+
 ### Shared and release operations
 
 - [ ] Verify the automated Cloud Run migration job on a clean database and production-like upgraded snapshot; rehearse failure, rollback, and forward-fix. POS-02 has clean-database and owner-confirmed production-like migration evidence; broader release rehearsal remains open.

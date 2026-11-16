@@ -28,7 +28,7 @@ public class InventoryAdjustmentLineCommandService(
 
         if (adjustment.Status != DocumentStatus.Draft)
         {
-            return ServiceResult<ILineResponse<InventoryAdjustmentLine>>.Failure(StatusCodes.Status400BadRequest, "Inventory adjustment lines can only be modified while the document is in Draft status.");
+            return ServiceResult<ILineResponse<InventoryAdjustmentLine>>.Failure(StatusCodes.Status409Conflict, "Inventory adjustment lines can only be modified while the document is in Draft status.");
         }
 
         if (!await dbContext.Products.AnyAsync(x => x.Id == request.ProductId, cancellationToken))
@@ -67,7 +67,7 @@ public class InventoryAdjustmentLineCommandService(
 
         if (adjustment.Status != DocumentStatus.Draft)
         {
-            return ServiceResult<ILineResponse<InventoryAdjustmentLine>>.Failure(StatusCodes.Status400BadRequest, "Inventory adjustment lines can only be modified while the document is in Draft status.");
+            return ServiceResult<ILineResponse<InventoryAdjustmentLine>>.Failure(StatusCodes.Status409Conflict, "Inventory adjustment lines can only be modified while the document is in Draft status.");
         }
 
         var line = adjustment.Lines.FirstOrDefault(x => x.Id == inventoryAdjustmentLineId);
@@ -102,7 +102,7 @@ public class InventoryAdjustmentLineCommandService(
 
         if (adjustment.Status != DocumentStatus.Draft)
         {
-            return ServiceResult<bool>.Failure(StatusCodes.Status400BadRequest, "Inventory adjustment lines can only be modified while the document is in Draft status.");
+            return ServiceResult<bool>.Failure(StatusCodes.Status409Conflict, "Inventory adjustment lines can only be modified while the document is in Draft status.");
         }
 
         var line = adjustment.Lines.FirstOrDefault(x => x.Id == inventoryAdjustmentLineId);

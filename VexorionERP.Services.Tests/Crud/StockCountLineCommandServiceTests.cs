@@ -40,7 +40,7 @@ public class StockCountLineCommandServiceTests
     }
 
     [Fact]
-    public async Task Create_NonDraftStockCount_Returns400()
+    public async Task Create_NonDraftStockCount_Returns409()
     {
         var (db, svc, tenantId) = Build();
         var stockCountId = Guid.NewGuid();
@@ -50,7 +50,7 @@ public class StockCountLineCommandServiceTests
         var result = await svc.CreateAsync(stockCountId, ValidCreate(Guid.NewGuid()));
 
         Assert.False(result.Succeeded);
-        Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
+        Assert.Equal(StatusCodes.Status409Conflict, result.StatusCode);
     }
 
     [Fact]

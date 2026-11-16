@@ -28,7 +28,7 @@ public class StockCountLineCommandService(
 
         if (stockCount.Status != DocumentStatus.Draft)
         {
-            return ServiceResult<ILineResponse<StockCountLine>>.Failure(StatusCodes.Status400BadRequest, "Stock count lines can only be modified while the stock count is in Draft status.");
+            return ServiceResult<ILineResponse<StockCountLine>>.Failure(StatusCodes.Status409Conflict, "Stock count lines can only be modified while the stock count is in Draft status.");
         }
 
         if (!await dbContext.Products.AnyAsync(x => x.Id == request.ProductId, cancellationToken))
@@ -66,7 +66,7 @@ public class StockCountLineCommandService(
 
         if (stockCount.Status != DocumentStatus.Draft)
         {
-            return ServiceResult<ILineResponse<StockCountLine>>.Failure(StatusCodes.Status400BadRequest, "Stock count lines can only be modified while the stock count is in Draft status.");
+            return ServiceResult<ILineResponse<StockCountLine>>.Failure(StatusCodes.Status409Conflict, "Stock count lines can only be modified while the stock count is in Draft status.");
         }
 
         var line = stockCount.Lines.FirstOrDefault(x => x.Id == stockCountLineId);
@@ -100,7 +100,7 @@ public class StockCountLineCommandService(
 
         if (stockCount.Status != DocumentStatus.Draft)
         {
-            return ServiceResult<bool>.Failure(StatusCodes.Status400BadRequest, "Stock count lines can only be modified while the stock count is in Draft status.");
+            return ServiceResult<bool>.Failure(StatusCodes.Status409Conflict, "Stock count lines can only be modified while the stock count is in Draft status.");
         }
 
         var line = stockCount.Lines.FirstOrDefault(x => x.Id == stockCountLineId);

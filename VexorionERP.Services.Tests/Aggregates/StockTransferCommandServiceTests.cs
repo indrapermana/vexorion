@@ -407,7 +407,7 @@ public class StockTransferCommandServiceTests
     }
 
     [Fact]
-    public async Task Delete_WhenNonDraft_Returns400()
+    public async Task Delete_WhenNonDraft_Returns409()
     {
         var tenantId = Guid.NewGuid();
         var transferId = Guid.NewGuid();
@@ -435,7 +435,7 @@ public class StockTransferCommandServiceTests
         var result = await service.DeleteAsync(transferId);
 
         Assert.False(result.Succeeded);
-        Assert.Equal(400, result.StatusCode);
+        Assert.Equal(409, result.StatusCode);
     }
 
     [Fact]

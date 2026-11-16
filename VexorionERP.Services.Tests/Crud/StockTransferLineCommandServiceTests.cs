@@ -40,7 +40,7 @@ public class StockTransferLineCommandServiceTests
     }
 
     [Fact]
-    public async Task Create_NonDraftTransfer_Returns400()
+    public async Task Create_NonDraftTransfer_Returns409()
     {
         var (db, svc, tenantId) = Build();
         var transferId = Guid.NewGuid();
@@ -59,7 +59,7 @@ public class StockTransferLineCommandServiceTests
         var result = await svc.CreateAsync(transferId, ValidCreate(Guid.NewGuid()));
 
         Assert.False(result.Succeeded);
-        Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
+        Assert.Equal(StatusCodes.Status409Conflict, result.StatusCode);
     }
 
     [Fact]

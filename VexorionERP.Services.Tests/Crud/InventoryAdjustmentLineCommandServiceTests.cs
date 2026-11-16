@@ -42,7 +42,7 @@ public class InventoryAdjustmentLineCommandServiceTests
     }
 
     [Fact]
-    public async Task Create_NonDraftAdjustment_Returns400()
+    public async Task Create_NonDraftAdjustment_Returns409()
     {
         var (db, svc, tenantId) = Build();
         var adjustmentId = Guid.NewGuid();
@@ -61,7 +61,7 @@ public class InventoryAdjustmentLineCommandServiceTests
         var result = await svc.CreateAsync(adjustmentId, ValidCreate(Guid.NewGuid()));
 
         Assert.False(result.Succeeded);
-        Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
+        Assert.Equal(StatusCodes.Status409Conflict, result.StatusCode);
     }
 
     [Fact]

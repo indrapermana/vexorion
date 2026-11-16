@@ -293,7 +293,7 @@ public class InventoryAdjustmentCommandServiceTests
     }
 
     [Fact]
-    public async Task Delete_WhenNonDraft_Returns400()
+    public async Task Delete_WhenNonDraft_Returns409()
     {
         var tenantId = Guid.NewGuid();
         var adjustmentId = Guid.NewGuid();
@@ -318,7 +318,7 @@ public class InventoryAdjustmentCommandServiceTests
         var result = await service.DeleteAsync(adjustmentId);
 
         Assert.False(result.Succeeded);
-        Assert.Equal(400, result.StatusCode);
+        Assert.Equal(409, result.StatusCode);
     }
 
     [Fact]

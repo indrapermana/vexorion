@@ -237,7 +237,7 @@ public class StockTransferCommandService(
 
         if (transfer.Status != DocumentStatus.Draft)
         {
-            return ServiceResult<bool>.Failure(StatusCodes.Status400BadRequest, "Stock transfers can only be deleted while in Draft status.");
+            return ServiceResult<bool>.Failure(StatusCodes.Status409Conflict, "Stock transfers can only be deleted while in Draft status.");
         }
 
         return null;
