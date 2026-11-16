@@ -54,6 +54,17 @@ public class SalesInvoiceCommandService : BaseCommandService<SalesInvoice>
 
             if (sourceSalesOrder is null)
                 return ServiceResult<IEntityResponse<SalesInvoice>>.Failure(StatusCodes.Status400BadRequest, "Source sales order not found.");
+
+            var sourceAlreadyInvoiced = await context.SalesInvoices.GetByTenant(tenantId.Value)
+                .AnyAsync(
+                    x => x.SourceSalesOrderId == sourceSalesOrder.Id
+                        && x.IsActive
+                        && x.Status != InvoiceStatus.Cancelled,
+                    cancellationToken);
+            if (sourceAlreadyInvoiced)
+                return ServiceResult<IEntityResponse<SalesInvoice>>.Failure(
+                    StatusCodes.Status409Conflict,
+                    "The source sales order has already been invoiced.");
         }
 
         var effectiveCustomerId = sourceSalesOrder?.CustomerId ?? createRequest.CustomerId;

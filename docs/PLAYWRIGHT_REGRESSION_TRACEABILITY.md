@@ -19,8 +19,8 @@ This matrix cross-references the 118 manual cases in `VexorionERP_FULL_REGRESSIO
 | Foundation | 12 | 0 | 9 | 3 |
 | Admin UI | 10 | 0 | 10 | 0 |
 | Master data | 14 | 0 | 12 | 2 |
-| Sales | 9 | 0 | 5 | 4 |
-| Purchasing | 8 | 0 | 4 | 4 |
+| Sales | 9 | 7 | 0 | 2 |
+| Purchasing | 8 | 6 | 0 | 2 |
 | Inventory | 11 | 8 | 0 | 3 |
 | Finance | 13 | 8 | 4 | 1 |
 | Projects | 7 | 0 | 6 | 1 |
@@ -28,7 +28,7 @@ This matrix cross-references the 118 manual cases in `VexorionERP_FULL_REGRESSIO
 | POS | 18 | 2 | 13 | 3 |
 | Security | 5 | 0 | 2 | 3 |
 | Operations | 7 | 0 | 2 | 5 |
-| **Total** | **118** | **21** | **68** | **29** |
+| **Total** | **118** | **34** | **59** | **25** |
 
 ## Foundation
 
@@ -85,27 +85,27 @@ This matrix cross-references the 118 manual cases in `VexorionERP_FULL_REGRESSIO
 
 | Excel ID | Coverage | Playwright evidence | Remaining gap |
 |---|---|---|---|
-| SAL-001 | Partial | `sales-cycle.spec.ts` TC-1.5.1.1/1.5.1.5; `sales.spec.ts` | Create/header/line flow is covered; totals, rounding, currency, numbering, and persisted reconciliation are incomplete. |
+| SAL-001 | Full | `trade-lifecycle.spec.ts` SAL-001/003–008 | Persisted header/line totals, decimal discount arithmetic, currency normalization, confirmation, and source data reconcile. |
 | SAL-002 | Missing | None | Draft edit, safe cancel, and confirmed delete are not automated. |
-| SAL-003 | Partial | `sales-cycle.spec.ts` TC-1.5.3.1 and UX-TRADE-04 | Shipment creation/UI is covered; partial/final stock movements and over-shipment are not reconciled. |
-| SAL-004 | Partial | `sales-cycle.spec.ts` TC-1.5.2.1/1.5.2.2 and UX-TRADE-02 | Manual creation/validation is covered; totals/status/immutable conflict are incomplete. |
-| SAL-005 | Missing | None | Source-quantity eligibility, traceability, and duplicate billing prevention are not automated. |
-| SAL-006 | Partial | `sales-cycle.spec.ts` payment tests | Payment list/allocation entry is covered; paid balance and ledger effects are not reconciled. |
-| SAL-007 | Partial | `sales-cycle.spec.ts` UX-TRADE-05 | Over-allocation preview is covered; partial and valid multi-allocation outcomes are not. |
-| SAL-008 | Missing | None | Concurrent edit conflict and recovery are not automated. |
+| SAL-003 | Full | `trade-lifecycle.spec.ts` SAL-001/003–008 | Competing partial shipment, over-shipment rejection, final shipment, order quantities/status, exact stock delta, and movement audit reconcile. |
+| SAL-004 | Full | `trade-lifecycle.spec.ts` SAL-001/003–008 | Source invoice lines/totals and issued immutability are persisted; ledger posting is balanced and source-linked. |
+| SAL-005 | Full | `trade-lifecycle.spec.ts` SAL-001/003–008 | Invoice copies the completed source order exactly and a second active invoice for that source is rejected with 409. |
+| SAL-006 | Full | `trade-lifecycle.spec.ts` SAL-001/003–008 | Partial/final payments reconcile paid and remaining balances; payment journal accounts, totals, and source link are asserted. |
+| SAL-007 | Full | `trade-lifecycle.spec.ts` SAL-001/003–008 | Valid partial/final allocations persist while an amount above the exact remaining balance is rejected without changing totals. |
+| SAL-008 | Full | `trade-lifecycle.spec.ts` SAL-001/003–008 | Two competing fulfillment posts yield one success and one conflict; reload shows one stock effect and correct remaining quantity before recovery. |
 | SAL-009 | Missing | None | Search/filter/sort/page/export equivalence is not automated. |
 
 ## Purchasing
 
 | Excel ID | Coverage | Playwright evidence | Remaining gap |
 |---|---|---|---|
-| PUR-001 | Partial | `purchase-cycle.spec.ts` TC-1.6.1.1/1.6.1.2; `purchasing.spec.ts` | Create/header/line flow is covered; totals, currency, and persisted reconciliation are incomplete. |
+| PUR-001 | Full | `trade-lifecycle.spec.ts` PUR-001/003–007 | Persisted order header/line totals, decimal cost arithmetic, currency normalization, confirmation, and source data reconcile. |
 | PUR-002 | Missing | None | Draft edit/cancel/delete is not automated. |
-| PUR-003 | Partial | `purchase-cycle.spec.ts` TC-1.6.2.1/1.6.2.1b and UX-TRADE-04 | Receipt creation/post UI is covered; partial/final inventory and excess prevention are not reconciled. |
-| PUR-004 | Partial | `purchase-cycle.spec.ts` TC-1.6.3.1/1.6.3.2 | Manual creation/validation is covered; totals/status/immutable conflict are incomplete. |
-| PUR-005 | Missing | None | Source eligibility, traceability, and duplicate invoicing are not automated. |
-| PUR-006 | Partial | `purchase-cycle.spec.ts` UX-TRADE-05; payment page smoke | Over-allocation preview is covered; balances, valid allocation, and ledger effects are not. |
-| PUR-007 | Missing | None | Concurrent purchase edit conflict/recovery is not automated. |
+| PUR-003 | Full | `trade-lifecycle.spec.ts` PUR-001/003–007 | Competing partial receipt, over-receipt rejection, final receipt, order quantities/status, exact stock delta, and movement audit reconcile. |
+| PUR-004 | Full | `trade-lifecycle.spec.ts` PUR-001/003–007 | Source invoice lines/totals and issued immutability are persisted; ledger posting is balanced and source-linked. |
+| PUR-005 | Full | `trade-lifecycle.spec.ts` PUR-001/003–007 | Invoice copies the completed source order exactly and a second active invoice for that source is rejected with 409. |
+| PUR-006 | Full | `trade-lifecycle.spec.ts` PUR-001/003–007 | Partial/final vendor allocations reconcile balances, reject excess, and produce a balanced source-linked payment journal. |
+| PUR-007 | Full | `trade-lifecycle.spec.ts` PUR-001/003–007 | Two competing receipt posts yield one success and one conflict; reload shows one stock effect and correct remaining quantity before recovery. |
 | PUR-008 | Missing | None | Search/filter/sort/page/export equivalence is not automated. |
 
 ## Inventory
@@ -216,8 +216,8 @@ Implement one independently reviewable workflow at a time in this order:
    INV-001 through INV-007 and INV-011 now use real completion/cancellation, movement, balance, immutability, insufficient-stock, and duplicate-effect assertions in an isolated automation tenant.
 2. **P0-AUTO-02 — Financial posting and reports — completed 16 November 2026**
    FIN-003 through FIN-006 and FIN-008 through FIN-011 now reconcile posting, period gates, reversal, statements, drill-down, aging, currencies, and CSV exports in an isolated automation tenant.
-3. **P0-AUTO-03 — Trade source, concurrency, and persistence**  
-   Cover SAL-001/003–008 and PUR-001/003–007, including source quantities, immutable states, concurrency, allocation, inventory, and ledger effects.
+3. **P0-AUTO-03 — Trade source, concurrency, and persistence — completed 16 November 2026**
+   SAL-001/003–008 and PUR-001/003–007 now reconcile persisted totals, source invoices, immutable states, fulfillment concurrency, allocations, inventory movements/balances, and ledger effects in an isolated automation tenant.
 4. **P0-AUTO-04 — POS full refund and hard stock conflict**  
    Cover POS-012 and replace the conditional POS-009 test with a guaranteed conflict plus recovery assertions.
 5. **P0-AUTO-05 — Project signed-link security and cleanup**  

@@ -56,6 +56,17 @@ public class PurchaseInvoiceCommandService : BaseCommandService<PurchaseInvoice>
 
             if (sourcePurchaseOrder is null)
                 return ServiceResult<IEntityResponse<PurchaseInvoice>>.Failure(StatusCodes.Status400BadRequest, "Source purchase order not found.");
+
+            var sourceAlreadyInvoiced = await context.PurchaseInvoices.GetByTenant(tenantId.Value)
+                .AnyAsync(
+                    x => x.SourcePurchaseOrderId == sourcePurchaseOrder.Id
+                        && x.IsActive
+                        && x.Status != InvoiceStatus.Cancelled,
+                    cancellationToken);
+            if (sourceAlreadyInvoiced)
+                return ServiceResult<IEntityResponse<PurchaseInvoice>>.Failure(
+                    StatusCodes.Status409Conflict,
+                    "The source purchase order has already been invoiced.");
         }
 
         var effectiveSupplierId = sourcePurchaseOrder?.SupplierId ?? createRequest.SupplierId;

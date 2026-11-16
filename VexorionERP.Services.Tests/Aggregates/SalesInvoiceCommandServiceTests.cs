@@ -155,6 +155,57 @@ public class SalesInvoiceCommandServiceTests
     }
 
     [Fact]
+    public async Task Create_FromAlreadyInvoicedSalesOrder_ReturnsConflict()
+    {
+        var tenantId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var warehouseId = Guid.NewGuid();
+        var orderId = Guid.NewGuid();
+        var databaseName = Guid.NewGuid().ToString();
+
+        await using var dbContext = TestDbContextFactory.Create(tenantId, databaseName);
+        dbContext.Customers.Add(new Customer { Id = customerId, TenantId = tenantId, CustomerNumber = "CUST-SOURCE", Name = "Customer" });
+        dbContext.Warehouses.Add(new Warehouse { Id = warehouseId, TenantId = tenantId, Code = "SOURCE", Name = "Source" });
+        dbContext.SalesOrders.Add(new SalesOrder
+        {
+            Id = orderId,
+            TenantId = tenantId,
+            OrderNumber = "SO-SOURCE",
+            CustomerId = customerId,
+            WarehouseId = warehouseId,
+            OrderDate = new DateOnly(2026, 4, 1),
+            RequiredDate = new DateOnly(2026, 4, 10),
+            CurrencyCode = "USD",
+            Status = DocumentStatus.Confirmed,
+        });
+        dbContext.SalesInvoices.Add(new SalesInvoice
+        {
+            TenantId = tenantId,
+            InvoiceNumber = "SI-FIRST",
+            CustomerId = customerId,
+            SourceSalesOrderId = orderId,
+            InvoiceDate = new DateOnly(2026, 4, 11),
+            DueDate = new DateOnly(2026, 5, 11),
+            CurrencyCode = "USD",
+            Status = InvoiceStatus.Issued,
+        });
+        await dbContext.SaveChangesAsync();
+
+        var service = new SalesInvoiceCommandService(dbContext, new FixedTenantProvider(tenantId));
+        var result = await service.CreateAsync(new CreateSalesInvoiceRequest
+        {
+            InvoiceNumber = "SI-SECOND",
+            SourceSalesOrderId = orderId,
+            InvoiceDate = new DateOnly(2026, 4, 12),
+            DueDate = new DateOnly(2026, 5, 12),
+        });
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(409, result.StatusCode);
+        Assert.Equal("The source sales order has already been invoiced.", result.ErrorMessage);
+    }
+
+    [Fact]
     public async Task Create_DuplicateInvoiceNumber_ReturnsConflict()
     {
         var tenantId = Guid.NewGuid();
