@@ -1,0 +1,117 @@
+name: Production readiness check
+
+on:
+  workflow_dispatch:
+    inputs:
+      idle_window_confirmed:
+        description: Confirm the min-zero service has been left idle for the approved cold-start window
+        required: true
+        type: boolean
+      max_health_seconds:
+        description: Maximum acceptable ready-response time in seconds
+        required: true
+        default: '30'
+        type: string
+
+concurrency:
+  group: production-readiness-check
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify production endpoints and readiness
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+
+    env:
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      GCP_REGION: ${{ vars.GCP_REGION }}
+      GCP_CLOUD_RUN_SERVICE: ${{ vars.GCP_CLOUD_RUN_SERVICE }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_DEPLOY_SERVICE_ACCOUNT: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+      IDLE_WINDOW_CONFIRMED: ${{ inputs.idle_window_confirmed }}
+      MAX_HEALTH_SECONDS: ${{ inputs.max_health_seconds }}
+      EVIDENCE_DIR: readiness-evidence
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Validate cold-start confirmation and threshold
+        run: |
+          [[ "$IDLE_WINDOW_CONFIRMED" == "true" ]] || {
+            echo "Wait for the approved idle window, then rerun with confirmation enabled."
+            exit 1
+          }
+          [[ "$MAX_HEALTH_SECONDS" =~ ^[0-9]+([.][0-9]+)?$ ]] || {
+            echo "max_health_seconds must be a positive number."
+            exit 1
+          }
+          awk -v value="$MAX_HEALTH_SECONDS" 'BEGIN { exit !(value > 0) }' || {
+            echo "max_health_seconds must be greater than zero."
+            exit 1
+          }
+          mkdir -p "$EVIDENCE_DIR"
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - name: Setup Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Verify current production revision
+        run: |
+          service_json=$(gcloud run services describe "$GCP_CLOUD_RUN_SERVICE" \
+            --project="$GCP_PROJECT_ID" \
+            --region="$GCP_REGION" \
+            --format=json)
+          service_url=$(jq -r '.status.url' <<< "$service_json")
+          image=$(jq -r '.spec.template.spec.containers[0].image' <<< "$service_json")
+          revision=$(jq -r '.status.latestReadyRevisionName' <<< "$service_json")
+          min_instances=$(jq -r '.spec.template.metadata.annotations["autoscaling.knative.dev/minScale"] // .metadata.annotations["autoscaling.knative.dev/minScale"] // "0"' <<< "$service_json")
+          traffic_percent=$(jq -r --arg revision "$revision" \
+            '[.status.traffic[] | select(.revisionName == $revision) | (.percent // 0)] | add // 0' \
+            <<< "$service_json")
+          [[ "$min_instances" == "0" ]] || {
+            echo "Cold-start evidence requires min instances 0; service reports $min_instances."
+            exit 1
+          }
+
+          SERVICE_URL="$service_url" \
+          EXPECTED_IMAGE="$image" \
+          EXPECTED_REVISION="$revision" \
+          ACTUAL_IMAGE="$image" \
+          ACTUAL_REVISION="$revision" \
+          TRAFFIC_PERCENT="$traffic_percent" \
+          MAX_HEALTH_SECONDS="$MAX_HEALTH_SECONDS" \
+          EVIDENCE_DIR="$EVIDENCE_DIR" \
+          scripts/release/verify-production.sh
+
+          jq -n \
+            --arg commit "$GITHUB_SHA" \
+            --arg revision "$revision" \
+            --arg image "$image" \
+            --arg idleWindowConfirmed "$IDLE_WINDOW_CONFIRMED" \
+            --arg workflowRun "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            --arg verifiedAtUtc "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+            '{commit: $commit, revision: $revision, image: $image, idleWindowConfirmed: ($idleWindowConfirmed == "true"), workflowRun: $workflowRun, verifiedAtUtc: $verifiedAtUtc}' \
+            > "$EVIDENCE_DIR/readiness-metadata.json"
+          cat "$EVIDENCE_DIR/production-verification.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload readiness evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: production-readiness-evidence-${{ github.run_id }}
+          path: readiness-evidence/
+          if-no-files-found: warn
+          retention-days: 90

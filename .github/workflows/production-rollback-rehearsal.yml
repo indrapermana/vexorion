@@ -1,0 +1,171 @@
+name: Production rollback rehearsal
+
+on:
+  workflow_dispatch:
+    inputs:
+      rollback_revision:
+        description: Previous known-good Cloud Run revision to test
+        required: true
+        type: string
+      restore_revision:
+        description: Current known-good revision that must receive traffic again
+        required: true
+        type: string
+      confirmation:
+        description: Type ROLLBACK_AND_RESTORE_PRODUCTION
+        required: true
+        type: string
+
+concurrency:
+  group: production-cloud-run-traffic
+  cancel-in-progress: false
+
+jobs:
+  rollback-and-restore:
+    name: Shift traffic, verify, and restore
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+
+    env:
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      GCP_REGION: ${{ vars.GCP_REGION }}
+      GCP_CLOUD_RUN_SERVICE: ${{ vars.GCP_CLOUD_RUN_SERVICE }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_DEPLOY_SERVICE_ACCOUNT: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+      ROLLBACK_REVISION: ${{ inputs.rollback_revision }}
+      RESTORE_REVISION: ${{ inputs.restore_revision }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+      EVIDENCE_ROOT: rollback-evidence
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Validate explicit production confirmation
+        run: |
+          [[ "$CONFIRMATION" == "ROLLBACK_AND_RESTORE_PRODUCTION" ]] || {
+            echo "Confirmation text does not match. No traffic was changed."
+            exit 1
+          }
+          [[ "$ROLLBACK_REVISION" != "$RESTORE_REVISION" ]] || {
+            echo "Rollback and restore revisions must be different."
+            exit 1
+          }
+          mkdir -p "$EVIDENCE_ROOT"
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - name: Setup Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Validate revision identities and current traffic
+        run: |
+          service_json=$(gcloud run services describe "$GCP_CLOUD_RUN_SERVICE" \
+            --project="$GCP_PROJECT_ID" \
+            --region="$GCP_REGION" \
+            --format=json)
+          service_url=$(jq -r '.status.url' <<< "$service_json")
+          restore_percent=$(jq -r --arg revision "$RESTORE_REVISION" \
+            '[.status.traffic[] | select(.revisionName == $revision) | (.percent // 0)] | add // 0' \
+            <<< "$service_json")
+          [[ "$restore_percent" == "100" ]] || {
+            echo "Restore revision must currently receive 100 percent traffic; got $restore_percent."
+            exit 1
+          }
+
+          for revision in "$ROLLBACK_REVISION" "$RESTORE_REVISION"; do
+            revision_json=$(gcloud run revisions describe "$revision" \
+              --project="$GCP_PROJECT_ID" \
+              --region="$GCP_REGION" \
+              --format=json)
+            revision_service=$(jq -r '.metadata.labels["serving.knative.dev/service"]' <<< "$revision_json")
+            ready_status=$(jq -r '[.status.conditions[] | select(.type == "Ready")][0].status' <<< "$revision_json")
+            [[ "$revision_service" == "$GCP_CLOUD_RUN_SERVICE" ]] || {
+              echo "Revision $revision does not belong to $GCP_CLOUD_RUN_SERVICE."
+              exit 1
+            }
+            [[ "$ready_status" == "True" ]] || {
+              echo "Revision $revision is not Ready."
+              exit 1
+            }
+            jq -r '.spec.containers[0].image' <<< "$revision_json" > "$EVIDENCE_ROOT/${revision}.image"
+          done
+
+          echo "SERVICE_URL=$service_url" >> "$GITHUB_ENV"
+          cp <(printf '%s\n' "$service_json") "$EVIDENCE_ROOT/service-before.json"
+
+      - name: Rehearse rollback and restore current revision
+        run: |
+          traffic_changed=false
+          restore_traffic() {
+            if [[ "$traffic_changed" == "true" ]]; then
+              echo "Restoring 100 percent traffic to $RESTORE_REVISION."
+              gcloud run services update-traffic "$GCP_CLOUD_RUN_SERVICE" \
+                --project="$GCP_PROJECT_ID" \
+                --region="$GCP_REGION" \
+                --to-revisions="$RESTORE_REVISION=100" \
+                --quiet
+            fi
+          }
+          trap restore_traffic EXIT
+
+          gcloud run services update-traffic "$GCP_CLOUD_RUN_SERVICE" \
+            --project="$GCP_PROJECT_ID" \
+            --region="$GCP_REGION" \
+            --to-revisions="$ROLLBACK_REVISION=100" \
+            --quiet
+          traffic_changed=true
+
+          rollback_image=$(<"$EVIDENCE_ROOT/${ROLLBACK_REVISION}.image")
+          SERVICE_URL="$SERVICE_URL" \
+          EXPECTED_IMAGE="$rollback_image" \
+          EXPECTED_REVISION="$ROLLBACK_REVISION" \
+          ACTUAL_IMAGE="$rollback_image" \
+          ACTUAL_REVISION="$ROLLBACK_REVISION" \
+          TRAFFIC_PERCENT=100 \
+          EVIDENCE_DIR="$EVIDENCE_ROOT/rollback" \
+          scripts/release/verify-production.sh
+
+          restore_traffic
+          traffic_changed=false
+          restore_image=$(<"$EVIDENCE_ROOT/${RESTORE_REVISION}.image")
+          SERVICE_URL="$SERVICE_URL" \
+          EXPECTED_IMAGE="$restore_image" \
+          EXPECTED_REVISION="$RESTORE_REVISION" \
+          ACTUAL_IMAGE="$restore_image" \
+          ACTUAL_REVISION="$RESTORE_REVISION" \
+          TRAFFIC_PERCENT=100 \
+          EVIDENCE_DIR="$EVIDENCE_ROOT/restore" \
+          scripts/release/verify-production.sh
+
+          jq -n \
+            --arg commit "$GITHUB_SHA" \
+            --arg rollbackRevision "$ROLLBACK_REVISION" \
+            --arg restoreRevision "$RESTORE_REVISION" \
+            --arg workflowRun "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            --arg completedAtUtc "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+            '{commit: $commit, rollbackRevision: $rollbackRevision, restoreRevision: $restoreRevision, workflowRun: $workflowRun, completedAtUtc: $completedAtUtc}' \
+            > "$EVIDENCE_ROOT/rehearsal-metadata.json"
+
+          cat "$EVIDENCE_ROOT/rollback/production-verification.md" >> "$GITHUB_STEP_SUMMARY"
+          echo >> "$GITHUB_STEP_SUMMARY"
+          cat "$EVIDENCE_ROOT/restore/production-verification.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload rollback rehearsal evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: production-rollback-evidence-${{ github.run_id }}
+          path: rollback-evidence/
+          if-no-files-found: warn
+          retention-days: 90

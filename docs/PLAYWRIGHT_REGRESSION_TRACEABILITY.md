@@ -16,7 +16,7 @@ This matrix cross-references the 118 manual cases in `VexorionERP_FULL_REGRESSIO
 
 | Area | Cases | Full | Partial | Missing |
 |---|---:|---:|---:|---:|
-| Foundation | 12 | 0 | 9 | 3 |
+| Foundation | 12 | 0 | 10 | 2 |
 | Admin UI | 10 | 0 | 10 | 0 |
 | Master data | 14 | 0 | 12 | 2 |
 | Sales | 9 | 7 | 0 | 2 |
@@ -27,14 +27,14 @@ This matrix cross-references the 118 manual cases in `VexorionERP_FULL_REGRESSIO
 | Imports | 4 | 3 | 1 | 0 |
 | POS | 18 | 4 | 12 | 2 |
 | Security | 5 | 4 | 0 | 1 |
-| Operations | 7 | 0 | 2 | 5 |
-| **Total** | **118** | **43** | **54** | **21** |
+| Operations | 7 | 0 | 6 | 1 |
+| **Total** | **118** | **43** | **59** | **16** |
 
 ## Foundation
 
 | Excel ID | Coverage | Playwright evidence | Remaining gap |
 |---|---|---|---|
-| FND-001 | Missing | None | Production URLs, TLS certificates, and both health endpoints are not checked. |
+| FND-001 | Partial | `verify-production.sh`; production deployment/readiness workflows | Landing, Main/Admin/POS, API TLS, live/ready bodies, status, and latency are gated and retained; clean-browser screenshots remain manual. |
 | FND-002 | Partial | `VexorionERP.UI/e2e/auth.spec.ts` — TC-M-001 | Does not explicitly fail on console/network errors. |
 | FND-003 | Partial | `VexorionERP.AdminUI/e2e/auth.spec.ts` — TC-A-001 | Successful login is checked, but authenticated refresh persistence is not. |
 | FND-004 | Partial | `VexorionERP.POS/e2e/auth.spec.ts` — TC-P-001 | Login is checked, but the complete authorized-action boundary is not. |
@@ -201,12 +201,12 @@ This matrix cross-references the 118 manual cases in `VexorionERP_FULL_REGRESSIO
 | Excel ID | Coverage | Playwright evidence | Remaining gap |
 |---|---|---|---|
 | OPS-001 | Missing | None | Loki/Cloud Run correlation, severity, causality, and secret-redaction are not automated. |
-| OPS-002 | Missing | None | Cold-start timing and readiness dependency behavior are not automated. |
-| OPS-003 | Missing | None | Migration paths, bootstrap idempotency, and startup read-only/current-schema gates are not Playwright coverage. |
-| OPS-004 | Missing | None | Rollback/forward-fix and revision/traffic evidence are not automated. |
+| OPS-002 | Partial | `production-readiness-check.yml`; `verify-production.sh` | An operator-confirmed min-zero idle run records live/ready timing and dependency readiness; authenticated read/write smoke and definitive instance-reclamation evidence remain manual. |
+| OPS-003 | Partial | `backend.yml` migration-before-traffic gate and migration-execution artifact | Production migration failure blocks deployment and normal startup validates current schema; clean-database/bootstrap-idempotency and cloned-snapshot upgrade paths remain outside this gate. |
+| OPS-004 | Partial | `production-rollback-rehearsal.yml` | The protected workflow validates revision ownership/readiness, shifts traffic, verifies rollback, restores through an exit trap, re-verifies, and records evidence; an approved successful production run is still required. |
 | OPS-005 | Partial | Responsive suites and selected error-boundary assertions | No suite-wide console, failed-resource, mixed-content, CSP, and CORS failure collector exists. |
 | OPS-006 | Partial | POS checkout/refund idempotency; project upload uncertainty; selected concurrency guards | Safeguards are covered for selected workflows, not all critical actions. |
-| OPS-007 | Missing | None | Commit/revision gate aggregation, defect status, evidence, and sign-off are not automated. |
+| OPS-007 | Partial | Backend release metadata and 90-day evidence artifacts; `PRODUCTION_RELEASE_GATES.md` | Commit, migration, digest, revision, traffic, endpoint, TLS, timing, and workflow URL are aggregated; cross-workflow E2E/manual evidence, defect review, and QA/Product/Engineering sign-off remain release-owner actions. |
 
 ## P0 automation backlog
 
@@ -224,8 +224,8 @@ Implement one independently reviewable workflow at a time in this order:
    PRJ-003/005/006 now cover precise invalid-upload causes, confirmed cancellation without a request, anonymous API denial, signed read-only access, tamper/write rejection, real R2 expiry, and parent-project cascade removal with storage reconciliation and object 404 proof.
 6. **P0-AUTO-06 — Cross-cutting security — completed 16 November 2026**
    SEC-001/002/004/005 now cover an audited tenant/object/transaction matrix, inert stored/reflected payloads, CSV formula neutralization, exact CORS/security-header behavior, public product images, and private R2 list/read/write/delete plus signed-expiry boundaries.
-7. **P0-AUTO-07 — Release gates outside Playwright**  
-   Implement FND-001 and OPS-002/003/004/007 in deployment/integration scripts rather than forcing them into browser tests.
+7. **P0-AUTO-07 — Release gates outside Playwright — completed 16 November 2026**
+   FND-001 and OPS-002/003/004/007 now have deployment/integration gates for production endpoints, TLS, health timing, migration-before-traffic, immutable revision evidence, operator-confirmed idle readiness, and protected rollback/restore. Workbook acceptance remains Partial where clean-browser screenshots, clean/snapshot database rehearsals, authenticated production smoke, an executed rollback run, defect review, or human sign-off is still required.
 
 ## Traceability convention for new tests
 

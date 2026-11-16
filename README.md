@@ -534,6 +534,8 @@ The backend workflow applies EF Core migrations automatically before it updates 
 
 The one-time job, identity, secret, IAM, and GitHub environment setup is documented in [Google Cloud Run production setup](docs/GOOGLE_CLOUD_RUN_PRODUCTION_SETUP.md). Migrations must remain backward-compatible with the currently serving revision; use expand-contract changes when old and new application versions cannot safely share a schema.
 
+After deployment, the workflow uploads a 90-day production evidence artifact containing the commit, immutable image digest, migration execution, previous/current revisions, traffic state, public endpoint/TLS checks, health timing, and CORS matrix. Read-only idle/readiness checks and the separately approved rollback-and-restore rehearsal are documented in [Production release gates](docs/PRODUCTION_RELEASE_GATES.md).
+
 For an authorized recovery or local verification, the same explicit operation can still be run manually. Securely read the connection string without adding it to shell history:
 
 From the repository root, securely read the connection string without adding it to shell history:
@@ -568,6 +570,7 @@ After a manual recovery migration succeeds, verify runtime access to newly creat
 - [Architecture and workflow diagrams](docs/VEXORIONERP_ARCHITECTURE_DIAGRAMS.md)
 - [Neon PostgreSQL production setup](docs/NEON_PRODUCTION_SETUP.md)
 - [Google Cloud Run production setup](docs/GOOGLE_CLOUD_RUN_PRODUCTION_SETUP.md)
+- [Production release gates and rollback rehearsal](docs/PRODUCTION_RELEASE_GATES.md)
 - [Cloudflare R2 production setup](docs/CLOUDFLARE_R2_SETUP.md)
 - [Cloudflare Pages setup for the three authenticated UIs](docs/CLOUDFLARE_PAGES_UI_SETUP.md)
 - [Historical Cloudflare frontend migration runbook](docs/CLOUDFLARE_FRONTEND_MIGRATION.md)

@@ -234,6 +234,8 @@ Push an approved commit to `master`. `.github/workflows/backend.yml` will:
 7. Stop without changing API traffic if migration fails.
 8. Update the API service to that same digest.
 9. Verify `/health/live` and `/health/ready`.
+10. Verify all public HTTPS endpoints, the anonymous authentication boundary, and the exact CORS-origin matrix.
+11. Upload immutable migration, revision, digest, timing, TLS, and endpoint evidence for 90 days.
 
 ## 11. Verify production
 
@@ -262,7 +264,9 @@ Both must return `Healthy`. Also verify login, an authenticated request, R2 uplo
 
 ## 12. Roll back and roll forward
 
-Cloud Run retains revisions. Move 100% traffic to the previously verified revision, repeat health checks, then move traffic back to the current revision. A rollback changes application code only; it must continue using the same production Neon database and R2 buckets.
+Cloud Run retains revisions. Use the protected `Production rollback rehearsal` GitHub workflow to validate both revision identities, move 100% traffic to the previously verified revision, run the production checks, restore the current revision, and run the checks again. The workflow attempts restoration through an exit trap if verification fails and retains its evidence for 90 days. A rollback changes application code only; it must continue using the same production Neon database and R2 buckets.
+
+The exact readiness and rollback procedure is in [Production release gates](PRODUCTION_RELEASE_GATES.md).
 
 ## Operational checklist
 

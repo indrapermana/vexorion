@@ -15,6 +15,7 @@ on:
       - '.dockerignore'
       - 'global.json'
       - '.github/workflows/backend.yml'
+      - 'scripts/release/**'
   pull_request:
     branches: [master, develop]
     paths:
@@ -29,6 +30,7 @@ on:
       - '.dockerignore'
       - 'global.json'
       - '.github/workflows/backend.yml'
+      - 'scripts/release/**'
 
 concurrency:
   group: backend-${{ github.workflow }}-${{ github.ref }}
@@ -62,6 +64,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Test production release verification script
+        run: scripts/release/test-verify-production.sh
 
       - name: Setup .NET 10
         uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
@@ -107,6 +112,9 @@ jobs:
     needs: build-and-test
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     environment: production
+    concurrency:
+      group: production-cloud-run-traffic
+      cancel-in-progress: false
 
     permissions:
       contents: read
@@ -123,10 +131,21 @@ jobs:
       GCP_IMAGE_NAME: ${{ vars.GCP_IMAGE_NAME }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_DEPLOY_SERVICE_ACCOUNT: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+      RELEASE_EVIDENCE_DIR: release-evidence
 
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Initialize release evidence
+        run: |
+          mkdir -p "$RELEASE_EVIDENCE_DIR"
+          jq -n \
+            --arg commit "$GITHUB_SHA" \
+            --arg workflowRun "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            --arg startedAtUtc "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+            '{commit: $commit, workflowRun: $workflowRun, startedAtUtc: $startedAtUtc}' \
+            > "$RELEASE_EVIDENCE_DIR/workflow-context.json"
 
       - name: Validate deployment configuration
         env:
@@ -180,6 +199,18 @@ jobs:
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
 
+      - name: Capture pre-deployment revision
+        run: |
+          previous_revision=$(gcloud run services describe "$GCP_CLOUD_RUN_SERVICE" \
+            --project="$GCP_PROJECT_ID" \
+            --region="$GCP_REGION" \
+            --format='value(status.latestReadyRevisionName)')
+          if [[ -z "$previous_revision" ]]; then
+            echo "Cloud Run did not return a current ready revision."
+            exit 1
+          fi
+          echo "PREVIOUS_READY_REVISION=$previous_revision" >> "$GITHUB_ENV"
+
       - name: Configure Artifact Registry authentication
         run: gcloud auth configure-docker "${GCP_REGION}-docker.pkg.dev" --quiet
 
@@ -232,11 +263,23 @@ jobs:
 
       - name: Apply pending database migrations
         run: |
-          gcloud run jobs execute "$GCP_MIGRATION_JOB" \
+          migration_execution=$(gcloud run jobs execute "$GCP_MIGRATION_JOB" \
             --project="$GCP_PROJECT_ID" \
             --region="$GCP_REGION" \
             --wait \
+            --format='value(metadata.name)' \
             --quiet
+          )
+          if [[ -z "$migration_execution" ]]; then
+            echo "Cloud Run did not return the migration execution name."
+            exit 1
+          fi
+          echo "MIGRATION_EXECUTION=$migration_execution" >> "$GITHUB_ENV"
+          gcloud run jobs executions describe "$migration_execution" \
+            --project="$GCP_PROJECT_ID" \
+            --region="$GCP_REGION" \
+            --format=json \
+            > "$RELEASE_EVIDENCE_DIR/migration-execution.json"
 
       - name: Deploy immutable revision
         env:
@@ -259,21 +302,52 @@ jobs:
 
       - name: Verify deployed revision
         run: |
-          service_url=$(gcloud run services describe "$GCP_CLOUD_RUN_SERVICE" \
+          service_json=$(gcloud run services describe "$GCP_CLOUD_RUN_SERVICE" \
             --project="$GCP_PROJECT_ID" \
             --region="$GCP_REGION" \
-            --format='value(status.url)')
-          deployed_image=$(gcloud run services describe "$GCP_CLOUD_RUN_SERVICE" \
-            --project="$GCP_PROJECT_ID" \
-            --region="$GCP_REGION" \
-            --format='value(spec.template.spec.containers[0].image)')
+            --format=json)
+          service_url=$(jq -r '.status.url' <<< "$service_json")
+          deployed_image=$(jq -r '.spec.template.spec.containers[0].image' <<< "$service_json")
+          created_revision=$(jq -r '.status.latestCreatedRevisionName' <<< "$service_json")
+          ready_revision=$(jq -r '.status.latestReadyRevisionName' <<< "$service_json")
+          traffic_percent=$(jq -r --arg revision "$ready_revision" \
+            '[.status.traffic[] | select(.revisionName == $revision) | (.percent // 0)] | add // 0' \
+            <<< "$service_json")
 
-          if [[ "$deployed_image" != "$IMAGE_DIGEST_URI" ]]; then
-            echo "Cloud Run is not using the image produced by this workflow."
-            exit 1
-          fi
+          SERVICE_URL="$service_url" \
+          EXPECTED_IMAGE="$IMAGE_DIGEST_URI" \
+          EXPECTED_REVISION="$created_revision" \
+          ACTUAL_IMAGE="$deployed_image" \
+          ACTUAL_REVISION="$ready_revision" \
+          TRAFFIC_PERCENT="$traffic_percent" \
+          EVIDENCE_DIR="$RELEASE_EVIDENCE_DIR" \
+          scripts/release/verify-production.sh
 
-          curl --fail --silent --show-error --retry 5 --retry-all-errors \
-            --retry-delay 5 --max-time 30 "$service_url/health/live"
-          curl --fail --silent --show-error --retry 5 --retry-all-errors \
-            --retry-delay 5 --max-time 30 "$service_url/health/ready"
+          jq -n \
+            --arg commit "$GITHUB_SHA" \
+            --arg workflowRun "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            --arg previousRevision "$PREVIOUS_READY_REVISION" \
+            --arg deployedRevision "$ready_revision" \
+            --arg image "$IMAGE_DIGEST_URI" \
+            --arg migrationExecution "$MIGRATION_EXECUTION" \
+            --arg verifiedAtUtc "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+            '{commit: $commit, workflowRun: $workflowRun, previousRevision: $previousRevision, deployedRevision: $deployedRevision, image: $image, migrationExecution: $migrationExecution, verifiedAtUtc: $verifiedAtUtc}' \
+            > "$RELEASE_EVIDENCE_DIR/release-metadata.json"
+
+          cat "$RELEASE_EVIDENCE_DIR/production-verification.md" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo
+            echo "- Commit: \`$GITHUB_SHA\`"
+            echo "- Previous ready revision: \`$PREVIOUS_READY_REVISION\`"
+            echo "- Migration execution: \`$MIGRATION_EXECUTION\`"
+            echo "- Workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload production release evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: production-release-evidence-${{ github.sha }}
+          path: release-evidence/
+          if-no-files-found: error
+          retention-days: 90
