@@ -34,6 +34,11 @@ on:
         required: false
         default: false
         type: boolean
+      run_e2e:
+        description: 'Run all Playwright suites against the development environment'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   # ─────────────────────────────────────────────
@@ -180,16 +185,17 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-test
     if: >-
-      false &&
       needs.build-and-test.result == 'success' &&
-      github.event_name != 'pull_request' &&
-      needs.build-and-test.outputs.ui_built == 'true'
+      github.event_name == 'workflow_dispatch' &&
+      inputs.run_e2e == true
+    environment: development
     env:
       CI: true
       E2E_API_BASE_URL: ${{ secrets.E2E_API_BASE_URL }}
       E2E_API_ENVIRONMENT: ${{ vars.E2E_API_ENVIRONMENT }}
       E2E_ALLOW_TENANT_PROVISIONING: ${{ vars.E2E_ALLOW_TENANT_PROVISIONING }}
       E2E_ALLOW_REMOTE_NON_PRODUCTION: ${{ vars.E2E_ALLOW_REMOTE_NON_PRODUCTION }}
+      E2E_ALLOWED_REMOTE_HOST: ${{ vars.E2E_ALLOWED_REMOTE_HOST }}
       E2E_CONTROL_TENANT_CODE: ${{ secrets.E2E_CONTROL_TENANT_CODE }}
       E2E_CONTROL_USERNAME: ${{ secrets.E2E_CONTROL_USERNAME }}
       E2E_CONTROL_PASSWORD: ${{ secrets.E2E_CONTROL_PASSWORD }}
@@ -209,6 +215,7 @@ jobs:
           [[ -z "${{ secrets.E2E_CONTROL_USERNAME }}" ]] && missing=1
           [[ -z "${{ secrets.E2E_CONTROL_PASSWORD }}" ]] && missing=1
           [[ "${{ vars.E2E_ALLOW_TENANT_PROVISIONING }}" != "true" ]] && missing=1
+          [[ -z "${{ vars.E2E_ALLOWED_REMOTE_HOST }}" ]] && missing=1
 
           if [[ "$missing" -eq 1 ]]; then
             echo "ready=false" >> "$GITHUB_OUTPUT"
@@ -244,16 +251,17 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-test
     if: >-
-      false &&
       needs.build-and-test.result == 'success' &&
-      github.event_name != 'pull_request' &&
-      needs.build-and-test.outputs.adminui_built == 'true'
+      github.event_name == 'workflow_dispatch' &&
+      inputs.run_e2e == true
+    environment: development
     env:
       CI: true
       E2E_API_BASE_URL: ${{ secrets.E2E_API_BASE_URL }}
       E2E_API_ENVIRONMENT: ${{ vars.E2E_API_ENVIRONMENT }}
       E2E_ALLOW_TENANT_PROVISIONING: ${{ vars.E2E_ALLOW_TENANT_PROVISIONING }}
       E2E_ALLOW_REMOTE_NON_PRODUCTION: ${{ vars.E2E_ALLOW_REMOTE_NON_PRODUCTION }}
+      E2E_ALLOWED_REMOTE_HOST: ${{ vars.E2E_ALLOWED_REMOTE_HOST }}
       E2E_CONTROL_TENANT_CODE: ${{ secrets.E2E_CONTROL_TENANT_CODE }}
       E2E_CONTROL_USERNAME: ${{ secrets.E2E_CONTROL_USERNAME }}
       E2E_CONTROL_PASSWORD: ${{ secrets.E2E_CONTROL_PASSWORD }}
@@ -273,6 +281,7 @@ jobs:
           [[ -z "${{ secrets.E2E_CONTROL_USERNAME }}" ]] && missing=1
           [[ -z "${{ secrets.E2E_CONTROL_PASSWORD }}" ]] && missing=1
           [[ "${{ vars.E2E_ALLOW_TENANT_PROVISIONING }}" != "true" ]] && missing=1
+          [[ -z "${{ vars.E2E_ALLOWED_REMOTE_HOST }}" ]] && missing=1
 
           if [[ "$missing" -eq 1 ]]; then
             echo "ready=false" >> "$GITHUB_OUTPUT"
@@ -308,16 +317,17 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-test
     if: >-
-      false &&
       needs.build-and-test.result == 'success' &&
-      github.event_name != 'pull_request' &&
-      needs.build-and-test.outputs.pos_built == 'true'
+      github.event_name == 'workflow_dispatch' &&
+      inputs.run_e2e == true
+    environment: development
     env:
       CI: true
       E2E_API_BASE_URL: ${{ secrets.E2E_API_BASE_URL }}
       E2E_API_ENVIRONMENT: ${{ vars.E2E_API_ENVIRONMENT }}
       E2E_ALLOW_TENANT_PROVISIONING: ${{ vars.E2E_ALLOW_TENANT_PROVISIONING }}
       E2E_ALLOW_REMOTE_NON_PRODUCTION: ${{ vars.E2E_ALLOW_REMOTE_NON_PRODUCTION }}
+      E2E_ALLOWED_REMOTE_HOST: ${{ vars.E2E_ALLOWED_REMOTE_HOST }}
       E2E_CONTROL_TENANT_CODE: ${{ secrets.E2E_CONTROL_TENANT_CODE }}
       E2E_CONTROL_USERNAME: ${{ secrets.E2E_CONTROL_USERNAME }}
       E2E_CONTROL_PASSWORD: ${{ secrets.E2E_CONTROL_PASSWORD }}
@@ -337,6 +347,7 @@ jobs:
           [[ -z "${{ secrets.E2E_CONTROL_USERNAME }}" ]] && missing=1
           [[ -z "${{ secrets.E2E_CONTROL_PASSWORD }}" ]] && missing=1
           [[ "${{ vars.E2E_ALLOW_TENANT_PROVISIONING }}" != "true" ]] && missing=1
+          [[ -z "${{ vars.E2E_ALLOWED_REMOTE_HOST }}" ]] && missing=1
 
           if [[ "$missing" -eq 1 ]]; then
             echo "ready=false" >> "$GITHUB_OUTPUT"

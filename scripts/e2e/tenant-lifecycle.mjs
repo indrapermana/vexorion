@@ -28,12 +28,21 @@ export function validateE2ESafety(environment) {
   }
 
   const apiBaseUrl = new URL(required(environment, 'E2E_API_BASE_URL'))
-  const isLocal = ['localhost', '127.0.0.1', '::1'].includes(apiBaseUrl.hostname)
+  const apiHostname = apiBaseUrl.hostname.toLowerCase()
+  const isLocal = ['localhost', '127.0.0.1', '::1'].includes(apiHostname)
+  if (apiHostname === 'vexorionerp.com' || apiHostname.endsWith('.vexorionerp.com')) {
+    throw new Error(`Refusing tenant lifecycle operations against protected host ${apiBaseUrl.hostname}.`)
+  }
   if (!isLocal && environment.E2E_ALLOW_REMOTE_NON_PRODUCTION?.toLowerCase() !== 'true') {
     throw new Error('Remote E2E APIs require E2E_ALLOW_REMOTE_NON_PRODUCTION=true.')
   }
-  if (/vexorionerp\.com$/iu.test(apiBaseUrl.hostname) || apiBaseUrl.hostname.endsWith('.run.app')) {
-    throw new Error(`Refusing tenant lifecycle operations against protected host ${apiBaseUrl.hostname}.`)
+  if (!isLocal) {
+    const allowedRemoteHost = required(environment, 'E2E_ALLOWED_REMOTE_HOST').toLowerCase()
+    if (apiHostname !== allowedRemoteHost) {
+      throw new Error(
+        `Remote E2E API host ${apiBaseUrl.hostname} does not match E2E_ALLOWED_REMOTE_HOST.`,
+      )
+    }
   }
 
   return apiBaseUrl.toString().replace(/\/$/u, '')
