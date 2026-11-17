@@ -209,20 +209,22 @@ jobs:
         id: e2e-secrets
         shell: bash
         run: |
-          missing=0
-          [[ -z "${{ secrets.E2E_API_BASE_URL }}" ]] && missing=1
-          [[ -z "${{ secrets.E2E_CONTROL_TENANT_CODE }}" ]] && missing=1
-          [[ -z "${{ secrets.E2E_CONTROL_USERNAME }}" ]] && missing=1
-          [[ -z "${{ secrets.E2E_CONTROL_PASSWORD }}" ]] && missing=1
-          [[ "${{ vars.E2E_ALLOW_TENANT_PROVISIONING }}" != "true" ]] && missing=1
-          [[ -z "${{ vars.E2E_ALLOWED_REMOTE_HOST }}" ]] && missing=1
+          missing=()
+          [[ -z "${{ secrets.E2E_API_BASE_URL }}" ]] && missing+=(E2E_API_BASE_URL)
+          [[ -z "${{ secrets.E2E_CONTROL_TENANT_CODE }}" ]] && missing+=(E2E_CONTROL_TENANT_CODE)
+          [[ -z "${{ secrets.E2E_CONTROL_USERNAME }}" ]] && missing+=(E2E_CONTROL_USERNAME)
+          [[ -z "${{ secrets.E2E_CONTROL_PASSWORD }}" ]] && missing+=(E2E_CONTROL_PASSWORD)
+          [[ "${{ vars.E2E_API_ENVIRONMENT }}" != "development" ]] && missing+=(E2E_API_ENVIRONMENT)
+          [[ "${{ vars.E2E_ALLOW_TENANT_PROVISIONING }}" != "true" ]] && missing+=(E2E_ALLOW_TENANT_PROVISIONING)
+          [[ "${{ vars.E2E_ALLOW_REMOTE_NON_PRODUCTION }}" != "true" ]] && missing+=(E2E_ALLOW_REMOTE_NON_PRODUCTION)
+          [[ -z "${{ vars.E2E_ALLOWED_REMOTE_HOST }}" ]] && missing+=(E2E_ALLOWED_REMOTE_HOST)
 
-          if [[ "$missing" -eq 1 ]]; then
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "Skipping UI e2e because required secrets are missing."
-          else
-            echo "ready=true" >> "$GITHUB_OUTPUT"
+          if (( ${#missing[@]} > 0 )); then
+            printf 'Missing or invalid GitHub development environment setting: %s\n' "${missing[@]}"
+            exit 1
           fi
+
+          echo "ready=true" >> "$GITHUB_OUTPUT"
 
       - name: Skip E2E (UI)
         if: steps.e2e-secrets.outputs.ready != 'true'
@@ -275,20 +277,22 @@ jobs:
         id: e2e-secrets
         shell: bash
         run: |
-          missing=0
-          [[ -z "${{ secrets.E2E_API_BASE_URL }}" ]] && missing=1
-          [[ -z "${{ secrets.E2E_CONTROL_TENANT_CODE }}" ]] && missing=1
-          [[ -z "${{ secrets.E2E_CONTROL_USERNAME }}" ]] && missing=1
-          [[ -z "${{ secrets.E2E_CONTROL_PASSWORD }}" ]] && missing=1
-          [[ "${{ vars.E2E_ALLOW_TENANT_PROVISIONING }}" != "true" ]] && missing=1
-          [[ -z "${{ vars.E2E_ALLOWED_REMOTE_HOST }}" ]] && missing=1
+          missing=()
+          [[ -z "${{ secrets.E2E_API_BASE_URL }}" ]] && missing+=(E2E_API_BASE_URL)
+          [[ -z "${{ secrets.E2E_CONTROL_TENANT_CODE }}" ]] && missing+=(E2E_CONTROL_TENANT_CODE)
+          [[ -z "${{ secrets.E2E_CONTROL_USERNAME }}" ]] && missing+=(E2E_CONTROL_USERNAME)
+          [[ -z "${{ secrets.E2E_CONTROL_PASSWORD }}" ]] && missing+=(E2E_CONTROL_PASSWORD)
+          [[ "${{ vars.E2E_API_ENVIRONMENT }}" != "development" ]] && missing+=(E2E_API_ENVIRONMENT)
+          [[ "${{ vars.E2E_ALLOW_TENANT_PROVISIONING }}" != "true" ]] && missing+=(E2E_ALLOW_TENANT_PROVISIONING)
+          [[ "${{ vars.E2E_ALLOW_REMOTE_NON_PRODUCTION }}" != "true" ]] && missing+=(E2E_ALLOW_REMOTE_NON_PRODUCTION)
+          [[ -z "${{ vars.E2E_ALLOWED_REMOTE_HOST }}" ]] && missing+=(E2E_ALLOWED_REMOTE_HOST)
 
-          if [[ "$missing" -eq 1 ]]; then
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "Skipping AdminUI e2e because required secrets are missing."
-          else
-            echo "ready=true" >> "$GITHUB_OUTPUT"
+          if (( ${#missing[@]} > 0 )); then
+            printf 'Missing or invalid GitHub development environment setting: %s\n' "${missing[@]}"
+            exit 1
           fi
+
+          echo "ready=true" >> "$GITHUB_OUTPUT"
 
       - name: Skip E2E (AdminUI)
         if: steps.e2e-secrets.outputs.ready != 'true'
@@ -341,20 +345,22 @@ jobs:
         id: e2e-secrets
         shell: bash
         run: |
-          missing=0
-          [[ -z "${{ secrets.E2E_API_BASE_URL }}" ]] && missing=1
-          [[ -z "${{ secrets.E2E_CONTROL_TENANT_CODE }}" ]] && missing=1
-          [[ -z "${{ secrets.E2E_CONTROL_USERNAME }}" ]] && missing=1
-          [[ -z "${{ secrets.E2E_CONTROL_PASSWORD }}" ]] && missing=1
-          [[ "${{ vars.E2E_ALLOW_TENANT_PROVISIONING }}" != "true" ]] && missing=1
-          [[ -z "${{ vars.E2E_ALLOWED_REMOTE_HOST }}" ]] && missing=1
+          missing=()
+          [[ -z "${{ secrets.E2E_API_BASE_URL }}" ]] && missing+=(E2E_API_BASE_URL)
+          [[ -z "${{ secrets.E2E_CONTROL_TENANT_CODE }}" ]] && missing+=(E2E_CONTROL_TENANT_CODE)
+          [[ -z "${{ secrets.E2E_CONTROL_USERNAME }}" ]] && missing+=(E2E_CONTROL_USERNAME)
+          [[ -z "${{ secrets.E2E_CONTROL_PASSWORD }}" ]] && missing+=(E2E_CONTROL_PASSWORD)
+          [[ "${{ vars.E2E_API_ENVIRONMENT }}" != "development" ]] && missing+=(E2E_API_ENVIRONMENT)
+          [[ "${{ vars.E2E_ALLOW_TENANT_PROVISIONING }}" != "true" ]] && missing+=(E2E_ALLOW_TENANT_PROVISIONING)
+          [[ "${{ vars.E2E_ALLOW_REMOTE_NON_PRODUCTION }}" != "true" ]] && missing+=(E2E_ALLOW_REMOTE_NON_PRODUCTION)
+          [[ -z "${{ vars.E2E_ALLOWED_REMOTE_HOST }}" ]] && missing+=(E2E_ALLOWED_REMOTE_HOST)
 
-          if [[ "$missing" -eq 1 ]]; then
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "Skipping POS e2e because required secrets are missing."
-          else
-            echo "ready=true" >> "$GITHUB_OUTPUT"
+          if (( ${#missing[@]} > 0 )); then
+            printf 'Missing or invalid GitHub development environment setting: %s\n' "${missing[@]}"
+            exit 1
           fi
+
+          echo "ready=true" >> "$GITHUB_OUTPUT"
 
       - name: Skip E2E (POS)
         if: steps.e2e-secrets.outputs.ready != 'true'
