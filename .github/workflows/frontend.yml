@@ -182,7 +182,7 @@ jobs:
   # ─────────────────────────────────────────────
   e2e-ui:
     name: E2E Tests (Playwright UI)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: build-and-test
     if: >-
       needs.build-and-test.result == 'success' &&
@@ -250,7 +250,7 @@ jobs:
 
   e2e-adminui:
     name: E2E Tests (Playwright AdminUI)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: build-and-test
     if: >-
       needs.build-and-test.result == 'success' &&
@@ -318,7 +318,7 @@ jobs:
 
   e2e-pos:
     name: E2E Tests (Playwright POS)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: build-and-test
     if: >-
       needs.build-and-test.result == 'success' &&
