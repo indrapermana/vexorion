@@ -39,7 +39,7 @@ test.describe('Chart of Accounts Workflow', () => {
 
     const dialog = await openAddDialog(page, /new account/i)
 
-    await fillField(page, /^code$/i, uid('ACCT'))
+    await fillField(page, /^code$/i, uid('ACCT').toUpperCase().slice(0, 30))
     await fillField(page, /^name$/i, uid('E2E Account'))
 
     // Account type — select first option from dropdown
@@ -87,7 +87,7 @@ test.describe('Fiscal Periods Workflow', () => {
 
     const dialog = await openAddDialog(page, /new period/i)
 
-    await dialog.getByLabel(/period code/i).fill(uid('P'))
+    await dialog.getByLabel(/period code/i).fill(uid('P').toUpperCase().slice(0, 30))
     // Start date / End date
     await dialog.getByLabel(/start date/i).fill('2036-01-01')
     await dialog.getByLabel(/end date/i).fill('2036-03-31')

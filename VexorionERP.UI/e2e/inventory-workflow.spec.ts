@@ -80,7 +80,7 @@ test.describe('Stock Count Workflow', () => {
     await page.waitForLoadState('networkidle')
 
     const dialog = await openAddDialog(page, /create stock count/i)
-    const countNumber = uid('COUNT').slice(0, 50)
+    const countNumber = uid('COUNT').toUpperCase().slice(0, 50)
     await fillField(page, /count number/i, countNumber)
 
     // Warehouse selector

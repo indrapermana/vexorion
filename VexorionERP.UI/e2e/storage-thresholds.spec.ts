@@ -5,14 +5,14 @@
  * state is deterministic. The hard quota path remains a real API request and
  * must reject before the disabled development Blob Storage account is called.
  */
-import { AUTH_CREDENTIALS, expect, test, uid, LoginPageObject } from './fixtures'
+import { AUTH_CREDENTIALS, expect, test, uid } from './fixtures'
 import { authenticatedApi, expectSuccessfulFixture, type CreatedEntity } from './api-helpers'
 
 type OnboardTenantResponse = {
   tenantId: string
 }
 
-test('P1-1: show storage thresholds and reject uploads beyond the hard quota', async ({ page, browser }) => {
+test('P1-1: show storage thresholds and reject uploads beyond the hard quota', async ({ page, browser, request }) => {
   test.setTimeout(90_000)
 
   const suffix = uid('storage')
@@ -63,9 +63,25 @@ test('P1-1: show storage thresholds and reject uploads beyond the hard quota', a
       'Storage threshold plan creation',
     )
 
+    const apiBaseUrl = process.env.E2E_API_BASE_URL?.replace(/\/$/u, '')
+    if (!apiBaseUrl) throw new Error('E2E_API_BASE_URL is required for storage threshold coverage.')
+    const loginResponse = await request.post(`${apiBaseUrl}/auth/login`, {
+      data: {
+        tenantCode,
+        userNameOrEmail: tenantUsername,
+        password: tenantPassword,
+      },
+    })
+    const loginResponseText = await loginResponse.text()
+    expect(loginResponse.status(), loginResponseText).toBe(200)
+    const tenantSession = JSON.parse(loginResponseText) as Record<string, unknown>
+
     tenantContext = await browser.newContext({
       baseURL: process.env.ERP_BASE_URL ?? 'http://127.0.0.1:5173',
     })
+    await tenantContext.addInitScript((session) => {
+      window.localStorage.setItem('vexorionerp.auth', JSON.stringify({ state: { session }, version: 0 }))
+    }, tenantSession)
     const tenantPage = await tenantContext.newPage()
     let thresholdStatus = 1
     let usedPercent = 80
@@ -88,10 +104,15 @@ test('P1-1: show storage thresholds and reject uploads beyond the hard quota', a
       })
     })
 
-    const loginPage = new LoginPageObject(tenantPage)
-    await loginPage.goto()
-    await loginPage.login(tenantCode, tenantUsername, tenantPassword)
-    await expect(tenantPage).not.toHaveURL(/\/login/, { timeout: 10_000 })
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      await tenantPage.goto('/')
+      try {
+        await expect(tenantPage).not.toHaveURL(/\/login/, { timeout: 10_000 })
+        break
+      } catch (error) {
+        if (attempt === 1) throw error
+      }
+    }
 
     // Login navigation can begin dashboard queries before the authenticated
     // tenant state has settled. Reload once and wait for the intercepted

@@ -203,7 +203,7 @@ test.describe('Sales Order Workflow', () => {
 
     const dialog = await openAddDialog(page, /new sales order/i)
 
-    const orderNumber = uid('SO')
+    const orderNumber = uid('SO').toUpperCase()
     await fillField(page, /order number/i, orderNumber)
     await fillField(page, /currency code/i, 'USD')
 
@@ -271,7 +271,7 @@ test.describe('Sales Invoice Workflow', () => {
 
     const dialog = await openAddDialog(page, /new sales invoice/i)
 
-    const invoiceNumber = uid('SI')
+    const invoiceNumber = uid('SI').toUpperCase()
     await fillField(page, /invoice number/i, invoiceNumber)
     await fillField(page, /currency code/i, 'USD')
     await selectFirstOption(page, /customer/i)

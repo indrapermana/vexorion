@@ -47,7 +47,7 @@ test.describe('Purchase Order Workflow', () => {
     await page.waitForLoadState('networkidle')
 
     const dialog = await openAddDialog(page, /new purchase order/i)
-    const orderNumber = uid('PO')
+    const orderNumber = uid('PO').toUpperCase()
     await fillField(page, /order number/i, orderNumber)
     await fillField(page, /currency code/i, 'USD')
     await selectFirstOption(page, /supplier/i)
@@ -162,7 +162,7 @@ test.describe('Purchase Invoice Workflow', () => {
     await page.waitForLoadState('networkidle')
 
     const dialog = await openAddDialog(page, /new purchase invoice/i)
-    const invoiceNumber = uid('PI')
+    const invoiceNumber = uid('PI').toUpperCase()
     await fillField(page, /invoice number/i, invoiceNumber)
     await fillField(page, /currency code/i, 'USD')
     await selectFirstOption(page, /supplier/i)
