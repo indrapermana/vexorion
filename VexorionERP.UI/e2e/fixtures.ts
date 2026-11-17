@@ -135,6 +135,8 @@ type Fixtures = {
 }
 
 export const test = base.extend<Fixtures>({
+  // Playwright requires object destructuring for fixture dependencies; this fixture has none.
+  // eslint-disable-next-line no-empty-pattern
   storageState: async ({}, use) => {
     await use({ cookies: [], origins: [] })
   },
