@@ -35,18 +35,21 @@ function expectSuccessStatus(result: ApiResult, operation: string) {
 }
 
 async function parallelPost(page: Parameters<typeof authenticatedApi>[0], paths: string[]) {
-  return page.evaluate(async (requestPaths) => {
+  const apiBaseUrl = process.env.E2E_API_BASE_URL?.replace(/\/$/u, '')
+  if (!apiBaseUrl) throw new Error('E2E_API_BASE_URL is required for concurrent trade posting coverage.')
+
+  return page.evaluate(async ({ requestPaths, requestApiBaseUrl }) => {
     const persisted = window.localStorage.getItem('vexorionerp.auth')
     const token = persisted
       ? (JSON.parse(persisted) as { state?: { session?: { accessToken?: string } } }).state?.session?.accessToken
       : undefined
     if (!token) throw new Error('Authenticated E2E session is missing its access token.')
     return Promise.all(requestPaths.map(async (path) => {
-      const response = await fetch(`/api${path}`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } })
+      const response = await fetch(`${requestApiBaseUrl}${path}`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } })
       const text = await response.text()
       return { status: response.status, body: text ? JSON.parse(text) as unknown : null }
     }))
-  }, paths)
+  }, { requestPaths: paths, requestApiBaseUrl: apiBaseUrl })
 }
 
 async function createCommonFixture(page: Parameters<typeof authenticatedApi>[0]) {

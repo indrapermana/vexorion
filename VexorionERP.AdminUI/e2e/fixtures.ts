@@ -35,7 +35,7 @@ let uidSequence = 0
 export const uid = (prefix: string) => {
   uidSequence += 1
   const retrySafeSuffix = crypto.randomUUID().slice(0, 8)
-  return `${prefix}-${retrySafeSuffix}-${AUTH_CREDENTIALS.runId}-${uidSequence}`
+  return `${prefix}-${AUTH_CREDENTIALS.runId}-${uidSequence}-${retrySafeSuffix}`
 }
 
 // ---------------------------------------------------------------------------

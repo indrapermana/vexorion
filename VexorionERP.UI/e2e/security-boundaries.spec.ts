@@ -71,7 +71,10 @@ test('SEC-005: product images are anonymously readable only through the configur
       'Public image product creation',
     ).id
 
-    const upload = await page.evaluate(async ({ id }) => {
+    const apiBaseUrl = process.env.E2E_API_BASE_URL?.replace(/\/$/u, '')
+    if (!apiBaseUrl) throw new Error('E2E_API_BASE_URL is required for product image security coverage.')
+
+    const upload = await page.evaluate(async ({ id, requestApiBaseUrl }) => {
       const persistedAuth = window.localStorage.getItem('vexorionerp.auth')
       const accessToken = persistedAuth
         ? (JSON.parse(persistedAuth) as { state?: { session?: { accessToken?: string } } }).state?.session?.accessToken
@@ -84,17 +87,19 @@ test('SEC-005: product images are anonymously readable only through the configur
       )
       const form = new FormData()
       form.append('file', new Blob([pngBytes], { type: 'image/png' }), 'security-pixel.png')
-      const response = await fetch(`/api/products/${id}/image`, {
+      const response = await fetch(`${requestApiBaseUrl}/products/${id}/image`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${accessToken}` },
         body: form,
       })
-      return { status: response.status, body: await response.json() as { imageUrl?: string } }
-    }, { id: productId })
+      const responseText = await response.text()
+      const body = responseText ? JSON.parse(responseText) as { imageUrl?: string } : null
+      return { status: response.status, body, responseText }
+    }, { id: productId, requestApiBaseUrl: apiBaseUrl })
 
     expect(upload.status, JSON.stringify(upload.body)).toBe(200)
-    imageUrl = upload.body.imageUrl ?? null
-    expect(imageUrl).toMatch(/^https:\/\/images\.vexorionerp\.com\//)
+    imageUrl = upload.body?.imageUrl ?? null
+    expect(imageUrl).toMatch(/^https:\/\/(?:dev-)?images\.vexorionerp\.com\//)
 
     const anonymousRead = await request.get(imageUrl!)
     expect(anonymousRead.status()).toBe(200)

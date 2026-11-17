@@ -54,6 +54,16 @@ test.describe('AdminUI responsive acceptance', () => {
           `${route} overflows at ${width}px: document width ${dimensions.document}px, viewport ${dimensions.viewport}px; elements ${JSON.stringify(dimensions.overflowElements)}`,
         ).toBeLessThanOrEqual(dimensions.viewport)
         if (width === 1440) {
+          // The permanent drawer and main column animate after crossing the
+          // desktop breakpoint. Assert the settled layout, not an intermediate
+          // transform sampled by a fast CI runner.
+          await expect.poll(async () => {
+            const sidebarBox = await page.locator('.MuiDrawer-paper:visible').boundingBox()
+            const mainBox = await page.locator('.dashboard-main').boundingBox()
+            if (!sidebarBox || !mainBox) return false
+            return mainBox.x >= sidebarBox.x + sidebarBox.width - 1
+          }, { message: 'Desktop content must start after the permanent navigation' }).toBe(true)
+
           const sidebar = await page.locator('.MuiDrawer-paper:visible').boundingBox()
           const main = await page.locator('.dashboard-main').boundingBox()
           const content = await page.locator('.dashboard-content').boundingBox()

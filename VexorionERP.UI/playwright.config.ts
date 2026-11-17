@@ -18,7 +18,10 @@ export default defineConfig({
   globalSetup: '../scripts/e2e/global-setup.mjs',
   fullyParallel: false,
   forbidOnly: isCI,
-  retries: isCI ? 2 : 0,
+  // These tests intentionally persist business transactions. Retrying in the
+  // same automation tenant replays partially completed workflows and produces
+  // misleading duplicate/conflict failures instead of useful retry evidence.
+  retries: 0,
   workers: 1,
   reporter: [
     ['../scripts/e2e/lifecycle-reporter.mjs'],

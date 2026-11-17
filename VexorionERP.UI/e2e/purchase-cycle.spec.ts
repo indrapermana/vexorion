@@ -47,14 +47,15 @@ test.describe('Purchase Order Workflow', () => {
     await page.waitForLoadState('networkidle')
 
     const dialog = await openAddDialog(page, /new purchase order/i)
-    await fillField(page, /order number/i, uid('PO'))
+    const orderNumber = uid('PO')
+    await fillField(page, /order number/i, orderNumber)
     await fillField(page, /currency code/i, 'USD')
     await selectFirstOption(page, /supplier/i)
     await selectFirstOption(page, /warehouse/i)
 
     await dialog.getByRole('button', { name: /create purchase order/i }).click()
     await expect(dialog).not.toBeVisible({ timeout: 10_000 })
-    await expect(page.getByText(/po-/i)).toBeVisible({ timeout: 5_000 })
+    await expect(page.getByText(orderNumber, { exact: true })).toBeVisible({ timeout: 5_000 })
   })
 
   test('TC-1.6.1.2: add line to purchase order', async ({ page }) => {
@@ -161,13 +162,14 @@ test.describe('Purchase Invoice Workflow', () => {
     await page.waitForLoadState('networkidle')
 
     const dialog = await openAddDialog(page, /new purchase invoice/i)
-    await fillField(page, /invoice number/i, uid('PI'))
+    const invoiceNumber = uid('PI')
+    await fillField(page, /invoice number/i, invoiceNumber)
     await fillField(page, /currency code/i, 'USD')
     await selectFirstOption(page, /supplier/i)
 
     await dialog.getByRole('button', { name: /create purchase invoice/i }).click()
     await expect(dialog).not.toBeVisible({ timeout: 10_000 })
-    await expect(page.getByText(/pi-/i)).toBeVisible({ timeout: 5_000 })
+    await expect(page.getByText(invoiceNumber, { exact: true })).toBeVisible({ timeout: 5_000 })
   })
 
   test('TC-1.6.3.2: empty invoice number shows validation', async ({ page }) => {
