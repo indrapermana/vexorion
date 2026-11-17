@@ -15,7 +15,10 @@ export async function authenticatedApi<T>(
   method: 'GET' | 'POST' | 'PUT' | 'DELETE',
   body?: unknown,
 ): Promise<ApiResult<T>> {
-  return page.evaluate(async ({ requestPath, requestMethod, requestBody }) => {
+  const apiBaseUrl = process.env.E2E_API_BASE_URL?.replace(/\/$/u, '')
+  if (!apiBaseUrl) throw new Error('E2E_API_BASE_URL is required for authenticated API fixtures.')
+
+  return page.evaluate(async ({ requestPath, requestMethod, requestBody, requestApiBaseUrl }) => {
     const persistedAuth = window.localStorage.getItem('vexorionerp.auth')
     const accessToken = persistedAuth
       ? (JSON.parse(persistedAuth) as { state?: { session?: { accessToken?: string } } }).state?.session?.accessToken
@@ -25,7 +28,7 @@ export async function authenticatedApi<T>(
       throw new Error('Authenticated E2E session is missing its access token.')
     }
 
-    const response = await window.fetch(`/api${requestPath}`, {
+    const response = await window.fetch(`${requestApiBaseUrl}${requestPath}`, {
       method: requestMethod,
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -39,7 +42,12 @@ export async function authenticatedApi<T>(
       status: response.status,
       body: text ? JSON.parse(text) : null,
     }
-  }, { requestPath: path, requestMethod: method, requestBody: body }) as Promise<ApiResult<T>>
+  }, {
+    requestPath: path,
+    requestMethod: method,
+    requestBody: body,
+    requestApiBaseUrl: apiBaseUrl,
+  }) as Promise<ApiResult<T>>
 }
 
 export function expectSuccessfulFixture<T>(result: ApiResult<T>, operation: string): T {

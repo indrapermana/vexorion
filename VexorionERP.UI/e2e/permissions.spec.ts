@@ -12,14 +12,20 @@
 import { test, expect } from './fixtures'
 import { request } from '@playwright/test'
 
+const apiBaseUrl = () => {
+  const value = process.env.E2E_API_BASE_URL?.replace(/\/$/u, '')
+  if (!value) throw new Error('E2E_API_BASE_URL is required for permission API checks.')
+  return value
+}
+
 // ---------------------------------------------------------------------------
 // TC-4.1.1 — Unauthenticated API → 401
 // ---------------------------------------------------------------------------
 
 test('TC-4.1.1: unauthenticated API call returns 401', async () => {
   // Make a direct API call without auth cookies/token
-  const apiContext = await request.newContext({ baseURL: process.env.API_BASE_URL ?? 'http://localhost:5000' })
-  const response = await apiContext.get('/api/customers', {
+  const apiContext = await request.newContext()
+  const response = await apiContext.get(`${apiBaseUrl()}/customers`, {
     headers: { 'X-Tenant-Code': 'demo' },
   })
   // Should return 401 Unauthorized
@@ -89,8 +95,8 @@ test('TC-4.1.5: admin can access audit logs', async ({ page }) => {
 // ---------------------------------------------------------------------------
 
 test('TC-4.1.6: API call with wrong tenant header returns 401 or 403', async () => {
-  const apiContext = await request.newContext({ baseURL: process.env.API_BASE_URL ?? 'http://localhost:5000' })
-  const response = await apiContext.get('/api/customers', {
+  const apiContext = await request.newContext()
+  const response = await apiContext.get(`${apiBaseUrl()}/customers`, {
     headers: { 'X-Tenant-Code': 'nonexistent-tenant-xyz' },
   })
   expect([401, 403, 404]).toContain(response.status())
