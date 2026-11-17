@@ -12,6 +12,15 @@ type OnboardTenantResponse = {
   tenantId: string
 }
 
+type CurrentUserResponse = {
+  id: string
+  tenantId: string
+  userName: string
+  email: string
+  roles: string[]
+  permissions: string[]
+}
+
 test('P1-1: show storage thresholds and reject uploads beyond the hard quota', async ({ page, browser, request }) => {
   test.setTimeout(90_000)
 
@@ -74,7 +83,19 @@ test('P1-1: show storage thresholds and reject uploads beyond the hard quota', a
     })
     const loginResponseText = await loginResponse.text()
     expect(loginResponse.status(), loginResponseText).toBe(200)
-    const tenantSession = JSON.parse(loginResponseText) as Record<string, unknown>
+    const tenantSession = JSON.parse(loginResponseText) as { accessToken?: string }
+    expect(tenantSession.accessToken, loginResponseText).toBeTruthy()
+
+    // Verify the newly provisioned tenant session directly, then isolate the
+    // browser bootstrap from remote auth timing. Authentication itself has
+    // dedicated E2E coverage; this scenario is concerned with storage states.
+    const currentUserResponse = await request.get(`${apiBaseUrl}/auth/me`, {
+      headers: { Authorization: `Bearer ${tenantSession.accessToken}` },
+    })
+    const currentUserResponseText = await currentUserResponse.text()
+    expect(currentUserResponse.status(), currentUserResponseText).toBe(200)
+    const currentUser = JSON.parse(currentUserResponseText) as CurrentUserResponse
+    expect(currentUser.tenantId).toBe(tenantId)
 
     tenantContext = await browser.newContext({
       baseURL: process.env.ERP_BASE_URL ?? 'http://127.0.0.1:5173',
@@ -82,7 +103,14 @@ test('P1-1: show storage thresholds and reject uploads beyond the hard quota', a
     await tenantContext.addInitScript((session) => {
       window.localStorage.setItem('vexorionerp.auth', JSON.stringify({ state: { session }, version: 0 }))
     }, tenantSession)
-    const tenantPage = await tenantContext.newPage()
+    await tenantContext.route('**/api/auth/me', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(currentUser),
+      })
+    })
+
     let thresholdStatus = 1
     let usedPercent = 80
     const storageSummaryRoute = '**/api/tenants/*/storage/summary**'
@@ -104,22 +132,11 @@ test('P1-1: show storage thresholds and reject uploads beyond the hard quota', a
       })
     })
 
-    for (let attempt = 0; attempt < 2; attempt += 1) {
-      await tenantPage.goto('/')
-      try {
-        await expect(tenantPage).not.toHaveURL(/\/login/, { timeout: 10_000 })
-        break
-      } catch (error) {
-        if (attempt === 1) throw error
-      }
-    }
-
-    // Login navigation can begin dashboard queries before the authenticated
-    // tenant state has settled. Reload once and wait for the intercepted
-    // tenant-scoped summary so the threshold assertion observes that response.
+    const tenantPage = await tenantContext.newPage()
     const initialSummary = tenantPage.waitForResponse((response) => response.url().includes('/storage/summary'))
-    await tenantPage.reload({ waitUntil: 'domcontentloaded' })
+    await tenantPage.goto('/')
     const initialSummaryResponse = await initialSummary
+    await expect(tenantPage).not.toHaveURL(/\/login/)
     expect(initialSummaryResponse.url()).toContain(`/tenants/${tenantId}/storage/summary`)
     await expect(initialSummaryResponse.json()).resolves.toMatchObject({ usedPercent: 80, thresholdStatus: 1 })
 
