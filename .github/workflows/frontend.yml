@@ -181,9 +181,13 @@ jobs:
   # 2. E2E — split per app for isolation and reruns
   # ─────────────────────────────────────────────
   e2e-ui:
-    name: E2E Tests (Playwright UI)
+    name: E2E Tests (Playwright UI ${{ matrix.shard }}/3)
     runs-on: ubuntu-24.04
     needs: build-and-test
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     if: >-
       needs.build-and-test.result == 'success' &&
       github.event_name == 'workflow_dispatch' &&
@@ -236,13 +240,13 @@ jobs:
 
       - name: Run E2E (UI)
         if: steps.e2e-secrets.outputs.ready == 'true'
-        run: npx turbo run e2e --filter=vexorionerp-ui
+        run: npm --workspace VexorionERP.UI run e2e -- --shard=${{ matrix.shard }}/3
 
       - name: Upload Playwright reports
         if: always() && steps.e2e-secrets.outputs.ready == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-reports-ui
+          name: playwright-reports-ui-shard-${{ matrix.shard }}-of-3
           path: |
             VexorionERP.UI/playwright-report/
             VexorionERP.UI/test-results/
