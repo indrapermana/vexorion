@@ -97,6 +97,17 @@ test('P1-1: show storage thresholds and reject uploads beyond the hard quota', a
     const currentUser = JSON.parse(currentUserResponseText) as CurrentUserResponse
     expect(currentUser.tenantId).toBe(tenantId)
 
+    const tenantApiPost = async <T>(path: string, body: unknown, operation: string): Promise<T> => {
+      const response = await request.post(`${apiBaseUrl}${path}`, {
+        headers: { Authorization: `Bearer ${tenantSession.accessToken}` },
+        data: body,
+      })
+      const responseText = await response.text()
+      expect(response.status(), `${operation} failed: ${responseText}`).toBeGreaterThanOrEqual(200)
+      expect(response.status(), `${operation} failed: ${responseText}`).toBeLessThan(300)
+      return JSON.parse(responseText) as T
+    }
+
     tenantContext = await browser.newContext({
       baseURL: process.env.ERP_BASE_URL ?? 'http://127.0.0.1:5173',
     })
@@ -157,18 +168,20 @@ test('P1-1: show storage thresholds and reject uploads beyond the hard quota', a
 
     await tenantContext.unroute(storageSummaryRoute)
 
-    const categoryId = expectSuccessfulFixture(
-      await authenticatedApi<CreatedEntity>(tenantPage, '/project-categories', 'POST', {
+    const category = await tenantApiPost<CreatedEntity>(
+      '/project-categories',
+      {
         code: categoryCode,
         name: `E2E Storage Threshold ${suffix}`,
         description: 'Temporary category for storage threshold E2E coverage.',
-      }),
+      },
       'Project category creation',
-    ).id
+    )
 
-    const projectId = expectSuccessfulFixture(
-      await authenticatedApi<CreatedEntity>(tenantPage, '/projects', 'POST', {
-        projectCategoryId: categoryId,
+    const project = await tenantApiPost<CreatedEntity>(
+      '/projects',
+      {
+        projectCategoryId: category.id,
         projectNumber,
         name: projectName,
         governmentAgency: null,
@@ -177,11 +190,11 @@ test('P1-1: show storage thresholds and reject uploads beyond the hard quota', a
         endDate: null,
         status: 1,
         notes: 'Temporary project for storage threshold E2E coverage.',
-      }),
+      },
       'Project creation',
-    ).id
+    )
 
-    await tenantPage.goto(`/projects/${projectId}`)
+    await tenantPage.goto(`/projects/${project.id}`)
     await expect(tenantPage.getByText(projectName, { exact: true })).toBeVisible()
     await tenantPage.getByRole('tab', { name: /^documents$/i }).click()
     await tenantPage.getByRole('button', { name: /upload document/i }).click()
@@ -196,7 +209,7 @@ test('P1-1: show storage thresholds and reject uploads beyond the hard quota', a
 
     const quotaResponsePromise = tenantPage.waitForResponse((response) => (
       response.request().method() === 'POST'
-      && response.url().endsWith(`/api/projects/${projectId}/documents/upload`)
+      && response.url().endsWith(`/api/projects/${project.id}/documents/upload`)
     ))
     await uploadDialog.getByRole('button', { name: /upload document/i }).click()
     const quotaResponse = await quotaResponsePromise
