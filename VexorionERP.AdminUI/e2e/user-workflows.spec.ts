@@ -116,13 +116,17 @@ test('TC-A-025: create user with valid data succeeds', async ({ page }) => {
     if (await opt.isVisible()) await opt.click()
   }
 
+  const createResponsePromise = page.waitForResponse((response) => (
+    response.request().method() === 'POST'
+    && new URL(response.url()).pathname.endsWith('/api/users')
+  ))
   await dialog.getByRole('button', { name: /create user/i }).click()
+  const createResponse = await createResponsePromise
+  const createResponseText = await createResponse.text()
 
-  const stillOpen = await page.getByRole('dialog').isVisible({ timeout: 2_000 }).catch(() => false)
-  if (stillOpen) {
-    // Validation or server error — close gracefully
-    await page.getByRole('dialog').getByRole('button', { name: /cancel/i }).click()
-  }
+  expect(createResponse.ok(), `Create user failed: ${createResponseText}`).toBeTruthy()
+  await expect(dialog).not.toBeVisible({ timeout: 10_000 })
+  await expect(page.getByRole('row').filter({ hasText: username })).toBeVisible()
 })
 
 // ---------------------------------------------------------------------------
