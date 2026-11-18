@@ -21,7 +21,7 @@ type CurrentUserResponse = {
   permissions: string[]
 }
 
-test('P1-1: show storage thresholds and reject uploads beyond the hard quota', async ({ page, browser, request }) => {
+test('P1-1: show storage thresholds and reject uploads beyond the hard quota', async ({ page, browser, request, baseURL }) => {
   test.setTimeout(90_000)
 
   const suffix = uid('storage')
@@ -108,8 +108,9 @@ test('P1-1: show storage thresholds and reject uploads beyond the hard quota', a
       return JSON.parse(responseText) as T
     }
 
+    if (!baseURL) throw new Error('The Playwright baseURL is required for storage threshold coverage.')
     tenantContext = await browser.newContext({
-      baseURL: process.env.ERP_BASE_URL ?? 'http://127.0.0.1:5173',
+      baseURL,
     })
     await tenantContext.addInitScript((session) => {
       window.localStorage.setItem('vexorionerp.auth', JSON.stringify({ state: { session }, version: 0 }))
