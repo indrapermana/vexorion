@@ -5,14 +5,23 @@
  * state is deterministic. The hard quota path remains a real API request and
  * must reject before the disabled development Blob Storage account is called.
  */
-import { AUTH_CREDENTIALS, expect, test, uid, LoginPageObject } from './fixtures'
+import { AUTH_CREDENTIALS, expect, test, uid } from './fixtures'
 import { authenticatedApi, expectSuccessfulFixture, type CreatedEntity } from './api-helpers'
 
 type OnboardTenantResponse = {
   tenantId: string
 }
 
-test('P1-1: show storage thresholds and reject uploads beyond the hard quota', async ({ page, browser }) => {
+type CurrentUserResponse = {
+  id: string
+  tenantId: string
+  userName: string
+  email: string
+  roles: string[]
+  permissions: string[]
+}
+
+test('P1-1: show storage thresholds and reject uploads beyond the hard quota', async ({ page, browser, request, baseURL }) => {
   test.setTimeout(90_000)
 
   const suffix = uid('storage')
@@ -63,10 +72,57 @@ test('P1-1: show storage thresholds and reject uploads beyond the hard quota', a
       'Storage threshold plan creation',
     )
 
-    tenantContext = await browser.newContext({
-      baseURL: process.env.ERP_BASE_URL ?? 'http://127.0.0.1:5173',
+    const apiBaseUrl = process.env.E2E_API_BASE_URL?.replace(/\/$/u, '')
+    if (!apiBaseUrl) throw new Error('E2E_API_BASE_URL is required for storage threshold coverage.')
+    const loginResponse = await request.post(`${apiBaseUrl}/auth/login`, {
+      data: {
+        tenantCode,
+        userNameOrEmail: tenantUsername,
+        password: tenantPassword,
+      },
     })
-    const tenantPage = await tenantContext.newPage()
+    const loginResponseText = await loginResponse.text()
+    expect(loginResponse.status(), loginResponseText).toBe(200)
+    const tenantSession = JSON.parse(loginResponseText) as { accessToken?: string }
+    expect(tenantSession.accessToken, loginResponseText).toBeTruthy()
+
+    // Verify the newly provisioned tenant session directly, then isolate the
+    // browser bootstrap from remote auth timing. Authentication itself has
+    // dedicated E2E coverage; this scenario is concerned with storage states.
+    const currentUserResponse = await request.get(`${apiBaseUrl}/auth/me`, {
+      headers: { Authorization: `Bearer ${tenantSession.accessToken}` },
+    })
+    const currentUserResponseText = await currentUserResponse.text()
+    expect(currentUserResponse.status(), currentUserResponseText).toBe(200)
+    const currentUser = JSON.parse(currentUserResponseText) as CurrentUserResponse
+    expect(currentUser.tenantId).toBe(tenantId)
+
+    const tenantApiPost = async <T>(path: string, body: unknown, operation: string): Promise<T> => {
+      const response = await request.post(`${apiBaseUrl}${path}`, {
+        headers: { Authorization: `Bearer ${tenantSession.accessToken}` },
+        data: body,
+      })
+      const responseText = await response.text()
+      expect(response.status(), `${operation} failed: ${responseText}`).toBeGreaterThanOrEqual(200)
+      expect(response.status(), `${operation} failed: ${responseText}`).toBeLessThan(300)
+      return JSON.parse(responseText) as T
+    }
+
+    if (!baseURL) throw new Error('The Playwright baseURL is required for storage threshold coverage.')
+    tenantContext = await browser.newContext({
+      baseURL,
+    })
+    await tenantContext.addInitScript((session) => {
+      window.localStorage.setItem('vexorionerp.auth', JSON.stringify({ state: { session }, version: 0 }))
+    }, tenantSession)
+    await tenantContext.route('**/api/auth/me', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(currentUser),
+      })
+    })
+
     let thresholdStatus = 1
     let usedPercent = 80
     const storageSummaryRoute = '**/api/tenants/*/storage/summary**'
@@ -88,17 +144,11 @@ test('P1-1: show storage thresholds and reject uploads beyond the hard quota', a
       })
     })
 
-    const loginPage = new LoginPageObject(tenantPage)
-    await loginPage.goto()
-    await loginPage.login(tenantCode, tenantUsername, tenantPassword)
-    await expect(tenantPage).not.toHaveURL(/\/login/, { timeout: 10_000 })
-
-    // Login navigation can begin dashboard queries before the authenticated
-    // tenant state has settled. Reload once and wait for the intercepted
-    // tenant-scoped summary so the threshold assertion observes that response.
+    const tenantPage = await tenantContext.newPage()
     const initialSummary = tenantPage.waitForResponse((response) => response.url().includes('/storage/summary'))
-    await tenantPage.reload({ waitUntil: 'domcontentloaded' })
+    await tenantPage.goto('/')
     const initialSummaryResponse = await initialSummary
+    await expect(tenantPage).not.toHaveURL(/\/login/)
     expect(initialSummaryResponse.url()).toContain(`/tenants/${tenantId}/storage/summary`)
     await expect(initialSummaryResponse.json()).resolves.toMatchObject({ usedPercent: 80, thresholdStatus: 1 })
 
@@ -119,18 +169,20 @@ test('P1-1: show storage thresholds and reject uploads beyond the hard quota', a
 
     await tenantContext.unroute(storageSummaryRoute)
 
-    const categoryId = expectSuccessfulFixture(
-      await authenticatedApi<CreatedEntity>(tenantPage, '/project-categories', 'POST', {
+    const category = await tenantApiPost<CreatedEntity>(
+      '/project-categories',
+      {
         code: categoryCode,
         name: `E2E Storage Threshold ${suffix}`,
         description: 'Temporary category for storage threshold E2E coverage.',
-      }),
+      },
       'Project category creation',
-    ).id
+    )
 
-    const projectId = expectSuccessfulFixture(
-      await authenticatedApi<CreatedEntity>(tenantPage, '/projects', 'POST', {
-        projectCategoryId: categoryId,
+    const project = await tenantApiPost<CreatedEntity>(
+      '/projects',
+      {
+        projectCategoryId: category.id,
         projectNumber,
         name: projectName,
         governmentAgency: null,
@@ -139,11 +191,11 @@ test('P1-1: show storage thresholds and reject uploads beyond the hard quota', a
         endDate: null,
         status: 1,
         notes: 'Temporary project for storage threshold E2E coverage.',
-      }),
+      },
       'Project creation',
-    ).id
+    )
 
-    await tenantPage.goto(`/projects/${projectId}`)
+    await tenantPage.goto(`/projects/${project.id}`)
     await expect(tenantPage.getByText(projectName, { exact: true })).toBeVisible()
     await tenantPage.getByRole('tab', { name: /^documents$/i }).click()
     await tenantPage.getByRole('button', { name: /upload document/i }).click()
@@ -158,7 +210,7 @@ test('P1-1: show storage thresholds and reject uploads beyond the hard quota', a
 
     const quotaResponsePromise = tenantPage.waitForResponse((response) => (
       response.request().method() === 'POST'
-      && response.url().endsWith(`/api/projects/${projectId}/documents/upload`)
+      && response.url().endsWith(`/api/projects/${project.id}/documents/upload`)
     ))
     await uploadDialog.getByRole('button', { name: /upload document/i }).click()
     const quotaResponse = await quotaResponsePromise

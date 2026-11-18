@@ -33,6 +33,25 @@
     },
     "e2e": {
       "cache": false,
+      "env": [
+        "ADMIN_BASE_URL",
+        "CI",
+        "E2E_ALLOWED_REMOTE_HOST",
+        "E2E_ALLOW_REMOTE_NON_PRODUCTION",
+        "E2E_ALLOW_TENANT_PROVISIONING",
+        "E2E_API_BASE_URL",
+        "E2E_API_ENVIRONMENT",
+        "E2E_CONTROL_PASSWORD",
+        "E2E_CONTROL_TENANT_CODE",
+        "E2E_CONTROL_USERNAME",
+        "E2E_RETAIN_TENANT_ON_FAILURE",
+        "E2E_RUN_ID",
+        "ERP_BASE_URL",
+        "GITHUB_RUN_ID",
+        "NODE_EXTRA_CA_CERTS",
+        "POS_BASE_URL",
+        "VITE_API_BASE_URL"
+      ],
       "outputs": ["playwright-report/**", "test-results/**"]
     }
   }

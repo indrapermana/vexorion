@@ -101,7 +101,8 @@ export class GenericCrudPage {
 let uidSequence = 0
 export const uid = (prefix: string) => {
   uidSequence += 1
-  return `${prefix}-${AUTH_CREDENTIALS.runId}-${uidSequence}`
+  const retrySafeSuffix = crypto.randomUUID().slice(0, 8)
+  return `${prefix}-${AUTH_CREDENTIALS.runId}-${uidSequence}-${retrySafeSuffix}`
 }
 
 /**
@@ -135,6 +136,8 @@ type Fixtures = {
 }
 
 export const test = base.extend<Fixtures>({
+  // Playwright requires object destructuring for fixture dependencies; this fixture has none.
+  // eslint-disable-next-line no-empty-pattern
   storageState: async ({}, use) => {
     await use({ cookies: [], origins: [] })
   },

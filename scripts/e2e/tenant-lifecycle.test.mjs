@@ -38,7 +38,24 @@ test('safety checks reject production and unapproved remote APIs', () => {
     ...baseEnvironment,
     E2E_API_BASE_URL: 'https://api.vexorionerp.com/api',
     E2E_ALLOW_REMOTE_NON_PRODUCTION: 'true',
+    E2E_ALLOWED_REMOTE_HOST: 'api.vexorionerp.com',
   }), /protected host/u)
+  assert.throws(() => validateE2ESafety({
+    ...baseEnvironment,
+    E2E_API_BASE_URL: 'https://unapproved-service.example.run.app/api',
+    E2E_ALLOW_REMOTE_NON_PRODUCTION: 'true',
+    E2E_ALLOWED_REMOTE_HOST: 'vexorionerp-api-development.example.run.app',
+  }), /does not match E2E_ALLOWED_REMOTE_HOST/u)
+})
+
+test('safety checks allow only the exact configured remote development API host', () => {
+  assert.equal(validateE2ESafety({
+    ...baseEnvironment,
+    E2E_API_ENVIRONMENT: 'Development',
+    E2E_API_BASE_URL: 'https://vexorionerp-api-development.example.run.app/api',
+    E2E_ALLOW_REMOTE_NON_PRODUCTION: 'true',
+    E2E_ALLOWED_REMOTE_HOST: 'VEXORIONERP-API-DEVELOPMENT.EXAMPLE.RUN.APP',
+  }), 'https://vexorionerp-api-development.example.run.app/api')
 })
 
 test('parallel run identities are prefixed and collision-safe', () => {

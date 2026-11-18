@@ -203,7 +203,8 @@ test.describe('Sales Order Workflow', () => {
 
     const dialog = await openAddDialog(page, /new sales order/i)
 
-    await fillField(page, /order number/i, uid('SO'))
+    const orderNumber = uid('SO').toUpperCase()
+    await fillField(page, /order number/i, orderNumber)
     await fillField(page, /currency code/i, 'USD')
 
     // Select customer (first available)
@@ -213,7 +214,7 @@ test.describe('Sales Order Workflow', () => {
 
     await dialog.getByRole('button', { name: /create sales order/i }).click()
     await expect(dialog).not.toBeVisible({ timeout: 10_000 })
-    await expect(page.getByText(/so-/i)).toBeVisible({ timeout: 5_000 })
+    await expect(page.getByText(orderNumber, { exact: true })).toBeVisible({ timeout: 5_000 })
   })
 
   test('TC-1.5.1.3: empty order number shows validation', async ({ page }) => {
@@ -270,13 +271,14 @@ test.describe('Sales Invoice Workflow', () => {
 
     const dialog = await openAddDialog(page, /new sales invoice/i)
 
-    await fillField(page, /invoice number/i, uid('SI'))
+    const invoiceNumber = uid('SI').toUpperCase()
+    await fillField(page, /invoice number/i, invoiceNumber)
     await fillField(page, /currency code/i, 'USD')
     await selectFirstOption(page, /customer/i)
 
     await dialog.getByRole('button', { name: /create sales invoice/i }).click()
     await expect(dialog).not.toBeVisible({ timeout: 10_000 })
-    await expect(page.getByText(/si-/i)).toBeVisible({ timeout: 5_000 })
+    await expect(page.getByText(invoiceNumber, { exact: true })).toBeVisible({ timeout: 5_000 })
   })
 
   test('TC-1.5.2.2: empty invoice number shows validation', async ({ page }) => {

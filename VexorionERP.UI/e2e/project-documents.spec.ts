@@ -265,8 +265,10 @@ test('PRJ-005: private project documents enforce signed-link security, expiry, a
 
     const anonymous = await playwrightRequest.newContext()
     try {
+      const apiBaseUrl = process.env.E2E_API_BASE_URL?.replace(/\/$/u, '')
+      if (!apiBaseUrl) throw new Error('E2E_API_BASE_URL is required for anonymous document API coverage.')
       const anonymousApi = await anonymous.get(
-        `${new URL(page.url()).origin}/api/projects/${projectId}/documents/${documentId}/download`,
+        `${apiBaseUrl}/projects/${projectId}/documents/${documentId}/download`,
       )
       expect(anonymousApi.status()).toBe(401)
 

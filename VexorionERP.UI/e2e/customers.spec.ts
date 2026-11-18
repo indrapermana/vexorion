@@ -29,7 +29,7 @@ test.describe('Customers', () => {
     // Dialog should close
     await expect(dialog).not.toBeVisible({ timeout: 8_000 })
     // New customer should appear in the list
-    await expect(page.getByText(name)).toBeVisible({ timeout: 5_000 })
+    await expect(page.getByText(name, { exact: true })).toBeVisible({ timeout: 5_000 })
   })
 
   test('TC-M-014: create customer — required name validation', async ({ page }) => {

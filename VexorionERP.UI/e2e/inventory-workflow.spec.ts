@@ -80,6 +80,8 @@ test.describe('Stock Count Workflow', () => {
     await page.waitForLoadState('networkidle')
 
     const dialog = await openAddDialog(page, /create stock count/i)
+    const countNumber = uid('COUNT').toUpperCase().slice(0, 50)
+    await fillField(page, /count number/i, countNumber)
 
     // Warehouse selector
     const warehouseField = dialog.getByLabel(/warehouse/i).first()
@@ -91,34 +93,19 @@ test.describe('Stock Count Workflow', () => {
 
     const createBtn = dialog.getByRole('button', { name: /^save$/i })
     await createBtn.click()
-
-    const stillOpen = await page.getByRole('dialog').isVisible()
-    if (stillOpen) {
-      await page.getByRole('dialog').getByRole('button', { name: /cancel/i }).click()
-    }
+    await expect(dialog).not.toBeVisible({ timeout: 10_000 })
+    await expect(page.getByText(countNumber, { exact: true })).toBeVisible({ timeout: 5_000 })
   })
 
   test('TC-1.7.2.2: post stock count button visible on unposted count', async ({ page }) => {
     await page.goto('/stock-counts')
     await page.waitForLoadState('networkidle')
 
-    // If any count exists, "Post stock count" row action or button should be available
-    const postBtn = page.getByRole('button', { name: /post stock count/i }).or(
-      page.getByRole('menuitem', { name: /post stock count/i }),
-    )
+    const draftRow = page.getByRole('row').filter({ has: page.getByText('Draft', { exact: true }) }).first()
+    if (!(await draftRow.isVisible())) test.skip(true, 'No draft stock count available')
 
-    const noCounts = page.getByText(/no data|no stock counts|empty/i)
-    const gridRow = page.locator('[role="row"]').nth(1) // second row = first data row
-
-    // Either no rows or post button accessible
-    if (await noCounts.isVisible()) {
-      test.skip(true, 'No stock counts available')
-    } else {
-      // Open row actions (ellipsis / kebab)
-      const actionBtn = gridRow.getByRole('button').last()
-      if (await actionBtn.isVisible()) await actionBtn.click()
-      await expect(postBtn).toBeVisible({ timeout: 3_000 })
-    }
+    await draftRow.click()
+    await expect(page.getByRole('button', { name: /^post$/i })).toBeVisible({ timeout: 5_000 })
   })
 })
 

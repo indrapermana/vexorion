@@ -570,6 +570,7 @@ After a manual recovery migration succeeds, verify runtime access to newly creat
 - [Architecture and workflow diagrams](docs/VEXORIONERP_ARCHITECTURE_DIAGRAMS.md)
 - [Neon PostgreSQL production setup](docs/NEON_PRODUCTION_SETUP.md)
 - [Google Cloud Run production setup](docs/GOOGLE_CLOUD_RUN_PRODUCTION_SETUP.md)
+- [Development automation environment setup](docs/DEVELOPMENT_AUTOMATION_ENVIRONMENT_SETUP.md)
 - [Production release gates and rollback rehearsal](docs/PRODUCTION_RELEASE_GATES.md)
 - [Cloudflare R2 production setup](docs/CLOUDFLARE_R2_SETUP.md)
 - [Cloudflare Pages setup for the three authenticated UIs](docs/CLOUDFLARE_PAGES_UI_SETUP.md)

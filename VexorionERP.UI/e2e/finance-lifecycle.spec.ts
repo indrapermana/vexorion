@@ -30,15 +30,18 @@ function expectSuccessStatus(result: { status: number; body: unknown }, operatio
 }
 
 async function fetchText(page: Parameters<typeof authenticatedApi>[0], path: string) {
-  return page.evaluate(async (requestPath) => {
+  const apiBaseUrl = process.env.E2E_API_BASE_URL?.replace(/\/$/u, '')
+  if (!apiBaseUrl) throw new Error('E2E_API_BASE_URL is required for authenticated report downloads.')
+
+  return page.evaluate(async ({ requestPath, requestApiBaseUrl }) => {
     const persisted = window.localStorage.getItem('vexorionerp.auth')
     const token = persisted
       ? (JSON.parse(persisted) as { state?: { session?: { accessToken?: string } } }).state?.session?.accessToken
       : undefined
     if (!token) throw new Error('Authenticated E2E session is missing its access token.')
-    const response = await fetch(`/api${requestPath}`, { headers: { Authorization: `Bearer ${token}` } })
+    const response = await fetch(`${requestApiBaseUrl}${requestPath}`, { headers: { Authorization: `Bearer ${token}` } })
     return { status: response.status, text: await response.text(), contentType: response.headers.get('content-type') }
-  }, path)
+  }, { requestPath: path, requestApiBaseUrl: apiBaseUrl })
 }
 
 async function createAccount(page: Parameters<typeof authenticatedApi>[0], code: string, name: string, accountType: number, normalBalance: number) {

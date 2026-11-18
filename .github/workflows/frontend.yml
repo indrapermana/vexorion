@@ -34,6 +34,11 @@ on:
         required: false
         default: false
         type: boolean
+      run_e2e:
+        description: 'Run all Playwright suites against the development environment'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   # ─────────────────────────────────────────────
@@ -176,20 +181,25 @@ jobs:
   # 2. E2E — split per app for isolation and reruns
   # ─────────────────────────────────────────────
   e2e-ui:
-    name: E2E Tests (Playwright UI)
-    runs-on: ubuntu-latest
+    name: E2E Tests (Playwright UI ${{ matrix.shard }}/3)
+    runs-on: ubuntu-24.04
     needs: build-and-test
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     if: >-
-      false &&
       needs.build-and-test.result == 'success' &&
-      github.event_name != 'pull_request' &&
-      needs.build-and-test.outputs.ui_built == 'true'
+      github.event_name == 'workflow_dispatch' &&
+      inputs.run_e2e == true
+    environment: development
     env:
       CI: true
       E2E_API_BASE_URL: ${{ secrets.E2E_API_BASE_URL }}
       E2E_API_ENVIRONMENT: ${{ vars.E2E_API_ENVIRONMENT }}
       E2E_ALLOW_TENANT_PROVISIONING: ${{ vars.E2E_ALLOW_TENANT_PROVISIONING }}
       E2E_ALLOW_REMOTE_NON_PRODUCTION: ${{ vars.E2E_ALLOW_REMOTE_NON_PRODUCTION }}
+      E2E_ALLOWED_REMOTE_HOST: ${{ vars.E2E_ALLOWED_REMOTE_HOST }}
       E2E_CONTROL_TENANT_CODE: ${{ secrets.E2E_CONTROL_TENANT_CODE }}
       E2E_CONTROL_USERNAME: ${{ secrets.E2E_CONTROL_USERNAME }}
       E2E_CONTROL_PASSWORD: ${{ secrets.E2E_CONTROL_PASSWORD }}
@@ -203,19 +213,22 @@ jobs:
         id: e2e-secrets
         shell: bash
         run: |
-          missing=0
-          [[ -z "${{ secrets.E2E_API_BASE_URL }}" ]] && missing=1
-          [[ -z "${{ secrets.E2E_CONTROL_TENANT_CODE }}" ]] && missing=1
-          [[ -z "${{ secrets.E2E_CONTROL_USERNAME }}" ]] && missing=1
-          [[ -z "${{ secrets.E2E_CONTROL_PASSWORD }}" ]] && missing=1
-          [[ "${{ vars.E2E_ALLOW_TENANT_PROVISIONING }}" != "true" ]] && missing=1
+          missing=()
+          [[ -z "${{ secrets.E2E_API_BASE_URL }}" ]] && missing+=(E2E_API_BASE_URL)
+          [[ -z "${{ secrets.E2E_CONTROL_TENANT_CODE }}" ]] && missing+=(E2E_CONTROL_TENANT_CODE)
+          [[ -z "${{ secrets.E2E_CONTROL_USERNAME }}" ]] && missing+=(E2E_CONTROL_USERNAME)
+          [[ -z "${{ secrets.E2E_CONTROL_PASSWORD }}" ]] && missing+=(E2E_CONTROL_PASSWORD)
+          [[ "${{ vars.E2E_API_ENVIRONMENT }}" != "development" ]] && missing+=(E2E_API_ENVIRONMENT)
+          [[ "${{ vars.E2E_ALLOW_TENANT_PROVISIONING }}" != "true" ]] && missing+=(E2E_ALLOW_TENANT_PROVISIONING)
+          [[ "${{ vars.E2E_ALLOW_REMOTE_NON_PRODUCTION }}" != "true" ]] && missing+=(E2E_ALLOW_REMOTE_NON_PRODUCTION)
+          [[ -z "${{ vars.E2E_ALLOWED_REMOTE_HOST }}" ]] && missing+=(E2E_ALLOWED_REMOTE_HOST)
 
-          if [[ "$missing" -eq 1 ]]; then
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "Skipping UI e2e because required secrets are missing."
-          else
-            echo "ready=true" >> "$GITHUB_OUTPUT"
+          if (( ${#missing[@]} > 0 )); then
+            printf 'Missing or invalid GitHub development environment setting: %s\n' "${missing[@]}"
+            exit 1
           fi
+
+          echo "ready=true" >> "$GITHUB_OUTPUT"
 
       - name: Skip E2E (UI)
         if: steps.e2e-secrets.outputs.ready != 'true'
@@ -227,13 +240,13 @@ jobs:
 
       - name: Run E2E (UI)
         if: steps.e2e-secrets.outputs.ready == 'true'
-        run: npx turbo run e2e --filter=vexorionerp-ui
+        run: npm --workspace VexorionERP.UI run e2e -- --shard=${{ matrix.shard }}/3
 
       - name: Upload Playwright reports
         if: always() && steps.e2e-secrets.outputs.ready == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-reports-ui
+          name: playwright-reports-ui-shard-${{ matrix.shard }}-of-3
           path: |
             VexorionERP.UI/playwright-report/
             VexorionERP.UI/test-results/
@@ -241,19 +254,20 @@ jobs:
 
   e2e-adminui:
     name: E2E Tests (Playwright AdminUI)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: build-and-test
     if: >-
-      false &&
       needs.build-and-test.result == 'success' &&
-      github.event_name != 'pull_request' &&
-      needs.build-and-test.outputs.adminui_built == 'true'
+      github.event_name == 'workflow_dispatch' &&
+      inputs.run_e2e == true
+    environment: development
     env:
       CI: true
       E2E_API_BASE_URL: ${{ secrets.E2E_API_BASE_URL }}
       E2E_API_ENVIRONMENT: ${{ vars.E2E_API_ENVIRONMENT }}
       E2E_ALLOW_TENANT_PROVISIONING: ${{ vars.E2E_ALLOW_TENANT_PROVISIONING }}
       E2E_ALLOW_REMOTE_NON_PRODUCTION: ${{ vars.E2E_ALLOW_REMOTE_NON_PRODUCTION }}
+      E2E_ALLOWED_REMOTE_HOST: ${{ vars.E2E_ALLOWED_REMOTE_HOST }}
       E2E_CONTROL_TENANT_CODE: ${{ secrets.E2E_CONTROL_TENANT_CODE }}
       E2E_CONTROL_USERNAME: ${{ secrets.E2E_CONTROL_USERNAME }}
       E2E_CONTROL_PASSWORD: ${{ secrets.E2E_CONTROL_PASSWORD }}
@@ -267,19 +281,22 @@ jobs:
         id: e2e-secrets
         shell: bash
         run: |
-          missing=0
-          [[ -z "${{ secrets.E2E_API_BASE_URL }}" ]] && missing=1
-          [[ -z "${{ secrets.E2E_CONTROL_TENANT_CODE }}" ]] && missing=1
-          [[ -z "${{ secrets.E2E_CONTROL_USERNAME }}" ]] && missing=1
-          [[ -z "${{ secrets.E2E_CONTROL_PASSWORD }}" ]] && missing=1
-          [[ "${{ vars.E2E_ALLOW_TENANT_PROVISIONING }}" != "true" ]] && missing=1
+          missing=()
+          [[ -z "${{ secrets.E2E_API_BASE_URL }}" ]] && missing+=(E2E_API_BASE_URL)
+          [[ -z "${{ secrets.E2E_CONTROL_TENANT_CODE }}" ]] && missing+=(E2E_CONTROL_TENANT_CODE)
+          [[ -z "${{ secrets.E2E_CONTROL_USERNAME }}" ]] && missing+=(E2E_CONTROL_USERNAME)
+          [[ -z "${{ secrets.E2E_CONTROL_PASSWORD }}" ]] && missing+=(E2E_CONTROL_PASSWORD)
+          [[ "${{ vars.E2E_API_ENVIRONMENT }}" != "development" ]] && missing+=(E2E_API_ENVIRONMENT)
+          [[ "${{ vars.E2E_ALLOW_TENANT_PROVISIONING }}" != "true" ]] && missing+=(E2E_ALLOW_TENANT_PROVISIONING)
+          [[ "${{ vars.E2E_ALLOW_REMOTE_NON_PRODUCTION }}" != "true" ]] && missing+=(E2E_ALLOW_REMOTE_NON_PRODUCTION)
+          [[ -z "${{ vars.E2E_ALLOWED_REMOTE_HOST }}" ]] && missing+=(E2E_ALLOWED_REMOTE_HOST)
 
-          if [[ "$missing" -eq 1 ]]; then
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "Skipping AdminUI e2e because required secrets are missing."
-          else
-            echo "ready=true" >> "$GITHUB_OUTPUT"
+          if (( ${#missing[@]} > 0 )); then
+            printf 'Missing or invalid GitHub development environment setting: %s\n' "${missing[@]}"
+            exit 1
           fi
+
+          echo "ready=true" >> "$GITHUB_OUTPUT"
 
       - name: Skip E2E (AdminUI)
         if: steps.e2e-secrets.outputs.ready != 'true'
@@ -305,19 +322,20 @@ jobs:
 
   e2e-pos:
     name: E2E Tests (Playwright POS)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: build-and-test
     if: >-
-      false &&
       needs.build-and-test.result == 'success' &&
-      github.event_name != 'pull_request' &&
-      needs.build-and-test.outputs.pos_built == 'true'
+      github.event_name == 'workflow_dispatch' &&
+      inputs.run_e2e == true
+    environment: development
     env:
       CI: true
       E2E_API_BASE_URL: ${{ secrets.E2E_API_BASE_URL }}
       E2E_API_ENVIRONMENT: ${{ vars.E2E_API_ENVIRONMENT }}
       E2E_ALLOW_TENANT_PROVISIONING: ${{ vars.E2E_ALLOW_TENANT_PROVISIONING }}
       E2E_ALLOW_REMOTE_NON_PRODUCTION: ${{ vars.E2E_ALLOW_REMOTE_NON_PRODUCTION }}
+      E2E_ALLOWED_REMOTE_HOST: ${{ vars.E2E_ALLOWED_REMOTE_HOST }}
       E2E_CONTROL_TENANT_CODE: ${{ secrets.E2E_CONTROL_TENANT_CODE }}
       E2E_CONTROL_USERNAME: ${{ secrets.E2E_CONTROL_USERNAME }}
       E2E_CONTROL_PASSWORD: ${{ secrets.E2E_CONTROL_PASSWORD }}
@@ -331,19 +349,22 @@ jobs:
         id: e2e-secrets
         shell: bash
         run: |
-          missing=0
-          [[ -z "${{ secrets.E2E_API_BASE_URL }}" ]] && missing=1
-          [[ -z "${{ secrets.E2E_CONTROL_TENANT_CODE }}" ]] && missing=1
-          [[ -z "${{ secrets.E2E_CONTROL_USERNAME }}" ]] && missing=1
-          [[ -z "${{ secrets.E2E_CONTROL_PASSWORD }}" ]] && missing=1
-          [[ "${{ vars.E2E_ALLOW_TENANT_PROVISIONING }}" != "true" ]] && missing=1
+          missing=()
+          [[ -z "${{ secrets.E2E_API_BASE_URL }}" ]] && missing+=(E2E_API_BASE_URL)
+          [[ -z "${{ secrets.E2E_CONTROL_TENANT_CODE }}" ]] && missing+=(E2E_CONTROL_TENANT_CODE)
+          [[ -z "${{ secrets.E2E_CONTROL_USERNAME }}" ]] && missing+=(E2E_CONTROL_USERNAME)
+          [[ -z "${{ secrets.E2E_CONTROL_PASSWORD }}" ]] && missing+=(E2E_CONTROL_PASSWORD)
+          [[ "${{ vars.E2E_API_ENVIRONMENT }}" != "development" ]] && missing+=(E2E_API_ENVIRONMENT)
+          [[ "${{ vars.E2E_ALLOW_TENANT_PROVISIONING }}" != "true" ]] && missing+=(E2E_ALLOW_TENANT_PROVISIONING)
+          [[ "${{ vars.E2E_ALLOW_REMOTE_NON_PRODUCTION }}" != "true" ]] && missing+=(E2E_ALLOW_REMOTE_NON_PRODUCTION)
+          [[ -z "${{ vars.E2E_ALLOWED_REMOTE_HOST }}" ]] && missing+=(E2E_ALLOWED_REMOTE_HOST)
 
-          if [[ "$missing" -eq 1 ]]; then
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "Skipping POS e2e because required secrets are missing."
-          else
-            echo "ready=true" >> "$GITHUB_OUTPUT"
+          if (( ${#missing[@]} > 0 )); then
+            printf 'Missing or invalid GitHub development environment setting: %s\n' "${missing[@]}"
+            exit 1
           fi
+
+          echo "ready=true" >> "$GITHUB_OUTPUT"
 
       - name: Skip E2E (POS)
         if: steps.e2e-secrets.outputs.ready != 'true'
@@ -379,7 +400,11 @@ jobs:
     if: >-
       vars.CLOUDFLARE_PAGES_DEPLOY_ENABLED == 'true' &&
       (
-        github.event_name == 'workflow_dispatch' ||
+        (
+          github.event_name == 'workflow_dispatch' &&
+          inputs.deploy_all == true &&
+          (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+        ) ||
         (
           github.event_name == 'push' &&
           (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
@@ -426,7 +451,11 @@ jobs:
     if: >-
       vars.CLOUDFLARE_PAGES_DEPLOY_ENABLED == 'true' &&
       (
-        github.event_name == 'workflow_dispatch' ||
+        (
+          github.event_name == 'workflow_dispatch' &&
+          inputs.deploy_all == true &&
+          (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+        ) ||
         (
           github.event_name == 'push' &&
           (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
@@ -473,7 +502,11 @@ jobs:
     if: >-
       vars.CLOUDFLARE_PAGES_DEPLOY_ENABLED == 'true' &&
       (
-        github.event_name == 'workflow_dispatch' ||
+        (
+          github.event_name == 'workflow_dispatch' &&
+          inputs.deploy_all == true &&
+          (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+        ) ||
         (
           github.event_name == 'push' &&
           (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
@@ -521,7 +554,11 @@ jobs:
       vars.CLOUDFLARE_PAGES_DEPLOY_ENABLED == 'true' &&
       vars.CLOUDFLARE_LANDING_DEPLOY_ENABLED == 'true' &&
       (
-        github.event_name == 'workflow_dispatch' ||
+        (
+          github.event_name == 'workflow_dispatch' &&
+          inputs.deploy_all == true &&
+          (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+        ) ||
         (
           github.event_name == 'push' &&
           (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
