@@ -396,7 +396,11 @@ jobs:
     if: >-
       vars.CLOUDFLARE_PAGES_DEPLOY_ENABLED == 'true' &&
       (
-        github.event_name == 'workflow_dispatch' ||
+        (
+          github.event_name == 'workflow_dispatch' &&
+          inputs.deploy_all == true &&
+          (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+        ) ||
         (
           github.event_name == 'push' &&
           (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
@@ -443,7 +447,11 @@ jobs:
     if: >-
       vars.CLOUDFLARE_PAGES_DEPLOY_ENABLED == 'true' &&
       (
-        github.event_name == 'workflow_dispatch' ||
+        (
+          github.event_name == 'workflow_dispatch' &&
+          inputs.deploy_all == true &&
+          (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+        ) ||
         (
           github.event_name == 'push' &&
           (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
@@ -490,7 +498,11 @@ jobs:
     if: >-
       vars.CLOUDFLARE_PAGES_DEPLOY_ENABLED == 'true' &&
       (
-        github.event_name == 'workflow_dispatch' ||
+        (
+          github.event_name == 'workflow_dispatch' &&
+          inputs.deploy_all == true &&
+          (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+        ) ||
         (
           github.event_name == 'push' &&
           (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
@@ -538,7 +550,11 @@ jobs:
       vars.CLOUDFLARE_PAGES_DEPLOY_ENABLED == 'true' &&
       vars.CLOUDFLARE_LANDING_DEPLOY_ENABLED == 'true' &&
       (
-        github.event_name == 'workflow_dispatch' ||
+        (
+          github.event_name == 'workflow_dispatch' &&
+          inputs.deploy_all == true &&
+          (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+        ) ||
         (
           github.event_name == 'push' &&
           (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
