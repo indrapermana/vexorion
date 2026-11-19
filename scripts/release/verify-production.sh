@@ -74,7 +74,8 @@ record_preflight() {
 }
 
 [[ "$ACTUAL_IMAGE" == "$EXPECTED_IMAGE" ]] || fail "Cloud Run image does not match the workflow image digest."
-[[ "$ACTUAL_REVISION" == "$EXPECTED_REVISION" ]] || fail "Cloud Run latest-ready revision is not the expected revision."
+[[ "$ACTUAL_REVISION" == "$EXPECTED_REVISION" ]] \
+  || fail "Cloud Run latest-ready revision '$ACTUAL_REVISION' does not match expected revision '$EXPECTED_REVISION'."
 [[ "$TRAFFIC_PERCENT" == "100" ]] || fail "Expected 100 percent traffic on the latest revision; got '$TRAFFIC_PERCENT'."
 
 # Probe the API first so an operator-confirmed idle run captures the cold-path response.

@@ -486,6 +486,7 @@ jobs:
           env_vars+="|EMAIL__MAINUIBASEURL=${EMAIL__MAINUIBASEURL}"
           env_vars+="|EMAIL__FROMADDRESS=${EMAIL__FROMADDRESS}"
           env_vars+="|EMAIL__REDIRECTPLUSADDRESSING=false"
+          env_vars+="|VEXORION_RELEASE_ID=${GITHUB_SHA}-${GITHUB_RUN_ATTEMPT}"
 
           gcloud run services update "$GCP_CLOUD_RUN_SERVICE" \
             --project="$GCP_PROJECT_ID" \
