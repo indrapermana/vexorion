@@ -83,4 +83,8 @@ jq -e '.revision == "api-00042-test" and .trafficPercent == 100 and (.endpoints 
   "$evidence_dir/production-verification.json" > /dev/null
 grep -q 'Production release verification' "$evidence_dir/production-verification.md"
 
+workflow_file="$repository_root/.github/workflows/backend.yml"
+grep -Fq -- '--revision-suffix="$revision_suffix"' "$workflow_file"
+grep -Fq 'VEXORION_RELEASE_ID=${GITHUB_SHA}-${GITHUB_RUN_ATTEMPT}' "$workflow_file"
+
 echo "Release verification script test passed."
