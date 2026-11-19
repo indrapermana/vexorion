@@ -480,6 +480,8 @@ jobs:
           EMAIL__MAINUIBASEURL: ${{ vars.EMAIL__MAINUIBASEURL }}
           EMAIL__FROMADDRESS: ${{ vars.EMAIL__FROMADDRESS }}
         run: |
+          revision_suffix="r${GITHUB_SHA::7}-${GITHUB_RUN_ATTEMPT}"
+          expected_revision="${GCP_CLOUD_RUN_SERVICE}-${revision_suffix}"
           env_vars="EMAIL__RESENDAPIKEY=${EMAIL__RESENDAPIKEY}"
           env_vars+="|EMAIL__MAINUIBASEURL=${EMAIL__MAINUIBASEURL}"
           env_vars+="|EMAIL__FROMADDRESS=${EMAIL__FROMADDRESS}"
@@ -489,9 +491,12 @@ jobs:
             --project="$GCP_PROJECT_ID" \
             --region="$GCP_REGION" \
             --image="$IMAGE_DIGEST_URI" \
+            --revision-suffix="$revision_suffix" \
             --update-env-vars="^|^${env_vars}" \
             --no-invoker-iam-check \
             --quiet
+
+          echo "EXPECTED_DEPLOYED_REVISION=$expected_revision" >> "$GITHUB_ENV"
 
       - name: Verify deployed revision
         run: |
@@ -501,7 +506,6 @@ jobs:
             --format=json)
           service_url=$(jq -r '.status.url' <<< "$service_json")
           deployed_image=$(jq -r '.spec.template.spec.containers[0].image' <<< "$service_json")
-          created_revision=$(jq -r '.status.latestCreatedRevisionName' <<< "$service_json")
           ready_revision=$(jq -r '.status.latestReadyRevisionName' <<< "$service_json")
           traffic_percent=$(jq -r --arg revision "$ready_revision" \
             '[.status.traffic[] | select(.revisionName == $revision) | (.percent // 0)] | add // 0' \
@@ -509,7 +513,7 @@ jobs:
 
           SERVICE_URL="$service_url" \
           EXPECTED_IMAGE="$IMAGE_DIGEST_URI" \
-          EXPECTED_REVISION="$created_revision" \
+          EXPECTED_REVISION="$EXPECTED_DEPLOYED_REVISION" \
           ACTUAL_IMAGE="$deployed_image" \
           ACTUAL_REVISION="$ready_revision" \
           TRAFFIC_PERCENT="$traffic_percent" \
