@@ -109,11 +109,11 @@ jobs:
           traffic_changed=false
           restore_traffic() {
             if [[ "$traffic_changed" == "true" ]]; then
-              echo "Restoring 100 percent traffic to $RESTORE_REVISION."
+              echo "Restoring 100 percent traffic to LATEST ($RESTORE_REVISION)."
               gcloud run services update-traffic "$GCP_CLOUD_RUN_SERVICE" \
                 --project="$GCP_PROJECT_ID" \
                 --region="$GCP_REGION" \
-                --to-revisions="$RESTORE_REVISION=100" \
+                --to-latest \
                 --quiet
             fi
           }

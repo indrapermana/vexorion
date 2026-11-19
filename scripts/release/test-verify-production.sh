@@ -86,5 +86,9 @@ grep -q 'Production release verification' "$evidence_dir/production-verification
 workflow_file="$repository_root/.github/workflows/backend.yml"
 grep -Fq -- '--revision-suffix="$revision_suffix"' "$workflow_file"
 grep -Fq 'VEXORION_RELEASE_ID=${GITHUB_SHA}-${GITHUB_RUN_ATTEMPT}' "$workflow_file"
+grep -Fq -- '--to-latest' "$workflow_file"
+
+rollback_workflow_file="$repository_root/.github/workflows/production-rollback-rehearsal.yml"
+grep -Fq -- '--to-latest' "$rollback_workflow_file"
 
 echo "Release verification script test passed."

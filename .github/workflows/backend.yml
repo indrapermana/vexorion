@@ -497,6 +497,14 @@ jobs:
             --no-invoker-iam-check \
             --quiet
 
+          # A rollback rehearsal pins traffic to a named revision. Restore the
+          # service's normal behavior so this and future deployments promote LATEST.
+          gcloud run services update-traffic "$GCP_CLOUD_RUN_SERVICE" \
+            --project="$GCP_PROJECT_ID" \
+            --region="$GCP_REGION" \
+            --to-latest \
+            --quiet
+
           echo "EXPECTED_DEPLOYED_REVISION=$expected_revision" >> "$GITHUB_ENV"
 
       - name: Verify deployed revision
